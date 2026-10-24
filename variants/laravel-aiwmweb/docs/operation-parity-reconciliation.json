@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 736,
-    "pending": 195,
+    "adapted": 737,
+    "pending": 194,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 736,
-    "overall_parity_percent": 79.05
+    "terminal": 737,
+    "overall_parity_percent": 79.16
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 267,
-    "pending": 179,
+    "terminal": 268,
+    "pending": 178,
     "blocked": 0,
-    "percent": 59.87
+    "percent": 60.09
   },
   "domains": {
     "ai": {
@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 69,
-      "pending": 95,
+      "adapted": 70,
+      "pending": 94,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 69,
-      "percent": 42.07
+      "terminal": 70,
+      "percent": 42.68
     },
     "email": {
       "total": 82,
@@ -20791,21 +20791,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/WelcomeAuthenticatedHeaderLinkTerminalityTest.php",
+      "evidence": "AIMW-CONT-C7CB5EE184 Welcome footer brand focused closure@8ba2d17c46a0c88d0e67ec751ed2f17eb52311e4: variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php; focused-closure:AIMW-CONT-C7CB5EE184; test:variants/laravel-aiwmweb/backend/tests/Feature/WelcomeAuthenticatedHeaderLinkTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/welcome-footer-brand-route-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-C7CB5EE184 Welcome footer brand focused closure",
+        "source_sha": "8ba2d17c46a0c88d0e67ec751ed2f17eb52311e4",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/welcome-footer-brand-route-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-C7CB5EE184",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/WelcomeAuthenticatedHeaderLinkTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/welcome-footer-brand-route-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -36499,12 +36509,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 267,
-      "pending": 179,
+      "adapted": 268,
+      "pending": 178,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 267,
-      "percent": 59.87
+      "terminal": 268,
+      "percent": 60.09
     }
   },
   "pending_operation_ids_by_domain": {
@@ -36598,7 +36608,6 @@
       "AIMW-CONT-BF5F72F4F9",
       "AIMW-CONT-C3EC665880",
       "AIMW-CONT-C49C37E2C9",
-      "AIMW-CONT-C7CB5EE184",
       "AIMW-CONT-CA17F05024",
       "AIMW-CONT-CA4920CBC8",
       "AIMW-CONT-CF4BE4EC3B",
@@ -37225,16 +37234,6 @@
           "AIMW-CONT-2C02B7A328"
         ],
         "explicit_operation_evidence_ids": []
-      },
-      {
-        "label": "AIMW-CONT-C7CB5EE184 Welcome footer brand focused closure",
-        "sha": "8ba2d17c46a0c88d0e67ec751ed2f17eb52311e4",
-        "domains": [],
-        "supporting_only": false,
-        "operation_ids": [
-          "AIMW-CONT-C7CB5EE184"
-        ],
-        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -37265,7 +37264,6 @@
       "57308368978c1bcb1e2a7083e1ecbf540baadc8d",
       "75ab4dcf2045786b875fc315000ca0c6de095b2e",
       "860095fc8322b913f17b472b41c44c1c17dcc5eb",
-      "8ba2d17c46a0c88d0e67ec751ed2f17eb52311e4",
       "9535f66b12b3839dd7606c5b305c6f0bd32e1216",
       "a3890ef1d4dac7e4e4bb5123d23625dd11269e7a",
       "a5f91d67cecde21f25d016c9a3eb1cecf5a10a1f",
@@ -37590,6 +37588,7 @@
       "AIMW-CONT-B1E9E1D6B0",
       "AIMW-CONT-BCE1211CE3",
       "AIMW-CONT-C178278FCB",
+      "AIMW-CONT-C7CB5EE184",
       "AIMW-CONT-CEA27985CB",
       "AIMW-CONT-D4607F943C",
       "AIMW-CONT-D5FFC84EC2",
@@ -37931,10 +37930,17 @@
         "operation_ids": [
           "AIMW-CONT-607ACDF4D8"
         ]
+      },
+      {
+        "label": "AIMW-CONT-C7CB5EE184 Welcome footer brand focused closure",
+        "sha": "8ba2d17c46a0c88d0e67ec751ed2f17eb52311e4",
+        "operation_ids": [
+          "AIMW-CONT-C7CB5EE184"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 37,
-    "focused_closure_contract_count": 267,
+    "focused_closure_operation_scoped_count": 38,
+    "focused_closure_contract_count": 268,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
