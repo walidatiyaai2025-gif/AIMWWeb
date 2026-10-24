@@ -983,7 +983,7 @@
       "route_api_provenance": {
         "AIMW-CONT-5CF47CBE2A": {
           "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
-          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentExplorerReadController.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
           "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentExplorerRouteTerminalityTest.php",
           "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentExplorerRouteTerminalityTest.php",
           "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-route-terminality.json",
