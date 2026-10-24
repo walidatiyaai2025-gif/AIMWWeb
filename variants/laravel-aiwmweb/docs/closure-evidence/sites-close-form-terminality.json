@@ -49,7 +49,7 @@
   },
   "provenance": {
     "base_branch": "worker/laravel-aiwmweb-closure-composition",
-    "base_composition_sha": "e5a12138a7babfd62bb12ab688899e63e11719ae",
+    "base_composition_sha": "6c385649043c4412cfaca1dbf13c6ac22459cd7a",
     "branch": "worker/868-sites-close-form",
     "issue": 868
   }
