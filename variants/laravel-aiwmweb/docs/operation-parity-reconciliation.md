@@ -8,22 +8,22 @@ Authority: AIMWWeb Issue #257. Evidence-only reconciliation; no feature completi
 |---|---:|
 | TOTAL | 931 |
 | PORTED | 0 |
-| ADAPTED | 728 |
-| PENDING | 203 |
+| ADAPTED | 729 |
+| PENDING | 202 |
 | BLOCKED | 0 |
 | VERIFIED_UNAVAILABLE_EXTERNAL | 0 |
-| TERMINAL | 728 |
-| OVERALL_PARITY_PERCENT | 78.20% |
+| TERMINAL | 729 |
+| OVERALL_PARITY_PERCENT | 78.30% |
 
 Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`; `BLOCKED` is not progress.
 
 ## Visible controls
 
 - Total: **446**
-- Terminal: **261**
-- Pending: **185**
+- Terminal: **262**
+- Pending: **184**
 - Blocked: **0**
-- Parity: **58.52%**
+- Parity: **58.74%**
 
 ## By domain
 
@@ -46,7 +46,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | settings | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 100.00% |
 | sites | 12 | 0 | 12 | 0 | 0 | 0 | 12 | 100.00% |
 | sync | 213 | 0 | 141 | 72 | 0 | 0 | 141 | 66.20% |
-| taxonomy | 13 | 0 | 6 | 7 | 0 | 0 | 6 | 46.15% |
+| taxonomy | 13 | 0 | 7 | 6 | 0 | 0 | 7 | 53.85% |
 
 ## By kind
 
@@ -56,7 +56,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | background_job | 21 | 0 | 21 | 0 | 0 | 0 | 21 | 100.00% |
 | route | 84 | 0 | 66 | 18 | 0 | 0 | 66 | 78.57% |
 | service | 349 | 0 | 349 | 0 | 0 | 0 | 349 | 100.00% |
-| visible_control | 446 | 0 | 261 | 185 | 0 | 0 | 261 | 58.52% |
+| visible_control | 446 | 0 | 262 | 184 | 0 | 0 | 262 | 58.74% |
 
 ## Reproducibility / guard results
 
@@ -66,7 +66,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - Totals reconcile: **PASS**
 - Evidence references exist for terminal code rows: **PASS**
 - Explicit route contracts: **43**
-- Focused visible-control contracts: **261**
+- Focused visible-control contracts: **262**
 - Focused service contracts: **32**
 - Focused background-job contracts: **7**
 - Unpushed countable sources: **0**
@@ -334,9 +334,8 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-SYNC-FD27B795ED`
 - `AIMW-SYNC-FF579F0EBF`
 
-### taxonomy (7)
+### taxonomy (6)
 
-- `AIMW-TAXO-005925568C`
 - `AIMW-TAXO-39CDD7EF81`
 - `AIMW-TAXO-5D39DA68B7`
 - `AIMW-TAXO-602DE140EB`
