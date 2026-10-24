@@ -114,6 +114,7 @@ final class WelcomeFooterLoginTerminalityTest extends TestCase
         $view = (string) file_get_contents(resource_path('views/ai/welcome.blade.php'));
 
         $this->assertSame(1, substr_count($view, 'data-canonical-operation="'.self::OPERATION_ID.'"'));
+        $this->assertSame(1, substr_count($view, 'data-canonical-operation="AIMW-CONT-C7CB5EE184"'));
         $this->assertStringNotContainsString('data-canonical-operation="AIMW-CONT-1456BE001F"', $view);
         $this->assertSame(1, substr_count($view, 'data-canonical-operation="AIMW-CONT-DD56664FDA"'));
     }
