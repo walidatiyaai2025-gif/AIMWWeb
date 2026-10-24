@@ -20099,7 +20099,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/sites-close-form-control.test.tsx",
-      "evidence": "AIMW-CONT-FBA95BDC1D Sites CloseForm focused closure@e9a33c5cd3cae35c78e0d25dc4962f8de5a9240e: variants/laravel-aiwmweb/backend/resources/js/sites-save-control.tsx; focused-closure:AIMW-CONT-FBA95BDC1D; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/sites-close-form-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/sites-close-form-terminality.json",
+      "evidence": "AIMW-CONT-FBA95BDC1D Sites CloseForm focused closure@98f482175fd13403fb1fad117e354c5107d4a6d8: variants/laravel-aiwmweb/backend/resources/js/sites-save-control.tsx; focused-closure:AIMW-CONT-FBA95BDC1D; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/sites-close-form-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/sites-close-form-terminality.json",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
