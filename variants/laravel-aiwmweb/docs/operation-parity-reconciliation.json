@@ -16368,31 +16368,21 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/content-editor-save-control.tsx",
+      "laravel_destination": "",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "ADAPTED",
-      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-editor-show-preview-control.test.tsx",
-      "evidence": "AIMW-CONT-F57B1E1503 Content Editor ShowPreview focused closure@39784fd5cda6f0dd9949558d055410ee7e7190b1: variants/laravel-aiwmweb/backend/resources/js/content-editor-save-control.tsx; focused-closure:AIMW-CONT-F57B1E1503; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-editor-show-preview-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-editor-show-preview-terminality.json",
+      "migration_state": "PENDING",
+      "acceptance_test": "",
+      "evidence": "",
       "reconciliation": {
-        "decision": "ADAPTED",
-        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "AIMW-CONT-F57B1E1503 Content Editor ShowPreview focused closure",
-        "source_sha": "39784fd5cda6f0dd9949558d055410ee7e7190b1",
-        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/content-editor-save-control.tsx",
-        "evidence_mode": "focused_closure_contract",
-        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/content-editor-show-preview-terminality.json",
-        "signals": [
-          "operation:AIMW-CONT-F57B1E1503",
-          "production-marker:variants/laravel-aiwmweb/backend/resources/js/content-editor-save-control.tsx",
-          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-editor-show-preview-control.test.tsx",
-          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-editor-show-preview-terminality.json",
-          "scope:operation-specific",
-          "test:tenant-isolation"
-        ]
+        "decision": "PENDING",
+        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
+        "source_label": null,
+        "source_sha": null,
+        "destination_path": null
       }
     },
     {
@@ -20114,21 +20104,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/sites-save-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/sites-close-form-control.test.tsx",
+      "evidence": "AIMW-CONT-FBA95BDC1D Sites CloseForm focused closure@98f482175fd13403fb1fad117e354c5107d4a6d8: variants/laravel-aiwmweb/backend/resources/js/sites-save-control.tsx; focused-closure:AIMW-CONT-FBA95BDC1D; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/sites-close-form-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/sites-close-form-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-FBA95BDC1D Sites CloseForm focused closure",
+        "source_sha": "98f482175fd13403fb1fad117e354c5107d4a6d8",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/sites-save-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/sites-close-form-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-FBA95BDC1D",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/sites-save-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/sites-close-form-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/sites-close-form-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -36673,8 +36673,8 @@
       "AIMW-CONT-EDC262499D",
       "AIMW-CONT-EE659E3F13",
       "AIMW-CONT-F4CBF0D714",
+      "AIMW-CONT-F57B1E1503",
       "AIMW-CONT-F9015FDB11",
-      "AIMW-CONT-FBA95BDC1D",
       "AIMW-CONT-FE1F15935E",
       "AIMW-CONT-FE6EE5740C"
     ],
@@ -37677,8 +37677,8 @@
       "AIMW-CONT-E38ADF8481",
       "AIMW-CONT-EBD53650BC",
       "AIMW-CONT-EE531AE1FC",
-      "AIMW-CONT-F57B1E1503",
       "AIMW-CONT-F9A87DD98C",
+      "AIMW-CONT-FBA95BDC1D",
       "AIMW-EMAI-00CC1272F6",
       "AIMW-EMAI-12A6FEB2FF",
       "AIMW-EMAI-2E59E39808",
@@ -38035,10 +38035,10 @@
         ]
       },
       {
-        "label": "AIMW-CONT-F57B1E1503 Content Editor ShowPreview focused closure",
-        "sha": "39784fd5cda6f0dd9949558d055410ee7e7190b1",
+        "label": "AIMW-CONT-FBA95BDC1D Sites CloseForm focused closure",
+        "sha": "98f482175fd13403fb1fad117e354c5107d4a6d8",
         "operation_ids": [
-          "AIMW-CONT-F57B1E1503"
+          "AIMW-CONT-FBA95BDC1D"
         ]
       }
     ],
