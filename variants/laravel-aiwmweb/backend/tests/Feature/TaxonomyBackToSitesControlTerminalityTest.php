@@ -43,19 +43,23 @@ final class TaxonomyBackToSitesControlTerminalityTest extends TestCase
         $this->assertSame('low', $operation['risk']);
     }
 
-    public function test_materialized_reconciliation_terminalizes_only_the_claimed_operation(): void
+    public function test_terminal_closure_evidence_is_operation_scoped_and_adapted(): void
     {
-        $document = json_decode(
-            (string) file_get_contents(base_path('../docs/operation-parity-reconciliation.json')),
+        $evidence = json_decode(
+            (string) file_get_contents(base_path('../docs/closure-evidence/taxonomy-back-to-sites-terminality.json')),
             true,
             512,
             JSON_THROW_ON_ERROR,
         );
-        $operation = collect($document['operations'])->firstWhere('operation_id', self::OPERATION_ID);
 
-        $this->assertNotNull($operation);
-        $this->assertSame('ADAPTED', $operation['migration_state']);
-        $this->assertSame('focused_closure_contract', $operation['reconciliation']['evidence_mode'] ?? null);
+        $this->assertSame(self::OPERATION_ID, $evidence['canonical_operation']['operation_id'] ?? null);
+        $this->assertSame('taxonomy', $evidence['canonical_operation']['domain'] ?? null);
+        $this->assertSame('visible_control', $evidence['canonical_operation']['kind'] ?? null);
+        $this->assertSame('PENDING', $evidence['canonical_operation']['previous_state'] ?? null);
+        $this->assertSame('ADAPTED', $evidence['canonical_operation']['terminal_state'] ?? null);
+        $this->assertSame(self::OPERATION_ID, $evidence['scope_guards']['only_operation_claimed'] ?? null);
+        $this->assertTrue((bool) ($evidence['terminality']['focused_tests_present'] ?? false));
+        $this->assertTrue((bool) ($evidence['terminality']['evidence_recorded'] ?? false));
     }
 
     public function test_sites_destination_is_real_tenant_guarded_read_only_workspace(): void
@@ -140,7 +144,8 @@ final class TaxonomyBackToSitesControlTerminalityTest extends TestCase
         $this->assertStringContainsString('BackToSites', $source);
         $this->assertStringContainsString(self::OPERATION_ID, $component);
         $this->assertStringContainsString('active_site', $component);
-        $this->assertStringContainsString("context.permissions.includes('sites.view')", $component);
+        $this->assertStringContainsString("hasPermission(context, 'sites.view')", $component);
+        $this->assertStringContainsString("hasPermission(context, 'tenant.view')", $component);
         $this->assertStringContainsString("tenantUrl(context.tenant.slug, '/sites')", $component);
         $this->assertStringContainsString('TaxonomyBackToSitesControl', $app);
         $this->assertStringContainsString("route.key === 'taxonomy'", $app);
