@@ -1,4 +1,6 @@
 import React from 'react';
+import type { FrontendContext } from './core';
+import { ContentExplorerPreviewEditorLinkControl } from './content-explorer-preview-editor-link-control';
 import { safeContentExplorerExternalUrl } from './content-explorer-wordpress-link-control';
 import { useLocale } from './i18n';
 
@@ -11,9 +13,11 @@ function previewText(value: unknown): string {
 }
 
 export function ContentExplorerPreviewPanel({
+    context,
     row,
     onClose,
 }: {
+    context: FrontendContext;
     row: ContentExplorerPreviewRow;
     onClose: () => void;
 }) {
@@ -46,6 +50,7 @@ export function ContentExplorerPreviewPanel({
                 {slug ? <code>/{slug}</code> : null}
             </div>
             <footer className="toolbar-actions">
+                <ContentExplorerPreviewEditorLinkControl context={context} row={row} />
                 {safeUrl ? (
                     <a
                         className="btn"
