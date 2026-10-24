@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #900 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-EMAI-7A54150265",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "email",
+    "kind": "visible_control",
+    "route_screen": "/account/profile",
+    "visible_control": "@(L.IsArabic ? -> /account/email-settings",
+    "source": "src/AIWordPressManager.Web/Components/Pages/AccountProfile.razor",
+    "source_intent": "Expose the account-level Dashboard email settings action from My Account and navigate to the real account email-settings workspace.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "source_route": "/tenants/{tenant}/account/profile",
+    "source_permission": "tenant.view",
+    "source_profile_api": "/tenants/{tenant}/route-api/account-profile",
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/account-profile-email-settings-link-control.tsx",
+    "runtime_mount": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "destination_builder": "tenantUrl(context.tenant.slug, '/account/email-settings')",
+    "destination_route": "/tenants/{tenant}/account/email-settings",
+    "destination_permission": "tenant.view",
+    "destination_operation": "AIMW-EMAI-B2CFCF818C",
+    "behavior": "Render the bilingual Dashboard email settings action only on the real Account Profile workspace and derive its destination from authenticated FrontendContext tenant state."
+  },
+  "authoritative_behavior": {
+    "source_data": "RouteApiAdapterController::accountProfile rereads the authenticated user and active tenant membership from persisted Laravel state.",
+    "destination_data": "The existing account email-settings workspace remains the authoritative configuration surface; this operation adds navigation only.",
+    "fake_success": false,
+    "placeholder": false,
+    "side_effect": "navigation only"
+  },
+  "security": {
+    "source_authorization": [
+      "auth",
+      "tenant.context",
+      "tenant.view"
+    ],
+    "destination_authorization": [
+      "auth",
+      "tenant.context",
+      "tenant.view"
+    ],
+    "tenant_source": "FrontendContext.tenant.slug supplied by authenticated tenant bootstrap",
+    "caller_supplied_tenant_allowed": false,
+    "slug_encoding": "tenantUrl uses encodeURIComponent",
+    "foreign_tenant_source": "404",
+    "foreign_tenant_destination": "404",
+    "guest": "redirect to /login",
+    "mutation_added": false,
+    "secret_exposure": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/account-profile-email-settings-link.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/AccountProfileEmailSettingsLinkTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation marker",
+      "English and Arabic source labels",
+      "tenant-derived encoded destination",
+      "real Account Profile route and persisted profile read",
+      "real account email-settings destination route",
+      "guest and missing-permission rejection",
+      "foreign-tenant source and destination rejection",
+      "no caller-selected tenant, mutation, API write, provider success, or secret exposure"
+    ]
+  },
+  "provenance": {
+    "implementation_snapshot_sha": "9944d99e322f8844f5ef7ed381d2aa4c6818f833",
+    "canonical_base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "lineage_branch": "worker/laravel-aiwmweb-AIMW-EMAI-7A54150265-account-profile-email-settings",
+    "self_sha_rule": "The manifest records the pushed evidence-bearing commit because a Git commit cannot embed its own SHA.",
+    "composition_sync_base_sha": "10e005d2a86b96bd2ff4168b97aaa3758d5a111d",
+    "focused_closure_source_sha": "4a40aa35adaec07e6b6ec6e72b9a214732bf2a50",
+    "note": "Synced by a non-destructive merge commit before final parity materialization."
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-EMAI-7A54150265"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "duplicate_lineage_created": false
+  }
+}
