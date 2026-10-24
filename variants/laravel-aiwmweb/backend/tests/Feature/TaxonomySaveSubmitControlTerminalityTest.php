@@ -73,7 +73,6 @@ final class TaxonomySaveSubmitControlTerminalityTest extends TestCase
         $this->assertIsArray($contract);
         $this->assertSame('site', $contract['ownership'] ?? null);
         $this->assertSame('content.edit', $contract['permission'] ?? null);
-        $this->assertSame('taxonomy.read', $contract['connector_scope'] ?? null);
         $this->assertSame('taxonomy.manage', $contract['capability'] ?? null);
         $this->assertSame('/api/v1/tenants/{tenant}/sites/{site}/taxonomy', $contract['endpoint'] ?? null);
         $this->assertSame('POST', $contract['method'] ?? null);

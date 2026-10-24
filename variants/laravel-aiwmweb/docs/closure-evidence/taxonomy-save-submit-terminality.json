@@ -35,9 +35,9 @@
   },
   "authorization": {
     "permission": "content.edit",
-    "connector_scope": "taxonomy.read",
     "missing_permission": "taxonomy.manage contract is unavailable with permission_denied",
-    "foreign_site": "taxonomy.manage contract is unavailable with context_mismatch"
+    "foreign_site": "taxonomy.manage contract is unavailable with context_mismatch",
+    "transport": "canonical ledger classifies this taxonomy control as native WordPress REST; the frontend action contract does not declare a connector scope"
   },
   "authoritative_state": {
     "method": "POST",
