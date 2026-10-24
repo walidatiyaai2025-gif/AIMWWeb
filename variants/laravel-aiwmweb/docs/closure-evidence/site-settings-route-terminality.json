@@ -1,0 +1,53 @@
+{
+  "operation_id": "AIMW-CONT-3443C173C6",
+  "domain": "content",
+  "kind": "route",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "source_file": "src/AIWordPressManager.Web/Components/Pages/SiteSettings.razor",
+  "source_route": "/sites/{Id:guid}/settings",
+  "source_action": "Open/render route",
+  "laravel_route": "GET /tenants/{tenant}/sites/{site}/settings",
+  "route_name": "canonical.site.settings",
+  "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SiteSettingsRouteServiceProvider.php",
+  "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteSettingsReadController.php",
+  "view_path": "variants/laravel-aiwmweb/backend/resources/views/sites/settings.blade.php",
+  "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteSettingsRouteTerminalityTest.php",
+  "security": {
+    "middleware": ["web", "auth", "tenant.context"],
+    "authorization": ["tenant.view", "sites.view"],
+    "foreign_site": "404",
+    "missing_permission": "403"
+  },
+  "semantics": {
+    "read_only": true,
+    "authoritative_site_read": true,
+    "tenant_scoped": true,
+    "deterministic_missing_state": true,
+    "fake_success": false
+  },
+  "shared_route_contract": {
+    "existing_visible_control_operation_id": "AIMW-SITE-9F9F2977B5",
+    "selected_route_operation_id": "AIMW-CONT-3443C173C6",
+    "visible_control_binding_preserved": true,
+    "double_counting_avoided": true
+  },
+  "source_states": {
+    "loading": "SiteSettings.razor uses _loading while the settings snapshot is read",
+    "empty": "SiteSettings.razor renders Site not found when the site is absent",
+    "error": "SiteSettings.razor renders a bounded load failure message"
+  },
+  "scope": {
+    "exactly_one_operation": true,
+    "runtime_mutation_added": false,
+    "aspnet_runtime_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "c1fe282022e96ea435508450a0e151a2023bb879",
+    "branch": "worker/870-site-settings-route",
+    "issue": 870,
+    "authority_issue": 257
+  }
+}
