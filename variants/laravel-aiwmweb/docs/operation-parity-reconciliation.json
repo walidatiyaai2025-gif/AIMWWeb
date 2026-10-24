@@ -103,22 +103,22 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 73,
-      "pending": 91,
+      "adapted": 74,
+      "pending": 90,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 73,
-      "percent": 44.51
+      "terminal": 74,
+      "percent": 45.12
     },
     "email": {
       "total": 82,
       "ported": 0,
-      "adapted": 75,
-      "pending": 7,
+      "adapted": 74,
+      "pending": 8,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 75,
-      "percent": 91.46
+      "terminal": 74,
+      "percent": 90.24
     },
     "identity": {
       "total": 7,
@@ -20104,21 +20104,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/sites-save-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/sites-close-form-control.test.tsx",
+      "evidence": "AIMW-CONT-FBA95BDC1D Sites CloseForm focused closure@98f482175fd13403fb1fad117e354c5107d4a6d8: variants/laravel-aiwmweb/backend/resources/js/sites-save-control.tsx; focused-closure:AIMW-CONT-FBA95BDC1D; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/sites-close-form-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/sites-close-form-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-FBA95BDC1D Sites CloseForm focused closure",
+        "source_sha": "98f482175fd13403fb1fad117e354c5107d4a6d8",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/sites-save-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/sites-close-form-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-FBA95BDC1D",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/sites-save-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/sites-close-form-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/sites-close-form-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -22211,31 +22221,21 @@
       "external_dependency": "email_provider",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/account-profile-email-settings-link-control.tsx",
+      "laravel_destination": "",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "ADAPTED",
-      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/account-profile-email-settings-link.test.tsx",
-      "evidence": "AIMW-EMAI-7A54150265 Account Profile Dashboard email settings focused closure@092525a3c46fec6a7b2063cc231ad13ee252a9a9: variants/laravel-aiwmweb/backend/resources/js/account-profile-email-settings-link-control.tsx; focused-closure:AIMW-EMAI-7A54150265; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/account-profile-email-settings-link.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/account-profile-email-settings-link-terminality.json",
+      "migration_state": "PENDING",
+      "acceptance_test": "",
+      "evidence": "",
       "reconciliation": {
-        "decision": "ADAPTED",
-        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "AIMW-EMAI-7A54150265 Account Profile Dashboard email settings focused closure",
-        "source_sha": "092525a3c46fec6a7b2063cc231ad13ee252a9a9",
-        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/account-profile-email-settings-link-control.tsx",
-        "evidence_mode": "focused_closure_contract",
-        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/account-profile-email-settings-link-terminality.json",
-        "signals": [
-          "operation:AIMW-EMAI-7A54150265",
-          "production-marker:variants/laravel-aiwmweb/backend/resources/js/account-profile-email-settings-link-control.tsx",
-          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/account-profile-email-settings-link.test.tsx",
-          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/account-profile-email-settings-link-terminality.json",
-          "scope:operation-specific",
-          "test:tenant-isolation"
-        ]
+        "decision": "PENDING",
+        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
+        "source_label": null,
+        "source_sha": null,
+        "destination_path": null
       }
     },
     {
@@ -36675,7 +36675,6 @@
       "AIMW-CONT-F4CBF0D714",
       "AIMW-CONT-F57B1E1503",
       "AIMW-CONT-F9015FDB11",
-      "AIMW-CONT-FBA95BDC1D",
       "AIMW-CONT-FE1F15935E",
       "AIMW-CONT-FE6EE5740C"
     ],
@@ -36683,6 +36682,7 @@
       "AIMW-EMAI-01F5713C4F",
       "AIMW-EMAI-0AA71A5EF6",
       "AIMW-EMAI-10F3C44369",
+      "AIMW-EMAI-7A54150265",
       "AIMW-EMAI-7E1D4105B0",
       "AIMW-EMAI-8C9768BCD0",
       "AIMW-EMAI-9EB09C490D",
@@ -37678,6 +37678,7 @@
       "AIMW-CONT-EBD53650BC",
       "AIMW-CONT-EE531AE1FC",
       "AIMW-CONT-F9A87DD98C",
+      "AIMW-CONT-FBA95BDC1D",
       "AIMW-EMAI-00CC1272F6",
       "AIMW-EMAI-12A6FEB2FF",
       "AIMW-EMAI-2E59E39808",
@@ -37685,7 +37686,6 @@
       "AIMW-EMAI-54E7EEFB15",
       "AIMW-EMAI-62B0B8EE4C",
       "AIMW-EMAI-77C637E3E3",
-      "AIMW-EMAI-7A54150265",
       "AIMW-EMAI-8E3B0AACD6",
       "AIMW-EMAI-8E56589573",
       "AIMW-EMAI-BDF888551C",
@@ -38035,10 +38035,10 @@
         ]
       },
       {
-        "label": "AIMW-EMAI-7A54150265 Account Profile Dashboard email settings focused closure",
-        "sha": "092525a3c46fec6a7b2063cc231ad13ee252a9a9",
+        "label": "AIMW-CONT-FBA95BDC1D Sites CloseForm focused closure",
+        "sha": "98f482175fd13403fb1fad117e354c5107d4a6d8",
         "operation_ids": [
-          "AIMW-EMAI-7A54150265"
+          "AIMW-CONT-FBA95BDC1D"
         ]
       }
     ],

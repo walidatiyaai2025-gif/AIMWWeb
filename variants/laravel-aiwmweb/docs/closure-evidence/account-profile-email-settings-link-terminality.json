@@ -73,7 +73,7 @@
     "canonical_base_branch": "worker/laravel-aiwmweb-closure-composition",
     "lineage_branch": "worker/laravel-aiwmweb-AIMW-EMAI-7A54150265-account-profile-email-settings",
     "self_sha_rule": "The manifest records the pushed evidence-bearing commit because a Git commit cannot embed its own SHA.",
-    "composition_sync_base_sha": "6df012cf1226292f6165d33f839cfea1bbe2b908",
+    "composition_sync_base_sha": "78f815051aed560db8021d7d39ef5e57638e25ab",
     "focused_closure_source_sha": "08c530fba88dc28101c660617fb84a131f1ee9ed",
     "note": "Original focused closure preserved; current-composition integration uses pages.tsx and its exact integration commit is recorded by the focused-closure registry."
   },
