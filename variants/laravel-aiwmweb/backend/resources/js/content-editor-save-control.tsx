@@ -9,6 +9,37 @@ export const CONTENT_EDITOR_SUBMIT_APPROVAL_OPERATION_ID = 'AIMW-BILL-F5686193FE
 export const CONTENT_EDITOR_CLEAR_FEATURED_OPERATION_ID = 'AIMW-CONT-A6867078EA';
 export const CONTENT_EDITOR_GENERATE_SLUG_OPERATION_ID = 'AIMW-CONT-564636DDC9';
 export const CONTENT_EDITOR_SITES_LINK_OPERATION_ID = 'AIMW-CONT-B6BB292F85';
+export const CONTENT_EDITOR_WORDPRESS_LINK_OPERATION_ID = 'AIMW-CONT-2C51372C70';
+
+export function safeContentEditorExternalUrl(value: unknown): string | null {
+    if (typeof value !== 'string' || value.trim() !== value || value.length === 0) return null;
+    try {
+        const parsed = new URL(value);
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+        if (parsed.username || parsed.password) return null;
+        return value;
+    } catch {
+        return null;
+    }
+}
+
+export function ContentEditorWordPressLinkControl({ value }: { value: unknown }) {
+    const { locale } = useLocale();
+    const safeUrl = safeContentEditorExternalUrl(value);
+    if (!safeUrl) return null;
+
+    return (
+        <a
+            className="btn"
+            href={safeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-canonical-operation={CONTENT_EDITOR_WORDPRESS_LINK_OPERATION_ID}
+        >
+            {locale === 'ar' ? 'عرض على WordPress' : 'View on WordPress'} ↗
+        </a>
+    );
+}
 
 export function ContentEditorSitesLinkControl({ context }: { context: FrontendContext }) {
     const { locale } = useLocale();
@@ -463,7 +494,7 @@ export function ContentEditorSaveControl({ context }: { context: FrontendContext
                 </div>
             ) : null}
 
-            {snapshot.link ? <a className="btn" href={snapshot.link} target="_blank" rel="noreferrer">{locale === 'ar' ? 'عرض على WordPress' : 'View on WordPress'} ↗</a> : null}
+            <ContentEditorWordPressLinkControl value={snapshot.link} />
         </form>
     );
 }
