@@ -1565,6 +1565,14 @@
       "operation_ids": [
         "AIMW-CONT-4961F90970"
       ]
+    },
+    {
+      "label": "AIMW-SYNC-1778E3F6B5 AppSearchBox focused closure",
+      "sha": "de1c5ff00086a98377499ee02a4b7d7811000872",
+      "observed_pr_head": "de1c5ff00086a98377499ee02a4b7d7811000872",
+      "operation_ids": [
+        "AIMW-SYNC-1778E3F6B5"
+      ]
     }
   ]
 }
