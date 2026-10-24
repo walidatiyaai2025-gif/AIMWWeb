@@ -65,7 +65,7 @@ final class ContentEditorSecondarySaveTerminalityTest extends TestCase
             $existingSaveTest,
         );
         $this->assertStringContainsString('->assertNotFound()', $existingSaveTest);
-        $this->assertStringContainsString('foreign tenant', strtolower($existingSaveTest));
+        $this->assertStringContainsString('/api/v1/tenants/beta/sites/{$betaSite->id}/content/post/202/editor', $existingSaveTest);
         $this->assertStringContainsString('content.edit', $existingSaveTest);
     }
 
