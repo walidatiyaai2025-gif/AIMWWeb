@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
+/** Canonical route-closure acceptance for AIMW-CONT-3443C173C6. */
 final class SiteSettingsRouteTerminalityTest extends TestCase
 {
     use RefreshDatabase;
