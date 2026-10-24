@@ -25,6 +25,7 @@ import { prepareActionRequest } from './action-contract';
 import { AUTOMATION_PHASE_ACTION_OPERATIONS, AUTOMATION_PHASE_REFRESH_OPERATIONS, SCHEDULE_CANCEL_EDIT_OPERATION_ID } from './automation-phase-controls';
 import { AuthoritativeReconciliationError, mutateThenReconcile } from './reconciliation';
 import { ContentExplorerWordPressLinkControl } from './content-explorer-wordpress-link-control';
+import { ContentExplorerBackToSitesControl } from './content-explorer-back-to-sites-control';
 import { CurrentUserLogsControl } from './current-user-logs-control';
 import { DashboardSitesNavigationControl } from './dashboard-sites-navigation-control';
 import { LiveSystemStatusRefreshControl } from './live-system-status-refresh-control';
@@ -651,6 +652,7 @@ function WorkspaceHub({ context, route }: { context: FrontendContext; route: Wor
 }
 
 export function WorkspacePage({ context, route }: { context: FrontendContext; route: WorkspaceRoute }) {
+    if (route.key === 'explorer') return <><ContentExplorerBackToSitesControl context={context} /><ResourceContent context={context} route={route} /></>;
     if (route.key === 'account-profile') return <><AccountProfileEmailSettingsLinkControl context={context} /><ResourceContent context={context} route={route} /></>;
     if (route.kind === 'dashboard') return <DashboardContent context={context} route={route} />;
     if (route.kind === 'workspace') return <WorkspaceHub context={context} route={route} />;
