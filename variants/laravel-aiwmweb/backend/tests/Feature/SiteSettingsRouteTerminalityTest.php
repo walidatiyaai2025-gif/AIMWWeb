@@ -21,7 +21,6 @@ final class SiteSettingsRouteTerminalityTest extends TestCase
     use RefreshDatabase;
 
     private const OPERATION_ID = 'AIMW-CONT-3443C173C6';
-    // Exact-head CI retrigger after composition sync; no runtime behavior.
 
     public function test_exact_canonical_operation_matches_site_settings_open_route(): void
     {
