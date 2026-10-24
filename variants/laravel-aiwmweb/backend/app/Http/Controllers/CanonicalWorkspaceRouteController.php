@@ -39,6 +39,25 @@ final class CanonicalWorkspaceRouteController extends Controller
         return view('app');
     }
 
+    public function showContentEditor(
+        Request $request,
+        string $tenant,
+        string $site,
+        string $contentType,
+        string $wordpressId,
+    ): View {
+        $this->authorizeRoute($request);
+
+        abort_unless(ctype_digit($site) && (int) $site > 0, 404);
+        abort_unless(in_array(strtolower($contentType), ['post', 'page'], true), 404);
+        abort_unless(ctype_digit($wordpressId) && (int) $wordpressId > 0, 404);
+
+        $model = Site::query()->findOrFail((int) $site);
+        $request->session()->put(self::SITE_SESSION_KEY, (int) $model->getKey());
+
+        return view('app');
+    }
+
     public function redirect(Request $request, string $tenant): RedirectResponse
     {
         $this->authorizeRoute($request);
