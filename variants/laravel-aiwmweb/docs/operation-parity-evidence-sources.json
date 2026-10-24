@@ -1343,6 +1343,14 @@
       ]
     },
     {
+      "label": "AIMW-CONT-F57B1E1503 Content Editor ShowPreview focused closure",
+      "sha": "39784fd5cda6f0dd9949558d055410ee7e7190b1",
+      "observed_pr_head": "39784fd5cda6f0dd9949558d055410ee7e7190b1",
+      "operation_ids": [
+        "AIMW-CONT-F57B1E1503"
+      ]
+    },
+    {
       "label": "AIMW-CONT-3D6485D903 Site Settings Back to sites focused closure",
       "sha": "a41d87ae8544ac190f6118b92ea1b13a2bc40c65",
       "observed_pr_head": "a41d87ae8544ac190f6118b92ea1b13a2bc40c65",
