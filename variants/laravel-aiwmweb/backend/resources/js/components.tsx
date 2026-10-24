@@ -61,25 +61,66 @@ export function useToast() {
     return value;
 }
 
+export const STATE_PANEL_RETRY_OPERATION_ID = 'AIMW-SYNC-AE544B4684';
+
 export function StatePanel({
     tone = 'neutral',
     title,
     children,
     action,
+    onRetry,
+    retryBusy = false,
+    retryText,
+    retryingText,
+    retryAriaLabel,
 }: {
     tone?: 'neutral' | 'warning' | 'danger';
     title: string;
     children: React.ReactNode;
     action?: React.ReactNode;
+    onRetry?: () => void;
+    retryBusy?: boolean;
+    retryText?: string;
+    retryingText?: string;
+    retryAriaLabel?: string;
 }) {
+    const { locale } = useLocale();
+    const effectiveRetryText = retryText ?? (locale === 'ar' ? 'حاول مرة أخرى' : 'Try again');
+    const effectiveRetryingText = retryingText ?? (locale === 'ar' ? 'جارٍ المحاولة مرة أخرى…' : 'Trying again...');
+    const retryControl = onRetry ? (
+        <button
+            type="button"
+            className="btn"
+            data-canonical-operation={STATE_PANEL_RETRY_OPERATION_ID}
+            aria-label={retryAriaLabel ?? effectiveRetryText}
+            aria-busy={retryBusy ? 'true' : 'false'}
+            disabled={retryBusy}
+            onClick={() => {
+                if (!retryBusy) onRetry();
+            }}
+        >
+            <span aria-hidden="true">↻</span>
+            <span>{retryBusy ? effectiveRetryingText : effectiveRetryText}</span>
+        </button>
+    ) : null;
+
     return (
-        <section className={`state-panel state-${tone}`} role={tone === 'danger' ? 'alert' : 'status'}>
+        <section
+            className={`state-panel state-${tone}`}
+            role={tone === 'danger' ? 'alert' : 'status'}
+            aria-busy={retryBusy ? 'true' : undefined}
+        >
             <div className="state-icon" aria-hidden="true">{tone === 'danger' ? '!' : tone === 'warning' ? '◷' : '◇'}</div>
             <div className="state-copy">
                 <h2>{title}</h2>
                 <div>{children}</div>
             </div>
-            {action ? <div className="state-action">{action}</div> : null}
+            {(retryControl || action) ? (
+                <div className="state-action">
+                    {retryControl}
+                    {action}
+                </div>
+            ) : null}
         </section>
     );
 }
