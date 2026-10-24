@@ -1026,6 +1026,14 @@
   "known_composition_blockers": [],
   "focused_closure_operation_sources": [
     {
+      "label": "AIMW-SYNC-26F2BF8EE8 ApplicationUsers SearchClickedAsync focused closure",
+      "sha": "0f914fa5b40abc594a4f6fbefd8cb2c908bf884d",
+      "observed_pr_head": "0f914fa5b40abc594a4f6fbefd8cb2c908bf884d",
+      "operation_ids": [
+        "AIMW-SYNC-26F2BF8EE8"
+      ]
+    },
+    {
       "label": "AIMW-CONT-E38ADF8481 application user StartCreate focused closure",
       "sha": "d32c91a10de07c92a306d43db3b540b4140d51a2",
       "observed_pr_head": "3b63ea9ff3274e9e4ffa812be0f5d246a98b3a6a",
