@@ -8,12 +8,12 @@ Authority: AIMWWeb Issue #257. Evidence-only reconciliation; no feature completi
 |---|---:|
 | TOTAL | 931 |
 | PORTED | 0 |
-| ADAPTED | 720 |
-| PENDING | 211 |
+| ADAPTED | 721 |
+| PENDING | 210 |
 | BLOCKED | 0 |
 | VERIFIED_UNAVAILABLE_EXTERNAL | 0 |
-| TERMINAL | 720 |
-| OVERALL_PARITY_PERCENT | 77.34% |
+| TERMINAL | 721 |
+| OVERALL_PARITY_PERCENT | 77.44% |
 
 Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`; `BLOCKED` is not progress.
 
@@ -36,7 +36,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | billing | 178 | 0 | 173 | 5 | 0 | 0 | 173 | 97.19% |
 | comments | 8 | 0 | 8 | 0 | 0 | 0 | 8 | 100.00% |
 | content | 164 | 0 | 55 | 109 | 0 | 0 | 55 | 33.54% |
-| email | 82 | 0 | 73 | 9 | 0 | 0 | 73 | 89.02% |
+| email | 82 | 0 | 74 | 8 | 0 | 0 | 74 | 90.24% |
 | identity | 7 | 0 | 7 | 0 | 0 | 0 | 7 | 100.00% |
 | media | 15 | 0 | 6 | 9 | 0 | 0 | 6 | 40.00% |
 | operations | 5 | 0 | 5 | 0 | 0 | 0 | 5 | 100.00% |
@@ -54,7 +54,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | api | 31 | 0 | 31 | 0 | 0 | 0 | 31 | 100.00% |
 | background_job | 21 | 0 | 21 | 0 | 0 | 0 | 21 | 100.00% |
-| route | 84 | 0 | 63 | 21 | 0 | 0 | 63 | 75.00% |
+| route | 84 | 0 | 64 | 20 | 0 | 0 | 64 | 76.19% |
 | service | 349 | 0 | 349 | 0 | 0 | 0 | 349 | 100.00% |
 | visible_control | 446 | 0 | 256 | 190 | 0 | 0 | 256 | 57.40% |
 
@@ -173,6 +173,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-CONT-98918A6C27`
 - `AIMW-CONT-9BA2C255AF`
 - `AIMW-CONT-9CF12067E6`
+- `AIMW-CONT-9EDE4C1141`
 - `AIMW-CONT-9F0D652C67`
 - `AIMW-CONT-A31317B378`
 - `AIMW-CONT-A3A2CD23B6`
@@ -209,18 +210,16 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-CONT-EE659E3F13`
 - `AIMW-CONT-F4CBF0D714`
 - `AIMW-CONT-F57B1E1503`
-- `AIMW-CONT-F90125AE87`
 - `AIMW-CONT-F9015FDB11`
 - `AIMW-CONT-FBA95BDC1D`
 - `AIMW-CONT-FE1F15935E`
 - `AIMW-CONT-FE6EE5740C`
 
-### email (9)
+### email (8)
 
 - `AIMW-EMAI-01F5713C4F`
 - `AIMW-EMAI-0AA71A5EF6`
 - `AIMW-EMAI-10F3C44369`
-- `AIMW-EMAI-470599356B`
 - `AIMW-EMAI-7A54150265`
 - `AIMW-EMAI-7E1D4105B0`
 - `AIMW-EMAI-8C9768BCD0`
