@@ -2,6 +2,7 @@ import React, { FormEvent, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ApiError, apiRequest, tenantUrl, type FrontendContext } from './core';
 import { useLocale } from './i18n';
+import { ContentEditorSecondarySaveControl } from './content-editor-secondary-save-control';
 
 export const CONTENT_EDITOR_SAVE_OPERATION_ID = 'AIMW-BILL-42F7590F00';
 export const CONTENT_EDITOR_SUBMIT_APPROVAL_OPERATION_ID = 'AIMW-BILL-F5686193FE';
@@ -450,6 +451,17 @@ export function ContentEditorSaveControl({ context }: { context: FrontendContext
                     </>
                 ) : null}
             </fieldset>
+
+            {canEdit ? (
+                <div className="cluster">
+                    <ContentEditorSecondarySaveControl
+                        saving={saving}
+                        submittingApproval={submittingApproval}
+                        titleValid={Boolean(draft.title.trim())}
+                        locale={locale}
+                    />
+                </div>
+            ) : null}
 
             {snapshot.link ? <a className="btn" href={snapshot.link} target="_blank" rel="noreferrer">{locale === 'ar' ? 'عرض على WordPress' : 'View on WordPress'} ↗</a> : null}
         </form>
