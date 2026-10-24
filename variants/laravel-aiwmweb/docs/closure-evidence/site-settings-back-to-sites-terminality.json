@@ -105,8 +105,9 @@
   },
   "provenance": {
     "base_branch": "worker/laravel-aiwmweb-closure-composition",
-    "base_composition_sha": "6df012cf1226292f6165d33f839cfea1bbe2b908",
-    "branch": "worker/871-site-settings-back-to-sites"
+    "base_composition_sha": "78f815051aed560db8021d7d39ef5e57638e25ab",
+    "branch": "worker/871-site-settings-back-to-sites",
+    "rebased_after_materialization": true
   },
   "terminality": {
     "state": "ADAPTED",
