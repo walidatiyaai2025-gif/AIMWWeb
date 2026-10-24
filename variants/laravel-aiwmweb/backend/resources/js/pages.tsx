@@ -299,6 +299,19 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         if (unchanged) await query.refetch();
     };
 
+    const clearEmailHistoryFilters = async (): Promise<void> => {
+        if (route.key !== 'email-history' || !endpoint || query.isFetching) return;
+        const empty: EmailHistoryFilterState = { siteId: '', status: '', correlation: '' };
+        const unchanged = page === 1
+            && emailHistoryFilters.siteId === ''
+            && emailHistoryFilters.status === ''
+            && emailHistoryFilters.correlation === '';
+        setEmailHistoryDraft(empty);
+        setEmailHistoryFilters(empty);
+        setPage(1);
+        if (unchanged) await query.refetch();
+    };
+
     const refreshWorkspace = async (): Promise<void> => {
         if (route.key === 'site-operations') {
             await runAuthoritativeSiteOperationsReload({
@@ -423,6 +436,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         busy={query.isFetching}
                         onChange={setEmailHistoryDraft}
                         onApply={() => { void applyEmailHistoryFilters(); }}
+                        onClear={() => { void clearEmailHistoryFilters(); }}
                     />
                 ) : null}
                 {route.key === 'site-operations' ? (
