@@ -1298,8 +1298,8 @@
     },
     {
       "label": "AIMW-CONT-FBA95BDC1D Sites CloseForm focused closure",
-      "sha": "954a2ba32e4d2f9e34bcae8717f2b063430bf806",
-      "observed_pr_head": "954a2ba32e4d2f9e34bcae8717f2b063430bf806",
+      "sha": "1a67fe0216ef59f22768f5b0cef01e189f22a006",
+      "observed_pr_head": "1a67fe0216ef59f22768f5b0cef01e189f22a006",
       "operation_ids": [
         "AIMW-CONT-FBA95BDC1D"
       ]
