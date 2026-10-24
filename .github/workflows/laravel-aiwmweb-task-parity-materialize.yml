@@ -1,7 +1,7 @@
 name: Laravel AIWMWeb Task Parity Materialize
 # trigger: AIMW-CONT-346657AD9D issue-875-wordpress-users-working-state
-# exact-head: d488569ccef2d2dd87adb93e3077aca3171df2fb
-# retrigger: post-materialization-2655feb7374a66789d8641b054bef08de6df6d28
+# exact-head: 248fe5d5f3ed8d081c12f821b584e8d3f79bf45f
+# retrigger: issue-875-latest-composition-e7bf35d1
 
 on:
   push:
