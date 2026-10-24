@@ -1,7 +1,7 @@
 name: Laravel AIWMWeb Task Parity Materialize
 # trigger: AIMW-CONT-C7CB5EE184 issue-885-welcome-footer-brand-route
 # exact-head: a8b2136fb6c813da06d87f556c94ff3c27369cf9
-# retrigger: issue-885-refreshed-evidence-materialization
+# retrigger: issue-885-refreshed-evidence-materialization-rerun
 
 on:
   push:
