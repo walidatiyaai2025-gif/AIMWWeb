@@ -7,10 +7,10 @@ import {
 } from '../live-system-status-refresh-control';
 import { LocaleProvider } from '../i18n';
 
-function renderControl(busy: boolean, onRefresh: () => void | Promise<unknown>) {
+function renderControl(busy: boolean, onClick: () => void | Promise<unknown>) {
     return render(
         <LocaleProvider>
-            <LiveSystemStatusRefreshControl busy={busy} onRefresh={onRefresh} />
+            <LiveSystemStatusRefreshControl busy={busy} onClick={onClick} />
         </LocaleProvider>,
     );
 }
