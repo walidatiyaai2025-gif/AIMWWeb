@@ -1,6 +1,6 @@
 import React, { FormEvent, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ApiError, apiRequest, resolveCapability, tenantUrl, workspaceRoutes, type FrontendContext } from './core';
+import { ApiError, apiRequest, tenantUrl, workspaceRoutes, type FrontendContext } from './core';
 import { useLocale } from './i18n';
 import { ContentEditorSecondarySaveControl } from './content-editor-secondary-save-control';
 
@@ -85,7 +85,8 @@ export function authoritativeContentEditorExplorerHref(
         || context.permissions.includes('*');
     if (!hasExplorerPermission) return null;
 
-    if (resolveCapability(context, contentEditorExplorerRoute).state !== 'enabled') return null;
+    const explicitExplorer = context.capabilities['explorer.view'] ?? context.capabilities.explorer;
+    if (explicitExplorer && explicitExplorer.state !== 'enabled') return null;
     if (!editorEndpoint) return null;
 
     try {
