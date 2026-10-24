@@ -66,6 +66,10 @@
   },
   "materialization": {
     "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-767.yml",
-    "generated_reconciliation_required": true
+    "generated_reconciliation_required": true,
+    "materialized_commit_sha": "62aa36c7726dff291f0e28f0697bad2793609c4c",
+    "materialized_terminal_total": 765,
+    "materialized_pending_total": 166,
+    "materialized_overall_parity_percent": 82.17
   }
 }
