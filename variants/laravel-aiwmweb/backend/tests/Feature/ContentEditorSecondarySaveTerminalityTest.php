@@ -54,6 +54,21 @@ final class ContentEditorSecondarySaveTerminalityTest extends TestCase
         );
     }
 
+    public function test_secondary_submit_inherits_the_existing_foreign_tenant_404_security_contract(): void
+    {
+        $existingSaveTest = (string) file_get_contents(
+            base_path('tests/Feature/ContentEditorSaveTerminalityTest.php'),
+        );
+
+        $this->assertStringContainsString(
+            'test_guest_missing_permission_foreign_tenant_and_foreign_site_fail_closed',
+            $existingSaveTest,
+        );
+        $this->assertStringContainsString('->assertNotFound()', $existingSaveTest);
+        $this->assertStringContainsString('foreign tenant', strtolower($existingSaveTest));
+        $this->assertStringContainsString('content.edit', $existingSaveTest);
+    }
+
     public function test_laravel_mounts_a_second_submit_control_without_creating_a_second_mutation(): void
     {
         $secondary = (string) file_get_contents(
