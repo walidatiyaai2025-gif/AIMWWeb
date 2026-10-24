@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 745,
-    "pending": 186,
+    "adapted": 746,
+    "pending": 185,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 745,
-    "overall_parity_percent": 80.02
+    "terminal": 746,
+    "overall_parity_percent": 80.13
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 274,
-    "pending": 172,
+    "terminal": 275,
+    "pending": 171,
     "blocked": 0,
-    "percent": 61.43
+    "percent": 61.66
   },
   "domains": {
     "ai": {
@@ -213,12 +213,12 @@
     "taxonomy": {
       "total": 13,
       "ported": 0,
-      "adapted": 8,
-      "pending": 5,
+      "adapted": 9,
+      "pending": 4,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 8,
-      "percent": 61.54
+      "terminal": 9,
+      "percent": 69.23
     }
   },
   "uncounted_work": [],
@@ -36255,21 +36255,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/components.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/taxonomy-save-submit-control.test.tsx",
+      "evidence": "AIMW-TAXO-39CDD7EF81 TaxonomyManager Save submit focused closure@71f17dd3d88940794aa8b43d18f0a8918f3ee204: variants/laravel-aiwmweb/backend/resources/js/components.tsx; focused-closure:AIMW-TAXO-39CDD7EF81; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/taxonomy-save-submit-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/taxonomy-save-submit-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-TAXO-39CDD7EF81 TaxonomyManager Save submit focused closure",
+        "source_sha": "71f17dd3d88940794aa8b43d18f0a8918f3ee204",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/components.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/taxonomy-save-submit-terminality.json",
+        "signals": [
+          "operation:AIMW-TAXO-39CDD7EF81",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/components.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/taxonomy-save-submit-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/taxonomy-save-submit-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -36595,12 +36605,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 274,
-      "pending": 172,
+      "adapted": 275,
+      "pending": 171,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 274,
-      "percent": 61.43
+      "terminal": 275,
+      "percent": 61.66
     }
   },
   "pending_operation_ids_by_domain": {
@@ -36808,7 +36818,6 @@
       "AIMW-SYNC-FF579F0EBF"
     ],
     "taxonomy": [
-      "AIMW-TAXO-39CDD7EF81",
       "AIMW-TAXO-5D39DA68B7",
       "AIMW-TAXO-602DE140EB",
       "AIMW-TAXO-A96714F338",
@@ -37777,6 +37786,7 @@
       "AIMW-SYNC-F135B261B2",
       "AIMW-SYNC-F340B5445A",
       "AIMW-TAXO-005925568C",
+      "AIMW-TAXO-39CDD7EF81",
       "AIMW-TAXO-770DAA668D",
       "AIMW-TAXO-D5A5B530C7",
       "AIMW-TAXO-D784149312",
@@ -38091,10 +38101,17 @@
         "operation_ids": [
           "AIMW-CONT-CA17F05024"
         ]
+      },
+      {
+        "label": "AIMW-TAXO-39CDD7EF81 TaxonomyManager Save submit focused closure",
+        "sha": "71f17dd3d88940794aa8b43d18f0a8918f3ee204",
+        "operation_ids": [
+          "AIMW-TAXO-39CDD7EF81"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 44,
-    "focused_closure_contract_count": 274,
+    "focused_closure_operation_scoped_count": 45,
+    "focused_closure_contract_count": 275,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
