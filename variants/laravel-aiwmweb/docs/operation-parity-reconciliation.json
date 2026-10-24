@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 739,
-    "pending": 192,
+    "adapted": 741,
+    "pending": 190,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 739,
-    "overall_parity_percent": 79.38
+    "terminal": 741,
+    "overall_parity_percent": 79.59
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 269,
-    "pending": 177,
+    "terminal": 270,
+    "pending": 176,
     "blocked": 0,
-    "percent": 60.31
+    "percent": 60.54
   },
   "domains": {
     "ai": {
@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 72,
-      "pending": 92,
+      "adapted": 74,
+      "pending": 90,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 72,
-      "percent": 43.9
+      "terminal": 74,
+      "percent": 45.12
     },
     "email": {
       "total": 82,
@@ -16657,21 +16657,34 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/routes/web.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentExplorerRouteTerminalityTest.php",
+      "evidence": "AIMW-CONT-5CF47CBE2A Content Explorer route closure@18191b10b7909f3670ccbde3dc41025202cb7ca5: variants/laravel-aiwmweb/backend/routes/web.php; explicit-route-api:AIMW-CONT-5CF47CBE2A; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/ContentExplorerRouteTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-route-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route/API provenance is operation-linked to a real route declaration, declared action, focused operation-ID binding, runtime acceptance, and strict security contract.",
+        "source_label": "AIMW-CONT-5CF47CBE2A Content Explorer route closure",
+        "source_sha": "18191b10b7909f3670ccbde3dc41025202cb7ca5",
+        "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+        "evidence_mode": "explicit_route_api_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-route-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-5CF47CBE2A",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/ContentExplorerRouteTerminalityTest.php",
+          "operation-link-test:variants/laravel-aiwmweb/backend/tests/Feature/ContentExplorerRouteTerminalityTest.php",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:404",
+          "test:403"
+        ]
       }
     },
     {
@@ -20824,21 +20837,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/WelcomeFooterBrandRouteTerminalityTest.php",
+      "evidence": "AIMW-CONT-C7CB5EE184 Welcome footer brand focused closure@279cab213e4faa3c5bf4c5253f35dd850caf5f1d: variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php; focused-closure:AIMW-CONT-C7CB5EE184; test:variants/laravel-aiwmweb/backend/tests/Feature/WelcomeFooterBrandRouteTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/welcome-footer-brand-route-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-C7CB5EE184 Welcome footer brand focused closure",
+        "source_sha": "279cab213e4faa3c5bf4c5253f35dd850caf5f1d",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/welcome-footer-brand-route-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-C7CB5EE184",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/WelcomeFooterBrandRouteTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/welcome-footer-brand-route-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -36512,12 +36535,12 @@
     "route": {
       "total": 84,
       "ported": 0,
-      "adapted": 69,
-      "pending": 15,
+      "adapted": 70,
+      "pending": 14,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 69,
-      "percent": 82.14
+      "terminal": 70,
+      "percent": 83.33
     },
     "service": {
       "total": 349,
@@ -36532,12 +36555,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 269,
-      "pending": 177,
+      "adapted": 270,
+      "pending": 176,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 269,
-      "percent": 60.31
+      "terminal": 270,
+      "percent": 60.54
     }
   },
   "pending_operation_ids_by_domain": {
@@ -36581,7 +36604,6 @@
       "AIMW-CONT-566A1899F1",
       "AIMW-CONT-56873F3DD6",
       "AIMW-CONT-5BE26C7AB5",
-      "AIMW-CONT-5CF47CBE2A",
       "AIMW-CONT-6187F8DF8A",
       "AIMW-CONT-63EDB4BA6F",
       "AIMW-CONT-6458D3030B",
@@ -36629,7 +36651,6 @@
       "AIMW-CONT-BF5F72F4F9",
       "AIMW-CONT-C3EC665880",
       "AIMW-CONT-C49C37E2C9",
-      "AIMW-CONT-C7CB5EE184",
       "AIMW-CONT-CA17F05024",
       "AIMW-CONT-CA4920CBC8",
       "AIMW-CONT-CF4BE4EC3B",
@@ -37267,6 +37288,18 @@
           "AIMW-CONT-3443C173C6"
         ],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "AIMW-CONT-5CF47CBE2A Content Explorer route closure",
+        "sha": "18191b10b7909f3670ccbde3dc41025202cb7ca5",
+        "domains": [
+          "content"
+        ],
+        "supporting_only": true,
+        "operation_ids": [
+          "AIMW-CONT-5CF47CBE2A"
+        ],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -37285,6 +37318,7 @@
     "missing_terminal_evidence_operation_ids": [],
     "pushed_source_shas_verified": [
       "0074d9dc9ec10fe1e7c64e40f4e1c7166c03cf01",
+      "18191b10b7909f3670ccbde3dc41025202cb7ca5",
       "2497296794e0f1fde94d8c0fd30babb047c912ae",
       "316d28cd4a22001812fa06c3a41f8ee962c6acd8",
       "34e66eba87657e5283f29765c083529b08ba7625",
@@ -37412,6 +37446,7 @@
       "AIMW-CONT-2F2E40D7F0",
       "AIMW-CONT-3443C173C6",
       "AIMW-CONT-475267F150",
+      "AIMW-CONT-5CF47CBE2A",
       "AIMW-CONT-65F2819526",
       "AIMW-CONT-6F699A5C14",
       "AIMW-CONT-859135B2D1",
@@ -37434,7 +37469,7 @@
       "AIMW-SEO-5F71B89C92",
       "AIMW-TAXO-CDC6948A06"
     ],
-    "explicit_route_api_contract_count": 34,
+    "explicit_route_api_contract_count": 35,
     "focused_closure_source_sha": "ae01461eb85c64046734688ae0bf3f418591c653",
     "focused_closure_contract_terminals": [
       "AIMW-AI-024BB0971B",
@@ -37624,6 +37659,7 @@
       "AIMW-CONT-B1E9E1D6B0",
       "AIMW-CONT-BCE1211CE3",
       "AIMW-CONT-C178278FCB",
+      "AIMW-CONT-C7CB5EE184",
       "AIMW-CONT-CEA27985CB",
       "AIMW-CONT-D4607F943C",
       "AIMW-CONT-D5FFC84EC2",
@@ -37975,6 +38011,13 @@
         ]
       },
       {
+        "label": "AIMW-CONT-C7CB5EE184 Welcome footer brand focused closure",
+        "sha": "279cab213e4faa3c5bf4c5253f35dd850caf5f1d",
+        "operation_ids": [
+          "AIMW-CONT-C7CB5EE184"
+        ]
+      },
+      {
         "label": "AIMW-CONT-FBA95BDC1D Sites CloseForm focused closure",
         "sha": "98f482175fd13403fb1fad117e354c5107d4a6d8",
         "operation_ids": [
@@ -37982,8 +38025,8 @@
         ]
       }
     ],
-    "focused_closure_operation_scoped_count": 39,
-    "focused_closure_contract_count": 269,
+    "focused_closure_operation_scoped_count": 40,
+    "focused_closure_contract_count": 270,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [

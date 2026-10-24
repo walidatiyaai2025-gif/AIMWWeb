@@ -1,15 +1,14 @@
 name: Laravel AIWMWeb Task Parity Materialize
-# trigger: AIMW-CONT-1C2443112C issue-874-wordpress-users-route
-# exact-head: 1f8b12f236640d581c5b82c1e141c77d238acefa
-# retrigger: issue-874-latest-composition-1f8b12f
+# trigger: merged-composition-parity
+# exact-composition-head: b477d1e8ee63d2fcf8b0ab48ded2851c28049ee3
 
 on:
   push:
     branches:
-      - worker/laravel-aiwmweb-AIMW-CONT-1C2443112C-users-route
+      - worker/laravel-aiwmweb-closure-composition
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
-      - 'variants/laravel-aiwmweb/docs/closure-evidence/wordpress-users-route-terminality.json'
+      - 'variants/laravel-aiwmweb/docs/closure-evidence/**'
       - '.github/workflows/laravel-aiwmweb-task-parity-materialize.yml'
 
 permissions:
@@ -50,5 +49,5 @@ jobs:
           if git diff --cached --quiet; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore(laravel): materialize parity for AIMW-CONT-1C2443112C"
+          git commit -m "chore(laravel): materialize merged composition parity"
           git push origin "HEAD:${{ github.ref_name }}"
