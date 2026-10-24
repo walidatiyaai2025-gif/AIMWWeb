@@ -72,4 +72,4 @@ describe('AIMW-CONT-93B6E02ACF ContentExplorer SetContentTab', () => {
     });
 });
 
-// exact-head gate retrigger after parity materialization
+// exact-head gate retrigger after parity materialization and composition sync
