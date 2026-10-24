@@ -65,7 +65,7 @@ final class SiteConnectRouteTerminalityTest extends TestCase
     public function test_authorized_route_renders_real_site_connect_workspace_contract(): void
     {
         $user = User::factory()->create();
-        $this->membership($user, 'alpha', ['sites.manage']);
+        $this->membership($user, 'alpha', ['tenant.view', 'sites.manage']);
 
         $this->actingAs($user)
             ->get('/tenants/alpha/sites/connect')
