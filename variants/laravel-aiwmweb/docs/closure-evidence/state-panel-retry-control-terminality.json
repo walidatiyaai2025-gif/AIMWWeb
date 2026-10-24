@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #995 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-AE544B4684",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "sync",
+    "kind": "visible_control",
+    "source": "src/AIWordPressManager.Web/Components/Shared/AppStatePanel.razor",
+    "source_intent": "Expose a shared retry action only when an authoritative retry callback exists; suppress duplicate retries while busy.",
+    "mutation": false
+  },
+  "laravel_runtime": {
+    "production_component": "variants/laravel-aiwmweb/backend/resources/js/components.tsx",
+    "production_consumer": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx::QueryError",
+    "operation_marker": "AIMW-SYNC-AE544B4684",
+    "retry_contract": "caller-supplied callback only",
+    "busy_guard": "retryBusy disables the button and blocks callback invocation"
+  },
+  "state_and_security": {
+    "client_request_added": false,
+    "server_mutation_added": false,
+    "wordpress_mutation_added": false,
+    "identity_override_surface": false,
+    "tenant_isolation": "The shared retry control accepts no tenant/user/site identifiers; production QueryError retries the already tenant-bound query, while server routes independently preserve tenant.context and foreign-tenant 404 behavior."
+  },
+  "source_semantics": {
+    "visible_when": "RetryRequested.HasDelegate",
+    "busy_label": "RetryingText",
+    "idle_label": "RetryText",
+    "disabled_when": "Busy",
+    "handler": "Busy ? Task.CompletedTask : RetryRequested.InvokeAsync()"
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/state-panel-retry-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/StatePanelRetryControlTerminalityTest.php",
+    "coverage": [
+      "canonical operation marker",
+      "callback-only retry semantics",
+      "busy disables and suppresses repeated invocation",
+      "no retry rendered without callback",
+      "caller actions remain composable",
+      "no fetch/apiRequest/mutation inside the shared control",
+      "foreign tenant route remains 404",
+      "no tenant/user identity override surface"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-SYNC-AE544B4684"],
+    "sibling_shared_controls_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "ef61304d9d8c6018b42150a8f747a3b4cf2edd04",
+    "branch": "worker/995-state-panel-retry-control",
+    "issue": 995
+  },
+  "materialization": {
+    "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-995.yml",
+    "generated_reconciliation_required": true
+  }
+}
