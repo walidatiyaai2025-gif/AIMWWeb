@@ -10,7 +10,7 @@ use Tests\TestCase;
 
 final class WelcomePricingAnchorTerminalityTest extends TestCase
 {
-    // Exact-head CI retrigger after official parity materialization.
+    // Exact-head CI retrigger after official parity materialization 4912e1b.
     use RefreshDatabase;
 
     private const OPERATION_ID = 'AIMW-CONT-3C205B1901';
