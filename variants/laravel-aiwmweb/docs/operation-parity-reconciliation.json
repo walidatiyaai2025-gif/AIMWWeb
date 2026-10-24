@@ -37174,6 +37174,16 @@
           "AIMW-CONT-1C2443112C"
         ],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "AIMW-CONT-247E791DA7 Welcome footer login focused closure",
+        "sha": "d97ba9b56996db97524874f000e6ea61fe6f8256",
+        "domains": [],
+        "supporting_only": false,
+        "operation_ids": [
+          "AIMW-CONT-247E791DA7"
+        ],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -37217,6 +37227,7 @@
       "ca212724d1ba532253c7128231326122967fc9d1",
       "d7ed8030da65376f9d0c43380fb6c80c1ee87508",
       "d807224f10f552687771e75bb9a33d825bdeebd1",
+      "d97ba9b56996db97524874f000e6ea61fe6f8256",
       "dbc983f4c9c7a9dfa07d1b4414eed38f1843fd76",
       "e26a7d9a254f7df980714b778491d0f864605087",
       "e4a21b493d2c40dbdda9cdabb1e539449c528cbe",
