@@ -946,6 +946,14 @@
           "security_mode": "tenant_selected"
         }
       }
+    },
+    {
+      "label": "AIMW-CONT-247E791DA7 Welcome footer login focused closure",
+      "sha": "d97ba9b56996db97524874f000e6ea61fe6f8256",
+      "observed_pr_head": "d97ba9b56996db97524874f000e6ea61fe6f8256",
+      "operation_ids": [
+        "AIMW-CONT-247E791DA7"
+      ]
     }
   ],
   "excluded_sources": [],
