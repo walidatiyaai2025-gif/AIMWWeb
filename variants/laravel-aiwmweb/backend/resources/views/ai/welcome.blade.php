@@ -54,6 +54,10 @@
         .price small { font-size: 13px; color: #91a4bf; font-weight: 650; }
         .price-cta { display: inline-flex; justify-content: center; align-items: center; min-height: 44px; padding: 10px 14px; border-radius: 11px; background: #72e2d1; color: #06111e; text-decoration: none; font-weight: 850; }
         .pricing-empty { padding: 18px; border: 1px solid rgba(255,255,255,.1); border-radius: 14px; color: #aabbd1; background: rgba(255,255,255,.03); }
+        .public-footer { min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-top: 1px solid rgba(255,255,255,.08); color: #91a4bf; }
+        .footer-nav { display: flex; align-items: center; gap: 16px; }
+        .footer-nav a { color: #d9e7fb; text-decoration: none; font-weight: 750; }
+        .footer-nav a:hover, .footer-nav a:focus-visible { color: #72e2d1; outline: none; }
         @media (max-width: 820px) { .hero { grid-template-columns: 1fr; padding: 48px 0; } .panel { order: -1; } .workflow-head, .pricing-head { align-items: start; flex-direction: column; } .workflow-grid { grid-template-columns: 1fr 1fr; } }
         @media (max-width: 560px) { .workflow-grid { grid-template-columns: 1fr; } }
     </style>
@@ -292,6 +296,13 @@
                 </div>
             @endif
         </section>
+
+        <footer class="public-footer" aria-label="Public footer">
+            <span>AI WordPress Manager · Operations OS</span>
+            <nav class="footer-nav" aria-label="Footer navigation">
+                <a href="/login" data-canonical-operation="AIMW-CONT-247E791DA7">Sign in</a>
+            </nav>
+        </footer>
     </div>
 </body>
 </html>
