@@ -1495,11 +1495,11 @@
       ]
     },
     {
-      "label": "AIMW-CONT-5BE26C7AB5 Site Operations Manage sites focused closure",
-      "sha": "336b283ff8837a32d6e06b0b2f8135b9fb7ad3eb",
-      "observed_pr_head": "336b283ff8837a32d6e06b0b2f8135b9fb7ad3eb",
+      "label": "AIMW-CONT-37B4B4BEC4 Content Explorer preview link focused closure",
+      "sha": "3c51124603b3ee28abba18af7ded1227e575f217",
+      "observed_pr_head": "3c51124603b3ee28abba18af7ded1227e575f217",
       "operation_ids": [
-        "AIMW-CONT-5BE26C7AB5"
+        "AIMW-CONT-37B4B4BEC4"
       ]
     }
   ]

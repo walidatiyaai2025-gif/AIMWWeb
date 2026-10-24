@@ -25,6 +25,7 @@ import { prepareActionRequest } from './action-contract';
 import { AUTOMATION_PHASE_ACTION_OPERATIONS, AUTOMATION_PHASE_REFRESH_OPERATIONS, SCHEDULE_CANCEL_EDIT_OPERATION_ID } from './automation-phase-controls';
 import { AuthoritativeReconciliationError, mutateThenReconcile } from './reconciliation';
 import { ContentExplorerWordPressLinkControl } from './content-explorer-wordpress-link-control';
+import { ContentExplorerPreviewPanel } from './content-explorer-preview-panel';
 import { ContentExplorerBackToSitesControl } from './content-explorer-back-to-sites-control';
 import { CurrentUserLogsControl } from './current-user-logs-control';
 import { DashboardSitesNavigationControl } from './dashboard-sites-navigation-control';
@@ -35,7 +36,6 @@ import { NotificationOpenControl } from './notification-open-control';
 import { PagesWordPressLinkControl } from './pages-wordpress-link-control';
 import { PostsWordPressLinkControl } from './posts-wordpress-link-control';
 import { SiteOperationsExportControl } from './site-operations-export-control';
-import { SiteOperationsSitesLinkControl } from './site-operations-sites-link-control';
 import {
     filterSiteOperationsRows,
     siteOperationsDefaultFilters,
@@ -212,6 +212,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
     const [sitesFilter, setSitesFilter] = useState<'all' | 'connected' | 'review'>('all');
+    const [explorerPreview, setExplorerPreview] = useState<Record<string, unknown> | null>(null);
     const [siteOperationsFilters, setSiteOperationsFilters] = useState<SiteOperationsFilterState>(() => siteOperationsDefaultFilters());
     const [siteOperationsExportResetToken, setSiteOperationsExportResetToken] = useState(0);
     const [taxonomyType, setTaxonomyType] = useState<'category' | 'post_tag'>('category');
@@ -368,7 +369,6 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     if (query.error) return (
         <div className="workspace-stack">
             <QueryError error={query.error} retry={() => query.refetch()} />
-            {route.key === 'site-operations' ? <SiteOperationsSitesLinkControl context={context} /> : null}
             <CurrentUserLogsControl context={context} />
         </div>
     );
@@ -453,9 +453,6 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                     ) : null}
                 </form>
                 <div className="toolbar-actions">
-                    {route.key === 'site-operations' ? (
-                        <SiteOperationsSitesLinkControl context={context} />
-                    ) : null}
                     {route.key === 'sites' ? (
                         <SitesSystemHealthLinkControl context={context} />
                     ) : null}
@@ -618,7 +615,15 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         renderActions={route.key === 'site-reliability' ? (row) => (
                             <SiteReliabilityConnectionLinkControl tenantSlug={context.tenant.slug} siteId={row.site_id} />
                         ) : route.key === 'explorer' ? (row) => (
-                            <ContentExplorerWordPressLinkControl value={row.link} />
+                            <span className="site-row-actions">
+                                <button
+                                    type="button"
+                                    className="btn compact"
+                                    onClick={() => setExplorerPreview(row)}
+                                >{locale === 'ar' ? 'معاينة' : 'Preview'}</button>
+                                <span aria-hidden="true"> · </span>
+                                <ContentExplorerWordPressLinkControl value={row.link} />
+                            </span>
                         ) : route.key === 'sites' ? (row) => (
                             <span className="site-row-actions">
                                 <SitesInterpolatedLinksControl tenantSlug={context.tenant.slug} siteId={row.id} />
@@ -646,6 +651,12 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                 ) : <div className="empty-state"><strong>{text(commonText.empty)}</strong><p>{locale === 'ar' ? 'لا يتم إنشاء صفوف تجريبية عندما يعيد الخادم نتيجة فارغة.' : 'No sample rows are synthesized when the server returns an empty result.'}</p></div>}
                 <Pagination page={collection.page} lastPage={collection.lastPage} onPage={setPage} previousOperationId={readOperations?.previous} />
             </section>
+            {route.key === 'explorer' && explorerPreview ? (
+                <ContentExplorerPreviewPanel
+                    row={explorerPreview}
+                    onClose={() => setExplorerPreview(null)}
+                />
+            ) : null}
             <ActionDialog
                 open={Boolean(dialog)}
                 actionKey={dialog?.key ?? ''}
