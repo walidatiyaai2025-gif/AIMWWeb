@@ -42,7 +42,7 @@ final class ApplicationUsersSearchTerminalityTest extends TestCase
         $this->assertStringContainsString('applicationUsersSearchInFlight.current', $pages);
         $this->assertStringContainsString('endpointWithQuery(endpoint, 1, nextSearch)', $pages);
 
-        $this->assertStringContainsString("public function members(Request \$request, string \$tenant)", $controller);
+        $this->assertStringContainsString('public function members(Request $request, string $tenant)', $controller);
         $this->assertStringContainsString("'search' => ['nullable', 'string', 'max:255']", $controller);
         $this->assertStringContainsString("\$this->administration->members(\$data['search'] ?? null)", $controller);
         $this->assertStringContainsString('public function members(?string $search = null): array', $administration);
