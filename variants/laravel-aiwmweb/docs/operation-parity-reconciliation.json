@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 754,
-    "pending": 177,
+    "adapted": 755,
+    "pending": 176,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 754,
-    "overall_parity_percent": 80.99
+    "terminal": 755,
+    "overall_parity_percent": 81.1
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 283,
-    "pending": 163,
+    "terminal": 284,
+    "pending": 162,
     "blocked": 0,
-    "percent": 63.45
+    "percent": 63.68
   },
   "domains": {
     "ai": {
@@ -113,12 +113,12 @@
     "email": {
       "total": 82,
       "ported": 0,
-      "adapted": 74,
-      "pending": 8,
+      "adapted": 75,
+      "pending": 7,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 74,
-      "percent": 90.24
+      "terminal": 75,
+      "percent": 91.46
     },
     "identity": {
       "total": 7,
@@ -22311,21 +22311,31 @@
       "external_dependency": "email_provider",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/account-profile-email-settings-link-control.tsx",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/account-profile-email-settings-link.test.tsx",
+      "evidence": "AIMW-EMAI-7A54150265 Account Profile Dashboard email settings focused closure@a4d76a9b033925ba40efc750c6c73c59ec92d7a8: variants/laravel-aiwmweb/backend/resources/js/account-profile-email-settings-link-control.tsx; focused-closure:AIMW-EMAI-7A54150265; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/account-profile-email-settings-link.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/account-profile-email-settings-link-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-EMAI-7A54150265 Account Profile Dashboard email settings focused closure",
+        "source_sha": "a4d76a9b033925ba40efc750c6c73c59ec92d7a8",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/account-profile-email-settings-link-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/account-profile-email-settings-link-terminality.json",
+        "signals": [
+          "operation:AIMW-EMAI-7A54150265",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/account-profile-email-settings-link-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/account-profile-email-settings-link.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/account-profile-email-settings-link-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -36685,12 +36695,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 283,
-      "pending": 163,
+      "adapted": 284,
+      "pending": 162,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 283,
-      "percent": 63.45
+      "terminal": 284,
+      "percent": 63.68
     }
   },
   "pending_operation_ids_by_domain": {
@@ -36793,7 +36803,6 @@
       "AIMW-EMAI-01F5713C4F",
       "AIMW-EMAI-0AA71A5EF6",
       "AIMW-EMAI-10F3C44369",
-      "AIMW-EMAI-7A54150265",
       "AIMW-EMAI-7E1D4105B0",
       "AIMW-EMAI-8C9768BCD0",
       "AIMW-EMAI-9EB09C490D",
@@ -37803,6 +37812,7 @@
       "AIMW-EMAI-54E7EEFB15",
       "AIMW-EMAI-62B0B8EE4C",
       "AIMW-EMAI-77C637E3E3",
+      "AIMW-EMAI-7A54150265",
       "AIMW-EMAI-8E3B0AACD6",
       "AIMW-EMAI-8E56589573",
       "AIMW-EMAI-BDF888551C",
@@ -38244,10 +38254,17 @@
         "operation_ids": [
           "AIMW-SYNC-F0C46A9BD1"
         ]
+      },
+      {
+        "label": "AIMW-EMAI-7A54150265 Account Profile Dashboard email settings focused closure",
+        "sha": "a4d76a9b033925ba40efc750c6c73c59ec92d7a8",
+        "operation_ids": [
+          "AIMW-EMAI-7A54150265"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 53,
-    "focused_closure_contract_count": 283,
+    "focused_closure_operation_scoped_count": 54,
+    "focused_closure_contract_count": 284,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
