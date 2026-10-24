@@ -16,6 +16,7 @@ import { ActionButton, ActionDialog, DataTable, LoadingState, Pagination, StateP
 import { commonText, useLocale } from './i18n';
 import { AiCenterGenerateControl } from './ai-center-generate-control';
 import { AdminBillingSupportClearSearchControl } from './admin-billing-support-clear-search-control';
+import { AccountProfileEmailSettingsLinkControl } from './account-profile-email-settings-link-control';
 import { ApplicationUsersClearSearchControl } from './application-users-clear-search-control';
 import { ApplicationUsersRolesPermissionsLinkControl } from './application-users-roles-permissions-link-control';
 import { ApplicationUsersStartCreateControl } from './application-users-start-create-control';
@@ -642,6 +643,7 @@ function WorkspaceHub({ context, route }: { context: FrontendContext; route: Wor
 }
 
 export function WorkspacePage({ context, route }: { context: FrontendContext; route: WorkspaceRoute }) {
+    if (route.key === 'account-profile') return <><AccountProfileEmailSettingsLinkControl context={context} /><ResourceContent context={context} route={route} /></>;
     if (route.kind === 'dashboard') return <DashboardContent context={context} route={route} />;
     if (route.kind === 'workspace') return <WorkspaceHub context={context} route={route} />;
     return <ResourceContent context={context} route={route} />;
