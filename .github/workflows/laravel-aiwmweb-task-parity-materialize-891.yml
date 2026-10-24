@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - worker/891-notification-center-view-all
+      - worker/laravel-aiwmweb-closure-composition
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
       - 'variants/laravel-aiwmweb/docs/closure-evidence/notification-center-view-all-terminality.json'
