@@ -35,6 +35,7 @@ import { MediaDeleteControl } from './media-delete-control';
 import { NotificationOpenControl } from './notification-open-control';
 import { PagesWordPressLinkControl } from './pages-wordpress-link-control';
 import { PostsWordPressLinkControl } from './posts-wordpress-link-control';
+import { RolesApplicationUsersLinkControl } from './roles-application-users-link-control';
 import { SiteOperationsExportControl } from './site-operations-export-control';
 import {
     filterSiteOperationsRows,
@@ -468,6 +469,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                                 }}
                             />
                         </>
+                    ) : null}
+                    {route.key === 'roles' ? (
+                        <RolesApplicationUsersLinkControl context={context} />
                     ) : null}
                     {route.key === 'sites' ? (
                         <button
