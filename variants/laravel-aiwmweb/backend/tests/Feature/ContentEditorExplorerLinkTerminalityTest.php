@@ -15,6 +15,7 @@ use Tests\TestCase;
 
 final class ContentEditorExplorerLinkTerminalityTest extends TestCase
 {
+    // Final exact-head CI trigger after corrected parity materialization.
     use RefreshDatabase;
 
     private const OPERATION_ID = 'AIMW-CONT-607ACDF4D8';
