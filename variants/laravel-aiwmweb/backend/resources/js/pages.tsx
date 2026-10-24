@@ -661,6 +661,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
             </section>
             {route.key === 'explorer' && explorerPreview ? (
                 <ContentExplorerPreviewPanel
+                    context={context}
                     row={explorerPreview}
                     onClose={() => setExplorerPreview(null)}
                 />
