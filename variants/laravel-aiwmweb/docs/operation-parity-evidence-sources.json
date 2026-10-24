@@ -1257,6 +1257,14 @@
       "operation_ids": [
         "AIMW-CONT-2C51372C70"
       ]
+    },
+    {
+      "label": "AIMW-CONT-607ACDF4D8 Content Editor Explorer link focused closure",
+      "sha": "1dbaca6967ec022a52224dbb47f523a32a34cf80",
+      "observed_pr_head": "1dbaca6967ec022a52224dbb47f523a32a34cf80",
+      "operation_ids": [
+        "AIMW-CONT-607ACDF4D8"
+      ]
     }
   ]
 }

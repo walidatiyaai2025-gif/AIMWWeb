@@ -1,6 +1,6 @@
 import React, { FormEvent, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ApiError, apiRequest, tenantUrl, type FrontendContext } from './core';
+import { ApiError, apiRequest, tenantUrl, workspaceRoutes, type FrontendContext } from './core';
 import { useLocale } from './i18n';
 import { ContentEditorSecondarySaveControl } from './content-editor-secondary-save-control';
 
@@ -9,6 +9,7 @@ export const CONTENT_EDITOR_SUBMIT_APPROVAL_OPERATION_ID = 'AIMW-BILL-F5686193FE
 export const CONTENT_EDITOR_CLEAR_FEATURED_OPERATION_ID = 'AIMW-CONT-A6867078EA';
 export const CONTENT_EDITOR_GENERATE_SLUG_OPERATION_ID = 'AIMW-CONT-564636DDC9';
 export const CONTENT_EDITOR_SITES_LINK_OPERATION_ID = 'AIMW-CONT-B6BB292F85';
+export const CONTENT_EDITOR_EXPLORER_LINK_OPERATION_ID = 'AIMW-CONT-607ACDF4D8';
 export const CONTENT_EDITOR_WORDPRESS_LINK_OPERATION_ID = 'AIMW-CONT-2C51372C70';
 
 export function safeContentEditorExternalUrl(value: unknown): string | null {
@@ -58,6 +59,71 @@ export function ContentEditorSitesLinkControl({ context }: { context: FrontendCo
                 {locale === 'ar' ? 'المواقع' : 'Sites'}
             </Link>
         </nav>
+    );
+}
+
+type ContentEditorSiteAwareContext = FrontendContext & {
+    active_site?: { id: number; name?: string; status?: string } | null;
+};
+
+const contentEditorExplorerRoute = workspaceRoutes.find((route) => route.key === 'explorer');
+
+export function authoritativeContentEditorExplorerHref(
+    context: FrontendContext,
+    siteId: string | number,
+    editorEndpoint: string | null,
+): string | null {
+    const requestedSiteId = Number(siteId);
+    const activeSiteId = Number((context as ContentEditorSiteAwareContext).active_site?.id);
+
+    if (!contentEditorExplorerRoute || !context.permissions.includes('tenant.view')) return null;
+    if (!Number.isSafeInteger(requestedSiteId) || requestedSiteId <= 0) return null;
+    if (!Number.isSafeInteger(activeSiteId) || activeSiteId !== requestedSiteId) return null;
+
+    const hasExplorerPermission = !contentEditorExplorerRoute.permission
+        || context.permissions.includes(contentEditorExplorerRoute.permission)
+        || context.permissions.includes('*');
+    if (!hasExplorerPermission) return null;
+
+    const explicitExplorer = context.capabilities['explorer.view'] ?? context.capabilities.explorer;
+    if (explicitExplorer && explicitExplorer.state !== 'enabled') return null;
+    if (!editorEndpoint) return null;
+
+    try {
+        const resolved = new URL(editorEndpoint, window.location.origin);
+        const expectedPrefix = `/api/v1/tenants/${encodeURIComponent(context.tenant.slug)}/sites/${requestedSiteId}/content/`;
+        if (resolved.origin !== window.location.origin) return null;
+        if (!resolved.pathname.startsWith(expectedPrefix) || !/\/(?:post|page)\/[1-9]\d*\/editor$/.test(resolved.pathname)) return null;
+        if (resolved.search || resolved.hash) return null;
+    } catch {
+        return null;
+    }
+
+    return `${tenantUrl(context.tenant.slug, '/explorer')}?site=${encodeURIComponent(String(requestedSiteId))}`;
+}
+
+export function ContentEditorExplorerLinkControl({
+    context,
+    siteId,
+    editorEndpoint,
+}: {
+    context: FrontendContext;
+    siteId: string | number;
+    editorEndpoint: string | null;
+}) {
+    const { locale } = useLocale();
+    const href = authoritativeContentEditorExplorerHref(context, siteId, editorEndpoint);
+
+    if (!href) return null;
+
+    return (
+        <a
+            className="btn"
+            href={href}
+            data-canonical-operation={CONTENT_EDITOR_EXPLORER_LINK_OPERATION_ID}
+        >
+            ← {locale === 'ar' ? 'العودة إلى المستكشف' : 'Back to Explorer'}
+        </a>
     );
 }
 
@@ -388,6 +454,7 @@ export function ContentEditorSaveControl({ context }: { context: FrontendContext
     return (
         <form className="workspace-stack" onSubmit={save} data-canonical-operation={CONTENT_EDITOR_SAVE_OPERATION_ID}>
             <ContentEditorSitesLinkControl context={context} />
+            <ContentEditorExplorerLinkControl context={context} siteId={siteId ?? ''} editorEndpoint={endpoint} />
             <section className="hero-panel">
                 <div>
                     <span className="workspace-kicker">CONTENT EDITOR</span>
