@@ -34,10 +34,10 @@
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 259,
-    "pending": 187,
+    "terminal": 258,
+    "pending": 188,
     "blocked": 0,
-    "percent": 58.07
+    "percent": 57.85
   },
   "domains": {
     "ai": {
@@ -10142,12 +10142,12 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AdminBillingSupportRouteTerminalityTest.php",
-      "evidence": "Platform-admin route closure@34d359e2eed06323d60834601bfd37695c70d548: variants/laravel-aiwmweb/backend/app/Providers/AdminBillingSupportRouteServiceProvider.php; platform-admin-route:AIMW-BILL-5811B45F89; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminBillingSupportReadController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/AdminBillingSupportRouteTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/admin-billing-support-route-terminality.json",
+      "evidence": "Platform-admin route closure@dac285ecd1f3bf15441bbbe5bc26834b8960d1e2: variants/laravel-aiwmweb/backend/app/Providers/AdminBillingSupportRouteServiceProvider.php; platform-admin-route:AIMW-BILL-5811B45F89; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminBillingSupportReadController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/AdminBillingSupportRouteTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/admin-billing-support-route-terminality.json",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Exact pushed evidence proves the source Settings.Manage administrator-only policy, Laravel web+auth+platform.admin enforcement without an invented tenant selector, zero route parameters, read-only action wiring, and deterministic fail-closed acceptance.",
         "source_label": "Platform-admin route closure",
-        "source_sha": "34d359e2eed06323d60834601bfd37695c70d548",
+        "source_sha": "dac285ecd1f3bf15441bbbe5bc26834b8960d1e2",
         "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/AdminBillingSupportRouteServiceProvider.php",
         "evidence_mode": "explicit_route_contract",
         "security_mode": "platform_admin_policy",
@@ -18186,21 +18186,40 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Providers/SecurityAuditRouteServiceProvider.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SecurityAuditRouteTerminalityTest.php",
+      "evidence": "Platform-admin route closure@dac285ecd1f3bf15441bbbe5bc26834b8960d1e2: variants/laravel-aiwmweb/backend/app/Providers/SecurityAuditRouteServiceProvider.php; platform-admin-route:AIMW-CONT-EBD89B0642; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/SecurityAuditReadController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/SecurityAuditRouteTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/security-audit-route-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed evidence proves the source Settings.Manage administrator-only policy, Laravel web+auth+platform.admin enforcement without an invented tenant selector, zero route parameters, read-only action wiring, and deterministic fail-closed acceptance.",
+        "source_label": "Platform-admin route closure",
+        "source_sha": "dac285ecd1f3bf15441bbbe5bc26834b8960d1e2",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SecurityAuditRouteServiceProvider.php",
+        "evidence_mode": "explicit_route_contract",
+        "security_mode": "platform_admin_policy",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SecurityAuditReadController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/security-audit-route-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-EBD89B0642",
+          "source-policy:Settings.Manage",
+          "source-policy:administrator-only",
+          "middleware:web",
+          "middleware:auth",
+          "middleware:platform.admin",
+          "middleware:no-tenant-context",
+          "route:no-parameters",
+          "resource-input:none",
+          "guest:login-redirect",
+          "non-admin:403",
+          "platform-admin:200",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/SecurityAuditRouteTerminalityTest.php"
+        ]
       }
     },
     {
@@ -20251,31 +20270,21 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/wordpress-users-working-state-control.tsx",
+      "laravel_destination": "",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "ADAPTED",
-      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/wordpress-users-working-state-control.test.tsx",
-      "evidence": "AIMW-CONT-346657AD9D WordPress Users working-state focused closure@34b7b208e7ed9fe8e386563556f99205a2f51f60: variants/laravel-aiwmweb/backend/resources/js/wordpress-users-working-state-control.tsx; focused-closure:AIMW-CONT-346657AD9D; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/wordpress-users-working-state-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/wordpress-users-working-state-terminality.json",
+      "migration_state": "PENDING",
+      "acceptance_test": "",
+      "evidence": "",
       "reconciliation": {
-        "decision": "ADAPTED",
-        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "AIMW-CONT-346657AD9D WordPress Users working-state focused closure",
-        "source_sha": "34b7b208e7ed9fe8e386563556f99205a2f51f60",
-        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/wordpress-users-working-state-control.tsx",
-        "evidence_mode": "focused_closure_contract",
-        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/wordpress-users-working-state-terminality.json",
-        "signals": [
-          "operation:AIMW-CONT-346657AD9D",
-          "production-marker:variants/laravel-aiwmweb/backend/resources/js/wordpress-users-working-state-control.tsx",
-          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/wordpress-users-working-state-control.test.tsx",
-          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/wordpress-users-working-state-terminality.json",
-          "scope:operation-specific",
-          "test:tenant-isolation"
-        ]
+        "decision": "PENDING",
+        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
+        "source_label": null,
+        "source_sha": null,
+        "destination_path": null
       }
     },
     {
@@ -36341,12 +36350,12 @@
     "route": {
       "total": 84,
       "ported": 0,
-      "adapted": 64,
-      "pending": 20,
+      "adapted": 65,
+      "pending": 19,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 64,
-      "percent": 76.19
+      "terminal": 65,
+      "percent": 77.38
     },
     "service": {
       "total": 349,
@@ -36361,12 +36370,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 259,
-      "pending": 187,
+      "adapted": 258,
+      "pending": 188,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 259,
-      "percent": 58.07
+      "terminal": 258,
+      "percent": 57.85
     }
   },
   "pending_operation_ids_by_domain": {
@@ -36396,6 +36405,7 @@
       "AIMW-CONT-2C02B7A328",
       "AIMW-CONT-2C51372C70",
       "AIMW-CONT-3443C173C6",
+      "AIMW-CONT-346657AD9D",
       "AIMW-CONT-349017BDF5",
       "AIMW-CONT-371D22489E",
       "AIMW-CONT-37B4B4BEC4",
@@ -36479,7 +36489,6 @@
       "AIMW-CONT-E346398EAD",
       "AIMW-CONT-E4D7C73D4E",
       "AIMW-CONT-E89EDDF780",
-      "AIMW-CONT-EBD89B0642",
       "AIMW-CONT-ED2F1E1572",
       "AIMW-CONT-EDC262499D",
       "AIMW-CONT-EE659E3F13",
@@ -37167,6 +37176,7 @@
       "AIMW-CONT-DF483546DA",
       "AIMW-CONT-E14274269E",
       "AIMW-CONT-EA0DDC0ABE",
+      "AIMW-CONT-EBD89B0642",
       "AIMW-CONT-FB7F9189C0",
       "AIMW-CONT-FBD0368CAA",
       "AIMW-EMAI-2E95AF6C05",
@@ -37194,10 +37204,11 @@
     "source_boundary_route_contract_count": 3,
     "tenant_neutral_route_source_sha": "66095bcecfaf63c43e987891ffc538c304c8f4a9",
     "platform_admin_route_contract_terminals": [
-      "AIMW-BILL-5811B45F89"
+      "AIMW-BILL-5811B45F89",
+      "AIMW-CONT-EBD89B0642"
     ],
-    "platform_admin_route_contract_count": 1,
-    "platform_admin_route_source_sha": "34d359e2eed06323d60834601bfd37695c70d548",
+    "platform_admin_route_contract_count": 2,
+    "platform_admin_route_source_sha": "dac285ecd1f3bf15441bbbe5bc26834b8960d1e2",
     "explicit_route_api_contract_terminals": [
       "AIMW-AI-58FABCCEDB",
       "AIMW-AI-82F795EE67",
@@ -37400,7 +37411,6 @@
       "AIMW-CONT-16D09482D4",
       "AIMW-CONT-1A08B49164",
       "AIMW-CONT-2CDC790742",
-      "AIMW-CONT-346657AD9D",
       "AIMW-CONT-4209A8ADF4",
       "AIMW-CONT-4D6C928D75",
       "AIMW-CONT-553D999DDB",
@@ -37690,17 +37700,10 @@
         "operation_ids": [
           "AIMW-CONT-BCE1211CE3"
         ]
-      },
-      {
-        "label": "AIMW-CONT-346657AD9D WordPress Users working-state focused closure",
-        "sha": "34b7b208e7ed9fe8e386563556f99205a2f51f60",
-        "operation_ids": [
-          "AIMW-CONT-346657AD9D"
-        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 29,
-    "focused_closure_contract_count": 259,
+    "focused_closure_operation_scoped_count": 28,
+    "focused_closure_contract_count": 258,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
