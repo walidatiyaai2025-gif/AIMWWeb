@@ -11,6 +11,7 @@ use Tests\TestCase;
 
 final class WelcomeFooterLoginTerminalityTest extends TestCase
 {
+    // Final exact-head CI retrigger after official parity materialization.
     use RefreshDatabase;
 
     private const OPERATION_ID = 'AIMW-CONT-247E791DA7';
