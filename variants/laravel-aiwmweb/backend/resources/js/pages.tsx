@@ -23,6 +23,7 @@ import { runAuthoritativeBackupReload } from './backup-reload-control';
 import { prepareActionRequest } from './action-contract';
 import { AUTOMATION_PHASE_ACTION_OPERATIONS, AUTOMATION_PHASE_REFRESH_OPERATIONS, SCHEDULE_CANCEL_EDIT_OPERATION_ID } from './automation-phase-controls';
 import { AuthoritativeReconciliationError, mutateThenReconcile } from './reconciliation';
+import { ContentExplorerWordPressLinkControl } from './content-explorer-wordpress-link-control';
 import { CurrentUserLogsControl } from './current-user-logs-control';
 import { DashboardSitesNavigationControl } from './dashboard-sites-navigation-control';
 import { EmailHistoryFiltersControl, type EmailHistoryFilterState } from './email-history-filters-control';
@@ -538,7 +539,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                 {visibleRows.length ? (
                     <DataTable
                         rows={visibleRows}
-                        renderActions={route.key === 'sites' ? (row) => (
+                        renderActions={route.key === 'explorer' ? (row) => (
+                            <ContentExplorerWordPressLinkControl value={row.link} />
+                        ) : route.key === 'sites' ? (row) => (
                             <SitesSiteUrlLinkControl value={row.site_url ?? row.url} />
                         ) : route.key === 'posts' ? (row) => (
                             <PostsWordPressLinkControl value={row.link} />
