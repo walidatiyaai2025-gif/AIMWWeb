@@ -37,6 +37,7 @@ import { SitesSiteUrlLinkControl } from './sites-site-url-link-control';
 import { SitesInterpolatedLinksControl } from './sites-interpolated-links-control';
 import { runAuthoritativeSiteOperationsReload, SITE_OPERATIONS_RELOAD_OPERATION_ID } from './site-operations-reload-control';
 import { runAuthoritativeSiteReliabilityReload, SITE_RELIABILITY_RELOAD_OPERATION_ID } from './site-reliability-reload-control';
+import { SiteReliabilityOperationHistoryLinkControl } from './site-reliability-operation-history-link-control';
 
 const SITES_RELOAD_OPERATION_ID = 'AIMW-SYNC-A9E956A4DA';
 const SITES_SHOW_ALL_OPERATION_ID = 'AIMW-CONT-C178278FCB';
@@ -513,6 +514,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                                             : text(commonText.refresh))
                                         : text(commonText.refresh)}
                     </button>
+                    {route.key === 'site-reliability' ? (
+                        <SiteReliabilityOperationHistoryLinkControl context={context} />
+                    ) : null}
                     {route.controls?.map((actionKey) => {
                         const canonicalOperation = AUTOMATION_PHASE_ACTION_OPERATIONS[actionKey];
                         return (
