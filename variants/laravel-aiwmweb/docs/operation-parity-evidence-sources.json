@@ -1357,6 +1357,14 @@
       "operation_ids": [
         "AIMW-CONT-3D6485D903"
       ]
+    },
+    {
+      "label": "AIMW-TAXO-39CDD7EF81 TaxonomyManager Save submit focused closure",
+      "sha": "753744dc30de9f9c0eb727f4de1437dd538aff31",
+      "observed_pr_head": "753744dc30de9f9c0eb727f4de1437dd538aff31",
+      "operation_ids": [
+        "AIMW-TAXO-39CDD7EF81"
+      ]
     }
   ]
 }
