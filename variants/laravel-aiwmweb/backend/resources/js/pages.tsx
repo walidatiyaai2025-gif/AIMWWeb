@@ -38,6 +38,7 @@ import { runAuthoritativeSiteReliabilityReload, SITE_RELIABILITY_RELOAD_OPERATIO
 
 const SITES_RELOAD_OPERATION_ID = 'AIMW-SYNC-A9E956A4DA';
 const SITES_SHOW_ALL_OPERATION_ID = 'AIMW-CONT-C178278FCB';
+const SITES_SHOW_CONNECTED_OPERATION_ID = 'AIMW-CONT-E346398EAD';
 const SITES_SHOW_REVIEW_OPERATION_ID = 'AIMW-CONT-CA17F05024';
 export const COMMENTS_SEARCH_OPERATION_ID = 'AIMW-SYNC-4E3C0156FC';
 export const AI_CENTER_METADATA_REFRESH_OPERATION_ID = 'AIMW-AI-953A6C0D98';
@@ -81,6 +82,11 @@ function normalizeCollection(payload: unknown) {
     const page = envelope.current_page ?? envelope.page ?? envelope.meta?.current_page ?? 1;
     const lastPage = envelope.last_page ?? envelope.lastPage ?? envelope.meta?.last_page ?? Math.max(1, Math.ceil(total / 20));
     return { rows, total, page, lastPage };
+}
+
+function isSiteConnectedRow(row: Record<string, unknown>): boolean {
+    const normalized = String(row.connection_status ?? 'unknown').trim().toLowerCase() || 'unknown';
+    return normalized === 'connected';
 }
 
 function isSiteReviewRow(row: Record<string, unknown>): boolean {
@@ -333,11 +339,12 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const collection = normalizeCollection(query.data);
     const visibleRows = route.key === 'sites'
         ? (sitesFilter === 'connected'
-            ? collection.rows.filter((row) => String(row.status ?? '').toLowerCase() === 'active')
+            ? collection.rows.filter(isSiteConnectedRow)
             : sitesFilter === 'review'
                 ? collection.rows.filter(isSiteReviewRow)
                 : collection.rows)
         : collection.rows;
+    const connectedSiteCount = route.key === 'sites' ? collection.rows.filter(isSiteConnectedRow).length : 0;
     const reviewSiteCount = route.key === 'sites' ? collection.rows.filter(isSiteReviewRow).length : 0;
     const serverErrors = mutation.error instanceof ApiError ? mutation.error.validation : {};
     const aiCenterMeta = route.key === 'ai-center' && query.data && typeof query.data === 'object'
@@ -419,6 +426,15 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             aria-pressed={sitesFilter === 'all'}
                             onClick={() => setSitesFilter('all')}
                         >{locale === 'ar' ? 'الكل' : 'All'}</button>
+                    ) : null}
+                    {route.key === 'sites' ? (
+                        <button
+                            type="button"
+                            className="btn"
+                            data-canonical-operation={SITES_SHOW_CONNECTED_OPERATION_ID}
+                            aria-pressed={sitesFilter === 'connected'}
+                            onClick={() => setSitesFilter('connected')}
+                        >{locale === 'ar' ? 'متصل' : 'Connected'} <b>{connectedSiteCount}</b></button>
                     ) : null}
                     {route.key === 'sites' ? (
                         <button
