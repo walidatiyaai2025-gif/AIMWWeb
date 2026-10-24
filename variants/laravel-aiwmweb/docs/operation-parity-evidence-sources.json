@@ -968,6 +968,28 @@
           "security_mode": "tenant_selected"
         }
       }
+    },
+    {
+      "label": "AIMW-CONT-3443C173C6 Site Settings route closure",
+      "sha": "09026a652d4c2f29e2d871c68e757291f317419d",
+      "observed_pr_head": "09026a652d4c2f29e2d871c68e757291f317419d",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "operation_ids": [
+        "AIMW-CONT-3443C173C6"
+      ],
+      "route_api_provenance": {
+        "AIMW-CONT-3443C173C6": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SiteSettingsRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteSettingsReadController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteSettingsRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteSettingsRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-settings-route-terminality.json",
+          "security_mode": "tenant_selected"
+        }
+      }
     }
   ],
   "excluded_sources": [],
