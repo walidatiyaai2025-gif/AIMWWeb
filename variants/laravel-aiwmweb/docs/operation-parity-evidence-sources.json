@@ -1222,8 +1222,8 @@
     },
     {
       "label": "AIMW-CONT-247E791DA7 Welcome footer login focused closure",
-      "sha": "13ea273300a0eb14cedf1c011411f402b9c1ca52",
-      "observed_pr_head": "13ea273300a0eb14cedf1c011411f402b9c1ca52",
+      "sha": "ad1f961595ac9eb3cfb644af9044d4e94c2a320e",
+      "observed_pr_head": "ad1f961595ac9eb3cfb644af9044d4e94c2a320e",
       "operation_ids": [
         "AIMW-CONT-247E791DA7"
       ]
