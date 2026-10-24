@@ -16138,12 +16138,12 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-editor-explorer-link-control.test.tsx",
-      "evidence": "AIMW-CONT-607ACDF4D8 Content Editor Explorer link focused closure@e63df8fe67334b819fe648fc52e796db8cf5d27c: variants/laravel-aiwmweb/backend/resources/js/content-editor-save-control.tsx; focused-closure:AIMW-CONT-607ACDF4D8; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-editor-explorer-link-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-editor-explorer-link-terminality.json",
+      "evidence": "AIMW-CONT-607ACDF4D8 Content Editor Explorer link focused closure@1dbaca6967ec022a52224dbb47f523a32a34cf80: variants/laravel-aiwmweb/backend/resources/js/content-editor-save-control.tsx; focused-closure:AIMW-CONT-607ACDF4D8; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-editor-explorer-link-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-editor-explorer-link-terminality.json",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
         "source_label": "AIMW-CONT-607ACDF4D8 Content Editor Explorer link focused closure",
-        "source_sha": "e63df8fe67334b819fe648fc52e796db8cf5d27c",
+        "source_sha": "1dbaca6967ec022a52224dbb47f523a32a34cf80",
         "destination_path": "variants/laravel-aiwmweb/backend/resources/js/content-editor-save-control.tsx",
         "evidence_mode": "focused_closure_contract",
         "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/content-editor-explorer-link-terminality.json",
@@ -37916,7 +37916,7 @@
       },
       {
         "label": "AIMW-CONT-607ACDF4D8 Content Editor Explorer link focused closure",
-        "sha": "e63df8fe67334b819fe648fc52e796db8cf5d27c",
+        "sha": "1dbaca6967ec022a52224dbb47f523a32a34cf80",
         "operation_ids": [
           "AIMW-CONT-607ACDF4D8"
         ]
