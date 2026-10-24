@@ -107,7 +107,7 @@ final class OperationsHubSiteOperationsControlTerminalityTest extends TestCase
     public function test_authorized_member_can_open_hub_destination_and_real_api_without_mutation(): void
     {
         $user = User::factory()->create();
-        $membership = $this->membership($user, 'alpha', ['operations.manage', 'execution.view']);
+        $membership = $this->membership($user, 'alpha', ['tenant.view', 'operations.manage', 'execution.view']);
         $tenantId = $membership->tenant_id;
 
         $membershipCount = TenantMembership::withoutGlobalScopes()->where('tenant_id', $tenantId)->count();
