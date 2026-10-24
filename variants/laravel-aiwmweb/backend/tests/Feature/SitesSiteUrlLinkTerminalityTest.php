@@ -61,7 +61,7 @@ final class SitesSiteUrlLinkTerminalityTest extends TestCase
         $this->assertStringContainsString('rel="noopener"', $frontend);
         $this->assertStringContainsString('data-canonical-operation={SITES_SITE_URL_OPERATION_ID}', $frontend);
         $this->assertStringContainsString('renderCell?: (row: Record<string, unknown>, column: string, formatted: string)', $table);
-        $this->assertStringContainsString("'site_url' => (string) $site->url", $service);
+        $this->assertStringContainsString("'site_url' => (string) \$site->url", $service);
 
         $start = strpos($frontend, "renderCell={route.key === 'sites'");
         $end = strpos($frontend, "renderActions={route.key === 'posts'", $start);
