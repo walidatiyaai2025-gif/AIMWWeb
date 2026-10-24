@@ -185,7 +185,7 @@ final class ContentExplorerRouteTerminalityTest extends TestCase
         $this->assertStringContainsString('if (query.isLoading) return <LoadingState />;', $pages);
         $this->assertStringContainsString('if (query.error) return (', $pages);
         $this->assertStringContainsString('No sample rows are synthesized when the server returns an empty result.', $pages);
-        $this->assertStringContainsString("'explorer' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/explorer"", $web);
+        $this->assertStringContainsString('\'explorer\' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/explorer"', $web);
         $this->assertStringContainsString("authorize('sites.view')", $controller);
         $this->assertStringContainsString("ContentItem::query()->where('site_id', $site)", $controller);
         $this->assertStringNotContainsString('fake success', strtolower($controller));
