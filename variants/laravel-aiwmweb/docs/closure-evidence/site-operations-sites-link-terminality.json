@@ -83,8 +83,8 @@
     ]
   },
   "generator_evidence_source": {
-    "sha": "528d65117d71ae7de0d14bd28c1656801fabd949",
-    "note": "Immutable pushed implementation-and-focused-test snapshot preceding this evidence commit."
+    "sha": "ae0403ab6fc9858fc4797cb81aeb360317fe32d5",
+    "note": "Immutable pushed implementation-and-focused-test snapshot with the production TypeScript wiring fixed, preceding this evidence commit."
   },
   "scope_guards": {
     "only_operation_claimed": "AIMW-CONT-5BE26C7AB5",
