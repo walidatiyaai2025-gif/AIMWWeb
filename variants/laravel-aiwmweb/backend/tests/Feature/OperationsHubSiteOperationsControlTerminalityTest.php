@@ -69,7 +69,7 @@ final class OperationsHubSiteOperationsControlTerminalityTest extends TestCase
         $this->assertStringContainsString("context.permissions.includes('operations.manage')", $control);
         $this->assertStringContainsString("context.permissions.includes('execution.view')", $control);
         $this->assertStringContainsString("context.api['site-operations'] === expectedApi", $control);
-        $this->assertStringContainsString("tenantUrl(context.tenant.slug, route.path)", $control);
+        $this->assertStringContainsString('tenantUrl(context.tenant.slug, route.path)', $control);
 
         $this->assertStringNotContainsString('apiRequest', $control);
         $this->assertStringNotContainsString('fetch(', $control);
