@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AiUsageReadController;
 use App\Http\Controllers\ContentApiController;
+use App\Http\Controllers\ContentExplorerReadController;
 use App\Http\Controllers\EmailNotificationController;
 use App\Http\Controllers\GlobalPagesTrashController;
 use App\Http\Controllers\GlobalPostsTrashController;
@@ -26,6 +27,10 @@ Route::middleware(['web', 'auth'])
 Route::post('v1/sync/webhooks/connector', [SyncApiController::class, 'webhook']);
 
 Route::prefix('v1/tenants/{tenant}/sites/{site}')->middleware(['web', 'tenant.context'])->group(function () {
+    Route::get('explorer', ContentExplorerReadController::class)
+        ->middleware('auth')
+        ->defaults('canonical_operation_id', ContentExplorerReadController::OPERATION_ID)
+        ->name('canonical.api.content-explorer.read');
     Route::get('content/{type}', [ContentApiController::class, 'index']);
     Route::post('content/{type}', [ContentApiController::class, 'store']);
     Route::get('content/{type}/{wordpressId}/editor', [ContentApiController::class, 'editor'])
