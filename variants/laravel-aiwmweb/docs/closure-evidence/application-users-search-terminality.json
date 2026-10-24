@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #924 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-26F2BF8EE8",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "/admin/application-users",
+    "source": "src/AIWordPressManager.Web/Components/Pages/ApplicationUsers.razor",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Pages/ApplicationUsers.razor:/admin/application-users:@(L.IsArabic ? [SearchClickedAsync]",
+    "source_intent": "Search the authoritative application-user list by the bound username term and render the matching result set.",
+    "mutation": false,
+    "tenant_owned": true
+  },
+  "source_semantics": {
+    "handler": "SearchClickedAsync calls LoadAsync",
+    "read": "ApplicationUserAdministrationService.ListAsync(_search)",
+    "normalization": "trim then case-insensitive normalized username contains",
+    "ordering": "username ascending",
+    "busy_guard": "_working disables the Search action while LoadAsync is active",
+    "failure": "LoadAsync surfaces the exception instead of claiming refreshed data"
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/application-users-search-control.tsx",
+    "workspace_wiring": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "read_controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php::members",
+    "read_service": "variants/laravel-aiwmweb/backend/app/Operations/AdministrationService.php::members",
+    "operation_marker": "AIMW-SYNC-26F2BF8EE8",
+    "endpoint": "GET /tenants/{tenant}/admin/members?search={term}",
+    "authoritative_reread": "React Query fetches the active tenant endpoint with the trimmed term even when the applied term is unchanged",
+    "literal_search": "percent, underscore, and the escape character are escaped before SQL LIKE so user input preserves Contains semantics"
+  },
+  "state_and_security": {
+    "control_permission": "members.manage or wildcard, preserving the source UsersManage page boundary",
+    "read_permission": "tenant.view on the established members read endpoint",
+    "tenant_resolution": "auth + tenant.context; a foreign tenant slug returns 404",
+    "tenant_identifier_source": "context.api['application-users']; the control owns no tenant or membership identifier",
+    "server_mutation_added": false,
+    "wordpress_mutation_added": false,
+    "secret_access_added": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/application-users-search-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/ApplicationUsersSearchTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation marker",
+      "authorized submit control and Arabic copy",
+      "busy duplicate-activation guard",
+      "trimmed case-insensitive username search",
+      "literal wildcard search semantics",
+      "foreign tenant search fails closed with 404",
+      "no mutation path"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-SYNC-26F2BF8EE8"],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "94d3251d3de1333ca2e79a9ad253e59b0456bb41",
+    "branch": "worker/924-application-users-search",
+    "issue": 924
+  },
+  "materialization": {
+    "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-924.yml",
+    "generated_reconciliation_required": true
+  }
+}
