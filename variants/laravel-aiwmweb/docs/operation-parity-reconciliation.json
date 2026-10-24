@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 90,
-      "pending": 74,
+      "adapted": 89,
+      "pending": 75,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 90,
-      "percent": 54.88
+      "terminal": 89,
+      "percent": 54.27
     },
     "email": {
       "total": 82,
@@ -203,12 +203,12 @@
     "sync": {
       "total": 213,
       "ported": 0,
-      "adapted": 143,
-      "pending": 70,
+      "adapted": 144,
+      "pending": 69,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 143,
-      "percent": 67.14
+      "terminal": 144,
+      "percent": 67.61
     },
     "taxonomy": {
       "total": 13,
@@ -16813,31 +16813,21 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-content-tab-control.tsx",
+      "laravel_destination": "",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "ADAPTED",
-      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-content-tab-control.test.tsx",
-      "evidence": "AIMW-CONT-93B6E02ACF Content Explorer SetContentTab focused closure@243bcdeb80587b7438935ccbed4c2820c94f1633: variants/laravel-aiwmweb/backend/resources/js/content-explorer-content-tab-control.tsx; focused-closure:AIMW-CONT-93B6E02ACF; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-content-tab-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-content-tab-terminality.json",
+      "migration_state": "PENDING",
+      "acceptance_test": "",
+      "evidence": "",
       "reconciliation": {
-        "decision": "ADAPTED",
-        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "AIMW-CONT-93B6E02ACF Content Explorer SetContentTab focused closure",
-        "source_sha": "243bcdeb80587b7438935ccbed4c2820c94f1633",
-        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-content-tab-control.tsx",
-        "evidence_mode": "focused_closure_contract",
-        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-content-tab-terminality.json",
-        "signals": [
-          "operation:AIMW-CONT-93B6E02ACF",
-          "production-marker:variants/laravel-aiwmweb/backend/resources/js/content-explorer-content-tab-control.tsx",
-          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-content-tab-control.test.tsx",
-          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-content-tab-terminality.json",
-          "scope:operation-specific",
-          "test:tenant-isolation"
-        ]
+        "decision": "PENDING",
+        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
+        "source_label": null,
+        "source_sha": null,
+        "destination_path": null
       }
     },
     {
@@ -32675,21 +32665,32 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "authoritative re-read / reconciled visible state",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/components.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "high",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/state-banner-retry-control.test.tsx",
+      "evidence": "AIMW-SYNC-8719C812DC retained StateBanner retry focused closure@0df86d6e260b6b7d6748fb8ffdf8f03517405cec: variants/laravel-aiwmweb/backend/resources/js/components.tsx; focused-closure:AIMW-SYNC-8719C812DC; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/state-banner-retry-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/state-banner-retry-control-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-SYNC-8719C812DC retained StateBanner retry focused closure",
+        "source_sha": "0df86d6e260b6b7d6748fb8ffdf8f03517405cec",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/components.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/state-banner-retry-control-terminality.json",
+        "signals": [
+          "operation:AIMW-SYNC-8719C812DC",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/components.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/state-banner-retry-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/state-banner-retry-control-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation",
+          "test:authorization"
+        ]
       }
     },
     {
@@ -36842,6 +36843,7 @@
       "AIMW-CONT-916E34454C",
       "AIMW-CONT-918BE3DBF1",
       "AIMW-CONT-932A09E4A9",
+      "AIMW-CONT-93B6E02ACF",
       "AIMW-CONT-98918A6C27",
       "AIMW-CONT-9BA2C255AF",
       "AIMW-CONT-9CF12067E6",
@@ -36936,7 +36938,6 @@
       "AIMW-SYNC-7C77CF7F7A",
       "AIMW-SYNC-80B81C07B8",
       "AIMW-SYNC-8409FB077A",
-      "AIMW-SYNC-8719C812DC",
       "AIMW-SYNC-8C35E9A7A0",
       "AIMW-SYNC-9504A57CAE",
       "AIMW-SYNC-9ABD7DEDBB",
@@ -37499,6 +37500,16 @@
           "AIMW-CONT-5CF47CBE2A"
         ],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "AIMW-SYNC-8719C812DC retained StateBanner retry focused closure",
+        "sha": "0df86d6e260b6b7d6748fb8ffdf8f03517405cec",
+        "domains": [],
+        "supporting_only": false,
+        "operation_ids": [
+          "AIMW-SYNC-8719C812DC"
+        ],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -37517,6 +37528,7 @@
     "missing_terminal_evidence_operation_ids": [],
     "pushed_source_shas_verified": [
       "0074d9dc9ec10fe1e7c64e40f4e1c7166c03cf01",
+      "0df86d6e260b6b7d6748fb8ffdf8f03517405cec",
       "18191b10b7909f3670ccbde3dc41025202cb7ca5",
       "2497296794e0f1fde94d8c0fd30babb047c912ae",
       "316d28cd4a22001812fa06c3a41f8ee962c6acd8",
@@ -37859,7 +37871,6 @@
       "AIMW-CONT-85394A0E55",
       "AIMW-CONT-8B3518EF80",
       "AIMW-CONT-915652366F",
-      "AIMW-CONT-93B6E02ACF",
       "AIMW-CONT-966F49CDAE",
       "AIMW-CONT-97AD37042A",
       "AIMW-CONT-9D5E269773",
@@ -37941,6 +37952,7 @@
       "AIMW-SYNC-724345B409",
       "AIMW-SYNC-7877CAF7E8",
       "AIMW-SYNC-7C3B0E834E",
+      "AIMW-SYNC-8719C812DC",
       "AIMW-SYNC-89777052CB",
       "AIMW-SYNC-8D6F1C5EAA",
       "AIMW-SYNC-A9E956A4DA",
@@ -38393,10 +38405,10 @@
         ]
       },
       {
-        "label": "AIMW-CONT-93B6E02ACF Content Explorer SetContentTab focused closure",
-        "sha": "243bcdeb80587b7438935ccbed4c2820c94f1633",
+        "label": "AIMW-SYNC-8719C812DC retained StateBanner retry focused closure",
+        "sha": "0df86d6e260b6b7d6748fb8ffdf8f03517405cec",
         "operation_ids": [
-          "AIMW-CONT-93B6E02ACF"
+          "AIMW-SYNC-8719C812DC"
         ]
       }
     ],
