@@ -14,6 +14,7 @@ use Tests\TestCase;
 
 final class TaxonomyResetFormControlTerminalityTest extends TestCase
 {
+    // Exact-head CI retrigger after official parity materialization.
     use RefreshDatabase;
 
     private const OPERATION_ID = 'AIMW-TAXO-5D39DA68B7';
