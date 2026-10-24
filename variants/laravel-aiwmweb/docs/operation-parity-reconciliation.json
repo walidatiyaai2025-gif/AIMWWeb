@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 757,
-    "pending": 174,
+    "adapted": 758,
+    "pending": 173,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 757,
-    "overall_parity_percent": 81.31
+    "terminal": 758,
+    "overall_parity_percent": 81.42
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 286,
-    "pending": 160,
+    "terminal": 287,
+    "pending": 159,
     "blocked": 0,
-    "percent": 64.13
+    "percent": 64.35
   },
   "domains": {
     "ai": {
@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 85,
-      "pending": 79,
+      "adapted": 86,
+      "pending": 78,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 85,
-      "percent": 51.83
+      "terminal": 86,
+      "percent": 52.44
     },
     "email": {
       "total": 82,
@@ -19728,21 +19728,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/site-reliability-connection-link-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-reliability-connection-link-control.test.tsx",
+      "evidence": "AIMW-CONT-A93DE991C0 Site Reliability connection link focused closure@94fb029cbef1dfe2a91d10c5636e56dccff39e0d: variants/laravel-aiwmweb/backend/resources/js/site-reliability-connection-link-control.tsx; focused-closure:AIMW-CONT-A93DE991C0; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/site-reliability-connection-link-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/site-reliability-connection-link-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-A93DE991C0 Site Reliability connection link focused closure",
+        "source_sha": "94fb029cbef1dfe2a91d10c5636e56dccff39e0d",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/site-reliability-connection-link-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-reliability-connection-link-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-A93DE991C0",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/site-reliability-connection-link-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/site-reliability-connection-link-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/site-reliability-connection-link-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -36715,12 +36725,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 286,
-      "pending": 160,
+      "adapted": 287,
+      "pending": 159,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 286,
-      "percent": 64.13
+      "terminal": 287,
+      "percent": 64.35
     }
   },
   "pending_operation_ids_by_domain": {
@@ -36793,7 +36803,6 @@
       "AIMW-CONT-A3A2CD23B6",
       "AIMW-CONT-A6867078EA",
       "AIMW-CONT-A6EA54E66D",
-      "AIMW-CONT-A93DE991C0",
       "AIMW-CONT-AC737C80BF",
       "AIMW-CONT-B1024628D9",
       "AIMW-CONT-B44DA81C28",
@@ -37806,6 +37815,7 @@
       "AIMW-CONT-9D5E269773",
       "AIMW-CONT-9EDE4C1141",
       "AIMW-CONT-A5D88995F3",
+      "AIMW-CONT-A93DE991C0",
       "AIMW-CONT-B1E9E1D6B0",
       "AIMW-CONT-BCE1211CE3",
       "AIMW-CONT-C178278FCB",
@@ -38295,10 +38305,17 @@
         "operation_ids": [
           "AIMW-EMAI-7A54150265"
         ]
+      },
+      {
+        "label": "AIMW-CONT-A93DE991C0 Site Reliability connection link focused closure",
+        "sha": "94fb029cbef1dfe2a91d10c5636e56dccff39e0d",
+        "operation_ids": [
+          "AIMW-CONT-A93DE991C0"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 56,
-    "focused_closure_contract_count": 286,
+    "focused_closure_operation_scoped_count": 57,
+    "focused_closure_contract_count": 287,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
