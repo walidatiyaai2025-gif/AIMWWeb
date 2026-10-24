@@ -1527,6 +1527,14 @@
       ]
     },
     {
+      "label": "AIMW-CONT-5BE26C7AB5 Site Operations Manage sites focused closure",
+      "sha": "336b283ff8837a32d6e06b0b2f8135b9fb7ad3eb",
+      "observed_pr_head": "336b283ff8837a32d6e06b0b2f8135b9fb7ad3eb",
+      "operation_ids": [
+        "AIMW-CONT-5BE26C7AB5"
+      ]
+    },
+    {
       "label": "AIMW-CONT-E1A7A8CAA7 Site Settings localized submit controls focused closure",
       "sha": "996bb17e8856ac10e8eb389d12d1197bff0511dd",
       "observed_pr_head": "996bb17e8856ac10e8eb389d12d1197bff0511dd",
