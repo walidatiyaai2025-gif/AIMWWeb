@@ -1133,6 +1133,14 @@
       "operation_ids": [
         "AIMW-EMAI-470599356B"
       ]
+    },
+    {
+      "label": "AIMW-CONT-3C205B1901 Welcome pricing anchor focused closure",
+      "sha": "e986d9e27e11a743db24f73aa4164fb3f4d10711",
+      "observed_pr_head": "e986d9e27e11a743db24f73aa4164fb3f4d10711",
+      "operation_ids": [
+        "AIMW-CONT-3C205B1901"
+      ]
     }
   ]
 }
