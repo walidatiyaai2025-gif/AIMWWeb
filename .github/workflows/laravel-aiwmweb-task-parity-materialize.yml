@@ -1,8 +1,8 @@
 name: Laravel AIWMWeb Task Parity Materialize
-# parity-refresh: composition-7dff1f78 pr-1102
+# parity-refresh: composition-34b7b208 pr-1102
 # trigger: AIMW-CONT-3C205B1901 issue-881-acceptance-safe-repin
 # exact-head: e986d9e27e11a743db24f73aa4164fb3f4d10711
-# retrigger: issue-881-current-composition-materialization
+# retrigger: issue-881-post-1115-composition-materialization
 
 on:
   push:
