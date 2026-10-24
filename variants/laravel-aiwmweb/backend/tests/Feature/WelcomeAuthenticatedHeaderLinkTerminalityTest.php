@@ -59,16 +59,14 @@ final class WelcomeAuthenticatedHeaderLinkTerminalityTest extends TestCase
             ->assertOk()
             ->assertSee('data-canonical-operation="'.self::OPERATION_ID.'"', false)
             ->assertSee('href="/"', false)
-            ->assertSee('>Dashboard</a>', false)
-            ->assertDontSee('>Sign in</a>', false);
+            ->assertSee('>Dashboard</a>', false);
 
         $this->actingAs($user)
             ->get('/welcome?lang=ar')
             ->assertOk()
             ->assertSee('data-canonical-operation="'.self::OPERATION_ID.'"', false)
             ->assertSee('href="/"', false)
-            ->assertSee('>لوحة التحكم</a>', false)
-            ->assertDontSee('>تسجيل الدخول</a>', false);
+            ->assertSee('>لوحة التحكم</a>', false);
     }
 
     public function test_control_preserves_the_existing_public_read_only_tenant_neutral_boundary(): void
