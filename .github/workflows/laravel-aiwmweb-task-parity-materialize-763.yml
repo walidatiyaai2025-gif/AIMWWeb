@@ -7,6 +7,7 @@ on:
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
       - 'variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-route-terminality.json'
+      - 'variants/laravel-aiwmweb/backend/tests/Feature/ContentExplorerRouteTerminalityTest.php'
       - '.github/workflows/laravel-aiwmweb-task-parity-materialize-763.yml'
 
 permissions:
