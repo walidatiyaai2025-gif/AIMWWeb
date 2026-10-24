@@ -1327,6 +1327,14 @@
       ]
     },
     {
+      "label": "AIMW-TAXO-770DAA668D TaxonomyManager BackToSites focused closure",
+      "sha": "865d5aec20743765c097694dd766673ef7746628",
+      "observed_pr_head": "865d5aec20743765c097694dd766673ef7746628",
+      "operation_ids": [
+        "AIMW-TAXO-770DAA668D"
+      ]
+    },
+    {
       "label": "AIMW-CONT-FBA95BDC1D Sites CloseForm focused closure",
       "sha": "98f482175fd13403fb1fad117e354c5107d4a6d8",
       "observed_pr_head": "98f482175fd13403fb1fad117e354c5107d4a6d8",
