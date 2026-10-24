@@ -48,6 +48,16 @@ describe('AIMW-TAXO-602DE140EB Global Taxonomy interpolated row links', () => {
         expect(GLOBAL_TAXONOMY_SITE_LINKS_OPERATION_ID).toBe('AIMW-TAXO-602DE140EB');
     });
 
+    it('keeps a foreign tenant destination behind the server 404 isolation boundary', () => {
+        const destinations = globalTaxonomySiteDestinations(context('alpha/../foreign'), 7);
+        const foreignTenant404Boundary = '/tenants/foreign/module/taxonomy?site=7';
+
+        expect(destinations).not.toBeNull();
+        expect(destinations?.manage).not.toBe(foreignTenant404Boundary);
+        expect(destinations?.manage).toContain('/tenants/alpha%2F..%2Fforeign/');
+        expect(destinations?.explorer).toContain('/tenants/alpha%2F..%2Fforeign/');
+    });
+
     it('encodes the tenant slug and rejects non-authoritative site identifiers', () => {
         expect(globalTaxonomySiteDestinations(context('alpha/../foreign'), 7)).toEqual({
             manage: '/tenants/alpha%2F..%2Fforeign/module/taxonomy?site=7',
