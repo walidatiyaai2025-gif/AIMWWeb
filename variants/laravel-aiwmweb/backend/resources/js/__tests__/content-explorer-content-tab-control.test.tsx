@@ -71,3 +71,5 @@ describe('AIMW-CONT-93B6E02ACF ContentExplorer SetContentTab', () => {
         expect(screen.queryByRole('button', { name: /Content/ })).not.toBeInTheDocument();
     });
 });
+
+// exact-head gate retrigger after parity materialization
