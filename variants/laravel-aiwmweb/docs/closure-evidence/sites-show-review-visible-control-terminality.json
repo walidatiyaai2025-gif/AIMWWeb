@@ -76,6 +76,11 @@
   },
   "materialization": {
     "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-865.yml",
-    "generated_reconciliation_required": true
+    "generated_reconciliation_required": true,
+    "generated_reconciliation_commit": "27cf5e8d4ab00ea7ade9c96d0d691a927c05bb39",
+    "generated_artifacts": [
+      "variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json",
+      "variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md"
+    ]
   }
 }
