@@ -48,7 +48,7 @@ final class SiteOperationsSitesLinkTerminalityTest extends TestCase
         $this->assertIsInt($loadingPosition);
         $this->assertIsInt($errorPosition);
         $this->assertIsInt($firstControlPosition);
-        $this->assertLessThan($errorPosition, $firstControlPosition);
+        $this->assertLessThan($firstControlPosition, $errorPosition);
     }
 
     public function test_destination_is_the_real_guarded_tenant_sites_workspace(): void
