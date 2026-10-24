@@ -5,10 +5,10 @@ export const LIVE_SYSTEM_STATUS_REFRESH_OPERATION_ID = 'AIMW-SYNC-F0C46A9BD1';
 
 export function LiveSystemStatusRefreshControl({
     busy,
-    onRefresh,
+    onClick,
 }: {
     busy: boolean;
-    onRefresh: () => void | Promise<unknown>;
+    onClick: () => void | Promise<unknown>;
 }) {
     const { locale } = useLocale();
 
@@ -21,7 +21,7 @@ export function LiveSystemStatusRefreshControl({
             aria-busy={busy ? 'true' : 'false'}
             onClick={() => {
                 if (busy) return;
-                void onRefresh();
+                void onClick();
             }}
         >
             {busy
