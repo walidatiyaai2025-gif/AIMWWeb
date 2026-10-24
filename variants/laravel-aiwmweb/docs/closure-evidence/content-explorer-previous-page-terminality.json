@@ -60,16 +60,17 @@
   },
   "provenance": {
     "base_branch": "worker/laravel-aiwmweb-closure-composition",
-    "base_composition_sha": "f1250b6ee3fd75b7a8b2dc3fa9c43adcb1a46a29",
+    "base_composition_sha": "d3e6c6703de2e08ac8138629e71d78ea3c3f2253",
     "branch": "worker/767-content-explorer-previous-page",
-    "issue": 767
+    "issue": 767,
+    "synchronization_merge_sha": "e8d41356125912956150530d4c5c71f72082b68b"
   },
   "materialization": {
     "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-767.yml",
     "generated_reconciliation_required": true,
-    "materialized_commit_sha": "62aa36c7726dff291f0e28f0697bad2793609c4c",
-    "materialized_terminal_total": 765,
-    "materialized_pending_total": 166,
-    "materialized_overall_parity_percent": 82.17
+    "materialized_commit_sha": "097bb707dee56ee90b66b3a7606f42c4cfe94799",
+    "materialized_terminal_total": 766,
+    "materialized_pending_total": 165,
+    "materialized_overall_parity_percent": 82.28
   }
 }
