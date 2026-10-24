@@ -1020,6 +1020,14 @@
       "operation_ids": [
         "AIMW-SYNC-8719C812DC"
       ]
+    },
+    {
+      "label": "AIMW-SYNC-1778E3F6B5 AppSearchBox focused closure",
+      "sha": "476e580aa2988d31742604506d957c886a1f5c6a",
+      "observed_pr_head": "476e580aa2988d31742604506d957c886a1f5c6a",
+      "operation_ids": [
+        "AIMW-SYNC-1778E3F6B5"
+      ]
     }
   ],
   "excluded_sources": [],
@@ -1536,3 +1544,4 @@
     }
   ]
 }
+
