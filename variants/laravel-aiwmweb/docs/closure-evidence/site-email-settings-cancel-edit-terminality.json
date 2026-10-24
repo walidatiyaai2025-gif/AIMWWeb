@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "operation_id": "AIMW-EMAI-7E1D4105B0",
+  "domain": "email",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "source_file": "src/AIWordPressManager.Web/Components/Pages/SiteEmailSettings.razor",
+  "source_control": "CancelEdit [CancelEdit]",
+  "destination": "variants/laravel-aiwmweb/backend/resources/views/sites/email-settings.blade.php",
+  "security_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteEmailSettingsCancelEditTerminalityTest.php",
+  "behavior": "Cancel closes the inline recipient editor and performs no save request.",
+  "server_mutation": false,
+  "only_operation_claimed": "AIMW-EMAI-7E1D4105B0"
+}
