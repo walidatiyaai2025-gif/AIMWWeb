@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 export const SITE_OPERATIONS_EXPORT_OPERATION_ID = 'AIMW-BILL-582319B640';
 
@@ -101,9 +101,21 @@ export function siteOperationsCsvFileName(now = new Date()): string {
     return `site-operations-${stamp}.csv`;
 }
 
-export function SiteOperationsExportControl({ rows, locale }: { rows: Row[]; locale: Locale }) {
+export function SiteOperationsExportControl({
+    rows,
+    locale,
+    resetToken = 0,
+}: {
+    rows: Row[];
+    locale: Locale;
+    resetToken?: number;
+}) {
     const [exporting, setExporting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        setError(null);
+    }, [resetToken]);
     const available = !exporting && rows.length > 0;
     const availability = available
         ? (locale === 'ar' ? 'تنزيل العمليات المعروضة حاليًا كملف CSV.' : 'Download the currently displayed operations as CSV.')
