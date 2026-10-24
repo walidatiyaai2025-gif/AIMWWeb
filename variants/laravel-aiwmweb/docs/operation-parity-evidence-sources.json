@@ -1135,6 +1135,14 @@
       ]
     },
     {
+      "label": "AIMW-CONT-9EDE4C1141 Welcome auth-aware header link focused closure",
+      "sha": "1f8bef5b99a8943055c1fd8c1e085b7c91071436",
+      "observed_pr_head": "1f8bef5b99a8943055c1fd8c1e085b7c91071436",
+      "operation_ids": [
+        "AIMW-CONT-9EDE4C1141"
+      ]
+    },
+    {
       "label": "AIMW-CONT-BCE1211CE3 WordPress Users StartCreate focused closure",
       "sha": "a368d5f828cfecc9cd8c945eddd52517157af1f5",
       "observed_pr_head": "a368d5f828cfecc9cd8c945eddd52517157af1f5",
