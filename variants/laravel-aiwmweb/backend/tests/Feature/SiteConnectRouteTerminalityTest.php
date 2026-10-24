@@ -51,12 +51,13 @@ final class SiteConnectRouteTerminalityTest extends TestCase
     {
         $route = Route::getRoutes()->match(Request::create('/tenants/alpha/sites/connect', 'GET'));
 
-        $this->assertSame('canonical.workspace.site-connect', $route->getName());
+        $this->assertSame('canonical.site.connect', $route->getName());
         $this->assertSame(CanonicalWorkspaceRouteController::class.'@show', ltrim($route->getActionName(), '\\'));
         $this->assertContains('auth', $route->gatherMiddleware());
         $this->assertContains('tenant.context', $route->gatherMiddleware());
-        $this->assertSame('sites.manage', $route->defaults['workspace_permissions'] ?? null);
-        $this->assertSame(self::OPERATION_ID, $route->defaults['canonical_operation_id'] ?? null);
+        $this->assertSame('tenant.view,sites.manage', $route->defaults['workspace_permissions'] ?? null);
+        $this->assertSame('AIMW-SITE-E3EA44AD3F', $route->defaults['canonical_operation_id'] ?? null);
+        $this->assertSame(self::OPERATION_ID, $route->defaults['canonical_route_operation_id'] ?? null);
         $this->assertSame(['GET', 'HEAD'], $route->methods());
 
         $this->post('/tenants/alpha/sites/connect')->assertStatus(405);
@@ -73,11 +74,12 @@ final class SiteConnectRouteTerminalityTest extends TestCase
             ->assertSee('id="app"', false);
 
         $context = $this->actingAs($user)->getJson('/tenants/alpha/context')->assertOk();
-        $action = $context->json('actions.sites.connect');
+        $this->assertSame('/api/tenants/alpha/sites', $context->json('api.sites'));
 
-        $this->assertIsArray($action);
-        $this->assertSame('/api/tenants/alpha/sites', $action['endpoint'] ?? null);
-        $this->assertSame('POST', $action['method'] ?? null);
+        $this->actingAs($user)
+            ->getJson('/api/tenants/alpha/sites')
+            ->assertOk()
+            ->assertExactJson([]);
     }
 
     public function test_missing_permission_and_foreign_tenant_fail_closed(): void
@@ -90,7 +92,7 @@ final class SiteConnectRouteTerminalityTest extends TestCase
             ->assertForbidden();
 
         $authorized = User::factory()->create();
-        $this->membership($authorized, 'owned', ['sites.manage']);
+        $this->membership($authorized, 'owned', ['tenant.view', 'sites.manage']);
 
         $this->actingAs($authorized)
             ->get('/tenants/foreign/sites/connect')
@@ -101,16 +103,16 @@ final class SiteConnectRouteTerminalityTest extends TestCase
     {
         $source = (string) file_get_contents(base_path('../../../src/AIWordPressManager.Web/Components/Pages/SiteOnboarding.razor'));
         $core = (string) file_get_contents(resource_path('js/core.ts'));
-        $actions = (string) file_get_contents(base_path('config/frontend_actions.php'));
+        $provider = (string) file_get_contents(app_path('Providers/SitesConnectRouteServiceProvider.php'));
         $routes = (string) file_get_contents(base_path('routes/web.php'));
 
         $this->assertStringContainsString('@page "/sites/connect"', $source);
         $this->assertStringContainsString('SaveTestAndSyncAsync', $source);
         $this->assertStringContainsString("r('site-connect', '/sites/connect'", $core);
         $this->assertStringContainsString("connectorScope: 'pairing'", $core);
-        $this->assertStringContainsString("'sites.connect' => [", $actions);
-        $this->assertStringContainsString("'endpoint' => '/api/tenants/{tenant}/sites'", $actions);
-        $this->assertStringContainsString("Route::get('/sites/connect', 'show')", $routes);
+        $this->assertStringContainsString("canonical_route_operation_id', 'AIMW-CONT-BF5F72F4F9", $provider);
+        $this->assertStringContainsString("->get('/tenants/{tenant}/sites/connect'", $provider);
+        $this->assertStringContainsString("Route::get('/sites', [SiteManagementController::class, 'index'])", $routes);
     }
 
     public function test_terminal_evidence_is_scoped_to_only_this_operation(): void
