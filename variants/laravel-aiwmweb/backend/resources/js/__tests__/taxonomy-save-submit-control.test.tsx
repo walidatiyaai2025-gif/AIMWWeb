@@ -25,14 +25,16 @@ const taxonomyContract: ActionContract = {
     ],
 };
 
+type SubmitHandler = (values: Record<string, string | number>) => void;
+
 function Harness({
     actionKey = 'taxonomy.manage',
     busy = false,
-    onSubmit = vi.fn(),
+    onSubmit = () => undefined,
 }: {
     actionKey?: string;
     busy?: boolean;
-    onSubmit?: ReturnType<typeof vi.fn>;
+    onSubmit?: SubmitHandler;
 }) {
     return (
         <LocaleProvider>
@@ -51,7 +53,7 @@ function Harness({
 
 describe('AIMW-TAXO-39CDD7EF81 taxonomy Save submit parity', () => {
     it('marks the taxonomy Save submit and forwards the validated draft exactly once', () => {
-        const onSubmit = vi.fn();
+        const onSubmit = vi.fn<SubmitHandler>();
         render(<Harness onSubmit={onSubmit} />);
 
         const save = screen.getByRole('button', { name: 'Save' });
@@ -68,7 +70,7 @@ describe('AIMW-TAXO-39CDD7EF81 taxonomy Save submit parity', () => {
     });
 
     it('keeps the Save control disabled and exposes Saving while the authoritative mutation is pending', () => {
-        const onSubmit = vi.fn();
+        const onSubmit = vi.fn<SubmitHandler>();
         render(<Harness busy onSubmit={onSubmit} />);
 
         const save = screen.getByRole('button', { name: 'Saving' });
