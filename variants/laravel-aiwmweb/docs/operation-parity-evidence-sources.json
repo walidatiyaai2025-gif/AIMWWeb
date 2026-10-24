@@ -1012,6 +1012,50 @@
           "security_mode": "tenant_selected"
         }
       }
+    },
+    {
+      "label": "AIMW-CONT-47007EE040 Site Reliability operations route closure",
+      "sha": "4ad93bd9cba56406cfb9077041dd40d4199aa651",
+      "observed_pr_head": "4ad93bd9cba56406cfb9077041dd40d4199aa651",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "operation_ids": [
+        "AIMW-CONT-47007EE040"
+      ],
+      "route_api_provenance": {
+        "AIMW-CONT-47007EE040": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteReliabilityOperationsRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteReliabilityOperationsRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-reliability-operations-route-terminality.json",
+          "security_mode": "tenant_selected"
+        }
+      }
+    },
+    {
+      "label": "AIMW-CONT-916E34454C Site Reliability direct route closure",
+      "sha": "d2cd0c4eaeb27c7b2f94eb3e8b70466a2c89c3a3",
+      "observed_pr_head": "d2cd0c4eaeb27c7b2f94eb3e8b70466a2c89c3a3",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "operation_ids": [
+        "AIMW-CONT-916E34454C"
+      ],
+      "route_api_provenance": {
+        "AIMW-CONT-916E34454C": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteReliabilityRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteReliabilityRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-reliability-route-terminality.json",
+          "security_mode": "tenant_selected"
+        }
+      }
     }
   ],
   "excluded_sources": [],
@@ -1500,6 +1544,14 @@
       "observed_pr_head": "3c51124603b3ee28abba18af7ded1227e575f217",
       "operation_ids": [
         "AIMW-CONT-37B4B4BEC4"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-5BE26C7AB5 Site Operations Manage sites focused closure",
+      "sha": "ffa5037010f28079f64576264fb67ebfd6733e73",
+      "observed_pr_head": "ffa5037010f28079f64576264fb67ebfd6733e73",
+      "operation_ids": [
+        "AIMW-CONT-5BE26C7AB5"
       ]
     }
   ]
