@@ -1357,6 +1357,14 @@
       "operation_ids": [
         "AIMW-CONT-3D6485D903"
       ]
+    },
+    {
+      "label": "AIMW-CONT-CA17F05024 Sites ShowReviewSites focused closure",
+      "sha": "eba82dd3b123109571fcaa9937d6e78c892aca95",
+      "observed_pr_head": "eba82dd3b123109571fcaa9937d6e78c892aca95",
+      "operation_ids": [
+        "AIMW-CONT-CA17F05024"
+      ]
     }
   ]
 }
