@@ -21,6 +21,7 @@ use Tests\TestCase;
 
 final class ContentExplorerRouteTerminalityTest extends TestCase
 {
+    // Exact-head gate retrigger after official #763 parity materialization.
     use RefreshDatabase;
 
     private const OPERATION_ID = 'AIMW-CONT-5CF47CBE2A';
