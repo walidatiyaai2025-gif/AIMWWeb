@@ -159,7 +159,12 @@ function QueryError({ error, retry }: { error: unknown; retry: () => void }) {
     const { locale, text } = useLocale();
     const apiError = error instanceof ApiError ? error : null;
     return (
-        <StatePanel tone="danger" title={locale === 'ar' ? 'فشل تحميل البيانات' : 'Data could not be loaded'} action={<button type="button" className="btn" onClick={retry}>{text(commonText.retry)}</button>}>
+        <StatePanel
+            tone="danger"
+            title={locale === 'ar' ? 'فشل تحميل البيانات' : 'Data could not be loaded'}
+            onRetry={retry}
+            retryText={text(commonText.retry)}
+        >
             <p>{apiError?.message ?? text(commonText.apiError)}</p>
             {apiError ? <code>HTTP {apiError.status} · {apiError.code}</code> : null}
         </StatePanel>
