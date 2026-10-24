@@ -1135,6 +1135,14 @@
       ]
     },
     {
+      "label": "AIMW-CONT-9EDE4C1141 Welcome auth-aware header link focused closure",
+      "sha": "1f8bef5b99a8943055c1fd8c1e085b7c91071436",
+      "observed_pr_head": "1f8bef5b99a8943055c1fd8c1e085b7c91071436",
+      "operation_ids": [
+        "AIMW-CONT-9EDE4C1141"
+      ]
+    },
+    {
       "label": "AIMW-CONT-289CEEF3BA Content Editor secondary Save focused closure",
       "sha": "8058b549ace9cdf85b55e80ce3eeabc21358e01c",
       "observed_pr_head": "8058b549ace9cdf85b55e80ce3eeabc21358e01c",

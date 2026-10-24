@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #875 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-346657AD9D",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/sites/{SiteId:guid}/users",
+    "source": "src/AIWordPressManager.Web/Components/Pages/UsersManager.razor",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Pages/UsersManager.razor:/sites/{SiteId:guid}/users:@(_working ? L[",
+    "source_intent": "Render deterministic Save/Saving state and suppress duplicate submit while the authoritative WordPress user save is in flight.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "workspace": "/tenants/{tenant}/module/users",
+    "control": "variants/laravel-aiwmweb/backend/resources/js/wordpress-users-working-state-control.tsx",
+    "operation_marker": "AIMW-CONT-346657AD9D",
+    "existing_action_contract": "wordpress-users.save",
+    "existing_save_operation": "AIMW-BILL-D307963B59",
+    "authoritative_read": "GET /api/v1/tenants/{tenant}/sites/{site}/users",
+    "authoritative_save": "POST /api/v1/tenants/{tenant}/sites/{site}/users/save",
+    "authoritative_reconciliation": "Existing wordpress-users.save mutation re-reads WordPress, then the ResourceContent query refetches the tenant/site user list."
+  },
+  "security": {
+    "control_owns_tenant_or_site_identifier": false,
+    "control_owns_endpoint": false,
+    "control_owns_mutation": false,
+    "server_permission": "content.edit",
+    "site_ownership": "site",
+    "tenant_selector": "active tenant context",
+    "foreign_tenant": "404/fail closed before WordPress access",
+    "placeholder_success": false,
+    "secrets_exposed": false
+  },
+  "acceptance": {
+    "vitest": "variants/laravel-aiwmweb/backend/resources/js/__tests__/wordpress-users-working-state-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/WordPressUsersWorkingStateTerminalityTest.php",
+    "existing_save_security_test": "variants/laravel-aiwmweb/backend/tests/Feature/WordPressUsersSaveTerminalityTest.php",
+    "coverage": [
+      "exact source Save/Saving semantics",
+      "exact canonical operation marker",
+      "idle Save state",
+      "busy Saving state",
+      "duplicate submit lock while busy",
+      "Arabic and English parity",
+      "foreign-tenant 404 before WordPress access",
+      "existing authoritative save operation is reused and not reimplemented"
+    ],
+    "ci_state": "PENDING_EXACT_HEAD"
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-CONT-346657AD9D"],
+    "sibling_operations_claimed": false,
+    "explicitly_not_claimed": [
+      "AIMW-BILL-D307963B59",
+      "AIMW-CONT-BCE1211CE3",
+      "AIMW-CONT-D5FFC84EC2"
+    ],
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "branch": "worker/laravel-aiwmweb-AIMW-CONT-346657AD9D-working-state"
+  }
+}

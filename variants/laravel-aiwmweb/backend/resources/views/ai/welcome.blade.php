@@ -90,7 +90,13 @@
                 href="{{ route('public.welcome', ['lang' => $welcomeLocale === 'ar' ? 'en' : 'ar'], false) }}"
                 lang="{{ $welcomeLocale === 'ar' ? 'en' : 'ar' }}"
                 aria-label="{{ $welcomeLocale === 'ar' ? 'Switch to English' : 'التبديل إلى العربية' }}">{{ $welcomeLocale === 'ar' ? 'EN' : 'AR' }}</a>
-            <a class="signin" href="/login">{{ $welcomeLocale === 'ar' ? 'تسجيل الدخول' : 'Sign in' }}</a>
+            <a
+                class="signin"
+                href="{{ $isAuthenticated ? '/' : '/login' }}"
+                data-canonical-operation="AIMW-CONT-9EDE4C1141"
+            >{{ $isAuthenticated
+                ? ($welcomeLocale === 'ar' ? 'لوحة التحكم' : 'Dashboard')
+                : ($welcomeLocale === 'ar' ? 'تسجيل الدخول' : 'Sign in') }}</a>
         </header>
 
         <main
