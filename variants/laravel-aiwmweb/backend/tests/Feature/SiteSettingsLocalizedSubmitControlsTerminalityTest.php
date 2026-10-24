@@ -215,4 +215,4 @@ final class SiteSettingsLocalizedSubmitControlsTerminalityTest extends TestCase
     }
 }
 
-// exact-head gate retrigger after parity materialization and composition sync
+// final exact-head gate retrigger after parity materialization and latest composition sync
