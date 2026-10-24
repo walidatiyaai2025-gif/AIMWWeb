@@ -33,6 +33,7 @@ import { PagesWordPressLinkControl } from './pages-wordpress-link-control';
 import { PostsWordPressLinkControl } from './posts-wordpress-link-control';
 import { SiteOperationsExportControl } from './site-operations-export-control';
 import { SitesSiteUrlLinkControl } from './sites-site-url-link-control';
+import { SitesInterpolatedLinksControl } from './sites-interpolated-links-control';
 import { runAuthoritativeSiteOperationsReload, SITE_OPERATIONS_RELOAD_OPERATION_ID } from './site-operations-reload-control';
 import { runAuthoritativeSiteReliabilityReload, SITE_RELIABILITY_RELOAD_OPERATION_ID } from './site-reliability-reload-control';
 
@@ -558,7 +559,11 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         renderActions={route.key === 'explorer' ? (row) => (
                             <ContentExplorerWordPressLinkControl value={row.link} />
                         ) : route.key === 'sites' ? (row) => (
-                            <SitesSiteUrlLinkControl value={row.site_url ?? row.url} />
+                            <span className="site-row-actions">
+                                <SitesInterpolatedLinksControl tenantSlug={context.tenant.slug} siteId={row.id} />
+                                <span aria-hidden="true"> · </span>
+                                <SitesSiteUrlLinkControl value={row.site_url ?? row.url} />
+                            </span>
                         ) : route.key === 'posts' ? (row) => (
                             <PostsWordPressLinkControl value={row.link} />
                         ) : route.key === 'pages' ? (row) => (
