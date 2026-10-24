@@ -20104,7 +20104,7 @@
         "decision": "ADAPTED",
         "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
         "source_label": "AIMW-CONT-FBA95BDC1D Sites CloseForm focused closure",
-        "source_sha": "e9a33c5cd3cae35c78e0d25dc4962f8de5a9240e",
+        "source_sha": "98f482175fd13403fb1fad117e354c5107d4a6d8",
         "destination_path": "variants/laravel-aiwmweb/backend/resources/js/sites-save-control.tsx",
         "evidence_mode": "focused_closure_contract",
         "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/sites-close-form-terminality.json",
@@ -37976,7 +37976,7 @@
       },
       {
         "label": "AIMW-CONT-FBA95BDC1D Sites CloseForm focused closure",
-        "sha": "e9a33c5cd3cae35c78e0d25dc4962f8de5a9240e",
+        "sha": "98f482175fd13403fb1fad117e354c5107d4a6d8",
         "operation_ids": [
           "AIMW-CONT-FBA95BDC1D"
         ]
