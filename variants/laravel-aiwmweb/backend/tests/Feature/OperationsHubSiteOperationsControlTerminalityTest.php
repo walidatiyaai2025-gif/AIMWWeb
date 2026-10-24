@@ -198,3 +198,5 @@ final class OperationsHubSiteOperationsControlTerminalityTest extends TestCase
         return $membership->fresh('tenant');
     }
 }
+
+// exact-head gate retrigger after tenant.view fixture correction
