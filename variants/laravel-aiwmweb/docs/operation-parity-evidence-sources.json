@@ -1581,6 +1581,14 @@
       "operation_ids": [
         "AIMW-SYNC-F7CE702C7D"
       ]
+    },
+    {
+      "label": "AIMW-CONT-AC737C80BF Content Explorer SelectAllFiltered focused closure",
+      "sha": "05832320ddbb8038334477b09366a426eebda24e",
+      "observed_pr_head": "05832320ddbb8038334477b09366a426eebda24e",
+      "operation_ids": [
+        "AIMW-CONT-AC737C80BF"
+      ]
     }
   ]
 }
