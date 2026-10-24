@@ -1133,6 +1133,14 @@
       "operation_ids": [
         "AIMW-EMAI-470599356B"
       ]
+    },
+    {
+      "label": "AIMW-CONT-9EDE4C1141 Welcome auth-aware header link focused closure",
+      "sha": "1f8bef5b99a8943055c1fd8c1e085b7c91071436",
+      "observed_pr_head": "1f8bef5b99a8943055c1fd8c1e085b7c91071436",
+      "operation_ids": [
+        "AIMW-CONT-9EDE4C1141"
+      ]
     }
   ]
 }
