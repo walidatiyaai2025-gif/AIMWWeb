@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 722,
-    "pending": 209,
+    "adapted": 723,
+    "pending": 208,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 722,
-    "overall_parity_percent": 77.55
+    "terminal": 723,
+    "overall_parity_percent": 77.66
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 257,
-    "pending": 189,
+    "terminal": 258,
+    "pending": 188,
     "blocked": 0,
-    "percent": 57.62
+    "percent": 57.85
   },
   "domains": {
     "ai": {
@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 56,
-      "pending": 108,
+      "adapted": 57,
+      "pending": 107,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 56,
-      "percent": 34.15
+      "terminal": 57,
+      "percent": 34.76
     },
     "email": {
       "total": 82,
@@ -20375,21 +20375,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/components.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/wordpress-users-start-create-control.test.tsx",
+      "evidence": "AIMW-CONT-BCE1211CE3 WordPress Users StartCreate focused closure@a368d5f828cfecc9cd8c945eddd52517157af1f5: variants/laravel-aiwmweb/backend/resources/js/components.tsx; focused-closure:AIMW-CONT-BCE1211CE3; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/wordpress-users-start-create-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/wordpress-users-start-create-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-BCE1211CE3 WordPress Users StartCreate focused closure",
+        "source_sha": "a368d5f828cfecc9cd8c945eddd52517157af1f5",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/components.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/wordpress-users-start-create-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-BCE1211CE3",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/components.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/wordpress-users-start-create-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/wordpress-users-start-create-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -36341,12 +36351,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 257,
-      "pending": 189,
+      "adapted": 258,
+      "pending": 188,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 257,
-      "percent": 57.62
+      "terminal": 258,
+      "percent": 57.85
     }
   },
   "pending_operation_ids_by_domain": {
@@ -36446,7 +36456,6 @@
       "AIMW-CONT-B9E6EFF3DF",
       "AIMW-CONT-BB31987A53",
       "AIMW-CONT-BCAD1E3A49",
-      "AIMW-CONT-BCE1211CE3",
       "AIMW-CONT-BF5F72F4F9",
       "AIMW-CONT-C3EC665880",
       "AIMW-CONT-C49C37E2C9",
@@ -37394,6 +37403,7 @@
       "AIMW-CONT-9D5E269773",
       "AIMW-CONT-9EDE4C1141",
       "AIMW-CONT-B1E9E1D6B0",
+      "AIMW-CONT-BCE1211CE3",
       "AIMW-CONT-C178278FCB",
       "AIMW-CONT-CEA27985CB",
       "AIMW-CONT-D4607F943C",
@@ -37663,10 +37673,17 @@
         "operation_ids": [
           "AIMW-CONT-9EDE4C1141"
         ]
+      },
+      {
+        "label": "AIMW-CONT-BCE1211CE3 WordPress Users StartCreate focused closure",
+        "sha": "a368d5f828cfecc9cd8c945eddd52517157af1f5",
+        "operation_ids": [
+          "AIMW-CONT-BCE1211CE3"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 27,
-    "focused_closure_contract_count": 257,
+    "focused_closure_operation_scoped_count": 28,
+    "focused_closure_contract_count": 258,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
