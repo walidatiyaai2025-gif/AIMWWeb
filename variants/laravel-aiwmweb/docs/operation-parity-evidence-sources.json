@@ -968,14 +968,6 @@
           "security_mode": "tenant_selected"
         }
       }
-    },
-    {
-      "label": "AIMW-CONT-C7CB5EE184 Welcome footer brand focused closure",
-      "sha": "8ba2d17c46a0c88d0e67ec751ed2f17eb52311e4",
-      "observed_pr_head": "8ba2d17c46a0c88d0e67ec751ed2f17eb52311e4",
-      "operation_ids": [
-        "AIMW-CONT-C7CB5EE184"
-      ]
     }
   ],
   "excluded_sources": [],
@@ -1272,6 +1264,14 @@
       "observed_pr_head": "1dbaca6967ec022a52224dbb47f523a32a34cf80",
       "operation_ids": [
         "AIMW-CONT-607ACDF4D8"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-C7CB5EE184 Welcome footer brand focused closure",
+      "sha": "8ba2d17c46a0c88d0e67ec751ed2f17eb52311e4",
+      "observed_pr_head": "8ba2d17c46a0c88d0e67ec751ed2f17eb52311e4",
+      "operation_ids": [
+        "AIMW-CONT-C7CB5EE184"
       ]
     }
   ]
