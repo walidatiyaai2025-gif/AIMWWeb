@@ -1211,6 +1211,14 @@
       "operation_ids": [
         "AIMW-CONT-3C205B1901"
       ]
+    },
+    {
+      "label": "AIMW-CONT-DD56664FDA Welcome primary CTA focused closure",
+      "sha": "9568cb257d2227bf9e5cd67c405563b3e624bffc",
+      "observed_pr_head": "9568cb257d2227bf9e5cd67c405563b3e624bffc",
+      "operation_ids": [
+        "AIMW-CONT-DD56664FDA"
+      ]
     }
   ]
 }
