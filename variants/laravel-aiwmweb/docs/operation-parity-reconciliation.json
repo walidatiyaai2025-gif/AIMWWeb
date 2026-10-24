@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 755,
-    "pending": 176,
+    "adapted": 756,
+    "pending": 175,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 755,
-    "overall_parity_percent": 81.1
+    "terminal": 756,
+    "overall_parity_percent": 81.2
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 284,
-    "pending": 162,
+    "terminal": 285,
+    "pending": 161,
     "blocked": 0,
-    "percent": 63.68
+    "percent": 63.9
   },
   "domains": {
     "ai": {
@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 84,
-      "pending": 80,
+      "adapted": 85,
+      "pending": 79,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 84,
-      "percent": 51.22
+      "terminal": 85,
+      "percent": 51.83
     },
     "email": {
       "total": 82,
@@ -19988,21 +19988,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/sites-system-health-link-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/sites-system-health-link-control.test.tsx",
+      "evidence": "AIMW-CONT-97AD37042A Sites System health link focused closure@b45543294cca4e23189978617796cf6a642e4436: variants/laravel-aiwmweb/backend/resources/js/sites-system-health-link-control.tsx; focused-closure:AIMW-CONT-97AD37042A; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/sites-system-health-link-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/sites-system-health-link-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-97AD37042A Sites System health link focused closure",
+        "source_sha": "b45543294cca4e23189978617796cf6a642e4436",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/sites-system-health-link-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/sites-system-health-link-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-97AD37042A",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/sites-system-health-link-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/sites-system-health-link-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/sites-system-health-link-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -36695,12 +36705,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 284,
-      "pending": 162,
+      "adapted": 285,
+      "pending": 161,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 284,
-      "percent": 63.68
+      "terminal": 285,
+      "percent": 63.9
     }
   },
   "pending_operation_ids_by_domain": {
@@ -36765,7 +36775,6 @@
       "AIMW-CONT-932A09E4A9",
       "AIMW-CONT-93B6E02ACF",
       "AIMW-CONT-966F49CDAE",
-      "AIMW-CONT-97AD37042A",
       "AIMW-CONT-98918A6C27",
       "AIMW-CONT-9BA2C255AF",
       "AIMW-CONT-9CF12067E6",
@@ -37784,6 +37793,7 @@
       "AIMW-CONT-83908F2D7C",
       "AIMW-CONT-85394A0E55",
       "AIMW-CONT-8B3518EF80",
+      "AIMW-CONT-97AD37042A",
       "AIMW-CONT-9D5E269773",
       "AIMW-CONT-9EDE4C1141",
       "AIMW-CONT-A5D88995F3",
@@ -38261,10 +38271,17 @@
         "operation_ids": [
           "AIMW-CONT-F4CBF0D714"
         ]
+      },
+      {
+        "label": "AIMW-CONT-97AD37042A Sites System health link focused closure",
+        "sha": "b45543294cca4e23189978617796cf6a642e4436",
+        "operation_ids": [
+          "AIMW-CONT-97AD37042A"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 54,
-    "focused_closure_contract_count": 284,
+    "focused_closure_operation_scoped_count": 55,
+    "focused_closure_contract_count": 285,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [

@@ -35,6 +35,7 @@ import { PostsWordPressLinkControl } from './posts-wordpress-link-control';
 import { SiteOperationsExportControl } from './site-operations-export-control';
 import { SitesSiteUrlLinkControl } from './sites-site-url-link-control';
 import { SitesInterpolatedLinksControl } from './sites-interpolated-links-control';
+import { SitesSystemHealthLinkControl } from './sites-system-health-link-control';
 import { runAuthoritativeSiteOperationsReload, SITE_OPERATIONS_RELOAD_OPERATION_ID } from './site-operations-reload-control';
 import { runAuthoritativeSiteReliabilityReload, SITE_RELIABILITY_RELOAD_OPERATION_ID } from './site-reliability-reload-control';
 import { SiteReliabilityOperationHistoryLinkControl } from './site-reliability-operation-history-link-control';
@@ -414,6 +415,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                     ) : null}
                 </form>
                 <div className="toolbar-actions">
+                    {route.key === 'sites' ? (
+                        <SitesSystemHealthLinkControl context={context} />
+                    ) : null}
                     {route.key === 'application-users' ? (
                         <>
                             <ApplicationUsersRolesPermissionsLinkControl context={context} />
