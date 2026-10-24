@@ -79,10 +79,10 @@ final class SitesCloseFormTerminalityTest extends TestCase
             ->assertNotFound();
     }
 
-    public function test_missing_sites_view_permission_fails_closed(): void
+    public function test_missing_tenant_view_permission_fails_closed(): void
     {
         $user = User::factory()->create();
-        $this->membership($user, 'gamma-close', ['tenant.view']);
+        $this->membership($user, 'gamma-close', []);
 
         $this->actingAs($user)
             ->getJson('/api/tenants/gamma-close/sites')
