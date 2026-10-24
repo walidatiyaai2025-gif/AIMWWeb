@@ -19,6 +19,10 @@ export function OperationsHubSiteOperationsControl({ context }: { context: Front
         && Number.isSafeInteger(context.user.id)
         && context.user.id > 0,
     );
+    const canOpenOperationsHub = context.permissions.includes('*') || (
+        context.permissions.includes('operations.manage')
+        && context.permissions.includes('execution.view')
+    );
     const expectedApi = `/tenants/${encodeURIComponent(context.tenant.slug)}/route-api/site-operations`;
     const routeContractIsExact = Boolean(
         route
@@ -32,6 +36,7 @@ export function OperationsHubSiteOperationsControl({ context }: { context: Front
 
     if (
         !activeTenantIsAuthoritative
+        || !canOpenOperationsHub
         || !route
         || !routeContractIsExact
         || !apiContractIsExact
