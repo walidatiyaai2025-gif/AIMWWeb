@@ -38,6 +38,7 @@ import { PagesWordPressLinkControl } from './pages-wordpress-link-control';
 import { PostsWordPressLinkControl } from './posts-wordpress-link-control';
 import { SiteOperationsExportControl } from './site-operations-export-control';
 import { OperationsHubSiteOperationsControl } from './operations-hub-site-operations-control';
+import { SiteOperationsSitesLinkControl } from './site-operations-sites-link-control';
 import {
     filterSiteOperationsRows,
     siteOperationsDefaultFilters,
@@ -378,6 +379,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     if (query.error) return (
         <div className="workspace-stack">
             <QueryError error={query.error} retry={() => query.refetch()} />
+            {route.key === 'site-operations' ? <SiteOperationsSitesLinkControl context={context} /> : null}
             <CurrentUserLogsControl context={context} />
         </div>
     );
@@ -462,6 +464,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                     ) : null}
                 </form>
                 <div className="toolbar-actions">
+                    {route.key === 'site-operations' ? (
+                        <SiteOperationsSitesLinkControl context={context} />
+                    ) : null}
                     {route.key === 'sites' ? (
                         <SitesSystemHealthLinkControl context={context} />
                     ) : null}
