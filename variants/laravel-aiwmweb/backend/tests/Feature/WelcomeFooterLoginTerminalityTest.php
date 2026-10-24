@@ -87,6 +87,10 @@ final class WelcomeFooterLoginTerminalityTest extends TestCase
             ->all();
 
         $this->assertSame([], $tenantWelcomeAliases);
+
+        $this->get('/tenants/foreign/welcome')
+            ->assertNotFound();
+
         $this->post('/welcome')->assertStatus(405);
     }
 
