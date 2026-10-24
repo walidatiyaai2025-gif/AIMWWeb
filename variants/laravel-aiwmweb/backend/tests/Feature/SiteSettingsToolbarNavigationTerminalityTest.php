@@ -55,6 +55,7 @@ final class SiteSettingsToolbarNavigationTerminalityTest extends TestCase
         $this->assertStringContainsString('Connection center', $source);
 
         $this->assertSame(2, substr_count($view, 'data-canonical-operation="'.self::OPERATION_ID.'"'));
+        $this->assertStringContainsString('aria-label="Site settings shortcuts"', $view);
         $this->assertStringContainsString("route('canonical.site.details'", $view);
         $this->assertStringContainsString('/tenants/{{ rawurlencode($tenant) }}/sites/{{ $site->getKey() }}/connection', $view);
         $this->assertStringContainsString("'لوحة الموقع' : 'Site dashboard'", $view);
