@@ -32,20 +32,20 @@ final class WelcomeAuthenticatedHeaderLinkTerminalityTest extends TestCase
         $this->assertStringContainsString("href=\"{{ \$isAuthenticated ? '/' : '/login' }}\"", $view);
         $this->assertStringContainsString("'Dashboard'", $view);
         $this->assertStringContainsString("'Sign in'", $view);
-        $this->assertSame(1, substr_count($view, 'data-canonical-operation="' . self::OPERATION_ID . '"'));
+        $this->assertSame(1, substr_count($view, 'data-canonical-operation="'.self::OPERATION_ID.'"'));
     }
 
     public function test_anonymous_welcome_keeps_sign_in_destination_in_both_locales(): void
     {
         $this->get('/welcome?lang=en')
             ->assertOk()
-            ->assertSee('data-canonical-operation="' . self::OPERATION_ID . '"', false)
+            ->assertSee('data-canonical-operation="'.self::OPERATION_ID.'"', false)
             ->assertSee('href="/login"', false)
             ->assertSee('>Sign in</a>', false);
 
         $this->get('/welcome?lang=ar')
             ->assertOk()
-            ->assertSee('data-canonical-operation="' . self::OPERATION_ID . '"', false)
+            ->assertSee('data-canonical-operation="'.self::OPERATION_ID.'"', false)
             ->assertSee('href="/login"', false)
             ->assertSee('>تسجيل الدخول</a>', false);
     }
@@ -57,7 +57,7 @@ final class WelcomeAuthenticatedHeaderLinkTerminalityTest extends TestCase
         $this->actingAs($user)
             ->get('/welcome?lang=en')
             ->assertOk()
-            ->assertSee('data-canonical-operation="' . self::OPERATION_ID . '"', false)
+            ->assertSee('data-canonical-operation="'.self::OPERATION_ID.'"', false)
             ->assertSee('href="/"', false)
             ->assertSee('>Dashboard</a>', false)
             ->assertDontSee('>Sign in</a>', false);
@@ -65,7 +65,7 @@ final class WelcomeAuthenticatedHeaderLinkTerminalityTest extends TestCase
         $this->actingAs($user)
             ->get('/welcome?lang=ar')
             ->assertOk()
-            ->assertSee('data-canonical-operation="' . self::OPERATION_ID . '"', false)
+            ->assertSee('data-canonical-operation="'.self::OPERATION_ID.'"', false)
             ->assertSee('href="/"', false)
             ->assertSee('>لوحة التحكم</a>', false)
             ->assertDontSee('>تسجيل الدخول</a>', false);
@@ -112,7 +112,7 @@ final class WelcomeAuthenticatedHeaderLinkTerminalityTest extends TestCase
     {
         $view = (string) file_get_contents(resource_path('views/ai/welcome.blade.php'));
 
-        $this->assertSame(1, substr_count($view, 'data-canonical-operation="' . self::OPERATION_ID . '"'));
+        $this->assertSame(1, substr_count($view, 'data-canonical-operation="'.self::OPERATION_ID.'"'));
         $this->assertStringNotContainsString('data-canonical-operation="AIMW-CONT-C7CB5EE184"', $view);
         $this->assertStringNotContainsString('data-canonical-operation="AIMW-CONT-DD56664FDA"', $view);
         $this->assertStringNotContainsString('data-canonical-operation="AIMW-CONT-3C205B1901"', $view);
