@@ -369,7 +369,7 @@ Route::prefix('/tenants/{tenant}')
 
         Route::get('/module/reports', 'show')->defaults('workspace_permissions', 'reports.view')->name('canonical.workspace.reports');
         Route::get('/site-operations', 'show')->defaults('workspace_permissions', 'execution.view')->name('canonical.workspace.site-operations');
-        Route::get('/site-reliability', 'show')->defaults('workspace_permissions', 'sites.view')->name('canonical.workspace.site-reliability');
+        Route::get('/site-reliability', 'show')->defaults('workspace_permissions', 'sites.view')->defaults('canonical_operation_id', 'AIMW-CONT-916E34454C')->name('canonical.workspace.site-reliability');
         Route::get('/automation-center', 'show')->defaults('workspace_permissions', 'operations.manage,automation.view')->name('canonical.workspace.automation');
         Route::get('/module/schedules', 'show')->defaults('workspace_permissions', 'operations.manage,automation.view')->name('canonical.workspace.schedules');
         Route::get('/module/execution', 'show')->defaults('workspace_permissions', 'operations.manage,execution.view')->name('canonical.workspace.execution');
