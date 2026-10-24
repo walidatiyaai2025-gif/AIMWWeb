@@ -16327,21 +16327,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/content-editor-save-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-editor-show-edit-control.test.tsx",
+      "evidence": "AIMW-CONT-A5D88995F3 Content Editor ShowEdit focused closure@39effaa2c6686e1d2d7a9466a569fb7596a92b54: variants/laravel-aiwmweb/backend/resources/js/content-editor-save-control.tsx; focused-closure:AIMW-CONT-A5D88995F3; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-editor-show-edit-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-editor-show-edit-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-A5D88995F3 Content Editor ShowEdit focused closure",
+        "source_sha": "39effaa2c6686e1d2d7a9466a569fb7596a92b54",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/content-editor-save-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/content-editor-show-edit-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-A5D88995F3",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/content-editor-save-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-editor-show-edit-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-editor-show-edit-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -20791,31 +20801,21 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
+      "laravel_destination": "",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "ADAPTED",
-      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/WelcomeFooterBrandRouteTerminalityTest.php",
-      "evidence": "AIMW-CONT-C7CB5EE184 Welcome footer brand focused closure@a8b2136fb6c813da06d87f556c94ff3c27369cf9: variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php; focused-closure:AIMW-CONT-C7CB5EE184; test:variants/laravel-aiwmweb/backend/tests/Feature/WelcomeFooterBrandRouteTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/welcome-footer-brand-route-terminality.json",
+      "migration_state": "PENDING",
+      "acceptance_test": "",
+      "evidence": "",
       "reconciliation": {
-        "decision": "ADAPTED",
-        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "AIMW-CONT-C7CB5EE184 Welcome footer brand focused closure",
-        "source_sha": "a8b2136fb6c813da06d87f556c94ff3c27369cf9",
-        "destination_path": "variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
-        "evidence_mode": "focused_closure_contract",
-        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/welcome-footer-brand-route-terminality.json",
-        "signals": [
-          "operation:AIMW-CONT-C7CB5EE184",
-          "production-marker:variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
-          "test:variants/laravel-aiwmweb/backend/tests/Feature/WelcomeFooterBrandRouteTerminalityTest.php",
-          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/welcome-footer-brand-route-terminality.json",
-          "scope:operation-specific",
-          "test:tenant-isolation"
-        ]
+        "decision": "PENDING",
+        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
+        "source_label": null,
+        "source_sha": null,
+        "destination_path": null
       }
     },
     {
@@ -36593,7 +36593,6 @@
       "AIMW-CONT-9F0D652C67",
       "AIMW-CONT-A31317B378",
       "AIMW-CONT-A3A2CD23B6",
-      "AIMW-CONT-A5D88995F3",
       "AIMW-CONT-A6867078EA",
       "AIMW-CONT-A6EA54E66D",
       "AIMW-CONT-A93DE991C0",
@@ -36608,6 +36607,7 @@
       "AIMW-CONT-BF5F72F4F9",
       "AIMW-CONT-C3EC665880",
       "AIMW-CONT-C49C37E2C9",
+      "AIMW-CONT-C7CB5EE184",
       "AIMW-CONT-CA17F05024",
       "AIMW-CONT-CA4920CBC8",
       "AIMW-CONT-CF4BE4EC3B",
@@ -37585,10 +37585,10 @@
       "AIMW-CONT-8B3518EF80",
       "AIMW-CONT-9D5E269773",
       "AIMW-CONT-9EDE4C1141",
+      "AIMW-CONT-A5D88995F3",
       "AIMW-CONT-B1E9E1D6B0",
       "AIMW-CONT-BCE1211CE3",
       "AIMW-CONT-C178278FCB",
-      "AIMW-CONT-C7CB5EE184",
       "AIMW-CONT-CEA27985CB",
       "AIMW-CONT-D4607F943C",
       "AIMW-CONT-D5FFC84EC2",
@@ -37932,10 +37932,10 @@
         ]
       },
       {
-        "label": "AIMW-CONT-C7CB5EE184 Welcome footer brand focused closure",
-        "sha": "a8b2136fb6c813da06d87f556c94ff3c27369cf9",
+        "label": "AIMW-CONT-A5D88995F3 Content Editor ShowEdit focused closure",
+        "sha": "39effaa2c6686e1d2d7a9466a569fb7596a92b54",
         "operation_ids": [
-          "AIMW-CONT-C7CB5EE184"
+          "AIMW-CONT-A5D88995F3"
         ]
       }
     ],
