@@ -31,6 +31,7 @@ import { NotificationOpenControl } from './notification-open-control';
 import { PagesWordPressLinkControl } from './pages-wordpress-link-control';
 import { PostsWordPressLinkControl } from './posts-wordpress-link-control';
 import { SiteOperationsExportControl } from './site-operations-export-control';
+import { SitesSiteUrlLinkControl } from './sites-site-url-link-control';
 import { runAuthoritativeSiteOperationsReload, SITE_OPERATIONS_RELOAD_OPERATION_ID } from './site-operations-reload-control';
 import { runAuthoritativeSiteReliabilityReload, SITE_RELIABILITY_RELOAD_OPERATION_ID } from './site-reliability-reload-control';
 
@@ -537,7 +538,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                 {visibleRows.length ? (
                     <DataTable
                         rows={visibleRows}
-                        renderActions={route.key === 'posts' ? (row) => (
+                        renderActions={route.key === 'sites' ? (row) => (
+                            <SitesSiteUrlLinkControl value={row.site_url ?? row.url} />
+                        ) : route.key === 'posts' ? (row) => (
                             <PostsWordPressLinkControl value={row.link} />
                         ) : route.key === 'pages' ? (row) => (
                             <PagesWordPressLinkControl value={row.link} />
