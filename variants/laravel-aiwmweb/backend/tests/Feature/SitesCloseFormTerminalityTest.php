@@ -2,10 +2,19 @@
 
 namespace Tests\Feature;
 
+use App\Models\Permission;
+use App\Models\Role;
+use App\Models\Tenant;
+use App\Models\TenantMembership;
+use App\Models\User;
+use App\Tenancy\TenantContext;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 final class SitesCloseFormTerminalityTest extends TestCase
 {
+    use RefreshDatabase;
+
     private const OPERATION_ID = 'AIMW-CONT-FBA95BDC1D';
 
     public function test_exact_canonical_operation_matches_sites_close_form(): void
@@ -34,7 +43,7 @@ final class SitesCloseFormTerminalityTest extends TestCase
         $this->assertStringContainsString(self::OPERATION_ID, $frontend);
         $this->assertStringContainsString('data-canonical-operation={SITES_CLOSE_FORM_OPERATION_ID}', $frontend);
         $this->assertStringContainsString('disabled={m.isPending} onClick={closeForm}', $frontend);
-        $this->assertStringContainsString('setFormOpen(false);setId(null);setName(\'\');setUrl(\'\');setMsg(null)', $frontend);
+        $this->assertStringContainsString("setFormOpen(false);setId(null);setName('');setUrl('');setMsg(null)", $frontend);
 
         $start = strpos($frontend, 'const closeForm=');
         $end = strpos($frontend, 'const openAddForm=', $start);
@@ -55,5 +64,46 @@ final class SitesCloseFormTerminalityTest extends TestCase
         $this->assertStringContainsString('c.api.sites===`/api/tenants/${encodeURIComponent(c.tenant.slug)}/sites`?c.api.sites:null', $frontend);
         $this->assertStringContainsString("context.permissions.includes('sites.manage')", $frontend);
         $this->assertStringContainsString('if(!allowed||!ep)return null;', $frontend);
+    }
+
+    public function test_foreign_tenant_authoritative_sites_read_fails_closed_with_404(): void
+    {
+        $user = User::factory()->create();
+        $this->membership($user, 'alpha-close', ['tenant.view', 'sites.view', 'sites.manage']);
+
+        $foreignUser = User::factory()->create();
+        $this->membership($foreignUser, 'beta-close', ['tenant.view', 'sites.view', 'sites.manage']);
+
+        $this->actingAs($user)
+            ->getJson('/api/tenants/beta-close/sites')
+            ->assertNotFound();
+    }
+
+    public function test_missing_sites_view_permission_fails_closed(): void
+    {
+        $user = User::factory()->create();
+        $this->membership($user, 'gamma-close', ['tenant.view']);
+
+        $this->actingAs($user)
+            ->getJson('/api/tenants/gamma-close/sites')
+            ->assertForbidden();
+    }
+
+    private function membership(User $user, string $slug, array $permissions): TenantMembership
+    {
+        $tenant = Tenant::query()->create(['slug' => $slug, 'name' => ucfirst($slug)]);
+        app(TenantContext::class)->activate($tenant);
+        $membership = TenantMembership::query()->create(['user_id' => $user->id, 'status' => 'active']);
+        $role = Role::query()->create(['name' => $slug.'-'.$user->id]);
+
+        foreach ($permissions as $name) {
+            $permission = Permission::query()->firstOrCreate(['name' => $name]);
+            $role->permissions()->attach($permission, ['tenant_id' => $tenant->id]);
+        }
+
+        $membership->roles()->attach($role, ['tenant_id' => $tenant->id]);
+        app(TenantContext::class)->forget();
+
+        return $membership->fresh('tenant');
     }
 }
