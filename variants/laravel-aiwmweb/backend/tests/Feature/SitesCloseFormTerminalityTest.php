@@ -13,6 +13,7 @@ use Tests\TestCase;
 
 final class SitesCloseFormTerminalityTest extends TestCase
 {
+    // Exact-head CI retrigger after guarded composition sync.
     use RefreshDatabase;
 
     private const OPERATION_ID = 'AIMW-CONT-FBA95BDC1D';
