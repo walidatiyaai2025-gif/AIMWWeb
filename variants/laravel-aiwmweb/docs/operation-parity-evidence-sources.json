@@ -1407,6 +1407,14 @@
       ]
     },
     {
+      "label": "AIMW-TAXO-5D39DA68B7 TaxonomyManager ResetFormClicked focused closure",
+      "sha": "88643aefcb4cbd1110bae676992dfd4e41386448",
+      "observed_pr_head": "88643aefcb4cbd1110bae676992dfd4e41386448",
+      "operation_ids": [
+        "AIMW-TAXO-5D39DA68B7"
+      ]
+    },
+    {
       "label": "AIMW-CONT-3A4E69E5D8 Sites interpolated links focused closure",
       "sha": "29d5d8623cbbf216212f57b08c34e9e6858ac5eb",
       "observed_pr_head": "29d5d8623cbbf216212f57b08c34e9e6858ac5eb",

@@ -160,6 +160,7 @@ export function Pagination({
 export const WORDPRESS_USERS_START_CREATE_OPERATION_ID = 'AIMW-CONT-BCE1211CE3';
 export const TAXONOMY_START_CREATE_OPERATION_ID = 'AIMW-TAXO-005925568C';
 export const TAXONOMY_SAVE_SUBMIT_OPERATION_ID = 'AIMW-TAXO-39CDD7EF81';
+export const TAXONOMY_RESET_FORM_OPERATION_ID = 'AIMW-TAXO-5D39DA68B7';
 
 export function ActionButton({
     route,
@@ -231,6 +232,13 @@ export function ActionDialog({
     const dialogRef = useRef<HTMLDivElement>(null);
     const firstFieldRef = useRef<HTMLInputElement>(null);
     const isTaxonomySaveSubmit = actionKey === 'taxonomy.manage';
+    const isTaxonomyResetForm = actionKey === 'taxonomy.manage';
+
+    const closeAndReset = () => {
+        setValues({});
+        setErrors({});
+        onClose();
+    };
 
     useEffect(() => {
         if (!open) return;
@@ -307,7 +315,15 @@ export function ActionDialog({
                         </label>
                     ))}
                     <footer className="dialog-actions">
-                        <button type="button" className="btn" onClick={onClose} disabled={busy}>{text(commonText.close)}</button>
+                        <button
+                            type="button"
+                            className="btn"
+                            onClick={isTaxonomyResetForm ? closeAndReset : onClose}
+                            disabled={busy}
+                            data-canonical-operation={isTaxonomyResetForm ? TAXONOMY_RESET_FORM_OPERATION_ID : undefined}
+                        >
+                            {isTaxonomyResetForm ? (locale === 'ar' ? 'إلغاء' : 'Cancel') : text(commonText.close)}
+                        </button>
                         {actionKey === 'wordpress-users.save' ? (
                             <WordPressUsersWorkingStateControl busy={busy} locale={locale} />
                         ) : (

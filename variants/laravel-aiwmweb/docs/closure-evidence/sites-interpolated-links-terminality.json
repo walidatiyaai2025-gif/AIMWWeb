@@ -50,7 +50,7 @@
   },
   "provenance": {
     "base_branch": "worker/laravel-aiwmweb-closure-composition",
-    "base_composition_sha": "20906cb3e7ac907b8447589e9bbf9bcfe66a3d3b",
+    "base_composition_sha": "3f03d675ee2812126748c2318a46c3f8dedafbe4",
     "branch": "worker/861-sites-interpolated-control",
     "issue": 861,
     "authority_issue": 257

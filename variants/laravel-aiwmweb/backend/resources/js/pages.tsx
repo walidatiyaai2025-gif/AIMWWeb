@@ -328,6 +328,12 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         },
     });
 
+    const closeActionDialog = () => {
+        if (mutation.isPending) return;
+        mutation.reset();
+        setDialog(null);
+    };
+
     if (state.state !== 'enabled') return <Unavailable route={route} context={context} state={state} />;
     if (query.isLoading) return <LoadingState />;
     if (query.error) return (
@@ -589,7 +595,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                 open={Boolean(dialog)}
                 actionKey={dialog?.key ?? ''}
                 contract={dialog?.contract ?? null}
-                onClose={() => !mutation.isPending && setDialog(null)}
+                onClose={closeActionDialog}
                 onSubmit={(values) => mutation.mutate(values)}
                 busy={mutation.isPending}
                 serverErrors={serverErrors}
