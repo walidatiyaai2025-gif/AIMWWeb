@@ -48,4 +48,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "chore(laravel): materialize parity for AIMW-CONT-E89EDDF780"
-          git pull --rebase origin "${{ github.ref_name }}"\n          git push origin "HEAD:${{ github.ref_name }}"
+          git pull --rebase origin "${{ github.ref_name }}"
+          git push origin "HEAD:${{ github.ref_name }}"
