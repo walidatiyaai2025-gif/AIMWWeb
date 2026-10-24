@@ -75,6 +75,18 @@ final class StatePanelRetryControlTerminalityTest extends TestCase
         $this->assertStringNotContainsString('membership_id', $components);
     }
 
+    public function test_tenant_scoped_retry_consumer_remains_permission_guarded(): void
+    {
+        $this->withoutVite();
+
+        $limited = User::factory()->create();
+        $this->membership($limited, 'limited-state-retry', ['tenant.view']);
+
+        $this->actingAs($limited)
+            ->get('/tenants/limited-state-retry/sites')
+            ->assertForbidden();
+    }
+
     private function statePanelSlice(string $components): string
     {
         $start = strpos($components, 'export const STATE_PANEL_RETRY_OPERATION_ID');
