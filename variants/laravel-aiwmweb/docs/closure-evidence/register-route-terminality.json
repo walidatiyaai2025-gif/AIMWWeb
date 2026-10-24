@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #795 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-8DF93FC75E",
+  "terminal_state": "ADAPTED",
+  "canonical_operation": {
+    "operation_id": "AIMW-CONT-8DF93FC75E",
+    "terminal_state": "ADAPTED",
+    "domain": "content",
+    "kind": "route",
+    "route_screen": "/register",
+    "source": "src/AIWordPressManager.Web/Components/Pages/Register.razor",
+    "source_authorization": "AllowAnonymous",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/RegisterRouteServiceProvider.php",
+    "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/RegisterController.php",
+    "action": "show",
+    "route": "GET /register",
+    "route_name": "register",
+    "middleware": [
+      "web"
+    ],
+    "route_parameters": [],
+    "tenant_context": false
+  },
+  "security": {
+    "anonymous_access": true,
+    "authentication_required": false,
+    "tenant_selector": false,
+    "tenant_identity_disclosure": false,
+    "mutation_added": false,
+    "registration_post_operation_modified": false
+  },
+  "acceptance": {
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/RegisterRouteTerminalityTest.php",
+    "proof": [
+      "canonical source route and AllowAnonymous semantics",
+      "GET/HEAD route is web-only with zero parameters",
+      "auth and tenant.context middleware are absent",
+      "anonymous render returns authoritative registration UI",
+      "tenant identities are not disclosed",
+      "authenticated GET behavior remains unchanged",
+      "POST registration mutation remains a distinct canonical operation"
+    ]
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-CONT-8DF93FC75E",
+    "second_operation_started": false,
+    "registration_mutation_modified": false,
+    "register_login_navigation_modified": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  }
+}
+
