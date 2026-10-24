@@ -30,6 +30,11 @@ import { ContentExplorerWordPressLinkControl } from './content-explorer-wordpres
 import { ContentExplorerPreviewPanel } from './content-explorer-preview-panel';
 import { CONTENT_EXPLORER_CONTENT_TAB_RESET_EVENT } from './content-explorer-content-tab-control';
 import { ContentExplorerPagination } from './content-explorer-previous-page-control';
+import {
+    ContentExplorerSelectAllFilteredControl,
+    contentExplorerSelectionKey,
+    loadAllFilteredExplorerKeys,
+} from './content-explorer-select-all-filtered-control';
 import { ContentExplorerBackToSitesControl } from './content-explorer-back-to-sites-control';
 import { CurrentUserLogsControl } from './current-user-logs-control';
 import { DashboardSitesNavigationControl } from './dashboard-sites-navigation-control';
@@ -219,12 +224,16 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const applicationUsersSearchInFlight = useRef(false);
     const [sitesFilter, setSitesFilter] = useState<'all' | 'connected' | 'review'>('all');
     const [explorerPreview, setExplorerPreview] = useState<Record<string, unknown> | null>(null);
+    const [explorerSelectedKeys, setExplorerSelectedKeys] = useState<Set<string>>(() => new Set());
 
     useEffect(() => {
         if (route.key !== 'explorer') return undefined;
-        const clearPreview = () => setExplorerPreview(null);
-        window.addEventListener(CONTENT_EXPLORER_CONTENT_TAB_RESET_EVENT, clearPreview);
-        return () => window.removeEventListener(CONTENT_EXPLORER_CONTENT_TAB_RESET_EVENT, clearPreview);
+        const resetExplorerLocalState = () => {
+            setExplorerPreview(null);
+            setExplorerSelectedKeys(new Set());
+        };
+        window.addEventListener(CONTENT_EXPLORER_CONTENT_TAB_RESET_EVENT, resetExplorerLocalState);
+        return () => window.removeEventListener(CONTENT_EXPLORER_CONTENT_TAB_RESET_EVENT, resetExplorerLocalState);
     }, [route.key]);
     const [siteOperationsFilters, setSiteOperationsFilters] = useState<SiteOperationsFilterState>(() => siteOperationsDefaultFilters());
     const [siteOperationsExportResetToken, setSiteOperationsExportResetToken] = useState(0);
@@ -235,6 +244,13 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const state = resolveCapability(context, route);
     const endpoint = route.apiKey ? context.api[route.apiKey] : undefined;
     const readOperations = COLLECTION_READ_OPERATIONS[route.key];
+    const canEditExplorerContent = context.permissions.includes('*') || context.permissions.includes('content.edit');
+
+    const selectAllExplorerFiltered = async (): Promise<void> => {
+        if (route.key !== 'explorer' || !canEditExplorerContent) return;
+        const keys = await loadAllFilteredExplorerKeys({ context, endpoint, search });
+        setExplorerSelectedKeys(keys);
+    };
 
     const taxonomyFilter: Record<string, string> = route.key === 'taxonomy' ? { taxonomy: taxonomyType } : {};
     const emailHistoryQueryFilters: Record<string, string> = route.key === 'email-history' ? {
@@ -467,7 +483,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         void searchApplicationUsers().catch(() => undefined);
                         return;
                     }
-                    setPage(1); setSearch(searchInput);
+                    setPage(1); setSearch(searchInput); if (route.key === 'explorer') setExplorerSelectedKeys(new Set());
                 }} role="search">
                     <label className="sr-only" htmlFor={`search-${route.key}`}>{text(commonText.search)}</label>
                     {route.key === 'comments' ? (
@@ -685,13 +701,41 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
             ) : null}
             <section className="panel data-panel">
                 <header className="panel-header"><div><span className="workspace-kicker">LIVE DATA</span><h2>{route.label[locale]}</h2></div><span className="count-badge">{route.key === 'sites' && sitesFilter !== 'all' ? visibleRows.length : collection.total}</span></header>
+                {route.key === 'explorer' ? (
+                    <ContentExplorerSelectAllFilteredControl
+                        canEdit={canEditExplorerContent}
+                        selectedCount={explorerSelectedKeys.size}
+                        total={collection.total}
+                        onSelectAll={selectAllExplorerFiltered}
+                    />
+                ) : null}
                 {visibleRows.length ? (
                     <DataTable
                         rows={visibleRows}
                         renderActions={route.key === 'site-reliability' ? (row) => (
                             <SiteReliabilityConnectionLinkControl tenantSlug={context.tenant.slug} siteId={row.site_id} />
-                        ) : route.key === 'explorer' ? (row) => (
+                        ) : route.key === 'explorer' ? (row) => {
+                            const selectionKey = contentExplorerSelectionKey(row);
+                            const selected = Boolean(selectionKey && explorerSelectedKeys.has(selectionKey));
+                            return (
                             <span className="site-row-actions">
+                                {canEditExplorerContent && selectionKey ? (
+                                    <label className="row-selection-control">
+                                        <input
+                                            type="checkbox"
+                                            aria-label={locale === 'ar' ? 'تحديد ' + String(row.title ?? '') : 'Select ' + String(row.title ?? '')}
+                                            checked={selected}
+                                            onChange={(event) => {
+                                                const checked = event.currentTarget.checked;
+                                                setExplorerSelectedKeys((current) => {
+                                                    const next = new Set(current);
+                                                    if (checked) next.add(selectionKey); else next.delete(selectionKey);
+                                                    return next;
+                                                });
+                                            }}
+                                        />
+                                    </label>
+                                ) : null}
                                 <button
                                     type="button"
                                     className="btn compact"
@@ -700,7 +744,8 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                                 <span aria-hidden="true"> · </span>
                                 <ContentExplorerWordPressLinkControl value={row.link} />
                             </span>
-                        ) : route.key === 'sites' ? (row) => (
+                            );
+                        } : route.key === 'sites' ? (row) => (
                             <span className="site-row-actions">
                                 <SitesInterpolatedLinksControl tenantSlug={context.tenant.slug} siteId={row.id} />
                                 <span aria-hidden="true"> · </span>
