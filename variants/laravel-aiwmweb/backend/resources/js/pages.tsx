@@ -16,6 +16,7 @@ import { ActionButton, ActionDialog, DataTable, LoadingState, Pagination, StateP
 import { commonText, useLocale } from './i18n';
 import { AiCenterGenerateControl } from './ai-center-generate-control';
 import { AdminBillingSupportClearSearchControl } from './admin-billing-support-clear-search-control';
+import { AccountProfileEmailSettingsLinkControl } from './account-profile-email-settings-link-control';
 import { ApplicationUsersClearSearchControl } from './application-users-clear-search-control';
 import { ApplicationUsersRolesPermissionsLinkControl } from './application-users-roles-permissions-link-control';
 import { ApplicationUsersStartCreateControl } from './application-users-start-create-control';
@@ -36,6 +37,7 @@ import { PostsWordPressLinkControl } from './posts-wordpress-link-control';
 import { SiteOperationsExportControl } from './site-operations-export-control';
 import { SitesSiteUrlLinkControl } from './sites-site-url-link-control';
 import { SitesInterpolatedLinksControl } from './sites-interpolated-links-control';
+import { SitesSystemHealthLinkControl } from './sites-system-health-link-control';
 import { runAuthoritativeSiteOperationsReload, SITE_OPERATIONS_RELOAD_OPERATION_ID } from './site-operations-reload-control';
 import { runAuthoritativeSiteReliabilityReload, SITE_RELIABILITY_RELOAD_OPERATION_ID } from './site-reliability-reload-control';
 import { SiteReliabilityOperationHistoryLinkControl } from './site-reliability-operation-history-link-control';
@@ -158,7 +160,12 @@ function QueryError({ error, retry }: { error: unknown; retry: () => void }) {
     const { locale, text } = useLocale();
     const apiError = error instanceof ApiError ? error : null;
     return (
-        <StatePanel tone="danger" title={locale === 'ar' ? 'فشل تحميل البيانات' : 'Data could not be loaded'} action={<button type="button" className="btn" onClick={retry}>{text(commonText.retry)}</button>}>
+        <StatePanel
+            tone="danger"
+            title={locale === 'ar' ? 'فشل تحميل البيانات' : 'Data could not be loaded'}
+            onRetry={retry}
+            retryText={text(commonText.retry)}
+        >
             <p>{apiError?.message ?? text(commonText.apiError)}</p>
             {apiError ? <code>HTTP {apiError.status} · {apiError.code}</code> : null}
         </StatePanel>
@@ -415,6 +422,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                     ) : null}
                 </form>
                 <div className="toolbar-actions">
+                    {route.key === 'sites' ? (
+                        <SitesSystemHealthLinkControl context={context} />
+                    ) : null}
                     {route.key === 'application-users' ? (
                         <>
                             <ApplicationUsersRolesPermissionsLinkControl context={context} />
@@ -640,6 +650,7 @@ function WorkspaceHub({ context, route }: { context: FrontendContext; route: Wor
 
 export function WorkspacePage({ context, route }: { context: FrontendContext; route: WorkspaceRoute }) {
     if (route.key === 'explorer') return <><ContentExplorerBackToSitesControl context={context} /><ResourceContent context={context} route={route} /></>;
+    if (route.key === 'account-profile') return <><AccountProfileEmailSettingsLinkControl context={context} /><ResourceContent context={context} route={route} /></>;
     if (route.kind === 'dashboard') return <DashboardContent context={context} route={route} />;
     if (route.kind === 'workspace') return <WorkspaceHub context={context} route={route} />;
     return <ResourceContent context={context} route={route} />;
