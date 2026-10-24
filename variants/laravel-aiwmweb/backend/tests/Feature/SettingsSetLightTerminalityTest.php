@@ -36,13 +36,13 @@ final class SettingsSetLightTerminalityTest extends TestCase
         $shell = (string) file_get_contents(resource_path('js/components.tsx'));
 
         $this->assertStringContainsString(self::OPERATION_ID, $control);
-        $this->assertStringContainsString("applyAppearanceMode('light')", $control);
-        $this->assertStringContainsString("window.localStorage.setItem(MODE_STORAGE_KEY, mode)", $control);
+        $this->assertStringContainsString('applyAppearanceMode(\'light\')', $control);
+        $this->assertStringContainsString('window.localStorage.setItem(MODE_STORAGE_KEY, mode)', $control);
         $this->assertStringContainsString('document.documentElement.dataset.mode = mode', $control);
-        $this->assertStringContainsString("window.dispatchEvent(new CustomEvent(APPEARANCE_MODE_EVENT", $control);
+        $this->assertStringContainsString('window.dispatchEvent(new CustomEvent(APPEARANCE_MODE_EVENT', $control);
         $this->assertStringContainsString('aria-pressed={mode === \'light\'}', $control);
         $this->assertStringContainsString('<SettingsAppearanceLightControl context={context} />', $app);
-        $this->assertStringContainsString("window.addEventListener('aiwm:appearance-mode', syncAppearanceMode)", $shell);
+        $this->assertStringContainsString('window.addEventListener(\'aiwm:appearance-mode\', syncAppearanceMode)', $shell);
 
         $this->assertStringNotContainsString('apiRequest', $control);
         $this->assertStringNotContainsString('fetch(', $control);
