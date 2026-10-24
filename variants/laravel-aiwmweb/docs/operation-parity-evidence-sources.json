@@ -1373,6 +1373,14 @@
       "operation_ids": [
         "AIMW-TAXO-39CDD7EF81"
       ]
+    },
+    {
+      "label": "AIMW-CONT-44A3B8E551 Sites external URL link focused closure",
+      "sha": "f464623cfeee702b76b1ffaff433f3c9fc7d731b",
+      "observed_pr_head": "f464623cfeee702b76b1ffaff433f3c9fc7d731b",
+      "operation_ids": [
+        "AIMW-CONT-44A3B8E551"
+      ]
     }
   ]
 }
