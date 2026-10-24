@@ -53,11 +53,14 @@
       "English and Arabic labels",
       "busy duplicate-submit suppression",
       "approval-busy and invalid-title suppression",
-      "existing tenant, permission, IDOR, optimistic concurrency, mutation and authoritative-reread security contract remains authoritative"
+      "existing tenant, permission, IDOR, optimistic concurrency, mutation and authoritative-reread security contract remains authoritative",
+      "focused proof links the reused save path to its executed foreign-tenant/site 404 acceptance contract"
     ]
   },
   "scope_guards": {
-    "claimed_operations": ["AIMW-CONT-289CEEF3BA"],
+    "claimed_operations": [
+      "AIMW-CONT-289CEEF3BA"
+    ],
     "sibling_operations_claimed": false,
     "existing_save_operation_claimed": false,
     "explicitly_not_claimed": [
@@ -73,6 +76,6 @@
   "provenance": {
     "base_branch": "worker/laravel-aiwmweb-closure-composition",
     "branch": "worker/laravel-aiwmweb-AIMW-CONT-289CEEF3BA-secondary-save",
-    "implementation_sha": "4e34292efdd0ce3550c531dcaf3f87d8b29962b9"
+    "implementation_sha": "06efacaf720e427a98cf9a2e54060194ad4f9616"
   }
 }
