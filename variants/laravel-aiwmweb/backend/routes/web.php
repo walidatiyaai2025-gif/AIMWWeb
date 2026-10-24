@@ -368,6 +368,12 @@ Route::prefix('/tenants/{tenant}')
         Route::get('/sites/{site}/comments', 'redirectSite')->defaults('workspace_permissions', 'content.view')->defaults('workspace_target', '/module/comments')->whereNumber('site')->name('canonical.site.comments');
         Route::get('/sites/{site}/media', 'redirectSite')->defaults('workspace_permissions', 'content.view')->defaults('workspace_target', '/module/media')->whereNumber('site')->name('canonical.site.media');
         Route::get('/sites/{site}/taxonomy', 'redirectSite')->defaults('workspace_permissions', 'content.view')->defaults('workspace_target', '/module/taxonomy')->whereNumber('site')->name('canonical.site.taxonomy');
+        Route::get('/sites/{site}/users', 'redirectSite')
+            ->defaults('workspace_permissions', 'tenant.view,sites.view')
+            ->defaults('workspace_target', '/module/users')
+            ->defaults('canonical_operation_id', 'AIMW-CONT-1C2443112C')
+            ->whereNumber('site')
+            ->name('canonical.site.wordpress-users');
 
         Route::get('/admin/application-users', 'redirect')->defaults('workspace_permissions', 'tenant.view,users.view')->defaults('workspace_target', '/admin/users')->name('canonical.alias.application-users');
         Route::get('/settings/sessions', 'redirect')->defaults('workspace_permissions', 'sessions.manage,sessions.view')->defaults('workspace_target', '/account/sessions')->name('canonical.alias.settings-sessions');
