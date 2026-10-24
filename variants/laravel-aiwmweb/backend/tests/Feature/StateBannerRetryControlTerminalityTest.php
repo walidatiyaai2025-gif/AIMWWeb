@@ -15,6 +15,7 @@ use Tests\TestCase;
 
 final class StateBannerRetryControlTerminalityTest extends TestCase
 {
+    // Final exact-head CI retrigger after combined #762 + #994 parity materialization.
     // Exact-head CI retrigger after official parity materialization.
     use RefreshDatabase;
 
