@@ -1026,6 +1026,14 @@
   "known_composition_blockers": [],
   "focused_closure_operation_sources": [
     {
+      "label": "AIMW-CONT-4961F90970 Settings SetLight focused closure",
+      "sha": "5c784d3af2ffbcbff560341cd71072687cdd4a7b",
+      "observed_pr_head": "bbf07713f79a14770fcdbbc6f5d38803c75088c2",
+      "operation_ids": [
+        "AIMW-CONT-4961F90970"
+      ]
+    },
+    {
       "label": "AIMW-CONT-E38ADF8481 application user StartCreate focused closure",
       "sha": "d32c91a10de07c92a306d43db3b540b4140d51a2",
       "observed_pr_head": "3b63ea9ff3274e9e4ffa812be0f5d246a98b3a6a",
@@ -1524,22 +1532,6 @@
       "observed_pr_head": "243bcdeb80587b7438935ccbed4c2820c94f1633",
       "operation_ids": [
         "AIMW-CONT-93B6E02ACF"
-      ]
-    },
-    {
-      "label": "AIMW-CONT-5BE26C7AB5 Site Operations Manage sites focused closure",
-      "sha": "336b283ff8837a32d6e06b0b2f8135b9fb7ad3eb",
-      "observed_pr_head": "336b283ff8837a32d6e06b0b2f8135b9fb7ad3eb",
-      "operation_ids": [
-        "AIMW-CONT-5BE26C7AB5"
-      ]
-    },
-    {
-      "label": "AIMW-CONT-4961F90970 Settings SetLight focused closure",
-      "sha": "5c784d3af2ffbcbff560341cd71072687cdd4a7b",
-      "observed_pr_head": "bbf07713f79a14770fcdbbc6f5d38803c75088c2",
-      "operation_ids": [
-        "AIMW-CONT-4961F90970"
       ]
     }
   ]
