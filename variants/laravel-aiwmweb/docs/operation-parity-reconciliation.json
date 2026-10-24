@@ -16751,21 +16751,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-previous-page-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-previous-page-control.test.tsx",
+      "evidence": "AIMW-CONT-A31317B378 Content Explorer PreviousPage focused closure@49ada2c1193e44eebfe32c4369b31da1189821ae: variants/laravel-aiwmweb/backend/resources/js/content-explorer-previous-page-control.tsx; focused-closure:AIMW-CONT-A31317B378; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-previous-page-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-previous-page-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-A31317B378 Content Explorer PreviousPage focused closure",
+        "source_sha": "49ada2c1193e44eebfe32c4369b31da1189821ae",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-previous-page-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-previous-page-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-A31317B378",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/content-explorer-previous-page-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-previous-page-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-previous-page-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -19850,31 +19860,21 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/views/sites/settings.blade.php",
+      "laravel_destination": "",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "ADAPTED",
-      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteSettingsLocalizedSubmitControlsTerminalityTest.php",
-      "evidence": "AIMW-CONT-E1A7A8CAA7 Site Settings localized submit controls focused closure@996bb17e8856ac10e8eb389d12d1197bff0511dd: variants/laravel-aiwmweb/backend/resources/views/sites/settings.blade.php; focused-closure:AIMW-CONT-E1A7A8CAA7; test:variants/laravel-aiwmweb/backend/tests/Feature/SiteSettingsLocalizedSubmitControlsTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/site-settings-localized-submit-controls-terminality.json",
+      "migration_state": "PENDING",
+      "acceptance_test": "",
+      "evidence": "",
       "reconciliation": {
-        "decision": "ADAPTED",
-        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "AIMW-CONT-E1A7A8CAA7 Site Settings localized submit controls focused closure",
-        "source_sha": "996bb17e8856ac10e8eb389d12d1197bff0511dd",
-        "destination_path": "variants/laravel-aiwmweb/backend/resources/views/sites/settings.blade.php",
-        "evidence_mode": "focused_closure_contract",
-        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-settings-localized-submit-controls-terminality.json",
-        "signals": [
-          "operation:AIMW-CONT-E1A7A8CAA7",
-          "production-marker:variants/laravel-aiwmweb/backend/resources/views/sites/settings.blade.php",
-          "test:variants/laravel-aiwmweb/backend/tests/Feature/SiteSettingsLocalizedSubmitControlsTerminalityTest.php",
-          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/site-settings-localized-submit-controls-terminality.json",
-          "scope:operation-specific",
-          "test:tenant-isolation"
-        ]
+        "decision": "PENDING",
+        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
+        "source_label": null,
+        "source_sha": null,
+        "destination_path": null
       }
     },
     {
@@ -36876,7 +36876,6 @@
       "AIMW-CONT-9BA2C255AF",
       "AIMW-CONT-9CF12067E6",
       "AIMW-CONT-9F0D652C67",
-      "AIMW-CONT-A31317B378",
       "AIMW-CONT-A3A2CD23B6",
       "AIMW-CONT-A6867078EA",
       "AIMW-CONT-A6EA54E66D",
@@ -36894,6 +36893,7 @@
       "AIMW-CONT-CA4920CBC8",
       "AIMW-CONT-CF4BE4EC3B",
       "AIMW-CONT-DF6FFA9D87",
+      "AIMW-CONT-E1A7A8CAA7",
       "AIMW-CONT-E4D7C73D4E",
       "AIMW-CONT-ED2F1E1572",
       "AIMW-CONT-EDC262499D",
@@ -37904,6 +37904,7 @@
       "AIMW-CONT-97AD37042A",
       "AIMW-CONT-9D5E269773",
       "AIMW-CONT-9EDE4C1141",
+      "AIMW-CONT-A31317B378",
       "AIMW-CONT-A5D88995F3",
       "AIMW-CONT-A93DE991C0",
       "AIMW-CONT-B1E9E1D6B0",
@@ -37916,7 +37917,6 @@
       "AIMW-CONT-D5FFC84EC2",
       "AIMW-CONT-DD56664FDA",
       "AIMW-CONT-DF8B12B6DE",
-      "AIMW-CONT-E1A7A8CAA7",
       "AIMW-CONT-E346398EAD",
       "AIMW-CONT-E38ADF8481",
       "AIMW-CONT-E89EDDF780",
@@ -38456,10 +38456,10 @@
         ]
       },
       {
-        "label": "AIMW-CONT-E1A7A8CAA7 Site Settings localized submit controls focused closure",
-        "sha": "996bb17e8856ac10e8eb389d12d1197bff0511dd",
+        "label": "AIMW-CONT-A31317B378 Content Explorer PreviousPage focused closure",
+        "sha": "49ada2c1193e44eebfe32c4369b31da1189821ae",
         "operation_ids": [
-          "AIMW-CONT-E1A7A8CAA7"
+          "AIMW-CONT-A31317B378"
         ]
       }
     ],
