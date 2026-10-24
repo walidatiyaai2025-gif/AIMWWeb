@@ -83,6 +83,11 @@
             >{{ $welcomeLocale === 'ar' ? 'طريقة العمل' : 'Workflow' }}</a>
             <a
                 class="signin"
+                href="#pricing"
+                data-canonical-operation="AIMW-CONT-3C205B1901"
+            >{{ $welcomeLocale === 'ar' ? 'الخطط' : 'Pricing' }}</a>
+            <a
+                class="signin"
                 href="#security"
                 data-canonical-operation="AIMW-CONT-6458D3030B"
             >{{ $welcomeLocale === 'ar' ? 'الأمان' : 'Security' }}</a>
@@ -213,7 +218,12 @@
             </div>
         </section>
 
-        <section class="pricing" id="pricing" aria-label="{{ $welcomeLocale === 'ar' ? 'خطط الاشتراك' : 'Subscription plans' }}">
+        <section
+            class="pricing"
+            id="pricing"
+            data-pricing-anchor-target="AIMW-CONT-3C205B1901"
+            aria-label="{{ $welcomeLocale === 'ar' ? 'خطط الاشتراك' : 'Subscription plans' }}"
+        >
             <div class="pricing-head">
                 <div>
                     <div class="eyebrow">{{ $welcomeLocale === 'ar' ? 'خطط من كتالوج المنتج' : 'LIVE PRODUCT CATALOG' }}</div>
