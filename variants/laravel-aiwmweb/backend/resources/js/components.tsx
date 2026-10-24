@@ -21,6 +21,7 @@ import {
     type WorkspaceRoute,
 } from './core';
 import { commonText, useLocale } from './i18n';
+import { WordPressUsersWorkingStateControl } from './wordpress-users-working-state-control';
 
 interface Toast {
     id: number;
@@ -156,6 +157,8 @@ export function Pagination({
     );
 }
 
+export const WORDPRESS_USERS_START_CREATE_OPERATION_ID = 'AIMW-CONT-BCE1211CE3';
+
 export function ActionButton({
     route,
     actionKey,
@@ -171,7 +174,10 @@ export function ActionButton({
     const state = resolveCapability(context, route, actionKey);
     const contract = context.actions[actionKey];
     const enabled = state.state === 'enabled' && Boolean(contract);
-    const label = actionKey.split('.').slice(-1)[0].replaceAll('-', ' ').replaceAll('_', ' ');
+    const isWordPressUsersStartCreate = route.key === 'wp-users' && actionKey === 'wordpress-users.save';
+    const label = isWordPressUsersStartCreate
+        ? (locale === 'ar' ? 'إضافة مستخدم' : 'Add user')
+        : actionKey.split('.').slice(-1)[0].replaceAll('-', ' ').replaceAll('_', ' ');
     const reason = enabled ? '' : capabilityReason(state, locale);
 
     return (
@@ -182,6 +188,7 @@ export function ActionButton({
                 disabled={!enabled}
                 aria-disabled={!enabled}
                 title={reason || label}
+                data-canonical-operation={isWordPressUsersStartCreate ? WORDPRESS_USERS_START_CREATE_OPERATION_ID : undefined}
                 onClick={() => contract && onAvailable(contract)}
             >
                 {label.charAt(0).toUpperCase() + label.slice(1)}
@@ -290,7 +297,11 @@ export function ActionDialog({
                     ))}
                     <footer className="dialog-actions">
                         <button type="button" className="btn" onClick={onClose} disabled={busy}>{text(commonText.close)}</button>
-                        <button type="submit" className="btn primary" disabled={busy}>{busy ? text(commonText.loading) : text(commonText.submit)}</button>
+                        {actionKey === 'wordpress-users.save' ? (
+                            <WordPressUsersWorkingStateControl busy={busy} locale={locale} />
+                        ) : (
+                            <button type="submit" className="btn primary" disabled={busy}>{busy ? text(commonText.loading) : text(commonText.submit)}</button>
+                        )}
                     </footer>
                 </form>
             </div>

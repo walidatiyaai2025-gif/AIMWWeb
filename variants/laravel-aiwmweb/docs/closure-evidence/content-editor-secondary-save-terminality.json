@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #752 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-289CEEF3BA",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/sites/{SiteId:guid}/content/{ContentType}/{WordPressId:int}/edit",
+    "source": "src/AIWordPressManager.Web/Components/Pages/ContentEditor.razor",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Pages/ContentEditor.razor:/sites/{SiteId:guid}/content/{ContentType}/{WordPressId:int}/edit:button control 14",
+    "scanner_control": "button control 14",
+    "source_intent": "Expose the secondary inspector Save to WordPress submit control. It submits the existing EditForm SaveAsync path, disables while save or approval submission is active, and changes to the Saving label only while the save itself is active.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "frontend_route": "/tenants/{tenant}/sites/{siteId}/content/{contentType}/{wordpressId}/edit",
+    "control": "variants/laravel-aiwmweb/backend/resources/js/content-editor-secondary-save-control.tsx",
+    "mount": "variants/laravel-aiwmweb/backend/resources/js/content-editor-save-control.tsx",
+    "operation_marker": "AIMW-CONT-289CEEF3BA",
+    "form_submit": true,
+    "own_click_handler": false,
+    "existing_save_operation": "AIMW-BILL-42F7590F00",
+    "existing_save_endpoint": "PATCH /api/v1/tenants/{tenant}/sites/{site}/content/{type}/{wordpressId}/editor",
+    "authoritative_reconciliation": "The existing Content Editor save path performs the WordPress mutation and then rereads authoritative content before displaying success."
+  },
+  "security": {
+    "control_owns_tenant_or_site_identifier": false,
+    "control_owns_endpoint": false,
+    "control_owns_mutation": false,
+    "server_permission": "content.edit",
+    "tenant_selector": "active authenticated tenant context",
+    "site_and_content_ownership": "existing tenant-scoped Content Editor API contract",
+    "foreign_tenant_and_site": "existing save endpoint fails closed",
+    "caller_owned_identity_fields": "rejected by existing Content Editor save contract",
+    "csrf": "existing web/apiRequest CSRF contract retained",
+    "placeholder_success": false,
+    "secrets_exposed": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-editor-secondary-save-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentEditorSecondarySaveTerminalityTest.php",
+    "existing_save_security_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentEditorSaveTerminalityTest.php",
+    "coverage": [
+      "exact canonical ledger identity and scanner control 14",
+      "exact source EditForm OnValidSubmit SaveAsync binding",
+      "secondary submit is a real type=submit control",
+      "no duplicate click handler or API request is introduced",
+      "existing authoritative save operation is reused",
+      "English and Arabic labels",
+      "busy duplicate-submit suppression",
+      "approval-busy and invalid-title suppression",
+      "existing tenant, permission, IDOR, optimistic concurrency, mutation and authoritative-reread security contract remains authoritative",
+      "focused proof links the reused save path to its executed foreign-tenant/site 404 acceptance contract"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-289CEEF3BA"
+    ],
+    "sibling_operations_claimed": false,
+    "existing_save_operation_claimed": false,
+    "explicitly_not_claimed": [
+      "AIMW-BILL-42F7590F00",
+      "AIMW-BILL-F5686193FE",
+      "AIMW-CONT-564636DDC9",
+      "AIMW-CONT-A6867078EA"
+    ],
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "parallel_provider_path_created": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "branch": "worker/laravel-aiwmweb-AIMW-CONT-289CEEF3BA-secondary-save",
+    "implementation_sha": "06efacaf720e427a98cf9a2e54060194ad4f9616"
+  }
+}
