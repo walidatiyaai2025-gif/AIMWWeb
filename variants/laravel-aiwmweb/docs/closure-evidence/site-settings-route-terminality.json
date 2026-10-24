@@ -14,8 +14,15 @@
   "view_path": "variants/laravel-aiwmweb/backend/resources/views/sites/settings.blade.php",
   "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteSettingsRouteTerminalityTest.php",
   "security": {
-    "middleware": ["web", "auth", "tenant.context"],
-    "authorization": ["tenant.view", "sites.view"],
+    "middleware": [
+      "web",
+      "auth",
+      "tenant.context"
+    ],
+    "authorization": [
+      "tenant.view",
+      "sites.view"
+    ],
     "foreign_site": "404",
     "missing_permission": "403"
   },
@@ -45,7 +52,7 @@
   },
   "provenance": {
     "base_branch": "worker/laravel-aiwmweb-closure-composition",
-    "base_composition_sha": "c1fe282022e96ea435508450a0e151a2023bb879",
+    "base_composition_sha": "27102d266a68be4eb55901d08e75c9344e250817",
     "branch": "worker/870-site-settings-route",
     "issue": 870,
     "authority_issue": 257
