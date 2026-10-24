@@ -1533,6 +1533,14 @@
       "operation_ids": [
         "AIMW-CONT-5BE26C7AB5"
       ]
+    },
+    {
+      "label": "AIMW-CONT-A31317B378 Content Explorer PreviousPage focused closure",
+      "sha": "49ada2c1193e44eebfe32c4369b31da1189821ae",
+      "observed_pr_head": "49ada2c1193e44eebfe32c4369b31da1189821ae",
+      "operation_ids": [
+        "AIMW-CONT-A31317B378"
+      ]
     }
   ]
 }

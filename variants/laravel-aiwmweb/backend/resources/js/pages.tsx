@@ -27,6 +27,7 @@ import { AuthoritativeReconciliationError, mutateThenReconcile } from './reconci
 import { ContentExplorerWordPressLinkControl } from './content-explorer-wordpress-link-control';
 import { ContentExplorerPreviewPanel } from './content-explorer-preview-panel';
 import { CONTENT_EXPLORER_CONTENT_TAB_RESET_EVENT } from './content-explorer-content-tab-control';
+import { ContentExplorerPagination } from './content-explorer-previous-page-control';
 import { ContentExplorerBackToSitesControl } from './content-explorer-back-to-sites-control';
 import { CurrentUserLogsControl } from './current-user-logs-control';
 import { DashboardSitesNavigationControl } from './dashboard-sites-navigation-control';
@@ -662,7 +663,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         ) : undefined}
                     />
                 ) : <div className="empty-state"><strong>{text(commonText.empty)}</strong><p>{locale === 'ar' ? 'لا يتم إنشاء صفوف تجريبية عندما يعيد الخادم نتيجة فارغة.' : 'No sample rows are synthesized when the server returns an empty result.'}</p></div>}
-                <Pagination page={collection.page} lastPage={collection.lastPage} onPage={setPage} previousOperationId={readOperations?.previous} />
+                {route.key === 'explorer'
+                    ? <ContentExplorerPagination page={collection.page} lastPage={collection.lastPage} onPage={setPage} />
+                    : <Pagination page={collection.page} lastPage={collection.lastPage} onPage={setPage} previousOperationId={readOperations?.previous} />}
             </section>
             {route.key === 'explorer' && explorerPreview ? (
                 <ContentExplorerPreviewPanel
