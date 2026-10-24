@@ -13,6 +13,7 @@ use Tests\TestCase;
 
 final class SitesShowConnectedVisibleControlTerminalityTest extends TestCase
 {
+    // Exact-head CI retrigger after official parity materialization.
     use RefreshDatabase;
 
     private const OPERATION_ID = 'AIMW-CONT-E346398EAD';
