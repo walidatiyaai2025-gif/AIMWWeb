@@ -467,8 +467,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         void searchApplicationUsers().catch(() => undefined);
                         return;
                     }
-                    setPage(1);
-                    setSearch(searchInput);
+                    setPage(1); setSearch(searchInput);
                 }} role="search">
                     <label className="sr-only" htmlFor={`search-${route.key}`}>{text(commonText.search)}</label>
                     {route.key === 'comments' ? (
