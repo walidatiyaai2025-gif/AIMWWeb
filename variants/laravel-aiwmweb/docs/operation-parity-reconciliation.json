@@ -36413,12 +36413,12 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-taxonomy-site-links-control.test.tsx",
-      "evidence": "AIMW-TAXO-602DE140EB Global Taxonomy row links focused closure@780e538aa5680a01ca4e2f89c67ae70c5993000d: variants/laravel-aiwmweb/backend/resources/js/global-taxonomy-site-links-control.tsx; focused-closure:AIMW-TAXO-602DE140EB; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/global-taxonomy-site-links-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-taxonomy-site-links-terminality.json",
+      "evidence": "AIMW-TAXO-602DE140EB Global Taxonomy row links focused closure@b3c78bbc11ff1d3be1016637182d4f7298e5ecf3: variants/laravel-aiwmweb/backend/resources/js/global-taxonomy-site-links-control.tsx; focused-closure:AIMW-TAXO-602DE140EB; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/global-taxonomy-site-links-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-taxonomy-site-links-terminality.json",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
         "source_label": "AIMW-TAXO-602DE140EB Global Taxonomy row links focused closure",
-        "source_sha": "780e538aa5680a01ca4e2f89c67ae70c5993000d",
+        "source_sha": "b3c78bbc11ff1d3be1016637182d4f7298e5ecf3",
         "destination_path": "variants/laravel-aiwmweb/backend/resources/js/global-taxonomy-site-links-control.tsx",
         "evidence_mode": "focused_closure_contract",
         "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/global-taxonomy-site-links-terminality.json",
@@ -38525,7 +38525,7 @@
       },
       {
         "label": "AIMW-TAXO-602DE140EB Global Taxonomy row links focused closure",
-        "sha": "780e538aa5680a01ca4e2f89c67ae70c5993000d",
+        "sha": "b3c78bbc11ff1d3be1016637182d4f7298e5ecf3",
         "operation_ids": [
           "AIMW-TAXO-602DE140EB"
         ]
