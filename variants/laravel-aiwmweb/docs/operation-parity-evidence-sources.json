@@ -924,6 +924,94 @@
           "security_mode": "tenant_selected"
         }
       }
+    },
+    {
+      "label": "AIMW-CONT-1C2443112C WordPress Users route closure",
+      "sha": "f22da647d324acde8f962c40453e2e3f852ad1b8",
+      "observed_pr_head": "b9ed0e9d7610c5f320ef48558d3b19b2825fe234",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "operation_ids": [
+        "AIMW-CONT-1C2443112C"
+      ],
+      "route_api_provenance": {
+        "AIMW-CONT-1C2443112C": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/WordPressUsersRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/WordPressUsersRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/wordpress-users-route-terminality.json",
+          "security_mode": "tenant_selected"
+        }
+      }
+    },
+    {
+      "label": "AIMW-CONT-2C02B7A328 Content Editor route closure",
+      "sha": "b118961dfefae73b37b4227807f84bea8de62854",
+      "observed_pr_head": "b118961dfefae73b37b4227807f84bea8de62854",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "operation_ids": [
+        "AIMW-CONT-2C02B7A328"
+      ],
+      "route_api_provenance": {
+        "AIMW-CONT-2C02B7A328": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentEditorRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentEditorRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/content-editor-route-terminality.json",
+          "security_mode": "tenant_selected"
+        }
+      }
+    },
+    {
+      "label": "AIMW-CONT-3443C173C6 Site Settings route closure",
+      "sha": "836b6a6a6d1d5d02022474f391d072fad2690c73",
+      "observed_pr_head": "836b6a6a6d1d5d02022474f391d072fad2690c73",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "operation_ids": [
+        "AIMW-CONT-3443C173C6"
+      ],
+      "route_api_provenance": {
+        "AIMW-CONT-3443C173C6": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SiteSettingsRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteSettingsReadController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteSettingsRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteSettingsRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-settings-route-terminality.json",
+          "security_mode": "tenant_selected"
+        }
+      }
+    },
+    {
+      "label": "AIMW-CONT-5CF47CBE2A Content Explorer route closure",
+      "sha": "18191b10b7909f3670ccbde3dc41025202cb7ca5",
+      "observed_pr_head": "18191b10b7909f3670ccbde3dc41025202cb7ca5",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "operation_ids": [
+        "AIMW-CONT-5CF47CBE2A"
+      ],
+      "route_api_provenance": {
+        "AIMW-CONT-5CF47CBE2A": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentExplorerRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentExplorerRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-route-terminality.json",
+          "security_mode": "tenant_selected"
+        }
+      }
     }
   ],
   "excluded_sources": [],
@@ -1143,11 +1231,107 @@
       ]
     },
     {
-      "label": "AIMW-EMAI-7A54150265 Account Profile Dashboard email settings focused closure",
-      "sha": "08c530fba88dc28101c660617fb84a131f1ee9ed",
-      "observed_pr_head": "08c530fba88dc28101c660617fb84a131f1ee9ed",
+      "label": "AIMW-CONT-BCE1211CE3 WordPress Users StartCreate focused closure",
+      "sha": "a368d5f828cfecc9cd8c945eddd52517157af1f5",
+      "observed_pr_head": "a368d5f828cfecc9cd8c945eddd52517157af1f5",
       "operation_ids": [
-        "AIMW-EMAI-7A54150265"
+        "AIMW-CONT-BCE1211CE3"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-289CEEF3BA Content Editor secondary Save focused closure",
+      "sha": "8058b549ace9cdf85b55e80ce3eeabc21358e01c",
+      "observed_pr_head": "8058b549ace9cdf85b55e80ce3eeabc21358e01c",
+      "operation_ids": [
+        "AIMW-CONT-289CEEF3BA"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-346657AD9D WordPress Users working-state focused closure",
+      "sha": "34b7b208e7ed9fe8e386563556f99205a2f51f60",
+      "observed_pr_head": "288d284ed775f523aa9e0946d1eac80934e20ec4",
+      "operation_ids": [
+        "AIMW-CONT-346657AD9D"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-D5FFC84EC2 WordPress Users back-to-explorer focused closure",
+      "sha": "534c1e9ac65393a3aa5ccba385f79cf255092a90",
+      "observed_pr_head": "534c1e9ac65393a3aa5ccba385f79cf255092a90",
+      "operation_ids": [
+        "AIMW-CONT-D5FFC84EC2"
+      ]
+    },
+    {
+      "label": "AIMW-TAXO-005925568C TaxonomyManager StartCreate focused closure",
+      "sha": "679b13bd02689acb2a90dd275419b4d505cbaad1",
+      "observed_pr_head": "679b13bd02689acb2a90dd275419b4d505cbaad1",
+      "operation_ids": [
+        "AIMW-TAXO-005925568C"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-3C205B1901 Welcome pricing anchor focused closure",
+      "sha": "e986d9e27e11a743db24f73aa4164fb3f4d10711",
+      "observed_pr_head": "e986d9e27e11a743db24f73aa4164fb3f4d10711",
+      "operation_ids": [
+        "AIMW-CONT-3C205B1901"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-DD56664FDA Welcome primary CTA focused closure",
+      "sha": "9568cb257d2227bf9e5cd67c405563b3e624bffc",
+      "observed_pr_head": "9568cb257d2227bf9e5cd67c405563b3e624bffc",
+      "operation_ids": [
+        "AIMW-CONT-DD56664FDA"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-247E791DA7 Welcome footer login focused closure",
+      "sha": "ad1f961595ac9eb3cfb644af9044d4e94c2a320e",
+      "observed_pr_head": "ad1f961595ac9eb3cfb644af9044d4e94c2a320e",
+      "operation_ids": [
+        "AIMW-CONT-247E791DA7"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-2C51372C70 Content Editor WordPress link focused closure",
+      "sha": "81d7032005988c1b174b0bc65cc4c5af1514f555",
+      "observed_pr_head": "81d7032005988c1b174b0bc65cc4c5af1514f555",
+      "operation_ids": [
+        "AIMW-CONT-2C51372C70"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-607ACDF4D8 Content Editor Explorer link focused closure",
+      "sha": "1dbaca6967ec022a52224dbb47f523a32a34cf80",
+      "observed_pr_head": "1dbaca6967ec022a52224dbb47f523a32a34cf80",
+      "operation_ids": [
+        "AIMW-CONT-607ACDF4D8"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-A5D88995F3 Content Editor ShowEdit focused closure",
+      "sha": "39effaa2c6686e1d2d7a9466a569fb7596a92b54",
+      "observed_pr_head": "39effaa2c6686e1d2d7a9466a569fb7596a92b54",
+      "operation_ids": [
+        "AIMW-CONT-A5D88995F3"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-C7CB5EE184 Welcome footer brand focused closure",
+      "sha": "279cab213e4faa3c5bf4c5253f35dd850caf5f1d",
+      "observed_pr_head": "279cab213e4faa3c5bf4c5253f35dd850caf5f1d",
+      "operation_ids": [
+        "AIMW-CONT-C7CB5EE184"
+      ]
+    },
+    {
+      "label": "AIMW-TAXO-770DAA668D TaxonomyManager BackToSites focused closure",
+      "sha": "865d5aec20743765c097694dd766673ef7746628",
+      "observed_pr_head": "865d5aec20743765c097694dd766673ef7746628",
+      "operation_ids": [
+        "AIMW-TAXO-770DAA668D"
       ]
     }
   ]

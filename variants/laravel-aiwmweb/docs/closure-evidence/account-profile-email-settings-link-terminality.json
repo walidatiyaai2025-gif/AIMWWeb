@@ -20,12 +20,12 @@
     "source_permission": "tenant.view",
     "source_profile_api": "/tenants/{tenant}/route-api/account-profile",
     "production_control": "variants/laravel-aiwmweb/backend/resources/js/account-profile-email-settings-link-control.tsx",
-    "runtime_mount": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "runtime_mount": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
     "destination_builder": "tenantUrl(context.tenant.slug, '/account/email-settings')",
     "destination_route": "/tenants/{tenant}/account/email-settings",
     "destination_permission": "tenant.view",
     "destination_operation": "AIMW-EMAI-B2CFCF818C",
-    "behavior": "Render the bilingual Dashboard email settings action only on the real Account Profile workspace and derive its destination from authenticated FrontendContext tenant state."
+    "behavior": "Render the bilingual Dashboard email settings action on the real Account Profile workspace via WorkspacePage and derive its destination from authenticated FrontendContext tenant state."
   },
   "authoritative_behavior": {
     "source_data": "RouteApiAdapterController::accountProfile rereads the authenticated user and active tenant membership from persisted Laravel state.",
@@ -69,13 +69,13 @@
     ]
   },
   "provenance": {
-    "implementation_snapshot_sha": "9944d99e322f8844f5ef7ed381d2aa4c6818f833",
+    "implementation_snapshot_sha": "08c530fba88dc28101c660617fb84a131f1ee9ed",
     "canonical_base_branch": "worker/laravel-aiwmweb-closure-composition",
     "lineage_branch": "worker/laravel-aiwmweb-AIMW-EMAI-7A54150265-account-profile-email-settings",
     "self_sha_rule": "The manifest records the pushed evidence-bearing commit because a Git commit cannot embed its own SHA.",
-    "composition_sync_base_sha": "10e005d2a86b96bd2ff4168b97aaa3758d5a111d",
-    "focused_closure_source_sha": "4a40aa35adaec07e6b6ec6e72b9a214732bf2a50",
-    "note": "Synced by a non-destructive merge commit before final parity materialization."
+    "composition_sync_base_sha": "6df012cf1226292f6165d33f839cfea1bbe2b908",
+    "focused_closure_source_sha": "08c530fba88dc28101c660617fb84a131f1ee9ed",
+    "note": "Original focused closure preserved; current-composition integration uses pages.tsx and its exact integration commit is recorded by the focused-closure registry."
   },
   "scope_guards": {
     "claimed_operations": [

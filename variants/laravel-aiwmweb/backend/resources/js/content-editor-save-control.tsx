@@ -1,13 +1,47 @@
 import React, { FormEvent, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ApiError, apiRequest, tenantUrl, type FrontendContext } from './core';
+import { ApiError, apiRequest, tenantUrl, workspaceRoutes, type FrontendContext } from './core';
 import { useLocale } from './i18n';
+import { ContentEditorSecondarySaveControl } from './content-editor-secondary-save-control';
 
 export const CONTENT_EDITOR_SAVE_OPERATION_ID = 'AIMW-BILL-42F7590F00';
 export const CONTENT_EDITOR_SUBMIT_APPROVAL_OPERATION_ID = 'AIMW-BILL-F5686193FE';
 export const CONTENT_EDITOR_CLEAR_FEATURED_OPERATION_ID = 'AIMW-CONT-A6867078EA';
 export const CONTENT_EDITOR_GENERATE_SLUG_OPERATION_ID = 'AIMW-CONT-564636DDC9';
 export const CONTENT_EDITOR_SITES_LINK_OPERATION_ID = 'AIMW-CONT-B6BB292F85';
+export const CONTENT_EDITOR_EXPLORER_LINK_OPERATION_ID = 'AIMW-CONT-607ACDF4D8';
+export const CONTENT_EDITOR_SHOW_EDIT_OPERATION_ID = 'AIMW-CONT-A5D88995F3';
+export const CONTENT_EDITOR_WORDPRESS_LINK_OPERATION_ID = 'AIMW-CONT-2C51372C70';
+
+export function safeContentEditorExternalUrl(value: unknown): string | null {
+    if (typeof value !== 'string' || value.trim() !== value || value.length === 0) return null;
+    try {
+        const parsed = new URL(value);
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+        if (parsed.username || parsed.password) return null;
+        return value;
+    } catch {
+        return null;
+    }
+}
+
+export function ContentEditorWordPressLinkControl({ value }: { value: unknown }) {
+    const { locale } = useLocale();
+    const safeUrl = safeContentEditorExternalUrl(value);
+    if (!safeUrl) return null;
+
+    return (
+        <a
+            className="btn"
+            href={safeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-canonical-operation={CONTENT_EDITOR_WORDPRESS_LINK_OPERATION_ID}
+        >
+            {locale === 'ar' ? 'عرض على WordPress' : 'View on WordPress'} ↗
+        </a>
+    );
+}
 
 export function ContentEditorSitesLinkControl({ context }: { context: FrontendContext }) {
     const { locale } = useLocale();
@@ -26,6 +60,99 @@ export function ContentEditorSitesLinkControl({ context }: { context: FrontendCo
                 {locale === 'ar' ? 'المواقع' : 'Sites'}
             </Link>
         </nav>
+    );
+}
+
+type ContentEditorSiteAwareContext = FrontendContext & {
+    active_site?: { id: number; name?: string; status?: string } | null;
+};
+
+const contentEditorExplorerRoute = workspaceRoutes.find((route) => route.key === 'explorer');
+
+export function authoritativeContentEditorExplorerHref(
+    context: FrontendContext,
+    siteId: string | number,
+    editorEndpoint: string | null,
+): string | null {
+    const requestedSiteId = Number(siteId);
+    const activeSiteId = Number((context as ContentEditorSiteAwareContext).active_site?.id);
+
+    if (!contentEditorExplorerRoute || !context.permissions.includes('tenant.view')) return null;
+    if (!Number.isSafeInteger(requestedSiteId) || requestedSiteId <= 0) return null;
+    if (!Number.isSafeInteger(activeSiteId) || activeSiteId !== requestedSiteId) return null;
+
+    const hasExplorerPermission = !contentEditorExplorerRoute.permission
+        || context.permissions.includes(contentEditorExplorerRoute.permission)
+        || context.permissions.includes('*');
+    if (!hasExplorerPermission) return null;
+
+    const explicitExplorer = context.capabilities['explorer.view'] ?? context.capabilities.explorer;
+    if (explicitExplorer && explicitExplorer.state !== 'enabled') return null;
+    if (!editorEndpoint) return null;
+
+    try {
+        const resolved = new URL(editorEndpoint, window.location.origin);
+        const expectedPrefix = `/api/v1/tenants/${encodeURIComponent(context.tenant.slug)}/sites/${requestedSiteId}/content/`;
+        if (resolved.origin !== window.location.origin) return null;
+        if (!resolved.pathname.startsWith(expectedPrefix) || !/\/(?:post|page)\/[1-9]\d*\/editor$/.test(resolved.pathname)) return null;
+        if (resolved.search || resolved.hash) return null;
+    } catch {
+        return null;
+    }
+
+    return `${tenantUrl(context.tenant.slug, '/explorer')}?site=${encodeURIComponent(String(requestedSiteId))}`;
+}
+
+export function ContentEditorExplorerLinkControl({
+    context,
+    siteId,
+    editorEndpoint,
+}: {
+    context: FrontendContext;
+    siteId: string | number;
+    editorEndpoint: string | null;
+}) {
+    const { locale } = useLocale();
+    const href = authoritativeContentEditorExplorerHref(context, siteId, editorEndpoint);
+
+    if (!href) return null;
+
+    return (
+        <a
+            className="btn"
+            href={href}
+            data-canonical-operation={CONTENT_EDITOR_EXPLORER_LINK_OPERATION_ID}
+        >
+            ← {locale === 'ar' ? 'العودة إلى المستكشف' : 'Back to Explorer'}
+        </a>
+    );
+}
+
+export type ContentEditorViewMode = 'edit' | 'preview';
+
+export function showContentEditorEdit(): ContentEditorViewMode {
+    return 'edit';
+}
+
+export function ContentEditorShowEditControl({
+    viewMode,
+    onShowEdit,
+}: {
+    viewMode: ContentEditorViewMode;
+    onShowEdit: () => void;
+}) {
+    const { locale } = useLocale();
+
+    return (
+        <button
+            type="button"
+            className={viewMode === 'edit' ? 'btn active' : 'btn'}
+            aria-pressed={viewMode === 'edit'}
+            data-canonical-operation={CONTENT_EDITOR_SHOW_EDIT_OPERATION_ID}
+            onClick={onShowEdit}
+        >
+            {locale === 'ar' ? 'تحرير' : 'Edit'}
+        </button>
     );
 }
 
@@ -254,6 +381,7 @@ export function ContentEditorSaveControl({ context }: { context: FrontendContext
     const [submittingApproval, setSubmittingApproval] = useState(false);
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
+    const [viewMode, setViewMode] = useState<ContentEditorViewMode>('edit');
 
     const reload = async (): Promise<ContentEditorSnapshot> => {
         if (!endpoint) throw new ApiError('Invalid content editor route.', 404, 'invalid_editor_route');
@@ -356,6 +484,7 @@ export function ContentEditorSaveControl({ context }: { context: FrontendContext
     return (
         <form className="workspace-stack" onSubmit={save} data-canonical-operation={CONTENT_EDITOR_SAVE_OPERATION_ID}>
             <ContentEditorSitesLinkControl context={context} />
+            <ContentEditorExplorerLinkControl context={context} siteId={siteId ?? ''} editorEndpoint={endpoint} />
             <section className="hero-panel">
                 <div>
                     <span className="workspace-kicker">CONTENT EDITOR</span>
@@ -407,7 +536,28 @@ export function ContentEditorSaveControl({ context }: { context: FrontendContext
                         />
                     </div>
                 </label>
-                <label><span>{locale === 'ar' ? 'المحتوى HTML' : 'Content HTML'}</span><textarea rows={14} value={draft.content} onChange={(e) => set('content', e.target.value)} /></label>
+                <section className="form-stack content-editor-content-card">
+                    <div className="editor-card-head">
+                        <div>
+                            <h3>{locale === 'ar' ? 'المحتوى HTML' : 'Content HTML'}</h3>
+                            <p>{locale === 'ar'
+                                ? 'حرر محتوى WordPress بصيغة HTML.'
+                                : 'Edit WordPress HTML content.'}</p>
+                        </div>
+                        <div className="editor-view-toggle">
+                            <ContentEditorShowEditControl
+                                viewMode={viewMode}
+                                onShowEdit={() => setViewMode(showContentEditorEdit())}
+                            />
+                        </div>
+                    </div>
+                    {viewMode === 'edit' ? (
+                        <label>
+                            <span className="sr-only">{locale === 'ar' ? 'المحتوى HTML' : 'Content HTML'}</span>
+                            <textarea rows={14} value={draft.content} onChange={(e) => set('content', e.target.value)} />
+                        </label>
+                    ) : null}
+                </section>
                 <label><span>{locale === 'ar' ? 'الملخص' : 'Excerpt'}</span><textarea rows={4} value={draft.excerpt} onChange={(e) => set('excerpt', e.target.value)} /></label>
                 <label><span>{locale === 'ar' ? 'الحالة' : 'Status'}</span>
                     <select value={draft.status} onChange={(e) => set('status', e.target.value as ContentEditorDraft['status'])}>
@@ -451,7 +601,18 @@ export function ContentEditorSaveControl({ context }: { context: FrontendContext
                 ) : null}
             </fieldset>
 
-            {snapshot.link ? <a className="btn" href={snapshot.link} target="_blank" rel="noreferrer">{locale === 'ar' ? 'عرض على WordPress' : 'View on WordPress'} ↗</a> : null}
+            {canEdit ? (
+                <div className="cluster">
+                    <ContentEditorSecondarySaveControl
+                        saving={saving}
+                        submittingApproval={submittingApproval}
+                        titleValid={Boolean(draft.title.trim())}
+                        locale={locale}
+                    />
+                </div>
+            ) : null}
+
+            <ContentEditorWordPressLinkControl value={snapshot.link} />
         </form>
     );
 }

@@ -250,6 +250,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
             $siteId = (int) $site->getKey();
             $api += [
                 'sites.detail.'.$siteId => "/api/tenants/{$tenant}/sites/{$siteId}",
+                'explorer' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/explorer",
                 'posts' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/content/post",
                 'pages' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/content/page",
                 'media' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/media",
@@ -332,6 +333,10 @@ Route::prefix('/tenants/{tenant}')
     ->group(function (): void {
         Route::get('/sites', 'show')->defaults('workspace_permissions', 'tenant.view,sites.view')->name('canonical.workspace.sites');
         Route::get('/sites/{site}', 'showSite')->defaults('workspace_permissions', 'tenant.view,sites.view')->whereNumber('site')->name('canonical.site.details');
+        Route::get('/sites/{site}/content/{contentType}/{wordpressId}/edit', 'showContentEditor')
+            ->defaults('workspace_permissions', 'content.view')
+            ->defaults('canonical_operation_id', 'AIMW-CONT-2C02B7A328')
+            ->name('canonical.site.content-editor');
         Route::get('/notifications', 'show')->defaults('workspace_permissions', 'tenant.view,notifications.view')->name('canonical.workspace.notifications');
         Route::get('/email/schedules', 'show')->defaults('workspace_permissions', 'operations.manage')->defaults('canonical_operation_id', 'AIMW-EMAI-F77DB6435F')->name('canonical.workspace.email-schedules');
         Route::get('/email/history', 'show')->defaults('workspace_permissions', 'tenant.manage,diagnostics.view')->name('canonical.workspace.email-history');
@@ -347,6 +352,10 @@ Route::prefix('/tenants/{tenant}')
         Route::get('/account/profile', 'show')->defaults('workspace_permissions', 'tenant.view')->name('canonical.workspace.account-profile');
         Route::get('/account/billing', 'show')->defaults('workspace_permissions', 'billing.view')->name('canonical.workspace.account-billing');
 
+        Route::get('/explorer', 'showSiteBound')
+            ->defaults('workspace_permissions', 'sites.view')
+            ->defaults('canonical_operation_id', 'AIMW-CONT-5CF47CBE2A')
+            ->name('canonical.workspace.explorer');
         Route::get('/content', 'show')->defaults('workspace_permissions', 'content.view')->defaults('canonical_operation_id', 'AIMW-CONT-65F2819526')->name('canonical.workspace.content-hub');
         Route::get('/content-workspace', 'show')->defaults('workspace_permissions', 'content.view')->defaults('canonical_operation_id', 'AIMW-CONT-E4275AE57F')->name('canonical.workspace.content-workspace');
         Route::get('/module/content', 'redirect')->defaults('workspace_permissions', 'content.view')->defaults('workspace_target', '/content')->defaults('canonical_operation_id', 'AIMW-CONT-859135B2D1')->name('canonical.alias.module-content');
@@ -368,6 +377,12 @@ Route::prefix('/tenants/{tenant}')
         Route::get('/sites/{site}/comments', 'redirectSite')->defaults('workspace_permissions', 'content.view')->defaults('workspace_target', '/module/comments')->whereNumber('site')->name('canonical.site.comments');
         Route::get('/sites/{site}/media', 'redirectSite')->defaults('workspace_permissions', 'content.view')->defaults('workspace_target', '/module/media')->whereNumber('site')->name('canonical.site.media');
         Route::get('/sites/{site}/taxonomy', 'redirectSite')->defaults('workspace_permissions', 'content.view')->defaults('workspace_target', '/module/taxonomy')->whereNumber('site')->name('canonical.site.taxonomy');
+        Route::get('/sites/{site}/users', 'redirectSite')
+            ->defaults('workspace_permissions', 'tenant.view,sites.view')
+            ->defaults('workspace_target', '/module/users')
+            ->defaults('canonical_operation_id', 'AIMW-CONT-1C2443112C')
+            ->whereNumber('site')
+            ->name('canonical.site.wordpress-users');
 
         Route::get('/admin/application-users', 'redirect')->defaults('workspace_permissions', 'tenant.view,users.view')->defaults('workspace_target', '/admin/users')->name('canonical.alias.application-users');
         Route::get('/settings/sessions', 'redirect')->defaults('workspace_permissions', 'sessions.manage,sessions.view')->defaults('workspace_target', '/account/sessions')->name('canonical.alias.settings-sessions');

@@ -96,11 +96,11 @@ class AccountProfileEmailSettingsLinkTerminalityTest extends TestCase
 
     public function test_runtime_mount_and_destination_are_bound_to_authoritative_tenant_context(): void
     {
-        $app = (string) file_get_contents(resource_path('js/app.tsx'));
+        $pages = (string) file_get_contents(resource_path('js/pages.tsx'));
         $control = (string) file_get_contents(resource_path('js/account-profile-email-settings-link-control.tsx'));
 
-        $this->assertStringContainsString("route.key === 'account-profile'", $app);
-        $this->assertStringContainsString('<AccountProfileEmailSettingsLinkControl context={context} />', $app);
+        $this->assertStringContainsString("route.key === 'account-profile'", $pages);
+        $this->assertStringContainsString('<AccountProfileEmailSettingsLinkControl context={context} />', $pages);
         $this->assertStringContainsString(self::OPERATION_ID, $control);
         $this->assertStringContainsString("tenantUrl(context.tenant.slug, '/account/email-settings')", $control);
         $this->assertStringContainsString('Dashboard email settings', $control);

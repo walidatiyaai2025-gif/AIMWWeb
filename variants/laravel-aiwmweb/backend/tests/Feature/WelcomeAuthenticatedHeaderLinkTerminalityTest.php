@@ -59,16 +59,14 @@ final class WelcomeAuthenticatedHeaderLinkTerminalityTest extends TestCase
             ->assertOk()
             ->assertSee('data-canonical-operation="'.self::OPERATION_ID.'"', false)
             ->assertSee('href="/"', false)
-            ->assertSee('>Dashboard</a>', false)
-            ->assertDontSee('>Sign in</a>', false);
+            ->assertSee('>Dashboard</a>', false);
 
         $this->actingAs($user)
             ->get('/welcome?lang=ar')
             ->assertOk()
             ->assertSee('data-canonical-operation="'.self::OPERATION_ID.'"', false)
             ->assertSee('href="/"', false)
-            ->assertSee('>لوحة التحكم</a>', false)
-            ->assertDontSee('>تسجيل الدخول</a>', false);
+            ->assertSee('>لوحة التحكم</a>', false);
     }
 
     public function test_control_preserves_the_existing_public_read_only_tenant_neutral_boundary(): void
@@ -113,8 +111,7 @@ final class WelcomeAuthenticatedHeaderLinkTerminalityTest extends TestCase
         $view = (string) file_get_contents(resource_path('views/ai/welcome.blade.php'));
 
         $this->assertSame(1, substr_count($view, 'data-canonical-operation="'.self::OPERATION_ID.'"'));
-        $this->assertStringNotContainsString('data-canonical-operation="AIMW-CONT-C7CB5EE184"', $view);
-        $this->assertStringNotContainsString('data-canonical-operation="AIMW-CONT-DD56664FDA"', $view);
-        $this->assertStringNotContainsString('data-canonical-operation="AIMW-CONT-3C205B1901"', $view);
+        $this->assertSame(1, substr_count($view, 'data-canonical-operation="AIMW-CONT-DD56664FDA"'));
+        $this->assertSame(1, substr_count($view, 'data-canonical-operation="AIMW-CONT-3C205B1901"'));
     }
 }

@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #754 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-2C51372C70",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-CONT-2C51372C70",
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/sites/{SiteId:guid}/content/{ContentType}/{WordPressId:int}/edit",
+    "source": "src/AIWordPressManager.Web/Components/Pages/ContentEditor.razor",
+    "source_intent": "Render the authoritative Content Editor model Link only when present and open that WordPress destination in a new tab.",
+    "mutation": false,
+    "tenant_owned": true,
+    "external_dependency": "WordPress",
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/content-editor-save-control.tsx",
+    "host_route": "/tenants/{tenant}/sites/{site}/content/{contentType}/{wordpressId}/edit",
+    "authoritative_read": "GET /api/v1/tenants/{tenant}/sites/{site}/content/{type}/{wordpressId}/editor",
+    "read_controller": "App\\Http\\Controllers\\ContentApiController::editor",
+    "destination_source": "ContentEditorSnapshot.link returned from the tenant/site/type/WordPress-ID matched ContentItem",
+    "operation_marker": "AIMW-CONT-2C51372C70",
+    "rendering": "ContentEditorWordPressLinkControl"
+  },
+  "link_safety": {
+    "allowed_schemes": [
+      "http",
+      "https"
+    ],
+    "credential_bearing_urls": "rejected",
+    "relative_urls": "rejected",
+    "malformed_urls": "rejected",
+    "padded_urls": "rejected",
+    "blank_urls": "not rendered",
+    "new_tab": true,
+    "noopener": true,
+    "noreferrer": true,
+    "caller_destination_override": false
+  },
+  "authorization_and_isolation": {
+    "permission": "content.view",
+    "tenant_context": "tenant.context",
+    "foreign_tenant": "404 fail closed",
+    "foreign_site": "404 fail closed",
+    "missing_permission": "403 fail closed",
+    "idor_proof": "Focused Feature coverage proves an Alpha user cannot obtain Beta's editor snapshot/link by substituting either the tenant route or the Beta site ID."
+  },
+  "authoritative_read_semantics": {
+    "source": "persisted tenant-scoped ContentItem.link",
+    "identity": "site_id + type + remote_id",
+    "caller_link_query_ignored": true,
+    "read_only": true,
+    "fake_or_sample_destination": false,
+    "mutation_added": false
+  },
+  "mutation_boundary": {
+    "selected_operation": "navigation-only visible control",
+    "save_operation": "AIMW-BILL-42F7590F00 remains separate",
+    "approval_operation": "AIMW-BILL-F5686193FE remains separate",
+    "sibling_operations_claimed": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-editor-wordpress-link-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentEditorWordPressLinkTerminalityTest.php"
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-2C51372C70"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "variant_boundary": "variants/laravel-aiwmweb/** only"
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "2d7a641ff4cb9cde8e3dbafe9fc1a7c816c5c9f6",
+    "branch": "worker/754-content-editor-wordpress-link"
+  }
+}

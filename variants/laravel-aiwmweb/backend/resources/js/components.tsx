@@ -157,6 +157,9 @@ export function Pagination({
     );
 }
 
+export const WORDPRESS_USERS_START_CREATE_OPERATION_ID = 'AIMW-CONT-BCE1211CE3';
+export const TAXONOMY_START_CREATE_OPERATION_ID = 'AIMW-TAXO-005925568C';
+
 export function ActionButton({
     route,
     actionKey,
@@ -172,7 +175,18 @@ export function ActionButton({
     const state = resolveCapability(context, route, actionKey);
     const contract = context.actions[actionKey];
     const enabled = state.state === 'enabled' && Boolean(contract);
-    const label = actionKey.split('.').slice(-1)[0].replaceAll('-', ' ').replaceAll('_', ' ');
+    const isWordPressUsersStartCreate = route.key === 'wp-users' && actionKey === 'wordpress-users.save';
+    const isTaxonomyStartCreate = route.key === 'taxonomy' && actionKey === 'taxonomy.manage';
+    const label = isTaxonomyStartCreate
+        ? (locale === 'ar' ? 'إضافة جديد' : 'Add new')
+        : isWordPressUsersStartCreate
+            ? (locale === 'ar' ? 'إضافة مستخدم' : 'Add user')
+            : actionKey.split('.').slice(-1)[0].replaceAll('-', ' ').replaceAll('_', ' ');
+    const canonicalOperation = isTaxonomyStartCreate
+        ? TAXONOMY_START_CREATE_OPERATION_ID
+        : isWordPressUsersStartCreate
+            ? WORDPRESS_USERS_START_CREATE_OPERATION_ID
+            : undefined;
     const reason = enabled ? '' : capabilityReason(state, locale);
 
     return (
@@ -183,6 +197,7 @@ export function ActionButton({
                 disabled={!enabled}
                 aria-disabled={!enabled}
                 title={reason || label}
+                data-canonical-operation={canonicalOperation}
                 onClick={() => contract && onAvailable(contract)}
             >
                 {label.charAt(0).toUpperCase() + label.slice(1)}

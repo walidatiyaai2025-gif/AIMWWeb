@@ -1,15 +1,14 @@
 name: Laravel AIWMWeb Task Parity Materialize
-# trigger: AIMW-EMAI-7A54150265 issue-900-account-profile-email-settings
-# exact-head: evidence-bearing source 08c530fba88dc28101c660617fb84a131f1ee9ed
-# retrigger: issue-900-latest-composition-materialization
+# trigger: merged-composition-parity
+# exact-composition-head: b477d1e8ee63d2fcf8b0ab48ded2851c28049ee3
 
 on:
   push:
     branches:
-      - worker/laravel-aiwmweb-AIMW-EMAI-7A54150265-account-profile-email-settings
+      - worker/laravel-aiwmweb-closure-composition
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
-      - 'variants/laravel-aiwmweb/docs/closure-evidence/account-profile-email-settings-link-terminality.json'
+      - 'variants/laravel-aiwmweb/docs/closure-evidence/**'
       - '.github/workflows/laravel-aiwmweb-task-parity-materialize.yml'
 
 permissions:
@@ -50,5 +49,5 @@ jobs:
           if git diff --cached --quiet; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore(laravel): materialize parity for AIMW-EMAI-7A54150265"
+          git commit -m "chore(laravel): materialize merged composition parity"
           git push origin "HEAD:${{ github.ref_name }}"
