@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #999 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-TAXO-602DE140EB",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-TAXO-602DE140EB",
+    "domain": "taxonomy",
+    "kind": "visible_control",
+    "route_screen": "/module/taxonomy",
+    "source": "src/AIWordPressManager.Web/Components/Pages/GlobalTaxonomyExplorer.razor",
+    "source_intent": "Expose each authoritative taxonomy row's interpolated Manage and Explorer navigation without inventing cross-tenant destinations.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/global-taxonomy-site-links-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "manage_destination": "/tenants/{tenant}/module/taxonomy?site={site}",
+    "explorer_destination": "/tenants/{tenant}/explorer?site={site}",
+    "operation_marker": "AIMW-TAXO-602DE140EB"
+  },
+  "security": {
+    "permissions": ["tenant.view", "content.view"],
+    "site_identity": "positive authoritative site id from the rendered server collection row",
+    "tenant_identity": "active authenticated tenant slug from FrontendContext",
+    "foreign_tenant": "tenant slug is URL encoded and remains behind the server tenant boundary",
+    "mutation_added": false,
+    "missing_taxonomy_contract": "control fails closed"
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-taxonomy-site-links-control.test.tsx"
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-TAXO-602DE140EB"],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  }
+}
