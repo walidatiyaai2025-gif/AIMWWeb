@@ -77,7 +77,7 @@ final class LiveSystemStatusRefreshTerminalityTest extends TestCase
         $this->assertStringContainsString(self::OPERATION_ID, $control);
         $this->assertStringContainsString('disabled={busy}', $control);
         $this->assertStringContainsString('if (busy) return;', $control);
-        $this->assertStringContainsString('<LiveSystemStatusRefreshControl busy={query.isFetching} onRefresh={() => query.refetch()} />', $pages);
+        $this->assertStringContainsString('<LiveSystemStatusRefreshControl busy={query.isFetching} onClick={() => query.refetch()} />', $pages);
 
         $route = Route::getRoutes()->match(Request::create('/api/dashboard?tenant=alpha', 'GET'));
         $this->assertSame(PlatformReadController::class.'@dashboard', $route->getActionName());
