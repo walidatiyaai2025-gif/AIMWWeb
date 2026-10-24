@@ -23,7 +23,8 @@
     "server_mutation_added": false,
     "wordpress_mutation_added": false,
     "identity_override_surface": false,
-    "tenant_isolation": "The shared retry control accepts no tenant/user/site identifiers; production QueryError retries the already tenant-bound query, while server routes independently preserve tenant.context and foreign-tenant 404 behavior."
+    "tenant_isolation": "The shared retry control accepts no tenant/user/site identifiers; production QueryError retries the already tenant-bound query, while server routes independently preserve tenant.context and foreign-tenant 404 behavior.",
+    "authorization": "Tenant-scoped production consumers remain server-authorized; missing sites.view returns 403 before the authoritative read can be retried."
   },
   "source_semantics": {
     "visible_when": "RetryRequested.HasDelegate",
@@ -43,11 +44,14 @@
       "caller actions remain composable",
       "no fetch/apiRequest/mutation inside the shared control",
       "foreign tenant route remains 404",
-      "no tenant/user identity override surface"
+      "no tenant/user identity override surface",
+      "missing consumer permission returns 403"
     ]
   },
   "scope_guards": {
-    "claimed_operations": ["AIMW-SYNC-AE544B4684"],
+    "claimed_operations": [
+      "AIMW-SYNC-AE544B4684"
+    ],
     "sibling_shared_controls_claimed": false,
     "aspnet_product_modified": false,
     "generated_reconciliation_hand_edited": false
