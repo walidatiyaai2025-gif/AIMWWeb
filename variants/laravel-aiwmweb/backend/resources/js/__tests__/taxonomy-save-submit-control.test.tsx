@@ -59,6 +59,7 @@ describe('AIMW-TAXO-39CDD7EF81 taxonomy Save submit parity', () => {
         const save = screen.getByRole('button', { name: 'Save' });
         expect(TAXONOMY_SAVE_SUBMIT_OPERATION_ID).toBe('AIMW-TAXO-39CDD7EF81');
         expect(save).toHaveAttribute('data-canonical-operation', TAXONOMY_SAVE_SUBMIT_OPERATION_ID);
+        expect(save).toHaveAttribute('type', 'submit');
         expect(save).toHaveAttribute('aria-busy', 'false');
         expect(save).not.toBeDisabled();
 
