@@ -9,13 +9,6 @@ use App\Models\TenantMembership;
 use App\Models\User;
 use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use App\Models\Permission;
-use App\Models\Role;
-use App\Models\Tenant;
-use App\Models\TenantMembership;
-use App\Models\User;
-use App\Tenancy\TenantContext;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 final class SitesCloseFormTerminalityTest extends TestCase
@@ -96,6 +89,7 @@ final class SitesCloseFormTerminalityTest extends TestCase
             ->assertForbidden();
     }
 
+    /** @param list<string> $permissions */
     private function membership(User $user, string $slug, array $permissions): TenantMembership
     {
         $tenant = Tenant::query()->create(['slug' => $slug, 'name' => ucfirst($slug)]);
@@ -113,34 +107,4 @@ final class SitesCloseFormTerminalityTest extends TestCase
 
         return $membership->fresh('tenant');
     }
-    public function test_foreign_tenant_context_fails_closed_as_404(): void
-    {
-        $user = User::factory()->create();
-        $this->membership($user, 'alpha-close', ['tenant.view', 'sites.view', 'sites.manage']);
-        Tenant::query()->create(['name' => 'Beta Close', 'slug' => 'beta-close']);
-
-        $this->actingAs($user)
-            ->getJson('/api/tenants/beta-close/sites')
-            ->assertNotFound();
-    }
-
-    /** @param list<string> $permissions */
-    private function membership(User $user, string $slug, array $permissions): TenantMembership
-    {
-        $tenant = Tenant::query()->create(['name' => ucfirst($slug), 'slug' => $slug]);
-        app(TenantContext::class)->activate($tenant);
-        $membership = TenantMembership::query()->create(['user_id' => $user->id, 'status' => 'active']);
-        $role = Role::query()->create(['name' => $slug.'-'.$user->id]);
-
-        foreach ($permissions as $name) {
-            $permission = Permission::query()->firstOrCreate(['name' => $name]);
-            $role->permissions()->attach($permission, ['tenant_id' => $tenant->id]);
-        }
-
-        $membership->roles()->attach($role, ['tenant_id' => $tenant->id]);
-        app(TenantContext::class)->forget();
-
-        return $membership->fresh('tenant');
-    }
-
 }
