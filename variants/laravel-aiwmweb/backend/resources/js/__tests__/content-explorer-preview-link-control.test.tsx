@@ -62,3 +62,5 @@ describe('AIMW-CONT-37B4B4BEC4 Content Explorer preview link', () => {
         expect(onClose).toHaveBeenCalledTimes(1);
     });
 });
+
+// exact-head gate retrigger after parity materialization
