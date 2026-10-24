@@ -1,5 +1,5 @@
 name: Laravel AIWMWeb Task Sync 868
-# retrigger: stable-base-6df012cf
+# retrigger: guarded-push-race-fix
 
 on:
   push:
@@ -10,6 +10,10 @@ on:
 
 permissions:
   contents: write
+
+concurrency:
+  group: laravel-aiwmweb-task-sync-868-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   sync:
@@ -33,6 +37,7 @@ jobs:
           REG=variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json
           OUT_JSON=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
           OUT_MD=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          SYNC_WORKFLOW=.github/workflows/laravel-aiwmweb-task-sync-868.yml
 
           python - <<'PY'
           import json
@@ -89,9 +94,21 @@ jobs:
           python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output /tmp/operation-parity-summary.json --markdown-output "$OUT_MD" --check-total 931
           python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output /tmp/operation-parity-summary.json --markdown-output "$OUT_MD" --check-total 931
 
-          rm -f .github/workflows/laravel-aiwmweb-task-sync-868.yml
-          git add "$REG" "$OUT_JSON" "$OUT_MD" .github/workflows/laravel-aiwmweb-task-sync-868.yml
+          rm -f "$SYNC_WORKFLOW"
+          git add "$REG" "$OUT_JSON" "$OUT_MD" "$SYNC_WORKFLOW"
           git add -u
           git add variants/laravel-aiwmweb/backend variants/laravel-aiwmweb/docs/closure-evidence
           git commit -m "merge(laravel): sync #868 with closure composition"
-          git push origin "HEAD:${{ github.ref_name }}"
+
+          git fetch origin "${{ github.ref_name }}"
+          remote_tip="$(git rev-parse "origin/${{ github.ref_name }}")"
+          if [ "$remote_tip" != "$GITHUB_SHA" ]; then
+            unexpected="$(git diff --name-only "$GITHUB_SHA..$remote_tip" | grep -v "^$SYNC_WORKFLOW$" || true)"
+            if [ -n "$unexpected" ]; then
+              echo "Ref moved with substantive changes; refusing overwrite:"
+              echo "$unexpected"
+              exit 1
+            fi
+          fi
+
+          git push --force-with-lease="refs/heads/${{ github.ref_name }}:$remote_tip" origin "HEAD:${{ github.ref_name }}"
