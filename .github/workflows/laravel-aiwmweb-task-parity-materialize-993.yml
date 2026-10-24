@@ -49,4 +49,4 @@ jobs:
           git commit -m "chore(laravel): materialize parity for AIMW-SYNC-1778E3F6B5"
           git push origin "HEAD:${{ github.ref_name }}"
 
-# Exact-head gate retrigger after official materialization.
+# Final exact-head verification after official materialization.
