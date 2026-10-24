@@ -1517,6 +1517,14 @@
       "operation_ids": [
         "AIMW-SYNC-8719C812DC"
       ]
+    },
+    {
+      "label": "AIMW-CONT-5BE26C7AB5 Site Operations Manage sites focused closure",
+      "sha": "ffa5037010f28079f64576264fb67ebfd6733e73",
+      "observed_pr_head": "ffa5037010f28079f64576264fb67ebfd6733e73",
+      "operation_ids": [
+        "AIMW-CONT-5BE26C7AB5"
+      ]
     }
   ]
 }
