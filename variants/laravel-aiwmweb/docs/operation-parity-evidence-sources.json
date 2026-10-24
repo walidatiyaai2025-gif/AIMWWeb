@@ -1565,6 +1565,14 @@
       "operation_ids": [
         "AIMW-SYNC-1778E3F6B5"
       ]
+    },
+    {
+      "label": "AIMW-TAXO-602DE140EB Global Taxonomy row links focused closure",
+      "sha": "8eca8c11cbf975a47231eebeca38ff2ddfd055e4",
+      "observed_pr_head": "8eca8c11cbf975a47231eebeca38ff2ddfd055e4",
+      "operation_ids": [
+        "AIMW-TAXO-602DE140EB"
+      ]
     }
   ]
 }
