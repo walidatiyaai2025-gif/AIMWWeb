@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import {
@@ -26,6 +26,7 @@ import { AUTOMATION_PHASE_ACTION_OPERATIONS, AUTOMATION_PHASE_REFRESH_OPERATIONS
 import { AuthoritativeReconciliationError, mutateThenReconcile } from './reconciliation';
 import { ContentExplorerWordPressLinkControl } from './content-explorer-wordpress-link-control';
 import { ContentExplorerPreviewPanel } from './content-explorer-preview-panel';
+import { CONTENT_EXPLORER_CONTENT_TAB_RESET_EVENT } from './content-explorer-content-tab-control';
 import { ContentExplorerBackToSitesControl } from './content-explorer-back-to-sites-control';
 import { CurrentUserLogsControl } from './current-user-logs-control';
 import { DashboardSitesNavigationControl } from './dashboard-sites-navigation-control';
@@ -214,6 +215,13 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const [page, setPage] = useState(1);
     const [sitesFilter, setSitesFilter] = useState<'all' | 'connected' | 'review'>('all');
     const [explorerPreview, setExplorerPreview] = useState<Record<string, unknown> | null>(null);
+
+    useEffect(() => {
+        if (route.key !== 'explorer') return undefined;
+        const clearPreview = () => setExplorerPreview(null);
+        window.addEventListener(CONTENT_EXPLORER_CONTENT_TAB_RESET_EVENT, clearPreview);
+        return () => window.removeEventListener(CONTENT_EXPLORER_CONTENT_TAB_RESET_EVENT, clearPreview);
+    }, [route.key]);
     const [siteOperationsFilters, setSiteOperationsFilters] = useState<SiteOperationsFilterState>(() => siteOperationsDefaultFilters());
     const [siteOperationsExportResetToken, setSiteOperationsExportResetToken] = useState(0);
     const [taxonomyType, setTaxonomyType] = useState<'category' | 'post_tag'>('category');
