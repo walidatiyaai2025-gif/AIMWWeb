@@ -21,6 +21,8 @@
         h1 { margin: 16px 0 20px; max-width: 760px; font-size: clamp(42px, 6vw, 78px); line-height: .98; letter-spacing: -.055em; }
         .lead { margin: 0; max-width: 700px; color: #aabbd1; font-size: clamp(17px, 2vw, 21px); line-height: 1.7; }
         .hero-actions { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+        .hero-primary { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 10px 16px; color: #06111e; text-decoration: none; font-weight: 850; border: 1px solid #72e2d1; border-radius: 11px; background: #72e2d1; }
+        .hero-primary:hover, .hero-primary:focus-visible { background: #8ce9dc; border-color: #8ce9dc; outline: none; }
         .hero-secondary { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; color: #d9e7fb; text-decoration: none; font-weight: 800; border: 1px solid rgba(255,255,255,.14); border-radius: 11px; background: rgba(255,255,255,.035); }
         .hero-secondary:hover, .hero-secondary:focus-visible { border-color: rgba(114,226,209,.55); outline: none; }
         .proof { margin-top: 32px; display: flex; flex-wrap: wrap; gap: 12px; color: #c9d8ec; }
@@ -114,6 +116,13 @@
                 <h1>{{ $welcomeLocale === 'ar' ? 'أدر ووردبريس كنظام واحد.' : 'Operate WordPress as one system.' }}</h1>
                 <p class="lead">{{ $welcomeLocale === 'ar' ? 'بوابة عامة لإدارة ووردبريس بالذكاء الاصطناعي. سجل الدخول للوصول إلى مواقع حسابك والعمليات والمحتوى وتحسين محركات البحث والأتمتة عبر مسارات التطبيق المحمية.' : 'A public, identity-neutral entry point for AI WordPress Manager. Sign in to reach tenant-owned sites, operations, content, SEO and automation through their protected application routes.' }}</p>
                 <div class="hero-actions">
+                    <a
+                        class="hero-primary"
+                        href="{{ $isAuthenticated ? '/' : route('register', [], false) }}"
+                        data-canonical-operation="AIMW-CONT-DD56664FDA"
+                    >{{ $isAuthenticated
+                        ? ($welcomeLocale === 'ar' ? 'فتح مساحة العمل' : 'Open workspace')
+                        : ($welcomeLocale === 'ar' ? 'ابدأ مجانًا' : 'Start free trial') }} <span aria-hidden="true">→</span></a>
                     <a
                         class="hero-secondary"
                         href="#workspace-preview"
