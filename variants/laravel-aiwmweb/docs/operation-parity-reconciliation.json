@@ -16356,21 +16356,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/content-editor-secondary-save-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-editor-secondary-save-control.test.tsx",
+      "evidence": "AIMW-CONT-289CEEF3BA Content Editor secondary Save focused closure@8058b549ace9cdf85b55e80ce3eeabc21358e01c: variants/laravel-aiwmweb/backend/resources/js/content-editor-secondary-save-control.tsx; focused-closure:AIMW-CONT-289CEEF3BA; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-editor-secondary-save-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-editor-secondary-save-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-289CEEF3BA Content Editor secondary Save focused closure",
+        "source_sha": "8058b549ace9cdf85b55e80ce3eeabc21358e01c",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/content-editor-secondary-save-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/content-editor-secondary-save-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-289CEEF3BA",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/content-editor-secondary-save-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-editor-secondary-save-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-editor-secondary-save-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -20270,31 +20280,21 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/wordpress-users-working-state-control.tsx",
+      "laravel_destination": "",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "ADAPTED",
-      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/wordpress-users-working-state-control.test.tsx",
-      "evidence": "AIMW-CONT-346657AD9D WordPress Users working-state focused closure@34b7b208e7ed9fe8e386563556f99205a2f51f60: variants/laravel-aiwmweb/backend/resources/js/wordpress-users-working-state-control.tsx; focused-closure:AIMW-CONT-346657AD9D; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/wordpress-users-working-state-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/wordpress-users-working-state-terminality.json",
+      "migration_state": "PENDING",
+      "acceptance_test": "",
+      "evidence": "",
       "reconciliation": {
-        "decision": "ADAPTED",
-        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "AIMW-CONT-346657AD9D WordPress Users working-state focused closure",
-        "source_sha": "34b7b208e7ed9fe8e386563556f99205a2f51f60",
-        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/wordpress-users-working-state-control.tsx",
-        "evidence_mode": "focused_closure_contract",
-        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/wordpress-users-working-state-terminality.json",
-        "signals": [
-          "operation:AIMW-CONT-346657AD9D",
-          "production-marker:variants/laravel-aiwmweb/backend/resources/js/wordpress-users-working-state-control.tsx",
-          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/wordpress-users-working-state-control.test.tsx",
-          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/wordpress-users-working-state-terminality.json",
-          "scope:operation-specific",
-          "test:tenant-isolation"
-        ]
+        "decision": "PENDING",
+        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
+        "source_label": null,
+        "source_sha": null,
+        "destination_path": null
       }
     },
     {
@@ -36411,10 +36411,10 @@
       "AIMW-CONT-247E791DA7",
       "AIMW-CONT-2752ED9351",
       "AIMW-CONT-276925F148",
-      "AIMW-CONT-289CEEF3BA",
       "AIMW-CONT-2C02B7A328",
       "AIMW-CONT-2C51372C70",
       "AIMW-CONT-3443C173C6",
+      "AIMW-CONT-346657AD9D",
       "AIMW-CONT-349017BDF5",
       "AIMW-CONT-371D22489E",
       "AIMW-CONT-37B4B4BEC4",
@@ -37419,8 +37419,8 @@
       "AIMW-CONT-058F41BD1B",
       "AIMW-CONT-16D09482D4",
       "AIMW-CONT-1A08B49164",
+      "AIMW-CONT-289CEEF3BA",
       "AIMW-CONT-2CDC790742",
-      "AIMW-CONT-346657AD9D",
       "AIMW-CONT-4209A8ADF4",
       "AIMW-CONT-4D6C928D75",
       "AIMW-CONT-553D999DDB",
@@ -37712,10 +37712,10 @@
         ]
       },
       {
-        "label": "AIMW-CONT-346657AD9D WordPress Users working-state focused closure",
-        "sha": "34b7b208e7ed9fe8e386563556f99205a2f51f60",
+        "label": "AIMW-CONT-289CEEF3BA Content Editor secondary Save focused closure",
+        "sha": "8058b549ace9cdf85b55e80ce3eeabc21358e01c",
         "operation_ids": [
-          "AIMW-CONT-346657AD9D"
+          "AIMW-CONT-289CEEF3BA"
         ]
       }
     ],
