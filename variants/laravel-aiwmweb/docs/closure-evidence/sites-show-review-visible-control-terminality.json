@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #865 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-CA17F05024",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/sites",
+    "source": "src/AIWordPressManager.Web/Components/Pages/Sites.razor",
+    "source_control": "ShowReviewSites [ShowReviewSites]",
+    "source_intent": "Switch the Sites local status filter to review and render sites whose connection state is neither Connected nor Unknown.",
+    "mutation": false,
+    "tenant_owned": true,
+    "external_dependency": "WordPress",
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "workspace": "ResourceContent for route.key === sites",
+    "operation_marker": "AIMW-CONT-CA17F05024",
+    "transition": "setSitesFilter('review')",
+    "authoritative_field": "connection_status",
+    "review_predicate": "normalized connection_status is neither connected nor unknown",
+    "count": "computed from the already-loaded authoritative tenant Sites collection"
+  },
+  "state_and_security": {
+    "local_ui_state_only": true,
+    "additional_request_on_filter": false,
+    "server_mutation": false,
+    "wordpress_mutation": false,
+    "queue_cache_scheduler_mutation": false,
+    "tenant_identity_override": false,
+    "loading_error_authority": "inherits the existing guarded Sites ResourceContent query loading and error states",
+    "empty_state": "the existing explicit no-sample-rows empty state is rendered when the review subset is empty",
+    "tenant_isolation": "the Sites workspace requires tenant.view plus sites.view; a foreign tenant slug without membership returns 404"
+  },
+  "source_semantics": {
+    "source_transition": "ShowReviewSites calls SetFilter(\"review\")",
+    "source_predicate": "ConnectionStatus is not Connected and not Unknown",
+    "source_count": "ProblemCount uses the same predicate",
+    "read_only": true
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/sites-show-review-visible-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/SitesShowReviewVisibleControlTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation identity and source semantics",
+      "production operation marker on the real Sites Needs review control",
+      "authoritative connection_status predicate parity",
+      "connected and unknown rows excluded from review",
+      "problem rows retained",
+      "review count derived from authoritative rows",
+      "no extra fetch or mutation when switching filter",
+      "deterministic empty review state without synthetic rows",
+      "sites.view authorization and foreign-tenant 404 isolation"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-CA17F05024"
+    ],
+    "sibling_show_connected_claimed": false,
+    "sibling_show_all_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "backend_mutation_added": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "47465a578085999b8540ee74e7d3fed97ccb3d68",
+    "branch": "worker/865-sites-show-review"
+  },
+  "materialization": {
+    "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-865.yml",
+    "generated_reconciliation_required": true,
+    "generated_reconciliation_commit": "27cf5e8d4ab00ea7ade9c96d0d691a927c05bb39",
+    "generated_artifacts": [
+      "variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json",
+      "variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md"
+    ]
+  }
+}
