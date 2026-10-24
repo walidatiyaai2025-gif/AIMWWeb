@@ -20099,12 +20099,12 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/sites-close-form-control.test.tsx",
-      "evidence": "AIMW-CONT-FBA95BDC1D Sites CloseForm focused closure@3406adfa75dba428d83441cf35e935babb6ddb6d: variants/laravel-aiwmweb/backend/resources/js/sites-save-control.tsx; focused-closure:AIMW-CONT-FBA95BDC1D; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/sites-close-form-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/sites-close-form-terminality.json",
+      "evidence": "AIMW-CONT-FBA95BDC1D Sites CloseForm focused closure@e9a33c5cd3cae35c78e0d25dc4962f8de5a9240e: variants/laravel-aiwmweb/backend/resources/js/sites-save-control.tsx; focused-closure:AIMW-CONT-FBA95BDC1D; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/sites-close-form-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/sites-close-form-terminality.json",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
         "source_label": "AIMW-CONT-FBA95BDC1D Sites CloseForm focused closure",
-        "source_sha": "3406adfa75dba428d83441cf35e935babb6ddb6d",
+        "source_sha": "e9a33c5cd3cae35c78e0d25dc4962f8de5a9240e",
         "destination_path": "variants/laravel-aiwmweb/backend/resources/js/sites-save-control.tsx",
         "evidence_mode": "focused_closure_contract",
         "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/sites-close-form-terminality.json",
@@ -37976,7 +37976,7 @@
       },
       {
         "label": "AIMW-CONT-FBA95BDC1D Sites CloseForm focused closure",
-        "sha": "3406adfa75dba428d83441cf35e935babb6ddb6d",
+        "sha": "e9a33c5cd3cae35c78e0d25dc4962f8de5a9240e",
         "operation_ids": [
           "AIMW-CONT-FBA95BDC1D"
         ]
