@@ -1028,6 +1028,28 @@
       "operation_ids": [
         "AIMW-SYNC-F7CE702C7D"
       ]
+    },
+    {
+      "label": "AIMW-CONT-BF5F72F4F9 Site Connect canonical route terminality",
+      "sha": "9ff12621218525ea09cf75e93cb5ad40fbb9a44c",
+      "observed_pr_head": "9ff12621218525ea09cf75e93cb5ad40fbb9a44c",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "operation_ids": [
+        "AIMW-CONT-BF5F72F4F9"
+      ],
+      "route_api_provenance": {
+        "AIMW-CONT-BF5F72F4F9": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SitesConnectRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteConnectRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteConnectRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-connect-route-terminality.json",
+          "security_mode": "tenant_selected"
+        }
+      }
     }
   ],
   "excluded_sources": [],
@@ -1588,6 +1610,14 @@
       "observed_pr_head": "2ab60e249852eceb662d615a61f0ba758ed9a494",
       "operation_ids": [
         "AIMW-SYNC-F7CE702C7D"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-AC737C80BF Content Explorer SelectAllFiltered focused closure",
+      "sha": "05832320ddbb8038334477b09366a426eebda24e",
+      "observed_pr_head": "05832320ddbb8038334477b09366a426eebda24e",
+      "operation_ids": [
+        "AIMW-CONT-AC737C80BF"
       ]
     }
   ]
