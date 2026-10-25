@@ -3,6 +3,7 @@ import type { FrontendContext } from './core';
 import { useLocale } from './i18n';
 
 export const SETTINGS_SET_LIGHT_OPERATION_ID = 'AIMW-CONT-4961F90970';
+export const SETTINGS_SET_DARK_OPERATION_ID = 'AIMW-CONT-EDC262499D';
 export const APPEARANCE_MODE_EVENT = 'aiwm:appearance-mode';
 const MODE_STORAGE_KEY = 'aiwm.mode';
 
@@ -35,6 +36,11 @@ export function SettingsAppearanceLightControl({ context }: { context: FrontendC
 
     if (!canViewSettings) return null;
 
+    const setDark = () => {
+        applyAppearanceMode('dark');
+        setMode('dark');
+    };
+
     const setLight = () => {
         applyAppearanceMode('light');
         setMode('light');
@@ -48,6 +54,16 @@ export function SettingsAppearanceLightControl({ context }: { context: FrontendC
                 <small>{locale === 'ar' ? 'وضوح أعلى في الإضاءة' : 'Clearer in bright environments'}</small>
             </div>
             <div className="toolbar-actions">
+                <button
+                    type="button"
+                    className={`btn ${mode === 'dark' ? 'primary' : ''}`}
+                    aria-pressed={mode === 'dark'}
+                    data-canonical-operation={SETTINGS_SET_DARK_OPERATION_ID}
+                    onClick={setDark}
+                >
+                    <span aria-hidden="true">☾</span>
+                    {locale === 'ar' ? 'داكن' : 'Dark'}
+                </button>
                 <button
                     type="button"
                     className={`btn ${mode === 'light' ? 'primary' : ''}`}
