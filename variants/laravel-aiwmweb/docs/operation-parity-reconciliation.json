@@ -113,12 +113,12 @@
     "email": {
       "total": 82,
       "ported": 0,
-      "adapted": 76,
-      "pending": 6,
+      "adapted": 75,
+      "pending": 7,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 76,
-      "percent": 92.68
+      "terminal": 75,
+      "percent": 91.46
     },
     "identity": {
       "total": 7,
@@ -203,12 +203,12 @@
     "sync": {
       "total": 213,
       "ported": 0,
-      "adapted": 147,
-      "pending": 66,
+      "adapted": 148,
+      "pending": 65,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 147,
-      "percent": 69.01
+      "terminal": 148,
+      "percent": 69.48
     },
     "taxonomy": {
       "total": 13,
@@ -22289,31 +22289,21 @@
       "external_dependency": "email_provider",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/account-email-settings-profile-form.tsx",
+      "laravel_destination": "",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "ADAPTED",
-      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/account-email-settings-cancel-edit-control.test.tsx",
-      "evidence": "AIMW-EMAI-A9CB66F400 AccountEmailSettings CancelEditClicked focused closure@ad642fa272cc38d7c8df4805314f44949926eb8e: variants/laravel-aiwmweb/backend/resources/js/account-email-settings-profile-form.tsx; focused-closure:AIMW-EMAI-A9CB66F400; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/account-email-settings-cancel-edit-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/account-email-settings-cancel-edit-terminality.json",
+      "migration_state": "PENDING",
+      "acceptance_test": "",
+      "evidence": "",
       "reconciliation": {
-        "decision": "ADAPTED",
-        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "AIMW-EMAI-A9CB66F400 AccountEmailSettings CancelEditClicked focused closure",
-        "source_sha": "ad642fa272cc38d7c8df4805314f44949926eb8e",
-        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/account-email-settings-profile-form.tsx",
-        "evidence_mode": "focused_closure_contract",
-        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/account-email-settings-cancel-edit-terminality.json",
-        "signals": [
-          "operation:AIMW-EMAI-A9CB66F400",
-          "production-marker:variants/laravel-aiwmweb/backend/resources/js/account-email-settings-profile-form.tsx",
-          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/account-email-settings-cancel-edit-control.test.tsx",
-          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/account-email-settings-cancel-edit-terminality.json",
-          "scope:operation-specific",
-          "test:tenant-isolation"
-        ]
+        "decision": "PENDING",
+        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
+        "source_label": null,
+        "source_sha": null,
+        "destination_path": null
       }
     },
     {
@@ -32698,21 +32688,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/sync-form-actions-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/sync-form-actions-control.test.tsx",
+      "evidence": "AIMW-SYNC-14DAFE7D73 AppFormActions CancelClickedAsync focused closure@3d46495b80ab7c25e99a9072cf6f6e626104671c: variants/laravel-aiwmweb/backend/resources/js/sync-form-actions-control.tsx; focused-closure:AIMW-SYNC-14DAFE7D73; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/sync-form-actions-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/sync-app-form-actions-cancel-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-SYNC-14DAFE7D73 AppFormActions CancelClickedAsync focused closure",
+        "source_sha": "3d46495b80ab7c25e99a9072cf6f6e626104671c",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/sync-form-actions-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/sync-app-form-actions-cancel-terminality.json",
+        "signals": [
+          "operation:AIMW-SYNC-14DAFE7D73",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/sync-form-actions-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/sync-form-actions-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/sync-app-form-actions-cancel-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -37017,7 +37017,8 @@
       "AIMW-EMAI-10F3C44369",
       "AIMW-EMAI-7E1D4105B0",
       "AIMW-EMAI-8C9768BCD0",
-      "AIMW-EMAI-9EB09C490D"
+      "AIMW-EMAI-9EB09C490D",
+      "AIMW-EMAI-A9CB66F400"
     ],
     "identity": [],
     "media": [
@@ -37042,7 +37043,6 @@
       "AIMW-SYNC-0239B0E6A3",
       "AIMW-SYNC-078D172C71",
       "AIMW-SYNC-0DFEE862FA",
-      "AIMW-SYNC-14DAFE7D73",
       "AIMW-SYNC-1A20057999",
       "AIMW-SYNC-1B63FBC758",
       "AIMW-SYNC-21483C88FA",
@@ -37686,6 +37686,16 @@
           "AIMW-CONT-9BA2C255AF"
         ],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "AIMW-SYNC-14DAFE7D73 AppFormActions CancelClickedAsync focused closure",
+        "sha": "3d46495b80ab7c25e99a9072cf6f6e626104671c",
+        "domains": [],
+        "supporting_only": false,
+        "operation_ids": [
+          "AIMW-SYNC-14DAFE7D73"
+        ],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -37711,6 +37721,7 @@
       "316d28cd4a22001812fa06c3a41f8ee962c6acd8",
       "34e66eba87657e5283f29765c083529b08ba7625",
       "392c4efe25adc0214893fd81b740171b8cd9a750",
+      "3d46495b80ab7c25e99a9072cf6f6e626104671c",
       "3e932f83ee1a9e3bcbee1159ead1fe29f8721640",
       "3ef0d094b3211f0e67966346f1a896d2daf164a9",
       "41011429295d0b5daa7a36a59824d4b45015b93e",
@@ -38096,7 +38107,6 @@
       "AIMW-EMAI-7A54150265",
       "AIMW-EMAI-8E3B0AACD6",
       "AIMW-EMAI-8E56589573",
-      "AIMW-EMAI-A9CB66F400",
       "AIMW-EMAI-BDF888551C",
       "AIMW-EMAI-EC34E40629",
       "AIMW-EMAI-F8E8A2BEE9",
@@ -38133,6 +38143,7 @@
       "AIMW-SYNC-112E6B9631",
       "AIMW-SYNC-12C023E4CC",
       "AIMW-SYNC-12F15A0A80",
+      "AIMW-SYNC-14DAFE7D73",
       "AIMW-SYNC-1778E3F6B5",
       "AIMW-SYNC-26F2BF8EE8",
       "AIMW-SYNC-461B1075DE",
@@ -38683,10 +38694,10 @@
         ]
       },
       {
-        "label": "AIMW-EMAI-A9CB66F400 AccountEmailSettings CancelEditClicked focused closure",
-        "sha": "ad642fa272cc38d7c8df4805314f44949926eb8e",
+        "label": "AIMW-SYNC-14DAFE7D73 AppFormActions CancelClickedAsync focused closure",
+        "sha": "3d46495b80ab7c25e99a9072cf6f6e626104671c",
         "operation_ids": [
-          "AIMW-EMAI-A9CB66F400"
+          "AIMW-SYNC-14DAFE7D73"
         ]
       }
     ],

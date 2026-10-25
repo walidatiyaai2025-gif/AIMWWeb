@@ -36,7 +36,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | billing | 178 | 0 | 173 | 5 | 0 | 0 | 173 | 97.19% |
 | comments | 8 | 0 | 8 | 0 | 0 | 0 | 8 | 100.00% |
 | content | 164 | 0 | 99 | 65 | 0 | 0 | 99 | 60.37% |
-| email | 82 | 0 | 76 | 6 | 0 | 0 | 76 | 92.68% |
+| email | 82 | 0 | 75 | 7 | 0 | 0 | 75 | 91.46% |
 | identity | 7 | 0 | 7 | 0 | 0 | 0 | 7 | 100.00% |
 | media | 15 | 0 | 6 | 9 | 0 | 0 | 6 | 40.00% |
 | operations | 5 | 0 | 5 | 0 | 0 | 0 | 5 | 100.00% |
@@ -45,7 +45,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | seo | 24 | 0 | 24 | 0 | 0 | 0 | 24 | 100.00% |
 | settings | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 100.00% |
 | sites | 12 | 0 | 12 | 0 | 0 | 0 | 12 | 100.00% |
-| sync | 213 | 0 | 147 | 66 | 0 | 0 | 147 | 69.01% |
+| sync | 213 | 0 | 148 | 65 | 0 | 0 | 148 | 69.48% |
 | taxonomy | 13 | 0 | 10 | 3 | 0 | 0 | 10 | 76.92% |
 
 ## By kind
@@ -171,7 +171,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-CONT-FE1F15935E`
 - `AIMW-CONT-FE6EE5740C`
 
-### email (6)
+### email (7)
 
 - `AIMW-EMAI-01F5713C4F`
 - `AIMW-EMAI-0AA71A5EF6`
@@ -179,6 +179,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-EMAI-7E1D4105B0`
 - `AIMW-EMAI-8C9768BCD0`
 - `AIMW-EMAI-9EB09C490D`
+- `AIMW-EMAI-A9CB66F400`
 
 ### identity (0)
 
@@ -220,13 +221,12 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 
 - None
 
-### sync (66)
+### sync (65)
 
 - `AIMW-SYNC-0108E40967`
 - `AIMW-SYNC-0239B0E6A3`
 - `AIMW-SYNC-078D172C71`
 - `AIMW-SYNC-0DFEE862FA`
-- `AIMW-SYNC-14DAFE7D73`
 - `AIMW-SYNC-1A20057999`
 - `AIMW-SYNC-1B63FBC758`
 - `AIMW-SYNC-21483C88FA`
