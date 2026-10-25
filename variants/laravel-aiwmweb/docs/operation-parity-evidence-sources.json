@@ -1216,6 +1216,14 @@
           "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/home-route-terminality.json"
         }
       }
+    },
+    {
+      "label": "AIMW-CONT-7957ECC794 Home quick-access Sites focused closure",
+      "sha": "e04c525501aeec1414368fcd35be0b1695ce0272",
+      "observed_pr_head": "e04c525501aeec1414368fcd35be0b1695ce0272",
+      "operation_ids": [
+        "AIMW-CONT-7957ECC794"
+      ]
     }
   ],
   "excluded_sources": [],
@@ -1896,6 +1904,14 @@
       "observed_pr_head": "4a1da41d841b4375a7f09a5c779a58b576501926",
       "operation_ids": [
         "AIMW-CONT-73E4F88038"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-7957ECC794 Home quick-access Sites focused closure",
+      "sha": "e04c525501aeec1414368fcd35be0b1695ce0272",
+      "observed_pr_head": "e04c525501aeec1414368fcd35be0b1695ce0272",
+      "operation_ids": [
+        "AIMW-CONT-7957ECC794"
       ]
     }
   ]
