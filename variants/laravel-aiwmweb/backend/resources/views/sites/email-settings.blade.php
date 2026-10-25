@@ -249,7 +249,7 @@
                                                 type="button"
                                                 data-canonical-operation="AIMW-EMAI-7E1D4105B0"
                                                 data-source-handler="CancelEdit"
-                                                onclick="this.closest('details').removeAttribute('open')"
+                                                onclick="this.closest('form').reset(); this.closest('details').removeAttribute('open')"
                                             >{{ $copy['cancel'] }}</button>
                                         </form>
                                     </details>

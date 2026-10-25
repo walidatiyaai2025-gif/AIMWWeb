@@ -13,6 +13,9 @@ final class SiteEmailSettingsCancelEditTerminalityTest extends TestCase
 
         $this->assertStringContainsString('AIMW-EMAI-7E1D4105B0', $view);
         $this->assertStringContainsString('CancelEdit', $view);
+        $this->assertStringContainsString('private void CancelEdit() => _editingId = null;', (string) file_get_contents(base_path('../../../src/AIWordPressManager.Web/Components/Pages/SiteEmailSettings.razor')));
+        $this->assertStringContainsString("this.closest('form').reset(); this.closest('details').removeAttribute('open')", $view);
+        $this->assertStringContainsString('type="button"', $view);
         $this->assertStringContainsString('assertNotFound', $guard);
         $this->assertStringContainsString('tenant.context', $guard);
     }
