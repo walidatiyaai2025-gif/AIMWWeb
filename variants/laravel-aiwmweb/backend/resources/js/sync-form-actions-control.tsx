@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import type { FrontendContext } from './core';
 
 export const SYNC_APP_FORM_ACTIONS_OPERATION_ID = 'AIMW-SYNC-7071DA172F';
+export const SYNC_APP_FORM_ACTIONS_CANCEL_OPERATION_ID = 'AIMW-SYNC-14DAFE7D73';
 
 function allowed(context: FrontendContext, permission: string): boolean {
     return context.permissions.includes('*') || context.permissions.includes(permission);
@@ -70,7 +71,14 @@ export function SyncFormActionsControl({
             </div>
             <div className="app-form-actions__buttons">
                 {showCancel ? (
-                    <button type="button" className="btn" disabled={busy || cancelDisabled} onClick={() => void cancel()}>
+                    <button
+                        type="button"
+                        className="btn"
+                        disabled={busy || cancelDisabled}
+                        onClick={() => void cancel()}
+                        data-canonical-operation={SYNC_APP_FORM_ACTIONS_CANCEL_OPERATION_ID}
+                        data-source-handler="CancelClickedAsync"
+                    >
                         {cancelText}
                     </button>
                 ) : null}
