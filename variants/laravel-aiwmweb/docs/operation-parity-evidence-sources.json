@@ -1143,7 +1143,8 @@
           "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/roles-permissions-route-terminality.json",
           "security_mode": "tenant_scoped"
         }
-      }
+      },
+      "supporting_only": true
     }
   ],
   "excluded_sources": [],
