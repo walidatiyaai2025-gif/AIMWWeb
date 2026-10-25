@@ -154,9 +154,9 @@ describe('AIMW-CONT-B44DA81C28 Content Explorer media SourceUrl', () => {
         vi.stubGlobal('fetch', fetchMock);
 
         renderControl();
-        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+        await waitFor(() => expect(screen.getAllByLabelText('Media file link unavailable')).toHaveLength(3));
 
+        expect(fetchMock).toHaveBeenCalledTimes(1);
         expect(screen.queryByRole('link')).not.toBeInTheDocument();
-        expect(screen.getAllByLabelText('Media file link unavailable')).toHaveLength(3);
     });
 });
