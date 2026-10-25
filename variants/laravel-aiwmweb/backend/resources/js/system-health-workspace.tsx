@@ -31,6 +31,7 @@ export function SystemHealthWorkspace({ context, route }: { context: FrontendCon
         );
     }
 
+    const snapshot = query.data;
     const trustedSnapshot = !query.error && query.data?.tenant === context.tenant.slug ? query.data : undefined;
 
     let content: React.ReactNode;
@@ -43,14 +44,14 @@ export function SystemHealthWorkspace({ context, route }: { context: FrontendCon
                 {error?.message ?? (locale === 'ar' ? 'فشل طلب التشخيصات الحقيقي.' : 'The real diagnostics request failed.')}
             </StatePanel>
         );
-    } else if (!trustedSnapshot) {
+    } else if (!snapshot || snapshot.tenant !== context.tenant.slug) {
         content = (
             <StatePanel tone="danger" title={locale === 'ar' ? 'بيانات صحة النظام غير صالحة' : 'Invalid System Health snapshot'}>
                 {locale === 'ar' ? 'لم يرجع الخادم لقطة موثوقة للحساب الحالي.' : 'The server did not return an authoritative snapshot for the active tenant.'}
             </StatePanel>
         );
     } else {
-        const checks = Object.entries(trustedSnapshot.checks ?? {});
+        const checks = Object.entries(snapshot.checks ?? {});
         content = (
             <>
                 <section className="workspace-card-grid" aria-label={locale === 'ar' ? 'فحوصات صحة النظام' : 'System health checks'}>
@@ -68,7 +69,7 @@ export function SystemHealthWorkspace({ context, route }: { context: FrontendCon
                     <strong>{locale === 'ar' ? 'إجراءات' : 'Actions'}</strong>
                     <p>{locale === 'ar' ? 'افتح السجلات فقط بعد نجاح تحميل لقطة صحة النظام.' : 'Open logs only after the System Health snapshot has loaded successfully.'}</p>
                     <SystemHealthOpenLogsControl context={context} snapshotReady={true} />
-                    <SystemHealthCopySummaryControl key={context.tenant.slug} context={context} snapshot={trustedSnapshot} loading={query.isFetching} />
+                    <SystemHealthCopySummaryControl key={context.tenant.slug} context={context} snapshot={snapshot} loading={query.isFetching} />
                 </section>
             </>
         );
