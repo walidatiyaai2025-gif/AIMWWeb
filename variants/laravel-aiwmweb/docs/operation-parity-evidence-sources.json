@@ -1126,6 +1126,25 @@
       "operation_ids": [
         "AIMW-SYNC-2A8778C6EA"
       ]
+    },
+    {
+      "label": "AIMW-CONT-9CF12067E6 Roles & Permissions canonical route terminality",
+      "sha": "57fe4921dca136e740609224a03b5d5feac5ab93",
+      "observed_pr_head": "57fe4921dca136e740609224a03b5d5feac5ab93",
+      "domains": [
+        "content"
+      ],
+      "route_api_provenance": {
+        "AIMW-CONT-9CF12067E6": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/RolesPermissionsRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RolesPermissionsRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/RolesPermissionsRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/roles-permissions-route-terminality.json",
+          "security_mode": "tenant_scoped"
+        }
+      },
+      "supporting_only": true
     }
   ],
   "excluded_sources": [],
