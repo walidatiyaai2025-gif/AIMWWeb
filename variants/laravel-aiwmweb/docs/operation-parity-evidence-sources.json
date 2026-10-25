@@ -1719,7 +1719,14 @@
       "operation_ids": [
         "AIMW-CONT-B9E6EFF3DF"
       ]
+    },
+    {
+      "label": "AIMW-SYNC-0DFEE862FA SystemHealth RefreshClickedAsync focused closure",
+      "sha": "90f6940f907a2ea641e04adcda871d6a228b4765",
+      "observed_pr_head": "90f6940f907a2ea641e04adcda871d6a228b4765",
+      "operation_ids": [
+        "AIMW-SYNC-0DFEE862FA"
+      ]
     }
   ]
 }
-
