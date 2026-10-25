@@ -58,9 +58,11 @@ describe('AIMW-EMAI-A9CB66F400 account email CancelEdit adaptation', () => {
         renderControl();
 
         fireEvent.change(screen.getByLabelText('SMTP Host'), { target: { value: 'smtp.unsaved.test' } });
+        fireEvent.change(screen.getByLabelText('SMTP Port'), { target: { value: '2525' } });
         fireEvent.change(screen.getByLabelText('SMTP username'), { target: { value: 'unsaved@alpha.test' } });
         fireEvent.change(screen.getByLabelText('SMTP password'), { target: { value: 'transient-secret' } });
         fireEvent.change(screen.getByLabelText('From address'), { target: { value: 'unsaved-from@alpha.test' } });
+        fireEvent.click(screen.getByLabelText('Enable account outbound email'));
 
         const cancel = screen.getByRole('button', { name: 'Cancel' });
         expect(cancel).toHaveAttribute('data-canonical-operation', ACCOUNT_EMAIL_CANCEL_EDIT_OPERATION_ID);
@@ -69,9 +71,11 @@ describe('AIMW-EMAI-A9CB66F400 account email CancelEdit adaptation', () => {
         fireEvent.click(cancel);
 
         expect(screen.getByLabelText('SMTP Host')).toHaveValue('smtp.alpha.test');
+        expect(screen.getByLabelText('SMTP Port')).toHaveValue(587);
         expect(screen.getByLabelText('SMTP username')).toHaveValue('mailer@alpha.test');
         expect(screen.getByLabelText('SMTP password')).toHaveValue('');
         expect(screen.getByLabelText('From address')).toHaveValue('from@alpha.test');
+        expect(screen.getByLabelText('Enable account outbound email')).toBeChecked();
         expect(fetchSpy).not.toHaveBeenCalled();
     });
 
