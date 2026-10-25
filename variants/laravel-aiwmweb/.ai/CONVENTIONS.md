@@ -33,6 +33,10 @@
 - Security-sensitive work includes tenant isolation and caller-owned-field rejection tests.
 - Run the full repository-required suites; focused green tests do not override full-suite failures.
 
+## JSON response fixtures
+- Mock `apiRequest` JSON responses with `Content-Type: application/json`; the client intentionally does not decode other response types as JSON.
+- Evidence: #833 / PR #1180, exact-head `0d89426cf57be823685aaf446af021f75e2f3c61` frontend-production-build failure; `operations-hub-sites-link-control.test.tsx` proves loaded/empty state handling after the fixture correction. Scope: frontend API tests.
+
 ## Knowledge hygiene
 - Stable rule -> `DECISIONS.md` or `CONVENTIONS.md`.
 - Recurring verified hazard -> `KNOWN_ISSUES.md`.
