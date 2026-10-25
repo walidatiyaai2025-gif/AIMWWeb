@@ -73,9 +73,10 @@
   "server_mutation": false,
   "external_mutation": false,
   "only_operation_claimed": "AIMW-CONT-73E4F88038",
-  "materialized": false,
+  "materialized": true,
   "materialization": {
     "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-779.yml",
     "generated_reconciliation_required": true
-  }
+  },
+  "evidence_source_sha": "4a1da41d841b4375a7f09a5c779a58b576501926"
 }
