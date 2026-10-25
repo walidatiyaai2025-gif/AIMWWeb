@@ -1699,6 +1699,14 @@
       ]
     },
     {
+      "label": "AIMW-CONT-B9E6EFF3DF Global Users full management focused closure",
+      "sha": "cfe48348cca2e6f76dc11fe5b71647ebec302c0f",
+      "observed_pr_head": "cfe48348cca2e6f76dc11fe5b71647ebec302c0f",
+      "operation_ids": [
+        "AIMW-CONT-B9E6EFF3DF"
+      ]
+    },
+    {
       "label": "AIMW-EMAI-7E1D4105B0 CancelEdit focused closure",
       "sha": "faa63881a3f34ec885b1a1548933acfabe92af81",
       "observed_pr_head": "faa63881a3f34ec885b1a1548933acfabe92af81",
