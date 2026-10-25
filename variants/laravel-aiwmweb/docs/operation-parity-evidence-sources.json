@@ -1668,12 +1668,11 @@
     },
     {
       "label": "AIMW-CONT-CA4920CBC8 Site Data Snapshot Back to sites focused closure",
-      "sha": "5b4059b4597287f45c505ab3245ab71b83a4c017",
-      "observed_pr_head": "5b4059b4597287f45c505ab3245ab71b83a4c017",
+      "sha": "57f6197482089607a05d783173bbdb61d20aa063",
+      "observed_pr_head": "57f6197482089607a05d783173bbdb61d20aa063",
       "operation_ids": [
         "AIMW-CONT-CA4920CBC8"
       ]
     }
   ]
 }
-
