@@ -1110,6 +1110,14 @@
           "security_mode": "tenant_bound"
         }
       }
+    },
+    {
+      "label": "AIMW-CONT-6AB0ED6C83 Settings accessibility anchor focused closure",
+      "sha": "e36250110e3f9f2c22cfb8ac04de98b3c55b9195",
+      "observed_pr_head": "e36250110e3f9f2c22cfb8ac04de98b3c55b9195",
+      "operation_ids": [
+        "AIMW-CONT-6AB0ED6C83"
+      ]
     }
   ],
   "excluded_sources": [],
@@ -1726,6 +1734,14 @@
       "observed_pr_head": "90f6940f907a2ea641e04adcda871d6a228b4765",
       "operation_ids": [
         "AIMW-SYNC-0DFEE862FA"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-6AB0ED6C83 Settings accessibility anchor focused closure",
+      "sha": "e36250110e3f9f2c22cfb8ac04de98b3c55b9195",
+      "observed_pr_head": "e36250110e3f9f2c22cfb8ac04de98b3c55b9195",
+      "operation_ids": [
+        "AIMW-CONT-6AB0ED6C83"
       ]
     }
   ]
