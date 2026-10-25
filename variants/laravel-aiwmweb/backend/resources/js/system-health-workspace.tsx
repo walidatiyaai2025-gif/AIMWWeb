@@ -4,7 +4,7 @@ import { ApiError, apiRequest, resolveCapability, type FrontendContext, type Wor
 import { LoadingState, StatePanel } from './components';
 import { useLocale } from './i18n';
 import { SystemHealthOpenLogsControl } from './system-health-open-logs-control';
-
+import { SystemHealthRefreshControl } from './system-health-refresh-control';
 import { SystemHealthCopySummaryControl, type SystemHealthSnapshot } from './system-health-copy-summary-control';
 
 export function SystemHealthWorkspace({ context, route }: { context: FrontendContext; route: WorkspaceRoute }) {
@@ -23,6 +23,14 @@ export function SystemHealthWorkspace({ context, route }: { context: FrontendCon
         enabled: activeTenantIsAuthoritative && capability.state === 'enabled',
     });
 
+    const refreshControl = (
+        <SystemHealthRefreshControl
+            context={context}
+            refreshing={query.isFetching}
+            onRefresh={() => query.refetch()}
+        />
+    );
+
     if (!activeTenantIsAuthoritative || capability.state !== 'enabled') {
         return (
             <StatePanel tone="warning" title={locale === 'ar' ? 'صحة النظام غير متاحة' : 'System health unavailable'}>
@@ -31,23 +39,31 @@ export function SystemHealthWorkspace({ context, route }: { context: FrontendCon
         );
     }
 
-    if (query.isLoading) return <LoadingState />;
+    if (query.isLoading) {
+        return <div className="workspace-stack system-health-workspace">{refreshControl}<LoadingState /></div>;
+    }
 
     if (query.error) {
         const error = query.error instanceof ApiError ? query.error : null;
         return (
-            <StatePanel tone="danger" title={locale === 'ar' ? 'تعذر تحميل صحة النظام' : 'System health could not be loaded'}>
-                {error?.message ?? (locale === 'ar' ? 'فشل طلب التشخيصات الحقيقي.' : 'The real diagnostics request failed.')}
-            </StatePanel>
+            <div className="workspace-stack system-health-workspace">
+                {refreshControl}
+                <StatePanel tone="danger" title={locale === 'ar' ? 'تعذر تحميل صحة النظام' : 'System health could not be loaded'}>
+                    {error?.message ?? (locale === 'ar' ? 'فشل طلب التشخيصات الحقيقي.' : 'The real diagnostics request failed.')}
+                </StatePanel>
+            </div>
         );
     }
 
     const snapshot = query.data;
     if (!snapshot || snapshot.tenant !== context.tenant.slug) {
         return (
-            <StatePanel tone="danger" title={locale === 'ar' ? 'بيانات صحة النظام غير صالحة' : 'Invalid System Health snapshot'}>
-                {locale === 'ar' ? 'لم يرجع الخادم لقطة موثوقة للحساب الحالي.' : 'The server did not return an authoritative snapshot for the active tenant.'}
-            </StatePanel>
+            <div className="workspace-stack system-health-workspace">
+                {refreshControl}
+                <StatePanel tone="danger" title={locale === 'ar' ? 'بيانات صحة النظام غير صالحة' : 'Invalid System Health snapshot'}>
+                    {locale === 'ar' ? 'لم يرجع الخادم لقطة موثوقة للحساب الحالي.' : 'The server did not return an authoritative snapshot for the active tenant.'}
+                </StatePanel>
+            </div>
         );
     }
 
@@ -78,6 +94,7 @@ export function SystemHealthWorkspace({ context, route }: { context: FrontendCon
             <section className="workspace-card">
                 <strong>{locale === 'ar' ? 'إجراءات' : 'Actions'}</strong>
                 <p>{locale === 'ar' ? 'افتح السجلات فقط بعد نجاح تحميل لقطة صحة النظام.' : 'Open logs only after the System Health snapshot has loaded successfully.'}</p>
+                {refreshControl}
                 <SystemHealthOpenLogsControl context={context} snapshotReady={true} />
                 <SystemHealthCopySummaryControl key={context.tenant.slug} context={context} snapshot={snapshot} loading={query.isFetching} />
             </section>
