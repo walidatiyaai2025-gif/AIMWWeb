@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #822 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-55FA799054",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "route",
+    "route_screen": "/sites/{Id:guid}/operations",
+    "source": "src/AIWordPressManager.Web/Components/Pages/SiteConnectionCenter.razor",
+    "source_intent": "Open and render the tenant-owned Site Connection Center operations-history route.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "route": "GET /tenants/{tenant}/sites/{site}/operations",
+    "route_name": "canonical.site.operations",
+    "action": "CanonicalWorkspaceRouteController@showSite",
+    "permission": "sites.view",
+    "operation_marker": "AIMW-CONT-55FA799054",
+    "authoritative_read": "GET /api/tenants/{tenant}/sites/{site}/operations?take=100",
+    "authoritative_read_action": "SiteDiagnosticsController@operations",
+    "frontend_route": "/sites/:siteId/operations",
+    "frontend_control": "SiteConnectionCenterSyncControl"
+  },
+  "security": {
+    "route_middleware": [
+      "web",
+      "auth",
+      "tenant.context"
+    ],
+    "site_binding": "tenant-scoped Site model lookup",
+    "foreign_site": "404/fail closed",
+    "missing_permission": "403/fail closed",
+    "mutation_added": false
+  },
+  "render_states": {
+    "loading": "Existing SiteConnectionCenterSyncControl performs authoritative connection and operation-history reads before rendering.",
+    "empty": "An empty authoritative operation history renders the existing no-history state.",
+    "error": "Tenant, site, and API failures fail closed or surface through the existing control error state.",
+    "freshness": "The operations endpoint reads tenant-scoped persisted SiteOperationHistory."
+  },
+  "acceptance": {
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteOperationsRouteTerminalityTest.php"
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-55FA799054"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "2506cc2b7fcb262e008f117916498ab1447877ff",
+    "branch": "worker/822-site-connection-operations-route",
+    "issue": 822
+  }
+}
