@@ -1189,14 +1189,15 @@
         "content"
       ],
       "supporting_only": true,
-      "route_api_provenance": {
+      "operation_ids": [
+        "AIMW-CONT-519B93F503"
+      ],
+      "operation_evidence": {
         "AIMW-CONT-519B93F503": {
           "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/CanonicalHomeRouteServiceProvider.php",
           "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
           "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/HomeRouteTerminalityTest.php",
-          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/HomeRouteTerminalityTest.php",
-          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/home-route-terminality.json",
-          "security_mode": "tenant_scoped"
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/home-route-terminality.json"
         }
       }
     }
