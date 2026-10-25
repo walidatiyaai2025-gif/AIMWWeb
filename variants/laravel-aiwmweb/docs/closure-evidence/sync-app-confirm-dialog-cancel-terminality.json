@@ -68,5 +68,6 @@
   "server_mutation": false,
   "external_mutation": false,
   "only_operation_claimed": "AIMW-SYNC-2A8778C6EA",
-  "materialized": false
+  "materialized": true,
+  "evidence_source_sha": "8c6f75421d95e892b56f4a66dccbde0e9734196f"
 }

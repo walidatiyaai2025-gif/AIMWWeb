@@ -1118,6 +1118,14 @@
       "operation_ids": [
         "AIMW-CONT-6AB0ED6C83"
       ]
+    },
+    {
+      "label": "AIMW-SYNC-2A8778C6EA AppConfirmDialog CancelClickedAsync focused closure",
+      "sha": "8c6f75421d95e892b56f4a66dccbde0e9734196f",
+      "observed_pr_head": "8c6f75421d95e892b56f4a66dccbde0e9734196f",
+      "operation_ids": [
+        "AIMW-SYNC-2A8778C6EA"
+      ]
     }
   ],
   "excluded_sources": [],
@@ -1742,6 +1750,14 @@
       "observed_pr_head": "e36250110e3f9f2c22cfb8ac04de98b3c55b9195",
       "operation_ids": [
         "AIMW-CONT-6AB0ED6C83"
+      ]
+    },
+    {
+      "label": "AIMW-SYNC-2A8778C6EA AppConfirmDialog CancelClickedAsync focused closure",
+      "sha": "8c6f75421d95e892b56f4a66dccbde0e9734196f",
+      "observed_pr_head": "8c6f75421d95e892b56f4a66dccbde0e9734196f",
+      "operation_ids": [
+        "AIMW-SYNC-2A8778C6EA"
       ]
     }
   ]
