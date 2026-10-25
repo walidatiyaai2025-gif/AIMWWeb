@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #859 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-2752ED9351",
+  "domain": "content",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "source_file": "src/AIWordPressManager.Web/Components/Pages/Sites.razor",
+  "source_control": "@(_saving ? L[\"Saving\"] : L[\"Save\"])",
+  "laravel_runtime": {
+    "workspace": "/tenants/{tenant}/sites",
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/sites-saving-state-control.tsx",
+    "composition": "variants/laravel-aiwmweb/backend/resources/js/sites-save-control.tsx",
+    "operation_marker": "AIMW-CONT-2752ED9351",
+    "existing_save_operation": "AIMW-BILL-54E4003BE9",
+    "authoritative_read": "GET /api/tenants/{tenant}/sites",
+    "authoritative_create": "POST /api/tenants/{tenant}/sites",
+    "authoritative_update": "PATCH /api/tenants/{tenant}/sites/{site}",
+    "adaptation": "The source-visible Save/Saving state is rendered from the existing tenant-scoped Sites mutation pending state. It disables duplicate submit while preserving the already-terminal save operation as the sole mutation authority."
+  },
+  "behavior": {
+    "server_mutation_owned_by_this_operation": false,
+    "idle_label": "Save / حفظ",
+    "busy_label": "Saving… / جارٍ الحفظ…",
+    "duplicate_submit_locked": true,
+    "aria_busy_exposed": true,
+    "authoritative_save_reused": true
+  },
+  "security": {
+    "permission": "sites.manage",
+    "tenant_scope": "existing auth + tenant.context Sites API boundary",
+    "foreign_tenant": "fail closed through the existing tenant-scoped Sites save contract",
+    "caller_controls_tenant_identifier": false,
+    "fake_success_path": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/sites-saving-state-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/SitesSavingStateTerminalityTest.php",
+    "existing_save_security_test": "variants/laravel-aiwmweb/backend/tests/Feature/SitesSaveTerminalityTest.php",
+    "coverage": [
+      "exact source Save/Saving semantics",
+      "exact canonical visible-control operation marker",
+      "idle and busy English labels",
+      "idle and busy Arabic labels",
+      "duplicate submit lock and aria-busy",
+      "existing authoritative save mutation remains canonical",
+      "existing auth and tenant.context route guards remain authoritative"
+    ]
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-CONT-2752ED9351",
+    "existing_save_operation_reimplemented": false,
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  }
+}
