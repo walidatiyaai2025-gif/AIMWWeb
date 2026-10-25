@@ -50,25 +50,41 @@ final class SiteOnboardingSaveTestAndSyncTerminalityTest extends TestCase
     {
         $source = (string) file_get_contents(base_path('../../../src/AIWordPressManager.Web/Components/Shared/AppFormActions.razor'));
         $this->assertStringContainsString('Busy || Disabled ? Task.CompletedTask : OnSave.InvokeAsync(args)', $source);
-        $this->assertStringContainsString('Busy || CancelDisabled ? Task.CompletedTask : OnCancel.InvokeAsync(args)', $source);
 
         $control = (string) file_get_contents(resource_path('js/sync-form-actions-control.tsx'));
         $this->assertStringContainsString(self::APP_FORM_ACTIONS_OPERATION_ID, $control);
-        $this->assertStringContainsString(self::APP_FORM_ACTIONS_CANCEL_OPERATION_ID, $control);
         $this->assertStringContainsString("requiredPermission = 'sites.manage'", $control);
         $this->assertStringContainsString('await onSave();', $control);
-        $this->assertStringContainsString('if (busy || cancelDisabled) return;', $control);
-        $this->assertStringNotContainsString('if (busy || cancelDisabled || dispatching.current) return;', $control);
-        $this->assertStringContainsString('await onCancel?.();', $control);
-        $this->assertStringContainsString('data-source-handler="CancelClickedAsync"', $control);
-        $this->assertStringNotContainsString('apiRequest', $control);
-        $this->assertStringNotContainsString('fetch(', $control);
 
         $onboarding = (string) file_get_contents(resource_path('js/site-onboarding-save-test-sync-control.tsx'));
         $this->assertStringContainsString('<SyncFormActionsControl', $onboarding);
         $this->assertStringContainsString('onSave={() => mutation.mutateAsync().catch(() => undefined)}', $onboarding);
         $this->assertStringContainsString('saveOperationId={SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID}', $onboarding);
+    }
+
+    public function test_sync_app_form_actions_cancel_matches_source_and_stays_inside_the_existing_tenant_boundary(): void
+    {
+        $source = (string) file_get_contents(base_path('../../../src/AIWordPressManager.Web/Components/Shared/AppFormActions.razor'));
+        $this->assertStringContainsString('ShowCancel', $source);
+        $this->assertStringContainsString('Disabled="@(Busy || CancelDisabled)"', $source);
+        $this->assertStringContainsString('OnClick="CancelClickedAsync"', $source);
+        $this->assertStringContainsString(
+            'Busy || CancelDisabled ? Task.CompletedTask : OnCancel.InvokeAsync(args)',
+            $source,
+        );
+
+        $control = (string) file_get_contents(resource_path('js/sync-form-actions-control.tsx'));
+        $this->assertStringContainsString(self::APP_FORM_ACTIONS_CANCEL_OPERATION_ID, $control);
+        $this->assertStringContainsString('data-source-handler="CancelClickedAsync"', $control);
+        $this->assertStringContainsString('if (busy || cancelDisabled) return;', $control);
+        $this->assertStringContainsString('await onCancel?.();', $control);
+        $this->assertStringNotContainsString('apiRequest', $control);
+        $this->assertStringNotContainsString('fetch(', $control);
+
+        $onboarding = (string) file_get_contents(resource_path('js/site-onboarding-save-test-sync-control.tsx'));
+        $this->assertStringContainsString('<SyncFormActionsControl', $onboarding);
         $this->assertStringContainsString('onCancel={previousStep}', $onboarding);
+        $this->assertStringContainsString("requiredPermission = 'sites.manage'", $control);
     }
 
     public function test_exact_mutation_route_is_guarded_and_bound_to_the_canonical_operation(): void

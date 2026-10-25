@@ -20,6 +20,7 @@ export function SyncFormActionsControl({
     savingText = 'Saving',
     cancelText = 'Cancel',
     saveOperationId,
+    cancelOperationId,
     requiredPermission = 'sites.manage',
     onSave,
     onCancel,
@@ -35,6 +36,7 @@ export function SyncFormActionsControl({
     savingText?: string;
     cancelText?: string;
     saveOperationId?: string;
+    cancelOperationId?: string;
     requiredPermission?: string;
     onSave: () => Promise<unknown> | unknown;
     onCancel?: () => Promise<unknown> | unknown;
@@ -75,9 +77,9 @@ export function SyncFormActionsControl({
                         type="button"
                         className="btn"
                         disabled={busy || cancelDisabled}
-                        onClick={() => void cancel()}
-                        data-canonical-operation={SYNC_APP_FORM_ACTIONS_CANCEL_OPERATION_ID}
+                        data-canonical-operation={cancelOperationId ?? SYNC_APP_FORM_ACTIONS_CANCEL_OPERATION_ID}
                         data-source-handler="CancelClickedAsync"
+                        onClick={() => void cancel()}
                     >
                         {cancelText}
                     </button>
