@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #991 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-14DAFE7D73",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "component:AppFormActions",
+    "visible_control": "@CancelText [CancelClickedAsync]",
+    "source": "src/AIWordPressManager.Web/Components/Shared/AppFormActions.razor",
+    "source_intent": "Render Cancel only when ShowCancel is enabled; disable it only while Busy or CancelDisabled; otherwise invoke the supplied OnCancel callback without creating an independent request.",
+    "tenant_owned": true,
+    "mutation": false,
+    "risk": "low"
+  },
+  "laravel_adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/sync-form-actions-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/site-onboarding-save-test-sync-control.tsx",
+    "operation_marker": "AIMW-SYNC-14DAFE7D73",
+    "source_handler_marker": "CancelClickedAsync",
+    "behavior": "The existing shared Laravel form-actions wrapper exposes the canonical cancel marker on its real Site Onboarding consumer, honors ShowCancel, Busy and cancelDisabled, and delegates only to the caller-owned onCancel callback.",
+    "authorization": "The shared control is rendered only for sites.manage (or *) in the server-authored tenant FrontendContext.",
+    "fake_success_path": "none",
+    "independent_request_added": false
+  },
+  "security_boundary": {
+    "tenant_context": "The mounted onboarding flow is selected from the authenticated tenant context; no caller-supplied tenant selector is added by the cancel control.",
+    "permission": "sites.manage",
+    "tenant_isolation_test": "The focused SiteOnboardingSaveTestAndSyncTerminalityTest retains an explicit foreign-tenant /api/tenants/beta/sites/onboarding assertNotFound check.",
+    "authorization_test": "The same focused feature test retains an explicit missing sites.manage assertForbidden check.",
+    "external_state": "Cancel is local wizard navigation only; it performs no WordPress, connector, queue or persistence mutation."
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/sync-form-actions-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteOnboardingSaveTestAndSyncTerminalityTest.php",
+    "coverage": [
+      "exact AIMW-SYNC-14DAFE7D73 production marker",
+      "exact CancelClickedAsync source-handler marker",
+      "ShowCancel visibility",
+      "Busy and CancelDisabled suppression",
+      "cancel remains independent of the local save-dispatch de-duplication guard",
+      "no request or mutation inside the shared cancel control",
+      "sites.manage authorization boundary",
+      "foreign tenant 404 isolation proof"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-SYNC-14DAFE7D73"],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "7499103bb76b1b1e9eec098a9b8236dc14960a3e",
+    "branch": "worker/991-sync-app-form-actions-cancel",
+    "issue": 991
+  },
+  "materialization": {
+    "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-991.yml",
+    "generated_reconciliation_required": true
+  }
+}
