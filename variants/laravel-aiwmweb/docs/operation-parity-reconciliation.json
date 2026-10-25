@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 776,
-    "pending": 155,
+    "adapted": 777,
+    "pending": 154,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 776,
-    "overall_parity_percent": 83.35
+    "terminal": 777,
+    "overall_parity_percent": 83.46
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 303,
-    "pending": 143,
+    "terminal": 304,
+    "pending": 142,
     "blocked": 0,
-    "percent": 67.94
+    "percent": 68.16
   },
   "domains": {
     "ai": {
@@ -113,12 +113,12 @@
     "email": {
       "total": 82,
       "ported": 0,
-      "adapted": 75,
-      "pending": 7,
+      "adapted": 76,
+      "pending": 6,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 75,
-      "percent": 91.46
+      "terminal": 76,
+      "percent": 92.68
     },
     "identity": {
       "total": 7,
@@ -22289,21 +22289,31 @@
       "external_dependency": "email_provider",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/account-email-settings-profile-form.tsx",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/account-email-settings-cancel-edit-control.test.tsx",
+      "evidence": "AIMW-EMAI-A9CB66F400 AccountEmailSettings CancelEditClicked focused closure@ad642fa272cc38d7c8df4805314f44949926eb8e: variants/laravel-aiwmweb/backend/resources/js/account-email-settings-profile-form.tsx; focused-closure:AIMW-EMAI-A9CB66F400; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/account-email-settings-cancel-edit-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/account-email-settings-cancel-edit-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-EMAI-A9CB66F400 AccountEmailSettings CancelEditClicked focused closure",
+        "source_sha": "ad642fa272cc38d7c8df4805314f44949926eb8e",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/account-email-settings-profile-form.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/account-email-settings-cancel-edit-terminality.json",
+        "signals": [
+          "operation:AIMW-EMAI-A9CB66F400",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/account-email-settings-profile-form.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/account-email-settings-cancel-edit-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/account-email-settings-cancel-edit-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -36913,12 +36923,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 303,
-      "pending": 143,
+      "adapted": 304,
+      "pending": 142,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 303,
-      "percent": 67.94
+      "terminal": 304,
+      "percent": 68.16
     }
   },
   "pending_operation_ids_by_domain": {
@@ -37007,8 +37017,7 @@
       "AIMW-EMAI-10F3C44369",
       "AIMW-EMAI-7E1D4105B0",
       "AIMW-EMAI-8C9768BCD0",
-      "AIMW-EMAI-9EB09C490D",
-      "AIMW-EMAI-A9CB66F400"
+      "AIMW-EMAI-9EB09C490D"
     ],
     "identity": [],
     "media": [
@@ -38087,6 +38096,7 @@
       "AIMW-EMAI-7A54150265",
       "AIMW-EMAI-8E3B0AACD6",
       "AIMW-EMAI-8E56589573",
+      "AIMW-EMAI-A9CB66F400",
       "AIMW-EMAI-BDF888551C",
       "AIMW-EMAI-EC34E40629",
       "AIMW-EMAI-F8E8A2BEE9",
@@ -38671,10 +38681,17 @@
         "operation_ids": [
           "AIMW-CONT-9BA2C255AF"
         ]
+      },
+      {
+        "label": "AIMW-EMAI-A9CB66F400 AccountEmailSettings CancelEditClicked focused closure",
+        "sha": "ad642fa272cc38d7c8df4805314f44949926eb8e",
+        "operation_ids": [
+          "AIMW-EMAI-A9CB66F400"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 73,
-    "focused_closure_contract_count": 303,
+    "focused_closure_operation_scoped_count": 74,
+    "focused_closure_contract_count": 304,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
