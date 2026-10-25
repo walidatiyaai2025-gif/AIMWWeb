@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { FrontendContext, WorkspaceRoute } from '../core';
 import {
     MODULE_WORKSPACE_LOAD_SITES_OPERATION_ID,
+    MODULE_WORKSPACE_MANAGE_SITES_OPERATION_ID,
     ModuleWorkspaceLoadSitesControl,
 } from '../module-workspace-load-sites-control';
 import { LocaleProvider } from '../i18n';
@@ -90,7 +91,26 @@ describe(`${MODULE_WORKSPACE_LOAD_SITES_OPERATION_ID} ModuleWorkspace LoadSitesA
         renderControl();
 
         expect(await screen.findByText('No sites available')).toBeInTheDocument();
-        expect(screen.getByRole('link', { name: 'Manage sites' })).toHaveAttribute('href', '/tenants/alpha/sites');
+        const manageSites = screen.getByRole('link', { name: 'Manage sites' });
+        expect(MODULE_WORKSPACE_MANAGE_SITES_OPERATION_ID).toBe('AIMW-CONT-56873F3DD6');
+        expect(manageSites).toHaveAttribute('href', '/tenants/alpha/sites');
+        expect(manageSites).toHaveAttribute('data-canonical-operation', MODULE_WORKSPACE_MANAGE_SITES_OPERATION_ID);
+        expect(manageSites).toHaveAttribute('data-testid', 'seo-manage-sites-link');
+    });
+
+    it('renders the Manage sites operation only for the authoritative ready-empty state', async () => {
+        let resolveFetch: ((value: Response) => void) | undefined;
+        vi.stubGlobal('fetch', vi.fn().mockImplementation(() => new Promise<Response>((resolve) => {
+            resolveFetch = resolve;
+        })));
+
+        renderControl();
+        expect(screen.queryByTestId('seo-manage-sites-link')).not.toBeInTheDocument();
+
+        await waitFor(() => expect(resolveFetch).toBeDefined());
+        resolveFetch!(jsonResponse([{ id: 7, name: 'Alpha WordPress' }]));
+        expect(await screen.findByText('Alpha WordPress')).toBeInTheDocument();
+        expect(screen.queryByTestId('seo-manage-sites-link')).not.toBeInTheDocument();
     });
 
     it('fails closed for a foreign advertised endpoint', async () => {
