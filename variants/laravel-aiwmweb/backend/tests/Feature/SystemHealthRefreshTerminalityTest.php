@@ -115,7 +115,7 @@ final class SystemHealthRefreshTerminalityTest extends TestCase
         $this->assertStringContainsString('await query.refetch();', $workspace);
         $this->assertStringContainsString('refreshing={query.isFetching}', $workspace);
         $this->assertStringContainsString('!query.error && query.data?.tenant === context.tenant.slug', $workspace);
-        $this->assertStringContainsString("tone=\"danger\"", $workspace);
+        $this->assertStringContainsString('tone="danger"', $workspace);
         $this->assertStringContainsString('SystemHealthRefreshControl', $workspace);
     }
 
