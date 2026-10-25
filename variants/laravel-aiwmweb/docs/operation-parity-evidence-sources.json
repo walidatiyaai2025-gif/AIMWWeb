@@ -1689,6 +1689,14 @@
       "operation_ids": [
         "AIMW-EMAI-A9CB66F400"
       ]
+    },
+    {
+      "label": "AIMW-SYNC-0DFEE862FA SystemHealth RefreshClickedAsync focused closure",
+      "sha": "f7a2695dc38d2e27782e01b270e8334d9a940a14",
+      "observed_pr_head": "f7a2695dc38d2e27782e01b270e8334d9a940a14",
+      "operation_ids": [
+        "AIMW-SYNC-0DFEE862FA"
+      ]
     }
   ]
 }
