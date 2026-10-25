@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #975 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-SYNC-0DFEE862FA",
+    "domain": "sync",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/SystemHealth.razor",
+    "source_screen": "/system-health",
+    "source_control": "RefreshClickedAsync -> RefreshAsync",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_behavior": {
+    "summary": "The System Health Run checks control suppresses overlapping checks and re-reads the real health service. Failed refreshes clear the successful snapshot instead of presenting stale or synthetic success.",
+    "side_effect": "read-only authoritative runtime health refresh"
+  },
+  "laravel_adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/system-health-refresh-control.tsx",
+    "production_wiring": "variants/laravel-aiwmweb/backend/resources/js/system-health-workspace.tsx",
+    "read_endpoint": "GET /api/tenants/{active tenant}/system-health",
+    "backend_controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SystemHealthReadController.php",
+    "health_service": "variants/laravel-aiwmweb/backend/app/Services/RuntimeHealthService.php",
+    "behavior": "The visible control refetches the existing tenant-authorized React Query snapshot, stays available after read failure for retry, reports busy state, and suppresses duplicate activation. The workspace renders error state instead of stale success after a failed refetch.",
+    "mutation_surface": "none"
+  },
+  "authorization": {
+    "session_required": true,
+    "tenant_context_required": true,
+    "permissions": [
+      "tenant.view",
+      "diagnostics.view"
+    ],
+    "foreign_tenant_fails_closed": true,
+    "caller_query_tenant_is_not_authority": true
+  },
+  "runtime_semantics": {
+    "read_only": true,
+    "overlapping_refresh_suppressed": true,
+    "authoritative_re_read": true,
+    "refresh_failure_withholds_success_snapshot": true,
+    "persistence_mutation": false,
+    "wordpress_mutation": false,
+    "ai_provider_write": false,
+    "queue_cache_scheduler": "status probes only; no dispatch or mutation",
+    "fake_success": false
+  },
+  "acceptance_tests": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/system-health-refresh-control.test.tsx",
+    "php_feature": "variants/laravel-aiwmweb/backend/tests/Feature/SystemHealthRefreshTerminalityTest.php",
+    "proof": [
+      "exact canonical operation marker is bound to the production refresh control",
+      "duplicate activation is suppressed before parent busy state can update",
+      "busy state disables refresh and exposes truthful checking feedback",
+      "refresh uses the existing authoritative React Query endpoint",
+      "read failure renders an error state rather than the previous successful snapshot",
+      "GET-only snapshot route enforces authentication, tenant context, tenant.view and diagnostics.view",
+      "foreign tenant access fails closed",
+      "refresh does not mutate tenant membership or role persistence"
+    ]
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-SYNC-0DFEE862FA",
+    "second_operation_started": false,
+    "aspnet_reference_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "security_assertions_weakened": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true
+  },
+  "materialized": false
+}
