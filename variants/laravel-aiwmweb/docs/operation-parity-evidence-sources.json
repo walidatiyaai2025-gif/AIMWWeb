@@ -1198,12 +1198,24 @@
       ]
     },
     {
-      "label": "AIMW-CONT-371D22489E ModuleWorkspace Back to home focused closure",
-      "sha": "eb4e4078b68fd82eac9e9300aecc1a16f2a6069c",
-      "observed_pr_head": "eb4e4078b68fd82eac9e9300aecc1a16f2a6069c",
+      "label": "AIMW-CONT-519B93F503 Home canonical route terminality",
+      "sha": "7c0e7c7e63216994d1e433b95f7fc83959281a0f",
+      "observed_pr_head": "7c0e7c7e63216994d1e433b95f7fc83959281a0f",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
       "operation_ids": [
-        "AIMW-CONT-371D22489E"
-      ]
+        "AIMW-CONT-519B93F503"
+      ],
+      "operation_evidence": {
+        "AIMW-CONT-519B93F503": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/CanonicalHomeRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/HomeRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/home-route-terminality.json"
+        }
+      }
     }
   ],
   "excluded_sources": [],
@@ -1884,14 +1896,6 @@
       "observed_pr_head": "4a1da41d841b4375a7f09a5c779a58b576501926",
       "operation_ids": [
         "AIMW-CONT-73E4F88038"
-      ]
-    },
-    {
-      "label": "AIMW-CONT-371D22489E ModuleWorkspace Back to home focused closure",
-      "sha": "eb4e4078b68fd82eac9e9300aecc1a16f2a6069c",
-      "observed_pr_head": "eb4e4078b68fd82eac9e9300aecc1a16f2a6069c",
-      "operation_ids": [
-        "AIMW-CONT-371D22489E"
       ]
     }
   ]
