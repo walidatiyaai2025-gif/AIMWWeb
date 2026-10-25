@@ -17,7 +17,7 @@
   "source_behavior": {
     "route": "/",
     "title": "Dashboard",
-    "authoritative_state": "tenant sites, cached posts/pages/media, execution state and last site synchronization",
+    "authoritative_state": "tenant sites, cached posts/pages/media, execution state, computed platform health and last synchronization",
     "loading_state": "explicit loading dashboard state",
     "error_state": "explicit retryable dashboard error state",
     "empty_state": "no synthetic metrics when authoritative data is absent",
@@ -29,19 +29,21 @@
     "route_name": "canonical.workspace.home",
     "provider": "variants/laravel-aiwmweb/backend/app/Providers/CanonicalHomeRouteServiceProvider.php",
     "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php#show",
-    "dashboard_api": "GET /tenants/{tenant}/route-api/dashboard",
-    "dashboard_controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/DashboardReadController.php",
+    "dashboard_api": "GET /api/dashboard?tenant={tenant}",
+    "dashboard_controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/PlatformReadController.php#dashboard",
+    "dashboard_api_operation": "AIMW-PLAT-FAC7505B26",
     "frontend_route": "variants/laravel-aiwmweb/backend/resources/js/core.ts#dashboard",
     "frontend_render": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx#DashboardContent",
-    "operation_marker": "AIMW-CONT-519B93F503"
+    "operation_marker": "AIMW-CONT-519B93F503",
+    "reuse": "the pre-existing canonical dashboard API is reused; no duplicate dashboard controller or API route is introduced"
   },
   "authorization_and_isolation": {
-    "session": "required",
-    "tenant_context": "required",
-    "permission_mapping": "tenant.view",
+    "home_route": "web + auth + tenant.context + tenant.view",
+    "dashboard_api": "web + auth; explicit tenant selector is resolved against the authenticated user's active memberships before TenantContext activation; execution.view is then authorized",
     "foreign_tenant": "404/fail closed",
-    "missing_tenant_view": "403/fail closed",
-    "dashboard_queries": "all use tenant-scoped Eloquent models under active TenantContext"
+    "missing_home_permission": "403/fail closed",
+    "missing_dashboard_permission": "403/fail closed",
+    "dashboard_queries": "existing PlatformReadController uses tenant-scoped Eloquent models after selected TenantContext activation"
   },
   "runtime_semantics": {
     "read_only_route": true,
@@ -49,11 +51,13 @@
     "get_mutation": false,
     "placeholder": false,
     "fake_success": false,
-    "fabricated_health_score": false,
+    "duplicate_dashboard_api": false,
+    "dashboard_payload_adapter": "React DashboardContent adapts the existing canonical API payload into the existing metric cards without demo values",
     "loading_error_empty_contracts": true
   },
   "scope_guards": {
     "only_operation_claimed": "AIMW-CONT-519B93F503",
+    "existing_dashboard_api_operation_claimed": false,
     "home_visible_controls_claimed": false,
     "refresh_control_claimed": false,
     "navigation_controls_claimed": false,
