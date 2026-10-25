@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 102,
-      "pending": 62,
+      "adapted": 101,
+      "pending": 63,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 102,
-      "percent": 62.2
+      "terminal": 101,
+      "percent": 61.59
     },
     "email": {
       "total": 82,
@@ -203,12 +203,12 @@
     "sync": {
       "total": 213,
       "ported": 0,
-      "adapted": 148,
-      "pending": 65,
+      "adapted": 149,
+      "pending": 64,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 148,
-      "percent": 69.48
+      "terminal": 149,
+      "percent": 69.95
     },
     "taxonomy": {
       "total": 13,
@@ -19267,31 +19267,21 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/site-data-snapshot-back-to-sites-control.tsx",
+      "laravel_destination": "",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "ADAPTED",
-      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-data-snapshot-back-to-sites-control.test.tsx",
-      "evidence": "AIMW-CONT-CA4920CBC8 Site Data Snapshot Back to sites focused closure@57f6197482089607a05d783173bbdb61d20aa063: variants/laravel-aiwmweb/backend/resources/js/site-data-snapshot-back-to-sites-control.tsx; focused-closure:AIMW-CONT-CA4920CBC8; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/site-data-snapshot-back-to-sites-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/site-data-snapshot-back-to-sites-terminality.json",
+      "migration_state": "PENDING",
+      "acceptance_test": "",
+      "evidence": "",
       "reconciliation": {
-        "decision": "ADAPTED",
-        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "AIMW-CONT-CA4920CBC8 Site Data Snapshot Back to sites focused closure",
-        "source_sha": "57f6197482089607a05d783173bbdb61d20aa063",
-        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/site-data-snapshot-back-to-sites-control.tsx",
-        "evidence_mode": "focused_closure_contract",
-        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-data-snapshot-back-to-sites-terminality.json",
-        "signals": [
-          "operation:AIMW-CONT-CA4920CBC8",
-          "production-marker:variants/laravel-aiwmweb/backend/resources/js/site-data-snapshot-back-to-sites-control.tsx",
-          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/site-data-snapshot-back-to-sites-control.test.tsx",
-          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/site-data-snapshot-back-to-sites-terminality.json",
-          "scope:operation-specific",
-          "test:tenant-isolation"
-        ]
+        "decision": "PENDING",
+        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
+        "source_label": null,
+        "source_sha": null,
+        "destination_path": null
       }
     },
     {
@@ -32144,21 +32134,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/system-health-refresh-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SystemHealthRefreshTerminalityTest.php",
+      "evidence": "AIMW-SYNC-0DFEE862FA SystemHealth RefreshClickedAsync focused closure@90f6940f907a2ea641e04adcda871d6a228b4765: variants/laravel-aiwmweb/backend/resources/js/system-health-refresh-control.tsx; focused-closure:AIMW-SYNC-0DFEE862FA; test:variants/laravel-aiwmweb/backend/tests/Feature/SystemHealthRefreshTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/system-health-refresh-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-SYNC-0DFEE862FA SystemHealth RefreshClickedAsync focused closure",
+        "source_sha": "90f6940f907a2ea641e04adcda871d6a228b4765",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/system-health-refresh-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/system-health-refresh-terminality.json",
+        "signals": [
+          "operation:AIMW-SYNC-0DFEE862FA",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/system-health-refresh-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/SystemHealthRefreshTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/system-health-refresh-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -37041,6 +37041,7 @@
       "AIMW-CONT-BCAD1E3A49",
       "AIMW-CONT-C3EC665880",
       "AIMW-CONT-C49C37E2C9",
+      "AIMW-CONT-CA4920CBC8",
       "AIMW-CONT-CF4BE4EC3B",
       "AIMW-CONT-DF6FFA9D87",
       "AIMW-CONT-E4D7C73D4E",
@@ -37081,7 +37082,6 @@
       "AIMW-SYNC-0108E40967",
       "AIMW-SYNC-0239B0E6A3",
       "AIMW-SYNC-078D172C71",
-      "AIMW-SYNC-0DFEE862FA",
       "AIMW-SYNC-1A20057999",
       "AIMW-SYNC-1B63FBC758",
       "AIMW-SYNC-21483C88FA",
@@ -38136,7 +38136,6 @@
       "AIMW-CONT-C178278FCB",
       "AIMW-CONT-C7CB5EE184",
       "AIMW-CONT-CA17F05024",
-      "AIMW-CONT-CA4920CBC8",
       "AIMW-CONT-CEA27985CB",
       "AIMW-CONT-D4607F943C",
       "AIMW-CONT-D5FFC84EC2",
@@ -38194,6 +38193,7 @@
       "AIMW-SITE-9F9F2977B5",
       "AIMW-SITE-D7DF8247B4",
       "AIMW-SITE-E3EA44AD3F",
+      "AIMW-SYNC-0DFEE862FA",
       "AIMW-SYNC-0EDB4AB9FC",
       "AIMW-SYNC-0FF542A678",
       "AIMW-SYNC-112E6B9631",
@@ -38771,10 +38771,10 @@
         ]
       },
       {
-        "label": "AIMW-CONT-CA4920CBC8 Site Data Snapshot Back to sites focused closure",
-        "sha": "57f6197482089607a05d783173bbdb61d20aa063",
+        "label": "AIMW-SYNC-0DFEE862FA SystemHealth RefreshClickedAsync focused closure",
+        "sha": "90f6940f907a2ea641e04adcda871d6a228b4765",
         "operation_ids": [
-          "AIMW-CONT-CA4920CBC8"
+          "AIMW-SYNC-0DFEE862FA"
         ]
       }
     ],
