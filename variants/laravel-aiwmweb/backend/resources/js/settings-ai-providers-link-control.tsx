@@ -15,7 +15,7 @@ export function SettingsAiProvidersLinkControl({ context }: { context: FrontendC
     return (
         <>
             {canViewSettings ? (
-                <section className="toolbar-panel" aria-label={locale === 'ar' ? 'إعدادات اللغة' : 'Language settings'}>
+                <section id="language" className="toolbar-panel" aria-label={locale === 'ar' ? 'إعدادات اللغة' : 'Language settings'}>
                     <div className="toolbar-actions">
                         <button
                             type="button"

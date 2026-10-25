@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiError, apiRequest, type FrontendContext, type WorkspaceRoute } from './core';
 import { LoadingState, StateBanner, StatePanel } from './components';
+import { AppFilterBar } from './app-filter-bar';
+import { AppFilterChip } from './app-filter-chip';
 import { useLocale } from './i18n';
 
 export const AI_USAGE_LOAD_OPERATION_ID = 'AIMW-BILL-258E431558';
@@ -131,7 +133,32 @@ export function AiUsageLoadWorkspace({ context, route }: { context: FrontendCont
 
     return (
         <div className="workspace-stack" data-ai-usage-load-state={loading ? 'loading' : error ? 'stale' : 'ready'}>
-            <section className="toolbar-panel" aria-label={locale === 'ar' ? 'أدوات استخدام الذكاء الاصطناعي' : 'AI usage tools'}>
+            <AppFilterBar
+                ariaLabel={locale === 'ar' ? 'فلاتر استخدام الذكاء الاصطناعي' : 'AI usage filters'}
+                activeFilterCount={selectedSiteId ? 1 : 0}
+                activeFiltersText={locale === 'ar' ? 'فلتر نشط' : 'active filter'}
+                noFiltersText={locale === 'ar' ? 'عرض كل المواقع' : 'Showing all sites'}
+                appliedFiltersAriaLabel={locale === 'ar' ? 'الفلاتر المطبقة' : 'Applied filters'}
+                clearText={locale === 'ar' ? 'مسح الفلاتر' : 'Clear filters'}
+                clearAriaLabel={locale === 'ar' ? 'مسح فلتر الموقع' : 'Clear site filter'}
+                busy={loading}
+                onClearRequested={async () => {
+                    setSelectedSiteId('');
+                    await load('');
+                }}
+                appliedFilters={selectedSiteId ? (
+                    <AppFilterChip
+                        label={locale === 'ar' ? 'الموقع' : 'Site'}
+                        value={snapshot?.sites.find((site) => String(site.id) === selectedSiteId)?.name ?? selectedSiteId}
+                        removeAriaLabel={locale === 'ar' ? 'إزالة فلتر الموقع' : 'Remove site filter'}
+                        disabled={loading}
+                        onRemoveRequested={async () => {
+                            setSelectedSiteId('');
+                            await load('');
+                        }}
+                    />
+                ) : undefined}
+            >
                 <label>
                     <span>{locale === 'ar' ? 'تصفية حسب الموقع' : 'Filter by site'}</span>
                     <select
@@ -157,7 +184,7 @@ export function AiUsageLoadWorkspace({ context, route }: { context: FrontendCont
                         disabled={loading}
                     >↻ {loading ? (locale === 'ar' ? 'جارٍ التحديث…' : 'Refreshing…') : (locale === 'ar' ? 'تحديث' : 'Refresh')}</button>
                 </div>
-            </section>
+            </AppFilterBar>
 
             {loading && snapshot ? (
                 <StateBanner

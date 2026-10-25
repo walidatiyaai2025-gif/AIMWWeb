@@ -1022,6 +1022,74 @@
       ]
     },
     {
+      "label": "AIMW-SYNC-F7CE702C7D AppFilterBar clear filters focused closure",
+      "sha": "2ab60e249852eceb662d615a61f0ba758ed9a494",
+      "observed_pr_head": "2ab60e249852eceb662d615a61f0ba758ed9a494",
+      "operation_ids": [
+        "AIMW-SYNC-F7CE702C7D"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-BF5F72F4F9 Site Connect canonical route terminality",
+      "sha": "9ff12621218525ea09cf75e93cb5ad40fbb9a44c",
+      "observed_pr_head": "9ff12621218525ea09cf75e93cb5ad40fbb9a44c",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "operation_ids": [
+        "AIMW-CONT-BF5F72F4F9"
+      ],
+      "route_api_provenance": {
+        "AIMW-CONT-BF5F72F4F9": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SitesConnectRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteConnectRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteConnectRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-connect-route-terminality.json",
+          "security_mode": "tenant_selected"
+        }
+      }
+    },
+    {
+      "label": "AIMW-CONT-6D14B76763 Site Snapshot canonical route terminality",
+      "sha": "70d7c83bf326d6be7114d8a61dbc89bfdbfd28ed",
+      "observed_pr_head": "70d7c83bf326d6be7114d8a61dbc89bfdbfd28ed",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "operation_ids": [
+        "AIMW-CONT-6D14B76763"
+      ],
+      "route_api_provenance": {
+        "AIMW-CONT-6D14B76763": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteSnapshotRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteSnapshotRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-snapshot-route-terminality.json",
+          "security_mode": "tenant_bound"
+        }
+      }
+    },
+    {
+      "label": "AIMW-CONT-9BA2C255AF Content Explorer dynamic href focused closure",
+      "sha": "ea253c2dc4d47e73079dc226d319ad723bdecdc7",
+      "observed_pr_head": "ea253c2dc4d47e73079dc226d319ad723bdecdc7",
+      "operation_ids": [
+        "AIMW-CONT-9BA2C255AF"
+      ]
+    },
+    {
+      "label": "AIMW-SYNC-14DAFE7D73 AppFormActions CancelClickedAsync focused closure",
+      "sha": "3d46495b80ab7c25e99a9072cf6f6e626104671c",
+      "observed_pr_head": "eaee1f7d53b7434ed0b4b57db9d5945601f91884",
+      "operation_ids": [
+        "AIMW-SYNC-14DAFE7D73"
+      ]
+    },
+    {
       "label": "AIMW-EMAI-7E1D4105B0 CancelEdit focused closure",
       "sha": "faa63881a3f34ec885b1a1548933acfabe92af81",
       "observed_pr_head": "faa63881a3f34ec885b1a1548933acfabe92af81",
@@ -1033,6 +1101,14 @@
   "excluded_sources": [],
   "known_composition_blockers": [],
   "focused_closure_operation_sources": [
+    {
+      "label": "AIMW-SYNC-26F2BF8EE8 ApplicationUsers SearchClickedAsync focused closure",
+      "sha": "9ef1547ac9d36a40c53ec79b552ac5020ee2ec3f",
+      "observed_pr_head": "9ef1547ac9d36a40c53ec79b552ac5020ee2ec3f",
+      "operation_ids": [
+        "AIMW-SYNC-26F2BF8EE8"
+      ]
+    },
     {
       "label": "AIMW-CONT-E38ADF8481 application user StartCreate focused closure",
       "sha": "d32c91a10de07c92a306d43db3b540b4140d51a2",
@@ -1572,6 +1648,54 @@
       "observed_pr_head": "de1c5ff00086a98377499ee02a4b7d7811000872",
       "operation_ids": [
         "AIMW-SYNC-1778E3F6B5"
+      ]
+    },
+    {
+      "label": "AIMW-SYNC-F7CE702C7D AppFilterBar clear filters focused closure",
+      "sha": "2ab60e249852eceb662d615a61f0ba758ed9a494",
+      "observed_pr_head": "2ab60e249852eceb662d615a61f0ba758ed9a494",
+      "operation_ids": [
+        "AIMW-SYNC-F7CE702C7D"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-AC737C80BF Content Explorer SelectAllFiltered focused closure",
+      "sha": "05832320ddbb8038334477b09366a426eebda24e",
+      "observed_pr_head": "05832320ddbb8038334477b09366a426eebda24e",
+      "operation_ids": [
+        "AIMW-CONT-AC737C80BF"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-041B5ED720 Settings language anchor focused closure",
+      "sha": "b110c8bec27c7e0553b9292e823ce26c96e985ab",
+      "observed_pr_head": "b110c8bec27c7e0553b9292e823ce26c96e985ab",
+      "operation_ids": [
+        "AIMW-CONT-041B5ED720"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-9BA2C255AF Content Explorer dynamic href focused closure",
+      "sha": "ea253c2dc4d47e73079dc226d319ad723bdecdc7",
+      "observed_pr_head": "ea253c2dc4d47e73079dc226d319ad723bdecdc7",
+      "operation_ids": [
+        "AIMW-CONT-9BA2C255AF"
+      ]
+    },
+    {
+      "label": "AIMW-SYNC-14DAFE7D73 AppFormActions CancelClickedAsync focused closure",
+      "sha": "3d46495b80ab7c25e99a9072cf6f6e626104671c",
+      "observed_pr_head": "eaee1f7d53b7434ed0b4b57db9d5945601f91884",
+      "operation_ids": [
+        "AIMW-SYNC-14DAFE7D73"
+      ]
+    },
+    {
+      "label": "AIMW-EMAI-A9CB66F400 AccountEmailSettings CancelEditClicked focused closure",
+      "sha": "ad642fa272cc38d7c8df4805314f44949926eb8e",
+      "observed_pr_head": "ad642fa272cc38d7c8df4805314f44949926eb8e",
+      "operation_ids": [
+        "AIMW-EMAI-A9CB66F400"
       ]
     },
     {

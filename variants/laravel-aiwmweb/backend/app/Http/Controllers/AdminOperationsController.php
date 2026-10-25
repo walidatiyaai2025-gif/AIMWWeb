@@ -27,11 +27,14 @@ final class AdminOperationsController extends Controller
         private readonly TenantContext $context,
     ) {}
 
-    public function members(string $tenant): JsonResponse
+    public function members(Request $request, string $tenant): JsonResponse
     {
         $this->authorizer->authorize('tenant.view');
+        $data = $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+        ]);
 
-        return response()->json(['data' => $this->administration->members()]);
+        return response()->json(['data' => $this->administration->members($data['search'] ?? null)]);
     }
 
     public function addMember(Request $request, string $tenant): JsonResponse

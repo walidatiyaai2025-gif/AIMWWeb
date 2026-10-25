@@ -26,6 +26,7 @@ import { ConfigurationValidationCopyReportControl } from './configuration-valida
 import { ApiError, apiRequest, workspaceRoutes, type FrontendContext, type WorkspaceRoute } from './core';
 import { AppShell, LoadingState, StatePanel, ToastProvider } from './components';
 import { ContentExplorerBulkTrashControl } from './content-explorer-bulk-trash-widget';
+import { ContentExplorerDynamicLinksControl } from './content-explorer-dynamic-links-control';
 import { GlobalPagesConfirmTrashControl } from './global-pages-confirm-trash-widget';
 import { GlobalPostsConfirmTrashControl } from './global-posts-confirm-trash-widget';
 import { GlobalTaxonomyPostsLinkControl } from './global-taxonomy-posts-link-control';
@@ -63,6 +64,7 @@ import { SettingsAiPromptsLinkControl } from './settings-ai-prompts-link-control
 import { SettingsBillingSupportLinkControl } from './settings-billing-support-link-control';
 import { SettingsAiProvidersLinkControl } from './settings-ai-providers-link-control';
 import { SettingsAppearanceLightControl } from './settings-appearance-light-control';
+import { SettingsLanguageAnchorControl } from './settings-language-anchor-control';
 import { SiteDetailsBackControl } from './site-details-back-control';
 import { SiteDetailsCancelSynchronizationControl } from './site-details-cancel-synchronization-control';
 import { SiteDetailsSettingsLinkControl } from './site-details-settings-link-control';
@@ -187,7 +189,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     );
     if (route.key === 'dashboard') return <><DashboardExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'sites') return <><SitesSaveControl context={context} /><SitesRetestSelectedControl context={context} /><SitesDeleteControl context={context} /><SitesBulkDeleteControl context={context} /><WorkspacePage context={context} route={route} /></>;
-    if (route.key === 'explorer') return <><ContentExplorerContentTabControl context={context} /><ContentExplorerMediaTabControl context={context} /><ContentExplorerExecutionLinkControl context={context} /><ContentExplorerSynchronizeControl context={context} /><ContentExplorerBulkTrashControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'explorer') return <><ContentExplorerContentTabControl context={context} /><ContentExplorerDynamicLinksControl context={context} /><ContentExplorerMediaTabControl context={context} /><ContentExplorerExecutionLinkControl context={context} /><ContentExplorerSynchronizeControl context={context} /><ContentExplorerBulkTrashControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'content-hub') return <><ContentHubAllSitesControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'content-planner') return <><ContentPlannerAiCenterLinkControl context={context} /><ContentPlannerExecutionLinkControl context={context} /><ContentPlannerNewItemControl context={context} /><ContentPlannerReloadControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'media') return <><MediaPagesLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
@@ -206,7 +208,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     if (route.key === 'sessions') return <><MySessionsAdminLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'backups') return <><BackupCopyPathControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'configuration-validation') return <><ConfigurationValidationCopyReportControl context={context} /><WorkspacePage context={context} route={route} /></>;
-    if (route.key === 'settings') return <><SettingsAppearanceLightControl context={context} /><SettingsBillingSupportLinkControl context={context} /><SettingsAiProvidersLinkControl context={context} /><SettingsAiPromptsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'settings') return <><SettingsLanguageAnchorControl context={context} /><SettingsAppearanceLightControl context={context} /><SettingsBillingSupportLinkControl context={context} /><SettingsAiProvidersLinkControl context={context} /><SettingsAiPromptsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'account-billing') return <><BillingProfileLink context={context} /><BillingStartCheckoutControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'admin-billing-support') return <><AdminBillingSupportSettingsLink context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'ai-center') return <><AiCenterApprovalStatusControl context={context} /><WorkspacePage context={context} route={route} /></>;
