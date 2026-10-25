@@ -17827,21 +17827,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/module-workspace-load-sites-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/module-workspace-load-sites-control.test.tsx",
+      "evidence": "AIMW-CONT-56873F3DD6 ModuleWorkspace Manage sites focused closure@0b4ef78382d419c2f8f569df84e8e95abb454b97: variants/laravel-aiwmweb/backend/resources/js/module-workspace-load-sites-control.tsx; focused-closure:AIMW-CONT-56873F3DD6; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/module-workspace-load-sites-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/module-workspace-manage-sites-link-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-56873F3DD6 ModuleWorkspace Manage sites focused closure",
+        "source_sha": "0b4ef78382d419c2f8f569df84e8e95abb454b97",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/module-workspace-load-sites-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/module-workspace-manage-sites-link-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-56873F3DD6",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/module-workspace-load-sites-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/module-workspace-load-sites-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/module-workspace-manage-sites-link-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -19127,31 +19137,21 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/site-connection-center-sync-control.tsx",
+      "laravel_destination": "",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "ADAPTED",
-      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-connection-site-url-control.test.tsx",
-      "evidence": "AIMW-CONT-63EDB4BA6F SiteConnectionCenter SiteUrl focused closure@9944d31bbee26ea1fbd2cf37dea46df9f42cec78: variants/laravel-aiwmweb/backend/resources/js/site-connection-center-sync-control.tsx; focused-closure:AIMW-CONT-63EDB4BA6F; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/site-connection-site-url-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/site-connection-site-url-terminality.json",
+      "migration_state": "PENDING",
+      "acceptance_test": "",
+      "evidence": "",
       "reconciliation": {
-        "decision": "ADAPTED",
-        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "AIMW-CONT-63EDB4BA6F SiteConnectionCenter SiteUrl focused closure",
-        "source_sha": "9944d31bbee26ea1fbd2cf37dea46df9f42cec78",
-        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/site-connection-center-sync-control.tsx",
-        "evidence_mode": "focused_closure_contract",
-        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-connection-site-url-terminality.json",
-        "signals": [
-          "operation:AIMW-CONT-63EDB4BA6F",
-          "production-marker:variants/laravel-aiwmweb/backend/resources/js/site-connection-center-sync-control.tsx",
-          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/site-connection-site-url-control.test.tsx",
-          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/site-connection-site-url-terminality.json",
-          "scope:operation-specific",
-          "test:tenant-isolation"
-        ]
+        "decision": "PENDING",
+        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
+        "source_label": null,
+        "source_sha": null,
+        "destination_path": null
       }
     },
     {
@@ -37034,8 +37034,8 @@
       "AIMW-CONT-50DF6B23CC",
       "AIMW-CONT-519B93F503",
       "AIMW-CONT-566A1899F1",
-      "AIMW-CONT-56873F3DD6",
       "AIMW-CONT-6187F8DF8A",
+      "AIMW-CONT-63EDB4BA6F",
       "AIMW-CONT-6458D3030B",
       "AIMW-CONT-659BEF8765",
       "AIMW-CONT-6700342002",
@@ -37794,16 +37794,6 @@
           "AIMW-SYNC-2A8778C6EA"
         ],
         "explicit_operation_evidence_ids": []
-      },
-      {
-        "label": "AIMW-CONT-63EDB4BA6F SiteConnectionCenter SiteUrl focused closure",
-        "sha": "9944d31bbee26ea1fbd2cf37dea46df9f42cec78",
-        "domains": [],
-        "supporting_only": false,
-        "operation_ids": [
-          "AIMW-CONT-63EDB4BA6F"
-        ],
-        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -37842,7 +37832,6 @@
       "860095fc8322b913f17b472b41c44c1c17dcc5eb",
       "8c6f75421d95e892b56f4a66dccbde0e9734196f",
       "9535f66b12b3839dd7606c5b305c6f0bd32e1216",
-      "9944d31bbee26ea1fbd2cf37dea46df9f42cec78",
       "9ff12621218525ea09cf75e93cb5ad40fbb9a44c",
       "a3890ef1d4dac7e4e4bb5123d23625dd11269e7a",
       "a5f91d67cecde21f25d016c9a3eb1cecf5a10a1f",
@@ -38172,9 +38161,9 @@
       "AIMW-CONT-4D6C928D75",
       "AIMW-CONT-553D999DDB",
       "AIMW-CONT-564636DDC9",
+      "AIMW-CONT-56873F3DD6",
       "AIMW-CONT-5BE26C7AB5",
       "AIMW-CONT-607ACDF4D8",
-      "AIMW-CONT-63EDB4BA6F",
       "AIMW-CONT-6AB0ED6C83",
       "AIMW-CONT-6E22D74EE0",
       "AIMW-CONT-71F54E3BA6",
@@ -38855,10 +38844,10 @@
         ]
       },
       {
-        "label": "AIMW-CONT-63EDB4BA6F SiteConnectionCenter SiteUrl focused closure",
-        "sha": "9944d31bbee26ea1fbd2cf37dea46df9f42cec78",
+        "label": "AIMW-CONT-56873F3DD6 ModuleWorkspace Manage sites focused closure",
+        "sha": "0b4ef78382d419c2f8f569df84e8e95abb454b97",
         "operation_ids": [
-          "AIMW-CONT-63EDB4BA6F"
+          "AIMW-CONT-56873F3DD6"
         ]
       }
     ],
