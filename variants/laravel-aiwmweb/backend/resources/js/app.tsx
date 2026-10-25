@@ -63,6 +63,7 @@ import { SettingsAiPromptsLinkControl } from './settings-ai-prompts-link-control
 import { SettingsBillingSupportLinkControl } from './settings-billing-support-link-control';
 import { SettingsAiProvidersLinkControl } from './settings-ai-providers-link-control';
 import { SettingsAppearanceLightControl } from './settings-appearance-light-control';
+import { SettingsLanguageAnchorControl } from './settings-language-anchor-control';
 import { SiteDetailsBackControl } from './site-details-back-control';
 import { SiteDetailsCancelSynchronizationControl } from './site-details-cancel-synchronization-control';
 import { SiteDetailsSettingsLinkControl } from './site-details-settings-link-control';
@@ -206,7 +207,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     if (route.key === 'sessions') return <><MySessionsAdminLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'backups') return <><BackupCopyPathControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'configuration-validation') return <><ConfigurationValidationCopyReportControl context={context} /><WorkspacePage context={context} route={route} /></>;
-    if (route.key === 'settings') return <><SettingsAppearanceLightControl context={context} /><SettingsBillingSupportLinkControl context={context} /><SettingsAiProvidersLinkControl context={context} /><SettingsAiPromptsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'settings') return <><SettingsLanguageAnchorControl context={context} /><SettingsAppearanceLightControl context={context} /><SettingsBillingSupportLinkControl context={context} /><SettingsAiProvidersLinkControl context={context} /><SettingsAiPromptsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'account-billing') return <><BillingProfileLink context={context} /><BillingStartCheckoutControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'admin-billing-support') return <><AdminBillingSupportSettingsLink context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'ai-center') return <><AiCenterApprovalStatusControl context={context} /><WorkspacePage context={context} route={route} /></>;
