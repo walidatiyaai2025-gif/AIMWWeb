@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #810 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-69B5134C7E",
+  "domain": "content",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "source": "src/AIWordPressManager.Web/Components/Pages/Settings.razor",
+  "source_action": "SetGold",
+  "destination": "variants/laravel-aiwmweb/backend/resources/js/settings-set-gold-control.tsx",
+  "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-set-gold-control.test.tsx",
+  "backend_test": "variants/laravel-aiwmweb/backend/tests/Feature/SettingsSetGoldTerminalityTest.php",
+  "runtime": "reuse canonical aiwm-color-theme persistence; Gold is the default palette, so applying it removes html data-theme and persists gold locally",
+  "server_mutation": false,
+  "external_mutation": false,
+  "tenant_permission": "tenant.view",
+  "only_operation_claimed": "AIMW-CONT-69B5134C7E",
+  "materialized": true
+}
