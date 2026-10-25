@@ -58,7 +58,7 @@ final class ContentExplorerDynamicLinksTerminalityTest extends TestCase
 
         $this->assertStringContainsString(self::OPERATION_ID, $control);
         $this->assertStringContainsString('active_site', $control);
-        $this->assertStringContainsString("tenantUrl(context.tenant.slug", $control);
+        $this->assertStringContainsString('tenantUrl(context.tenant.slug', $control);
         $this->assertStringContainsString('/module/taxonomy?site=', $control);
         $this->assertStringContainsString('/module/seo-audit?site=', $control);
         $this->assertStringContainsString('/content/', $control);
