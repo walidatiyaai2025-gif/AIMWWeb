@@ -1,0 +1,85 @@
+name: Laravel AIWMWeb Task 811 Finalize
+
+on:
+  push:
+    branches:
+      - worker/811-settings-accessibility-anchor
+    paths:
+      - '.github/workflows/laravel-aiwmweb-task-811-finalize.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - name: Fetch exact evidence refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Register exact operation evidence
+        run: |
+          python - <<'PY'
+          import json
+          import subprocess
+          from pathlib import Path
+
+          operation = 'AIMW-CONT-6AB0ED6C83'
+          label = 'AIMW-CONT-6AB0ED6C83 Settings accessibility anchor focused closure'
+          head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+
+          evidence_path = Path('variants/laravel-aiwmweb/docs/closure-evidence/settings-accessibility-anchor-terminality.json')
+          evidence = json.loads(evidence_path.read_text())
+          evidence['materialized'] = True
+          evidence['evidence_source_sha'] = head
+          evidence_path.write_text(json.dumps(evidence, indent=2) + '\n')
+
+          sources_path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          sources = json.loads(sources_path.read_text())
+          entry = {
+              'label': label,
+              'sha': head,
+              'observed_pr_head': head,
+              'operation_ids': [operation],
+          }
+          for key in ('countable_sources', 'focused_closure_operation_sources'):
+              sources[key] = [
+                  item for item in sources[key]
+                  if operation not in item.get('operation_ids', [])
+              ]
+              sources[key].append(entry)
+          sources_path.write_text(json.dumps(sources, indent=2) + '\n')
+          PY
+      - name: Run official parity materializer
+        run: |
+          set -euo pipefail
+          OUT_JSON=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          OUT_MD=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          TMP_SUMMARY=/tmp/operation-parity-summary.json
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_platform_admin_route_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+      - name: Commit generated reconciliation and remove task workflow
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/laravel-aiwmweb-task-811-finalize.yml
+          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md \
+                  variants/laravel-aiwmweb/docs/closure-evidence/settings-accessibility-anchor-terminality.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(laravel): materialize parity for AIMW-CONT-6AB0ED6C83"
+          git push origin "HEAD:${{ github.ref_name }}"
