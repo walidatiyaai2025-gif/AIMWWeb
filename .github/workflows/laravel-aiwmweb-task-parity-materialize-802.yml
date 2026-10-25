@@ -47,3 +47,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "chore(laravel): materialize parity for AIMW-CONT-041B5ED720"
           git push origin "HEAD:${{ github.ref_name }}"
+
+# exact-head CI retrigger marker after materialization AIMW-CONT-041B5ED720
