@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #766 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-CONT-9BA2C255AF",
+    "domain": "content",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/ContentExplorer.razor",
+    "source_screen": "/sites/{Id:guid}/explorer",
+    "source_control": "@($ -> @($",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_behavior": {
+    "summary": "The source Content Explorer uses route-bound dynamic href expressions for site details, taxonomy, SEO and content editor navigation.",
+    "scanner_note": "The source census normalizes all href=@($...) expressions to one deduplicated canonical visible-control row.",
+    "side_effect": "navigation/read only",
+    "wordpress_behavior": "none until the destination workspace performs its own authorized read",
+    "success_semantics": "navigation only; no fabricated success state"
+  },
+  "laravel_adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-dynamic-links-control.tsx",
+    "production_mount": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "site_identity": "server-derived FrontendContext.active_site.id",
+    "tenant_identity": "server-derived FrontendContext.tenant.slug",
+    "site_details": "/tenants/{tenant}/sites/{site}",
+    "taxonomy": "/tenants/{tenant}/module/taxonomy?site={site}",
+    "seo": "/tenants/{tenant}/module/seo-audit?site={site}",
+    "content_editor": "/tenants/{tenant}/sites/{site}/content/{post|page}/{wordpressId}/edit",
+    "content_rows": "real tenant/site posts and pages endpoints from FrontendContext.api",
+    "loading_empty_error": "deterministic loading, empty and error states around authoritative posts/pages reads",
+    "placeholder_or_catch_all": false,
+    "demo_or_sample_data": false
+  },
+  "authorization_and_isolation": {
+    "explorer_guard": "auth + tenant.context + sites.view",
+    "content_links": "content.view required before taxonomy/editor data are exposed",
+    "seo_link": "seo.view required",
+    "foreign_site": "404 under tenant-scoped explorer resolution",
+    "caller_controlled_tenant_redirect": false,
+    "caller_controlled_site_id": false
+  },
+  "runtime_semantics": {
+    "read_only": true,
+    "persistence": "none",
+    "queue_cache_scheduler": "none",
+    "idempotency": "repeated navigation is side-effect free",
+    "authoritative_reread": "each destination re-enters its existing authenticated tenant-scoped Laravel route"
+  },
+  "acceptance_tests": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-dynamic-links-control.test.tsx",
+    "php_feature": "variants/laravel-aiwmweb/backend/tests/Feature/ContentExplorerDynamicLinksTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation marker",
+      "tenant-derived site/taxonomy/SEO targets",
+      "real content-editor route construction",
+      "permission fail-closed visibility",
+      "missing active-site fail closed",
+      "foreign tenant site 404",
+      "no caller supplied redirect destination"
+    ]
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-CONT-9BA2C255AF",
+    "aspnet_runtime_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "retry_v2_final_lineage_created": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "branch": "worker/766-content-explorer-dynamic-links",
+    "issue": 766
+  },
+  "materialization": {
+    "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-766.yml",
+    "generated_reconciliation_required": true
+  }
+}
