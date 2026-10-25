@@ -74,60 +74,60 @@ jobs:
               exit 1
             fi
 
-            python - <<'PY'
-            from pathlib import Path
-            import json
-            import os
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          import os
 
-            app = Path('variants/laravel-aiwmweb/backend/resources/js/app.tsx')
-            s = app.read_text()
-            import_anchor = "import { ContentHubAllSitesControl } from './content-hub-all-sites-control';"
-            import_line = "import { ContentHubSiteLinksControl } from './content-hub-site-links-control';"
-            if import_line not in s:
-                if import_anchor not in s:
-                    raise SystemExit('content hub import anchor missing')
-                s = s.replace(import_anchor, import_anchor + '\n' + import_line, 1)
+          app = Path('variants/laravel-aiwmweb/backend/resources/js/app.tsx')
+          s = app.read_text()
+          import_anchor = "import { ContentHubAllSitesControl } from './content-hub-all-sites-control';"
+          import_line = "import { ContentHubSiteLinksControl } from './content-hub-site-links-control';"
+          if import_line not in s:
+              if import_anchor not in s:
+                  raise SystemExit('content hub import anchor missing')
+              s = s.replace(import_anchor, import_anchor + '\n' + import_line, 1)
 
-            lines = s.splitlines()
-            for i, line in enumerate(lines):
-                if "route.key === 'content-hub'" in line:
-                    if 'ContentHubSiteLinksControl' not in line:
-                        needle = '<ContentHubAllSitesControl context={context} />'
-                        if needle not in line:
-                            raise SystemExit('content hub route anchor missing')
-                        lines[i] = line.replace(needle, needle + '<ContentHubSiteLinksControl context={context} />', 1)
-                    break
-            else:
-                raise SystemExit('content hub route missing')
-            app.write_text('\n'.join(lines) + '\n')
+          lines = s.splitlines()
+          for i, line in enumerate(lines):
+              if "route.key === 'content-hub'" in line:
+                  if 'ContentHubSiteLinksControl' not in line:
+                      needle = '<ContentHubAllSitesControl context={context} />'
+                      if needle not in line:
+                          raise SystemExit('content hub route anchor missing')
+                      lines[i] = line.replace(needle, needle + '<ContentHubSiteLinksControl context={context} />', 1)
+                  break
+          else:
+              raise SystemExit('content hub route missing')
+          app.write_text('\n'.join(lines) + '\n')
 
-            source_sha = os.environ['SOURCE_SHA']
-            base_sha = os.environ['BASE_SHA']
-            op = os.environ['OPERATION_ID']
+          source_sha = os.environ['SOURCE_SHA']
+          base_sha = os.environ['BASE_SHA']
+          op = os.environ['OPERATION_ID']
 
-            sources = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
-            data = json.loads(sources.read_text())
-            entry = {
-                'label': 'AIMW-CONT-276925F148 GlobalContentHub dynamic site links focused closure',
-                'sha': source_sha,
-                'observed_pr_head': source_sha,
-                'operation_ids': [op],
-            }
-            for key in ('countable_sources', 'focused_closure_operation_sources'):
-                data[key] = [row for row in data[key] if op not in row.get('operation_ids', [])]
-                data[key].append(entry)
-            sources.write_text(json.dumps(data, indent=2) + '\n')
+          sources = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          data = json.loads(sources.read_text())
+          entry = {
+              'label': 'AIMW-CONT-276925F148 GlobalContentHub dynamic site links focused closure',
+              'sha': source_sha,
+              'observed_pr_head': source_sha,
+              'operation_ids': [op],
+          }
+          for key in ('countable_sources', 'focused_closure_operation_sources'):
+              data[key] = [row for row in data[key] if op not in row.get('operation_ids', [])]
+              data[key].append(entry)
+          sources.write_text(json.dumps(data, indent=2) + '\n')
 
-            evidence = Path('variants/laravel-aiwmweb/docs/closure-evidence/content-hub-site-links-terminality.json')
-            payload = json.loads(evidence.read_text())
-            payload.setdefault('provenance', {})['base_composition_sha'] = base_sha
-            payload['provenance']['base_branch'] = 'worker/laravel-aiwmweb-closure-composition'
-            payload['provenance']['branch'] = 'worker/772-content-hub-site-links'
-            payload['provenance']['issue'] = 772
-            payload['materialized'] = True
-            payload['evidence_source_sha'] = source_sha
-            evidence.write_text(json.dumps(payload, indent=2) + '\n')
-            PY
+          evidence = Path('variants/laravel-aiwmweb/docs/closure-evidence/content-hub-site-links-terminality.json')
+          payload = json.loads(evidence.read_text())
+          payload.setdefault('provenance', {})['base_composition_sha'] = base_sha
+          payload['provenance']['base_branch'] = 'worker/laravel-aiwmweb-closure-composition'
+          payload['provenance']['branch'] = 'worker/772-content-hub-site-links'
+          payload['provenance']['issue'] = 772
+          payload['materialized'] = True
+          payload['evidence_source_sha'] = source_sha
+          evidence.write_text(json.dumps(payload, indent=2) + '\n')
+          PY
 
             OUT_JSON=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
             OUT_MD=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
@@ -140,29 +140,29 @@ jobs:
             python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
             python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
 
-            SOURCE_SHA="${SOURCE_SHA}" python - <<'PY'
-            import json
-            import os
-            from pathlib import Path
-            op = os.environ['OPERATION_ID']
-            sha = os.environ['SOURCE_SHA']
-            data = json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json').read_text())
-            rows = []
-            def walk(node):
-                if isinstance(node, dict):
-                    if node.get('operation_id') == op:
-                        rows.append(node)
-                    for value in node.values():
-                        walk(value)
-                elif isinstance(node, list):
-                    for value in node:
-                        walk(value)
-            walk(data)
-            assert rows, f'{op} missing from reconciliation'
-            row = rows[0]
-            assert row.get('migration_state') == 'ADAPTED', row
-            assert row.get('reconciliation', {}).get('source_sha') == sha, row
-            PY
+          SOURCE_SHA="${SOURCE_SHA}" python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          op = os.environ['OPERATION_ID']
+          sha = os.environ['SOURCE_SHA']
+          data = json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json').read_text())
+          rows = []
+          def walk(node):
+              if isinstance(node, dict):
+                  if node.get('operation_id') == op:
+                      rows.append(node)
+                  for value in node.values():
+                      walk(value)
+              elif isinstance(node, list):
+                  for value in node:
+                      walk(value)
+          walk(data)
+          assert rows, f'{op} missing from reconciliation'
+          row = rows[0]
+          assert row.get('migration_state') == 'ADAPTED', row
+          assert row.get('reconciliation', {}).get('source_sha') == sha, row
+          PY
 
             git fetch origin "${COMPOSITION_BRANCH}"
             END_BASE_SHA="$(git rev-parse "origin/${COMPOSITION_BRANCH}")"
