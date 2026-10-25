@@ -43,7 +43,7 @@ describe('AIMW-CONT-7EF5524637 Operations Hub Manage sites', () => {
     });
 
     it('offers real navigation beside retry after a failed read', async () => {
-        const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ message: 'Unavailable' }), { status: 503 }));
+        const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ message: 'Unavailable' }), { status: 503, headers: { 'content-type': 'application/json' } }));
         vi.stubGlobal('fetch', fetchMock);
         render(<LocaleProvider><OperationsHubReloadControl context={context()} /></LocaleProvider>);
         expect(await screen.findByRole('link', { name: 'Manage sites' })).toHaveAttribute('href', '/tenants/alpha/sites');
@@ -55,7 +55,7 @@ describe('AIMW-CONT-7EF5524637 Operations Hub Manage sites', () => {
         const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
             data: { sites: [], operations },
             meta: { operation_id: OPERATIONS_HUB_RELOAD_OPERATION_ID, tenant: 'alpha', refreshed_at: '2026-10-25' },
-        }), { status: 200 }));
+        }), { status: 200, headers: { 'content-type': 'application/json' } }));
         vi.stubGlobal('fetch', fetchMock);
         render(<LocaleProvider><OperationsHubReloadControl context={context()} /></LocaleProvider>);
         expect(await screen.findByRole('link', { name: 'Manage sites' })).toHaveAttribute('href', '/tenants/alpha/sites');
