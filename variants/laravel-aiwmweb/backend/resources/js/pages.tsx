@@ -147,9 +147,67 @@ function DashboardContent({ context, route }: { context: FrontendContext; route:
 
     const payload = query.data ?? {};
     const metricsCandidate = payload.metrics;
-    const metrics = Array.isArray(metricsCandidate)
+    const explicitMetrics = Array.isArray(metricsCandidate)
         ? metricsCandidate.filter((metric): metric is Record<string, unknown> => Boolean(metric && typeof metric === 'object'))
         : [];
+
+    const sitesCandidate = payload.sites;
+    const sites = sitesCandidate && typeof sitesCandidate === 'object' && !Array.isArray(sitesCandidate)
+        ? sitesCandidate as Record<string, unknown>
+        : null;
+    const hasCanonicalDashboardPayload = Boolean(sites)
+        || ['posts', 'pages', 'media', 'activeJobs', 'failedJobs', 'healthScore', 'lastSynchronizationAtUtc']
+            .some((key) => Object.prototype.hasOwnProperty.call(payload, key));
+
+    const metricNumber = (value: unknown): number | string => typeof value === 'number' ? value : '—';
+    const posts = typeof payload.posts === 'number' ? payload.posts : null;
+    const pages = typeof payload.pages === 'number' ? payload.pages : null;
+    const cachedContent = posts !== null && pages !== null ? posts + pages : '—';
+    const connectedSites = typeof sites?.connectedSites === 'number' ? sites.connectedSites : null;
+    const failedJobs = typeof payload.failedJobs === 'number' ? payload.failedJobs : null;
+    const lastSync = typeof payload.lastSynchronizationAtUtc === 'string' && payload.lastSynchronizationAtUtc.trim() !== ''
+        ? payload.lastSynchronizationAtUtc
+        : '—';
+
+    const canonicalMetrics: Array<Record<string, unknown>> = hasCanonicalDashboardPayload ? [
+        {
+            key: 'sites',
+            label: locale === 'ar' ? 'المواقع' : 'Sites',
+            value: metricNumber(sites?.totalSites),
+            detail: connectedSites !== null ? `${connectedSites} ${locale === 'ar' ? 'متصل' : 'connected'}` : undefined,
+        },
+        {
+            key: 'content',
+            label: locale === 'ar' ? 'المحتوى المحلي' : 'Cached content',
+            value: cachedContent,
+            detail: posts !== null && pages !== null
+                ? `${posts} ${locale === 'ar' ? 'مقال' : 'posts'} · ${pages} ${locale === 'ar' ? 'صفحة' : 'pages'}`
+                : undefined,
+        },
+        {
+            key: 'media',
+            label: locale === 'ar' ? 'الوسائط' : 'Media',
+            value: metricNumber(payload.media),
+        },
+        {
+            key: 'active_jobs',
+            label: locale === 'ar' ? 'مهام نشطة' : 'Active jobs',
+            value: metricNumber(payload.activeJobs),
+            detail: failedJobs !== null ? `${failedJobs} ${locale === 'ar' ? 'فاشلة' : 'failed'}` : undefined,
+        },
+        ...(typeof payload.healthScore === 'number' ? [{
+            key: 'health',
+            label: locale === 'ar' ? 'صحة المنصة' : 'Platform health',
+            value: `${payload.healthScore}%`,
+        }] : []),
+        {
+            key: 'last_sync',
+            label: locale === 'ar' ? 'آخر مزامنة' : 'Last sync',
+            value: lastSync,
+        },
+    ] : [];
+
+    const metrics = explicitMetrics.length ? explicitMetrics : canonicalMetrics;
 
     return (
         <div className="workspace-stack">
@@ -170,7 +228,7 @@ function DashboardContent({ context, route }: { context: FrontendContext; route:
                 </section>
             ) : (
                 <StatePanel title={locale === 'ar' ? 'لا توجد مؤشرات حقيقية بعد' : 'No live metrics returned'}>
-                    {locale === 'ar' ? 'لم يرسل عقد لوحة التحكم أي metrics. لن تستبدل الواجهة ذلك بأرقام تجريبية.' : 'The dashboard contract returned no metrics. The frontend will not replace them with demo numbers.'}
+                    {locale === 'ar' ? 'لم يرسل عقد لوحة التحكم بيانات قابلة للعرض. لن تستبدل الواجهة ذلك بأرقام تجريبية.' : 'The dashboard contract returned no renderable metrics. The frontend will not replace them with demo numbers.'}
                 </StatePanel>
             )}
         </div>
