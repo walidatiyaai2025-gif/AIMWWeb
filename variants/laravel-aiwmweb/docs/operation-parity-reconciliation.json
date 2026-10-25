@@ -25,12 +25,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 791,
-    "pending": 140,
+    "adapted": 792,
+    "pending": 139,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 791,
-    "overall_parity_percent": 84.96
+    "terminal": 792,
+    "overall_parity_percent": 85.07
   },
   "visible_controls": {
     "total": 446,
@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 109,
-      "pending": 55,
+      "adapted": 110,
+      "pending": 54,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 109,
-      "percent": 66.46
+      "terminal": 110,
+      "percent": 67.07
     },
     "email": {
       "total": 82,
@@ -17683,21 +17683,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Providers/CanonicalHomeRouteServiceProvider.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/HomeRouteTerminalityTest.php",
+      "evidence": "AIMW-CONT-519B93F503 Home canonical route terminality@7c0e7c7e63216994d1e433b95f7fc83959281a0f: variants/laravel-aiwmweb/backend/app/Providers/CanonicalHomeRouteServiceProvider.php; explicit-route-contract:AIMW-CONT-519B93F503; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/home-route-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route contract is linked to the canonical operation ID, auth+tenant authorization, a real backing action boundary, and acceptance evidence.",
+        "source_label": "AIMW-CONT-519B93F503 Home canonical route terminality",
+        "source_sha": "7c0e7c7e63216994d1e433b95f7fc83959281a0f",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/CanonicalHomeRouteServiceProvider.php",
+        "evidence_mode": "explicit_route_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/home-route-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-519B93F503",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/HomeRouteTerminalityTest.php"
+        ]
       }
     },
     {
@@ -37052,12 +37062,12 @@
     "route": {
       "total": 84,
       "ported": 0,
-      "adapted": 75,
-      "pending": 9,
+      "adapted": 76,
+      "pending": 8,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 75,
-      "percent": 89.29
+      "terminal": 76,
+      "percent": 90.48
     },
     "service": {
       "total": 349,
@@ -37106,7 +37116,6 @@
       "AIMW-CONT-47C0477703",
       "AIMW-CONT-4A64732FC6",
       "AIMW-CONT-50DF6B23CC",
-      "AIMW-CONT-519B93F503",
       "AIMW-CONT-566A1899F1",
       "AIMW-CONT-6187F8DF8A",
       "AIMW-CONT-63EDB4BA6F",
@@ -37923,6 +37932,20 @@
           "AIMW-CONT-73E4F88038"
         ],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "AIMW-CONT-519B93F503 Home canonical route terminality",
+        "sha": "7c0e7c7e63216994d1e433b95f7fc83959281a0f",
+        "domains": [
+          "content"
+        ],
+        "supporting_only": true,
+        "operation_ids": [
+          "AIMW-CONT-519B93F503"
+        ],
+        "explicit_operation_evidence_ids": [
+          "AIMW-CONT-519B93F503"
+        ]
       }
     ]
   },
@@ -37961,6 +37984,7 @@
       "57fe4921dca136e740609224a03b5d5feac5ab93",
       "70d7c83bf326d6be7114d8a61dbc89bfdbfd28ed",
       "75ab4dcf2045786b875fc315000ca0c6de095b2e",
+      "7c0e7c7e63216994d1e433b95f7fc83959281a0f",
       "836b6a6a6d1d5d02022474f391d072fad2690c73",
       "860095fc8322b913f17b472b41c44c1c17dcc5eb",
       "8c6f75421d95e892b56f4a66dccbde0e9734196f",
@@ -38021,6 +38045,7 @@
       "AIMW-CONT-1DA83B9262",
       "AIMW-CONT-455F01DAC7",
       "AIMW-CONT-4A295D45D4",
+      "AIMW-CONT-519B93F503",
       "AIMW-CONT-5D18F49928",
       "AIMW-CONT-8140D785B5",
       "AIMW-CONT-81B4B20D2D",
