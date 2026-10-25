@@ -8,22 +8,22 @@ Authority: AIMWWeb Issue #257. Evidence-only reconciliation; no feature completi
 |---|---:|
 | TOTAL | 931 |
 | PORTED | 0 |
-| ADAPTED | 787 |
-| PENDING | 144 |
+| ADAPTED | 788 |
+| PENDING | 143 |
 | BLOCKED | 0 |
 | VERIFIED_UNAVAILABLE_EXTERNAL | 0 |
-| TERMINAL | 787 |
-| OVERALL_PARITY_PERCENT | 84.53% |
+| TERMINAL | 788 |
+| OVERALL_PARITY_PERCENT | 84.64% |
 
 Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`; `BLOCKED` is not progress.
 
 ## Visible controls
 
 - Total: **446**
-- Terminal: **311**
-- Pending: **135**
+- Terminal: **312**
+- Pending: **134**
 - Blocked: **0**
-- Parity: **69.73%**
+- Parity: **69.96%**
 
 ## By domain
 
@@ -45,7 +45,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | seo | 24 | 0 | 24 | 0 | 0 | 0 | 24 | 100.00% |
 | settings | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 100.00% |
 | sites | 12 | 0 | 12 | 0 | 0 | 0 | 12 | 100.00% |
-| sync | 213 | 0 | 150 | 63 | 0 | 0 | 150 | 70.42% |
+| sync | 213 | 0 | 151 | 62 | 0 | 0 | 151 | 70.89% |
 | taxonomy | 13 | 0 | 10 | 3 | 0 | 0 | 10 | 76.92% |
 
 ## By kind
@@ -56,7 +56,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | background_job | 21 | 0 | 21 | 0 | 0 | 0 | 21 | 100.00% |
 | route | 84 | 0 | 75 | 9 | 0 | 0 | 75 | 89.29% |
 | service | 349 | 0 | 349 | 0 | 0 | 0 | 349 | 100.00% |
-| visible_control | 446 | 0 | 311 | 135 | 0 | 0 | 311 | 69.73% |
+| visible_control | 446 | 0 | 312 | 134 | 0 | 0 | 312 | 69.96% |
 
 ## Reproducibility / guard results
 
@@ -66,7 +66,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - Totals reconcile: **PASS**
 - Evidence references exist for terminal code rows: **PASS**
 - Explicit route contracts: **43**
-- Focused visible-control contracts: **311**
+- Focused visible-control contracts: **312**
 - Focused service contracts: **32**
 - Focused background-job contracts: **7**
 - Unpushed countable sources: **0**
@@ -213,7 +213,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 
 - None
 
-### sync (63)
+### sync (62)
 
 - `AIMW-SYNC-0108E40967`
 - `AIMW-SYNC-0239B0E6A3`
@@ -236,7 +236,6 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-SYNC-476CDB769B`
 - `AIMW-SYNC-4B986B2651`
 - `AIMW-SYNC-4FDCFDA33F`
-- `AIMW-SYNC-598142307A`
 - `AIMW-SYNC-5A397204EF`
 - `AIMW-SYNC-5EE3F98A28`
 - `AIMW-SYNC-627C90DC5C`
