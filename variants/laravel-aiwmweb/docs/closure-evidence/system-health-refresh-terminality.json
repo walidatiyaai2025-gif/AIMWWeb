@@ -3,7 +3,7 @@
   "authority": "AIMWWeb Issue #975 / umbrella #257",
   "target_variant": "LARAVEL_AIWMWEB",
   "canonical_base_branch": "worker/laravel-aiwmweb-closure-composition",
-  "canonical_base_sha": "bfab191167739a9b43cbc6e8dff049689ce00b54",
+  "canonical_base_sha": "8bc7f8bae6e51db87952f3cea632ef95c52630a9",
   "canonical_operation": {
     "operation_id": "AIMW-SYNC-0DFEE862FA",
     "domain": "sync",
@@ -64,7 +64,7 @@
     "aspnet_runtime_modified": false,
     "generated_reconciliation_hand_edited": false
   },
-  "implementation_sha": "7241dec7c7937530ed4b22d502be07aacccbfd5b",
+  "implementation_sha": "90f6940f907a2ea641e04adcda871d6a228b4765",
   "terminality": {
     "state": "ADAPTED",
     "fully_implemented": true,

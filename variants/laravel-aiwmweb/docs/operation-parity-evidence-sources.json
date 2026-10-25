@@ -1700,8 +1700,8 @@
     },
     {
       "label": "AIMW-SYNC-0DFEE862FA SystemHealth RefreshClickedAsync focused closure",
-      "sha": "43771d0f3c57e41d52ad3e3734ab7fdff5143553",
-      "observed_pr_head": "43771d0f3c57e41d52ad3e3734ab7fdff5143553",
+      "sha": "90f6940f907a2ea641e04adcda871d6a228b4765",
+      "observed_pr_head": "90f6940f907a2ea641e04adcda871d6a228b4765",
       "operation_ids": [
         "AIMW-SYNC-0DFEE862FA"
       ]
