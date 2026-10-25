@@ -1,0 +1,110 @@
+name: Laravel AIWMWeb Task Parity Materialize 975
+
+on:
+  push:
+    branches:
+      - worker/975-system-health-refresh
+    paths:
+      - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
+      - 'variants/laravel-aiwmweb/docs/closure-evidence/system-health-refresh-terminality.json'
+      - '.github/workflows/laravel-aiwmweb-task-parity-materialize-975.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+      COMPOSITION_REF: origin/worker/laravel-aiwmweb-closure-composition
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Fetch exact refs and capture stable heads
+        run: |
+          set -euo pipefail
+          git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+          echo "START_HEAD=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          echo "BASE_SHA=$(git rev-parse "$COMPOSITION_REF")" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Converge latest composition evidence plus exact #975 source
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import subprocess
+          from pathlib import Path
+
+          op = 'AIMW-SYNC-0DFEE862FA'
+          manifest_path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          evidence_path = Path('variants/laravel-aiwmweb/docs/closure-evidence/system-health-refresh-terminality.json')
+          base_ref = os.environ['COMPOSITION_REF']
+
+          current = json.loads(manifest_path.read_text())
+          focused = [
+              row for row in current.get('focused_closure_operation_sources', [])
+              if op in row.get('operation_ids', [])
+          ]
+          if len(focused) != 1:
+              raise SystemExit(f'expected exactly one focused #975 source, found {len(focused)}')
+          task_source = focused[0]
+
+          base_raw = subprocess.check_output(
+              ['git', 'show', f'{base_ref}:{manifest_path.as_posix()}'],
+              text=True,
+          )
+          merged = json.loads(base_raw)
+          merged.setdefault('focused_closure_operation_sources', [])
+          merged['focused_closure_operation_sources'] = [
+              row for row in merged['focused_closure_operation_sources']
+              if op not in row.get('operation_ids', [])
+          ]
+          merged['focused_closure_operation_sources'].append(task_source)
+          manifest_path.write_text(json.dumps(merged, indent=2) + '\n')
+
+          evidence = json.loads(evidence_path.read_text())
+          evidence['canonical_base_sha'] = os.environ['BASE_SHA']
+          evidence_path.write_text(json.dumps(evidence, indent=2) + '\n')
+          PY
+
+      - name: Run official parity materializer
+        run: |
+          set -euo pipefail
+          OUT_JSON=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          OUT_MD=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          TMP_SUMMARY=/tmp/operation-parity-summary.json
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_platform_admin_route_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+
+      - name: Verify base and branch stayed stable
+        run: |
+          set -euo pipefail
+          git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+          test "$(git rev-parse "$COMPOSITION_REF")" = "$BASE_SHA"
+          test "$(git rev-parse "origin/${{ github.ref_name }}")" = "$START_HEAD"
+
+      - name: Commit converged reconciliation and remove task workflow
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/laravel-aiwmweb-task-parity-materialize-975.yml
+          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
+                  variants/laravel-aiwmweb/docs/closure-evidence/system-health-refresh-terminality.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(laravel): converge and materialize #975 parity"
+          git push origin "HEAD:${{ github.ref_name }}"
