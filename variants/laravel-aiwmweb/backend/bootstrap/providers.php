@@ -13,6 +13,7 @@ use App\Providers\ApprovalQueueRouteServiceProvider;
 use App\Providers\ApprovalsReportExportRouteServiceProvider;
 use App\Providers\AppServiceProvider;
 use App\Providers\ContentPlannerRouteServiceProvider;
+use App\Providers\CanonicalSettingsRouteServiceProvider;
 use App\Providers\ErrorRouteServiceProvider;
 use App\Providers\LoginReadRouteServiceProvider;
 use App\Providers\OperationsMaintenanceRouteServiceProvider;
@@ -33,6 +34,7 @@ use App\Providers\SystemHealthRouteServiceProvider;
 
 return [
     AppServiceProvider::class,
+    CanonicalSettingsRouteServiceProvider::class,
     AccountEmailSettingsRouteServiceProvider::class,
     AdminBillingSupportRouteServiceProvider::class,
     ApplicationUserPasswordResetRouteServiceProvider::class,
