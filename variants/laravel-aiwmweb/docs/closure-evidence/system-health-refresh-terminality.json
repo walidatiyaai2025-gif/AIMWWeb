@@ -1,0 +1,43 @@
+{
+  "authority": "AIMWWeb Issue #257",
+  "operation_id": "AIMW-SYNC-0DFEE862FA",
+  "domain": "sync",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/SystemHealth.razor",
+    "route_screen": "/system-health",
+    "visible_control": "@(isLoading ? (L.IsArabic ? [RefreshClickedAsync]",
+    "behavior": "Run checks is always available to an authorized viewer, becomes busy/disabled while the real health check is running, and retries the same authoritative System Health read after failure."
+  },
+  "laravel_adaptation": {
+    "control_file": "variants/laravel-aiwmweb/backend/resources/js/system-health-refresh-control.tsx",
+    "workspace_file": "variants/laravel-aiwmweb/backend/resources/js/system-health-workspace.tsx",
+    "endpoint": "GET /api/tenants/{tenant}/system-health",
+    "behavior": "The dedicated Run checks control invokes the existing React Query refetch for the active tenant System Health snapshot. It is disabled while a read is in flight, suppresses duplicate clicks, remains available after a failed read for recovery, and never displays a synthetic success result."
+  },
+  "authorization": {
+    "authentication": "session auth",
+    "tenant_context": "tenant.context",
+    "permissions": ["tenant.view", "diagnostics.view"],
+    "foreign_tenant": "404 fail closed",
+    "missing_permission": "403 fail closed",
+    "guest": "401 on JSON endpoint",
+    "caller_override": "query tenant/user/site values cannot replace the route-derived TenantContext"
+  },
+  "semantics": {
+    "mutation": false,
+    "read_only": true,
+    "idempotent": true,
+    "retry_safe": true,
+    "authoritative_reread": "Every activation refetches the same tenant-scoped server endpoint; prior data is not presented as a new success when the reread fails.",
+    "duplicate_suppression": "The control keeps a local pending guard in addition to React Query isFetching.",
+    "secrets": "The server response remains allowlisted and focused tests verify a configuration secret sentinel is absent.",
+    "fake_success": "none"
+  },
+  "acceptance_tests": [
+    "variants/laravel-aiwmweb/backend/resources/js/__tests__/system-health-refresh-control.test.tsx",
+    "variants/laravel-aiwmweb/backend/tests/Feature/SystemHealthRefreshTerminalityTest.php"
+  ]
+}
