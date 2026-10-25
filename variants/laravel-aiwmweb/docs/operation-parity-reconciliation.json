@@ -103,22 +103,22 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 98,
-      "pending": 66,
+      "adapted": 99,
+      "pending": 65,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 98,
-      "percent": 59.76
+      "terminal": 99,
+      "percent": 60.37
     },
     "email": {
       "total": 82,
       "ported": 0,
-      "adapted": 76,
-      "pending": 6,
+      "adapted": 75,
+      "pending": 7,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 76,
-      "percent": 92.68
+      "terminal": 75,
+      "percent": 91.46
     },
     "identity": {
       "total": 7,
@@ -16501,21 +16501,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-dynamic-links-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-dynamic-links-control.test.tsx",
+      "evidence": "AIMW-CONT-9BA2C255AF Content Explorer dynamic href focused closure@ea253c2dc4d47e73079dc226d319ad723bdecdc7: variants/laravel-aiwmweb/backend/resources/js/content-explorer-dynamic-links-control.tsx; focused-closure:AIMW-CONT-9BA2C255AF; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-dynamic-links-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-dynamic-links-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-9BA2C255AF Content Explorer dynamic href focused closure",
+        "source_sha": "ea253c2dc4d47e73079dc226d319ad723bdecdc7",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-dynamic-links-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-dynamic-links-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-9BA2C255AF",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/content-explorer-dynamic-links-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-dynamic-links-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-dynamic-links-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -22279,31 +22289,21 @@
       "external_dependency": "email_provider",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/account-email-settings-profile-form.tsx",
+      "laravel_destination": "",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "ADAPTED",
-      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/account-email-settings-cancel-edit-control.test.tsx",
-      "evidence": "AIMW-EMAI-A9CB66F400 AccountEmailSettings CancelEditClicked focused closure@ad642fa272cc38d7c8df4805314f44949926eb8e: variants/laravel-aiwmweb/backend/resources/js/account-email-settings-profile-form.tsx; focused-closure:AIMW-EMAI-A9CB66F400; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/account-email-settings-cancel-edit-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/account-email-settings-cancel-edit-terminality.json",
+      "migration_state": "PENDING",
+      "acceptance_test": "",
+      "evidence": "",
       "reconciliation": {
-        "decision": "ADAPTED",
-        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "AIMW-EMAI-A9CB66F400 AccountEmailSettings CancelEditClicked focused closure",
-        "source_sha": "ad642fa272cc38d7c8df4805314f44949926eb8e",
-        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/account-email-settings-profile-form.tsx",
-        "evidence_mode": "focused_closure_contract",
-        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/account-email-settings-cancel-edit-terminality.json",
-        "signals": [
-          "operation:AIMW-EMAI-A9CB66F400",
-          "production-marker:variants/laravel-aiwmweb/backend/resources/js/account-email-settings-profile-form.tsx",
-          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/account-email-settings-cancel-edit-control.test.tsx",
-          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/account-email-settings-cancel-edit-terminality.json",
-          "scope:operation-specific",
-          "test:tenant-isolation"
-        ]
+        "decision": "PENDING",
+        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
+        "source_label": null,
+        "source_sha": null,
+        "destination_path": null
       }
     },
     {
@@ -36976,7 +36976,6 @@
       "AIMW-CONT-918BE3DBF1",
       "AIMW-CONT-932A09E4A9",
       "AIMW-CONT-98918A6C27",
-      "AIMW-CONT-9BA2C255AF",
       "AIMW-CONT-9CF12067E6",
       "AIMW-CONT-9F0D652C67",
       "AIMW-CONT-A3A2CD23B6",
@@ -37008,7 +37007,8 @@
       "AIMW-EMAI-10F3C44369",
       "AIMW-EMAI-7E1D4105B0",
       "AIMW-EMAI-8C9768BCD0",
-      "AIMW-EMAI-9EB09C490D"
+      "AIMW-EMAI-9EB09C490D",
+      "AIMW-EMAI-A9CB66F400"
     ],
     "identity": [],
     "media": [
@@ -37667,6 +37667,16 @@
           "AIMW-CONT-6D14B76763"
         ],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "AIMW-CONT-9BA2C255AF Content Explorer dynamic href focused closure",
+        "sha": "ea253c2dc4d47e73079dc226d319ad723bdecdc7",
+        "domains": [],
+        "supporting_only": false,
+        "operation_ids": [
+          "AIMW-CONT-9BA2C255AF"
+        ],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -37722,6 +37732,7 @@
       "e4a21b493d2c40dbdda9cdabb1e539449c528cbe",
       "e9bf787b783b972541187ac8748ca24d7785f5d3",
       "e9df9b090a8bb5ee98a3487a65ce6cc2d7af9a72",
+      "ea253c2dc4d47e73079dc226d319ad723bdecdc7",
       "ed3f8fa663b105d8b8105b56eb22fc7399baa8f4",
       "ef875ba3118ce78b45f0d6fc3a1e46ccc5c722d8",
       "f22da647d324acde8f962c40453e2e3f852ad1b8",
@@ -38039,6 +38050,7 @@
       "AIMW-CONT-93B6E02ACF",
       "AIMW-CONT-966F49CDAE",
       "AIMW-CONT-97AD37042A",
+      "AIMW-CONT-9BA2C255AF",
       "AIMW-CONT-9D5E269773",
       "AIMW-CONT-9EDE4C1141",
       "AIMW-CONT-A31317B378",
@@ -38075,7 +38087,6 @@
       "AIMW-EMAI-7A54150265",
       "AIMW-EMAI-8E3B0AACD6",
       "AIMW-EMAI-8E56589573",
-      "AIMW-EMAI-A9CB66F400",
       "AIMW-EMAI-BDF888551C",
       "AIMW-EMAI-EC34E40629",
       "AIMW-EMAI-F8E8A2BEE9",
@@ -38655,10 +38666,10 @@
         ]
       },
       {
-        "label": "AIMW-EMAI-A9CB66F400 AccountEmailSettings CancelEditClicked focused closure",
-        "sha": "ad642fa272cc38d7c8df4805314f44949926eb8e",
+        "label": "AIMW-CONT-9BA2C255AF Content Explorer dynamic href focused closure",
+        "sha": "ea253c2dc4d47e73079dc226d319ad723bdecdc7",
         "operation_ids": [
-          "AIMW-EMAI-A9CB66F400"
+          "AIMW-CONT-9BA2C255AF"
         ]
       }
     ],
