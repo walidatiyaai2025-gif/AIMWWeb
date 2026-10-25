@@ -91,7 +91,8 @@
     "base_branch": "worker/laravel-aiwmweb-closure-composition",
     "base_composition_sha": "48a25d4eb54567b816e5f5e88bc5f4de7399811b",
     "branch": "worker/769-content-explorer-source-url",
-    "implementation_snapshot_sha": "7ac7da76bf56335bbc2b5b972844f6913a60fb06"
+    "implementation_snapshot_sha": "7ac7da76bf56335bbc2b5b972844f6913a60fb06",
+    "focused_test_fix_sha": "22659d11d3f5dbc7613b52c687f821399838cd6e"
   },
   "materialization": {
     "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-769.yml",
