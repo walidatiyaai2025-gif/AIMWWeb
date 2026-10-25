@@ -86,7 +86,7 @@ jobs:
           assert rows, f'{op} missing from reconciliation'
           row = rows[0]
           assert row.get('migration_state') == 'ADAPTED', row
-          assert row.get('reconciliation', {}).get('source_sha') == '34b5d813cd588a2a8aa18653e5963af35d147e41', row
+          assert row.get('reconciliation', {}).get('source_sha') == '45f29f77f325389420a117426ae033ccced327a2', row
           PY
       - name: Commit generated reconciliation and remove task workflow
         run: |
