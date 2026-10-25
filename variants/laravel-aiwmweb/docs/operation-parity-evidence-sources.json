@@ -1118,6 +1118,14 @@
       "operation_ids": [
         "AIMW-CONT-6AB0ED6C83"
       ]
+    },
+    {
+      "label": "AIMW-CONT-69B5134C7E Settings SetGold focused closure",
+      "sha": "d34206885ff41839125cd909055928a2378aa9a6",
+      "observed_pr_head": "d34206885ff41839125cd909055928a2378aa9a6",
+      "operation_ids": [
+        "AIMW-CONT-69B5134C7E"
+      ]
     }
   ],
   "excluded_sources": [],
@@ -1742,6 +1750,14 @@
       "observed_pr_head": "e36250110e3f9f2c22cfb8ac04de98b3c55b9195",
       "operation_ids": [
         "AIMW-CONT-6AB0ED6C83"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-69B5134C7E Settings SetGold focused closure",
+      "sha": "d34206885ff41839125cd909055928a2378aa9a6",
+      "observed_pr_head": "d34206885ff41839125cd909055928a2378aa9a6",
+      "operation_ids": [
+        "AIMW-CONT-69B5134C7E"
       ]
     }
   ]
