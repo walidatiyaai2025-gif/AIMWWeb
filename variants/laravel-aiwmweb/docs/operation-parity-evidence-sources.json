@@ -1649,6 +1649,14 @@
       "operation_ids": [
         "AIMW-CONT-041B5ED720"
       ]
+    },
+    {
+      "label": "AIMW-CONT-B9E6EFF3DF Global Users full management focused closure",
+      "sha": "6aa11cbe04d59a011e34a78f7a26031ea8fec0bd",
+      "observed_pr_head": "6aa11cbe04d59a011e34a78f7a26031ea8fec0bd",
+      "operation_ids": [
+        "AIMW-CONT-B9E6EFF3DF"
+      ]
     }
   ]
 }
