@@ -1126,6 +1126,14 @@
       "operation_ids": [
         "AIMW-SYNC-2A8778C6EA"
       ]
+    },
+    {
+      "label": "AIMW-SYNC-EB9202408A AppDataGrid ExportCsvAsync issue #987 focused closure",
+      "sha": "cb59f548bb2501797c6f0c3b32017f838ac0c486",
+      "observed_pr_head": "cb59f548bb2501797c6f0c3b32017f838ac0c486",
+      "operation_ids": [
+        "AIMW-SYNC-EB9202408A"
+      ]
     }
   ],
   "excluded_sources": [],
@@ -1758,6 +1766,14 @@
       "observed_pr_head": "8c6f75421d95e892b56f4a66dccbde0e9734196f",
       "operation_ids": [
         "AIMW-SYNC-2A8778C6EA"
+      ]
+    },
+    {
+      "label": "AIMW-SYNC-EB9202408A AppDataGrid ExportCsvAsync issue #987 focused closure",
+      "sha": "cb59f548bb2501797c6f0c3b32017f838ac0c486",
+      "observed_pr_head": "cb59f548bb2501797c6f0c3b32017f838ac0c486",
+      "operation_ids": [
+        "AIMW-SYNC-EB9202408A"
       ]
     }
   ]

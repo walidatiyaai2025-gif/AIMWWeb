@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 783,
-    "pending": 148,
+    "adapted": 784,
+    "pending": 147,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 783,
-    "overall_parity_percent": 84.1
+    "terminal": 784,
+    "overall_parity_percent": 84.21
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 309,
-    "pending": 137,
+    "terminal": 310,
+    "pending": 136,
     "blocked": 0,
-    "percent": 69.28
+    "percent": 69.51
   },
   "domains": {
     "ai": {
@@ -203,12 +203,12 @@
     "sync": {
       "total": 213,
       "ported": 0,
-      "adapted": 150,
-      "pending": 63,
+      "adapted": 151,
+      "pending": 62,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 150,
-      "percent": 70.42
+      "terminal": 151,
+      "percent": 70.89
     },
     "taxonomy": {
       "total": 13,
@@ -32514,21 +32514,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/app-data-grid-csv-export-control.ts",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/app-data-grid-csv-export-control.test.ts",
+      "evidence": "AIMW-SYNC-EB9202408A AppDataGrid ExportCsvAsync issue #987 focused closure@cb59f548bb2501797c6f0c3b32017f838ac0c486: variants/laravel-aiwmweb/backend/resources/js/app-data-grid-csv-export-control.ts; focused-closure:AIMW-SYNC-EB9202408A; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/app-data-grid-csv-export-control.test.ts; evidence:variants/laravel-aiwmweb/docs/closure-evidence/app-data-grid-csv-export-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-SYNC-EB9202408A AppDataGrid ExportCsvAsync issue #987 focused closure",
+        "source_sha": "cb59f548bb2501797c6f0c3b32017f838ac0c486",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/app-data-grid-csv-export-control.ts",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/app-data-grid-csv-export-terminality.json",
+        "signals": [
+          "operation:AIMW-SYNC-EB9202408A",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/app-data-grid-csv-export-control.ts",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/app-data-grid-csv-export-control.test.ts",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/app-data-grid-csv-export-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -36986,12 +36996,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 309,
-      "pending": 137,
+      "adapted": 310,
+      "pending": 136,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 309,
-      "percent": 69.28
+      "terminal": 310,
+      "percent": 69.51
     }
   },
   "pending_operation_ids_by_domain": {
@@ -37153,7 +37163,6 @@
       "AIMW-SYNC-E3EB27C678",
       "AIMW-SYNC-E51F091C0B",
       "AIMW-SYNC-E6888B0B4D",
-      "AIMW-SYNC-EB9202408A",
       "AIMW-SYNC-ECAB44A389",
       "AIMW-SYNC-ED1442005E",
       "AIMW-SYNC-EE7D7534DF",
@@ -37785,6 +37794,16 @@
           "AIMW-SYNC-2A8778C6EA"
         ],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "AIMW-SYNC-EB9202408A AppDataGrid ExportCsvAsync issue #987 focused closure",
+        "sha": "cb59f548bb2501797c6f0c3b32017f838ac0c486",
+        "domains": [],
+        "supporting_only": false,
+        "operation_ids": [
+          "AIMW-SYNC-EB9202408A"
+        ],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -37836,6 +37855,7 @@
       "c19ba111947512de296aa73dd62e03c334bd8f43",
       "c394c3143917c6c1cbff8e136a2a8b1847929a78",
       "ca212724d1ba532253c7128231326122967fc9d1",
+      "cb59f548bb2501797c6f0c3b32017f838ac0c486",
       "d7ed8030da65376f9d0c43380fb6c80c1ee87508",
       "d807224f10f552687771e75bb9a33d825bdeebd1",
       "dbc983f4c9c7a9dfa07d1b4414eed38f1843fd76",
@@ -38265,6 +38285,7 @@
       "AIMW-SYNC-D8581471A2",
       "AIMW-SYNC-DBD736FACC",
       "AIMW-SYNC-E36C56A631",
+      "AIMW-SYNC-EB9202408A",
       "AIMW-SYNC-EF652932D6",
       "AIMW-SYNC-F0C46A9BD1",
       "AIMW-SYNC-F135B261B2",
@@ -38832,10 +38853,17 @@
         "operation_ids": [
           "AIMW-SYNC-2A8778C6EA"
         ]
+      },
+      {
+        "label": "AIMW-SYNC-EB9202408A AppDataGrid ExportCsvAsync issue #987 focused closure",
+        "sha": "cb59f548bb2501797c6f0c3b32017f838ac0c486",
+        "operation_ids": [
+          "AIMW-SYNC-EB9202408A"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 79,
-    "focused_closure_contract_count": 309,
+    "focused_closure_operation_scoped_count": 80,
+    "focused_closure_contract_count": 310,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
