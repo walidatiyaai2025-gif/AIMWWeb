@@ -61,15 +61,18 @@ describe('AIMW-SYNC-7071DA172F AppFormActions SaveClickedAsync', () => {
         expect(save).toHaveBeenCalledTimes(1);
     });
 
-    it('binds CancelClickedAsync to the exact cancel operation and fails closed while blocked', () => {
+    it('binds CancelClickedAsync to the exact cancel operation with source-equivalent independent guards', async () => {
+        let release!: () => void;
+        const save = vi.fn(() => new Promise<void>((resolve) => { release = resolve; }));
         const cancel = vi.fn();
+
         const first = render(
             <SyncFormActionsControl
                 context={context()}
                 busy={false}
                 saveText="Save"
                 cancelText="Previous"
-                onSave={() => undefined}
+                onSave={save}
                 onCancel={cancel}
             />,
         );
@@ -77,8 +80,13 @@ describe('AIMW-SYNC-7071DA172F AppFormActions SaveClickedAsync', () => {
         const previous = screen.getByRole('button', { name: 'Previous' });
         expect(previous).toHaveAttribute('data-canonical-operation', SYNC_APP_FORM_ACTIONS_CANCEL_OPERATION_ID);
         expect(previous).toHaveAttribute('data-source-handler', 'CancelClickedAsync');
+
+        fireEvent.click(screen.getByRole('button', { name: 'Save' }));
         fireEvent.click(previous);
+        expect(save).toHaveBeenCalledTimes(1);
         expect(cancel).toHaveBeenCalledTimes(1);
+        release();
+        await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
 
         first.rerender(
             <SyncFormActionsControl
@@ -106,8 +114,19 @@ describe('AIMW-SYNC-7071DA172F AppFormActions SaveClickedAsync', () => {
             />,
         );
         expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled();
-        fireEvent.click(screen.getByRole('button', { name: 'Previous' }));
-        expect(cancel).toHaveBeenCalledTimes(1);
+
+        first.rerender(
+            <SyncFormActionsControl
+                context={context()}
+                busy={false}
+                showCancel={false}
+                saveText="Save"
+                cancelText="Previous"
+                onSave={() => undefined}
+                onCancel={cancel}
+            />,
+        );
+        expect(screen.queryByRole('button', { name: 'Previous' })).toBeNull();
         first.unmount();
 
         render(
