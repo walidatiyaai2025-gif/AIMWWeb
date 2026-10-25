@@ -57,8 +57,12 @@ final class SiteOnboardingSaveTestAndSyncTerminalityTest extends TestCase
         $this->assertStringContainsString(self::APP_FORM_ACTIONS_CANCEL_OPERATION_ID, $control);
         $this->assertStringContainsString("requiredPermission = 'sites.manage'", $control);
         $this->assertStringContainsString('await onSave();', $control);
+        $this->assertStringContainsString('if (busy || cancelDisabled) return;', $control);
+        $this->assertStringNotContainsString('if (busy || cancelDisabled || dispatching.current) return;', $control);
         $this->assertStringContainsString('await onCancel?.();', $control);
         $this->assertStringContainsString('data-source-handler="CancelClickedAsync"', $control);
+        $this->assertStringNotContainsString('apiRequest', $control);
+        $this->assertStringNotContainsString('fetch(', $control);
 
         $onboarding = (string) file_get_contents(resource_path('js/site-onboarding-save-test-sync-control.tsx'));
         $this->assertStringContainsString('<SyncFormActionsControl', $onboarding);
