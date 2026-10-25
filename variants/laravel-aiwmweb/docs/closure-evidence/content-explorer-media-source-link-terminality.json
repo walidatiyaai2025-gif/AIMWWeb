@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #769 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-B44DA81C28",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/sites/{Id:guid}/explorer",
+    "source": "src/AIWordPressManager.Web/Components/Pages/ContentExplorer.razor",
+    "source_control": "@item.SourceUrl -> @item.SourceUrl",
+    "source_intent": "Open the authoritative persisted media SourceUrl in a new tab from the Content Explorer media surface.",
+    "mutation": false,
+    "tenant_owned": true,
+    "external_dependency": "WordPress",
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-media-source-link-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "authoritative_read": "GET /api/v1/tenants/{tenant}/sites/{site}/media",
+    "read_controller": "App\\Http\\Controllers\\ContentApiController::media",
+    "persistence_model": "App\\Models\\MediaItem",
+    "persisted_field": "media_items.source_url",
+    "operation_marker": "AIMW-CONT-B44DA81C28",
+    "behavior": "The Explorer mounts a read-only media SourceUrl panel only when the authenticated tenant/site media contract is exact. Links come only from persisted MediaItem.source_url returned by the authoritative media read."
+  },
+  "security": {
+    "visibility_permissions": [
+      "tenant.view",
+      "sites.view",
+      "content.view"
+    ],
+    "connector_scope": "media.read",
+    "tenant_selector": "FrontendContext.tenant.slug only",
+    "site_selector": "FrontendContext.active_site.id only, cross-checked against the exact server-advertised media API",
+    "allowed_destination_schemes": [
+      "http",
+      "https"
+    ],
+    "credential_bearing_urls": "rejected",
+    "relative_malformed_or_unsafe_urls": "rejected",
+    "caller_destination_override": "ignored; no caller destination is accepted",
+    "cross_origin_media_api": "rejected",
+    "foreign_tenant": "tenant.context fails closed",
+    "foreign_site": "frontend context fails 404; direct tenant-scoped media read cannot disclose foreign MediaItem rows",
+    "mutation_added": false,
+    "fake_success": false,
+    "secret_disclosure_added": false
+  },
+  "runtime_semantics": {
+    "read_only": true,
+    "loading": "explicit loading state while authoritative media read is pending",
+    "empty": "explicit no-media state; no sample rows synthesized",
+    "error": "explicit error state; no external links synthesized",
+    "success": "safe HTTP(S) persisted SourceUrl renders as a new-tab anchor only",
+    "provider_mutation": false,
+    "wordpress_mutation": false,
+    "queue_or_scheduler_added": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-media-source-link-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentExplorerMediaSourceLinkTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation identity and source contract",
+      "authoritative tenant/site media read and persisted source_url",
+      "exact same-origin media API contract",
+      "tenant, site, permission and connector-scope fail-closed behavior",
+      "safe absolute credential-free HTTP(S) new-tab navigation",
+      "unsafe, relative, malformed and credential-bearing SourceUrl suppression",
+      "deterministic loading, empty and error behavior",
+      "read-only behavior with no fake success or provider mutation"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-B44DA81C28"
+    ],
+    "copy_link_operation_claimed": false,
+    "image_source_render_operation_claimed": false,
+    "media_tab_operation_claimed": false,
+    "media_delete_operation_claimed": false,
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "48a25d4eb54567b816e5f5e88bc5f4de7399811b",
+    "branch": "worker/769-content-explorer-source-url",
+    "implementation_snapshot_sha": "7ac7da76bf56335bbc2b5b972844f6913a60fb06"
+  },
+  "materialization": {
+    "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-769.yml",
+    "generated_reconciliation_required": true,
+    "canonical_total": 931
+  }
+}
