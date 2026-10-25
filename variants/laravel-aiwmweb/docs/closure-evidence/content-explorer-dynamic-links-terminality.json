@@ -73,10 +73,13 @@
   "provenance": {
     "base_branch": "worker/laravel-aiwmweb-closure-composition",
     "branch": "worker/766-content-explorer-dynamic-links",
-    "issue": 766
+    "issue": 766,
+    "implementation_sha": "ea253c2dc4d47e73079dc226d319ad723bdecdc7",
+    "evidence_registration_sha": "78c7159f20cbacf46cbccceee0421c73d52cd510"
   },
   "materialization": {
     "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-766.yml",
-    "generated_reconciliation_required": true
+    "generated_reconciliation_required": true,
+    "trigger": "evidence-seal push after workflow installation"
   }
 }
