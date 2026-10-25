@@ -54,7 +54,7 @@ export function SyncFormActionsControl({
     };
 
     const cancel = async () => {
-        if (busy || cancelDisabled || dispatching.current) return;
+        if (busy || cancelDisabled) return;
         await onCancel?.();
     };
 
