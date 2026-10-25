@@ -1090,6 +1090,28 @@
       ]
     },
     {
+      "label": "AIMW-CONT-55FA799054 Site Operations canonical route terminality",
+      "sha": "bbcaf429febf2f59f44ddae4d5862977ccee9415",
+      "observed_pr_head": "bbcaf429febf2f59f44ddae4d5862977ccee9415",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "operation_ids": [
+        "AIMW-CONT-55FA799054"
+      ],
+      "route_api_provenance": {
+        "AIMW-CONT-55FA799054": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteOperationsRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteOperationsRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-operations-route-terminality.json",
+          "security_mode": "tenant_bound"
+        }
+      }
+    },
+    {
       "label": "AIMW-EMAI-7E1D4105B0 CancelEdit focused closure",
       "sha": "faa63881a3f34ec885b1a1548933acfabe92af81",
       "observed_pr_head": "faa63881a3f34ec885b1a1548933acfabe92af81",
