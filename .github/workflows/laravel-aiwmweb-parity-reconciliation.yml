@@ -24,7 +24,7 @@ on:
       - worker/laravel-aiwmweb-closure-composition
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   reconcile:
@@ -86,6 +86,25 @@ jobs:
             --summary-output /tmp/operation-parity-summary.json \
             --markdown-output /tmp/operation-parity-reconciliation.md \
             --check-total 931
+
+      - name: Persist generated billing-five reconciliation
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'worker/billing-five-pending-closure'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp /tmp/operation-parity-reconciliation.json /tmp/generated-operation-parity-reconciliation.json
+          cp /tmp/operation-parity-reconciliation.md /tmp/generated-operation-parity-reconciliation.md
+          git checkout "${{ github.event.pull_request.head.ref }}"
+          cp /tmp/generated-operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          cp /tmp/generated-operation-parity-reconciliation.md variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git show "origin/${{ github.event.pull_request.base.ref }}:.github/workflows/laravel-aiwmweb-parity-reconciliation.yml" > .github/workflows/laravel-aiwmweb-parity-reconciliation.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md .github/workflows/laravel-aiwmweb-parity-reconciliation.yml
+          if ! git diff --cached --quiet; then
+            git commit -m "docs(laravel): refresh billing parity reconciliation"
+            git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
+          fi
 
       - name: Verify committed reconciliation artifacts
         shell: bash
