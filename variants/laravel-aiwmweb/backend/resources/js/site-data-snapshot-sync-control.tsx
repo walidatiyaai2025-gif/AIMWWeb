@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { ApiError, apiRequest, type FrontendContext } from './core';
 import { useLocale } from './i18n';
+import { SiteDataSnapshotBackToSitesControl } from './site-data-snapshot-back-to-sites-control';
 
 export const SITE_DATA_SNAPSHOT_SYNC_OPERATION_ID = 'AIMW-BILL-2D6F2BC88E';
 
@@ -105,6 +106,7 @@ export function SiteDataSnapshotSyncControl({ context }: { context: FrontendCont
 
     return (
         <div className="workspace-stack" data-canonical-operation={SITE_DATA_SNAPSHOT_SYNC_OPERATION_ID}>
+            <SiteDataSnapshotBackToSitesControl context={context} />
             <section className="hero-panel">
                 <div>
                     <span className="workspace-kicker">LOCAL DATA</span>
