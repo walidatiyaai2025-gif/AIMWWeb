@@ -32,7 +32,7 @@ export function SystemHealthWorkspace({ context, route }: { context: FrontendCon
         );
     }
 
-    const snapshot = query.data;
+    const snapshot = query.error ? undefined : query.data;
     const snapshotIsAuthoritative = Boolean(snapshot && snapshot.tenant === context.tenant.slug);
     const checks = snapshotIsAuthoritative ? Object.entries(snapshot?.checks ?? {}) : [];
 
@@ -53,7 +53,7 @@ export function SystemHealthWorkspace({ context, route }: { context: FrontendCon
                 </div>
             </section>
 
-            {query.isLoading ? (
+            {(query.isLoading || (query.isFetching && !snapshotIsAuthoritative)) ? (
                 <LoadingState />
             ) : query.error ? (
                 <StatePanel tone="danger" title={locale === 'ar' ? 'تعذر تحميل صحة النظام' : 'System health could not be loaded'}>
