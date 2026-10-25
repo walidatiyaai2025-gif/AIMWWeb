@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\CanonicalWorkspaceRouteController;
-use App\Http\Controllers\DashboardReadController;
+use App\Http\Controllers\PlatformReadController;
 use App\Models\ContentItem;
 use App\Models\MediaItem;
 use App\Models\Permission;
@@ -53,7 +53,7 @@ final class HomeRouteTerminalityTest extends TestCase
         $this->assertSame('low', $operation['risk']);
     }
 
-    public function test_source_frontend_and_explicit_routes_preserve_real_dashboard_contract(): void
+    public function test_source_frontend_and_explicit_home_route_reuse_canonical_dashboard_api(): void
     {
         $source = (string) file_get_contents(
             base_path('../../../src/AIWordPressManager.Web/Components/Pages/Home.razor'),
@@ -76,49 +76,50 @@ final class HomeRouteTerminalityTest extends TestCase
         $this->assertContains('tenant.context', $route->gatherMiddleware());
         $this->assertSame(['GET', 'HEAD'], $route->methods());
 
-        $api = Route::getRoutes()->match(Request::create('/tenants/alpha/route-api/dashboard', 'GET'));
+        $api = Route::getRoutes()->match(Request::create('/api/dashboard', 'GET'));
         $this->assertSame('canonical.api.dashboard', $api->getName());
-        $this->assertSame(DashboardReadController::class, ltrim($api->getActionName(), '\\'));
-        $this->assertTrue(method_exists(DashboardReadController::class, '__invoke'));
-        $this->assertSame(self::OPERATION_ID, $api->defaults['canonical_operation_id'] ?? null);
+        $this->assertSame(PlatformReadController::class.'@dashboard', ltrim($api->getActionName(), '\\'));
+        $this->assertContains('web', $api->gatherMiddleware());
         $this->assertContains('auth', $api->gatherMiddleware());
-        $this->assertContains('tenant.context', $api->gatherMiddleware());
 
         $this->assertSame(self::OPERATION_ID, CanonicalHomeRouteServiceProvider::OPERATION_ID);
-        $this->assertSame(self::OPERATION_ID, DashboardReadController::OPERATION_ID);
         $this->assertStringContainsString("r('dashboard', '/',", $core);
         $this->assertStringContainsString("kind: 'dashboard'", $core);
         $this->assertStringContainsString('function DashboardContent', $pages);
+        $this->assertStringContainsString('hasCanonicalDashboardPayload', $pages);
+        $this->assertStringContainsString('payload.healthScore', $pages);
         $this->assertStringContainsString('if (query.isLoading) return <LoadingState />;', $pages);
         $this->assertStringContainsString('if (query.error) return <QueryError', $pages);
         $this->assertStringContainsString('No live metrics returned', $pages);
+        $this->assertFileDoesNotExist(app_path('Http/Controllers/DashboardReadController.php'));
     }
 
     public function test_guest_missing_permission_and_foreign_tenant_fail_closed(): void
     {
         $this->get('/tenants/alpha')->assertRedirect('/login');
-        $this->get('/tenants/alpha/route-api/dashboard')->assertRedirect('/login');
+        $this->getJson('/api/dashboard?tenant=alpha')->assertUnauthorized();
 
         $limited = User::factory()->create();
         $this->membership($limited, 'alpha', []);
 
         $this->actingAs($limited)->get('/tenants/alpha')->assertForbidden();
-        $this->actingAs($limited)->getJson('/tenants/alpha/route-api/dashboard')->assertForbidden();
+        $this->actingAs($limited)->getJson('/api/dashboard?tenant=alpha')->assertForbidden();
 
         $authorized = User::factory()->create();
-        $this->membership($authorized, 'owned', ['tenant.view']);
+        $this->membership($authorized, 'owned', ['tenant.view', 'execution.view']);
+
         $this->actingAs($authorized)->get('/tenants/foreign')->assertNotFound();
-        $this->actingAs($authorized)->getJson('/tenants/foreign/route-api/dashboard')->assertNotFound();
+        $this->actingAs($authorized)->getJson('/api/dashboard?tenant=foreign')->assertNotFound();
     }
 
-    public function test_authorized_route_renders_and_dashboard_api_reads_only_active_tenant_data(): void
+    public function test_authorized_route_renders_and_existing_dashboard_api_reads_only_selected_tenant_data(): void
     {
         $alphaUser = User::factory()->create();
-        $alphaMembership = $this->membership($alphaUser, 'alpha', ['tenant.view']);
+        $alphaMembership = $this->membership($alphaUser, 'alpha', ['tenant.view', 'execution.view']);
         $this->seedDashboardData($alphaMembership, 'alpha', 1);
 
         $betaUser = User::factory()->create();
-        $betaMembership = $this->membership($betaUser, 'beta', ['tenant.view']);
+        $betaMembership = $this->membership($betaUser, 'beta', ['tenant.view', 'execution.view']);
         $this->seedDashboardData($betaMembership, 'beta', 3);
 
         $before = [
@@ -136,23 +137,20 @@ final class HomeRouteTerminalityTest extends TestCase
         $this->actingAs($alphaUser)
             ->getJson('/tenants/alpha/context')
             ->assertOk()
-            ->assertJsonPath('api.dashboard', '/tenants/alpha/route-api/dashboard');
+            ->assertJsonPath('api.dashboard', '/api/dashboard?tenant=alpha');
 
         $this->actingAs($alphaUser)
-            ->getJson('/tenants/alpha/route-api/dashboard')
+            ->getJson('/api/dashboard?tenant=alpha')
             ->assertOk()
-            ->assertJsonPath('summary.sites.total', 1)
-            ->assertJsonPath('summary.sites.connected', 1)
-            ->assertJsonPath('summary.content.posts', 1)
-            ->assertJsonPath('summary.content.pages', 1)
-            ->assertJsonPath('summary.content.media', 1)
-            ->assertJsonPath('summary.jobs.active', 0)
-            ->assertJsonPath('summary.jobs.failed', 0)
-            ->assertJsonCount(5, 'metrics')
-            ->assertJsonPath('metrics.0.key', 'sites')
-            ->assertJsonPath('metrics.0.value', 1)
-            ->assertJsonPath('metrics.1.value', 2)
-            ->assertJsonPath('metrics.2.value', 1);
+            ->assertJsonPath('sites.totalSites', 1)
+            ->assertJsonPath('sites.connectedSites', 1)
+            ->assertJsonPath('posts', 1)
+            ->assertJsonPath('pages', 1)
+            ->assertJsonPath('media', 1)
+            ->assertJsonPath('activeJobs', 0)
+            ->assertJsonPath('failedJobs', 0)
+            ->assertJsonPath('healthScore', 100)
+            ->assertJsonCount(0, 'recentJobs');
 
         $this->assertSame($before['sites'], DB::table('sites')->count());
         $this->assertSame($before['content_items'], DB::table('content_items')->count());
@@ -171,6 +169,7 @@ final class HomeRouteTerminalityTest extends TestCase
                 'url' => "https://{$prefix}-{$index}.test",
                 'status' => 'active',
                 'connection_status' => 'connected',
+                'health_state' => 'healthy',
                 'last_sync_at' => now()->subMinutes($index),
             ]);
 
