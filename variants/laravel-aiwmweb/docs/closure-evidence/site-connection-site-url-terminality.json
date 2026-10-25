@@ -4,7 +4,7 @@
   "target_variant": "LARAVEL_AIWMWEB",
   "operation_id": "AIMW-CONT-63EDB4BA6F",
   "terminal_state": "ADAPTED",
-  "materialized": false,
+  "materialized": true,
   "operation": {
     "domain": "content",
     "kind": "visible_control",
@@ -53,5 +53,6 @@
     "aspnet_product_modified": false,
     "core_variant_modified": false,
     "destructive_migration": false
-  }
+  },
+  "evidence_source_sha": "9944d31bbee26ea1fbd2cf37dea46df9f42cec78"
 }
