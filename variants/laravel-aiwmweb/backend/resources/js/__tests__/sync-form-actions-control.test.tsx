@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { FrontendContext } from '../core';
 import {
     SYNC_APP_FORM_ACTIONS_OPERATION_ID,
+    SYNC_APP_FORM_ACTIONS_CANCEL_OPERATION_ID,
     SyncFormActionsControl,
 } from '../sync-form-actions-control';
 
@@ -85,6 +86,74 @@ describe('AIMW-SYNC-7071DA172F AppFormActions SaveClickedAsync', () => {
             />,
         );
         expect(screen.queryByRole('button', { name: 'Save' })).toBeNull();
+    });
+
+    it('binds AIMW-SYNC-14DAFE7D73 to CancelClickedAsync and preserves its independent guards', async () => {
+        let release!: () => void;
+        const save = vi.fn(() => new Promise<void>((resolve) => { release = resolve; }));
+        const cancel = vi.fn();
+
+        const view = render(
+            <SyncFormActionsControl
+                context={context()}
+                busy={false}
+                saveText="Save"
+                cancelText="Cancel"
+                onSave={save}
+                onCancel={cancel}
+            />,
+        );
+
+        const cancelButton = screen.getByRole('button', { name: 'Cancel' });
+        expect(SYNC_APP_FORM_ACTIONS_CANCEL_OPERATION_ID).toBe('AIMW-SYNC-14DAFE7D73');
+        expect(cancelButton).toHaveAttribute('data-canonical-operation', SYNC_APP_FORM_ACTIONS_CANCEL_OPERATION_ID);
+        expect(cancelButton).toHaveAttribute('data-source-handler', 'CancelClickedAsync');
+
+        fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+        fireEvent.click(cancelButton);
+        expect(save).toHaveBeenCalledTimes(1);
+        expect(cancel).toHaveBeenCalledTimes(1);
+
+        release();
+        await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+
+        view.rerender(
+            <SyncFormActionsControl
+                context={context()}
+                busy={false}
+                cancelDisabled
+                saveText="Save"
+                cancelText="Cancel"
+                onSave={() => undefined}
+                onCancel={cancel}
+            />,
+        );
+        expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled();
+
+        view.rerender(
+            <SyncFormActionsControl
+                context={context()}
+                busy
+                saveText="Save"
+                cancelText="Cancel"
+                onSave={() => undefined}
+                onCancel={cancel}
+            />,
+        );
+        expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled();
+
+        view.rerender(
+            <SyncFormActionsControl
+                context={context()}
+                busy={false}
+                showCancel={false}
+                saveText="Save"
+                cancelText="Cancel"
+                onSave={() => undefined}
+                onCancel={cancel}
+            />,
+        );
+        expect(screen.queryByRole('button', { name: 'Cancel' })).toBeNull();
     });
 
     it('uses the exact canonical operation identity for the source-equivalent wrapper', () => {
