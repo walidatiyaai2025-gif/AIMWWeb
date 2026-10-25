@@ -169,7 +169,7 @@ final class ContentExplorerMediaSourceLinkTerminalityTest extends TestCase
         $this->assertStringContainsString('target="_blank"', $control);
         $this->assertStringContainsString('rel="noopener noreferrer"', $control);
         $this->assertStringContainsString("authorize('content.view')", $controller);
-        $this->assertStringContainsString("where('site_id', $site)", $controller);
+        $this->assertStringContainsString("where('site_id', \$site)", $controller);
         $this->assertStringNotContainsString('method: \'POST\'', $control);
         $this->assertStringNotContainsString('method: \'PATCH\'', $control);
         $this->assertStringNotContainsString('method: \'DELETE\'', $control);
