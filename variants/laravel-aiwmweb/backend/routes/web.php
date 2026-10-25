@@ -220,6 +220,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
         $actions = $actionRegistry->contracts($tenantModel, $permissions, $site);
 
         $api = [
+            'dashboard' => "/api/dashboard?tenant={$tenant}",
             'sites' => "/api/tenants/{$tenant}/sites",
             'operations' => "/tenants/{$tenant}/admin/operations",
             'operations-hub' => "/tenants/{$tenant}/admin/operations-hub",
