@@ -13,6 +13,7 @@ final class SettingsAppearanceAmberTerminalityTest extends TestCase
         $control = (string) file_get_contents(resource_path('js/settings-appearance-light-control.tsx'));
         $core = (string) file_get_contents(resource_path('js/core.ts'));
         $app = (string) file_get_contents(resource_path('js/app.tsx'));
+        $settingsGuard = (string) file_get_contents(base_path('tests/Feature/CurrentUserSettingsControlTerminalityTest.php'));
 
         $this->assertStringContainsString(self::OPERATION_ID, $control);
         $this->assertStringContainsString('data-source-handler="SetAmber"', $control);
@@ -26,5 +27,10 @@ final class SettingsAppearanceAmberTerminalityTest extends TestCase
         $this->assertStringContainsString("permission: 'tenant.view', kind: 'settings'", $core);
         $this->assertStringContainsString("if (route.key === 'settings')", $app);
         $this->assertStringContainsString('<SettingsAppearanceLightControl context={context} />', $app);
+
+        // Reuse the real generic Settings workspace security contract: auth + tenant.view,
+        // with foreign tenant navigation failing closed through tenant.context as 404.
+        $this->assertStringContainsString("get('/tenants/beta/settings')->assertNotFound()", $settingsGuard);
+        $this->assertStringContainsString('tenant', $settingsGuard);
     }
 }
