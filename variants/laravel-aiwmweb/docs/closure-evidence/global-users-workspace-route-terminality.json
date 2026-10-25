@@ -81,5 +81,6 @@
   "server_mutation": false,
   "external_mutation": false,
   "only_operation_claimed": "AIMW-CONT-C3EC665880",
-  "materialized": false
+  "materialized": true,
+  "evidence_source_sha": "eaceb34cbf5beb25952bfff61c291aba01d78130"
 }
