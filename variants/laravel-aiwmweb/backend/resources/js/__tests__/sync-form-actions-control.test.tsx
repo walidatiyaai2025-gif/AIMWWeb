@@ -1,9 +1,10 @@
-// Canonical PR CI anchor: AIMW-SYNC-7071DA172F remains bound to the source-equivalent AppFormActions wrapper.
+// Canonical PR CI anchors: save AIMW-SYNC-7071DA172F and cancel AIMW-SYNC-14DAFE7D73 remain bound to AppFormActions.
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { FrontendContext } from '../core';
 import {
+    SYNC_APP_FORM_ACTIONS_CANCEL_OPERATION_ID,
     SYNC_APP_FORM_ACTIONS_OPERATION_ID,
     SyncFormActionsControl,
 } from '../sync-form-actions-control';
@@ -60,7 +61,7 @@ describe('AIMW-SYNC-7071DA172F AppFormActions SaveClickedAsync', () => {
         expect(save).toHaveBeenCalledTimes(1);
     });
 
-    it('dispatches cancel only when available and hides the control without sites.manage', () => {
+    it('binds CancelClickedAsync to the exact cancel operation and fails closed while blocked', () => {
         const cancel = vi.fn();
         const first = render(
             <SyncFormActionsControl
@@ -72,6 +73,39 @@ describe('AIMW-SYNC-7071DA172F AppFormActions SaveClickedAsync', () => {
                 onCancel={cancel}
             />,
         );
+
+        const previous = screen.getByRole('button', { name: 'Previous' });
+        expect(previous).toHaveAttribute('data-canonical-operation', SYNC_APP_FORM_ACTIONS_CANCEL_OPERATION_ID);
+        expect(previous).toHaveAttribute('data-source-handler', 'CancelClickedAsync');
+        fireEvent.click(previous);
+        expect(cancel).toHaveBeenCalledTimes(1);
+
+        first.rerender(
+            <SyncFormActionsControl
+                context={context()}
+                busy
+                saveText="Save"
+                cancelText="Previous"
+                onSave={() => undefined}
+                onCancel={cancel}
+            />,
+        );
+        expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled();
+        fireEvent.click(screen.getByRole('button', { name: 'Previous' }));
+        expect(cancel).toHaveBeenCalledTimes(1);
+
+        first.rerender(
+            <SyncFormActionsControl
+                context={context()}
+                busy={false}
+                cancelDisabled
+                saveText="Save"
+                cancelText="Previous"
+                onSave={() => undefined}
+                onCancel={cancel}
+            />,
+        );
+        expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled();
         fireEvent.click(screen.getByRole('button', { name: 'Previous' }));
         expect(cancel).toHaveBeenCalledTimes(1);
         first.unmount();
@@ -89,5 +123,6 @@ describe('AIMW-SYNC-7071DA172F AppFormActions SaveClickedAsync', () => {
 
     it('uses the exact canonical operation identity for the source-equivalent wrapper', () => {
         expect(SYNC_APP_FORM_ACTIONS_OPERATION_ID).toBe('AIMW-SYNC-7071DA172F');
+        expect(SYNC_APP_FORM_ACTIONS_CANCEL_OPERATION_ID).toBe('AIMW-SYNC-14DAFE7D73');
     });
 });
