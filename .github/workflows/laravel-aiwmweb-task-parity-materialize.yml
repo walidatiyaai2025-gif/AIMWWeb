@@ -6,7 +6,6 @@ on:
   push:
     branches:
       - worker/laravel-aiwmweb-closure-composition
-      - worker/laravel-aiwmweb-AIMW-CONT-9CF12067E6-roles-permissions-route
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
       - 'variants/laravel-aiwmweb/docs/closure-evidence/**'
