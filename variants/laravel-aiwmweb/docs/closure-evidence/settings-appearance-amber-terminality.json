@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #818 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-CF4BE4EC3B",
+  "domain": "content",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/Settings.razor",
+    "route_screen": "/settings",
+    "control": "SetAmber [SetAmber]",
+    "source_behavior": "SetAmber delegates to SetTheme(\"amber\"), which applies the browser theme and returns the selected value.",
+    "mutation": false,
+    "risk": "low"
+  },
+  "laravel_adaptation": {
+    "route": "/tenants/{tenant}/settings",
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/settings-appearance-light-control.tsx",
+    "operation_marker": "AIMW-CONT-CF4BE4EC3B",
+    "storage_key": "aiwm-color-theme",
+    "runtime_attribute": "document.documentElement.dataset.theme",
+    "selected_value": "amber",
+    "shared_runtime": "The Settings control uses the same aiwm-color-theme key and data-theme contract already consumed by the Laravel shell theme picker."
+  },
+  "behavior": {
+    "authoritative_read": "The control initializes from the active document data-theme, falling back to the persisted aiwm-color-theme value and then gold.",
+    "apply": "Selecting Amber sets data-theme=amber immediately and persists aiwm-color-theme=amber.",
+    "synchronization": "A MutationObserver follows external data-theme changes made by the existing shell theme picker; a storage listener reconciles same-origin persisted changes.",
+    "network_request": false,
+    "server_mutation": false,
+    "wordpress_or_connector_mutation": false,
+    "fake_or_demo_success": false
+  },
+  "authorization_and_tenant_isolation": {
+    "authentication": "Inherited from the authenticated tenant SPA bootstrap.",
+    "permission": "tenant.view or wildcard is required before the Settings appearance control renders.",
+    "tenant_source": "Server-authored FrontendContext supplies the active tenant; SetAmber accepts no tenant, site, user, or resource identifier.",
+    "foreign_tenant": "The existing generic Settings workspace tenant.context contract rejects cross-tenant /tenants/{tenant}/settings access with 404.",
+    "direct_object_id": "not applicable",
+    "csrf": "not applicable because the operation performs no HTTP mutation"
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-appearance-amber-control.test.tsx",
+    "php_contract_test": "variants/laravel-aiwmweb/backend/tests/Feature/SettingsAppearanceAmberTerminalityTest.php",
+    "proof": [
+      "exact canonical operation marker is bound to the Amber button",
+      "source handler marker is SetAmber",
+      "selecting Amber writes aiwm-color-theme=amber",
+      "selecting Amber applies data-theme=amber immediately",
+      "aria-pressed reflects current authoritative theme state",
+      "external shell theme changes are observed and reflected",
+      "no fetch call occurs",
+      "missing tenant.view hides the control without changing state",
+      "generic Settings workspace foreign-tenant navigation remains fail-closed with 404"
+    ]
+  },
+  "generator_evidence_source": {
+    "sha": "6af5db533c558d574e9b626423f0106548c0aaf8",
+    "note": "Immutable pushed implementation-and-focused-test snapshot immediately preceding this evidence document."
+  },
+  "scope_guards": {
+    "exactly_one_operation": true,
+    "only_operation_claimed": "AIMW-CONT-CF4BE4EC3B",
+    "sibling_theme_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "force_push_performed": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true,
+    "basis": "Laravel Settings now exposes the canonical Amber accent action against the existing real browser theme runtime, with immediate application, persisted state, authoritative synchronization, tenant/permission fail-closed behavior, and no fabricated server or external mutation."
+  }
+}
