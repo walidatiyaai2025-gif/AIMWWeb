@@ -14,6 +14,7 @@ use Tests\TestCase;
 
 final class ContentExplorerDynamicLinksTerminalityTest extends TestCase
 {
+    // Final exact-head CI retrigger after #766 parity materialization.
     use RefreshDatabase;
 
     private const OPERATION_ID = 'AIMW-CONT-9BA2C255AF';
