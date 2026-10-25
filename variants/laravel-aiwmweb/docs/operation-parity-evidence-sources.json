@@ -1052,6 +1052,28 @@
       }
     },
     {
+      "label": "AIMW-CONT-6D14B76763 Site Snapshot canonical route terminality",
+      "sha": "70d7c83bf326d6be7114d8a61dbc89bfdbfd28ed",
+      "observed_pr_head": "70d7c83bf326d6be7114d8a61dbc89bfdbfd28ed",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "operation_ids": [
+        "AIMW-CONT-6D14B76763"
+      ],
+      "route_api_provenance": {
+        "AIMW-CONT-6D14B76763": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteSnapshotRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteSnapshotRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-snapshot-route-terminality.json",
+          "security_mode": "tenant_bound"
+        }
+      }
+    },
+    {
       "label": "AIMW-CONT-9BA2C255AF Content Explorer dynamic href focused closure",
       "sha": "ea253c2dc4d47e73079dc226d319ad723bdecdc7",
       "observed_pr_head": "ea253c2dc4d47e73079dc226d319ad723bdecdc7",
