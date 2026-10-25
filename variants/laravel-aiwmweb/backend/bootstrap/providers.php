@@ -18,6 +18,7 @@ use App\Providers\LoginReadRouteServiceProvider;
 use App\Providers\OperationsMaintenanceRouteServiceProvider;
 use App\Providers\PublicWelcomeRouteServiceProvider;
 use App\Providers\RegisterRouteServiceProvider;
+use App\Providers\RolesPermissionsRouteServiceProvider;
 use App\Providers\SecurityAuditRouteServiceProvider;
 use App\Providers\SeoVisibleControlRouteServiceProvider;
 use App\Providers\SetupRouteServiceProvider;
@@ -39,6 +40,7 @@ return [
     LoginReadRouteServiceProvider::class,
     PublicWelcomeRouteServiceProvider::class,
     RegisterRouteServiceProvider::class,
+    RolesPermissionsRouteServiceProvider::class,
     SecurityAuditRouteServiceProvider::class,
     AboutBuildRouteServiceProvider::class,
     AiCenterRouteServiceProvider::class,
