@@ -51,7 +51,7 @@ describe('AIMW-CONT-7EF5524637 Operations Hub Manage sites', () => {
         expect(fetchMock).toHaveBeenCalledTimes(1);
     });
 
-    it.each([[], [{ id: 1, type: 'sync', status: 'succeeded' }]])('offers real navigation after an empty or populated read', async (operations) => {
+    it.each([{ operations: [] }, { operations: [{ id: 1, type: 'sync', status: 'succeeded' }] }])('offers real navigation after an empty or populated read', async ({ operations }) => {
         const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
             data: { sites: [], operations },
             meta: { operation_id: OPERATIONS_HUB_RELOAD_OPERATION_ID, tenant: 'alpha', refreshed_at: '2026-10-25' },
