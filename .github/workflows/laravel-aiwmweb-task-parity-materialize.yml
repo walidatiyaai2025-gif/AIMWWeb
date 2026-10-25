@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - worker/laravel-aiwmweb-closure-composition
+      - worker/laravel-aiwmweb-AIMW-CONT-CF4BE4EC3B-set-amber
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
       - 'variants/laravel-aiwmweb/docs/closure-evidence/**'
