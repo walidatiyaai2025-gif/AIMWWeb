@@ -68,7 +68,7 @@
     "base_branch": "worker/laravel-aiwmweb-closure-composition",
     "branch": "worker/772-content-hub-site-links",
     "issue": 772,
-    "base_composition_sha": "d5313ebf0719a7d8b5a815ccf0f9fe8e3e70a49a"
+    "base_composition_sha": "7781ba013039e5b775e8f0ab44a29c92c476e243"
   },
   "materialization": {
     "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-772.yml",
