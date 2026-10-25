@@ -1935,6 +1935,17 @@
       "operation_ids": [
         "AIMW-CONT-371D22489E"
       ]
+    },
+    {
+      "label": "Billing five pending visible-control closure",
+      "sha": "489095c85300bc4f25d687a68c8d9fbdf8e90fe0",
+      "operation_ids": [
+        "AIMW-BILL-616576D8F7",
+        "AIMW-BILL-7BD7B04B26",
+        "AIMW-BILL-BC093D6418",
+        "AIMW-BILL-D307963B59",
+        "AIMW-BILL-EE42461195"
+      ]
     }
   ]
 }
