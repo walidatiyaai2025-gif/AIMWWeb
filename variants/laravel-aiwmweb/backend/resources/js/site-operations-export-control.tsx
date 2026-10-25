@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { APP_DATA_GRID_CSV_EXPORT_OPERATION_ID, requestAppDataGridCsvExport } from './app-data-grid-csv-export-control';
 
 export const SITE_OPERATIONS_EXPORT_OPERATION_ID = 'AIMW-BILL-582319B640';
 
@@ -123,13 +124,18 @@ export function SiteOperationsExportControl({
             ? (locale === 'ar' ? 'لا توجد عمليات معروضة لتصديرها.' : 'There are no displayed operations to export.')
             : (locale === 'ar' ? 'التصدير قيد التنفيذ.' : 'An export is already in progress.');
 
-    const exportCsv = () => {
+    const exportCsv = async () => {
         if (!available) return;
         setExporting(true);
         setError(null);
         let objectUrl: string | null = null;
         try {
-            const csv = buildSiteOperationsCsv(rows);
+            let csv = '';
+            await requestAppDataGridCsvExport(
+                rows,
+                (row) => buildSiteOperationsCsv([row]).split('\r\n')[1]?.split(',') ?? [],
+                async () => { csv = buildSiteOperationsCsv(rows); },
+            );
             const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8' });
             objectUrl = URL.createObjectURL(blob);
             const anchor = document.createElement('a');
@@ -155,9 +161,10 @@ export function SiteOperationsExportControl({
                 type="button"
                 className="btn"
                 data-canonical-operation={SITE_OPERATIONS_EXPORT_OPERATION_ID}
+                data-canonical-app-data-grid-csv-operation={APP_DATA_GRID_CSV_EXPORT_OPERATION_ID}
                 disabled={!available}
                 title={availability}
-                onClick={exportCsv}
+                onClick={() => { void exportCsv(); }}
             >
                 {exporting
                     ? (locale === 'ar' ? 'جارٍ التصدير…' : 'Exporting…')
