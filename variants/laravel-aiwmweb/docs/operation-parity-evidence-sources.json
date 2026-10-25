@@ -1180,6 +1180,25 @@
       "operation_ids": [
         "AIMW-CONT-276925F148"
       ]
+    },
+    {
+      "label": "AIMW-CONT-519B93F503 Home canonical route terminality",
+      "sha": "0fe89083b1862cee70796e8fcb0eefc2b79a7684",
+      "observed_pr_head": "0fe89083b1862cee70796e8fcb0eefc2b79a7684",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "route_api_provenance": {
+        "AIMW-CONT-519B93F503": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/CanonicalHomeRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/HomeRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/HomeRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/home-route-terminality.json",
+          "security_mode": "tenant_scoped"
+        }
+      }
     }
   ],
   "excluded_sources": [],
