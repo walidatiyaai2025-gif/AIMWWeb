@@ -4,7 +4,7 @@ import { ApiError, apiRequest, resolveCapability, type FrontendContext, type Wor
 import { LoadingState, StatePanel } from './components';
 import { useLocale } from './i18n';
 import { SystemHealthOpenLogsControl } from './system-health-open-logs-control';
-
+import { SystemHealthRefreshControl } from './system-health-refresh-control';
 import { SystemHealthCopySummaryControl, type SystemHealthSnapshot } from './system-health-copy-summary-control';
 
 export function SystemHealthWorkspace({ context, route }: { context: FrontendContext; route: WorkspaceRoute }) {
@@ -31,27 +31,48 @@ export function SystemHealthWorkspace({ context, route }: { context: FrontendCon
         );
     }
 
-    if (query.isLoading) return <LoadingState />;
+    const trustedSnapshot = !query.error && query.data?.tenant === context.tenant.slug ? query.data : undefined;
 
-    if (query.error) {
+    let content: React.ReactNode;
+    if (query.isLoading) {
+        content = <LoadingState />;
+    } else if (query.error) {
         const error = query.error instanceof ApiError ? query.error : null;
-        return (
+        content = (
             <StatePanel tone="danger" title={locale === 'ar' ? 'تعذر تحميل صحة النظام' : 'System health could not be loaded'}>
                 {error?.message ?? (locale === 'ar' ? 'فشل طلب التشخيصات الحقيقي.' : 'The real diagnostics request failed.')}
             </StatePanel>
         );
-    }
-
-    const snapshot = query.data;
-    if (!snapshot || snapshot.tenant !== context.tenant.slug) {
-        return (
+    } else if (!trustedSnapshot) {
+        content = (
             <StatePanel tone="danger" title={locale === 'ar' ? 'بيانات صحة النظام غير صالحة' : 'Invalid System Health snapshot'}>
                 {locale === 'ar' ? 'لم يرجع الخادم لقطة موثوقة للحساب الحالي.' : 'The server did not return an authoritative snapshot for the active tenant.'}
             </StatePanel>
         );
-    }
+    } else {
+        const checks = Object.entries(trustedSnapshot.checks ?? {});
+        content = (
+            <>
+                <section className="workspace-card-grid" aria-label={locale === 'ar' ? 'فحوصات صحة النظام' : 'System health checks'}>
+                    {checks.map(([name, check]) => (
+                        <article className="workspace-card" key={name}>
+                            <div>
+                                <strong>{name}</strong>
+                                <p>{check.status}</p>
+                            </div>
+                        </article>
+                    ))}
+                </section>
 
-    const checks = Object.entries(snapshot.checks ?? {});
+                <section className="workspace-card">
+                    <strong>{locale === 'ar' ? 'إجراءات' : 'Actions'}</strong>
+                    <p>{locale === 'ar' ? 'افتح السجلات فقط بعد نجاح تحميل لقطة صحة النظام.' : 'Open logs only after the System Health snapshot has loaded successfully.'}</p>
+                    <SystemHealthOpenLogsControl context={context} snapshotReady={true} />
+                    <SystemHealthCopySummaryControl key={context.tenant.slug} context={context} snapshot={trustedSnapshot} loading={query.isFetching} />
+                </section>
+            </>
+        );
+    }
 
     return (
         <div className="workspace-stack system-health-workspace">
@@ -61,26 +82,16 @@ export function SystemHealthWorkspace({ context, route }: { context: FrontendCon
                     <h2>{locale === 'ar' ? 'صحة النظام' : 'System Health'}</h2>
                     <p>{locale === 'ar' ? 'لقطة حقيقية لحالة خدمات تشغيل Laravel.' : 'A real snapshot of the Laravel runtime services.'}</p>
                 </div>
-                <span className="tenant-badge">{snapshot.status}</span>
+                <div className="d-flex gap-2 flex-wrap">
+                    {trustedSnapshot ? <span className="tenant-badge">{trustedSnapshot.status}</span> : null}
+                    <SystemHealthRefreshControl
+                        context={context}
+                        refreshing={query.isFetching}
+                        onRefresh={async () => { await query.refetch(); }}
+                    />
+                </div>
             </section>
-
-            <section className="workspace-card-grid" aria-label={locale === 'ar' ? 'فحوصات صحة النظام' : 'System health checks'}>
-                {checks.map(([name, check]) => (
-                    <article className="workspace-card" key={name}>
-                        <div>
-                            <strong>{name}</strong>
-                            <p>{check.status}</p>
-                        </div>
-                    </article>
-                ))}
-            </section>
-
-            <section className="workspace-card">
-                <strong>{locale === 'ar' ? 'إجراءات' : 'Actions'}</strong>
-                <p>{locale === 'ar' ? 'افتح السجلات فقط بعد نجاح تحميل لقطة صحة النظام.' : 'Open logs only after the System Health snapshot has loaded successfully.'}</p>
-                <SystemHealthOpenLogsControl context={context} snapshotReady={true} />
-                <SystemHealthCopySummaryControl key={context.tenant.slug} context={context} snapshot={snapshot} loading={query.isFetching} />
-            </section>
+            {content}
         </div>
     );
 }
