@@ -1145,6 +1145,25 @@
         }
       },
       "supporting_only": true
+    },
+    {
+      "label": "AIMW-CONT-3FD89CE024 Settings canonical route terminality",
+      "sha": "47e77005c65e3dd0082b8cb2a701957ca20759d0",
+      "observed_pr_head": "47e77005c65e3dd0082b8cb2a701957ca20759d0",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "route_api_provenance": {
+        "AIMW-CONT-3FD89CE024": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/CanonicalSettingsRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SettingsRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/SettingsRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/settings-route-terminality.json",
+          "security_mode": "tenant_scoped"
+        }
+      }
     }
   ],
   "excluded_sources": [],
