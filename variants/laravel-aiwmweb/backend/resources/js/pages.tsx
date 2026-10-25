@@ -40,6 +40,7 @@ import { CurrentUserLogsControl } from './current-user-logs-control';
 import { DashboardSitesNavigationControl } from './dashboard-sites-navigation-control';
 import { LiveSystemStatusRefreshControl } from './live-system-status-refresh-control';
 import { EmailHistoryFiltersControl, type EmailHistoryFilterState } from './email-history-filters-control';
+import { GlobalUsersFullManagementControl } from './global-users-full-management-control';
 import { MediaDeleteControl } from './media-delete-control';
 import { NotificationOpenControl } from './notification-open-control';
 import { PagesWordPressLinkControl } from './pages-wordpress-link-control';
@@ -822,6 +823,7 @@ function WorkspaceHub({ context, route }: { context: FrontendContext; route: Wor
 }
 
 export function WorkspacePage({ context, route }: { context: FrontendContext; route: WorkspaceRoute }) {
+    if (route.key === 'wp-users') return <><GlobalUsersFullManagementControl context={context} route={route} /><ResourceContent context={context} route={route} /></>;
     if (route.key === 'explorer') return <><ContentExplorerBackToSitesControl context={context} /><ResourceContent context={context} route={route} /></>;
     if (route.key === 'account-profile') return <><AccountProfileEmailSettingsLinkControl context={context} /><ResourceContent context={context} route={route} /></>;
     if (route.kind === 'dashboard') return <DashboardContent context={context} route={route} />;
