@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import {
     ApiError,
     apiRequest,
@@ -14,6 +14,7 @@ import {
 } from './core';
 import { ActionButton, ActionDialog, DataTable, LoadingState, Pagination, StatePanel, useToast } from './components';
 import { commonText, useLocale } from './i18n';
+import { CONTENT_HUB_WORKSPACE_URL_OPERATION_ID, contentHubWorkspaceUrl, isContentHubWorkspacePath } from './content-hub-workspace-url';
 import { AiCenterGenerateControl } from './ai-center-generate-control';
 import { AdminBillingSupportClearSearchControl } from './admin-billing-support-clear-search-control';
 import { AppSearchBox } from './app-search-box';
@@ -797,6 +798,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
 function WorkspaceHub({ context, route }: { context: FrontendContext; route: WorkspaceRoute }) {
     const { locale } = useLocale();
     const tenantSlug = context.tenant.slug;
+    const location = useLocation();
     const related = useMemo(() => {
         if (route.key === 'welcome' || route.key === 'system-overview' || route.key === 'workspace') return ['overview', 'content', 'seo', 'ai', 'operations', 'reports', 'system'];
         if (route.key === 'content-hub') return ['content'];
@@ -807,11 +809,33 @@ function WorkspaceHub({ context, route }: { context: FrontendContext; route: Wor
     return (
         <div className="workspace-stack">
             <section className="hero-panel" data-canonical-operation={route.key === 'content-hub' ? CONTENT_WORKSPACE_LOAD_OPERATION_ID : undefined}><div><span className="workspace-kicker">WORKSPACE</span><h2>{route.label[locale]}</h2><p>{route.description[locale]}</p></div><span className="tenant-badge">{context.tenant.name}</span></section>
+            {route.key === 'content-hub' ? (
+                <nav className="toolbar-panel" aria-label={locale === 'ar' ? 'تنقل مساحة المحتوى' : 'Content workspace navigation'}>
+                    <div className="toolbar-actions">
+                        <Link
+                            className="btn primary"
+                            to={contentHubWorkspaceUrl(tenantSlug, '/module/sync', location.search)}
+                            data-canonical-operation={CONTENT_HUB_WORKSPACE_URL_OPERATION_ID}
+                        >
+                            {locale === 'ar' ? 'فتح المزامنة' : 'Open synchronization'}
+                        </Link>
+                    </div>
+                </nav>
+            ) : null}
             <section className="workspace-card-grid">
                 {workspaceRoutes.filter((candidate) => !candidate.hidden && related.includes(candidate.group) && candidate.key !== route.key).map((candidate) => {
                     const state = resolveCapability(context, candidate);
+                    const sourceWorkspacePath = route.key === 'content-hub' && isContentHubWorkspacePath(candidate.path);
+                    const destination = sourceWorkspacePath
+                        ? contentHubWorkspaceUrl(tenantSlug, candidate.path, location.search)
+                        : tenantUrl(tenantSlug, candidate.path);
                     return (
-                        <Link className="workspace-card" key={candidate.key} to={tenantUrl(tenantSlug, candidate.path)}>
+                        <Link
+                            className="workspace-card"
+                            key={candidate.key}
+                            to={destination}
+                            data-canonical-operation={sourceWorkspacePath ? CONTENT_HUB_WORKSPACE_URL_OPERATION_ID : undefined}
+                        >
                             <span className="workspace-card-icon" aria-hidden="true">{candidate.icon}</span>
                             <div><strong>{candidate.label[locale]}</strong><p>{candidate.description[locale]}</p><small className={`capability-pill capability-${state.state}`}>{state.state.replaceAll('_', ' ')}</small></div>
                         </Link>
