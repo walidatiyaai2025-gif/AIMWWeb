@@ -16,5 +16,6 @@
   "network_request": false,
   "only_operation_claimed": "AIMW-CONT-6AB0ED6C83",
   "materialized": true,
-  "evidence_source_sha": "e36250110e3f9f2c22cfb8ac04de98b3c55b9195"
+  "evidence_source_sha": "e36250110e3f9f2c22cfb8ac04de98b3c55b9195",
+  "post_materialization_gate_trigger": "user-authored exact-head CI trigger after official materialization; no runtime semantics changed"
 }
