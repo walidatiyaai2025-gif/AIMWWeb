@@ -1691,6 +1691,14 @@
       ]
     },
     {
+      "label": "AIMW-CONT-B9E6EFF3DF Global Users full management focused closure",
+      "sha": "cfe48348cca2e6f76dc11fe5b71647ebec302c0f",
+      "observed_pr_head": "cfe48348cca2e6f76dc11fe5b71647ebec302c0f",
+      "operation_ids": [
+        "AIMW-CONT-B9E6EFF3DF"
+      ]
+    },
+    {
       "label": "AIMW-SYNC-0DFEE862FA SystemHealth RefreshClickedAsync focused closure",
       "sha": "43771d0f3c57e41d52ad3e3734ab7fdff5143553",
       "observed_pr_head": "43771d0f3c57e41d52ad3e3734ab7fdff5143553",
