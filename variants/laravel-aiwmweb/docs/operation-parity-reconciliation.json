@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 776,
-    "pending": 155,
+    "adapted": 777,
+    "pending": 154,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 776,
-    "overall_parity_percent": 83.35
+    "terminal": 777,
+    "overall_parity_percent": 83.46
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 303,
-    "pending": 143,
+    "terminal": 304,
+    "pending": 142,
     "blocked": 0,
-    "percent": 67.94
+    "percent": 68.16
   },
   "domains": {
     "ai": {
@@ -203,12 +203,12 @@
     "sync": {
       "total": 213,
       "ported": 0,
-      "adapted": 147,
-      "pending": 66,
+      "adapted": 148,
+      "pending": 65,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 147,
-      "percent": 69.01
+      "terminal": 148,
+      "percent": 69.48
     },
     "taxonomy": {
       "total": 13,
@@ -32688,21 +32688,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/sync-form-actions-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/sync-form-actions-control.test.tsx",
+      "evidence": "AIMW-SYNC-14DAFE7D73 AppFormActions CancelClickedAsync focused closure@3d46495b80ab7c25e99a9072cf6f6e626104671c: variants/laravel-aiwmweb/backend/resources/js/sync-form-actions-control.tsx; focused-closure:AIMW-SYNC-14DAFE7D73; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/sync-form-actions-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/sync-app-form-actions-cancel-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-SYNC-14DAFE7D73 AppFormActions CancelClickedAsync focused closure",
+        "source_sha": "3d46495b80ab7c25e99a9072cf6f6e626104671c",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/sync-form-actions-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/sync-app-form-actions-cancel-terminality.json",
+        "signals": [
+          "operation:AIMW-SYNC-14DAFE7D73",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/sync-form-actions-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/sync-form-actions-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/sync-app-form-actions-cancel-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -36913,12 +36923,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 303,
-      "pending": 143,
+      "adapted": 304,
+      "pending": 142,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 303,
-      "percent": 67.94
+      "terminal": 304,
+      "percent": 68.16
     }
   },
   "pending_operation_ids_by_domain": {
@@ -37033,7 +37043,6 @@
       "AIMW-SYNC-0239B0E6A3",
       "AIMW-SYNC-078D172C71",
       "AIMW-SYNC-0DFEE862FA",
-      "AIMW-SYNC-14DAFE7D73",
       "AIMW-SYNC-1A20057999",
       "AIMW-SYNC-1B63FBC758",
       "AIMW-SYNC-21483C88FA",
@@ -37677,6 +37686,16 @@
           "AIMW-CONT-9BA2C255AF"
         ],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "AIMW-SYNC-14DAFE7D73 AppFormActions CancelClickedAsync focused closure",
+        "sha": "3d46495b80ab7c25e99a9072cf6f6e626104671c",
+        "domains": [],
+        "supporting_only": false,
+        "operation_ids": [
+          "AIMW-SYNC-14DAFE7D73"
+        ],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -37702,6 +37721,7 @@
       "316d28cd4a22001812fa06c3a41f8ee962c6acd8",
       "34e66eba87657e5283f29765c083529b08ba7625",
       "392c4efe25adc0214893fd81b740171b8cd9a750",
+      "3d46495b80ab7c25e99a9072cf6f6e626104671c",
       "3e932f83ee1a9e3bcbee1159ead1fe29f8721640",
       "3ef0d094b3211f0e67966346f1a896d2daf164a9",
       "41011429295d0b5daa7a36a59824d4b45015b93e",
@@ -38123,6 +38143,7 @@
       "AIMW-SYNC-112E6B9631",
       "AIMW-SYNC-12C023E4CC",
       "AIMW-SYNC-12F15A0A80",
+      "AIMW-SYNC-14DAFE7D73",
       "AIMW-SYNC-1778E3F6B5",
       "AIMW-SYNC-26F2BF8EE8",
       "AIMW-SYNC-461B1075DE",
@@ -38671,10 +38692,17 @@
         "operation_ids": [
           "AIMW-CONT-9BA2C255AF"
         ]
+      },
+      {
+        "label": "AIMW-SYNC-14DAFE7D73 AppFormActions CancelClickedAsync focused closure",
+        "sha": "3d46495b80ab7c25e99a9072cf6f6e626104671c",
+        "operation_ids": [
+          "AIMW-SYNC-14DAFE7D73"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 73,
-    "focused_closure_contract_count": 303,
+    "focused_closure_operation_scoped_count": 74,
+    "focused_closure_contract_count": 304,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
