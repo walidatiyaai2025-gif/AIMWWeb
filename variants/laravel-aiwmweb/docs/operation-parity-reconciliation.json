@@ -16655,21 +16655,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-clear-selection-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-clear-selection-control.test.tsx",
+      "evidence": "AIMW-CONT-F9015FDB11 Content Explorer ClearSelection focused closure@45f29f77f325389420a117426ae033ccced327a2: variants/laravel-aiwmweb/backend/resources/js/content-explorer-clear-selection-control.tsx; focused-closure:AIMW-CONT-F9015FDB11; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-clear-selection-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-clear-selection-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-F9015FDB11 Content Explorer ClearSelection focused closure",
+        "source_sha": "45f29f77f325389420a117426ae033ccced327a2",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-clear-selection-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-clear-selection-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-F9015FDB11",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/content-explorer-clear-selection-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-clear-selection-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-clear-selection-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -17096,31 +17106,21 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/content-hub-site-links-control.tsx",
+      "laravel_destination": "",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "ADAPTED",
-      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-hub-site-links-control.test.tsx",
-      "evidence": "AIMW-CONT-276925F148 GlobalContentHub dynamic site links focused closure@aba6003ed1ea50b25b99b50b06488f240d31a132: variants/laravel-aiwmweb/backend/resources/js/content-hub-site-links-control.tsx; focused-closure:AIMW-CONT-276925F148; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-hub-site-links-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-hub-site-links-terminality.json",
+      "migration_state": "PENDING",
+      "acceptance_test": "",
+      "evidence": "",
       "reconciliation": {
-        "decision": "ADAPTED",
-        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "AIMW-CONT-276925F148 GlobalContentHub dynamic site links focused closure",
-        "source_sha": "aba6003ed1ea50b25b99b50b06488f240d31a132",
-        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/content-hub-site-links-control.tsx",
-        "evidence_mode": "focused_closure_contract",
-        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/content-hub-site-links-terminality.json",
-        "signals": [
-          "operation:AIMW-CONT-276925F148",
-          "production-marker:variants/laravel-aiwmweb/backend/resources/js/content-hub-site-links-control.tsx",
-          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-hub-site-links-control.test.tsx",
-          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-hub-site-links-terminality.json",
-          "scope:operation-specific",
-          "test:tenant-isolation"
-        ]
+        "decision": "PENDING",
+        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
+        "source_label": null,
+        "source_sha": null,
+        "destination_path": null
       }
     },
     {
@@ -37077,6 +37077,7 @@
       "AIMW-CONT-10AFCDF334",
       "AIMW-CONT-1456BE001F",
       "AIMW-CONT-2752ED9351",
+      "AIMW-CONT-276925F148",
       "AIMW-CONT-349017BDF5",
       "AIMW-CONT-371D22489E",
       "AIMW-CONT-38FC74B9DE",
@@ -37129,7 +37130,6 @@
       "AIMW-CONT-ED2F1E1572",
       "AIMW-CONT-EDC262499D",
       "AIMW-CONT-EE659E3F13",
-      "AIMW-CONT-F9015FDB11",
       "AIMW-CONT-FE6EE5740C"
     ],
     "email": [
@@ -37877,12 +37877,12 @@
         "explicit_operation_evidence_ids": []
       },
       {
-        "label": "AIMW-CONT-276925F148 GlobalContentHub dynamic site links focused closure",
-        "sha": "aba6003ed1ea50b25b99b50b06488f240d31a132",
+        "label": "AIMW-CONT-F9015FDB11 Content Explorer ClearSelection focused closure",
+        "sha": "45f29f77f325389420a117426ae033ccced327a2",
         "domains": [],
         "supporting_only": false,
         "operation_ids": [
-          "AIMW-CONT-276925F148"
+          "AIMW-CONT-F9015FDB11"
         ],
         "explicit_operation_evidence_ids": []
       }
@@ -37914,6 +37914,7 @@
       "3e932f83ee1a9e3bcbee1159ead1fe29f8721640",
       "3ef0d094b3211f0e67966346f1a896d2daf164a9",
       "41011429295d0b5daa7a36a59824d4b45015b93e",
+      "45f29f77f325389420a117426ae033ccced327a2",
       "47e77005c65e3dd0082b8cb2a701957ca20759d0",
       "486f9f0cd1ea46afaed862c52525bf82a7cb4bd4",
       "53d1178f4ec9e1a9134650bf9d3ac22a68ccf081",
@@ -37929,7 +37930,6 @@
       "a3890ef1d4dac7e4e4bb5123d23625dd11269e7a",
       "a5f91d67cecde21f25d016c9a3eb1cecf5a10a1f",
       "aa328fe4daabf8e5042abe568e10e7719a9d3ad4",
-      "aba6003ed1ea50b25b99b50b06488f240d31a132",
       "af67f421f2850ccb7afc8089aaad15149f7a636a",
       "b118961dfefae73b37b4227807f84bea8de62854",
       "b1822544144bd7b2e27d1bdaa20bb7b688e4f5be",
@@ -38244,7 +38244,6 @@
       "AIMW-CONT-16D4AD8DC8",
       "AIMW-CONT-1A08B49164",
       "AIMW-CONT-247E791DA7",
-      "AIMW-CONT-276925F148",
       "AIMW-CONT-289CEEF3BA",
       "AIMW-CONT-2C51372C70",
       "AIMW-CONT-2CDC790742",
@@ -38298,6 +38297,7 @@
       "AIMW-CONT-EE531AE1FC",
       "AIMW-CONT-F4CBF0D714",
       "AIMW-CONT-F57B1E1503",
+      "AIMW-CONT-F9015FDB11",
       "AIMW-CONT-F9A87DD98C",
       "AIMW-CONT-FBA95BDC1D",
       "AIMW-CONT-FE1F15935E",
@@ -38965,10 +38965,10 @@
         ]
       },
       {
-        "label": "AIMW-CONT-276925F148 GlobalContentHub dynamic site links focused closure",
-        "sha": "aba6003ed1ea50b25b99b50b06488f240d31a132",
+        "label": "AIMW-CONT-F9015FDB11 Content Explorer ClearSelection focused closure",
+        "sha": "45f29f77f325389420a117426ae033ccced327a2",
         "operation_ids": [
-          "AIMW-CONT-276925F148"
+          "AIMW-CONT-F9015FDB11"
         ]
       }
     ],

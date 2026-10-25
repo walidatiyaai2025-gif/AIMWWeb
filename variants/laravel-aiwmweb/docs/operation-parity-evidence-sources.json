@@ -1174,11 +1174,11 @@
       ]
     },
     {
-      "label": "AIMW-CONT-276925F148 GlobalContentHub dynamic site links focused closure",
-      "sha": "aba6003ed1ea50b25b99b50b06488f240d31a132",
-      "observed_pr_head": "aba6003ed1ea50b25b99b50b06488f240d31a132",
+      "label": "AIMW-CONT-F9015FDB11 Content Explorer ClearSelection focused closure",
+      "sha": "45f29f77f325389420a117426ae033ccced327a2",
+      "observed_pr_head": "45f29f77f325389420a117426ae033ccced327a2",
       "operation_ids": [
-        "AIMW-CONT-276925F148"
+        "AIMW-CONT-F9015FDB11"
       ]
     }
   ],
@@ -1839,11 +1839,11 @@
       ]
     },
     {
-      "label": "AIMW-CONT-276925F148 GlobalContentHub dynamic site links focused closure",
-      "sha": "aba6003ed1ea50b25b99b50b06488f240d31a132",
-      "observed_pr_head": "aba6003ed1ea50b25b99b50b06488f240d31a132",
+      "label": "AIMW-CONT-F9015FDB11 Content Explorer ClearSelection focused closure",
+      "sha": "45f29f77f325389420a117426ae033ccced327a2",
+      "observed_pr_head": "45f29f77f325389420a117426ae033ccced327a2",
       "operation_ids": [
-        "AIMW-CONT-276925F148"
+        "AIMW-CONT-F9015FDB11"
       ]
     }
   ]

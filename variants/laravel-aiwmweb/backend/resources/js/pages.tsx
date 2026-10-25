@@ -38,6 +38,7 @@ import {
     loadAllFilteredExplorerKeys,
 } from './content-explorer-select-all-filtered-control';
 import { ContentExplorerBackToSitesControl } from './content-explorer-back-to-sites-control';
+import { ContentExplorerClearSelectionControl } from './content-explorer-clear-selection-control';
 import { CurrentUserLogsControl } from './current-user-logs-control';
 import { DashboardSitesNavigationControl } from './dashboard-sites-navigation-control';
 import { LiveSystemStatusRefreshControl } from './live-system-status-refresh-control';
@@ -710,6 +711,13 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         selectedCount={explorerSelectedKeys.size}
                         total={collection.total}
                         onSelectAll={selectAllExplorerFiltered}
+                        afterActions={
+                            <ContentExplorerClearSelectionControl
+                                canEdit={canEditExplorerContent}
+                                selectedCount={explorerSelectedKeys.size}
+                                onClear={() => setExplorerSelectedKeys(new Set())}
+                            />
+                        }
                     />
                 ) : null}
                 {visibleRows.length ? (

@@ -74,11 +74,13 @@ export function ContentExplorerSelectAllFilteredControl({
     selectedCount,
     total,
     onSelectAll,
+    afterActions,
 }: {
     canEdit: boolean;
     selectedCount: number;
     total: number;
     onSelectAll: () => Promise<void>;
+    afterActions?: React.ReactNode;
 }) {
     const { locale } = useLocale();
     const [busy, setBusy] = useState(false);
@@ -117,6 +119,7 @@ export function ContentExplorerSelectAllFilteredControl({
                         ? (locale === 'ar' ? 'جارٍ تحديد كل النتائج…' : 'Selecting all results…')
                         : (locale === 'ar' ? 'تحديد كل النتائج' : 'Select all results')}
             </button>
+            {afterActions}
             {error ? <span role="alert">{error}</span> : null}
         </section>
     );
