@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-CONT-371D22489E",
+    "domain": "content",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/ModuleWorkspace.razor",
+    "source_screen": "/module/{Key}",
+    "source_control": "Unavailable module -> Back to home",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_behavior": {
+    "summary": "When a module key has neither the SEO gateway nor a canonical real destination, the source renders an explicit unavailable state with a Back to home action.",
+    "source_destination": "/",
+    "side_effect": "read-only navigation"
+  },
+  "laravel_adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/module-workspace-back-to-home-control.tsx",
+    "production_wiring": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "route_match": "/tenants/{tenant}/module/:moduleKey after all static governed workspace routes",
+    "destination": "/tenants/{tenant}",
+    "render_condition": "Only an otherwise-unmatched single-segment module key reaches the explicit ModuleWorkspace unavailable fallback.",
+    "mutation_surface": "none"
+  },
+  "authorization": {
+    "session_required": true,
+    "tenant_context_required": true,
+    "permissions": ["tenant.view"],
+    "foreign_tenant_fails_closed": true,
+    "browser_tenant_override": false
+  },
+  "runtime_semantics": {
+    "read_only": true,
+    "network_request": false,
+    "persistence_mutation": false,
+    "wordpress_write": false,
+    "provider_write": "none",
+    "fake_success": false
+  },
+  "acceptance_tests": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/module-workspace-back-to-home-control.test.tsx",
+    "php_feature": "variants/laravel-aiwmweb/backend/tests/Feature/ModuleWorkspaceBackToHomeControlTerminalityTest.php",
+    "proof": [
+      "source-equivalent explicit unavailable state",
+      "tenant-qualified Back to home destination",
+      "known static workspace routes remain separate and outrank the dynamic module fallback",
+      "guest, missing permission and foreign tenant fail closed",
+      "control performs no request or persistence mutation"
+    ]
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-CONT-371D22489E",
+    "second_operation_started": false,
+    "aspnet_reference_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "security_assertions_weakened": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true
+  }
+}
