@@ -68,15 +68,14 @@
     "base_branch": "worker/laravel-aiwmweb-closure-composition",
     "branch": "worker/779-global-posts-interpolated-links",
     "issue": 779,
-    "base_composition_sha": "7ef37267e21d037175b5e5f25fc05abae19245b2"
+    "base_composition_sha": "33f06b4c8a05a88bae7e9899fe362fc045133941"
   },
   "server_mutation": false,
   "external_mutation": false,
   "only_operation_claimed": "AIMW-CONT-73E4F88038",
-  "materialized": true,
+  "materialized": false,
   "materialization": {
     "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-779.yml",
     "generated_reconciliation_required": true
-  },
-  "evidence_source_sha": "4a1da41d841b4375a7f09a5c779a58b576501926"
+  }
 }
