@@ -6,7 +6,6 @@ on:
   push:
     branches:
       - worker/laravel-aiwmweb-closure-composition
-      - worker/899-account-email-cancel-edit
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
       - 'variants/laravel-aiwmweb/docs/closure-evidence/**'
