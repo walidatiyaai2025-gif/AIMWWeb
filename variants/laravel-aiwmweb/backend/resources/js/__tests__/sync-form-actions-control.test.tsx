@@ -1,5 +1,5 @@
 // Canonical PR CI anchor: AIMW-SYNC-7071DA172F remains bound to the source-equivalent AppFormActions wrapper.
-// Exact-head CI retrigger after official issue 991 parity materialization.
+// Exact-head CI retrigger after official issue 991 post-convergence parity materialization.
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
