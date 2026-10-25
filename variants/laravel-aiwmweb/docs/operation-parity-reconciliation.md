@@ -35,7 +35,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | backup | 14 | 0 | 14 | 0 | 0 | 0 | 14 | 100.00% |
 | billing | 178 | 0 | 173 | 5 | 0 | 0 | 173 | 97.19% |
 | comments | 8 | 0 | 8 | 0 | 0 | 0 | 8 | 100.00% |
-| content | 164 | 0 | 100 | 64 | 0 | 0 | 100 | 60.98% |
+| content | 164 | 0 | 101 | 63 | 0 | 0 | 101 | 61.59% |
 | email | 82 | 0 | 77 | 5 | 0 | 0 | 77 | 93.90% |
 | identity | 7 | 0 | 7 | 0 | 0 | 0 | 7 | 100.00% |
 | media | 15 | 0 | 6 | 9 | 0 | 0 | 6 | 40.00% |
@@ -103,7 +103,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 
 - None
 
-### content (64)
+### content (63)
 
 - `AIMW-CONT-10AFCDF334`
 - `AIMW-CONT-1456BE001F`
