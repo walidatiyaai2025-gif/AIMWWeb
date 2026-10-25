@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #785 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-7957ECC794",
+  "domain": "content",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-CONT-7957ECC794",
+    "route_screen": "/",
+    "visible_control": "@(L.IsArabic ? -> /sites",
+    "source": "src/AIWordPressManager.Web/Components/Pages/Home.razor",
+    "source_intent": "Expose the localized Sites item in the dashboard Quick Access grid as navigation to the real Sites workspace.",
+    "tenant_owned": true,
+    "mutation": false,
+    "risk": "low"
+  },
+  "laravel_adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/dashboard-sites-quick-access-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "operation_marker": "AIMW-CONT-7957ECC794",
+    "destination": "/tenants/{tenant}/sites",
+    "source_control": "dashboard-quick-access-sites",
+    "loading_empty_error": "DashboardContent renders this control only after the authoritative dashboard query has cleared loading and error states.",
+    "independent_mutation_added": false
+  },
+  "security_boundary": {
+    "permission": "sites.view",
+    "tenant_selector": "server-provided active FrontendContext tenant",
+    "active_membership_required": true,
+    "sites_api_contract": "must exactly match /api/tenants/{encoded-active-tenant}/sites",
+    "foreign_or_synthesized_tenant": "control omitted/fail closed",
+    "network_effect": "none; navigation only"
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/dashboard-sites-quick-access-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/DashboardSitesQuickAccessTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation identity distinct from #784 Add site",
+      "localized Quick Access Sites link",
+      "tenant-scoped Sites destination",
+      "sites.view permission fail-closed behavior",
+      "active-membership and API-contract fail-closed behavior",
+      "foreign tenant workspace 404 isolation",
+      "navigation-only no mutation behavior"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-7957ECC794"
+    ],
+    "add_site_operation_claimed": false,
+    "system_health_operation_claimed": false,
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "branch": "worker/785-dashboard-sites-quick-access",
+    "issue": 785,
+    "base_composition_sha": "68dddc4e00a540d5958367e1f672fdb28264c068"
+  },
+  "server_mutation": false,
+  "external_mutation": false,
+  "only_operation_claimed": "AIMW-CONT-7957ECC794",
+  "materialized": false,
+  "materialization": {
+    "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-785.yml",
+    "generated_reconciliation_required": true
+  }
+}
