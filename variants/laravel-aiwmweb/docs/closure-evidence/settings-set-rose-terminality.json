@@ -57,5 +57,5 @@
   },
   "materialized": true,
   "evidence_source_sha": "61cd10cd5312e374faf4f27f7dbbfbe7d55e83bb",
-  "post_materialization_gate_trigger": "pending user-authored exact-head CI trigger after official materialization"
+  "post_materialization_gate_trigger": "user-authored exact-head CI trigger after official materialization commit d430ecbd31639d037be451c7663d4866b189a37b; no runtime semantics changed"
 }
