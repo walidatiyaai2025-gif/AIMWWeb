@@ -1689,6 +1689,14 @@
       "operation_ids": [
         "AIMW-EMAI-A9CB66F400"
       ]
+    },
+    {
+      "label": "AIMW-CONT-CF4BE4EC3B Settings SetAmber focused closure",
+      "sha": "e335369e9219d39fb9a1b930a6c03c1a071fda5b",
+      "observed_pr_head": "e335369e9219d39fb9a1b930a6c03c1a071fda5b",
+      "operation_ids": [
+        "AIMW-CONT-CF4BE4EC3B"
+      ]
     }
   ]
 }
