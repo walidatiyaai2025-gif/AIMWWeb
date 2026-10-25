@@ -78,7 +78,8 @@ final class HomeRouteTerminalityTest extends TestCase
 
         $api = Route::getRoutes()->match(Request::create('/tenants/alpha/route-api/dashboard', 'GET'));
         $this->assertSame('canonical.api.dashboard', $api->getName());
-        $this->assertSame(DashboardReadController::class.'@__invoke', ltrim($api->getActionName(), '\\'));
+        $this->assertSame(DashboardReadController::class, ltrim($api->getActionName(), '\\'));
+        $this->assertTrue(method_exists(DashboardReadController::class, '__invoke'));
         $this->assertSame(self::OPERATION_ID, $api->defaults['canonical_operation_id'] ?? null);
         $this->assertContains('auth', $api->gatherMiddleware());
         $this->assertContains('tenant.context', $api->gatherMiddleware());
