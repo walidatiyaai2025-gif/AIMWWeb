@@ -31,7 +31,9 @@
   "authorization": {
     "session_required": true,
     "tenant_context_required": true,
-    "permissions": ["tenant.view"],
+    "permissions": [
+      "tenant.view"
+    ],
     "foreign_tenant_fails_closed": true,
     "browser_tenant_override": false
   },
@@ -69,5 +71,7 @@
     "security_and_tenant_enforced": true,
     "focused_tests_present": true,
     "evidence_recorded": true
-  }
+  },
+  "materialized": true,
+  "evidence_source_sha": "eb4e4078b68fd82eac9e9300aecc1a16f2a6069c"
 }
