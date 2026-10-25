@@ -7,6 +7,13 @@ on:
     paths:
       - '.github/workflows/laravel-aiwmweb-task-parity-materialize-810-reconcile.yml'
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
+  pull_request:
+    branches:
+      - worker/laravel-aiwmweb-closure-composition
+    types: [opened, synchronize, reopened]
+    paths:
+      - '.github/workflows/laravel-aiwmweb-task-parity-materialize-810-reconcile.yml'
+      - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
 
 permissions:
   contents: write
