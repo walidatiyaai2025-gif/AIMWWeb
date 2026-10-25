@@ -52,9 +52,9 @@ final class GlobalUsersFullManagementTerminalityTest extends TestCase
         $this->assertStringContainsString('L.IsArabic ? "الإدارة الكاملة" : "Full user management"', $source);
 
         $this->assertStringContainsString(self::OPERATION_ID, $control);
-        $this->assertStringContainsString("context.api[\`sites.detail.\${activeSite.id}\`]", $control);
+        $this->assertStringContainsString('context.api[`sites.detail.${activeSite.id}`]', $control);
         $this->assertStringContainsString("context.api['wp-users']", $control);
-        $this->assertStringContainsString("tenantUrl(tenantSlug, \`/sites/\${activeSite.id}/users\`)", $control);
+        $this->assertStringContainsString('tenantUrl(tenantSlug, `/sites/${activeSite.id}/users`)', $control);
         $this->assertStringContainsString('data-canonical-operation={GLOBAL_USERS_FULL_MANAGEMENT_OPERATION_ID}', $control);
         $this->assertStringContainsString("locale === 'ar' ? 'الإدارة الكاملة' : 'Full user management'", $control);
 
