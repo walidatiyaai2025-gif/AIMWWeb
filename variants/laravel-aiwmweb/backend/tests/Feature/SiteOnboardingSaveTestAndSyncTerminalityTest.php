@@ -29,6 +29,8 @@ final class SiteOnboardingSaveTestAndSyncTerminalityTest extends TestCase
 
     private const APP_FORM_ACTIONS_OPERATION_ID = 'AIMW-SYNC-7071DA172F';
 
+    private const APP_FORM_ACTIONS_CANCEL_OPERATION_ID = 'AIMW-SYNC-14DAFE7D73';
+
     public function test_next_async_is_a_client_only_control_inside_the_same_tenant_guarded_onboarding_boundary(): void
     {
         $frontend = (string) file_get_contents(resource_path('js/site-onboarding-save-test-sync-control.tsx'));
@@ -48,16 +50,21 @@ final class SiteOnboardingSaveTestAndSyncTerminalityTest extends TestCase
     {
         $source = (string) file_get_contents(base_path('../../../src/AIWordPressManager.Web/Components/Shared/AppFormActions.razor'));
         $this->assertStringContainsString('Busy || Disabled ? Task.CompletedTask : OnSave.InvokeAsync(args)', $source);
+        $this->assertStringContainsString('Busy || CancelDisabled ? Task.CompletedTask : OnCancel.InvokeAsync(args)', $source);
 
         $control = (string) file_get_contents(resource_path('js/sync-form-actions-control.tsx'));
         $this->assertStringContainsString(self::APP_FORM_ACTIONS_OPERATION_ID, $control);
+        $this->assertStringContainsString(self::APP_FORM_ACTIONS_CANCEL_OPERATION_ID, $control);
         $this->assertStringContainsString("requiredPermission = 'sites.manage'", $control);
         $this->assertStringContainsString('await onSave();', $control);
+        $this->assertStringContainsString('await onCancel?.();', $control);
+        $this->assertStringContainsString('data-source-handler="CancelClickedAsync"', $control);
 
         $onboarding = (string) file_get_contents(resource_path('js/site-onboarding-save-test-sync-control.tsx'));
         $this->assertStringContainsString('<SyncFormActionsControl', $onboarding);
         $this->assertStringContainsString('onSave={() => mutation.mutateAsync().catch(() => undefined)}', $onboarding);
         $this->assertStringContainsString('saveOperationId={SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID}', $onboarding);
+        $this->assertStringContainsString('onCancel={previousStep}', $onboarding);
     }
 
     public function test_exact_mutation_route_is_guarded_and_bound_to_the_canonical_operation(): void
