@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-CONT-CA4920CBC8",
+    "domain": "content",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/SiteDataSnapshot.razor",
+    "source_screen": "/sites/{Id:guid}/snapshot | /sites/{Id:guid}/offline-data",
+    "source_control": "@(L.IsArabic ? -> /sites",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "verification": "rendered/read response matches authoritative source"
+  },
+  "source_behavior": {
+    "summary": "SiteDataSnapshot exposes Back to sites navigation to /sites as the recovery action when the requested site cannot be resolved.",
+    "side_effect": "navigation only",
+    "wordpress_behavior": "none for this control; no WordPress request or mutation is initiated",
+    "success_semantics": "navigation only; no success message, mutation receipt, or fabricated state"
+  },
+  "laravel_adaptation": {
+    "source_route": "/tenants/{tenant}/sites/{site}/snapshot",
+    "source_route_name": "canonical.site.snapshot",
+    "source_controller": "App\\Http\\Controllers\\CanonicalWorkspaceRouteController::showSite",
+    "visible_control": "variants/laravel-aiwmweb/backend/resources/js/site-data-snapshot-back-to-sites-control.tsx",
+    "runtime_wiring": "SiteDataSnapshotBackToSitesControl is mounted by the existing SiteDataSnapshotSyncControl used by the site-snapshot and site-offline-data React route keys",
+    "target_builder": "tenantUrl(context.tenant.slug, '/sites')",
+    "target_route": "/tenants/{tenant}/sites",
+    "target_route_name": "canonical.workspace.sites",
+    "target_controller": "App\\Http\\Controllers\\CanonicalWorkspaceRouteController::show",
+    "target_backing_api": "/api/tenants/{tenant}/sites",
+    "placeholder_or_catch_all": false,
+    "demo_or_sample_data": false
+  },
+  "adaptation_note": "The ASP.NET control appears in the source site-not-found state. Laravel preserves its stricter explicit snapshot route resolution: unknown or foreign site IDs fail closed before React renders. The source-equivalent recovery intent is therefore exposed on the real snapshot workspace without weakening the 404/IDOR boundary. The /offline-data route contract is separately owned by canonical operation AIMW-CONT-98918A6C27 (#828); this closure does not alter or claim that route.",
+  "runtime_path": [
+    "authenticated user enters the explicit tenant/site snapshot route",
+    "auth and tenant.context activate the current tenant membership",
+    "sites.view is authorized before Site is resolved through tenant-scoped lookup",
+    "foreign or missing Site direct IDs fail closed before workspace rendering",
+    "React renders the existing SiteDataSnapshotSyncControl for the authoritative snapshot surface",
+    "the back control target is derived exclusively from FrontendContext.tenant.slug",
+    "the destination explicit Sites workspace authorizes tenant.view and sites.view and reads the real tenant-scoped Sites API"
+  ],
+  "authorization": {
+    "source_route": [
+      "auth",
+      "tenant.context",
+      "sites.view"
+    ],
+    "destination_route": [
+      "auth",
+      "tenant.context",
+      "tenant.view",
+      "sites.view"
+    ],
+    "guest": "redirects to canonical login",
+    "missing_source_permission": "403",
+    "missing_destination_permission": "403"
+  },
+  "tenant_isolation": {
+    "target_tenant_source": "authoritative FrontendContext.tenant.slug only",
+    "caller_controlled_redirect": false,
+    "foreign_site_direct_id": "404",
+    "foreign_tenant_destination": "404",
+    "destination_direct_id_surface": "none"
+  },
+  "runtime_semantics": {
+    "read_only": true,
+    "csrf_write_path": "not applicable; no HTTP mutation exists",
+    "persistence": "none",
+    "queue_cache_scheduler": "none",
+    "secret_provider_connector_surface": "none",
+    "authoritative_reread": "destination Sites workspace reads the real tenant-scoped Sites collection",
+    "idempotency": "repeated navigation is side-effect free",
+    "retry_and_cancellation": "not applicable to navigation-only control",
+    "audit_or_receipt": "not applicable because no domain mutation occurs"
+  },
+  "acceptance_tests": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-data-snapshot-back-to-sites-control.test.tsx",
+    "php_feature": "variants/laravel-aiwmweb/backend/tests/Feature/SiteDataSnapshotBackToSitesControlTerminalityTest.php",
+    "proof": [
+      "exact canonical operation marker and tenant-derived target",
+      "tenant slug encoding without caller-derived destination",
+      "explicit snapshot source and Sites destination routes with auth/tenant middleware",
+      "authorized real Snapshot and Sites reachability",
+      "guest redirect and permission 403 behavior",
+      "foreign-site and foreign-tenant 404 isolation",
+      "no network mutation from the navigation control"
+    ]
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-CONT-CA4920CBC8",
+    "sibling_offline_data_route_operation": "AIMW-CONT-98918A6C27",
+    "second_operation_started": false,
+    "aspnet_or_current_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true,
+    "reason": "The exact source navigation intent is implemented on the real tenant-scoped Site Data Snapshot runtime with an authoritative tenant-derived Sites destination, existing fail-closed site IDOR behavior is preserved, no mutation or fake success is introduced, and focused frontend/Laravel proof is committed. Exact pushed provenance is generator-owned through operation-parity-evidence-sources.json."
+  }
+}
