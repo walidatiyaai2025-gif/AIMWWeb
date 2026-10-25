@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 794,
-    "pending": 137,
+    "adapted": 799,
+    "pending": 132,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 794,
-    "overall_parity_percent": 85.28
+    "terminal": 799,
+    "overall_parity_percent": 85.82
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 316,
-    "pending": 130,
+    "terminal": 321,
+    "pending": 125,
     "blocked": 0,
-    "percent": 70.85
+    "percent": 71.97
   },
   "domains": {
     "ai": {
@@ -83,12 +83,12 @@
     "billing": {
       "total": 178,
       "ported": 0,
-      "adapted": 173,
-      "pending": 5,
+      "adapted": 178,
+      "pending": 0,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 173,
-      "percent": 97.19
+      "terminal": 178,
+      "percent": 100.0
     },
     "comments": {
       "total": 8,
@@ -13362,21 +13362,31 @@
       "external_dependency": "payment_provider",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/views/billing/subscription-plans-admin.blade.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SubscriptionPlansAdminCloneCurrentTerminalityTest.php",
+      "evidence": "Billing five pending visible-control closure@489095c85300bc4f25d687a68c8d9fbdf8e90fe0: variants/laravel-aiwmweb/backend/resources/views/billing/subscription-plans-admin.blade.php; focused-closure:AIMW-BILL-7BD7B04B26; test:variants/laravel-aiwmweb/backend/tests/Feature/SubscriptionPlansAdminCloneCurrentTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/subscription-plans-clone-current-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "Billing five pending visible-control closure",
+        "source_sha": "489095c85300bc4f25d687a68c8d9fbdf8e90fe0",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/views/billing/subscription-plans-admin.blade.php",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/subscription-plans-clone-current-terminality.json",
+        "signals": [
+          "operation:AIMW-BILL-7BD7B04B26",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/views/billing/subscription-plans-admin.blade.php",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/SubscriptionPlansAdminCloneCurrentTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/subscription-plans-clone-current-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -13680,21 +13690,32 @@
       "external_dependency": "payment_provider",
       "approval": false,
       "verification": "authoritative re-read / reconciled visible state",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Http/Controllers/WordPressUsersController.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "high",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/WordPressUsersRouteTerminalityTest.php",
+      "evidence": "Billing five pending visible-control closure@489095c85300bc4f25d687a68c8d9fbdf8e90fe0: variants/laravel-aiwmweb/backend/app/Http/Controllers/WordPressUsersController.php; focused-closure:AIMW-BILL-D307963B59; test:variants/laravel-aiwmweb/backend/tests/Feature/WordPressUsersRouteTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/wordpress-users-save-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "Billing five pending visible-control closure",
+        "source_sha": "489095c85300bc4f25d687a68c8d9fbdf8e90fe0",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/WordPressUsersController.php",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/wordpress-users-save-terminality.json",
+        "signals": [
+          "operation:AIMW-BILL-D307963B59",
+          "production-marker:variants/laravel-aiwmweb/backend/app/Http/Controllers/WordPressUsersController.php",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/WordPressUsersRouteTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/wordpress-users-save-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation",
+          "test:authorization"
+        ]
       }
     },
     {
@@ -13711,21 +13732,31 @@
       "external_dependency": "payment_provider",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/WelcomePlanCtaVisibleControlTerminalityTest.php",
+      "evidence": "Billing five pending visible-control closure@489095c85300bc4f25d687a68c8d9fbdf8e90fe0: variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php; focused-closure:AIMW-BILL-616576D8F7; test:variants/laravel-aiwmweb/backend/tests/Feature/WelcomePlanCtaVisibleControlTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/welcome-plan-cta-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "Billing five pending visible-control closure",
+        "source_sha": "489095c85300bc4f25d687a68c8d9fbdf8e90fe0",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/welcome-plan-cta-terminality.json",
+        "signals": [
+          "operation:AIMW-BILL-616576D8F7",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/WelcomePlanCtaVisibleControlTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/welcome-plan-cta-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -13782,21 +13813,31 @@
       "external_dependency": "payment_provider",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteEmailSettingsController.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SmtpDiagnosticsDiagnoseTerminalityTest.php",
+      "evidence": "Billing five pending visible-control closure@489095c85300bc4f25d687a68c8d9fbdf8e90fe0: variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteEmailSettingsController.php; focused-closure:AIMW-BILL-EE42461195; test:variants/laravel-aiwmweb/backend/tests/Feature/SmtpDiagnosticsDiagnoseTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/smtp-diagnose-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "Billing five pending visible-control closure",
+        "source_sha": "489095c85300bc4f25d687a68c8d9fbdf8e90fe0",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteEmailSettingsController.php",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/smtp-diagnose-terminality.json",
+        "signals": [
+          "operation:AIMW-BILL-EE42461195",
+          "production-marker:variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteEmailSettingsController.php",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/SmtpDiagnosticsDiagnoseTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/smtp-diagnose-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -13813,21 +13854,31 @@
       "external_dependency": "payment_provider",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteEmailSettingsController.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SmtpDiagnosticsSendTestTerminalityTest.php",
+      "evidence": "Billing five pending visible-control closure@489095c85300bc4f25d687a68c8d9fbdf8e90fe0: variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteEmailSettingsController.php; focused-closure:AIMW-BILL-BC093D6418; test:variants/laravel-aiwmweb/backend/tests/Feature/SmtpDiagnosticsSendTestTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/smtp-send-test-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "Billing five pending visible-control closure",
+        "source_sha": "489095c85300bc4f25d687a68c8d9fbdf8e90fe0",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteEmailSettingsController.php",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/smtp-send-test-terminality.json",
+        "signals": [
+          "operation:AIMW-BILL-BC093D6418",
+          "production-marker:variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteEmailSettingsController.php",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/SmtpDiagnosticsSendTestTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/smtp-send-test-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -37105,12 +37156,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 316,
-      "pending": 130,
+      "adapted": 321,
+      "pending": 125,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 316,
-      "percent": 70.85
+      "terminal": 321,
+      "percent": 71.97
     }
   },
   "pending_operation_ids_by_domain": {
@@ -37118,13 +37169,7 @@
     "approvals": [],
     "automation": [],
     "backup": [],
-    "billing": [
-      "AIMW-BILL-616576D8F7",
-      "AIMW-BILL-7BD7B04B26",
-      "AIMW-BILL-BC093D6418",
-      "AIMW-BILL-D307963B59",
-      "AIMW-BILL-EE42461195"
-    ],
+    "billing": [],
     "comments": [],
     "content": [
       "AIMW-CONT-10AFCDF334",
@@ -38291,12 +38336,14 @@
       "AIMW-BILL-5E8896CD58",
       "AIMW-BILL-602CCA4A55",
       "AIMW-BILL-609F15BFCA",
+      "AIMW-BILL-616576D8F7",
       "AIMW-BILL-67B6CF3962",
       "AIMW-BILL-6928C148FF",
       "AIMW-BILL-7101AC9489",
       "AIMW-BILL-723BEA8F1D",
       "AIMW-BILL-75CF9DBDA4",
       "AIMW-BILL-77E7F0D972",
+      "AIMW-BILL-7BD7B04B26",
       "AIMW-BILL-7DACB1EFDF",
       "AIMW-BILL-7ECC5F8CBA",
       "AIMW-BILL-81D0940A0A",
@@ -38321,12 +38368,14 @@
       "AIMW-BILL-B84663A4C0",
       "AIMW-BILL-B9162DF5EF",
       "AIMW-BILL-B9C3030764",
+      "AIMW-BILL-BC093D6418",
       "AIMW-BILL-BC1C75CE0D",
       "AIMW-BILL-BE4B8C3822",
       "AIMW-BILL-C12CEEC7C6",
       "AIMW-BILL-C37235F06A",
       "AIMW-BILL-C499965699",
       "AIMW-BILL-CAFE798AA3",
+      "AIMW-BILL-D307963B59",
       "AIMW-BILL-D4E1DA62D9",
       "AIMW-BILL-D6B3460675",
       "AIMW-BILL-D7D075EF3C",
@@ -38337,6 +38386,7 @@
       "AIMW-BILL-E3C47C563B",
       "AIMW-BILL-E747D0E843",
       "AIMW-BILL-EE0BEAAC55",
+      "AIMW-BILL-EE42461195",
       "AIMW-BILL-F189D80354",
       "AIMW-BILL-F5686193FE",
       "AIMW-BILL-F56F7955DA",
@@ -39105,10 +39155,21 @@
         "operation_ids": [
           "AIMW-CONT-371D22489E"
         ]
+      },
+      {
+        "label": "Billing five pending visible-control closure",
+        "sha": "489095c85300bc4f25d687a68c8d9fbdf8e90fe0",
+        "operation_ids": [
+          "AIMW-BILL-616576D8F7",
+          "AIMW-BILL-7BD7B04B26",
+          "AIMW-BILL-BC093D6418",
+          "AIMW-BILL-D307963B59",
+          "AIMW-BILL-EE42461195"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 86,
-    "focused_closure_contract_count": 316,
+    "focused_closure_operation_scoped_count": 91,
+    "focused_closure_contract_count": 321,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
