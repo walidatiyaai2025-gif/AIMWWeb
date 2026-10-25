@@ -3,6 +3,7 @@ import { apiRequest, type FrontendContext } from './core';
 import { useLocale } from './i18n';
 
 export const ACCOUNT_EMAIL_SAVE_PROFILE_OPERATION_ID = 'AIMW-EMAI-00CC1272F6';
+export const ACCOUNT_EMAIL_CANCEL_EDIT_OPERATION_ID = 'AIMW-EMAI-A9CB66F400';
 
 export type AccountMailConfiguration = {
     configuration_key?: string;
@@ -125,6 +126,13 @@ export function AccountEmailSettingsProfileForm({
         }
     };
 
+    const cancelEdit = () => {
+        if (busy) return;
+        setDraft(draftFrom(configuration));
+        setError(null);
+        setSaved(false);
+    };
+
     return (
         <section className="panel" data-canonical-operation={ACCOUNT_EMAIL_SAVE_PROFILE_OPERATION_ID}>
             <h3>{locale === 'ar' ? 'إعداد الإرسال العام' : 'Account outbound mail profile'}</h3>
@@ -176,11 +184,23 @@ export function AccountEmailSettingsProfileForm({
                 <label><input type="checkbox" checked={draft.enabled} disabled={busy}
                     onChange={event => setDraft({ ...draft, enabled: event.target.checked })} />
                     {locale === 'ar' ? 'تفعيل الإرسال العام للحساب' : 'Enable account outbound email'}</label>
-                <button type="submit" className="btn primary" disabled={busy}
-                    data-canonical-operation={ACCOUNT_EMAIL_SAVE_PROFILE_OPERATION_ID}
-                    data-source-handler="SaveProfileClickedAsync">
-                    {busy ? '…' : (locale === 'ar' ? 'حفظ إعداد البريد' : 'Save mail profile')}
-                </button>
+                <div className="toolbar-actions">
+                    <button type="submit" className="btn primary" disabled={busy}
+                        data-canonical-operation={ACCOUNT_EMAIL_SAVE_PROFILE_OPERATION_ID}
+                        data-source-handler="SaveProfileClickedAsync">
+                        {busy ? '…' : (locale === 'ar' ? 'حفظ إعداد البريد' : 'Save mail profile')}
+                    </button>
+                    <button
+                        type="button"
+                        className="btn secondary"
+                        disabled={busy}
+                        onClick={cancelEdit}
+                        data-canonical-operation={ACCOUNT_EMAIL_CANCEL_EDIT_OPERATION_ID}
+                        data-source-handler="CancelEditClicked"
+                    >
+                        {locale === 'ar' ? 'إلغاء' : 'Cancel'}
+                    </button>
+                </div>
                 {saved ? <p role="status">{locale === 'ar' ? 'تم حفظ إعداد البريد.' : 'Mail profile saved.'}</p> : null}
                 {error ? <p role="alert">{error}</p> : null}
             </form>

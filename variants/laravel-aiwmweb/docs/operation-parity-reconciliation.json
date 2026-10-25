@@ -103,22 +103,22 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 100,
-      "pending": 64,
+      "adapted": 99,
+      "pending": 65,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 100,
-      "percent": 60.98
+      "terminal": 99,
+      "percent": 60.37
     },
     "email": {
       "total": 82,
       "ported": 0,
-      "adapted": 75,
-      "pending": 7,
+      "adapted": 76,
+      "pending": 6,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 75,
-      "percent": 91.46
+      "terminal": 76,
+      "percent": 92.68
     },
     "identity": {
       "total": 7,
@@ -17468,31 +17468,21 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/global-users-full-management-control.tsx",
+      "laravel_destination": "",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "ADAPTED",
-      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalUsersFullManagementTerminalityTest.php",
-      "evidence": "AIMW-CONT-B9E6EFF3DF Global Users full management focused closure@cfe48348cca2e6f76dc11fe5b71647ebec302c0f: variants/laravel-aiwmweb/backend/resources/js/global-users-full-management-control.tsx; focused-closure:AIMW-CONT-B9E6EFF3DF; test:variants/laravel-aiwmweb/backend/tests/Feature/GlobalUsersFullManagementTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-users-full-management-terminality.json",
+      "migration_state": "PENDING",
+      "acceptance_test": "",
+      "evidence": "",
       "reconciliation": {
-        "decision": "ADAPTED",
-        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "AIMW-CONT-B9E6EFF3DF Global Users full management focused closure",
-        "source_sha": "cfe48348cca2e6f76dc11fe5b71647ebec302c0f",
-        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/global-users-full-management-control.tsx",
-        "evidence_mode": "focused_closure_contract",
-        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/global-users-full-management-terminality.json",
-        "signals": [
-          "operation:AIMW-CONT-B9E6EFF3DF",
-          "production-marker:variants/laravel-aiwmweb/backend/resources/js/global-users-full-management-control.tsx",
-          "test:variants/laravel-aiwmweb/backend/tests/Feature/GlobalUsersFullManagementTerminalityTest.php",
-          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-users-full-management-terminality.json",
-          "scope:operation-specific",
-          "test:tenant-isolation"
-        ]
+        "decision": "PENDING",
+        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
+        "source_label": null,
+        "source_sha": null,
+        "destination_path": null
       }
     },
     {
@@ -22299,21 +22289,31 @@
       "external_dependency": "email_provider",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/account-email-settings-profile-form.tsx",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/account-email-settings-cancel-edit-control.test.tsx",
+      "evidence": "AIMW-EMAI-A9CB66F400 AccountEmailSettings CancelEditClicked focused closure@ad642fa272cc38d7c8df4805314f44949926eb8e: variants/laravel-aiwmweb/backend/resources/js/account-email-settings-profile-form.tsx; focused-closure:AIMW-EMAI-A9CB66F400; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/account-email-settings-cancel-edit-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/account-email-settings-cancel-edit-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-EMAI-A9CB66F400 AccountEmailSettings CancelEditClicked focused closure",
+        "source_sha": "ad642fa272cc38d7c8df4805314f44949926eb8e",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/account-email-settings-profile-form.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/account-email-settings-cancel-edit-terminality.json",
+        "signals": [
+          "operation:AIMW-EMAI-A9CB66F400",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/account-email-settings-profile-form.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/account-email-settings-cancel-edit-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/account-email-settings-cancel-edit-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -37005,6 +37005,7 @@
       "AIMW-CONT-B44DA81C28",
       "AIMW-CONT-B60F3F750B",
       "AIMW-CONT-B6BB292F85",
+      "AIMW-CONT-B9E6EFF3DF",
       "AIMW-CONT-BB31987A53",
       "AIMW-CONT-BCAD1E3A49",
       "AIMW-CONT-C3EC665880",
@@ -37026,8 +37027,7 @@
       "AIMW-EMAI-10F3C44369",
       "AIMW-EMAI-7E1D4105B0",
       "AIMW-EMAI-8C9768BCD0",
-      "AIMW-EMAI-9EB09C490D",
-      "AIMW-EMAI-A9CB66F400"
+      "AIMW-EMAI-9EB09C490D"
     ],
     "identity": [],
     "media": [
@@ -38087,7 +38087,6 @@
       "AIMW-CONT-A93DE991C0",
       "AIMW-CONT-AC737C80BF",
       "AIMW-CONT-B1E9E1D6B0",
-      "AIMW-CONT-B9E6EFF3DF",
       "AIMW-CONT-BCE1211CE3",
       "AIMW-CONT-C178278FCB",
       "AIMW-CONT-C7CB5EE184",
@@ -38117,6 +38116,7 @@
       "AIMW-EMAI-7A54150265",
       "AIMW-EMAI-8E3B0AACD6",
       "AIMW-EMAI-8E56589573",
+      "AIMW-EMAI-A9CB66F400",
       "AIMW-EMAI-BDF888551C",
       "AIMW-EMAI-EC34E40629",
       "AIMW-EMAI-F8E8A2BEE9",
@@ -38711,10 +38711,10 @@
         ]
       },
       {
-        "label": "AIMW-CONT-B9E6EFF3DF Global Users full management focused closure",
-        "sha": "cfe48348cca2e6f76dc11fe5b71647ebec302c0f",
+        "label": "AIMW-EMAI-A9CB66F400 AccountEmailSettings CancelEditClicked focused closure",
+        "sha": "ad642fa272cc38d7c8df4805314f44949926eb8e",
         "operation_ids": [
-          "AIMW-CONT-B9E6EFF3DF"
+          "AIMW-EMAI-A9CB66F400"
         ]
       }
     ],
