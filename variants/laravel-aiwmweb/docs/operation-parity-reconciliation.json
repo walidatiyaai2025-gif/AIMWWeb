@@ -17665,31 +17665,21 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/dashboard-sites-quick-access-control.tsx",
+      "laravel_destination": "",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "ADAPTED",
-      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/dashboard-sites-quick-access-control.test.tsx",
-      "evidence": "AIMW-CONT-7957ECC794 Home quick-access Sites focused closure@e04c525501aeec1414368fcd35be0b1695ce0272: variants/laravel-aiwmweb/backend/resources/js/dashboard-sites-quick-access-control.tsx; focused-closure:AIMW-CONT-7957ECC794; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/dashboard-sites-quick-access-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/dashboard-sites-quick-access-terminality.json",
+      "migration_state": "PENDING",
+      "acceptance_test": "",
+      "evidence": "",
       "reconciliation": {
-        "decision": "ADAPTED",
-        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "AIMW-CONT-7957ECC794 Home quick-access Sites focused closure",
-        "source_sha": "e04c525501aeec1414368fcd35be0b1695ce0272",
-        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/dashboard-sites-quick-access-control.tsx",
-        "evidence_mode": "focused_closure_contract",
-        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/dashboard-sites-quick-access-terminality.json",
-        "signals": [
-          "operation:AIMW-CONT-7957ECC794",
-          "production-marker:variants/laravel-aiwmweb/backend/resources/js/dashboard-sites-quick-access-control.tsx",
-          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/dashboard-sites-quick-access-control.test.tsx",
-          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/dashboard-sites-quick-access-terminality.json",
-          "scope:operation-specific",
-          "test:tenant-isolation"
-        ]
+        "decision": "PENDING",
+        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
+        "source_label": null,
+        "source_sha": null,
+        "destination_path": null
       }
     },
     {
@@ -17869,21 +17859,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/module-workspace-back-to-home-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ModuleWorkspaceBackToHomeControlTerminalityTest.php",
+      "evidence": "AIMW-CONT-371D22489E ModuleWorkspace Back to home focused closure@eb4e4078b68fd82eac9e9300aecc1a16f2a6069c: variants/laravel-aiwmweb/backend/resources/js/module-workspace-back-to-home-control.tsx; focused-closure:AIMW-CONT-371D22489E; test:variants/laravel-aiwmweb/backend/tests/Feature/ModuleWorkspaceBackToHomeControlTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/module-workspace-back-to-home-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-371D22489E ModuleWorkspace Back to home focused closure",
+        "source_sha": "eb4e4078b68fd82eac9e9300aecc1a16f2a6069c",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/module-workspace-back-to-home-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/module-workspace-back-to-home-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-371D22489E",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/module-workspace-back-to-home-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/ModuleWorkspaceBackToHomeControlTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/module-workspace-back-to-home-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -37131,7 +37131,6 @@
       "AIMW-CONT-1456BE001F",
       "AIMW-CONT-2752ED9351",
       "AIMW-CONT-349017BDF5",
-      "AIMW-CONT-371D22489E",
       "AIMW-CONT-38FC74B9DE",
       "AIMW-CONT-40CD7F080F",
       "AIMW-CONT-4147188AB1",
@@ -37150,6 +37149,7 @@
       "AIMW-CONT-6B6790BE84",
       "AIMW-CONT-6CB3D0BE1B",
       "AIMW-CONT-6EC0601E18",
+      "AIMW-CONT-7957ECC794",
       "AIMW-CONT-7D7BCD462F",
       "AIMW-CONT-7D83B09470",
       "AIMW-CONT-7EF5524637",
@@ -37981,12 +37981,12 @@
         "explicit_operation_evidence_ids": []
       },
       {
-        "label": "AIMW-CONT-7957ECC794 Home quick-access Sites focused closure",
-        "sha": "e04c525501aeec1414368fcd35be0b1695ce0272",
+        "label": "AIMW-CONT-371D22489E ModuleWorkspace Back to home focused closure",
+        "sha": "eb4e4078b68fd82eac9e9300aecc1a16f2a6069c",
         "domains": [],
         "supporting_only": false,
         "operation_ids": [
-          "AIMW-CONT-7957ECC794"
+          "AIMW-CONT-371D22489E"
         ],
         "explicit_operation_evidence_ids": []
       }
@@ -38049,7 +38049,6 @@
       "d7ed8030da65376f9d0c43380fb6c80c1ee87508",
       "d807224f10f552687771e75bb9a33d825bdeebd1",
       "dbc983f4c9c7a9dfa07d1b4414eed38f1843fd76",
-      "e04c525501aeec1414368fcd35be0b1695ce0272",
       "e26a7d9a254f7df980714b778491d0f864605087",
       "e36250110e3f9f2c22cfb8ac04de98b3c55b9195",
       "e4a21b493d2c40dbdda9cdabb1e539449c528cbe",
@@ -38058,6 +38057,7 @@
       "e9df9b090a8bb5ee98a3487a65ce6cc2d7af9a72",
       "ea253c2dc4d47e73079dc226d319ad723bdecdc7",
       "eaceb34cbf5beb25952bfff61c291aba01d78130",
+      "eb4e4078b68fd82eac9e9300aecc1a16f2a6069c",
       "ed3f8fa663b105d8b8105b56eb22fc7399baa8f4",
       "ef875ba3118ce78b45f0d6fc3a1e46ccc5c722d8",
       "f22da647d324acde8f962c40453e2e3f852ad1b8",
@@ -38360,6 +38360,7 @@
       "AIMW-CONT-2C51372C70",
       "AIMW-CONT-2CDC790742",
       "AIMW-CONT-346657AD9D",
+      "AIMW-CONT-371D22489E",
       "AIMW-CONT-37B4B4BEC4",
       "AIMW-CONT-3A4E69E5D8",
       "AIMW-CONT-3C205B1901",
@@ -38377,7 +38378,6 @@
       "AIMW-CONT-6E22D74EE0",
       "AIMW-CONT-71F54E3BA6",
       "AIMW-CONT-73E4F88038",
-      "AIMW-CONT-7957ECC794",
       "AIMW-CONT-83908F2D7C",
       "AIMW-CONT-85394A0E55",
       "AIMW-CONT-8B3518EF80",
@@ -39100,10 +39100,10 @@
         ]
       },
       {
-        "label": "AIMW-CONT-7957ECC794 Home quick-access Sites focused closure",
-        "sha": "e04c525501aeec1414368fcd35be0b1695ce0272",
+        "label": "AIMW-CONT-371D22489E ModuleWorkspace Back to home focused closure",
+        "sha": "eb4e4078b68fd82eac9e9300aecc1a16f2a6069c",
         "operation_ids": [
-          "AIMW-CONT-7957ECC794"
+          "AIMW-CONT-371D22489E"
         ]
       }
     ],

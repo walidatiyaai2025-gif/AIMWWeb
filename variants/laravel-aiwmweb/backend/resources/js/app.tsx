@@ -54,6 +54,7 @@ import { LogsCloseDetailsControl } from './logs-close-details-control';
 import { MainLayoutParityControls } from './main-layout-parity-controls';
 import { NotificationCenterToggleControl } from './notification-center-toggle-control';
 import { ModuleWorkspaceLoadSitesControl } from './module-workspace-load-sites-control';
+import { ModuleWorkspaceBackToHomeControl } from './module-workspace-back-to-home-control';
 import { MySessionsAdminLinkControl } from './my-sessions-admin-link-control';
 import { OperationsHubReloadControl } from './operations-hub-reload-control';
 import { PagesPostsLinkControl } from './pages-posts-link-control';
@@ -219,6 +220,11 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     return <WorkspacePage context={context} route={route} />;
 }
 
+function ModuleWorkspaceFallbackRoute() {
+    const { context } = useOutletContext<OutletState>();
+    return <ModuleWorkspaceBackToHomeControl context={context} />;
+}
+
 function NotFoundElement() {
     const { context } = useOutletContext<OutletState>();
     return <NotFoundPage context={context} />;
@@ -250,6 +256,7 @@ function AppRoutes() {
                         ? <Route key={route.key} index element={<RouteElement route={route} />} />
                         : <Route key={route.key} path={relative} element={<RouteElement route={route} />} />;
                 })}
+                <Route path="module/:moduleKey" element={<ModuleWorkspaceFallbackRoute />} />
                 <Route path="*" element={<NotFoundElement />} />
             </Route>
             <Route path="*" element={<OutsideTenantRoute />} />
