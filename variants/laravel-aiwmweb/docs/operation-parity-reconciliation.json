@@ -25,12 +25,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 784,
-    "pending": 147,
+    "adapted": 785,
+    "pending": 146,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 784,
-    "overall_parity_percent": 84.21
+    "terminal": 785,
+    "overall_parity_percent": 84.32
   },
   "visible_controls": {
     "total": 446,
@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 103,
-      "pending": 61,
+      "adapted": 104,
+      "pending": 60,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 103,
-      "percent": 62.8
+      "terminal": 104,
+      "percent": 63.41
     },
     "email": {
       "total": 82,
@@ -18303,21 +18303,34 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Providers/RolesPermissionsRouteServiceProvider.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RolesPermissionsRouteTerminalityTest.php",
+      "evidence": "AIMW-CONT-9CF12067E6 Roles & Permissions canonical route terminality@57fe4921dca136e740609224a03b5d5feac5ab93: variants/laravel-aiwmweb/backend/app/Providers/RolesPermissionsRouteServiceProvider.php; explicit-route-api:AIMW-CONT-9CF12067E6; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/RolesPermissionsRouteTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/roles-permissions-route-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route/API provenance is operation-linked to a real route declaration, declared action, focused operation-ID binding, runtime acceptance, and strict security contract.",
+        "source_label": "AIMW-CONT-9CF12067E6 Roles & Permissions canonical route terminality",
+        "source_sha": "57fe4921dca136e740609224a03b5d5feac5ab93",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/RolesPermissionsRouteServiceProvider.php",
+        "evidence_mode": "explicit_route_api_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/roles-permissions-route-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-9CF12067E6",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/RolesPermissionsRouteTerminalityTest.php",
+          "operation-link-test:variants/laravel-aiwmweb/backend/tests/Feature/RolesPermissionsRouteTerminalityTest.php",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:404",
+          "test:403"
+        ]
       }
     },
     {
@@ -36976,12 +36989,12 @@
     "route": {
       "total": 84,
       "ported": 0,
-      "adapted": 73,
-      "pending": 11,
+      "adapted": 74,
+      "pending": 10,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 73,
-      "percent": 86.9
+      "terminal": 74,
+      "percent": 88.1
     },
     "service": {
       "total": 349,
@@ -37056,7 +37069,6 @@
       "AIMW-CONT-918BE3DBF1",
       "AIMW-CONT-932A09E4A9",
       "AIMW-CONT-98918A6C27",
-      "AIMW-CONT-9CF12067E6",
       "AIMW-CONT-9F0D652C67",
       "AIMW-CONT-A3A2CD23B6",
       "AIMW-CONT-A6867078EA",
@@ -37794,6 +37806,16 @@
           "AIMW-SYNC-2A8778C6EA"
         ],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "AIMW-CONT-9CF12067E6 Roles & Permissions canonical route terminality",
+        "sha": "57fe4921dca136e740609224a03b5d5feac5ab93",
+        "domains": [
+          "content"
+        ],
+        "supporting_only": true,
+        "operation_ids": [],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -37826,6 +37848,7 @@
       "486f9f0cd1ea46afaed862c52525bf82a7cb4bd4",
       "53d1178f4ec9e1a9134650bf9d3ac22a68ccf081",
       "57308368978c1bcb1e2a7083e1ecbf540baadc8d",
+      "57fe4921dca136e740609224a03b5d5feac5ab93",
       "70d7c83bf326d6be7114d8a61dbc89bfdbfd28ed",
       "75ab4dcf2045786b875fc315000ca0c6de095b2e",
       "836b6a6a6d1d5d02022474f391d072fad2690c73",
@@ -37956,6 +37979,7 @@
       "AIMW-CONT-6F699A5C14",
       "AIMW-CONT-859135B2D1",
       "AIMW-CONT-95341D9AB0",
+      "AIMW-CONT-9CF12067E6",
       "AIMW-CONT-BF5F72F4F9",
       "AIMW-CONT-C6C7F24B03",
       "AIMW-CONT-E4275AE57F",
@@ -37975,7 +37999,7 @@
       "AIMW-SEO-5F71B89C92",
       "AIMW-TAXO-CDC6948A06"
     ],
-    "explicit_route_api_contract_count": 38,
+    "explicit_route_api_contract_count": 39,
     "focused_closure_source_sha": "ae01461eb85c64046734688ae0bf3f418591c653",
     "focused_closure_contract_terminals": [
       "AIMW-AI-024BB0971B",
