@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 789,
-    "pending": 142,
+    "adapted": 790,
+    "pending": 141,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 789,
-    "overall_parity_percent": 84.75
+    "terminal": 790,
+    "overall_parity_percent": 84.85
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 313,
-    "pending": 133,
+    "terminal": 314,
+    "pending": 132,
     "blocked": 0,
-    "percent": 70.18
+    "percent": 70.4
   },
   "domains": {
     "ai": {
@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 107,
-      "pending": 57,
+      "adapted": 108,
+      "pending": 56,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 107,
-      "percent": 65.24
+      "terminal": 108,
+      "percent": 65.85
     },
     "email": {
       "total": 82,
@@ -17106,21 +17106,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/content-hub-site-links-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-hub-site-links-control.test.tsx",
+      "evidence": "AIMW-CONT-276925F148 GlobalContentHub dynamic site links focused closure@aba6003ed1ea50b25b99b50b06488f240d31a132: variants/laravel-aiwmweb/backend/resources/js/content-hub-site-links-control.tsx; focused-closure:AIMW-CONT-276925F148; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-hub-site-links-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-hub-site-links-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-276925F148 GlobalContentHub dynamic site links focused closure",
+        "source_sha": "aba6003ed1ea50b25b99b50b06488f240d31a132",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/content-hub-site-links-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/content-hub-site-links-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-276925F148",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/content-hub-site-links-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-hub-site-links-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-hub-site-links-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -37052,12 +37062,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 313,
-      "pending": 133,
+      "adapted": 314,
+      "pending": 132,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 313,
-      "percent": 70.18
+      "terminal": 314,
+      "percent": 70.4
     }
   },
   "pending_operation_ids_by_domain": {
@@ -37077,7 +37087,6 @@
       "AIMW-CONT-10AFCDF334",
       "AIMW-CONT-1456BE001F",
       "AIMW-CONT-2752ED9351",
-      "AIMW-CONT-276925F148",
       "AIMW-CONT-349017BDF5",
       "AIMW-CONT-371D22489E",
       "AIMW-CONT-38FC74B9DE",
@@ -37877,6 +37886,16 @@
         "explicit_operation_evidence_ids": []
       },
       {
+        "label": "AIMW-CONT-276925F148 GlobalContentHub dynamic site links focused closure",
+        "sha": "aba6003ed1ea50b25b99b50b06488f240d31a132",
+        "domains": [],
+        "supporting_only": false,
+        "operation_ids": [
+          "AIMW-CONT-276925F148"
+        ],
+        "explicit_operation_evidence_ids": []
+      },
+      {
         "label": "AIMW-CONT-F9015FDB11 Content Explorer ClearSelection focused closure",
         "sha": "45f29f77f325389420a117426ae033ccced327a2",
         "domains": [],
@@ -37930,6 +37949,7 @@
       "a3890ef1d4dac7e4e4bb5123d23625dd11269e7a",
       "a5f91d67cecde21f25d016c9a3eb1cecf5a10a1f",
       "aa328fe4daabf8e5042abe568e10e7719a9d3ad4",
+      "aba6003ed1ea50b25b99b50b06488f240d31a132",
       "af67f421f2850ccb7afc8089aaad15149f7a636a",
       "b118961dfefae73b37b4227807f84bea8de62854",
       "b1822544144bd7b2e27d1bdaa20bb7b688e4f5be",
@@ -38244,6 +38264,7 @@
       "AIMW-CONT-16D4AD8DC8",
       "AIMW-CONT-1A08B49164",
       "AIMW-CONT-247E791DA7",
+      "AIMW-CONT-276925F148",
       "AIMW-CONT-289CEEF3BA",
       "AIMW-CONT-2C51372C70",
       "AIMW-CONT-2CDC790742",
@@ -38965,6 +38986,13 @@
         ]
       },
       {
+        "label": "AIMW-CONT-276925F148 GlobalContentHub dynamic site links focused closure",
+        "sha": "aba6003ed1ea50b25b99b50b06488f240d31a132",
+        "operation_ids": [
+          "AIMW-CONT-276925F148"
+        ]
+      },
+      {
         "label": "AIMW-CONT-F9015FDB11 Content Explorer ClearSelection focused closure",
         "sha": "45f29f77f325389420a117426ae033ccced327a2",
         "operation_ids": [
@@ -38972,8 +39000,8 @@
         ]
       }
     ],
-    "focused_closure_operation_scoped_count": 83,
-    "focused_closure_contract_count": 313,
+    "focused_closure_operation_scoped_count": 84,
+    "focused_closure_contract_count": 314,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
