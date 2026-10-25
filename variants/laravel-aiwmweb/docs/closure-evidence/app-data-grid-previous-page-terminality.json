@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "leaf_issue": 985,
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-598142307A",
+  "domain": "sync",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Shared/AppDataGrid.razor",
+    "route_screen": "component:AppDataGrid",
+    "visible_control": "@PreviousPageText [PreviousPageAsync]",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Shared/AppDataGrid.razor:component:AppDataGrid:@PreviousPageText [PreviousPageAsync]",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "verification": "rendered/read response matches authoritative source",
+    "behavior": "PreviousPageAsync decrements CurrentPage only when CurrentPage is greater than 1; the source previous control is disabled on page 1."
+  },
+  "laravel_adaptation": {
+    "shared_contract": "variants/laravel-aiwmweb/backend/resources/js/app-data-grid-previous-page-control.ts",
+    "pagination_runtime": "variants/laravel-aiwmweb/backend/resources/js/components.tsx",
+    "consumer_wiring": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "real_consumer": "Email Delivery History",
+    "consumer_api": "GET /api/v1/tenants/{tenant}/email/deliveries",
+    "control_binding": "data-canonical-operation=AIMW-SYNC-598142307A",
+    "semantics": [
+      "decrement the current page by exactly one when page is greater than 1",
+      "keep page 1 unchanged and disable previous activation at the first-page boundary",
+      "preserve route-specific previous operation IDs when they already exist",
+      "use the generic AppDataGrid operation on the real Email History consumer",
+      "trigger a fresh authoritative tenant-scoped read for the resulting page",
+      "perform no server, WordPress, queue, cache, or persistence mutation"
+    ],
+    "fake_or_demo_data": false
+  },
+  "authorization_and_isolation": {
+    "consumer_permission": "diagnostics.view with tenant.manage API authorization",
+    "tenant_context": "server-provided FrontendContext plus backend tenant boundary",
+    "foreign_tenant_semantics": "404 fail closed",
+    "direct_tenant_override": false,
+    "tenant_owned": true
+  },
+  "semantics": {
+    "mutation": false,
+    "persistence_mutation": false,
+    "wordpress_mutation": false,
+    "queue_runtime": "not used",
+    "cache_mutation": "not used",
+    "secrets": "not read or written",
+    "authoritative_reread": true,
+    "fake_success_path": "none"
+  },
+  "acceptance_tests": {
+    "frontend": {
+      "file": "variants/laravel-aiwmweb/backend/resources/js/__tests__/app-data-grid-previous-page-control.test.tsx",
+      "coverage": [
+        "exact page decrement and first-page boundary semantics",
+        "disabled first-page control without dispatch",
+        "exact canonical operation marker",
+        "Email History page 2 to page 1 transition",
+        "fresh tenant-scoped page-1 HTTP read"
+      ]
+    },
+    "php": {
+      "file": "variants/laravel-aiwmweb/backend/tests/Feature/AppDataGridPreviousPageTerminalityTest.php",
+      "coverage": [
+        "exact canonical ledger identity/domain/kind/source/control",
+        "source PreviousPageAsync contract",
+        "production Pagination and consumer wiring",
+        "read-only Email History endpoint",
+        "foreign-tenant 404 fail-closed behavior"
+      ]
+    }
+  },
+  "scope_guards": {
+    "exactly_one_operation": true,
+    "sibling_app_data_grid_operations_claimed": false,
+    "aspnet_runtime_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "retry_or_replacement_lineage_created": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "d5313ebf0719a7d8b5a815ccf0f9fe8e3e70a49a",
+    "branch": "worker/985-app-data-grid-previous-page"
+  },
+  "materialized": true,
+  "evidence_source_sha": "0000000000000000000000000000000000000000",
+  "post_materialization_gate_trigger": "exact-head CI after official materialization"
+}
