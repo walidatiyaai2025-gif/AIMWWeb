@@ -68,23 +68,27 @@ function durationMs(row: Row): string {
     return String(Math.max(0, completed - started));
 }
 
+export function siteOperationsCsvRow(row: Row): readonly string[] {
+    const status = String(row.status ?? '');
+    const result = status === 'succeeded' ? 'Success' : status === 'failed' ? 'Failed' : status;
+    return [
+        localTimestamp(row.started_at),
+        siteName(row),
+        String(row.site_id ?? ''),
+        String(row.execution_job_id ?? ''),
+        String(row.operation ?? ''),
+        result,
+        durationMs(row),
+        String(row.affected_records ?? ''),
+        String(row.message ?? ''),
+        detailsText(row.details),
+    ];
+}
+
 export function buildSiteOperationsCsv(rows: Row[]): string {
     const lines = [SITE_OPERATIONS_CSV_HEADERS.map(csvCell).join(',')];
     for (const row of rows) {
-        const status = String(row.status ?? '');
-        const result = status === 'succeeded' ? 'Success' : status === 'failed' ? 'Failed' : status;
-        lines.push([
-            localTimestamp(row.started_at),
-            siteName(row),
-            row.site_id ?? '',
-            row.execution_job_id ?? '',
-            row.operation ?? '',
-            result,
-            durationMs(row),
-            row.affected_records ?? '',
-            row.message ?? '',
-            detailsText(row.details),
-        ].map(csvCell).join(','));
+        lines.push(siteOperationsCsvRow(row).map(csvCell).join(','));
     }
     return lines.join('\r\n');
 }
@@ -133,8 +137,13 @@ export function SiteOperationsExportControl({
             let csv = '';
             await requestAppDataGridCsvExport(
                 rows,
-                (row) => buildSiteOperationsCsv([row]).split('\r\n')[1]?.split(',') ?? [],
-                async () => { csv = buildSiteOperationsCsv(rows); },
+                siteOperationsCsvRow,
+                async (selectedRows) => {
+                    csv = [
+                        SITE_OPERATIONS_CSV_HEADERS.map(csvCell).join(','),
+                        ...selectedRows.map((row) => row.map(csvCell).join(',')),
+                    ].join('\r\n');
+                },
             );
             const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8' });
             objectUrl = URL.createObjectURL(blob);
