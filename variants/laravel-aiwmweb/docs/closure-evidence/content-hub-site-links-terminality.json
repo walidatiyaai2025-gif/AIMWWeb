@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #772 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-276925F148",
+  "domain": "content",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-CONT-276925F148",
+    "route_screen": "/content | /module/content",
+    "source": "src/AIWordPressManager.Web/Components/Pages/GlobalContentHub.razor",
+    "source_action": "@($ -> @($",
+    "source_controls": [
+      "site name href -> /sites/{site.SiteId}",
+      "Content href -> /sites/{site.SiteId}/explorer"
+    ],
+    "source_intent": "For each authoritative site row in GlobalContentHub, expose navigation to the site workspace and that site's content explorer.",
+    "tenant_owned": true,
+    "mutation": false,
+    "risk": "low"
+  },
+  "laravel_adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/content-hub-site-links-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "operation_marker": "AIMW-CONT-276925F148",
+    "authoritative_read": "GET context.api.sites only after exact same-origin /api/tenants/{tenant}/sites validation",
+    "site_destination": "/tenants/{tenant}/sites/{site}",
+    "explorer_destination": "/tenants/{tenant}/explorer?site={site}",
+    "explorer_adaptation_reason": "Laravel's canonical Explorer route is site-bound through the validated site query instead of the ASP.NET /sites/{id}/explorer path.",
+    "loading_empty_error": "Explicit loading, empty, retryable error, and populated states; invalid or duplicate site identifiers are dropped rather than synthesized.",
+    "independent_mutation_added": false
+  },
+  "security_boundary": {
+    "permissions": [
+      "tenant.view",
+      "content.view",
+      "sites.view"
+    ],
+    "tenant_endpoint": "Server-provided context.api.sites must exactly match the active encoded tenant path and same origin.",
+    "tenant_isolation": "The sites API is behind auth + tenant.context and Site global tenant scope; foreign tenant requests return 404.",
+    "identity_input": "Only server-returned positive integer site ids are accepted for destinations.",
+    "network_effect": "read-only GET"
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-hub-site-links-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentHubSiteLinksControlTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation identity and both source href fragments",
+      "authoritative tenant sites GET with no request body or mutation method",
+      "site details and Explorer destinations derived from active tenant plus returned site id",
+      "loading, empty, error, populated and retry states",
+      "invalid and duplicate identifiers fail closed",
+      "missing permission and non-authoritative endpoint fail closed",
+      "guest, foreign-tenant and tenant-scoped site read proof"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-276925F148"
+    ],
+    "sibling_operations_claimed": false,
+    "workspace_url_operation_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "branch": "worker/772-content-hub-site-links",
+    "issue": 772
+  },
+  "materialization": {
+    "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-772.yml",
+    "generated_reconciliation_required": true
+  },
+  "server_mutation": false,
+  "external_mutation": false,
+  "only_operation_claimed": "AIMW-CONT-276925F148",
+  "materialized": false
+}
