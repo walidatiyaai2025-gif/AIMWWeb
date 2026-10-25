@@ -50,5 +50,13 @@ final class SitesSavingStateTerminalityTest extends TestCase
         $this->assertContains('tenant.context', $create->gatherMiddleware());
         $this->assertContains('auth', $update->gatherMiddleware());
         $this->assertContains('tenant.context', $update->gatherMiddleware());
+
+        $existingGuard = (string) file_get_contents(
+            base_path('tests/Feature/SitesSaveTerminalityTest.php'),
+        );
+        $this->assertStringContainsString('foreign_site_fail_closed', $existingGuard);
+        $this->assertStringContainsString('assertNotFound', $existingGuard);
+        $this->assertStringContainsString('assertForbidden', $existingGuard);
+        $this->assertStringContainsString('tenant.context', $existingGuard);
     }
 }
