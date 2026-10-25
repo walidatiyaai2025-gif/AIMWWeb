@@ -1164,6 +1164,14 @@
           "security_mode": "tenant_scoped"
         }
       }
+    },
+    {
+      "label": "AIMW-CONT-276925F148 GlobalContentHub dynamic site links focused closure",
+      "sha": "aba6003ed1ea50b25b99b50b06488f240d31a132",
+      "observed_pr_head": "aba6003ed1ea50b25b99b50b06488f240d31a132",
+      "operation_ids": [
+        "AIMW-CONT-276925F148"
+      ]
     }
   ],
   "excluded_sources": [],
@@ -1812,6 +1820,14 @@
       "observed_pr_head": "c0a6333249418d00bf320eeed14c3b8d9cf22693",
       "operation_ids": [
         "AIMW-CONT-FE1F15935E"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-276925F148 GlobalContentHub dynamic site links focused closure",
+      "sha": "aba6003ed1ea50b25b99b50b06488f240d31a132",
+      "observed_pr_head": "aba6003ed1ea50b25b99b50b06488f240d31a132",
+      "operation_ids": [
+        "AIMW-CONT-276925F148"
       ]
     }
   ]
