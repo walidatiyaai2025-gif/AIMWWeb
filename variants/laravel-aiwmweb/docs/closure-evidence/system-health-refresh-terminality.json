@@ -3,7 +3,7 @@
   "authority": "AIMWWeb Issue #975 / umbrella #257",
   "target_variant": "LARAVEL_AIWMWEB",
   "canonical_base_branch": "worker/laravel-aiwmweb-closure-composition",
-  "canonical_base_sha": "c88195e9b097ec6457b34f3bb8b632a8af52d928",
+  "canonical_base_sha": "d688fc1985fb200bfec02b769caf481dc5a45d5b",
   "canonical_operation": {
     "operation_id": "AIMW-SYNC-0DFEE862FA",
     "domain": "sync",
