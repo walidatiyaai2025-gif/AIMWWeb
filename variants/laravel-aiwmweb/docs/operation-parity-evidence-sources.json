@@ -1218,12 +1218,26 @@
       }
     },
     {
-      "label": "AIMW-CONT-7957ECC794 Home quick-access Sites focused closure",
-      "sha": "e04c525501aeec1414368fcd35be0b1695ce0272",
-      "observed_pr_head": "e04c525501aeec1414368fcd35be0b1695ce0272",
+      "label": "AIMW-CONT-C3EC665880 Global Users workspace canonical route terminality",
+      "sha": "eaceb34cbf5beb25952bfff61c291aba01d78130",
+      "observed_pr_head": "eaceb34cbf5beb25952bfff61c291aba01d78130",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
       "operation_ids": [
-        "AIMW-CONT-7957ECC794"
-      ]
+        "AIMW-CONT-C3EC665880"
+      ],
+      "route_api_provenance": {
+        "AIMW-CONT-C3EC665880": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalUsersWorkspaceRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalUsersWorkspaceRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/global-users-workspace-route-terminality.json",
+          "security_mode": "tenant_selected"
+        }
+      }
     }
   ],
   "excluded_sources": [],
@@ -1904,14 +1918,6 @@
       "observed_pr_head": "4a1da41d841b4375a7f09a5c779a58b576501926",
       "operation_ids": [
         "AIMW-CONT-73E4F88038"
-      ]
-    },
-    {
-      "label": "AIMW-CONT-7957ECC794 Home quick-access Sites focused closure",
-      "sha": "e04c525501aeec1414368fcd35be0b1695ce0272",
-      "observed_pr_head": "e04c525501aeec1414368fcd35be0b1695ce0272",
-      "operation_ids": [
-        "AIMW-CONT-7957ECC794"
       ]
     }
   ]
