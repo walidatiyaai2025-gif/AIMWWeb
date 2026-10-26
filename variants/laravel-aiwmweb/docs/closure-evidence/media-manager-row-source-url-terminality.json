@@ -73,5 +73,14 @@
   "provenance": {
     "base_branch": "worker/laravel-aiwmweb-closure-composition",
     "branch": "worker/921-media-row-source-url"
+  },
+  "materialization": {
+    "official_materializer_commit": "40b844e2b38b471003e0dcd2a838dbc146cc6e53",
+    "terminal_state": "ADAPTED",
+    "total": 931,
+    "adapted": 817,
+    "pending": 114,
+    "overall_parity_percent": 87.76,
+    "exact_head_retrigger": "post-materialization evidence-only touch"
   }
 }
