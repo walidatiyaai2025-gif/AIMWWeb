@@ -74,7 +74,7 @@
     "implementation_sha": "1c96e49a9935d66a4438e443ca736705d4f6f20b",
     "materialization_sha": null,
     "reconciliation_json_blob": null,
-    "reconciliation_markdown_blob": null
+    "reconciliation_markdown_blob": null,
+    "composition_integration_sha": "d9bf9be09bbb24e799a2d6da566cdfd8bb5b11c8"
   }
 }
-
