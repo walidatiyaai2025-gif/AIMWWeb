@@ -55,7 +55,7 @@
     "base_composition_sha": "196d976f88f522afaa18f29771dc84b702e165d6",
     "branch": "worker/809-settings-set-rose"
   },
-  "materialized": false,
-  "evidence_source_sha": null,
-  "post_materialization_gate_trigger": "pending official materialization and exact-head CI after composition resync"
+  "materialized": true,
+  "evidence_source_sha": "0a21b959b6e09e49545272beec8c3911b592d10e",
+  "post_materialization_gate_trigger": "pending user-authored exact-head CI trigger after official materialization"
 }
