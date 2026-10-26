@@ -80,7 +80,8 @@
     "implementation_sha": "d817e1fc64a80c632cb56d783564868bc8d6050d"
   },
   "materialization": {
-    "generated_head": "ecfbcdd412fe0e503ff37ca757f496324ecadd1d",
+    "generated_head": "6c9550442f4d4189ffc8da8573179b207fef68c4",
     "exact_head_retrigger": true
-  }
+  },
+  "materialized": true
 }
