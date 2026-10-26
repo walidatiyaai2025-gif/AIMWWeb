@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { ApiError, apiRequest, type FrontendContext } from './core';
+import { ApiError, apiRequest, tenantUrl, type FrontendContext } from './core';
 import { useLocale } from './i18n';
 import { safeExternalSiteUrl } from './site-details-site-url-control';
 
@@ -8,6 +8,7 @@ export const SITE_CONNECTION_CENTER_SYNC_OPERATION_ID = 'AIMW-BILL-3762C05261';
 export const SITE_CONNECTION_CENTER_COPY_DIAGNOSTICS_OPERATION_ID = 'AIMW-BILL-D4E1DA62D9';
 export const SITE_CONNECTION_CENTER_RETEST_OPERATION_ID = 'AIMW-BILL-E747D0E843';
 export const SITE_CONNECTION_CENTER_SITE_URL_OPERATION_ID = 'AIMW-CONT-63EDB4BA6F';
+export const SITE_CONNECTION_CENTER_DYNAMIC_LINKS_OPERATION_ID = 'AIMW-CONT-DF6FFA9D87';
 
 type ConnectionSnapshot = {
     site: {
@@ -32,6 +33,46 @@ type OperationHistoryItem = {
 
 type OperationHistoryPayload = { items: OperationHistoryItem[] };
 type SyncRun = { id: number; status: string; processed?: number; failure?: string | null };
+
+export type SiteConnectionCenterDynamicLinks = {
+    dashboard: string;
+    applicationPassword: string | null;
+    localContent: string;
+    execution: string;
+};
+
+export function siteConnectionCenterDynamicLinks(
+    tenantSlug: string,
+    routeSiteId: string | number | undefined,
+    site: ConnectionSnapshot['site'] | null | undefined,
+): SiteConnectionCenterDynamicLinks | null {
+    const rawSiteId = String(routeSiteId ?? '').trim();
+    if (!/^[1-9]\d*$/.test(rawSiteId) || !tenantSlug.trim() || /[\\/]/.test(tenantSlug)) return null;
+    if (!site || Number(site.id) !== Number(rawSiteId)) return null;
+
+    const encodedSiteId = encodeURIComponent(rawSiteId);
+    const siteUrl = safeExternalSiteUrl(site.url);
+    let applicationPassword: string | null = null;
+
+    if (siteUrl) {
+        try {
+            const profile = new URL(siteUrl);
+            profile.pathname = `${profile.pathname.replace(/\/+$/, '')}/wp-admin/profile.php`;
+            profile.search = '';
+            profile.hash = '';
+            applicationPassword = profile.toString();
+        } catch {
+            applicationPassword = null;
+        }
+    }
+
+    return {
+        dashboard: tenantUrl(tenantSlug, `/sites/${encodedSiteId}`),
+        applicationPassword,
+        localContent: `${tenantUrl(tenantSlug, '/explorer')}?site=${encodedSiteId}`,
+        execution: `${tenantUrl(tenantSlug, '/module/execution')}?siteId=${encodedSiteId}`,
+    };
+}
 
 export function formatSiteDiagnosticsReport(connection: ConnectionSnapshot, history: OperationHistoryItem[]): string {
     const site = connection.site as ConnectionSnapshot['site'] & { wordpress_version?: string | null; language_code?: string | null; last_verified_at?: string | null };
@@ -217,6 +258,7 @@ export function SiteConnectionCenterSyncControl({ context }: { context: Frontend
     }
 
     const siteUrl = safeExternalSiteUrl(connection?.site.url);
+    const dynamicLinks = siteConnectionCenterDynamicLinks(context.tenant.slug, siteId, connection?.site);
 
     return (
         <div className="workspace-stack" data-canonical-operation={SITE_CONNECTION_CENTER_SYNC_OPERATION_ID}>
@@ -278,6 +320,37 @@ export function SiteConnectionCenterSyncControl({ context }: { context: Frontend
                     <p>{locale === 'ar' ? 'رابط الموقع غير متاح.' : 'Site URL unavailable.'}</p>
                 ) : null}
             </section>
+
+            {dynamicLinks ? (
+                <section
+                    className="workspace-card"
+                    aria-label={locale === 'ar' ? 'روابط الموقع الديناميكية' : 'Dynamic site navigation'}
+                    data-testid="site-connection-dynamic-links"
+                    data-canonical-operation={SITE_CONNECTION_CENTER_DYNAMIC_LINKS_OPERATION_ID}
+                >
+                    <div className="workspace-grid">
+                        <a href={dynamicLinks.dashboard} data-testid="site-connection-dashboard-link">
+                            <strong>{locale === 'ar' ? 'لوحة الموقع' : 'Site dashboard'}</strong>
+                        </a>
+                        {dynamicLinks.applicationPassword ? (
+                            <a
+                                href={dynamicLinks.applicationPassword}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                data-testid="site-connection-application-password-link"
+                            >
+                                <strong>Application Password</strong>
+                            </a>
+                        ) : null}
+                        <a href={dynamicLinks.localContent} data-testid="site-connection-local-content-link">
+                            <strong>{locale === 'ar' ? 'المحتوى المحلي' : 'Local content'}</strong>
+                        </a>
+                        <a href={dynamicLinks.execution} data-testid="site-connection-execution-link">
+                            <strong>{locale === 'ar' ? 'مركز التنفيذ' : 'Execution Center'}</strong>
+                        </a>
+                    </div>
+                </section>
+            ) : null}
 
             <section className="workspace-card">
                 <strong>{locale === 'ar' ? 'حالة الاتصال' : 'Connection'}: {connection?.connection ?? '—'}</strong>

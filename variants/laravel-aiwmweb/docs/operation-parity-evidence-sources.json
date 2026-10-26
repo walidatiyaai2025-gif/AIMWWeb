@@ -1332,6 +1332,14 @@
   "known_composition_blockers": [],
   "focused_closure_operation_sources": [
     {
+      "label": "AIMW-CONT-DF6FFA9D87 Site Connection dynamic links focused closure",
+      "sha": "34c048bb089fcd460d222bd74b52c9e9ca0b1248",
+      "observed_pr_head": "34c048bb089fcd460d222bd74b52c9e9ca0b1248",
+      "operation_ids": [
+        "AIMW-CONT-DF6FFA9D87"
+      ]
+    },
+    {
       "label": "AIMW-SYNC-26F2BF8EE8 ApplicationUsers SearchClickedAsync focused closure",
       "sha": "9ef1547ac9d36a40c53ec79b552ac5020ee2ec3f",
       "observed_pr_head": "9ef1547ac9d36a40c53ec79b552ac5020ee2ec3f",
