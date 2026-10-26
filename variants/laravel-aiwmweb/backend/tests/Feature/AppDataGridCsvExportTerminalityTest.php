@@ -80,6 +80,7 @@ final class AppDataGridCsvExportTerminalityTest extends TestCase
         }
         $membership->roles()->attach($role, ['tenant_id' => $tenant->id]);
         app(TenantContext::class)->forget();
+
         return $tenant;
     }
 
@@ -92,6 +93,7 @@ final class AppDataGridCsvExportTerminalityTest extends TestCase
             'status' => 'active',
         ]);
         app(TenantContext::class)->forget();
+
         return $site;
     }
 
@@ -110,6 +112,7 @@ final class AppDataGridCsvExportTerminalityTest extends TestCase
             'completed_at' => now(),
         ]);
         app(TenantContext::class)->forget();
+
         return $row;
     }
 }

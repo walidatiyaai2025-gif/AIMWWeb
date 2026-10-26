@@ -36,24 +36,24 @@ final class RolesStartCreateTerminalityTest extends TestCase
         $this->assertStringContainsString('Disabled="@_working"', $source);
 
         $this->assertStringContainsString(self::OPERATION_ID, $control);
-        $this->assertStringContainsString("context.permissions.includes('roles.manage')", $control);
+        $this->assertStringContainsString('context.permissions.includes(\'roles.manage\')', $control);
         $this->assertStringContainsString('const rolesEndpoint = context.api.roles;', $control);
-        $this->assertStringContainsString("setName('');", $control);
+        $this->assertStringContainsString('setName(\'\');', $control);
         $this->assertStringContainsString('setError(null);', $control);
         $this->assertStringContainsString('apiRequest(rolesEndpoint', $control);
-        $this->assertStringContainsString("method: 'POST'", $control);
+        $this->assertStringContainsString('method: \'POST\'', $control);
         $this->assertStringContainsString('permissions: []', $control);
-        $this->assertStringContainsString("'＋ New role'", $control);
-        $this->assertStringContainsString("'＋ دور جديد'", $control);
+        $this->assertStringContainsString('\'＋ New role\'', $control);
+        $this->assertStringContainsString('\'＋ دور جديد\'', $control);
 
         $this->assertStringContainsString(
-            "import { RolesStartCreateControl } from './roles-start-create-control';",
+            'import { RolesStartCreateControl } from \'./roles-start-create-control\';',
             $pages,
         );
-        $this->assertStringContainsString("route.key === 'roles'", $pages);
+        $this->assertStringContainsString('route.key === \'roles\'', $pages);
         $this->assertStringContainsString('<RolesStartCreateControl', $pages);
         $this->assertStringContainsString(
-            "!(route.key === 'roles' && actionKey === 'roles.create')",
+            '!(route.key === \'roles\' && actionKey === \'roles.create\')',
             $pages,
         );
     }

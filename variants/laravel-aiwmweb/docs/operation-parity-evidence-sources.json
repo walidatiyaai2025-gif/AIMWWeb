@@ -1256,7 +1256,7 @@
       ]
     },
     {
-      "label": "AIMW-CONT-FE6EE5740C Content Explorer ClosePreview focused closure",
+      "label": "AIMW-CONT-FE6EE5740C Content Explorer ClosePreview focused closure integrated",
       "sha": "e4aacb50a551a0cd0bb5a45b2a95eb7a5d641c9e",
       "observed_pr_head": "e4aacb50a551a0cd0bb5a45b2a95eb7a5d641c9e",
       "operation_ids": [
@@ -1293,14 +1293,6 @@
       "observed_pr_head": "e4aacb50a551a0cd0bb5a45b2a95eb7a5d641c9e",
       "operation_ids": [
         "AIMW-EMAI-7E1D4105B0"
-      ]
-    },
-    {
-      "label": "AIMW-CONT-6CB3D0BE1B Roles Permissions StartCreate focused closure",
-      "sha": "8614973d74b1318d897c8766c89cb34e90ddda0d",
-      "observed_pr_head": "8614973d74b1318d897c8766c89cb34e90ddda0d",
-      "operation_ids": [
-        "AIMW-CONT-6CB3D0BE1B"
       ]
     }
   ],
@@ -2012,7 +2004,7 @@
       ]
     },
     {
-      "label": "AIMW-CONT-FE6EE5740C Content Explorer ClosePreview focused closure",
+      "label": "AIMW-CONT-FE6EE5740C Content Explorer ClosePreview focused closure integrated",
       "sha": "e4aacb50a551a0cd0bb5a45b2a95eb7a5d641c9e",
       "observed_pr_head": "e4aacb50a551a0cd0bb5a45b2a95eb7a5d641c9e",
       "operation_ids": [
@@ -2049,14 +2041,6 @@
       "observed_pr_head": "e4aacb50a551a0cd0bb5a45b2a95eb7a5d641c9e",
       "operation_ids": [
         "AIMW-EMAI-7E1D4105B0"
-      ]
-    },
-    {
-      "label": "AIMW-CONT-6CB3D0BE1B Roles Permissions StartCreate focused closure",
-      "sha": "8614973d74b1318d897c8766c89cb34e90ddda0d",
-      "observed_pr_head": "8614973d74b1318d897c8766c89cb34e90ddda0d",
-      "operation_ids": [
-        "AIMW-CONT-6CB3D0BE1B"
       ]
     }
   ]
