@@ -17,7 +17,7 @@ final class RolesStartCreateTerminalityTest extends TestCase
 
     private const OPERATION_ID = 'AIMW-CONT-6CB3D0BE1B';
 
-    public function test_source_start_create_semantics_are_wired_without_claiming_the_save_mutation(): void
+    public function test_source_start_create_semantics_are_wired_to_a_real_clean_create_state(): void
     {
         $source = (string) file_get_contents(
             base_path('../../../src/AIWordPressManager.Web/Components/Pages/RolesPermissions.razor'),
@@ -26,44 +26,69 @@ final class RolesStartCreateTerminalityTest extends TestCase
             resource_path('js/roles-start-create-control.tsx'),
         );
         $pages = (string) file_get_contents(resource_path('js/pages.tsx'));
-        $dialog = (string) file_get_contents(resource_path('js/components.tsx'));
 
         $this->assertStringContainsString('OnClick="StartCreate"', $source);
         $this->assertStringContainsString('private Task StartCreate', $source);
         $this->assertStringContainsString('ResetEditor();', $source);
         $this->assertStringContainsString('_editingExisting = false;', $source);
         $this->assertStringContainsString('_name = _displayNameEnglish = _displayNameArabic = string.Empty;', $source);
+        $this->assertStringContainsString('_selectedPermissions.Clear();', $source);
         $this->assertStringContainsString('Disabled="@_working"', $source);
 
         $this->assertStringContainsString(self::OPERATION_ID, $control);
-        $this->assertStringContainsString("resolveCapability(context, route, 'roles.create')", $control);
-        $this->assertStringContainsString("context.actions['roles.create']", $control);
+        $this->assertStringContainsString("context.permissions.includes('roles.manage')", $control);
+        $this->assertStringContainsString('const rolesEndpoint = context.api.roles;', $control);
+        $this->assertStringContainsString("setName('');", $control);
+        $this->assertStringContainsString('setError(null);', $control);
+        $this->assertStringContainsString('apiRequest(rolesEndpoint', $control);
+        $this->assertStringContainsString("method: 'POST'", $control);
+        $this->assertStringContainsString('permissions: []', $control);
         $this->assertStringContainsString("'＋ New role'", $control);
         $this->assertStringContainsString("'＋ دور جديد'", $control);
-        $this->assertStringNotContainsString('apiRequest', $control);
-        $this->assertStringNotContainsString('fetch(', $control);
 
         $this->assertStringContainsString(
             "import { RolesStartCreateControl } from './roles-start-create-control';",
             $pages,
         );
         $this->assertStringContainsString("route.key === 'roles'", $pages);
-        $this->assertStringContainsString("<RolesStartCreateControl", $pages);
-        $this->assertStringContainsString("key: 'roles.create'", $pages);
+        $this->assertStringContainsString('<RolesStartCreateControl', $pages);
         $this->assertStringContainsString(
             "!(route.key === 'roles' && actionKey === 'roles.create')",
             $pages,
         );
-
-        $this->assertStringContainsString('if (!open) return;', $dialog);
-        $this->assertStringContainsString('setValues({});', $dialog);
-        $this->assertStringContainsString('setErrors({});', $dialog);
     }
 
-    public function test_roles_workspace_and_create_authority_fail_closed_across_permission_and_tenant_boundaries(): void
+    public function test_supporting_role_create_path_persists_then_authoritative_read_reconciles(): void
     {
         [$alpha, $authorized] = $this->tenantWithUser(
             'alpha-start-create',
+            ['tenant.view', 'roles.view', 'roles.manage'],
+        );
+
+        $this->actingAs($authorized->user)
+            ->postJson('/tenants/alpha-start-create/admin/roles', [
+                'name' => 'support-agent',
+                'permissions' => [],
+            ])
+            ->assertCreated()
+            ->assertJsonPath('name', 'support-agent')
+            ->assertJsonPath('permissions', []);
+
+        $this->assertDatabaseHas('roles', [
+            'tenant_id' => $alpha->id,
+            'name' => 'support-agent',
+        ]);
+
+        $this->actingAs($authorized->user)
+            ->getJson('/tenants/alpha-start-create/admin/roles')
+            ->assertOk()
+            ->assertJsonFragment(['name' => 'support-agent']);
+    }
+
+    public function test_missing_manage_permission_and_foreign_tenant_fail_closed(): void
+    {
+        [$alpha, $authorized] = $this->tenantWithUser(
+            'alpha-start-create-deny',
             ['tenant.view', 'roles.view', 'roles.manage'],
         );
         $limited = $this->member(
@@ -77,13 +102,8 @@ final class RolesStartCreateTerminalityTest extends TestCase
         ]);
         $this->withoutVite();
 
-        $this->actingAs($authorized->user)
-            ->get('/tenants/alpha-start-create/admin/roles-permissions')
-            ->assertOk()
-            ->assertSee('id="app"', false);
-
         $this->actingAs($limited->user)
-            ->postJson('/tenants/alpha-start-create/admin/roles', [
+            ->postJson('/tenants/alpha-start-create-deny/admin/roles', [
                 'name' => 'blocked-role',
                 'permissions' => [],
             ])
