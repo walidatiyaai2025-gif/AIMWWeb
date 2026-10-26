@@ -44,6 +44,7 @@ import { CurrentUserLogsControl } from './current-user-logs-control';
 import { DashboardSitesNavigationControl } from './dashboard-sites-navigation-control';
 import { DashboardSystemHealthNavigationControl } from './dashboard-system-health-navigation-control';
 import { DashboardSitesQuickAccessControl } from './dashboard-sites-quick-access-control';
+import { DashboardMediaNavigationControl } from './dashboard-media-navigation-control';
 import { LiveSystemStatusRefreshControl } from './live-system-status-refresh-control';
 import { EmailHistoryFiltersControl, type EmailHistoryFilterState } from './email-history-filters-control';
 import { GlobalUsersFullManagementControl } from './global-users-full-management-control';
@@ -224,6 +225,7 @@ function DashboardContent({ context, route }: { context: FrontendContext; route:
                 <DashboardSitesNavigationControl context={context} />
                 <DashboardSystemHealthNavigationControl context={context} />
                 <DashboardSitesQuickAccessControl context={context} />
+                <DashboardMediaNavigationControl context={context} />
             </section>
             {metrics.length ? (
                 <section className="metric-grid" aria-label={locale === 'ar' ? 'مؤشرات الحساب' : 'Tenant metrics'}>
