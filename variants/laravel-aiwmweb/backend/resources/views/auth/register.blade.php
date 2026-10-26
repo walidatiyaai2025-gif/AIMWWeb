@@ -59,7 +59,7 @@
         <label for="register-confirm">Confirm password</label>
         <input id="register-confirm" type="password" name="password_confirmation" autocomplete="new-password" required>
 
-        <button type="submit" data-canonical-operation="{{ \\App\\Http\\Controllers\\RegisterController::REGISTER_SUBMIT_VISIBLE_OPERATION_ID }}">Start free trial</button>
+        <button type="submit" data-canonical-operation="{{ \App\Http\Controllers\RegisterController::REGISTER_SUBMIT_VISIBLE_OPERATION_ID }}">Start free trial</button>
     </form>
 
     <div class="limits" aria-label="Free trial limits">
