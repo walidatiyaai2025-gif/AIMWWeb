@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #923 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-MEDI-8F93BEDD59",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-MEDI-8F93BEDD59",
+    "domain": "media",
+    "kind": "visible_control",
+    "route_screen": "/sites/{SiteId:guid}/media",
+    "source": "src/AIWordPressManager.Web/Components/Pages/MediaManager.razor",
+    "source_control": "@L[ -> @($\"/sites/{SiteId}/explorer\")",
+    "source_intent": "Return from the site-scoped Media Manager to the explorer for the same authoritative site without mutating media state.",
+    "mutation": false,
+    "tenant_owned": true,
+    "external_dependency": "WordPress",
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/media-pages-link-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "authoritative_read": "GET /api/v1/tenants/{tenant}/sites/{site}/media",
+    "destination": "/tenants/{tenant}/explorer?site={site}",
+    "operation_marker": "AIMW-MEDI-8F93BEDD59",
+    "adaptation": "Laravel extends the existing Media toolbar with a tenant-qualified Back to Explorer action derived from active_site and the authoritative site-scoped Media API. No duplicate workspace or API path is introduced."
+  },
+  "security": {
+    "permissions": [
+      "tenant.view",
+      "content.view",
+      "sites.view"
+    ],
+    "required_capabilities": [
+      "media",
+      "explorer when explicitly advertised"
+    ],
+    "tenant_navigation": "tenantUrl encodes the authoritative tenant slug",
+    "site_source": "FrontendContext.active_site validated against the tenant/site-scoped Media API path",
+    "foreign_or_mismatched_media_authority": "fails closed",
+    "cross_origin_media_authority": "fails closed",
+    "query_or_fragment_override": "fails closed",
+    "mutation_added": false
+  },
+  "authoritative_state": {
+    "source": "existing tenant/site-scoped Media bootstrap context",
+    "destination_site": "same server-authoritative active_site id only",
+    "synthetic_site": false,
+    "mutation": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/media-back-to-explorer-control.test.tsx",
+    "coverage": [
+      "exact canonical operation identity",
+      "tenant-qualified explorer destination",
+      "authoritative active_site binding",
+      "mismatched site API rejected",
+      "foreign tenant API rejected",
+      "cross-origin API rejected",
+      "query and fragment override rejected",
+      "tenant slug encoding",
+      "permission and capability fail-closed behavior",
+      "read-only navigation"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-MEDI-8F93BEDD59"
+    ],
+    "existing_media_toolbar_reused": true,
+    "sibling_media_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "duplicate_branch_created": false,
+    "variant_boundary": "variants/laravel-aiwmweb/**"
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "branch": "worker/923-media-back-to-explorer",
+    "implementation_sha": "d817e1fc64a80c632cb56d783564868bc8d6050d"
+  },
+  "materialization": {
+    "generated_head": "ecfbcdd412fe0e503ff37ca757f496324ecadd1d",
+    "exact_head_retrigger": true
+  }
+}
