@@ -3,6 +3,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest, type FrontendContext } from './core';
 import { useToast } from './components';
 import { useLocale } from './i18n';
+import { PagesInterpolatedLinksControl } from './pages-interpolated-links-control';
 import {
     GLOBAL_PAGES_CONFIRM_TRASH_OPERATION_ID,
     buildGlobalPagesTrashPayload,
@@ -186,7 +187,14 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
                                                 />
                                             </td>
                                             <td>{row.title || `#${row.wordpress_id}`}</td>
-                                            <td>{row.site_name || `#${row.site_id}`}</td>
+                                            <td>
+                                                <PagesInterpolatedLinksControl
+                                                    tenantSlug={context.tenant.slug}
+                                                    siteId={row.site_id}
+                                                    wordpressId={row.wordpress_id}
+                                                    siteName={row.site_name}
+                                                />
+                                            </td>
                                             <td>{row.status || '—'}</td>
                                         </tr>
                                     );
