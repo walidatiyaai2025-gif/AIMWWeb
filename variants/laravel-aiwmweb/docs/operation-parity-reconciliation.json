@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 805,
-    "pending": 126,
+    "adapted": 806,
+    "pending": 125,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 805,
-    "overall_parity_percent": 86.47
+    "terminal": 806,
+    "overall_parity_percent": 86.57
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 327,
-    "pending": 119,
+    "terminal": 328,
+    "pending": 118,
     "blocked": 0,
-    "percent": 73.32
+    "percent": 73.54
   },
   "domains": {
     "ai": {
@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 116,
-      "pending": 48,
+      "adapted": 117,
+      "pending": 47,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 116,
-      "percent": 70.73
+      "terminal": 117,
+      "percent": 71.34
     },
     "email": {
       "total": 82,
@@ -18416,21 +18416,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/roles-start-create-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/roles-start-create-control.test.tsx",
+      "evidence": "AIMW-CONT-6CB3D0BE1B Roles Permissions StartCreate focused closure@1de518ca20ddfc9f14527c092a6ba455966fc8cd: variants/laravel-aiwmweb/backend/resources/js/roles-start-create-control.tsx; focused-closure:AIMW-CONT-6CB3D0BE1B; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/roles-start-create-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/roles-start-create-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-6CB3D0BE1B Roles Permissions StartCreate focused closure",
+        "source_sha": "1de518ca20ddfc9f14527c092a6ba455966fc8cd",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/roles-start-create-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/roles-start-create-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-6CB3D0BE1B",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/roles-start-create-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/roles-start-create-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/roles-start-create-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -37216,12 +37226,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 327,
-      "pending": 119,
+      "adapted": 328,
+      "pending": 118,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 327,
-      "percent": 73.32
+      "terminal": 328,
+      "percent": 73.54
     }
   },
   "pending_operation_ids_by_domain": {
@@ -37251,7 +37261,6 @@
       "AIMW-CONT-69B5134C7E",
       "AIMW-CONT-6B051BD8C0",
       "AIMW-CONT-6B6790BE84",
-      "AIMW-CONT-6CB3D0BE1B",
       "AIMW-CONT-6EC0601E18",
       "AIMW-CONT-7D7BCD462F",
       "AIMW-CONT-7D83B09470",
@@ -38148,6 +38157,16 @@
           "AIMW-EMAI-7E1D4105B0"
         ],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "AIMW-CONT-6CB3D0BE1B Roles Permissions StartCreate focused closure",
+        "sha": "d685d3d46e2f8c76c6c781dc7724aec0c463a5e9",
+        "domains": [],
+        "supporting_only": false,
+        "operation_ids": [
+          "AIMW-CONT-6CB3D0BE1B"
+        ],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -38205,6 +38224,7 @@
       "c19ba111947512de296aa73dd62e03c334bd8f43",
       "c394c3143917c6c1cbff8e136a2a8b1847929a78",
       "ca212724d1ba532253c7128231326122967fc9d1",
+      "d685d3d46e2f8c76c6c781dc7724aec0c463a5e9",
       "d7ed8030da65376f9d0c43380fb6c80c1ee87508",
       "d807224f10f552687771e75bb9a33d825bdeebd1",
       "dbc983f4c9c7a9dfa07d1b4414eed38f1843fd76",
@@ -38542,6 +38562,7 @@
       "AIMW-CONT-607ACDF4D8",
       "AIMW-CONT-63EDB4BA6F",
       "AIMW-CONT-6AB0ED6C83",
+      "AIMW-CONT-6CB3D0BE1B",
       "AIMW-CONT-6E22D74EE0",
       "AIMW-CONT-71F54E3BA6",
       "AIMW-CONT-73E4F88038",
@@ -39330,10 +39351,17 @@
         "operation_ids": [
           "AIMW-EMAI-7E1D4105B0"
         ]
+      },
+      {
+        "label": "AIMW-CONT-6CB3D0BE1B Roles Permissions StartCreate focused closure",
+        "sha": "1de518ca20ddfc9f14527c092a6ba455966fc8cd",
+        "operation_ids": [
+          "AIMW-CONT-6CB3D0BE1B"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 97,
-    "focused_closure_contract_count": 327,
+    "focused_closure_operation_scoped_count": 98,
+    "focused_closure_contract_count": 328,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
