@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 813,
-    "pending": 118,
+    "adapted": 814,
+    "pending": 117,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 813,
-    "overall_parity_percent": 87.33
+    "terminal": 814,
+    "overall_parity_percent": 87.43
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 335,
-    "pending": 111,
+    "terminal": 336,
+    "pending": 110,
     "blocked": 0,
-    "percent": 75.11
+    "percent": 75.34
   },
   "domains": {
     "ai": {
@@ -133,12 +133,12 @@
     "media": {
       "total": 15,
       "ported": 0,
-      "adapted": 6,
-      "pending": 9,
+      "adapted": 7,
+      "pending": 8,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 6,
-      "percent": 40.0
+      "terminal": 7,
+      "percent": 46.67
     },
     "operations": {
       "total": 5,
@@ -25837,21 +25837,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/media-pages-link-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/media-global-link-control.test.tsx",
+      "evidence": "AIMW-MEDI-56F4EF0AFB MediaManager Global media link focused closure@97c08355b03a4005f276638e79f24f0b94a18607: variants/laravel-aiwmweb/backend/resources/js/media-pages-link-control.tsx; focused-closure:AIMW-MEDI-56F4EF0AFB; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/media-global-link-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/media-global-link-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-MEDI-56F4EF0AFB MediaManager Global media link focused closure",
+        "source_sha": "97c08355b03a4005f276638e79f24f0b94a18607",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/media-pages-link-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/media-global-link-terminality.json",
+        "signals": [
+          "operation:AIMW-MEDI-56F4EF0AFB",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/media-pages-link-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/media-global-link-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/media-global-link-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -37296,12 +37306,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 335,
-      "pending": 111,
+      "adapted": 336,
+      "pending": 110,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 335,
-      "percent": 75.11
+      "terminal": 336,
+      "percent": 75.34
     }
   },
   "pending_operation_ids_by_domain": {
@@ -37367,7 +37377,6 @@
       "AIMW-MEDI-3444B17C11",
       "AIMW-MEDI-34B5C789D2",
       "AIMW-MEDI-34E7DCA832",
-      "AIMW-MEDI-56F4EF0AFB",
       "AIMW-MEDI-727FAEEB01",
       "AIMW-MEDI-799B36D113",
       "AIMW-MEDI-8F93BEDD59",
@@ -38720,6 +38729,7 @@
       "AIMW-IDEN-CD4ADA5087",
       "AIMW-IDEN-FC900E61B8",
       "AIMW-MEDI-0694CEEBBA",
+      "AIMW-MEDI-56F4EF0AFB",
       "AIMW-MEDI-73C0DA6B3D",
       "AIMW-OPER-21EC1BDE45",
       "AIMW-PLAT-17BC7DA9E5",
@@ -39499,10 +39509,17 @@
         "operation_ids": [
           "AIMW-CONT-E4D7C73D4E"
         ]
+      },
+      {
+        "label": "AIMW-MEDI-56F4EF0AFB MediaManager Global media link focused closure",
+        "sha": "97c08355b03a4005f276638e79f24f0b94a18607",
+        "operation_ids": [
+          "AIMW-MEDI-56F4EF0AFB"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 105,
-    "focused_closure_contract_count": 335,
+    "focused_closure_operation_scoped_count": 106,
+    "focused_closure_contract_count": 336,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
