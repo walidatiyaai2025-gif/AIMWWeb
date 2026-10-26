@@ -85,9 +85,11 @@ describe('AIMW-BILL-582319B640 Site Operations ExportCsvAsync', () => {
         expect(button).toHaveAttribute('data-canonical-operation', SITE_OPERATIONS_EXPORT_OPERATION_ID);
         fireEvent.click(button);
 
-        await waitFor(() => expect(createObjectURL).toHaveBeenCalledTimes(1));
-        expect(click).toHaveBeenCalledTimes(1);
-        expect(revokeObjectURL).toHaveBeenCalledWith('blob:site-operations');
+        await waitFor(() => {
+            expect(createObjectURL).toHaveBeenCalledTimes(1);
+            expect(click).toHaveBeenCalledTimes(1);
+            expect(revokeObjectURL).toHaveBeenCalledWith('blob:site-operations');
+        });
         expect(screen.queryByRole('alert')).toBeNull();
     });
 

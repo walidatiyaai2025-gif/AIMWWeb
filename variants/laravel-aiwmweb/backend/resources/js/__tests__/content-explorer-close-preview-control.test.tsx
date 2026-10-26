@@ -8,6 +8,8 @@ import {
 } from '../content-explorer-preview-panel';
 import { LocaleProvider } from '../i18n';
 
+// Batch integration verification anchor: five Visible Controls closure, 2026-10-26.
+
 const row: ContentExplorerPreviewRow = {
     id: 17,
     wordpress_id: 451,
