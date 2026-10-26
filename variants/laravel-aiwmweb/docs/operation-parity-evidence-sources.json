@@ -1318,6 +1318,14 @@
       "operation_ids": [
         "AIMW-CONT-BB31987A53"
       ]
+    },
+    {
+      "label": "AIMW-CONT-6EC0601E18 SiteOnboarding back-to-sites focused closure",
+      "sha": "6970df3e878f0c24f9ee4a7b80b8525f50f5c9ff",
+      "observed_pr_head": "6970df3e878f0c24f9ee4a7b80b8525f50f5c9ff",
+      "operation_ids": [
+        "AIMW-CONT-6EC0601E18"
+      ]
     }
   ],
   "excluded_sources": [],

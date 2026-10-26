@@ -16,5 +16,6 @@
   "external_mutation": false,
   "tenant_permission": "sites.manage",
   "only_operation_claimed": "AIMW-CONT-6EC0601E18",
-  "materialized": true
+  "materialized": true,
+  "evidence_source_sha": "6970df3e878f0c24f9ee4a7b80b8525f50f5c9ff"
 }
