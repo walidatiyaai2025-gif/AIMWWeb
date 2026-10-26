@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 815,
-    "pending": 116,
+    "adapted": 816,
+    "pending": 115,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 815,
-    "overall_parity_percent": 87.54
+    "terminal": 816,
+    "overall_parity_percent": 87.65
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 337,
-    "pending": 109,
+    "terminal": 338,
+    "pending": 108,
     "blocked": 0,
-    "percent": 75.56
+    "percent": 75.78
   },
   "domains": {
     "ai": {
@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 124,
-      "pending": 40,
+      "adapted": 125,
+      "pending": 39,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 124,
-      "percent": 75.61
+      "terminal": 125,
+      "percent": 76.22
     },
     "email": {
       "total": 82,
@@ -19325,21 +19325,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/site-connection-center-sync-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-connection-dynamic-links.test.tsx",
+      "evidence": "AIMW-CONT-DF6FFA9D87 Site Connection dynamic links focused closure@34c048bb089fcd460d222bd74b52c9e9ca0b1248: variants/laravel-aiwmweb/backend/resources/js/site-connection-center-sync-control.tsx; focused-closure:AIMW-CONT-DF6FFA9D87; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/site-connection-dynamic-links.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/site-connection-dynamic-links-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-DF6FFA9D87 Site Connection dynamic links focused closure",
+        "source_sha": "34c048bb089fcd460d222bd74b52c9e9ca0b1248",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/site-connection-center-sync-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-connection-dynamic-links-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-DF6FFA9D87",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/site-connection-center-sync-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/site-connection-dynamic-links.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/site-connection-dynamic-links-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -25847,31 +25857,21 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/media-pages-link-control.tsx",
+      "laravel_destination": "",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "ADAPTED",
-      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/media-global-link-control.test.tsx",
-      "evidence": "AIMW-MEDI-56F4EF0AFB MediaManager Global media link focused closure@97c08355b03a4005f276638e79f24f0b94a18607: variants/laravel-aiwmweb/backend/resources/js/media-pages-link-control.tsx; focused-closure:AIMW-MEDI-56F4EF0AFB; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/media-global-link-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/media-global-link-terminality.json",
+      "migration_state": "PENDING",
+      "acceptance_test": "",
+      "evidence": "",
       "reconciliation": {
-        "decision": "ADAPTED",
-        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "AIMW-MEDI-56F4EF0AFB MediaManager Global media link focused closure",
-        "source_sha": "97c08355b03a4005f276638e79f24f0b94a18607",
-        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/media-pages-link-control.tsx",
-        "evidence_mode": "focused_closure_contract",
-        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/media-global-link-terminality.json",
-        "signals": [
-          "operation:AIMW-MEDI-56F4EF0AFB",
-          "production-marker:variants/laravel-aiwmweb/backend/resources/js/media-pages-link-control.tsx",
-          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/media-global-link-control.test.tsx",
-          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/media-global-link-terminality.json",
-          "scope:operation-specific",
-          "test:tenant-isolation"
-        ]
+        "decision": "PENDING",
+        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
+        "source_label": null,
+        "source_sha": null,
+        "destination_path": null
       }
     },
     {
@@ -25950,21 +25950,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/media-manager-editing-source-url-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/media-manager-editing-source-url-control.test.tsx",
+      "evidence": "AIMW-MEDI-03A0D722AD MediaManager editing SourceUrl focused closure@722d48b5c7c7d27badfabecc88fb4c1df3877d86: variants/laravel-aiwmweb/backend/resources/js/media-manager-editing-source-url-control.tsx; focused-closure:AIMW-MEDI-03A0D722AD; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/media-manager-editing-source-url-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/media-manager-editing-source-url-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-MEDI-03A0D722AD MediaManager editing SourceUrl focused closure",
+        "source_sha": "722d48b5c7c7d27badfabecc88fb4c1df3877d86",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/media-manager-editing-source-url-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/media-manager-editing-source-url-terminality.json",
+        "signals": [
+          "operation:AIMW-MEDI-03A0D722AD",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/media-manager-editing-source-url-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/media-manager-editing-source-url-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/media-manager-editing-source-url-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -37316,12 +37326,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 337,
-      "pending": 109,
+      "adapted": 338,
+      "pending": 108,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 337,
-      "percent": 75.56
+      "terminal": 338,
+      "percent": 75.78
     }
   },
   "pending_operation_ids_by_domain": {
@@ -37368,7 +37378,6 @@
       "AIMW-CONT-C49C37E2C9",
       "AIMW-CONT-CA4920CBC8",
       "AIMW-CONT-CF4BE4EC3B",
-      "AIMW-CONT-DF6FFA9D87",
       "AIMW-CONT-ED2F1E1572",
       "AIMW-CONT-EDC262499D",
       "AIMW-CONT-EE659E3F13"
@@ -37382,10 +37391,10 @@
     ],
     "identity": [],
     "media": [
-      "AIMW-MEDI-03A0D722AD",
       "AIMW-MEDI-3444B17C11",
       "AIMW-MEDI-34B5C789D2",
       "AIMW-MEDI-34E7DCA832",
+      "AIMW-MEDI-56F4EF0AFB",
       "AIMW-MEDI-727FAEEB01",
       "AIMW-MEDI-799B36D113",
       "AIMW-MEDI-8F93BEDD59",
@@ -38278,16 +38287,6 @@
           "AIMW-CONT-932A09E4A9"
         ],
         "explicit_operation_evidence_ids": []
-      },
-      {
-        "label": "AIMW-MEDI-56F4EF0AFB MediaManager Global media link focused closure",
-        "sha": "97c08355b03a4005f276638e79f24f0b94a18607",
-        "domains": [],
-        "supporting_only": false,
-        "operation_ids": [
-          "AIMW-MEDI-56F4EF0AFB"
-        ],
-        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -38331,7 +38330,6 @@
       "860095fc8322b913f17b472b41c44c1c17dcc5eb",
       "8c6f75421d95e892b56f4a66dccbde0e9734196f",
       "9535f66b12b3839dd7606c5b305c6f0bd32e1216",
-      "97c08355b03a4005f276638e79f24f0b94a18607",
       "9f9ec64983b33f3bf5bba7d5e8d4d59e97c4994f",
       "9ff12621218525ea09cf75e93cb5ad40fbb9a44c",
       "a3890ef1d4dac7e4e4bb5123d23625dd11269e7a",
@@ -38723,6 +38721,7 @@
       "AIMW-CONT-D4607F943C",
       "AIMW-CONT-D5FFC84EC2",
       "AIMW-CONT-DD56664FDA",
+      "AIMW-CONT-DF6FFA9D87",
       "AIMW-CONT-DF8B12B6DE",
       "AIMW-CONT-E1A7A8CAA7",
       "AIMW-CONT-E346398EAD",
@@ -38760,8 +38759,8 @@
       "AIMW-IDEN-BF78057C28",
       "AIMW-IDEN-CD4ADA5087",
       "AIMW-IDEN-FC900E61B8",
+      "AIMW-MEDI-03A0D722AD",
       "AIMW-MEDI-0694CEEBBA",
-      "AIMW-MEDI-56F4EF0AFB",
       "AIMW-MEDI-73C0DA6B3D",
       "AIMW-OPER-21EC1BDE45",
       "AIMW-PLAT-17BC7DA9E5",
@@ -38831,6 +38830,13 @@
       "AIMW-TAXO-ECDD00F787"
     ],
     "focused_closure_operation_sources": [
+      {
+        "label": "AIMW-CONT-DF6FFA9D87 Site Connection dynamic links focused closure",
+        "sha": "34c048bb089fcd460d222bd74b52c9e9ca0b1248",
+        "operation_ids": [
+          "AIMW-CONT-DF6FFA9D87"
+        ]
+      },
       {
         "label": "AIMW-SYNC-26F2BF8EE8 ApplicationUsers SearchClickedAsync focused closure",
         "sha": "9ef1547ac9d36a40c53ec79b552ac5020ee2ec3f",
@@ -39550,15 +39556,15 @@
         ]
       },
       {
-        "label": "AIMW-MEDI-56F4EF0AFB MediaManager Global media link focused closure",
-        "sha": "97c08355b03a4005f276638e79f24f0b94a18607",
+        "label": "AIMW-MEDI-03A0D722AD MediaManager editing SourceUrl focused closure",
+        "sha": "722d48b5c7c7d27badfabecc88fb4c1df3877d86",
         "operation_ids": [
-          "AIMW-MEDI-56F4EF0AFB"
+          "AIMW-MEDI-03A0D722AD"
         ]
       }
     ],
-    "focused_closure_operation_scoped_count": 107,
-    "focused_closure_contract_count": 337,
+    "focused_closure_operation_scoped_count": 108,
+    "focused_closure_contract_count": 338,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
