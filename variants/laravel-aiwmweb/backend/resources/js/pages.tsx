@@ -51,6 +51,7 @@ import { NotificationOpenControl } from './notification-open-control';
 import { PagesInterpolatedLinksControl } from './pages-interpolated-links-control';
 import { PagesWordPressLinkControl } from './pages-wordpress-link-control';
 import { PostsWordPressLinkControl } from './posts-wordpress-link-control';
+import { RolesApplicationUsersLinkControl } from './roles-application-users-link-control';
 import { RolesStartCreateControl } from './roles-start-create-control';
 import { SiteOperationsExportControl } from './site-operations-export-control';
 import { SiteOperationsSitesLinkControl } from './site-operations-sites-link-control';
@@ -629,14 +630,17 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         </>
                     ) : null}
                     {route.key === 'roles' ? (
-                        <RolesStartCreateControl
-                            context={context}
-                            busy={query.isFetching}
-                            onCreated={async () => {
-                                const refreshed = await query.refetch();
-                                if (refreshed.error) throw refreshed.error;
-                            }}
-                        />
+                        <>
+                            <RolesApplicationUsersLinkControl context={context} />
+                            <RolesStartCreateControl
+                                context={context}
+                                busy={query.isFetching}
+                                onCreated={async () => {
+                                    const refreshed = await query.refetch();
+                                    if (refreshed.error) throw refreshed.error;
+                                }}
+                            />
+                        </>
                     ) : null}
                     {route.key === 'sites' ? (
                         <button
