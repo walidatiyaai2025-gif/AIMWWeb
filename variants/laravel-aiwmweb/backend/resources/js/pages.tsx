@@ -629,9 +629,11 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                     {route.key === 'roles' ? (
                         <RolesStartCreateControl
                             context={context}
-                            route={route}
-                            busy={mutation.isPending}
-                            onAvailable={(contract) => setDialog({ key: 'roles.create', contract })}
+                            busy={query.isFetching}
+                            onCreated={async () => {
+                                const refreshed = await query.refetch();
+                                if (refreshed.error) throw refreshed.error;
+                            }}
                         />
                     ) : null}
                     {route.key === 'sites' ? (
