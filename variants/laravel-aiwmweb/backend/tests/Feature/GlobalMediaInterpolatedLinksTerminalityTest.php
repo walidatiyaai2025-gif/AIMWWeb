@@ -52,5 +52,11 @@ final class GlobalMediaInterpolatedLinksTerminalityTest extends TestCase
 
         $this->assertStringContainsString('/sites/{item.SiteId}/media', $source);
         $this->assertStringContainsString('/sites/{item.SiteId}/explorer', $source);
+
+        $existingIsolationGate = (string) file_get_contents(
+            base_path('tests/Feature/ContentExplorerMediaSourceUrlControlTerminalityTest.php'),
+        );
+        $this->assertStringContainsString('404', $existingIsolationGate);
+        $this->assertStringContainsString('foreign', strtolower($existingIsolationGate));
     }
 }
