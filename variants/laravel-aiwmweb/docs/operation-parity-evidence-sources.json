@@ -1350,6 +1350,28 @@
       "operation_ids": [
         "AIMW-CONT-EDC262499D"
       ]
+    },
+    {
+      "label": "AIMW-CONT-47007EE040 Site Reliability operations route closure",
+      "sha": "fca00ed3979215af02f7bfcc95ac01697e029e9b",
+      "observed_pr_head": "fca00ed3979215af02f7bfcc95ac01697e029e9b",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "operation_ids": [
+        "AIMW-CONT-47007EE040"
+      ],
+      "route_api_provenance": {
+        "AIMW-CONT-47007EE040": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteReliabilityOperationsRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteReliabilityOperationsRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-reliability-operations-route-terminality.json",
+          "security_mode": "tenant_selected"
+        }
+      }
     }
   ],
   "excluded_sources": [],
