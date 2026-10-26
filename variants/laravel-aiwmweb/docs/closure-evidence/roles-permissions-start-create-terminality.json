@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #797 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-6CB3D0BE1B",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/admin/roles-permissions",
+    "source": "src/AIWordPressManager.Web/Components/Pages/RolesPermissions.razor",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Pages/RolesPermissions.razor:/admin/roles-permissions:@(L.IsArabic ? [StartCreate]",
+    "source_intent": "Enter a clean new-role creation state from Roles & Permissions.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "workspace": "/tenants/{tenant}/admin/roles-permissions",
+    "control": "variants/laravel-aiwmweb/backend/resources/js/roles-permissions-start-create-control.tsx",
+    "production_consumer": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "operation_marker": "AIMW-CONT-6CB3D0BE1B",
+    "role_mutation": "POST /tenants/{tenant}/admin/roles",
+    "authoritative_reconciliation": "GET /tenants/{tenant}/admin/roles after successful mutation"
+  },
+  "security": {
+    "control_permission": "roles.manage or wildcard",
+    "server_mutation_guard": "auth + tenant.context + roles.manage",
+    "tenant_selector": "active tenant context APIs only",
+    "foreign_tenant": "404/fail closed",
+    "placeholder_success": false,
+    "secrets_exposed": false
+  },
+  "acceptance": {
+    "vitest": "variants/laravel-aiwmweb/backend/resources/js/__tests__/roles-permissions-start-create-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/RolesPermissionsStartCreateTerminalityTest.php",
+    "coverage": [
+      "exact source StartCreate reset semantics",
+      "exact canonical operation marker",
+      "roles.manage fail-closed visibility",
+      "real tenant-scoped role POST",
+      "authoritative roles re-read after success",
+      "foreign-tenant 404",
+      "no adjacent operation claim"
+    ],
+    "ci_state": "PENDING_EXACT_HEAD"
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-CONT-6CB3D0BE1B"],
+    "sibling_operations_claimed": false,
+    "explicitly_not_claimed": [
+      "AIMW-CONT-47C0477703",
+      "AIMW-CONT-9CF12067E6"
+    ],
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "8e6ac6245a29f8b433139a9849e6b4dcfe74ffa0",
+    "branch": "worker/laravel-aiwmweb-AIMW-CONT-6CB3D0BE1B-start-create"
+  }
+}
