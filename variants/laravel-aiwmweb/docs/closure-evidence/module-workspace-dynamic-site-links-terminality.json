@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #791 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-E4D7C73D4E",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/module/{Key}",
+    "source": "src/AIWordPressManager.Web/Components/Pages/ModuleWorkspace.razor",
+    "source_control": "@($ -> @($",
+    "source_intent": "Navigate from each authoritative ModuleWorkspace site card to that exact site's real SEO or content workspace.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/module-workspace-load-sites-control.tsx",
+    "production_wiring": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "site_authority": "GET /api/tenants/{tenant}/sites",
+    "seo_destination": "/tenants/{tenant}/sites/{site}/seo",
+    "explorer_destination": "/tenants/{tenant}/explorer?site={site}",
+    "adaptation_reason": "Laravel consolidates per-site Content Explorer onto the tenant Explorer route with an authoritative site query; preserving site identity in ?site= is the source-equivalent adaptation.",
+    "behavior": "Both links are rendered only from normalized rows returned by the authenticated tenant sites read."
+  },
+  "security": {
+    "required_permissions": [
+      "tenant.view",
+      "seo.view"
+    ],
+    "server_selected_tenant": true,
+    "site_id_from_authoritative_read": true,
+    "tenant_slug_encoded_by_tenantUrl": true,
+    "explorer_site_id_percent_encoded": true,
+    "foreign_tenant_or_site": "fail closed",
+    "server_mutation_added": false,
+    "external_mutation_added": false,
+    "fake_success": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/module-workspace-load-sites-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/ModuleWorkspaceDynamicSiteLinksTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation identity and source dynamic href semantics",
+      "tenant-qualified SEO destination",
+      "site-qualified consolidated Explorer destination",
+      "two-site identity preservation",
+      "authoritative loading/empty/error behavior inherited from the existing ModuleWorkspace site picker",
+      "foreign tenant and foreign site rejection",
+      "read-only navigation with no persistence mutation"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-E4D7C73D4E"
+    ],
+    "load_sites_operation_claimed": false,
+    "manage_sites_operation_claimed": false,
+    "canonical_destination_operation_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "duplicate_branch_created": false
+  }
+}
