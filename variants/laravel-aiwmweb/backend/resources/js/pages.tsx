@@ -48,6 +48,7 @@ import { LiveSystemStatusRefreshControl } from './live-system-status-refresh-con
 import { EmailHistoryFiltersControl, type EmailHistoryFilterState } from './email-history-filters-control';
 import { GlobalUsersFullManagementControl } from './global-users-full-management-control';
 import { MediaDeleteControl } from './media-delete-control';
+import { MediaBackToSitesControl } from './media-back-to-sites-control';
 import { MediaManagerEditingSourceUrlControl } from './media-manager-editing-source-url-control';
 import { NotificationOpenControl } from './notification-open-control';
 import { PagesInterpolatedLinksControl } from './pages-interpolated-links-control';
@@ -493,6 +494,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     if (query.error) return (
         <div className="workspace-stack">
             <QueryError error={query.error} retry={() => query.refetch()} />
+            {route.key === 'media' ? (
+                <MediaBackToSitesControl tenantSlug={context.tenant.slug} error={query.error} />
+            ) : null}
             {route.key === 'site-operations' ? <SiteOperationsSitesLinkControl context={context} /> : null}
             <CurrentUserLogsControl context={context} />
         </div>
