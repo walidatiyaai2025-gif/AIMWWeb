@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - worker/laravel-aiwmweb-closure-composition
+      - worker/919-media-parity
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
       - 'variants/laravel-aiwmweb/docs/closure-evidence/**'
