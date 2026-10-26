@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 128,
-      "pending": 36,
+      "adapted": 129,
+      "pending": 35,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 128,
-      "percent": 78.05
+      "terminal": 129,
+      "percent": 78.66
     },
     "email": {
       "total": 82,
@@ -20104,21 +20104,34 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/routes/web.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteReliabilityOperationsRouteTerminalityTest.php",
+      "evidence": "AIMW-CONT-47007EE040 Site Reliability operations route closure@fca00ed3979215af02f7bfcc95ac01697e029e9b: variants/laravel-aiwmweb/backend/routes/web.php; explicit-route-api:AIMW-CONT-47007EE040; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/SiteReliabilityOperationsRouteTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/site-reliability-operations-route-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route/API provenance is operation-linked to a real route declaration, declared action, focused operation-ID binding, runtime acceptance, and strict security contract.",
+        "source_label": "AIMW-CONT-47007EE040 Site Reliability operations route closure",
+        "source_sha": "fca00ed3979215af02f7bfcc95ac01697e029e9b",
+        "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+        "evidence_mode": "explicit_route_api_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-reliability-operations-route-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-47007EE040",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/SiteReliabilityOperationsRouteTerminalityTest.php",
+          "operation-link-test:variants/laravel-aiwmweb/backend/tests/Feature/SiteReliabilityOperationsRouteTerminalityTest.php",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:404",
+          "test:403"
+        ]
       }
     },
     {
@@ -37366,12 +37379,12 @@
     "route": {
       "total": 84,
       "ported": 0,
-      "adapted": 77,
-      "pending": 7,
+      "adapted": 78,
+      "pending": 6,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 77,
-      "percent": 91.67
+      "terminal": 78,
+      "percent": 92.86
     },
     "service": {
       "total": 349,
@@ -37409,7 +37422,6 @@
       "AIMW-CONT-38FC74B9DE",
       "AIMW-CONT-40CD7F080F",
       "AIMW-CONT-4147188AB1",
-      "AIMW-CONT-47007EE040",
       "AIMW-CONT-47C0477703",
       "AIMW-CONT-50DF6B23CC",
       "AIMW-CONT-566A1899F1",
@@ -38371,6 +38383,18 @@
           "AIMW-CONT-EDC262499D"
         ],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "AIMW-CONT-47007EE040 Site Reliability operations route closure",
+        "sha": "fca00ed3979215af02f7bfcc95ac01697e029e9b",
+        "domains": [
+          "content"
+        ],
+        "supporting_only": true,
+        "operation_ids": [
+          "AIMW-CONT-47007EE040"
+        ],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -38455,6 +38479,7 @@
       "fa06abdfabc3d435386644615f7d59f3adb49d94",
       "fb068134c2ad60111bd376f4f400c1bd247394ca",
       "fb1507b10ec2aba89da4eb540dd1ad98e87e35a2",
+      "fca00ed3979215af02f7bfcc95ac01697e029e9b",
       "fcdb592864636e096ec75a4fab8beb580c380f6c",
       "fe609aae19825502b8ee519533871fe3948535da"
     ],
@@ -38545,6 +38570,7 @@
       "AIMW-CONT-2F2E40D7F0",
       "AIMW-CONT-3443C173C6",
       "AIMW-CONT-3FD89CE024",
+      "AIMW-CONT-47007EE040",
       "AIMW-CONT-475267F150",
       "AIMW-CONT-55FA799054",
       "AIMW-CONT-5CF47CBE2A",
@@ -38574,7 +38600,7 @@
       "AIMW-SEO-5F71B89C92",
       "AIMW-TAXO-CDC6948A06"
     ],
-    "explicit_route_api_contract_count": 41,
+    "explicit_route_api_contract_count": 42,
     "focused_closure_source_sha": "ae01461eb85c64046734688ae0bf3f418591c653",
     "focused_closure_contract_terminals": [
       "AIMW-AI-024BB0971B",
