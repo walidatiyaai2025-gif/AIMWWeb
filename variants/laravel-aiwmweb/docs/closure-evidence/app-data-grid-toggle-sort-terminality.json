@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "leaf_issue": 982,
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-0108E40967",
+  "domain": "sync",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Shared/AppDataGrid.razor",
+    "route_screen": "component:AppDataGrid",
+    "visible_control": "@SortText [ToggleSortAsync]",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Shared/AppDataGrid.razor:component:AppDataGrid:@SortText [ToggleSortAsync]",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "verification": "rendered/read response matches authoritative source",
+    "behavior": "ToggleSortAsync flips the descending flag, resets the current page to 1, and raises SortChanged with the new direction; rows are ordered case-insensitively through SortKeySelector."
+  },
+  "laravel_adaptation": {
+    "shared_contract": "variants/laravel-aiwmweb/backend/resources/js/app-data-grid-sort-control.tsx",
+    "consumer_wiring": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "real_consumer": "tenant-scoped Email Delivery History",
+    "consumer_api": "GET /api/v1/tenants/{tenant}/email/deliveries",
+    "sort_key_mapping": "Email History maps SortKeySelector to created_at with delivery_id fallback over the authoritative rows returned for the current tenant page.",
+    "control_binding": "data-canonical-operation=AIMW-SYNC-0108E40967",
+    "semantics": [
+      "toggle the descending flag exactly once per activation",
+      "reset the consumer page to 1 on every sort activation",
+      "render ascending/descending accessible state and matching directional icon",
+      "sort a copied row collection without mutating authoritative query data",
+      "perform no persistence, WordPress, queue, cache, provider, or secret mutation"
+    ],
+    "fake_or_demo_data": false
+  },
+  "authorization_and_isolation": {
+    "consumer_authorization": "auth + tenant.context + tenant.manage; route workspace also diagnostics.view",
+    "tenant_context": "server-provided FrontendContext plus backend tenant boundary",
+    "foreign_tenant_semantics": "404 fail closed",
+    "direct_tenant_override": false,
+    "tenant_owned": true
+  },
+  "semantics": {
+    "mutation": false,
+    "persistence_mutation": false,
+    "wordpress_mutation": false,
+    "queue_runtime": "not used",
+    "cache_mutation": "not used",
+    "secrets": "not read or written",
+    "authoritative_reread_on_page_reset": true,
+    "fake_success_path": "none"
+  },
+  "acceptance_tests": {
+    "frontend": {
+      "file": "variants/laravel-aiwmweb/backend/resources/js/__tests__/app-data-grid-sort-control.test.tsx",
+      "coverage": [
+        "exact descending-flag toggle",
+        "case-insensitive ascending and descending ordering without source-array mutation",
+        "exact canonical operation marker and aria-pressed state",
+        "Email History page reset to 1 with a fresh tenant-scoped read",
+        "no mutation request from sort activation"
+      ]
+    },
+    "php": {
+      "file": "variants/laravel-aiwmweb/backend/tests/Feature/AppDataGridToggleSortTerminalityTest.php",
+      "coverage": [
+        "exact canonical ledger identity/domain/kind/source/control",
+        "source ToggleSortAsync contract",
+        "production shared contract and Email History consumer binding",
+        "read-only tenant-scoped Email History endpoint",
+        "foreign-tenant 404 fail-closed behavior"
+      ]
+    }
+  },
+  "scope_guards": {
+    "exactly_one_operation": true,
+    "sibling_app_data_grid_operations_claimed": false,
+    "aspnet_runtime_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "retry_or_replacement_lineage_created": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "337c587bfe1af223bcbdf3eb13896fa43d22f984",
+    "branch": "worker/982-app-data-grid-toggle-sort"
+  },
+  "materialization": {
+    "path": "official Laravel AIWMWeb parity materializer",
+    "generated_reconciliation_hand_edited": false
+  }
+}
