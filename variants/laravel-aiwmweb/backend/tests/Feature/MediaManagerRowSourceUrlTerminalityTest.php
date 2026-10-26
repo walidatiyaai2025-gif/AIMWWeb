@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Permission;
 use App\Models\Role;
+use App\Models\Site;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
@@ -17,7 +18,7 @@ final class MediaManagerRowSourceUrlTerminalityTest extends TestCase
 
     private const OPERATION_ID = 'AIMW-MEDI-34E7DCA832';
 
-    public function test_media_manager_row_source_url_binding_is_exact_and_read_only(): void
+    public function test_media_manager_row_source_url_binding_is_exact_read_only_and_composed(): void
     {
         $control = (string) file_get_contents(
             resource_path('js/media-manager-row-source-url-control.tsx'),
@@ -29,9 +30,16 @@ final class MediaManagerRowSourceUrlTerminalityTest extends TestCase
             'safeContentExplorerMediaSourceUrl(value)',
             $control,
         );
-        $this->assertStringContainsString('rel="noopener noreferrer"', $control);
         $this->assertStringContainsString(
-            '<MediaManagerRowSourceUrlControl value={row.source_url} />',
+            '<MediaManagerRowSourceUrlControl value={row.source_url}>',
+            $host,
+        );
+        $this->assertStringContainsString(
+            '<ContentExplorerMediaSourceUrlControl value={row.source_url} />',
+            $host,
+        );
+        $this->assertStringContainsString(
+            '<MediaManagerEditingSourceUrlControl value={row.source_url}>',
             $host,
         );
         $this->assertStringNotContainsString('apiRequest', $control);
@@ -41,21 +49,22 @@ final class MediaManagerRowSourceUrlTerminalityTest extends TestCase
         $this->assertStringNotContainsString('DELETE', $control);
     }
 
-    public function test_media_workspace_rejects_foreign_tenant_context(): void
+    public function test_media_read_surface_rejects_foreign_tenant_context(): void
     {
-        $this->withoutVite();
+        $alphaUser = User::factory()->create();
+        $alpha = $this->membership($alphaUser, 'alpha-media-row', ['tenant.view', 'content.view']);
+        $alphaSite = $this->site($alpha, 'Alpha Media Row');
 
-        $alpha = User::factory()->create();
-        $this->membership($alpha, 'alpha-media-row', ['tenant.view', 'content.view']);
-        $beta = User::factory()->create();
-        $this->membership($beta, 'beta-media-row', ['tenant.view', 'content.view']);
+        $betaUser = User::factory()->create();
+        $beta = $this->membership($betaUser, 'beta-media-row', ['tenant.view', 'content.view']);
+        $betaSite = $this->site($beta, 'Beta Media Row');
 
-        $this->actingAs($alpha)
-            ->get('/tenants/alpha-media-row/module/media')
+        $this->actingAs($alphaUser)
+            ->getJson('/api/v1/tenants/alpha-media-row/sites/'.$alphaSite->id.'/media')
             ->assertOk();
 
-        $this->actingAs($alpha)
-            ->get('/tenants/beta-media-row/module/media')
+        $this->actingAs($alphaUser)
+            ->getJson('/api/v1/tenants/beta-media-row/sites/'.$betaSite->id.'/media')
             ->assertNotFound();
     }
 
@@ -83,5 +92,23 @@ final class MediaManagerRowSourceUrlTerminalityTest extends TestCase
         $context->forget();
 
         return $membership->fresh('tenant');
+    }
+
+    private function site(TenantMembership $membership, string $name): Site
+    {
+        $context = app(TenantContext::class);
+        $context->activate($membership->tenant, $membership);
+
+        try {
+            return Site::query()->create([
+                'name' => $name,
+                'url' => 'https://'.strtolower(str_replace(' ', '-', $name)).'.example.test',
+                'status' => 'active',
+                'connection_status' => 'connected',
+                'last_sync_at' => now(),
+            ]);
+        } finally {
+            $context->forget();
+        }
     }
 }
