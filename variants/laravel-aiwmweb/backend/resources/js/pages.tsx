@@ -47,6 +47,7 @@ import { EmailHistoryFiltersControl, type EmailHistoryFilterState } from './emai
 import { GlobalUsersFullManagementControl } from './global-users-full-management-control';
 import { MediaDeleteControl } from './media-delete-control';
 import { NotificationOpenControl } from './notification-open-control';
+import { PagesInterpolatedLinksControl } from './pages-interpolated-links-control';
 import { PagesWordPressLinkControl } from './pages-wordpress-link-control';
 import { PostsWordPressLinkControl } from './posts-wordpress-link-control';
 import { RolesStartCreateControl } from './roles-start-create-control';
@@ -837,7 +838,16 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         ) : route.key === 'posts' ? (row) => (
                             <PostsWordPressLinkControl value={row.link} />
                         ) : route.key === 'pages' ? (row) => (
-                            <PagesWordPressLinkControl value={row.link} />
+                            <span className="site-row-actions">
+                                <PagesInterpolatedLinksControl
+                                    tenantSlug={context.tenant.slug}
+                                    siteId={row.site_id}
+                                    wordpressId={row.wordpress_id}
+                                    siteName={row.site_name}
+                                />
+                                <span aria-hidden="true"> · </span>
+                                <PagesWordPressLinkControl value={row.link} />
+                            </span>
                         ) : route.key === 'media' && endpoint ? (row) => (
                             <MediaDeleteControl
                                 context={context}
