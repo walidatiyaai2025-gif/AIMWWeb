@@ -50,3 +50,4 @@ jobs:
           git push origin "HEAD:${{ github.ref_name }}"
 
 # exact-head CI retrigger after materialization
+# materialized reconciliation committed by GitHub Actions; user-authored touch retriggers exact-head gates
