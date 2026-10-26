@@ -61,7 +61,7 @@ final class SiteConnectionDynamicLinksTerminalityTest extends TestCase
         $this->assertStringContainsString(self::OPERATION_ID, $control);
         $this->assertStringContainsString('siteConnectionCenterDynamicLinks', $control);
         $this->assertStringContainsString('Number(site.id) !== Number(rawSiteId)', $control);
-        $this->assertStringContainsString("tenantUrl(tenantSlug, `/sites/${encodedSiteId}`)", $control);
+        $this->assertStringContainsString('tenantUrl(tenantSlug, `/sites/${encodedSiteId}`)', $control);
         $this->assertStringContainsString("tenantUrl(tenantSlug, '/explorer')", $control);
         $this->assertStringContainsString("tenantUrl(tenantSlug, '/module/execution')", $control);
         $this->assertStringContainsString('wp-admin/profile.php', $control);
