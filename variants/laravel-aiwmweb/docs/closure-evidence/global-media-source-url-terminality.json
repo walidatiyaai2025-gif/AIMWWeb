@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #915 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-MEDI-3444B17C11",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-MEDI-3444B17C11",
+    "domain": "media",
+    "kind": "visible_control",
+    "route_screen": "/module/media",
+    "source": "src/AIWordPressManager.Web/Components/Pages/GlobalMediaExplorer.razor",
+    "source_control": "@item.SourceUrl -> @item.SourceUrl",
+    "source_intent": "Open the authoritative WordPress media SourceUrl in a new tab from Global Media Explorer.",
+    "mutation": false,
+    "tenant_owned": true,
+    "external_dependency": "WordPress",
+    "risk": "low"
+  },
+  "laravel_adaptation": {
+    "operation_binding": "variants/laravel-aiwmweb/backend/resources/js/global-media-source-url-control.tsx",
+    "reused_safe_control": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-media-source-url-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "authoritative_read": "GET /api/v1/tenants/{tenant}/sites/{site}/media",
+    "read_controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentApiController.php",
+    "operation_marker": "AIMW-MEDI-3444B17C11",
+    "adaptation": "Global Media reuses the already-integrated safe SourceUrl anchor rather than duplicating link or URL-validation logic; this operation binding only materializes when that authoritative URL is a credential-free absolute HTTP(S) URL."
+  },
+  "security": {
+    "permission": "content.view",
+    "tenant_boundary": "auth + tenant.context and tenant-owned Site/MediaItem reads",
+    "foreign_tenant": "404 fail closed",
+    "destination_source": "persisted MediaItem.source_url only",
+    "allowed_schemes": ["http", "https"],
+    "credential_bearing_urls": "rejected",
+    "relative_or_malformed_urls": "rejected",
+    "mutation_added": false,
+    "duplicate_external_io": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-media-source-url-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalMediaSourceUrlTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation identity",
+      "source-equivalent new-tab behavior",
+      "reuse of existing safe SourceUrl control",
+      "unsafe and credential-bearing URL fail-closed behavior",
+      "authoritative persisted media SourceUrl read",
+      "permission and tenant isolation",
+      "read-only/no-mutation behavior",
+      "no duplicate API or fetch path"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-MEDI-3444B17C11"],
+    "existing_content_explorer_operation_preserved": "AIMW-CONT-B44DA81C28",
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "variant_boundary": "variants/laravel-aiwmweb/**"
+  }
+}
