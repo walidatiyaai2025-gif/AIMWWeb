@@ -2106,6 +2106,14 @@
       "operation_ids": [
         "AIMW-CONT-BB31987A53"
       ]
+    },
+    {
+      "label": "AIMW-CONT-7F2BC55FF4 ModuleWorkspace canonical destination focused closure",
+      "sha": "9ba4d8d10b266b3b2c8fdb97744cfe920d870fdc",
+      "observed_pr_head": "9ba4d8d10b266b3b2c8fdb97744cfe920d870fdc",
+      "operation_ids": [
+        "AIMW-CONT-7F2BC55FF4"
+      ]
     }
   ]
 }
