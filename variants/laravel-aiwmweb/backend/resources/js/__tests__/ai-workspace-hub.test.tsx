@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
     AI_WORKSPACE_CARD_OPERATION_ID,
     AI_WORKSPACE_OPERATION_ID,
+    MODULE_WORKSPACE_CANONICAL_DESTINATION_OPERATION_ID,
     AiWorkspaceHub,
 } from '../ai-workspace-hub';
 import type { FrontendContext } from '../core';
@@ -86,6 +87,43 @@ describe('AIMW-AI-8EE4F9F6FC AI workspace route', () => {
             expect(link.getAttribute('href')).toContain('/tenants/alpha%2F..%2Fbeta/');
             expect(link.getAttribute('href')).not.toContain('/tenants/beta/');
         }
+    });
+});
+
+
+describe('AIMW-CONT-7F2BC55FF4 ModuleWorkspace canonical destination adaptation', () => {
+    it('maps the three source @destination targets to the same tenant-qualified real workspaces', () => {
+        renderHub();
+
+        expect(MODULE_WORKSPACE_CANONICAL_DESTINATION_OPERATION_ID).toBe('AIMW-CONT-7F2BC55FF4');
+
+        const canonicalLinks = screen.getAllByTestId('workspace-link').filter((link) =>
+            link.getAttribute('data-module-workspace-canonical-destination-operation') === MODULE_WORKSPACE_CANONICAL_DESTINATION_OPERATION_ID,
+        );
+
+        expect(canonicalLinks.map((link) => link.getAttribute('data-workspace-key'))).toEqual([
+            'ai-providers',
+            'ai-prompts',
+            'approvals',
+        ]);
+        expect(canonicalLinks.map((link) => link.getAttribute('href'))).toEqual([
+            '/tenants/alpha/settings/ai-providers',
+            '/tenants/alpha/settings/ai-prompts',
+            '/tenants/alpha/approvals',
+        ]);
+
+        const aiCenter = screen.getAllByTestId('workspace-link').find((link) => link.getAttribute('data-workspace-key') === 'ai-center');
+        expect(aiCenter).toBeDefined();
+        expect(aiCenter!).not.toHaveAttribute('data-module-workspace-canonical-destination-operation');
+    });
+
+    it('never renders a canonical destination marker when the user cannot open that real workspace', () => {
+        renderHub('alpha', ['tenant.view', 'ai.use']);
+
+        const links = screen.getAllByTestId('workspace-link');
+        expect(links).toHaveLength(1);
+        expect(links[0]).toHaveAttribute('data-workspace-key', 'ai-center');
+        expect(links[0]).not.toHaveAttribute('data-module-workspace-canonical-destination-operation');
     });
 });
 
