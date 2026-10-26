@@ -1,4 +1,5 @@
 name: Laravel AIWMWeb Task Parity Materialize 815
+# exact-head reconciliation refresh
 
 on:
   push:
@@ -44,8 +45,11 @@ jobs:
         run: |
           set -euo pipefail
           git rm .github/workflows/laravel-aiwmweb-task-parity-materialize-815.yml
-          git add variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json                   variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git add variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore(laravel): materialize exact #815 parity artifacts"
+          git commit -m "chore(laravel): refresh exact #815 parity artifacts"
+          git fetch origin "${{ github.ref_name }}"
+          git rebase "origin/${{ github.ref_name }}"
           git push origin "HEAD:${{ github.ref_name }}"
