@@ -2296,6 +2296,14 @@
       "operation_ids": [
         "AIMW-CONT-6EC0601E18"
       ]
+    },
+    {
+      "label": "AIMW-SYNC-2E94028E4E AppDataGrid ClearSelectionAsync issue #983 focused closure",
+      "sha": "fd2a443d339836c1fb279052155f94655294e633",
+      "observed_pr_head": "fd2a443d339836c1fb279052155f94655294e633",
+      "operation_ids": [
+        "AIMW-SYNC-2E94028E4E"
+      ]
     }
   ],
   "sources": [
