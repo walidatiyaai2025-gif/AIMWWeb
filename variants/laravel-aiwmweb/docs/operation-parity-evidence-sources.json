@@ -1372,6 +1372,14 @@
           "security_mode": "tenant_selected"
         }
       }
+    },
+    {
+      "label": "AIMW-CONT-6700342002 Settings SetRose focused closure",
+      "sha": "f2dc3210543d17028ab24c2e865eec2a966bf8ad",
+      "observed_pr_head": "f2dc3210543d17028ab24c2e865eec2a966bf8ad",
+      "operation_ids": [
+        "AIMW-CONT-6700342002"
+      ]
     }
   ],
   "excluded_sources": [],
@@ -2258,11 +2266,11 @@
       ]
     },
     {
-      "label": "AIMW-SYNC-0108E40967 AppDataGrid ToggleSortAsync focused closure",
-      "sha": "8f53d8947413f1747d2195bc3b0a9970c45f9717",
-      "observed_pr_head": "8f53d8947413f1747d2195bc3b0a9970c45f9717",
+      "label": "AIMW-CONT-6700342002 Settings SetRose focused closure",
+      "sha": "f2dc3210543d17028ab24c2e865eec2a966bf8ad",
+      "observed_pr_head": "f2dc3210543d17028ab24c2e865eec2a966bf8ad",
       "operation_ids": [
-        "AIMW-SYNC-0108E40967"
+        "AIMW-CONT-6700342002"
       ]
     }
   ],
