@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
     buildSiteOperationsCsv,
@@ -64,7 +64,7 @@ describe('AIMW-BILL-582319B640 Site Operations ExportCsvAsync', () => {
         expect(button).toHaveAttribute('title', 'There are no displayed operations to export.');
     });
 
-    it('starts a real browser download only from the supplied authoritative rows', () => {
+    it('starts a real browser download only from the supplied authoritative rows', async () => {
         const createObjectURL = vi.fn(() => 'blob:site-operations');
         const revokeObjectURL = vi.fn();
         Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: createObjectURL });
@@ -85,13 +85,13 @@ describe('AIMW-BILL-582319B640 Site Operations ExportCsvAsync', () => {
         expect(button).toHaveAttribute('data-canonical-operation', SITE_OPERATIONS_EXPORT_OPERATION_ID);
         fireEvent.click(button);
 
-        expect(createObjectURL).toHaveBeenCalledTimes(1);
+        await waitFor(() => expect(createObjectURL).toHaveBeenCalledTimes(1));
         expect(click).toHaveBeenCalledTimes(1);
         expect(revokeObjectURL).toHaveBeenCalledWith('blob:site-operations');
         expect(screen.queryByRole('alert')).toBeNull();
     });
 
-    it('reports a truthful error instead of success when browser download startup fails', () => {
+    it('reports a truthful error instead of success when browser download startup fails', async () => {
         Object.defineProperty(URL, 'createObjectURL', {
             configurable: true,
             value: vi.fn(() => { throw new Error('downloads blocked'); }),
@@ -107,6 +107,6 @@ describe('AIMW-BILL-582319B640 Site Operations ExportCsvAsync', () => {
         }]} locale="en" />);
 
         fireEvent.click(screen.getByRole('button', { name: 'Export CSV' }));
-        expect(screen.getByRole('alert')).toHaveTextContent('could not be started');
+        expect(await screen.findByRole('alert')).toHaveTextContent('could not be started');
     });
 });
