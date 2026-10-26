@@ -31,7 +31,7 @@ jobs:
           import json
           from pathlib import Path
           op = 'AIMW-CONT-EDC262499D'
-          sha = 'f2c9f6e2f4fb34955697950ad27d7d0064eddc95'
+          sha = 'bfab191167739a9b43cbc6e8dff049689ce00b54'
           p = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
           d = json.loads(p.read_text())
           e = {
