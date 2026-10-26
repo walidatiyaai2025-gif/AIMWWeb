@@ -39,8 +39,8 @@ final class ModuleWorkspaceDynamicSiteLinksTerminalityTest extends TestCase
         $app = (string) file_get_contents(resource_path('js/app.tsx'));
 
         $this->assertStringContainsString(self::OPERATION_ID, $frontend);
-        $this->assertStringContainsString("tenantUrl(context.tenant.slug, `/sites/${site.id}/seo`)", $frontend);
-        $this->assertStringContainsString("tenantUrl(context.tenant.slug, `/explorer?site=${site.id}`)", $frontend);
+        $this->assertStringContainsString('tenantUrl(context.tenant.slug, `/sites/${site.id}/seo`)', $frontend);
+        $this->assertStringContainsString('tenantUrl(context.tenant.slug, `/explorer?site=${site.id}`)', $frontend);
         $this->assertStringContainsString('data-testid="seo-site-link"', $frontend);
         $this->assertStringContainsString('data-testid="seo-site-explorer-link"', $frontend);
         $this->assertStringContainsString('ModuleWorkspaceLoadSitesControl', $app);
