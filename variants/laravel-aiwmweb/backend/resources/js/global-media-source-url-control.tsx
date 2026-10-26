@@ -1,8 +1,5 @@
 import React from 'react';
-import {
-    ContentExplorerMediaSourceUrlControl,
-    safeContentExplorerMediaSourceUrl,
-} from './content-explorer-media-source-url-control';
+import { safeContentExplorerMediaSourceUrl } from './content-explorer-media-source-url-control';
 
 export const GLOBAL_MEDIA_SOURCE_URL_OPERATION_ID = 'AIMW-MEDI-3444B17C11';
 
@@ -19,13 +16,5 @@ export function GlobalMediaSourceUrlOperationBinding({
         <span data-canonical-operation={GLOBAL_MEDIA_SOURCE_URL_OPERATION_ID}>
             {children}
         </span>
-    );
-}
-
-export function GlobalMediaSourceUrlControl({ value }: { value: unknown }) {
-    return (
-        <GlobalMediaSourceUrlOperationBinding value={value}>
-            <ContentExplorerMediaSourceUrlControl value={value} />
-        </GlobalMediaSourceUrlOperationBinding>
     );
 }
