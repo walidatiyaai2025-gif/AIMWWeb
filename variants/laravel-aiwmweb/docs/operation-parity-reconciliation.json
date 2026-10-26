@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 810,
-    "pending": 121,
+    "adapted": 811,
+    "pending": 120,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 810,
-    "overall_parity_percent": 87.0
+    "terminal": 811,
+    "overall_parity_percent": 87.11
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 332,
-    "pending": 114,
+    "terminal": 333,
+    "pending": 113,
     "blocked": 0,
-    "percent": 74.44
+    "percent": 74.66
   },
   "domains": {
     "ai": {
@@ -48,7 +48,7 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 92,
-      "percent": 100.0
+      "percent": 100
     },
     "approvals": {
       "total": 25,
@@ -58,7 +58,7 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 25,
-      "percent": 100.0
+      "percent": 100
     },
     "automation": {
       "total": 59,
@@ -68,7 +68,7 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 59,
-      "percent": 100.0
+      "percent": 100
     },
     "backup": {
       "total": 14,
@@ -78,7 +78,7 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 14,
-      "percent": 100.0
+      "percent": 100
     },
     "billing": {
       "total": 178,
@@ -88,7 +88,7 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 178,
-      "percent": 100.0
+      "percent": 100
     },
     "comments": {
       "total": 8,
@@ -98,17 +98,17 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 8,
-      "percent": 100.0
+      "percent": 100
     },
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 120,
-      "pending": 44,
+      "adapted": 121,
+      "pending": 43,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 120,
-      "percent": 73.17
+      "terminal": 121,
+      "percent": 73.78
     },
     "email": {
       "total": 82,
@@ -128,7 +128,7 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 7,
-      "percent": 100.0
+      "percent": 100
     },
     "media": {
       "total": 15,
@@ -138,7 +138,7 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 6,
-      "percent": 40.0
+      "percent": 40
     },
     "operations": {
       "total": 5,
@@ -148,7 +148,7 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 5,
-      "percent": 100.0
+      "percent": 100
     },
     "platform": {
       "total": 18,
@@ -158,7 +158,7 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 18,
-      "percent": 100.0
+      "percent": 100
     },
     "reports": {
       "total": 1,
@@ -168,7 +168,7 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 1,
-      "percent": 100.0
+      "percent": 100
     },
     "seo": {
       "total": 24,
@@ -178,7 +178,7 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 24,
-      "percent": 100.0
+      "percent": 100
     },
     "settings": {
       "total": 1,
@@ -188,7 +188,7 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 1,
-      "percent": 100.0
+      "percent": 100
     },
     "sites": {
       "total": 12,
@@ -198,7 +198,7 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 12,
-      "percent": 100.0
+      "percent": 100
     },
     "sync": {
       "total": 213,
@@ -18022,21 +18022,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/module-workspace-load-sites-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/module-workspace-load-sites-control.test.tsx",
+      "evidence": "AIMW-CONT-E4D7C73D4E ModuleWorkspace dynamic site links focused closure@47818671472aab93fb7136bf9e6db0e26588df72: variants/laravel-aiwmweb/backend/resources/js/module-workspace-load-sites-control.tsx; focused-closure:AIMW-CONT-E4D7C73D4E; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/module-workspace-load-sites-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/module-workspace-dynamic-site-links-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-E4D7C73D4E ModuleWorkspace dynamic site links focused closure",
+        "source_sha": "47818671472aab93fb7136bf9e6db0e26588df72",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/module-workspace-load-sites-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/module-workspace-dynamic-site-links-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-E4D7C73D4E",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/module-workspace-load-sites-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/module-workspace-load-sites-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/module-workspace-dynamic-site-links-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -37231,7 +37241,7 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 31,
-      "percent": 100.0
+      "percent": 100
     },
     "background_job": {
       "total": 21,
@@ -37241,7 +37251,7 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 21,
-      "percent": 100.0
+      "percent": 100
     },
     "route": {
       "total": 84,
@@ -37261,17 +37271,17 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 349,
-      "percent": 100.0
+      "percent": 100
     },
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 332,
-      "pending": 114,
+      "adapted": 333,
+      "pending": 113,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 332,
-      "percent": 74.44
+      "terminal": 333,
+      "percent": 74.66
     }
   },
   "pending_operation_ids_by_domain": {
@@ -37322,7 +37332,6 @@
       "AIMW-CONT-CA4920CBC8",
       "AIMW-CONT-CF4BE4EC3B",
       "AIMW-CONT-DF6FFA9D87",
-      "AIMW-CONT-E4D7C73D4E",
       "AIMW-CONT-ED2F1E1572",
       "AIMW-CONT-EDC262499D",
       "AIMW-CONT-EE659E3F13"
@@ -38657,6 +38666,7 @@
       "AIMW-CONT-E1A7A8CAA7",
       "AIMW-CONT-E346398EAD",
       "AIMW-CONT-E38ADF8481",
+      "AIMW-CONT-E4D7C73D4E",
       "AIMW-CONT-E89EDDF780",
       "AIMW-CONT-EBD53650BC",
       "AIMW-CONT-EE531AE1FC",
@@ -39448,10 +39458,17 @@
         "operation_ids": [
           "AIMW-CONT-BB31987A53"
         ]
+      },
+      {
+        "label": "AIMW-CONT-E4D7C73D4E ModuleWorkspace dynamic site links focused closure",
+        "sha": "47818671472aab93fb7136bf9e6db0e26588df72",
+        "operation_ids": [
+          "AIMW-CONT-E4D7C73D4E"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 102,
-    "focused_closure_contract_count": 332,
+    "focused_closure_operation_scoped_count": 103,
+    "focused_closure_contract_count": 333,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [

@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #791 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-E4D7C73D4E",
+  "terminal_state": "ADAPTED",
+  "source": "src/AIWordPressManager.Web/Components/Pages/ModuleWorkspace.razor",
+  "source_action": "@($ -> @($",
+  "destination": "variants/laravel-aiwmweb/backend/resources/js/module-workspace-load-sites-control.tsx",
+  "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/module-workspace-load-sites-control.test.tsx",
+  "backend_test": "variants/laravel-aiwmweb/backend/tests/Feature/ModuleWorkspaceDynamicSiteLinksTerminalityTest.php",
+  "runtime": "the authenticated SEO module gateway renders dynamic per-site navigation only after the authoritative tenant site collection reaches ready state; SEO preserves /sites/{site}/seo and Explorer preserves the selected site as /explorer?site={site}",
+  "authorization": "tenant.view plus seo.view (or wildcard) and exact tenant-qualified api.sites advertisement; otherwise the gateway fails closed",
+  "authoritative_read": "GET /api/tenants/{tenant}/sites",
+  "tenant_isolation": "site ids are accepted only from the tenant-scoped authoritative site collection returned for the active server tenant",
+  "server_mutation": false,
+  "external_mutation": false,
+  "network_request": "read-only tenant site collection only",
+  "only_operation_claimed": "AIMW-CONT-E4D7C73D4E",
+  "materialized": true,
+  "evidence_source_sha": "f4235cabc7fe116eb5c47337b6d1a890d594a883",
+  "post_materialization_gate_trigger": "user-authored exact-head CI trigger after official operation-scoped materialization; runtime semantics unchanged"
+}
