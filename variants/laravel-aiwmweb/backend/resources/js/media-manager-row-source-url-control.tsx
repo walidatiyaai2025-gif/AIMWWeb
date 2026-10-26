@@ -1,26 +1,27 @@
-import React from 'react';
+import React, { type ReactNode } from 'react';
 import { safeContentExplorerMediaSourceUrl } from './content-explorer-media-source-url-control';
-import { useLocale } from './i18n';
 
 export const MEDIA_MANAGER_ROW_SOURCE_URL_OPERATION_ID = 'AIMW-MEDI-34E7DCA832';
 
-export function MediaManagerRowSourceUrlControl({ value }: { value: unknown }) {
-    const { locale } = useLocale();
-    const safeUrl = safeContentExplorerMediaSourceUrl(value);
-
-    if (!safeUrl) return null;
+// Preserve the existing hardened SourceUrl anchor and sibling operation markers.
+// This wrapper records the exact MediaManager row-level canonical operation without
+// rendering a duplicate action or introducing a second data source.
+export function MediaManagerRowSourceUrlControl({
+    value,
+    children,
+}: {
+    value: unknown;
+    children: ReactNode;
+}) {
+    if (!safeContentExplorerMediaSourceUrl(value)) return null;
 
     return (
-        <a
-            className="btn compact"
-            href={safeUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            data-canonical-operation={MEDIA_MANAGER_ROW_SOURCE_URL_OPERATION_ID}
+        <span
+            className="media-manager-row-source-url"
             data-source-control="media-manager-row-source-url"
-            aria-label={locale === 'ar' ? 'فتح ملف الوسائط' : 'Open media file'}
+            data-canonical-operation={MEDIA_MANAGER_ROW_SOURCE_URL_OPERATION_ID}
         >
-            {locale === 'ar' ? 'فتح الملف' : 'Open file'} ↗
-        </a>
+            {children}
+        </span>
     );
 }
