@@ -148,6 +148,7 @@ final class EmailNotificationController extends Controller
             'search' => ['nullable', 'string', 'max:100'],
             'page' => ['nullable', 'integer', 'min:1'],
             'per_page' => ['nullable', 'integer', 'between:1,100'],
+            'sort_desc' => ['nullable', 'boolean'],
         ]);
 
         return response()->json($this->deliveries->history($filters));
