@@ -12,7 +12,7 @@
     "file": "src/AIWordPressManager.Web/Components/Pages/RolesPermissions.razor",
     "route_screen": "/admin/roles-permissions",
     "visible_control": "@(L.IsArabic ? [StartCreate]",
-    "source_intent": "Enter a clean new-role creation state without persisting anything.",
+    "source_intent": "Enter a clean new-role creation state without persisting anything on the StartCreate click.",
     "tenant_owned": true,
     "mutation": false,
     "risk": "low"
@@ -22,9 +22,12 @@
     "control": "variants/laravel-aiwmweb/backend/resources/js/roles-start-create-control.tsx",
     "operation_marker": "AIMW-CONT-6CB3D0BE1B",
     "workspace": "/tenants/{tenant}/admin/roles-permissions",
-    "existing_action_contract": "roles.create",
-    "behavior": "Open the existing ActionDialog with a freshly reset form state; no request is sent by the StartCreate control.",
-    "busy_behavior": "Disabled while another role mutation is in progress, matching ASP.NET _working.",
+    "start_create_behavior": "Reset local role name/error state and open the real create-role dialog. The StartCreate click issues no request.",
+    "supporting_existing_mutation": "POST /tenants/{tenant}/admin/roles via the existing AdminOperationsController::saveRole path; this supporting save is not claimed as the canonical StartCreate operation.",
+    "authoritative_reconciliation": "GET /tenants/{tenant}/admin/roles after successful supporting save.",
+    "initial_permissions": [],
+    "least_privilege": "A newly created role begins with no permissions, preserving least privilege.",
+    "busy_behavior": "Disabled while authoritative role data is refreshing or the supporting role save is in progress.",
     "bilingual_label": "New role / دور جديد",
     "mutation": false,
     "external_call": false,
@@ -32,8 +35,8 @@
   },
   "security_boundary": {
     "route": "auth + tenant.context + tenant.view + roles.view",
-    "create_authority": "The downstream roles.create server mutation remains guarded by roles.manage.",
-    "availability": "The control fails closed unless the server advertises the roles.create action contract.",
+    "control_visibility": "roles.manage or wildcard",
+    "supporting_save_guard": "AdminOperationsController::saveRole authorizes roles.manage",
     "foreign_tenant": "404/fail closed",
     "tenant_selector": "active authenticated tenant context only"
   },
@@ -43,7 +46,8 @@
   ],
   "scope": {
     "only_operation_claimed": "AIMW-CONT-6CB3D0BE1B",
-    "sibling_roles_create_mutation_claimed": false,
+    "supporting_role_save_claimed_as_operation": false,
+    "sibling_roles_assign_claimed": false,
     "aspnet_modified": false,
     "generated_reconciliation_modified": false,
     "denominator_modified": false
@@ -51,7 +55,7 @@
   "scope_exclusions": [
     "No ASP.NET runtime changes",
     "No new role persistence endpoint",
-    "No duplicate role editor",
+    "No roles.create ActionContract invented for the non-mutating StartCreate identity",
     "No roles.assign claim",
     "No manual generated reconciliation edits"
   ],
