@@ -8,12 +8,12 @@ Authority: AIMWWeb Issue #257. Evidence-only reconciliation; no feature completi
 |---|---:|
 | TOTAL | 931 |
 | PORTED | 0 |
-| ADAPTED | 822 |
-| PENDING | 109 |
+| ADAPTED | 823 |
+| PENDING | 108 |
 | BLOCKED | 0 |
 | VERIFIED_UNAVAILABLE_EXTERNAL | 0 |
-| TERMINAL | 822 |
-| OVERALL_PARITY_PERCENT | 88.29% |
+| TERMINAL | 823 |
+| OVERALL_PARITY_PERCENT | 88.40% |
 
 Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`; `BLOCKED` is not progress.
 
