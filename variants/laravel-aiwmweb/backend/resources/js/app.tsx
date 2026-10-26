@@ -67,6 +67,7 @@ import { SettingsBillingSupportLinkControl } from './settings-billing-support-li
 import { SettingsAiProvidersLinkControl } from './settings-ai-providers-link-control';
 import { SettingsAccessibilityAnchorControl } from './settings-accessibility-anchor-control';
 import { SettingsAdminSessionsLinkControl } from './settings-admin-sessions-link-control';
+import { SettingsMySessionsLinkControl } from './settings-my-sessions-link-control';
 import { SettingsAppearanceLightControl } from './settings-appearance-light-control';
 import { SettingsDatabaseAnchorControl } from './settings-database-anchor-control';
 import { SettingsLanguageAnchorControl } from './settings-language-anchor-control';
@@ -213,7 +214,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     if (route.key === 'sessions') return <><MySessionsAdminLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'backups') return <><BackupCopyPathControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'configuration-validation') return <><ConfigurationValidationCopyReportControl context={context} /><WorkspacePage context={context} route={route} /></>;
-    if (route.key === 'settings') return <><SettingsAdminSessionsLinkControl context={context} /><SettingsAccessibilityAnchorControl context={context} /><SettingsLanguageAnchorControl context={context} /><SettingsAppearanceLightControl context={context} /><SettingsDatabaseAnchorControl context={context} /><SettingsBillingSupportLinkControl context={context} /><SettingsAiProvidersLinkControl context={context} /><SettingsAiPromptsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'settings') return <><SettingsMySessionsLinkControl context={context} /><SettingsAdminSessionsLinkControl context={context} /><SettingsAccessibilityAnchorControl context={context} /><SettingsLanguageAnchorControl context={context} /><SettingsAppearanceLightControl context={context} /><SettingsDatabaseAnchorControl context={context} /><SettingsBillingSupportLinkControl context={context} /><SettingsAiProvidersLinkControl context={context} /><SettingsAiPromptsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'account-billing') return <><BillingProfileLink context={context} /><BillingStartCheckoutControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'admin-billing-support') return <><AdminBillingSupportSettingsLink context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'ai-center') return <><AiCenterApprovalStatusControl context={context} /><WorkspacePage context={context} route={route} /></>;
