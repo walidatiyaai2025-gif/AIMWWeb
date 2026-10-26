@@ -62,5 +62,21 @@
     "aspnet_product_modified": false,
     "generated_reconciliation_hand_edited": false,
     "mutation_added": false
+  },
+  "materialization": {
+    "workflow_run": 40294215865,
+    "materialized_head": "3fb05e7a52e6ed173887627f0ec5ba234a86fc9d",
+    "result": "success",
+    "operation_delta": "AIMW-CONT-A3A2CD23B6 PENDING -> ADAPTED; exactly one terminal operation added",
+    "generated_totals": {
+      "total": 931,
+      "terminal": 818,
+      "pending": 113,
+      "overall_parity_percent": 87.86,
+      "visible_control_terminal": 340,
+      "visible_control_pending": 106,
+      "visible_control_percent": 76.23
+    },
+    "note": "Official parity materializer completed on the latest synchronized #786 implementation; generated reconciliation was not hand-edited."
   }
 }
