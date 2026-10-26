@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { FrontendContext, WorkspaceRoute } from '../core';
 import {
+    MODULE_WORKSPACE_DYNAMIC_SITE_LINK_OPERATION_ID,
     MODULE_WORKSPACE_LOAD_SITES_OPERATION_ID,
     MODULE_WORKSPACE_MANAGE_SITES_OPERATION_ID,
     ModuleWorkspaceLoadSitesControl,
@@ -65,9 +66,34 @@ describe(`${MODULE_WORKSPACE_LOAD_SITES_OPERATION_ID} ModuleWorkspace LoadSitesA
 
         expect(screen.getByTestId('seo-site-picker-loading')).toHaveAttribute('aria-busy', 'true');
         expect(await screen.findByText('Alpha WordPress')).toBeInTheDocument();
-        expect(screen.getByTestId('seo-site-link')).toHaveAttribute('href', '/tenants/alpha/sites/7/seo');
+        const seoLink = screen.getByTestId('seo-site-link');
+        const explorerLink = screen.getByTestId('seo-content-explorer-link');
+        expect(MODULE_WORKSPACE_DYNAMIC_SITE_LINK_OPERATION_ID).toBe('AIMW-CONT-E4D7C73D4E');
+        expect(seoLink).toHaveAttribute('href', '/tenants/alpha/sites/7/seo');
+        expect(seoLink).toHaveAttribute('data-canonical-operation', MODULE_WORKSPACE_DYNAMIC_SITE_LINK_OPERATION_ID);
+        expect(explorerLink).toHaveAttribute('href', '/tenants/alpha/explorer?site=7');
+        expect(explorerLink).toHaveAttribute('data-canonical-operation', MODULE_WORKSPACE_DYNAMIC_SITE_LINK_OPERATION_ID);
         expect(fetchMock).toHaveBeenCalledTimes(1);
         expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/tenants/alpha/sites');
+    });
+
+    it('derives both dynamic destinations from each authoritative site instead of dropping site identity', async () => {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse([
+            { id: 7, name: 'First' },
+            { id: 19, name: 'Second' },
+        ])));
+
+        renderControl();
+        expect(await screen.findByText('First')).toBeInTheDocument();
+
+        expect(screen.getAllByTestId('seo-site-link').map((link) => link.getAttribute('href'))).toEqual([
+            '/tenants/alpha/sites/7/seo',
+            '/tenants/alpha/sites/19/seo',
+        ]);
+        expect(screen.getAllByTestId('seo-content-explorer-link').map((link) => link.getAttribute('href'))).toEqual([
+            '/tenants/alpha/explorer?site=7',
+            '/tenants/alpha/explorer?site=19',
+        ]);
     });
 
     it('refreshes by rereading the same authoritative site collection', async () => {
