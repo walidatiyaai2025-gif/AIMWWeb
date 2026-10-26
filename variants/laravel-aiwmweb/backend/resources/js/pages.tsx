@@ -29,6 +29,7 @@ import { prepareActionRequest } from './action-contract';
 import { AUTOMATION_PHASE_ACTION_OPERATIONS, AUTOMATION_PHASE_REFRESH_OPERATIONS, SCHEDULE_CANCEL_EDIT_OPERATION_ID } from './automation-phase-controls';
 import { AuthoritativeReconciliationError, mutateThenReconcile } from './reconciliation';
 import { ContentExplorerWordPressLinkControl } from './content-explorer-wordpress-link-control';
+import { ContentExplorerMediaSourceUrlControl } from './content-explorer-media-source-url-control';
 import { ContentExplorerPreviewPanel } from './content-explorer-preview-panel';
 import { CONTENT_EXPLORER_CONTENT_TAB_RESET_EVENT } from './content-explorer-content-tab-control';
 import { ContentExplorerPagination } from './content-explorer-previous-page-control';
@@ -47,6 +48,7 @@ import { LiveSystemStatusRefreshControl } from './live-system-status-refresh-con
 import { EmailHistoryFiltersControl, type EmailHistoryFilterState } from './email-history-filters-control';
 import { GlobalUsersFullManagementControl } from './global-users-full-management-control';
 import { MediaDeleteControl } from './media-delete-control';
+import { MediaManagerEditingSourceUrlControl } from './media-manager-editing-source-url-control';
 import { MediaManagerRowSourceUrlControl } from './media-manager-row-source-url-control';
 import { NotificationOpenControl } from './notification-open-control';
 import { PagesInterpolatedLinksControl } from './pages-interpolated-links-control';
@@ -853,7 +855,11 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             </span>
                         ) : route.key === 'media' && endpoint ? (row) => (
                             <span className="site-row-actions">
-                                <MediaManagerRowSourceUrlControl value={row.source_url} />
+                                <MediaManagerEditingSourceUrlControl value={row.source_url}>
+                                    <MediaManagerRowSourceUrlControl value={row.source_url}>
+                                        <ContentExplorerMediaSourceUrlControl value={row.source_url} />
+                                    </MediaManagerRowSourceUrlControl>
+                                </MediaManagerEditingSourceUrlControl>
                                 <MediaDeleteControl
                                     context={context}
                                     endpoint={endpoint}
