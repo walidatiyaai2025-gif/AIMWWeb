@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #808 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-659BEF8765",
+  "domain": "content",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "source": "src/AIWordPressManager.Web/Components/Pages/Settings.razor",
+  "source_action": "SetOcean",
+  "destination": "variants/laravel-aiwmweb/backend/resources/js/settings-accent-theme-control.tsx",
+  "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-set-ocean-control.test.tsx",
+  "backend_test": "variants/laravel-aiwmweb/backend/tests/Feature/SettingsSetOceanTerminalityTest.php",
+  "runtime": "reuse canonical aiwm-color-theme persistence; applying Ocean sets html data-theme=ocean and persists ocean locally",
+  "server_mutation": false,
+  "external_mutation": false,
+  "tenant_permission": "tenant.view",
+  "only_operation_claimed": "AIMW-CONT-659BEF8765",
+  "materialized": true
+}
