@@ -61,7 +61,7 @@ final class RolesPermissionsStartCreateTerminalityTest extends TestCase
         $context = app(TenantContext::class);
         $context->activate($tenant);
         $role = Role::query()->where('name', 'editor')->firstOrFail();
-        $this->assertTrue($role->permissions()->whereIn('name', ['content.view', 'sites.view'])->count() === 2);
+        $this->assertTrue($role->permissions()->whereIn('permissions.name', ['content.view', 'sites.view'])->count() === 2);
         $context->forget();
 
         $this->actingAs($actor)
