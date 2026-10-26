@@ -2058,14 +2058,6 @@
       "operation_ids": [
         "AIMW-CONT-6CB3D0BE1B"
       ]
-    },
-    {
-      "label": "AIMW-CONT-7D7BCD462F Register submit button visible-control focused closure",
-      "sha": "fc447ef772ab2eb1529471216c3ecc305bc0d77e",
-      "observed_pr_head": "fc447ef772ab2eb1529471216c3ecc305bc0d77e",
-      "operation_ids": [
-        "AIMW-CONT-7D7BCD462F"
-      ]
     }
   ]
 }
