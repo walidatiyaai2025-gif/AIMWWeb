@@ -11,12 +11,16 @@
   "destination": "variants/laravel-aiwmweb/backend/resources/js/media-manager-row-source-url-control.tsx",
   "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/media-manager-row-source-url-control.test.tsx",
   "backend_test": "variants/laravel-aiwmweb/backend/tests/Feature/MediaManagerRowSourceUrlTerminalityTest.php",
-  "runtime": "the tenant-scoped media collection renders the authoritative row.source_url as a hardened read-only external Open file link",
+  "runtime": "the tenant-scoped media row composes the existing hardened SourceUrl anchor inside an operation-specific wrapper; no duplicate Open file action is rendered",
   "authorization": "the media workspace remains inside authenticated tenant context with content.view; foreign tenant access returns 404",
-  "source_url_policy": "only absolute trimmed http/https URLs without embedded credentials are rendered",
+  "source_url_policy": "the wrapper reuses safeContentExplorerMediaSourceUrl; the existing child anchor remains the sole absolute trimmed http/https URL action without embedded credentials",
   "server_mutation": false,
   "external_mutation": false,
   "network_request_from_control": false,
   "only_operation_claimed": "AIMW-MEDI-34E7DCA832",
-  "materialized": false
+  "materialized": false,
+  "sibling_operation_preservation": [
+    "AIMW-CONT-B44DA81C28 existing ContentExplorerMediaSourceUrlControl remains wired",
+    "AIMW-MEDI-03A0D722AD existing MediaManagerEditingSourceUrlControl remains wired"
+  ]
 }
