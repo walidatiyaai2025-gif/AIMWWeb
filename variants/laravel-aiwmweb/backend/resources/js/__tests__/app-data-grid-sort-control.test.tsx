@@ -5,7 +5,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
     APP_DATA_GRID_TOGGLE_SORT_OPERATION_ID,
     AppDataGridSortControl,
-    sortAppDataGridRows,
     toggleAppDataGridSortDescending,
 } from '../app-data-grid-sort-control';
 import { ToastProvider } from '../components';
@@ -51,13 +50,13 @@ function renderWorkspace() {
     );
 }
 
-function pagePayload(page: number) {
+function pagePayload(page: number, descending: boolean) {
     const prefix = page === 1 ? '2026-10-26T' : '2026-10-25T';
+    const newer = { delivery_id: `p${page}-newer`, status: 'SENT', created_at: `${prefix}10:00:00Z` };
+    const older = { delivery_id: `p${page}-older`, status: 'FAILED', created_at: `${prefix}08:00:00Z` };
+
     return {
-        data: [
-            { delivery_id: `p${page}-newer`, status: 'SENT', created_at: `${prefix}10:00:00Z` },
-            { delivery_id: `p${page}-older`, status: 'FAILED', created_at: `${prefix}08:00:00Z` },
-        ],
+        data: descending ? [newer, older] : [older, newer],
         total: 4,
         current_page: page,
         last_page: 2,
@@ -70,16 +69,9 @@ afterEach(() => {
 });
 
 describe(`${APP_DATA_GRID_TOGGLE_SORT_OPERATION_ID} AppDataGrid ToggleSortAsync`, () => {
-    it('matches the source toggle and case-insensitive key ordering semantics', () => {
+    it('matches the source descending-flag toggle semantics exactly', () => {
         expect(toggleAppDataGridSortDescending(false)).toBe(true);
         expect(toggleAppDataGridSortDescending(true)).toBe(false);
-
-        const rows = [{ key: 'Beta' }, { key: 'alpha' }, { key: 'charlie' }];
-        expect(sortAppDataGridRows(rows, (row) => row.key, false).map((row) => row.key))
-            .toEqual(['alpha', 'Beta', 'charlie']);
-        expect(sortAppDataGridRows(rows, (row) => row.key, true).map((row) => row.key))
-            .toEqual(['charlie', 'Beta', 'alpha']);
-        expect(rows.map((row) => row.key)).toEqual(['Beta', 'alpha', 'charlie']);
     });
 
     it('renders the exact canonical marker and toggles the pressed sort direction', () => {
@@ -98,11 +90,13 @@ describe(`${APP_DATA_GRID_TOGGLE_SORT_OPERATION_ID} AppDataGrid ToggleSortAsync`
         expect(onToggle).toHaveBeenCalledWith(true);
     });
 
-    it('resets Email History to page 1, sorts authoritative rows, and performs no mutation request', async () => {
+    it('resets Email History to page 1 and requests server-side descending sort before pagination', async () => {
         const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-            const url = String(input);
-            const page = url.includes('page=2') ? 2 : 1;
-            return new Response(JSON.stringify(pagePayload(page)), {
+            const url = new URL(String(input), 'https://app.example.test');
+            const page = Number(url.searchParams.get('page') ?? '1');
+            const descending = url.searchParams.get('sort_desc') === '1';
+
+            return new Response(JSON.stringify(pagePayload(page, descending)), {
                 status: 200,
                 headers: { 'content-type': 'application/json' },
             });
@@ -112,17 +106,21 @@ describe(`${APP_DATA_GRID_TOGGLE_SORT_OPERATION_ID} AppDataGrid ToggleSortAsync`
         renderWorkspace();
 
         await screen.findByText('Page 1 of 2');
+        await waitFor(() => expect(fetchMock.mock.calls.some(([input]) => {
+            const url = String(input);
+            return url.includes('page=1') && url.includes('sort_desc=0');
+        })).toBe(true));
+
         fireEvent.click(screen.getByRole('button', { name: 'Next' }));
         await screen.findByText('Page 2 of 2');
 
-        const sort = screen.getByRole('button', { name: 'Sort: Sorted ascending' });
-        fireEvent.click(sort);
+        fireEvent.click(screen.getByRole('button', { name: 'Sort: Sorted ascending' }));
 
         await screen.findByText('Page 1 of 2');
-        await waitFor(() => {
-            const pageOneReads = fetchMock.mock.calls.filter(([input]) => String(input).includes('page=1'));
-            expect(pageOneReads.length).toBeGreaterThanOrEqual(2);
-        });
+        await waitFor(() => expect(fetchMock.mock.calls.some(([input]) => {
+            const url = String(input);
+            return url.includes('page=1') && url.includes('sort_desc=1');
+        })).toBe(true));
 
         const updatedSort = screen.getByRole('button', { name: 'Sort: Sorted descending' });
         expect(updatedSort).toHaveAttribute('aria-pressed', 'true');
