@@ -47,7 +47,7 @@ import { LiveSystemStatusRefreshControl } from './live-system-status-refresh-con
 import { EmailHistoryFiltersControl, type EmailHistoryFilterState } from './email-history-filters-control';
 import { GlobalUsersFullManagementControl } from './global-users-full-management-control';
 import { MediaDeleteControl } from './media-delete-control';
-import { MediaManagerEditingSourceUrlControl } from './media-manager-editing-source-url-control';\nimport { MediaManagerRowSourceUrlControl } from './media-manager-row-source-url-control';
+import { MediaManagerRowSourceUrlControl } from './media-manager-row-source-url-control';
 import { NotificationOpenControl } from './notification-open-control';
 import { PagesInterpolatedLinksControl } from './pages-interpolated-links-control';
 import { PagesWordPressLinkControl } from './pages-wordpress-link-control';
