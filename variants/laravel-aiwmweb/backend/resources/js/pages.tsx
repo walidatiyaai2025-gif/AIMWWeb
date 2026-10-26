@@ -726,7 +726,8 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                     {route.key === 'site-reliability' ? (
                         <SiteReliabilityOperationHistoryLinkControl context={context} />
                     ) : null}
-                    {route.controls?.filter((actionKey) => !(route.key === 'roles' && actionKey === 'roles.create')).map((actionKey) => {
+                    {route.controls?.map((actionKey) => {
+                        if (route.key === 'roles' && actionKey === 'roles.create') return null;
                         const canonicalOperation = AUTOMATION_PHASE_ACTION_OPERATIONS[actionKey];
                         return (
                             <span key={actionKey} data-canonical-operation={canonicalOperation}>
