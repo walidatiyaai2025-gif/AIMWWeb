@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #922 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-MEDI-56F4EF0AFB",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "media",
+    "kind": "visible_control",
+    "route_screen": "/sites/{SiteId:guid}/media",
+    "source": "src/AIWordPressManager.Web/Components/Pages/MediaManager.razor",
+    "source_control": "@(L.IsArabic ? -> /module/media",
+    "source_intent": "Open Global Media from a site-scoped Media Manager without mutating media state.",
+    "mutation": false,
+    "tenant_owned": true,
+    "external_dependency": "WordPress",
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/media-pages-link-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "destination": "/tenants/{tenant}/module/media",
+    "operation_marker": "AIMW-MEDI-56F4EF0AFB",
+    "reuse": "Extends the existing canonical Media toolbar; no duplicate media workspace or API path is introduced."
+  },
+  "security": {
+    "permissions": ["tenant.view", "content.view"],
+    "required_capabilities": ["media"],
+    "tenant_navigation": "tenantUrl encodes the authoritative tenant slug",
+    "site_authority": "The control renders only when the server context exposes the authoritative site-scoped Media API.",
+    "foreign_tenant": "server 404/fail closed",
+    "mutation_added": false
+  },
+  "authoritative_state": {
+    "source_media": "existing tenant/site-scoped Media API",
+    "destination_media": "existing canonical tenant Media workspace",
+    "synthetic_media": false,
+    "mutation": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/media-global-link-control.test.tsx"
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-MEDI-56F4EF0AFB"],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "variant_boundary": "variants/laravel-aiwmweb/**"
+  }
+}
