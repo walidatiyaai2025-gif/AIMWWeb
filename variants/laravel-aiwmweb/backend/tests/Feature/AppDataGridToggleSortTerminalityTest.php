@@ -3,13 +3,16 @@
 namespace Tests\Feature;
 
 use App\Models\EmailDelivery;
+use App\Models\MailConfiguration;
 use App\Models\Permission;
 use App\Models\Role;
+use App\Models\Site;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
 use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 final class AppDataGridToggleSortTerminalityTest extends TestCase
@@ -45,6 +48,8 @@ final class AppDataGridToggleSortTerminalityTest extends TestCase
         $source = (string) file_get_contents(base_path('../../../src/AIWordPressManager.Web/Components/Shared/AppDataGrid.razor'));
         $contract = (string) file_get_contents(resource_path('js/app-data-grid-sort-control.tsx'));
         $consumer = (string) file_get_contents(resource_path('js/pages.tsx'));
+        $controller = (string) file_get_contents(app_path('Http/Controllers/EmailNotificationController.php'));
+        $service = (string) file_get_contents(app_path('Email/Services/EmailDeliveryService.php'));
 
         $this->assertStringContainsString('Text="@SortText"', $source);
         $this->assertStringContainsString('AriaPressed="@_sortDescending"', $source);
@@ -52,18 +57,53 @@ final class AppDataGridToggleSortTerminalityTest extends TestCase
         $this->assertStringContainsString('_sortDescending = !_sortDescending;', $source);
         $this->assertStringContainsString('CurrentPage = 1;', $source);
         $this->assertStringContainsString('await SortChanged.InvokeAsync(_sortDescending);', $source);
+        $this->assertLessThan(
+            strpos($source, 'private IReadOnlyList<TItem> PagedItems'),
+            strpos($source, 'private IEnumerable<TItem> SortedItems'),
+        );
 
         $this->assertStringContainsString(self::OPERATION_ID, $contract);
         $this->assertStringContainsString('return !sortDescending;', $contract);
-        $this->assertStringContainsString('return sortDescending ? -comparison : comparison;', $contract);
         $this->assertStringContainsString('data-canonical-operation={APP_DATA_GRID_TOGGLE_SORT_OPERATION_ID}', $contract);
         $this->assertStringContainsString('aria-pressed={sortDescending}', $contract);
 
         $this->assertStringContainsString('AppDataGridSortControl', $consumer);
-        $this->assertStringContainsString("route.key === 'email-history'", $consumer);
-        $this->assertStringContainsString('sortAppDataGridRows(', $consumer);
+        $this->assertStringContainsString("sort_desc: appDataGridSortDescending ? '1' : '0'", $consumer);
+        $this->assertStringContainsString('emailHistoryFilters.correlation, appDataGridSortDescending', $consumer);
         $this->assertStringContainsString('setAppDataGridSortDescending(sortDescending);', $consumer);
         $this->assertStringContainsString('setPage(1);', $consumer);
+        $this->assertStringContainsString("'sort_desc' => ['nullable', 'boolean']", $controller);
+        $this->assertStringContainsString("array_key_exists('sort_desc', \$filters)", $service);
+        $this->assertStringContainsString("\$query->orderBy('created_at', \$direction)->orderBy('id', \$direction);", $service);
+        $this->assertLessThan(
+            strpos($service, '->forPage($page, $perPage)'),
+            strpos($service, "\$query->orderBy('created_at', \$direction)"),
+        );
+    }
+
+    public function test_server_sort_is_applied_to_the_authoritative_tenant_set_before_pagination(): void
+    {
+        $user = User::factory()->create();
+        $membership = $this->membership($user, 'alpha-sort', ['tenant.view', 'tenant.manage', 'diagnostics.view']);
+        $site = $this->site($membership, 'Alpha Sort');
+
+        $oldest = $this->delivery($membership, $site, 'SENT', now()->subDays(3));
+        $middle = $this->delivery($membership, $site, 'FAILED', now()->subDays(2));
+        $newest = $this->delivery($membership, $site, 'SENT', now()->subDay());
+
+        $this->actingAs($user)
+            ->getJson('/api/v1/tenants/alpha-sort/email/deliveries?sort_desc=0&page=1&per_page=2')
+            ->assertOk()
+            ->assertJsonPath('total', 3)
+            ->assertJsonPath('data.0.delivery_id', $oldest->delivery_id)
+            ->assertJsonPath('data.1.delivery_id', $middle->delivery_id);
+
+        $this->actingAs($user)
+            ->getJson('/api/v1/tenants/alpha-sort/email/deliveries?sort_desc=1&page=1&per_page=2')
+            ->assertOk()
+            ->assertJsonPath('total', 3)
+            ->assertJsonPath('data.0.delivery_id', $newest->delivery_id)
+            ->assertJsonPath('data.1.delivery_id', $middle->delivery_id);
     }
 
     public function test_real_email_history_consumer_is_read_only_and_foreign_tenant_fails_closed(): void
@@ -75,14 +115,14 @@ final class AppDataGridToggleSortTerminalityTest extends TestCase
         $before = EmailDelivery::withoutGlobalScopes()->count();
 
         $this->actingAs($user)
-            ->getJson('/api/v1/tenants/alpha/email/deliveries?page=1')
+            ->getJson('/api/v1/tenants/alpha/email/deliveries?sort_desc=0&page=1')
             ->assertOk()
             ->assertJsonPath('current_page', 1);
 
         $this->assertSame($before, EmailDelivery::withoutGlobalScopes()->count());
 
         $this->actingAs($user)
-            ->getJson('/api/v1/tenants/beta/email/deliveries?page=1')
+            ->getJson('/api/v1/tenants/beta/email/deliveries?sort_desc=1&page=1')
             ->assertNotFound();
 
         $this->assertSame($before, EmailDelivery::withoutGlobalScopes()->count());
@@ -107,5 +147,62 @@ final class AppDataGridToggleSortTerminalityTest extends TestCase
         $context->forget();
 
         return $membership->fresh('tenant');
+    }
+
+    private function site(TenantMembership $membership, string $name): Site
+    {
+        $context = app(TenantContext::class);
+        $context->activate($membership->tenant, $membership);
+        $site = Site::query()->create([
+            'name' => $name,
+            'url' => 'https://'.Str::slug($name).'.example.test',
+            'status' => 'active',
+        ]);
+        $context->forget();
+
+        return $site;
+    }
+
+    private function delivery(TenantMembership $membership, Site $site, string $status, \DateTimeInterface $createdAt): EmailDelivery
+    {
+        $context = app(TenantContext::class);
+        $context->activate($membership->tenant, $membership);
+
+        $configuration = MailConfiguration::query()->create([
+            'configuration_key' => 'site-'.$site->id.'-'.Str::lower(Str::random(6)),
+            'site_id' => $site->id,
+            'transport' => 'smtp',
+            'host' => 'smtp.example.test',
+            'port' => 587,
+            'from_address' => 'noreply@example.test',
+            'from_name' => 'AIWM',
+            'enabled' => true,
+            'timeout_seconds' => 20,
+            'max_attempts' => 4,
+        ]);
+
+        $delivery = EmailDelivery::query()->create([
+            'in_app_notification_id' => null,
+            'mail_configuration_id' => $configuration->id,
+            'event_id' => (string) Str::uuid(),
+            'delivery_id' => (string) Str::uuid(),
+            'idempotency_key' => 'app-data-grid-sort-'.Str::uuid(),
+            'recipient' => 'person@example.test',
+            'recipient_hash' => hash('sha256', 'person@example.test'),
+            'template_stable_id' => 'system-test',
+            'locale' => 'en',
+            'status' => $status,
+            'attempt_count' => 1,
+            'max_attempts' => 4,
+            'variables' => [],
+        ]);
+        $delivery->forceFill([
+            'created_at' => $createdAt,
+            'updated_at' => $createdAt,
+        ])->save();
+
+        $context->forget();
+
+        return $delivery->fresh();
     }
 }
