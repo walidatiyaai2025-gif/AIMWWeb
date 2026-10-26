@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #769 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-B44DA81C28",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-CONT-B44DA81C28",
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/sites/{Id:guid}/explorer",
+    "source": "src/AIWordPressManager.Web/Components/Pages/ContentExplorer.razor",
+    "source_control": "@item.SourceUrl -> @item.SourceUrl",
+    "source_intent": "Open the authoritative persisted WordPress media SourceUrl in a new tab.",
+    "mutation": false,
+    "tenant_owned": true,
+    "external_dependency": "WordPress",
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-media-source-url-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "content_explorer_media_handoff": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-media-tab-control.tsx",
+    "authoritative_read": "GET /api/v1/tenants/{tenant}/sites/{site}/media",
+    "read_controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentApiController.php",
+    "operation_marker": "AIMW-CONT-B44DA81C28",
+    "adaptation": "The ASP.NET Content Explorer media tab is already mapped to the canonical Laravel Media workspace for the same server-selected tenant/site. This closure renders the source-equivalent SourceUrl action on those authoritative media rows rather than creating a duplicate media subsystem."
+  },
+  "security": {
+    "permission": "content.view",
+    "destination_source": "persisted MediaItem.source_url only",
+    "allowed_schemes": [
+      "http",
+      "https"
+    ],
+    "credential_bearing_urls": "rejected",
+    "relative_or_malformed_urls": "rejected",
+    "foreign_tenant_or_site_rows": "fail closed and are never disclosed",
+    "caller_source_url_override": "ignored",
+    "mutation_added": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-media-source-url-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentExplorerMediaSourceUrlControlTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation identity",
+      "authoritative persisted MediaItem.source_url read",
+      "source-equivalent new-tab navigation",
+      "safe absolute HTTP(S) URL enforcement",
+      "credential-bearing and unsafe URL fail-closed behavior",
+      "tenant and site isolation",
+      "caller query cannot override SourceUrl",
+      "read-only/no-mutation behavior",
+      "existing loading, empty and error states inherited from the canonical Media workspace"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-B44DA81C28"
+    ],
+    "copy_link_operation_claimed": false,
+    "preview_operation_claimed": false,
+    "media_delete_operation_claimed": false,
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "variant_boundary": "variants/laravel-aiwmweb/**",
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "branch": "worker/laravel-aiwmweb-AIMW-CONT-B44DA81C28-source-url",
+    "implementation_sha": "8dd7d5263a6fbd2e8aca5c1c5d06579e86390311",
+    "materialization_sha": null,
+    "reconciliation_json_blob": null,
+    "reconciliation_markdown_blob": null
+  }
+}
