@@ -29,6 +29,7 @@ import { prepareActionRequest } from './action-contract';
 import { AUTOMATION_PHASE_ACTION_OPERATIONS, AUTOMATION_PHASE_REFRESH_OPERATIONS, SCHEDULE_CANCEL_EDIT_OPERATION_ID } from './automation-phase-controls';
 import { AuthoritativeReconciliationError, mutateThenReconcile } from './reconciliation';
 import { ContentExplorerWordPressLinkControl } from './content-explorer-wordpress-link-control';
+import { ContentExplorerMediaSourceUrlControl } from './content-explorer-media-source-url-control';
 import { ContentExplorerPreviewPanel } from './content-explorer-preview-panel';
 import { CONTENT_EXPLORER_CONTENT_TAB_RESET_EVENT } from './content-explorer-content-tab-control';
 import { ContentExplorerPagination } from './content-explorer-previous-page-control';
@@ -849,15 +850,18 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                                 <PagesWordPressLinkControl value={row.link} />
                             </span>
                         ) : route.key === 'media' && endpoint ? (row) => (
-                            <MediaDeleteControl
-                                context={context}
-                                endpoint={endpoint}
-                                row={row}
-                                onReconcile={async () => {
-                                    const refreshed = await query.refetch();
-                                    if (refreshed.error) throw refreshed.error;
-                                }}
-                            />
+                            <span className="site-row-actions">
+                                <ContentExplorerMediaSourceUrlControl value={row.source_url} />
+                                <MediaDeleteControl
+                                    context={context}
+                                    endpoint={endpoint}
+                                    row={row}
+                                    onReconcile={async () => {
+                                        const refreshed = await query.refetch();
+                                        if (refreshed.error) throw refreshed.error;
+                                    }}
+                                />
+                            </span>
                         ) : route.key === 'notifications' ? (row) => (
                             <NotificationOpenControl context={context} row={row} />
                         ) : undefined}
