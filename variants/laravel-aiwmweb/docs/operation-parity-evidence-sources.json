@@ -1350,6 +1350,14 @@
       "operation_ids": [
         "AIMW-CONT-EDC262499D"
       ]
+    },
+    {
+      "label": "AIMW-CONT-6700342002 Settings SetRose focused closure",
+      "sha": "f7b584242fb03f0eb5ff3ebc52591e212f302c29",
+      "observed_pr_head": "f7b584242fb03f0eb5ff3ebc52591e212f302c29",
+      "operation_ids": [
+        "AIMW-CONT-6700342002"
+      ]
     }
   ],
   "excluded_sources": [],
@@ -2233,6 +2241,14 @@
       "observed_pr_head": "061b4e751ac9f58a5c92cb59568f638e73d19dbc",
       "operation_ids": [
         "AIMW-CONT-A3A2CD23B6"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-6700342002 Settings SetRose focused closure",
+      "sha": "f7b584242fb03f0eb5ff3ebc52591e212f302c29",
+      "observed_pr_head": "f7b584242fb03f0eb5ff3ebc52591e212f302c29",
+      "operation_ids": [
+        "AIMW-CONT-6700342002"
       ]
     }
   ],
