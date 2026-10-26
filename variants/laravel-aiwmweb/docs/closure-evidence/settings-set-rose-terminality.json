@@ -56,6 +56,6 @@
     "branch": "worker/809-settings-set-rose"
   },
   "materialized": true,
-  "evidence_source_sha": "0a21b959b6e09e49545272beec8c3911b592d10e",
+  "evidence_source_sha": "f2dc3210543d17028ab24c2e865eec2a966bf8ad",
   "post_materialization_gate_trigger": "pending user-authored exact-head CI trigger after official materialization"
 }
