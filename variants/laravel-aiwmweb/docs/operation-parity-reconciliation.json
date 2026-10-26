@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 826,
-    "pending": 105,
+    "adapted": 827,
+    "pending": 104,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 826,
-    "overall_parity_percent": 88.72
+    "terminal": 827,
+    "overall_parity_percent": 88.83
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 347,
-    "pending": 99,
+    "terminal": 348,
+    "pending": 98,
     "blocked": 0,
-    "percent": 77.8
+    "percent": 78.03
   },
   "domains": {
     "ai": {
@@ -203,12 +203,12 @@
     "sync": {
       "total": 213,
       "ported": 0,
-      "adapted": 154,
-      "pending": 59,
+      "adapted": 155,
+      "pending": 58,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 154,
-      "percent": 72.3
+      "terminal": 155,
+      "percent": 72.77
     },
     "taxonomy": {
       "total": 13,
@@ -32855,21 +32855,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/app-data-grid-clear-selection-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AppDataGridClearSelectionTerminalityTest.php",
+      "evidence": "AIMW-SYNC-2E94028E4E AppDataGrid ClearSelectionAsync issue #983 focused closure@fd2a443d339836c1fb279052155f94655294e633: variants/laravel-aiwmweb/backend/resources/js/app-data-grid-clear-selection-control.tsx; focused-closure:AIMW-SYNC-2E94028E4E; test:variants/laravel-aiwmweb/backend/tests/Feature/AppDataGridClearSelectionTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/app-data-grid-clear-selection-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-SYNC-2E94028E4E AppDataGrid ClearSelectionAsync issue #983 focused closure",
+        "source_sha": "fd2a443d339836c1fb279052155f94655294e633",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/app-data-grid-clear-selection-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/app-data-grid-clear-selection-terminality.json",
+        "signals": [
+          "operation:AIMW-SYNC-2E94028E4E",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/app-data-grid-clear-selection-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/AppDataGridClearSelectionTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/app-data-grid-clear-selection-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -37429,12 +37439,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 347,
-      "pending": 99,
+      "adapted": 348,
+      "pending": 98,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 347,
-      "percent": 77.8
+      "terminal": 348,
+      "percent": 78.03
     }
   },
   "pending_operation_ids_by_domain": {
@@ -37509,7 +37519,6 @@
       "AIMW-SYNC-246AD1A2AE",
       "AIMW-SYNC-2A256826D2",
       "AIMW-SYNC-2C6ADCE34C",
-      "AIMW-SYNC-2E94028E4E",
       "AIMW-SYNC-3389FB622C",
       "AIMW-SYNC-33EE696FF7",
       "AIMW-SYNC-38D8A24B15",
@@ -38962,6 +38971,7 @@
       "AIMW-SYNC-1778E3F6B5",
       "AIMW-SYNC-26F2BF8EE8",
       "AIMW-SYNC-2A8778C6EA",
+      "AIMW-SYNC-2E94028E4E",
       "AIMW-SYNC-3BFC8AF183",
       "AIMW-SYNC-461B1075DE",
       "AIMW-SYNC-4E3C0156FC",
@@ -39795,10 +39805,17 @@
         "operation_ids": [
           "AIMW-CONT-6EC0601E18"
         ]
+      },
+      {
+        "label": "AIMW-SYNC-2E94028E4E AppDataGrid ClearSelectionAsync issue #983 focused closure",
+        "sha": "fd2a443d339836c1fb279052155f94655294e633",
+        "operation_ids": [
+          "AIMW-SYNC-2E94028E4E"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 117,
-    "focused_closure_contract_count": 347,
+    "focused_closure_operation_scoped_count": 118,
+    "focused_closure_contract_count": 348,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
