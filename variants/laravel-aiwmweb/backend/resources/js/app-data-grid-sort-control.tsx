@@ -9,19 +9,6 @@ export function toggleAppDataGridSortDescending(sortDescending: boolean): boolea
     return !sortDescending;
 }
 
-export function sortAppDataGridRows<T>(
-    rows: readonly T[],
-    keySelector: (row: T) => string | null | undefined,
-    sortDescending: boolean,
-): T[] {
-    return [...rows].sort((left, right) => {
-        const leftKey = keySelector(left) ?? '';
-        const rightKey = keySelector(right) ?? '';
-        const comparison = leftKey.localeCompare(rightKey, undefined, { sensitivity: 'base' });
-        return sortDescending ? -comparison : comparison;
-    });
-}
-
 export function AppDataGridSortControl({
     sortDescending,
     onToggle,
