@@ -1357,8 +1357,8 @@
   "focused_closure_operation_sources": [
     {
       "label": "AIMW-MEDI-34B5C789D2 MediaManager BackToSites focused closure",
-      "sha": "4307fae16a73bd54807f38a55836c895b74faaff",
-      "observed_pr_head": "4307fae16a73bd54807f38a55836c895b74faaff",
+      "sha": "0bed34e0893ec1f0515314a55572db578bdbb69c",
+      "observed_pr_head": "0bed34e0893ec1f0515314a55572db578bdbb69c",
       "operation_ids": [
         "AIMW-MEDI-34B5C789D2"
       ]
