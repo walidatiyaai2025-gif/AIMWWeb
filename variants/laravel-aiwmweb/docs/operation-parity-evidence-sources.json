@@ -2147,5 +2147,15 @@
         "AIMW-CONT-932A09E4A9"
       ]
     }
+  ],
+  "sources": [
+    {
+      "label": "AIMW-MEDI-F55A549341 GlobalMediaExplorer Posts link focused closure",
+      "sha": "f591fcf2f3c5927111c5a8e8cff479be4b4b04c1",
+      "observed_pr_head": "f591fcf2f3c5927111c5a8e8cff479be4b4b04c1",
+      "operation_ids": [
+        "AIMW-MEDI-F55A549341"
+      ]
+    }
   ]
 }
