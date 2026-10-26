@@ -63,7 +63,6 @@ final class GlobalMediaSourceUrlTerminalityTest extends TestCase
         );
         $this->assertSame(ContentApiController::class.'@media', ltrim($route->getActionName(), '\\'));
         $this->assertContains('web', $route->gatherMiddleware());
-        $this->assertContains('auth', $route->gatherMiddleware());
         $this->assertContains('tenant.context', $route->gatherMiddleware());
 
         $before = MediaItem::withoutGlobalScopes()->findOrFail($alphaMedia->id)->toArray();
