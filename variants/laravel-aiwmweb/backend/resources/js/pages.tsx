@@ -18,6 +18,7 @@ import { CONTENT_HUB_WORKSPACE_URL_OPERATION_ID, contentHubWorkspaceUrl, isConte
 import { AiCenterGenerateControl } from './ai-center-generate-control';
 import { AdminBillingSupportClearSearchControl } from './admin-billing-support-clear-search-control';
 import { APP_DATA_GRID_PREVIOUS_PAGE_OPERATION_ID } from './app-data-grid-previous-page-control';
+import { AppDataGridSortControl } from './app-data-grid-sort-control';
 import { AppSearchBox } from './app-search-box';
 import { AccountProfileEmailSettingsLinkControl } from './account-profile-email-settings-link-control';
 import { ApplicationUsersClearSearchControl } from './application-users-clear-search-control';
@@ -294,6 +295,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const [searchInput, setSearchInput] = useState('');
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
+    const [appDataGridSortDescending, setAppDataGridSortDescending] = useState(false);
     const applicationUsersSearchInFlight = useRef(false);
     const [sitesFilter, setSitesFilter] = useState<'all' | 'connected' | 'review'>('all');
     const [explorerPreview, setExplorerPreview] = useState<Record<string, unknown> | null>(null);
@@ -330,10 +332,11 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         ...(emailHistoryFilters.siteId ? { site_id: emailHistoryFilters.siteId } : {}),
         ...(emailHistoryFilters.status ? { status: emailHistoryFilters.status } : {}),
         ...(emailHistoryFilters.correlation.trim() ? { correlation: emailHistoryFilters.correlation.trim() } : {}),
+        sort_desc: appDataGridSortDescending ? '1' : '0',
     } : {};
     const resourceFilters = { ...taxonomyFilter, ...emailHistoryQueryFilters };
     const query = useQuery(route.key === 'email-history' ? {
-        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType, emailHistoryFilters.siteId, emailHistoryFilters.status, emailHistoryFilters.correlation],
+        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType, emailHistoryFilters.siteId, emailHistoryFilters.status, emailHistoryFilters.correlation, appDataGridSortDescending],
         queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, resourceFilters)),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     } : {
@@ -787,7 +790,22 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                 />
             ) : null}
             <section className="panel data-panel">
-                <header className="panel-header"><div><span className="workspace-kicker">LIVE DATA</span><h2>{route.label[locale]}</h2></div><span className="count-badge">{route.key === 'sites' && sitesFilter !== 'all' ? visibleRows.length : collection.total}</span></header>
+                <header className="panel-header">
+                    <div><span className="workspace-kicker">LIVE DATA</span><h2>{route.label[locale]}</h2></div>
+                    <div className="toolbar-actions">
+                        {route.key === 'email-history' ? (
+                            <AppDataGridSortControl
+                                sortDescending={appDataGridSortDescending}
+                                locale={locale}
+                                onToggle={(sortDescending) => {
+                                    setAppDataGridSortDescending(sortDescending);
+                                    setPage(1);
+                                }}
+                            />
+                        ) : null}
+                        <span className="count-badge">{route.key === 'sites' && sitesFilter !== 'all' ? visibleRows.length : collection.total}</span>
+                    </div>
+                </header>
                 {route.key === 'explorer' ? (
                     <ContentExplorerSelectAllFilteredControl
                         canEdit={canEditExplorerContent}
