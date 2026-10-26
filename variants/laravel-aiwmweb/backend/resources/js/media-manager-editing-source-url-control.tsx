@@ -3,6 +3,7 @@ import { safeContentExplorerMediaSourceUrl } from './content-explorer-media-sour
 
 export const MEDIA_MANAGER_EDITING_SOURCE_URL_OPERATION_ID = 'AIMW-MEDI-03A0D722AD';
 
+// Keep one visible SourceUrl action while recording the source editing-pane operation separately.
 export function MediaManagerEditingSourceUrlControl({
     value,
     children,
