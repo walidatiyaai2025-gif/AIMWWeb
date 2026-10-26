@@ -1318,14 +1318,6 @@
       "operation_ids": [
         "AIMW-CONT-BB31987A53"
       ]
-    },
-    {
-      "label": "AIMW-CONT-932A09E4A9 Settings database anchor focused closure",
-      "sha": "9f9ec64983b33f3bf5bba7d5e8d4d59e97c4994f",
-      "observed_pr_head": "9f9ec64983b33f3bf5bba7d5e8d4d59e97c4994f",
-      "operation_ids": [
-        "AIMW-CONT-932A09E4A9"
-      ]
     }
   ],
   "excluded_sources": [],
@@ -2125,8 +2117,8 @@
     },
     {
       "label": "AIMW-CONT-B44DA81C28 ContentExplorer media SourceUrl focused closure",
-      "sha": "5eb59f398c2660a5ee8fd2dc501f00da47a94d99",
-      "observed_pr_head": "5eb59f398c2660a5ee8fd2dc501f00da47a94d99",
+      "sha": "1260576e65c11e1b6eba97572d5a84f0aabd249f",
+      "observed_pr_head": "5619238b5eef4bc0ec16e0024ed121caf2a94125",
       "operation_ids": [
         "AIMW-CONT-B44DA81C28"
       ]
@@ -2137,14 +2129,6 @@
       "observed_pr_head": "47818671472aab93fb7136bf9e6db0e26588df72",
       "operation_ids": [
         "AIMW-CONT-E4D7C73D4E"
-      ]
-    },
-    {
-      "label": "AIMW-CONT-932A09E4A9 Settings database anchor focused closure",
-      "sha": "9f9ec64983b33f3bf5bba7d5e8d4d59e97c4994f",
-      "observed_pr_head": "9f9ec64983b33f3bf5bba7d5e8d4d59e97c4994f",
-      "operation_ids": [
-        "AIMW-CONT-932A09E4A9"
       ]
     }
   ]

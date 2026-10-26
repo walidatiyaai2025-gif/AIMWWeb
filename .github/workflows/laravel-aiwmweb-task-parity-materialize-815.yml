@@ -1,0 +1,84 @@
+name: Laravel AIWMWeb Task Parity Materialize 815
+# synchronized-base: 1260576e65c11e1b6eba97572d5a84f0aabd249f
+
+on:
+  push:
+    branches:
+      - worker/815-settings-database-anchor
+    paths:
+      - '.github/workflows/laravel-aiwmweb-task-parity-materialize-815.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    env:
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - name: Fetch exact evidence refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Register exact task evidence
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          op = 'AIMW-CONT-932A09E4A9'
+          sha = '9f9ec64983b33f3bf5bba7d5e8d4d59e97c4994f'
+          p = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          d = json.loads(p.read_text())
+          e = {
+              'label': 'AIMW-CONT-932A09E4A9 Settings database anchor focused closure',
+              'sha': sha,
+              'observed_pr_head': sha,
+              'operation_ids': [op],
+          }
+          for key in ('countable_sources', 'focused_closure_operation_sources'):
+              d[key] = [row for row in d[key] if op not in row.get('operation_ids', [])]
+              d[key].append(e)
+          p.write_text(json.dumps(d, indent=2) + '\n')
+
+          evidence = Path('variants/laravel-aiwmweb/docs/closure-evidence/settings-database-anchor-terminality.json')
+          payload = json.loads(evidence.read_text())
+          payload['materialized'] = True
+          payload['evidence_source_sha'] = sha
+          evidence.write_text(json.dumps(payload, indent=2) + '\n')
+          PY
+      - name: Run official parity materializer
+        run: |
+          set -euo pipefail
+          OUT_JSON=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          OUT_MD=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          TMP_SUMMARY=/tmp/operation-parity-summary.json
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_platform_admin_route_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+      - name: Commit generated reconciliation and remove task workflow
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/laravel-aiwmweb-task-parity-materialize-815.yml
+          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md \
+                  variants/laravel-aiwmweb/docs/closure-evidence/settings-database-anchor-terminality.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(laravel): materialize parity for AIMW-CONT-932A09E4A9"
+          git fetch origin "${{ github.ref_name }}"
+          git rebase "origin/${{ github.ref_name }}"
+          git push origin "HEAD:${{ github.ref_name }}"
