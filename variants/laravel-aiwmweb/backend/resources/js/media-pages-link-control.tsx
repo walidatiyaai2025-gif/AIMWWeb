@@ -4,9 +4,11 @@ import { resolveCapability, tenantUrl, workspaceRoutes, type FrontendContext } f
 import { useLocale } from './i18n';
 
 export const MEDIA_PAGES_OPERATION_ID = 'AIMW-MEDI-0694CEEBBA';
+export const MEDIA_POSTS_OPERATION_ID = 'AIMW-MEDI-F55A549341';
 
 const mediaRoute = workspaceRoutes.find((route) => route.key === 'media');
 const pagesRoute = workspaceRoutes.find((route) => route.key === 'pages');
+const postsRoute = workspaceRoutes.find((route) => route.key === 'posts');
 
 const canOpenPagesFromMedia = (context: FrontendContext): boolean =>
     context.permissions.includes('tenant.view')
@@ -15,21 +17,41 @@ const canOpenPagesFromMedia = (context: FrontendContext): boolean =>
     && resolveCapability(context, mediaRoute!).state === 'enabled'
     && resolveCapability(context, pagesRoute!).state === 'enabled';
 
+const canOpenPostsFromMedia = (context: FrontendContext): boolean =>
+    context.permissions.includes('tenant.view')
+    && Boolean(mediaRoute)
+    && Boolean(postsRoute)
+    && resolveCapability(context, mediaRoute!).state === 'enabled'
+    && resolveCapability(context, postsRoute!).state === 'enabled';
+
 export function MediaPagesLinkControl({ context }: { context: FrontendContext }) {
     const { locale } = useLocale();
+    const canOpenPosts = Boolean(postsRoute) && canOpenPostsFromMedia(context);
+    const canOpenPages = Boolean(pagesRoute) && canOpenPagesFromMedia(context);
 
-    if (!pagesRoute || !canOpenPagesFromMedia(context)) return null;
+    if (!canOpenPosts && !canOpenPages) return null;
 
     return (
         <nav className="toolbar-panel" aria-label={locale === 'ar' ? 'إجراءات مستكشف الوسائط' : 'Media Explorer actions'}>
             <div className="toolbar-actions">
-                <Link
-                    className="btn"
-                    to={tenantUrl(context.tenant.slug, pagesRoute.path)}
-                    data-canonical-operation={MEDIA_PAGES_OPERATION_ID}
-                >
-                    {locale === 'ar' ? 'الصفحات' : 'Pages'}
-                </Link>
+                {canOpenPosts && postsRoute ? (
+                    <Link
+                        className="btn"
+                        to={tenantUrl(context.tenant.slug, postsRoute.path)}
+                        data-canonical-operation={MEDIA_POSTS_OPERATION_ID}
+                    >
+                        {locale === 'ar' ? 'المقالات' : 'Posts'}
+                    </Link>
+                ) : null}
+                {canOpenPages && pagesRoute ? (
+                    <Link
+                        className="btn"
+                        to={tenantUrl(context.tenant.slug, pagesRoute.path)}
+                        data-canonical-operation={MEDIA_PAGES_OPERATION_ID}
+                    >
+                        {locale === 'ar' ? 'الصفحات' : 'Pages'}
+                    </Link>
+                ) : null}
             </div>
         </nav>
     );
