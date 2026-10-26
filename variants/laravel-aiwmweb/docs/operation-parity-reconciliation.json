@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 808,
-    "pending": 123,
+    "adapted": 810,
+    "pending": 121,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 808,
-    "overall_parity_percent": 86.79
+    "terminal": 810,
+    "overall_parity_percent": 87.0
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 330,
-    "pending": 116,
+    "terminal": 332,
+    "pending": 114,
     "blocked": 0,
-    "percent": 73.99
+    "percent": 74.44
   },
   "domains": {
     "ai": {
@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 118,
-      "pending": 46,
+      "adapted": 120,
+      "pending": 44,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 118,
-      "percent": 71.95
+      "terminal": 120,
+      "percent": 73.17
     },
     "email": {
       "total": 82,
@@ -17333,21 +17333,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/pages-interpolated-links-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/pages-interpolated-links-control.test.tsx",
+      "evidence": "AIMW-CONT-BB31987A53 GlobalPagesExplorer dynamic links focused closure@fe609aae19825502b8ee519533871fe3948535da: variants/laravel-aiwmweb/backend/resources/js/pages-interpolated-links-control.tsx; focused-closure:AIMW-CONT-BB31987A53; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/pages-interpolated-links-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/pages-interpolated-links-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-BB31987A53 GlobalPagesExplorer dynamic links focused closure",
+        "source_sha": "fe609aae19825502b8ee519533871fe3948535da",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/pages-interpolated-links-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/pages-interpolated-links-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-BB31987A53",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/pages-interpolated-links-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/pages-interpolated-links-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/pages-interpolated-links-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -18272,21 +18282,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Http/Controllers/RegisterController.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RegisterSubmitVisibleControlTerminalityTest.php",
+      "evidence": "AIMW-CONT-7D7BCD462F Register submit button visible-control focused closure@2c3faa510ea70908b4f1aca4fb42dba574f0e810: variants/laravel-aiwmweb/backend/app/Http/Controllers/RegisterController.php; focused-closure:AIMW-CONT-7D7BCD462F; test:variants/laravel-aiwmweb/backend/tests/Feature/RegisterSubmitVisibleControlTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/register-submit-visible-control-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-7D7BCD462F Register submit button visible-control focused closure",
+        "source_sha": "2c3faa510ea70908b4f1aca4fb42dba574f0e810",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/RegisterController.php",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/register-submit-visible-control-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-7D7BCD462F",
+          "production-marker:variants/laravel-aiwmweb/backend/app/Http/Controllers/RegisterController.php",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/RegisterSubmitVisibleControlTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/register-submit-visible-control-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -37246,12 +37266,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 330,
-      "pending": 116,
+      "adapted": 332,
+      "pending": 114,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 330,
-      "percent": 73.99
+      "terminal": 332,
+      "percent": 74.44
     }
   },
   "pending_operation_ids_by_domain": {
@@ -37281,7 +37301,6 @@
       "AIMW-CONT-6B051BD8C0",
       "AIMW-CONT-6B6790BE84",
       "AIMW-CONT-6EC0601E18",
-      "AIMW-CONT-7D7BCD462F",
       "AIMW-CONT-7D83B09470",
       "AIMW-CONT-7F2BC55FF4",
       "AIMW-CONT-80EE7CA296",
@@ -37298,7 +37317,6 @@
       "AIMW-CONT-B44DA81C28",
       "AIMW-CONT-B60F3F750B",
       "AIMW-CONT-B6BB292F85",
-      "AIMW-CONT-BB31987A53",
       "AIMW-CONT-BCAD1E3A49",
       "AIMW-CONT-C49C37E2C9",
       "AIMW-CONT-CA4920CBC8",
@@ -38195,6 +38213,16 @@
           "AIMW-CONT-4A64732FC6"
         ],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "AIMW-CONT-BB31987A53 GlobalPagesExplorer dynamic links focused closure",
+        "sha": "fe609aae19825502b8ee519533871fe3948535da",
+        "domains": [],
+        "supporting_only": false,
+        "operation_ids": [
+          "AIMW-CONT-BB31987A53"
+        ],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -38275,7 +38303,8 @@
       "fa06abdfabc3d435386644615f7d59f3adb49d94",
       "fb068134c2ad60111bd376f4f400c1bd247394ca",
       "fb1507b10ec2aba89da4eb540dd1ad98e87e35a2",
-      "fcdb592864636e096ec75a4fab8beb580c380f6c"
+      "fcdb592864636e096ec75a4fab8beb580c380f6c",
+      "fe609aae19825502b8ee519533871fe3948535da"
     ],
     "unpushed_sources_counted": [],
     "explicit_route_contract_terminals": [
@@ -38597,6 +38626,7 @@
       "AIMW-CONT-71F54E3BA6",
       "AIMW-CONT-73E4F88038",
       "AIMW-CONT-7957ECC794",
+      "AIMW-CONT-7D7BCD462F",
       "AIMW-CONT-7EF5524637",
       "AIMW-CONT-83908F2D7C",
       "AIMW-CONT-85394A0E55",
@@ -38614,6 +38644,7 @@
       "AIMW-CONT-AC737C80BF",
       "AIMW-CONT-B1E9E1D6B0",
       "AIMW-CONT-B9E6EFF3DF",
+      "AIMW-CONT-BB31987A53",
       "AIMW-CONT-BCE1211CE3",
       "AIMW-CONT-C178278FCB",
       "AIMW-CONT-C7CB5EE184",
@@ -39403,10 +39434,24 @@
         "operation_ids": [
           "AIMW-SYNC-3BFC8AF183"
         ]
+      },
+      {
+        "label": "AIMW-CONT-7D7BCD462F Register submit button visible-control focused closure",
+        "sha": "2c3faa510ea70908b4f1aca4fb42dba574f0e810",
+        "operation_ids": [
+          "AIMW-CONT-7D7BCD462F"
+        ]
+      },
+      {
+        "label": "AIMW-CONT-BB31987A53 GlobalPagesExplorer dynamic links focused closure",
+        "sha": "fe609aae19825502b8ee519533871fe3948535da",
+        "operation_ids": [
+          "AIMW-CONT-BB31987A53"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 100,
-    "focused_closure_contract_count": 330,
+    "focused_closure_operation_scoped_count": 102,
+    "focused_closure_contract_count": 332,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
