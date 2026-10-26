@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 116,
-      "pending": 48,
+      "adapted": 117,
+      "pending": 47,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 116,
-      "percent": 70.73
+      "terminal": 117,
+      "percent": 71.34
     },
     "email": {
       "total": 82,
@@ -203,12 +203,12 @@
     "sync": {
       "total": 213,
       "ported": 0,
-      "adapted": 153,
-      "pending": 60,
+      "adapted": 152,
+      "pending": 61,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 153,
-      "percent": 71.83
+      "terminal": 152,
+      "percent": 71.36
     },
     "taxonomy": {
       "total": 13,
@@ -18416,21 +18416,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/roles-start-create-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/roles-start-create-control.test.tsx",
+      "evidence": "AIMW-CONT-6CB3D0BE1B Roles Permissions StartCreate focused closure@1de518ca20ddfc9f14527c092a6ba455966fc8cd: variants/laravel-aiwmweb/backend/resources/js/roles-start-create-control.tsx; focused-closure:AIMW-CONT-6CB3D0BE1B; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/roles-start-create-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/roles-start-create-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-6CB3D0BE1B Roles Permissions StartCreate focused closure",
+        "source_sha": "1de518ca20ddfc9f14527c092a6ba455966fc8cd",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/roles-start-create-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/roles-start-create-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-6CB3D0BE1B",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/roles-start-create-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/roles-start-create-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/roles-start-create-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -32806,31 +32816,21 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/app-data-grid-select-all-filtered-control.ts",
+      "laravel_destination": "",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "ADAPTED",
-      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AppDataGridSelectAllFilteredTerminalityTest.php",
-      "evidence": "AIMW-SYNC-3BFC8AF183 AppDataGrid SelectAllFilteredAsync focused closure@1ff9dc8840ff2a6d204298b0620bcb23d28af0c1: variants/laravel-aiwmweb/backend/resources/js/app-data-grid-select-all-filtered-control.ts; focused-closure:AIMW-SYNC-3BFC8AF183; test:variants/laravel-aiwmweb/backend/tests/Feature/AppDataGridSelectAllFilteredTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/app-data-grid-select-all-filtered-terminality.json",
+      "migration_state": "PENDING",
+      "acceptance_test": "",
+      "evidence": "",
       "reconciliation": {
-        "decision": "ADAPTED",
-        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "AIMW-SYNC-3BFC8AF183 AppDataGrid SelectAllFilteredAsync focused closure",
-        "source_sha": "1ff9dc8840ff2a6d204298b0620bcb23d28af0c1",
-        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/app-data-grid-select-all-filtered-control.ts",
-        "evidence_mode": "focused_closure_contract",
-        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/app-data-grid-select-all-filtered-terminality.json",
-        "signals": [
-          "operation:AIMW-SYNC-3BFC8AF183",
-          "production-marker:variants/laravel-aiwmweb/backend/resources/js/app-data-grid-select-all-filtered-control.ts",
-          "test:variants/laravel-aiwmweb/backend/tests/Feature/AppDataGridSelectAllFilteredTerminalityTest.php",
-          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/app-data-grid-select-all-filtered-terminality.json",
-          "scope:operation-specific",
-          "test:tenant-isolation"
-        ]
+        "decision": "PENDING",
+        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
+        "source_label": null,
+        "source_sha": null,
+        "destination_path": null
       }
     },
     {
@@ -37261,7 +37261,6 @@
       "AIMW-CONT-69B5134C7E",
       "AIMW-CONT-6B051BD8C0",
       "AIMW-CONT-6B6790BE84",
-      "AIMW-CONT-6CB3D0BE1B",
       "AIMW-CONT-6EC0601E18",
       "AIMW-CONT-7D7BCD462F",
       "AIMW-CONT-7D83B09470",
@@ -37330,6 +37329,7 @@
       "AIMW-SYNC-3389FB622C",
       "AIMW-SYNC-33EE696FF7",
       "AIMW-SYNC-38D8A24B15",
+      "AIMW-SYNC-3BFC8AF183",
       "AIMW-SYNC-3E7DCF4C71",
       "AIMW-SYNC-419C403EFB",
       "AIMW-SYNC-425B82511E",
@@ -38157,6 +38157,16 @@
           "AIMW-EMAI-7E1D4105B0"
         ],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "AIMW-CONT-6CB3D0BE1B Roles Permissions StartCreate focused closure",
+        "sha": "d685d3d46e2f8c76c6c781dc7724aec0c463a5e9",
+        "domains": [],
+        "supporting_only": false,
+        "operation_ids": [
+          "AIMW-CONT-6CB3D0BE1B"
+        ],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -38214,6 +38224,7 @@
       "c19ba111947512de296aa73dd62e03c334bd8f43",
       "c394c3143917c6c1cbff8e136a2a8b1847929a78",
       "ca212724d1ba532253c7128231326122967fc9d1",
+      "d685d3d46e2f8c76c6c781dc7724aec0c463a5e9",
       "d7ed8030da65376f9d0c43380fb6c80c1ee87508",
       "d807224f10f552687771e75bb9a33d825bdeebd1",
       "dbc983f4c9c7a9dfa07d1b4414eed38f1843fd76",
@@ -38551,6 +38562,7 @@
       "AIMW-CONT-607ACDF4D8",
       "AIMW-CONT-63EDB4BA6F",
       "AIMW-CONT-6AB0ED6C83",
+      "AIMW-CONT-6CB3D0BE1B",
       "AIMW-CONT-6E22D74EE0",
       "AIMW-CONT-71F54E3BA6",
       "AIMW-CONT-73E4F88038",
@@ -38647,7 +38659,6 @@
       "AIMW-SYNC-1778E3F6B5",
       "AIMW-SYNC-26F2BF8EE8",
       "AIMW-SYNC-2A8778C6EA",
-      "AIMW-SYNC-3BFC8AF183",
       "AIMW-SYNC-461B1075DE",
       "AIMW-SYNC-4E3C0156FC",
       "AIMW-SYNC-4E969573BB",
@@ -39342,10 +39353,10 @@
         ]
       },
       {
-        "label": "AIMW-SYNC-3BFC8AF183 AppDataGrid SelectAllFilteredAsync focused closure",
-        "sha": "1ff9dc8840ff2a6d204298b0620bcb23d28af0c1",
+        "label": "AIMW-CONT-6CB3D0BE1B Roles Permissions StartCreate focused closure",
+        "sha": "1de518ca20ddfc9f14527c092a6ba455966fc8cd",
         "operation_ids": [
-          "AIMW-SYNC-3BFC8AF183"
+          "AIMW-CONT-6CB3D0BE1B"
         ]
       }
     ],
