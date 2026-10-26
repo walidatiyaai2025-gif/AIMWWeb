@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #921 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-MEDI-34E7DCA832",
+  "domain": "media",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "source": "src/AIWordPressManager.Web/Components/Pages/MediaManager.razor",
+  "source_action": "@item.SourceUrl -> Open file",
+  "destination": "variants/laravel-aiwmweb/backend/resources/js/media-manager-row-source-url-control.tsx",
+  "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/media-manager-row-source-url-control.test.tsx",
+  "backend_test": "variants/laravel-aiwmweb/backend/tests/Feature/MediaManagerRowSourceUrlTerminalityTest.php",
+  "runtime": "the tenant-scoped media collection renders the authoritative row.source_url as a hardened read-only external Open file link",
+  "authorization": "the media workspace remains inside authenticated tenant context with content.view; foreign tenant access returns 404",
+  "source_url_policy": "only absolute trimmed http/https URLs without embedded credentials are rendered",
+  "server_mutation": false,
+  "external_mutation": false,
+  "network_request_from_control": false,
+  "only_operation_claimed": "AIMW-MEDI-34E7DCA832",
+  "materialized": false
+}
