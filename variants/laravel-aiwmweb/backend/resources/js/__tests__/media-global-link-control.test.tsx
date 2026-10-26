@@ -46,7 +46,7 @@ describe('AIMW-MEDI-56F4EF0AFB MediaManager Global media navigation', () => {
         expect(MEDIA_GLOBAL_OPERATION_ID).toBe('AIMW-MEDI-56F4EF0AFB');
     });
 
-    it('encodes a hostile tenant slug so navigation cannot escape the authenticated tenant boundary', () => {
+    it('encodes a hostile tenant slug so a foreign tenant path stays behind the server 404 tenant boundary', () => {
         renderControl(context('alpha/../foreign'));
 
         const link = screen.getByRole('link', { name: 'Global media' });
