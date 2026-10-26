@@ -21,6 +21,9 @@
   "sibling_preview_link_operation": "AIMW-CONT-37B4B4BEC4",
   "aspnet_reference_modified": false,
   "materialized": true,
-  "evidence_source_sha": "5f24dfe2b99d09bea0959551340dfb97307c8a72",
-  "post_materialization_gate_trigger": "exact-head CI after current-composition provenance pin; runtime semantics unchanged"
+  "evidence_source_sha": "e4aacb50a551a0cd0bb5a45b2a95eb7a5d641c9e",
+  "post_materialization_gate_trigger": "canonical #771 closure metadata over integrated composition; exact-head PR gates required",
+  "integration_commit_sha": "e4aacb50a551a0cd0bb5a45b2a95eb7a5d641c9e",
+  "materialization_commit_sha": "6f3e2f14074afe33bcdb97ee785bd44676cc6f31",
+  "exact_head_ci_required": true
 }
