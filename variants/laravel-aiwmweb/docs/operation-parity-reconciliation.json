@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 827,
-    "pending": 104,
+    "adapted": 828,
+    "pending": 103,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 827,
-    "overall_parity_percent": 88.83
+    "terminal": 828,
+    "overall_parity_percent": 88.94
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 348,
-    "pending": 98,
+    "terminal": 349,
+    "pending": 97,
     "blocked": 0,
-    "percent": 78.03
+    "percent": 78.25
   },
   "domains": {
     "ai": {
@@ -203,12 +203,12 @@
     "sync": {
       "total": 213,
       "ported": 0,
-      "adapted": 155,
-      "pending": 58,
+      "adapted": 156,
+      "pending": 57,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 155,
-      "percent": 72.77
+      "terminal": 156,
+      "percent": 73.24
     },
     "taxonomy": {
       "total": 13,
@@ -30114,21 +30114,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/application-user-password-reset-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/application-user-request-reset-password-control.test.tsx",
+      "evidence": "AIMW-SYNC-9ABD7DEDBB ApplicationUsers RequestResetPassword focused closure@074d884454491d355765278a9bc52bef88cbb82d: variants/laravel-aiwmweb/backend/resources/js/application-user-password-reset-control.tsx; focused-closure:AIMW-SYNC-9ABD7DEDBB; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/application-user-request-reset-password-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/application-users-request-reset-password-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-SYNC-9ABD7DEDBB ApplicationUsers RequestResetPassword focused closure",
+        "source_sha": "074d884454491d355765278a9bc52bef88cbb82d",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/application-user-password-reset-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/application-users-request-reset-password-terminality.json",
+        "signals": [
+          "operation:AIMW-SYNC-9ABD7DEDBB",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/application-user-password-reset-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/application-user-request-reset-password-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/application-users-request-reset-password-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -37439,12 +37449,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 348,
-      "pending": 98,
+      "adapted": 349,
+      "pending": 97,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 348,
-      "percent": 78.03
+      "terminal": 349,
+      "percent": 78.25
     }
   },
   "pending_operation_ids_by_domain": {
@@ -37539,7 +37549,6 @@
       "AIMW-SYNC-8409FB077A",
       "AIMW-SYNC-8C35E9A7A0",
       "AIMW-SYNC-9504A57CAE",
-      "AIMW-SYNC-9ABD7DEDBB",
       "AIMW-SYNC-9B87CACA17",
       "AIMW-SYNC-9DFB5B4FF9",
       "AIMW-SYNC-AA26ED0909",
@@ -38998,6 +39007,7 @@
       "AIMW-SYNC-8719C812DC",
       "AIMW-SYNC-89777052CB",
       "AIMW-SYNC-8D6F1C5EAA",
+      "AIMW-SYNC-9ABD7DEDBB",
       "AIMW-SYNC-A9E956A4DA",
       "AIMW-SYNC-AE544B4684",
       "AIMW-SYNC-C8C380E7F8",
@@ -39823,10 +39833,17 @@
         "operation_ids": [
           "AIMW-SYNC-2E94028E4E"
         ]
+      },
+      {
+        "label": "AIMW-SYNC-9ABD7DEDBB ApplicationUsers RequestResetPassword focused closure",
+        "sha": "074d884454491d355765278a9bc52bef88cbb82d",
+        "operation_ids": [
+          "AIMW-SYNC-9ABD7DEDBB"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 118,
-    "focused_closure_contract_count": 348,
+    "focused_closure_operation_scoped_count": 119,
+    "focused_closure_contract_count": 349,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
