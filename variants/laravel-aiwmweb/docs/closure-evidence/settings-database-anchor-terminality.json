@@ -15,6 +15,6 @@
   "external_mutation": false,
   "network_request": false,
   "only_operation_claimed": "AIMW-CONT-932A09E4A9",
-  "materialized": false,
-  "evidence_source_sha": null
+  "materialized": true,
+  "evidence_source_sha": "9f9ec64983b33f3bf5bba7d5e8d4d59e97c4994f"
 }
