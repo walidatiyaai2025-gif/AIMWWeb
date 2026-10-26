@@ -1,11 +1,12 @@
-name: Laravel AIWMWeb Task Parity Materialize 820
+name: Laravel AIWMWeb Task Parity Materialize 923
 
 on:
   push:
     branches:
-      - worker/820-settings-set-dark
+      - worker/923-media-back-to-explorer
     paths:
-      - '.github/workflows/laravel-aiwmweb-task-parity-materialize-820.yml'
+      - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
+      - '.github/workflows/laravel-aiwmweb-task-parity-materialize-923.yml'
 
 permissions:
   contents: write
@@ -25,32 +26,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Register exact task evidence
-        run: |
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          op = 'AIMW-CONT-EDC262499D'
-          sha = 'f2c9f6e2f4fb34955697950ad27d7d0064eddc95'
-          p = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
-          d = json.loads(p.read_text())
-          e = {
-              'label': 'AIMW-CONT-EDC262499D Settings SetDark focused closure',
-              'sha': sha,
-              'observed_pr_head': sha,
-              'operation_ids': [op],
-          }
-          for key in ('countable_sources', 'focused_closure_operation_sources'):
-              d[key] = [row for row in d[key] if op not in row.get('operation_ids', [])]
-              d[key].append(e)
-          p.write_text(json.dumps(d, indent=2) + '\n')
-
-          evidence = Path('variants/laravel-aiwmweb/docs/closure-evidence/settings-set-dark-terminality.json')
-          payload = json.loads(evidence.read_text())
-          payload['materialized'] = True
-          payload['evidence_source_sha'] = sha
-          evidence.write_text(json.dumps(payload, indent=2) + '\n')
-          PY
       - name: Run official parity materializer
         run: |
           set -euo pipefail
@@ -64,15 +39,15 @@ jobs:
           python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
           python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
           python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
-      - name: Commit generated reconciliation and remove task workflow
+      - name: Commit generated reconciliation
         run: |
           set -euo pipefail
-          git rm .github/workflows/laravel-aiwmweb-task-parity-materialize-820.yml
-          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
-                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
-                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md \
-                  variants/laravel-aiwmweb/docs/closure-evidence/settings-set-dark-terminality.json
+          git add variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          if git diff --cached --quiet; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore(laravel): materialize parity for AIMW-CONT-EDC262499D"
+          git commit -m "chore(laravel): materialize parity for AIMW-MEDI-8F93BEDD59"
           git push origin "HEAD:${{ github.ref_name }}"
+
+# exact-head CI retrigger after materialization
+# materialized reconciliation committed by GitHub Actions; user-authored evidence touch retriggers exact-head gates

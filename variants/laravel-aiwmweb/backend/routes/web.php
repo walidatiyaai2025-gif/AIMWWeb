@@ -220,6 +220,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
         $actions = $actionRegistry->contracts($tenantModel, $permissions, $site);
 
         $api = [
+            'dashboard' => "/api/dashboard?tenant={$tenant}",
             'sites' => "/api/tenants/{$tenant}/sites",
             'operations' => "/tenants/{$tenant}/admin/operations",
             'operations-hub' => "/tenants/{$tenant}/admin/operations-hub",
@@ -365,6 +366,10 @@ Route::prefix('/tenants/{tenant}')
         Route::get('/module/media', 'showSiteBound')->defaults('workspace_permissions', 'content.view')->name('canonical.workspace.media');
         Route::get('/module/comments', 'showSiteBound')->defaults('workspace_permissions', 'content.view')->name('canonical.workspace.comments');
         Route::get('/module/taxonomy', 'showSiteBound')->defaults('workspace_permissions', 'content.view')->name('canonical.workspace.taxonomy');
+        Route::get('/module/users', 'showSiteBound')
+            ->defaults('workspace_permissions', 'tenant.view,sites.view')
+            ->defaults('canonical_operation_id', 'AIMW-CONT-C3EC665880')
+            ->name('canonical.workspace.wordpress-users');
         Route::get('/module/sync', 'showSiteBound')->defaults('workspace_permissions', 'content.view,sync.view')->name('canonical.workspace.sync');
 
         Route::get('/module/reports', 'show')->defaults('workspace_permissions', 'reports.view')->name('canonical.workspace.reports');

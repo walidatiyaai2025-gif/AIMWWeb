@@ -38,6 +38,7 @@ import { ContentExplorerContentTabControl } from './content-explorer-content-tab
 import { ContentExplorerMediaTabControl } from './content-explorer-media-tab-control';
 import { ContentEditorSaveControl } from './content-editor-save-control';
 import { ContentHubAllSitesControl } from './content-hub-all-sites-control';
+import { ContentHubSiteLinksControl } from './content-hub-site-links-control';
 import { ContentPlannerAiCenterLinkControl } from './content-planner-ai-center-link-control';
 import { ContentPlannerExecutionLinkControl } from './content-planner-execution-link-control';
 import { ContentPlannerNewItemControl } from './content-planner-new-item-control';
@@ -53,10 +54,12 @@ import { LogsCloseDetailsControl } from './logs-close-details-control';
 import { MainLayoutParityControls } from './main-layout-parity-controls';
 import { NotificationCenterToggleControl } from './notification-center-toggle-control';
 import { ModuleWorkspaceLoadSitesControl } from './module-workspace-load-sites-control';
+import { ModuleWorkspaceBackToHomeControl } from './module-workspace-back-to-home-control';
 import { MySessionsAdminLinkControl } from './my-sessions-admin-link-control';
 import { OperationsHubReloadControl } from './operations-hub-reload-control';
 import { PagesPostsLinkControl } from './pages-posts-link-control';
 import { MediaPagesLinkControl } from './media-pages-link-control';
+import { MediaBackToSitesControl } from './media-back-to-sites-control';
 import { NotFoundPage, SiteDetailsRoute, WorkspacePage } from './pages';
 import { PostsExecutionLinkControl } from './posts-execution-link-control';
 import { RuntimeErrorBoundary } from './runtime-error-boundary';
@@ -64,8 +67,12 @@ import { SettingsAiPromptsLinkControl } from './settings-ai-prompts-link-control
 import { SettingsBillingSupportLinkControl } from './settings-billing-support-link-control';
 import { SettingsAiProvidersLinkControl } from './settings-ai-providers-link-control';
 import { SettingsAccessibilityAnchorControl } from './settings-accessibility-anchor-control';
+import { SettingsOpenAccessibilityControl } from './settings-open-accessibility-control';
+import { SettingsAdminSessionsLinkControl } from './settings-admin-sessions-link-control';
+import { SettingsMySessionsLinkControl } from './settings-my-sessions-link-control';
 import { SettingsAppearanceLightControl } from './settings-appearance-light-control';
 import { SettingsSetRoseControl } from './settings-set-rose-control';
+import { SettingsDatabaseAnchorControl } from './settings-database-anchor-control';
 import { SettingsLanguageAnchorControl } from './settings-language-anchor-control';
 import { SiteDetailsBackControl } from './site-details-back-control';
 import { SiteDetailsCancelSynchronizationControl } from './site-details-cancel-synchronization-control';
@@ -94,7 +101,15 @@ const queryClient = new QueryClient({
 
 type OutletState = { context: FrontendContext };
 
-function ContextFailure({ error, retry }: { error: unknown; retry: () => void }) {
+function ContextFailure({
+    error,
+    retry,
+    mediaTenantSlug,
+}: {
+    error: unknown;
+    retry: () => void;
+    mediaTenantSlug?: string | null;
+}) {
     const { locale } = useLocale();
     const apiError = error instanceof ApiError ? error : null;
     const isAuth = apiError?.status === 401;
@@ -103,6 +118,7 @@ function ContextFailure({ error, retry }: { error: unknown; retry: () => void })
         <div className="bootstrap-state">
             <StatePanel tone={isForbidden ? 'danger' : 'warning'} title={isAuth ? (locale === 'ar' ? 'يلزم تسجيل الدخول' : 'Sign-in required') : isForbidden ? (locale === 'ar' ? 'الوصول مرفوض' : 'Access denied') : (locale === 'ar' ? 'تعذر تحميل سياق الحساب' : 'Tenant context unavailable')}>
                 <p>{apiError?.message ?? (locale === 'ar' ? 'لم يكتمل طلب سياق الواجهة.' : 'The frontend context request did not complete.')}</p>
+                {mediaTenantSlug ? <MediaBackToSitesControl tenantSlug={mediaTenantSlug} error={error} /> : null}
                 {isAuth ? <p>{locale === 'ar' ? 'لم يتم اختراع تدفق دخول محلي؛ يلزم دمج مصادقة Laravel من قائد التكامل.' : 'No local fake sign-in is provided; the Laravel authentication flow must be integrated by the backend authority.'}</p> : null}
                 <button type="button" className="btn" onClick={retry}>{locale === 'ar' ? 'إعادة المحاولة' : 'Retry'}</button>
             </StatePanel>
@@ -114,6 +130,7 @@ function TenantBootstrap() {
     const { tenantSlug } = useParams();
     const location = useLocation();
     const activeSite = new URLSearchParams(location.search).get('site');
+    const isMediaWorkspace = location.pathname.endsWith('/module/media');
     const contextUrl = `/tenants/${encodeURIComponent(tenantSlug ?? '')}/context${activeSite ? `?site=${encodeURIComponent(activeSite)}` : ''}`;
     const query = useQuery({
         queryKey: ['frontend-context', tenantSlug, activeSite],
@@ -122,7 +139,13 @@ function TenantBootstrap() {
     });
 
     if (query.isLoading) return <div className="bootstrap-state"><LoadingState /></div>;
-    if (query.error) return <ContextFailure error={query.error} retry={() => query.refetch()} />;
+    if (query.error) return (
+        <ContextFailure
+            error={query.error}
+            retry={() => query.refetch()}
+            mediaTenantSlug={isMediaWorkspace ? tenantSlug : null}
+        />
+    );
     if (!query.data) return <ContextFailure error={new Error('Tenant context returned no data.')} retry={() => query.refetch()} />;
 
     const context = withApprovalQueueEndpoint(query.data);
@@ -192,7 +215,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     if (route.key === 'dashboard') return <><DashboardExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'sites') return <><SitesSaveControl context={context} /><SitesRetestSelectedControl context={context} /><SitesDeleteControl context={context} /><SitesBulkDeleteControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'explorer') return <><ContentExplorerContentTabControl context={context} /><ContentExplorerDynamicLinksControl context={context} /><ContentExplorerMediaTabControl context={context} /><ContentExplorerExecutionLinkControl context={context} /><ContentExplorerSynchronizeControl context={context} /><ContentExplorerBulkTrashControl context={context} /><WorkspacePage context={context} route={route} /></>;
-    if (route.key === 'content-hub') return <><ContentHubAllSitesControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'content-hub') return <><ContentHubAllSitesControl context={context} /><ContentHubSiteLinksControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'content-planner') return <><ContentPlannerAiCenterLinkControl context={context} /><ContentPlannerExecutionLinkControl context={context} /><ContentPlannerNewItemControl context={context} /><ContentPlannerReloadControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'media') return <><MediaPagesLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'pages') return <><GlobalPagesConfirmTrashControl context={context} /><PagesPostsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
@@ -210,13 +233,18 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     if (route.key === 'sessions') return <><MySessionsAdminLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'backups') return <><BackupCopyPathControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'configuration-validation') return <><ConfigurationValidationCopyReportControl context={context} /><WorkspacePage context={context} route={route} /></>;
-    if (route.key === 'settings') return <><SettingsAccessibilityAnchorControl context={context} /><SettingsLanguageAnchorControl context={context} /><SettingsAppearanceLightControl context={context} /><SettingsSetRoseControl context={context} /><SettingsBillingSupportLinkControl context={context} /><SettingsAiProvidersLinkControl context={context} /><SettingsAiPromptsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'settings') return <><SettingsMySessionsLinkControl context={context} /><SettingsAdminSessionsLinkControl context={context} /><SettingsAccessibilityAnchorControl context={context} /><SettingsOpenAccessibilityControl context={context} /><SettingsLanguageAnchorControl context={context} /><SettingsAppearanceLightControl context={context} /><SettingsSetRoseControl context={context} /><SettingsDatabaseAnchorControl context={context} /><SettingsBillingSupportLinkControl context={context} /><SettingsAiProvidersLinkControl context={context} /><SettingsAiPromptsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'account-billing') return <><BillingProfileLink context={context} /><BillingStartCheckoutControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'admin-billing-support') return <><AdminBillingSupportSettingsLink context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'ai-center') return <><AiCenterApprovalStatusControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'ai-usage') return <><AiUsageAiCenterLinkControl context={context} /><AiUsageLoadWorkspace context={context} route={route} /></>;
     if (route.key === 'system-health') return <SystemHealthWorkspace context={context} route={route} />;
     return <WorkspacePage context={context} route={route} />;
+}
+
+function ModuleWorkspaceFallbackRoute() {
+    const { context } = useOutletContext<OutletState>();
+    return <ModuleWorkspaceBackToHomeControl context={context} />;
 }
 
 function NotFoundElement() {
@@ -250,6 +278,7 @@ function AppRoutes() {
                         ? <Route key={route.key} index element={<RouteElement route={route} />} />
                         : <Route key={route.key} path={relative} element={<RouteElement route={route} />} />;
                 })}
+                <Route path="module/:moduleKey" element={<ModuleWorkspaceFallbackRoute />} />
                 <Route path="*" element={<NotFoundElement />} />
             </Route>
             <Route path="*" element={<OutsideTenantRoute />} />

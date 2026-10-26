@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "leaf_issue": 984,
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-3BFC8AF183",
+  "domain": "sync",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Shared/AppDataGrid.razor",
+    "route_screen": "component:AppDataGrid",
+    "visible_control": "@SelectAllFilteredText [SelectAllFilteredAsync]",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Shared/AppDataGrid.razor:component:AppDataGrid:@SelectAllFilteredText [SelectAllFilteredAsync]",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "verification": "rendered/read response matches authoritative source",
+    "behavior": "When selection is enabled and the filtered set spans beyond the current page, SelectAllFilteredAsync adds every filtered item key to the existing selection and raises the selection-changed callback."
+  },
+  "laravel_adaptation": {
+    "shared_contract": "variants/laravel-aiwmweb/backend/resources/js/app-data-grid-select-all-filtered-control.ts",
+    "consumer_wiring": "variants/laravel-aiwmweb/backend/resources/js/seo-visible-controls.tsx",
+    "real_consumer": "tenant/site-scoped SEO findings",
+    "consumer_route": "/tenants/{tenant}/sites/{site}/seo",
+    "authoritative_reads": [
+      "GET /api/tenants/{tenant}/sites/{site}/seo/audits",
+      "GET /api/tenants/{tenant}/sites/{site}/seo/audits/{audit}/findings",
+      "GET /tenants/{tenant}/sites/{site}/seo/presentation"
+    ],
+    "selection_mapping": "The generic selectable FilteredItems set maps to proposal-eligible filtered SEO findings; disabled findings without a deterministic or AI proposal are not selectable in the real consumer.",
+    "control_binding": "data-canonical-operation=AIMW-SYNC-3BFC8AF183",
+    "semantics": [
+      "preserve existing selection keys",
+      "add every proposal-eligible key in the current filtered set, including keys on later pages",
+      "expose the canonical control only when the selectable filtered set is larger than the current selectable page",
+      "hide the operation control after all filtered selectable keys are selected without claiming the sibling ClearSelection operation",
+      "perform no HTTP request, persistence write, queue dispatch, provider call, or WordPress mutation from selection itself"
+    ],
+    "fake_or_demo_data": false
+  },
+  "authorization_and_isolation": {
+    "consumer_authorization": "auth + tenant.context + tenant.view + seo.view",
+    "tenant_context": "server-authoritative tenant slug and site ownership in the SEO manager route",
+    "foreign_tenant_site_semantics": "404 fail closed",
+    "direct_tenant_override": false,
+    "tenant_owned": true
+  },
+  "semantics": {
+    "mutation": false,
+    "persistence_mutation": false,
+    "wordpress_mutation": false,
+    "network_dispatch_from_control": false,
+    "queue_runtime": "not used",
+    "cache_mutation": "not used",
+    "secrets": "not read or written",
+    "authoritative_state_source": "persisted tenant/site SEO audit and finding read model",
+    "fake_success_path": "none"
+  },
+  "acceptance_tests": {
+    "frontend": {
+      "file": "variants/laravel-aiwmweb/backend/resources/js/__tests__/app-data-grid-select-all-filtered-control.test.tsx",
+      "coverage": [
+        "exact add-all-filtered key semantics while preserving existing selection",
+        "source-equivalent filtered-count versus paged-count visibility boundary",
+        "exact canonical operation marker",
+        "selection across two SEO findings pages",
+        "no request dispatched by the selection operation itself"
+      ]
+    },
+    "php": {
+      "file": "variants/laravel-aiwmweb/backend/tests/Feature/AppDataGridSelectAllFilteredTerminalityTest.php",
+      "coverage": [
+        "exact canonical ledger identity/domain/kind/source/control",
+        "source SelectAllFilteredAsync contract",
+        "production shared contract and SEO consumer binding",
+        "read-only real SEO manager consumer",
+        "foreign-tenant site 404 fail-closed behavior"
+      ]
+    }
+  },
+  "scope_guards": {
+    "exactly_one_operation": true,
+    "sibling_app_data_grid_operations_claimed": false,
+    "aspnet_runtime_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "retry_or_replacement_lineage_created": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "376121deb668723bb4f84ef2e5f4cffecc666645",
+    "branch": "worker/laravel-aiwmweb-AIMW-SYNC-3BFC8AF183-select-all-filtered",
+    "implementation_head": "fcc59729764cb5f901368f8d6390f19f82fc4af5"
+  },
+  "materialization": {
+    "path": "official Laravel AIWMWeb parity materializer",
+    "generated_reconciliation_hand_edited": false
+  }
+}

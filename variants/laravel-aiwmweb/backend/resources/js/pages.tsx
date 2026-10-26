@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import {
     ApiError,
     apiRequest,
@@ -14,8 +14,10 @@ import {
 } from './core';
 import { ActionButton, ActionDialog, DataTable, LoadingState, Pagination, StatePanel, useToast } from './components';
 import { commonText, useLocale } from './i18n';
+import { CONTENT_HUB_WORKSPACE_URL_OPERATION_ID, contentHubWorkspaceUrl, isContentHubWorkspacePath } from './content-hub-workspace-url';
 import { AiCenterGenerateControl } from './ai-center-generate-control';
 import { AdminBillingSupportClearSearchControl } from './admin-billing-support-clear-search-control';
+import { APP_DATA_GRID_PREVIOUS_PAGE_OPERATION_ID } from './app-data-grid-previous-page-control';
 import { AppSearchBox } from './app-search-box';
 import { AccountProfileEmailSettingsLinkControl } from './account-profile-email-settings-link-control';
 import { ApplicationUsersClearSearchControl } from './application-users-clear-search-control';
@@ -27,6 +29,7 @@ import { prepareActionRequest } from './action-contract';
 import { AUTOMATION_PHASE_ACTION_OPERATIONS, AUTOMATION_PHASE_REFRESH_OPERATIONS, SCHEDULE_CANCEL_EDIT_OPERATION_ID } from './automation-phase-controls';
 import { AuthoritativeReconciliationError, mutateThenReconcile } from './reconciliation';
 import { ContentExplorerWordPressLinkControl } from './content-explorer-wordpress-link-control';
+import { ContentExplorerMediaSourceUrlControl } from './content-explorer-media-source-url-control';
 import { ContentExplorerPreviewPanel } from './content-explorer-preview-panel';
 import { CONTENT_EXPLORER_CONTENT_TAB_RESET_EVENT } from './content-explorer-content-tab-control';
 import { ContentExplorerPagination } from './content-explorer-previous-page-control';
@@ -36,15 +39,23 @@ import {
     loadAllFilteredExplorerKeys,
 } from './content-explorer-select-all-filtered-control';
 import { ContentExplorerBackToSitesControl } from './content-explorer-back-to-sites-control';
+import { ContentExplorerClearSelectionControl } from './content-explorer-clear-selection-control';
 import { CurrentUserLogsControl } from './current-user-logs-control';
 import { DashboardSitesNavigationControl } from './dashboard-sites-navigation-control';
+import { DashboardSystemHealthNavigationControl } from './dashboard-system-health-navigation-control';
+import { DashboardSitesQuickAccessControl } from './dashboard-sites-quick-access-control';
+import { DashboardMediaNavigationControl } from './dashboard-media-navigation-control';
 import { LiveSystemStatusRefreshControl } from './live-system-status-refresh-control';
 import { EmailHistoryFiltersControl, type EmailHistoryFilterState } from './email-history-filters-control';
 import { GlobalUsersFullManagementControl } from './global-users-full-management-control';
 import { MediaDeleteControl } from './media-delete-control';
+import { MediaBackToSitesControl } from './media-back-to-sites-control';
+import { MediaManagerEditingSourceUrlControl } from './media-manager-editing-source-url-control';
 import { NotificationOpenControl } from './notification-open-control';
+import { PagesInterpolatedLinksControl } from './pages-interpolated-links-control';
 import { PagesWordPressLinkControl } from './pages-wordpress-link-control';
 import { PostsWordPressLinkControl } from './posts-wordpress-link-control';
+import { RolesStartCreateControl } from './roles-start-create-control';
 import { SiteOperationsExportControl } from './site-operations-export-control';
 import { SiteOperationsSitesLinkControl } from './site-operations-sites-link-control';
 import {
@@ -145,9 +156,67 @@ function DashboardContent({ context, route }: { context: FrontendContext; route:
 
     const payload = query.data ?? {};
     const metricsCandidate = payload.metrics;
-    const metrics = Array.isArray(metricsCandidate)
+    const explicitMetrics = Array.isArray(metricsCandidate)
         ? metricsCandidate.filter((metric): metric is Record<string, unknown> => Boolean(metric && typeof metric === 'object'))
         : [];
+
+    const sitesCandidate = payload.sites;
+    const sites = sitesCandidate && typeof sitesCandidate === 'object' && !Array.isArray(sitesCandidate)
+        ? sitesCandidate as Record<string, unknown>
+        : null;
+    const hasCanonicalDashboardPayload = Boolean(sites)
+        || ['posts', 'pages', 'media', 'activeJobs', 'failedJobs', 'healthScore', 'lastSynchronizationAtUtc']
+            .some((key) => Object.prototype.hasOwnProperty.call(payload, key));
+
+    const metricNumber = (value: unknown): number | string => typeof value === 'number' ? value : '—';
+    const posts = typeof payload.posts === 'number' ? payload.posts : null;
+    const pages = typeof payload.pages === 'number' ? payload.pages : null;
+    const cachedContent = posts !== null && pages !== null ? posts + pages : '—';
+    const connectedSites = typeof sites?.connectedSites === 'number' ? sites.connectedSites : null;
+    const failedJobs = typeof payload.failedJobs === 'number' ? payload.failedJobs : null;
+    const lastSync = typeof payload.lastSynchronizationAtUtc === 'string' && payload.lastSynchronizationAtUtc.trim() !== ''
+        ? payload.lastSynchronizationAtUtc
+        : '—';
+
+    const canonicalMetrics: Array<Record<string, unknown>> = hasCanonicalDashboardPayload ? [
+        {
+            key: 'sites',
+            label: locale === 'ar' ? 'المواقع' : 'Sites',
+            value: metricNumber(sites?.totalSites),
+            detail: connectedSites !== null ? `${connectedSites} ${locale === 'ar' ? 'متصل' : 'connected'}` : undefined,
+        },
+        {
+            key: 'content',
+            label: locale === 'ar' ? 'المحتوى المحلي' : 'Cached content',
+            value: cachedContent,
+            detail: posts !== null && pages !== null
+                ? `${posts} ${locale === 'ar' ? 'مقال' : 'posts'} · ${pages} ${locale === 'ar' ? 'صفحة' : 'pages'}`
+                : undefined,
+        },
+        {
+            key: 'media',
+            label: locale === 'ar' ? 'الوسائط' : 'Media',
+            value: metricNumber(payload.media),
+        },
+        {
+            key: 'active_jobs',
+            label: locale === 'ar' ? 'مهام نشطة' : 'Active jobs',
+            value: metricNumber(payload.activeJobs),
+            detail: failedJobs !== null ? `${failedJobs} ${locale === 'ar' ? 'فاشلة' : 'failed'}` : undefined,
+        },
+        ...(typeof payload.healthScore === 'number' ? [{
+            key: 'health',
+            label: locale === 'ar' ? 'صحة المنصة' : 'Platform health',
+            value: `${payload.healthScore}%`,
+        }] : []),
+        {
+            key: 'last_sync',
+            label: locale === 'ar' ? 'آخر مزامنة' : 'Last sync',
+            value: lastSync,
+        },
+    ] : [];
+
+    const metrics = explicitMetrics.length ? explicitMetrics : canonicalMetrics;
 
     return (
         <div className="workspace-stack">
@@ -155,6 +224,9 @@ function DashboardContent({ context, route }: { context: FrontendContext; route:
                 <div><span className="workspace-kicker">LIVE TENANT DATA</span><h2>{locale === 'ar' ? 'ملخص التشغيل' : 'Operational summary'}</h2><p>{locale === 'ar' ? 'تُعرض المؤشرات فقط عندما يعيدها خادم Laravel للحساب الحالي.' : 'Metrics render only when the Laravel backend returns them for the active tenant.'}</p></div>
                 <LiveSystemStatusRefreshControl busy={query.isFetching} onClick={() => query.refetch()} />
                 <DashboardSitesNavigationControl context={context} />
+                <DashboardSystemHealthNavigationControl context={context} />
+                <DashboardSitesQuickAccessControl context={context} />
+                <DashboardMediaNavigationControl context={context} />
             </section>
             {metrics.length ? (
                 <section className="metric-grid" aria-label={locale === 'ar' ? 'مؤشرات الحساب' : 'Tenant metrics'}>
@@ -168,7 +240,7 @@ function DashboardContent({ context, route }: { context: FrontendContext; route:
                 </section>
             ) : (
                 <StatePanel title={locale === 'ar' ? 'لا توجد مؤشرات حقيقية بعد' : 'No live metrics returned'}>
-                    {locale === 'ar' ? 'لم يرسل عقد لوحة التحكم أي metrics. لن تستبدل الواجهة ذلك بأرقام تجريبية.' : 'The dashboard contract returned no metrics. The frontend will not replace them with demo numbers.'}
+                    {locale === 'ar' ? 'لم يرسل عقد لوحة التحكم بيانات قابلة للعرض. لن تستبدل الواجهة ذلك بأرقام تجريبية.' : 'The dashboard contract returned no renderable metrics. The frontend will not replace them with demo numbers.'}
                 </StatePanel>
             )}
         </div>
@@ -424,6 +496,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     if (query.error) return (
         <div className="workspace-stack">
             <QueryError error={query.error} retry={() => query.refetch()} />
+            {route.key === 'media' ? (
+                <MediaBackToSitesControl tenantSlug={context.tenant.slug} error={query.error} />
+            ) : null}
             {route.key === 'site-operations' ? <SiteOperationsSitesLinkControl context={context} /> : null}
             <CurrentUserLogsControl context={context} />
         </div>
@@ -562,6 +637,16 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             />
                         </>
                     ) : null}
+                    {route.key === 'roles' ? (
+                        <RolesStartCreateControl
+                            context={context}
+                            busy={query.isFetching}
+                            onCreated={async () => {
+                                const refreshed = await query.refetch();
+                                if (refreshed.error) throw refreshed.error;
+                            }}
+                        />
+                    ) : null}
                     {route.key === 'sites' ? (
                         <button
                             type="button"
@@ -653,6 +738,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         <SiteReliabilityOperationHistoryLinkControl context={context} />
                     ) : null}
                     {route.controls?.map((actionKey) => {
+                        if (route.key === 'roles' && actionKey === 'roles.create') return null;
                         const canonicalOperation = AUTOMATION_PHASE_ACTION_OPERATIONS[actionKey];
                         return (
                             <span key={actionKey} data-canonical-operation={canonicalOperation}>
@@ -708,6 +794,13 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         selectedCount={explorerSelectedKeys.size}
                         total={collection.total}
                         onSelectAll={selectAllExplorerFiltered}
+                        afterActions={
+                            <ContentExplorerClearSelectionControl
+                                canEdit={canEditExplorerContent}
+                                selectedCount={explorerSelectedKeys.size}
+                                onClear={() => setExplorerSelectedKeys(new Set())}
+                            />
+                        }
                     />
                 ) : null}
                 {visibleRows.length ? (
@@ -755,17 +848,31 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         ) : route.key === 'posts' ? (row) => (
                             <PostsWordPressLinkControl value={row.link} />
                         ) : route.key === 'pages' ? (row) => (
-                            <PagesWordPressLinkControl value={row.link} />
+                            <span className="site-row-actions">
+                                <PagesInterpolatedLinksControl
+                                    tenantSlug={context.tenant.slug}
+                                    siteId={row.site_id}
+                                    wordpressId={row.wordpress_id}
+                                    siteName={row.site_name}
+                                />
+                                <span aria-hidden="true"> · </span>
+                                <PagesWordPressLinkControl value={row.link} />
+                            </span>
                         ) : route.key === 'media' && endpoint ? (row) => (
-                            <MediaDeleteControl
-                                context={context}
-                                endpoint={endpoint}
-                                row={row}
-                                onReconcile={async () => {
-                                    const refreshed = await query.refetch();
-                                    if (refreshed.error) throw refreshed.error;
-                                }}
-                            />
+                            <span className="site-row-actions">
+                                <MediaManagerEditingSourceUrlControl value={row.source_url}>
+                                    <ContentExplorerMediaSourceUrlControl value={row.source_url} />
+                                </MediaManagerEditingSourceUrlControl>
+                                <MediaDeleteControl
+                                    context={context}
+                                    endpoint={endpoint}
+                                    row={row}
+                                    onReconcile={async () => {
+                                        const refreshed = await query.refetch();
+                                        if (refreshed.error) throw refreshed.error;
+                                    }}
+                                />
+                            </span>
                         ) : route.key === 'notifications' ? (row) => (
                             <NotificationOpenControl context={context} row={row} />
                         ) : undefined}
@@ -773,7 +880,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                 ) : <div className="empty-state"><strong>{text(commonText.empty)}</strong><p>{locale === 'ar' ? 'لا يتم إنشاء صفوف تجريبية عندما يعيد الخادم نتيجة فارغة.' : 'No sample rows are synthesized when the server returns an empty result.'}</p></div>}
                 {route.key === 'explorer'
                     ? <ContentExplorerPagination page={collection.page} lastPage={collection.lastPage} onPage={setPage} />
-                    : <Pagination page={collection.page} lastPage={collection.lastPage} onPage={setPage} previousOperationId={readOperations?.previous} />}
+                    : <Pagination page={collection.page} lastPage={collection.lastPage} onPage={setPage} previousOperationId={readOperations?.previous ?? (route.key === 'email-history' ? APP_DATA_GRID_PREVIOUS_PAGE_OPERATION_ID : undefined)} />}
             </section>
             {route.key === 'explorer' && explorerPreview ? (
                 <ContentExplorerPreviewPanel
@@ -797,6 +904,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
 function WorkspaceHub({ context, route }: { context: FrontendContext; route: WorkspaceRoute }) {
     const { locale } = useLocale();
     const tenantSlug = context.tenant.slug;
+    const location = useLocation();
     const related = useMemo(() => {
         if (route.key === 'welcome' || route.key === 'system-overview' || route.key === 'workspace') return ['overview', 'content', 'seo', 'ai', 'operations', 'reports', 'system'];
         if (route.key === 'content-hub') return ['content'];
@@ -807,11 +915,33 @@ function WorkspaceHub({ context, route }: { context: FrontendContext; route: Wor
     return (
         <div className="workspace-stack">
             <section className="hero-panel" data-canonical-operation={route.key === 'content-hub' ? CONTENT_WORKSPACE_LOAD_OPERATION_ID : undefined}><div><span className="workspace-kicker">WORKSPACE</span><h2>{route.label[locale]}</h2><p>{route.description[locale]}</p></div><span className="tenant-badge">{context.tenant.name}</span></section>
+            {route.key === 'content-hub' ? (
+                <nav className="toolbar-panel" aria-label={locale === 'ar' ? 'تنقل مساحة المحتوى' : 'Content workspace navigation'}>
+                    <div className="toolbar-actions">
+                        <Link
+                            className="btn primary"
+                            to={contentHubWorkspaceUrl(tenantSlug, '/module/sync', location.search)}
+                            data-canonical-operation={CONTENT_HUB_WORKSPACE_URL_OPERATION_ID}
+                        >
+                            {locale === 'ar' ? 'فتح المزامنة' : 'Open synchronization'}
+                        </Link>
+                    </div>
+                </nav>
+            ) : null}
             <section className="workspace-card-grid">
                 {workspaceRoutes.filter((candidate) => !candidate.hidden && related.includes(candidate.group) && candidate.key !== route.key).map((candidate) => {
                     const state = resolveCapability(context, candidate);
+                    const sourceWorkspacePath = route.key === 'content-hub' && isContentHubWorkspacePath(candidate.path);
+                    const destination = sourceWorkspacePath
+                        ? contentHubWorkspaceUrl(tenantSlug, candidate.path, location.search)
+                        : tenantUrl(tenantSlug, candidate.path);
                     return (
-                        <Link className="workspace-card" key={candidate.key} to={tenantUrl(tenantSlug, candidate.path)}>
+                        <Link
+                            className="workspace-card"
+                            key={candidate.key}
+                            to={destination}
+                            data-canonical-operation={sourceWorkspacePath ? CONTENT_HUB_WORKSPACE_URL_OPERATION_ID : undefined}
+                        >
                             <span className="workspace-card-icon" aria-hidden="true">{candidate.icon}</span>
                             <div><strong>{candidate.label[locale]}</strong><p>{candidate.description[locale]}</p><small className={`capability-pill capability-${state.state}`}>{state.state.replaceAll('_', ' ')}</small></div>
                         </Link>

@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #816 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-A6EA54E66D",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/settings",
+    "source": "src/AIWordPressManager.Web/Components/Pages/Settings.razor",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Pages/Settings.razor:/settings:/settings/sessions -> /settings/sessions",
+    "source_intent": "Open the signed-in user's real active-device/session workspace from Settings.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/settings-my-sessions-link-control.tsx",
+    "production_consumer": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "source_route": "/tenants/{tenant}/settings/sessions",
+    "canonical_redirect": "/tenants/{tenant}/account/sessions",
+    "route_name": "canonical.alias.settings-sessions",
+    "permissions": [
+      "sessions.manage",
+      "sessions.view"
+    ],
+    "read_only": true,
+    "permission_mode": "all"
+  },
+  "security": {
+    "authentication_required": true,
+    "tenant_context_required": true,
+    "foreign_tenant_rejected": true,
+    "unauthorized_user_rejected": true,
+    "server_mutation_added": false,
+    "fake_success": false,
+    "frontend_fails_closed_unless_both_destination_permissions_are_present": true
+  },
+  "acceptance": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-my-sessions-link-control.test.tsx",
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/SettingsMySessionsLinkTerminalityTest.php",
+    "coverage": [
+      "exact Settings /settings/sessions source semantics",
+      "tenant-qualified visible destination",
+      "real canonical alias to the authoritative account sessions workspace",
+      "tenant isolation and exact all-of session permission failure behavior",
+      "Arabic and English navigation copy",
+      "no mutation or fake session state"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-A6EA54E66D"
+    ],
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "materialized": true,
+  "evidence_source_sha": "be34483d1e08d5301954c9e73e0c0f2066973b62",
+  "post_materialization_gate_trigger": "exact-head CI after official task materialization"
+}

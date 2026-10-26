@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #833 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-CONT-7EF5524637",
+    "domain": "content",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/SiteOperationsHub.razor",
+    "source_screen": "/operations | /operations/hub",
+    "source_control": "/sites -> /sites (Manage sites / إدارة المواقع)",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "verification": "authoritative rendered/read state with loading/empty/error behavior"
+  },
+  "source_behavior": {
+    "summary": "Operations Hub exposes the bilingual Manage sites action to /sites in the load-error recovery state and in the normal rendered state; the loading-only state does not expose it.",
+    "side_effect": "navigation only",
+    "wordpress_behavior": "none; this control does not call or mutate WordPress",
+    "success_semantics": "browser navigation only; no success toast, mutation receipt, fabricated state, or local-only mutation"
+  },
+  "laravel_adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/operations-hub-sites-link-control.tsx",
+    "production_page": "variants/laravel-aiwmweb/backend/resources/js/operations-hub-reload-control.tsx",
+    "operation_marker": "AIMW-CONT-7EF5524637",
+    "target_builder": "tenantUrl(context.tenant.slug, '/sites')",
+    "target_route": "/tenants/{tenant}/sites",
+    "target_route_name": "canonical.workspace.sites",
+    "target_backing_api": "/api/tenants/{tenant}/sites",
+    "render_states": {
+      "loading": "not rendered, matching source loading-only state",
+      "error": "rendered beside retryable QueryError, matching source recovery state",
+      "empty": "rendered in normal toolbar while authoritative collection may be empty",
+      "loaded": "rendered in normal toolbar with authoritative operation-history data"
+    },
+    "placeholder_or_catch_all": false,
+    "demo_or_sample_data": false
+  },
+  "authorization": {
+    "destination_middleware": [
+      "auth",
+      "tenant.context"
+    ],
+    "destination_permissions": [
+      "tenant.view",
+      "sites.view"
+    ],
+    "guest": "redirects to canonical login",
+    "missing_sites_view": "403",
+    "foreign_tenant_without_membership": "404",
+    "visible_control_permissions": [
+      "tenant.view",
+      "sites.view",
+      "execution.view"
+    ]
+  },
+  "tenant_isolation": {
+    "target_tenant_source": "server-supplied FrontendContext tenant slug after authenticated tenant-context bootstrap",
+    "caller_controlled_external_redirect": false,
+    "foreign_tenant_destination": "404",
+    "destination_collection": "tenant-scoped Site API"
+  },
+  "runtime_semantics": {
+    "read_only": true,
+    "persistence": "none",
+    "queue_cache_scheduler": "none",
+    "secrets_provider_connector": "none",
+    "authoritative_reread": "destination Sites workspace reads the real active-tenant Site collection",
+    "idempotency": "repeated navigation is side-effect free",
+    "retry_and_cancellation": "not applicable to navigation-only control",
+    "audit_or_receipt": "not applicable because no domain mutation occurs"
+  },
+  "acceptance_tests": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/operations-hub-sites-link-control.test.tsx",
+    "php_feature": "variants/laravel-aiwmweb/backend/tests/Feature/OperationsHubSitesLinkTerminalityTest.php",
+    "proof": [
+      "exact source /sites action and bilingual labels",
+      "exact canonical operation marker in production code and focused tests",
+      "tenant-derived and URL-encoded Sites destination",
+      "source-equivalent loading/error/empty/loaded visibility placement",
+      "explicit canonical.workspace.sites destination route with auth and tenant.context",
+      "tenant-scoped Sites API read with no Site mutation",
+      "guest and missing sites.view fail closed",
+      "foreign tenant destination returns 404"
+    ]
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-CONT-7EF5524637",
+    "sibling_site_operations_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "mutation_added": false,
+    "force_push_performed": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true,
+    "reason": "The source Manage sites navigation is adapted to the real tenant-scoped Sites workspace, appears in the same source-equivalent error and normal/empty states while remaining absent during loading, performs no mutation or fake success, and has focused tenant-isolation/read-only evidence."
+  }
+}

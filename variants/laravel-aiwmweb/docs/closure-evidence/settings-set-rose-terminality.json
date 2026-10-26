@@ -52,10 +52,10 @@
   },
   "provenance": {
     "base_branch": "worker/laravel-aiwmweb-closure-composition",
-    "base_composition_sha": "8a813a8f38950a641b237b3355de16286f9ba144",
+    "base_composition_sha": "2f10d90eec9759d2933636c70554e6b03f1c72a0",
     "branch": "worker/809-settings-set-rose"
   },
-  "materialized": true,
-  "evidence_source_sha": "61cd10cd5312e374faf4f27f7dbbfbe7d55e83bb",
-  "post_materialization_gate_trigger": "user-authored exact-head CI trigger after official materialization commit d430ecbd31639d037be451c7663d4866b189a37b; no runtime semantics changed"
+  "materialized": false,
+  "evidence_source_sha": null,
+  "post_materialization_gate_trigger": "pending official materialization and exact-head CI after composition resync"
 }
