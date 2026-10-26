@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 119,
-      "pending": 45,
+      "adapted": 118,
+      "pending": 46,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 119,
-      "percent": 72.56
+      "terminal": 118,
+      "percent": 71.95
     },
     "email": {
       "total": 82,
@@ -203,12 +203,12 @@
     "sync": {
       "total": 213,
       "ported": 0,
-      "adapted": 152,
-      "pending": 61,
+      "adapted": 153,
+      "pending": 60,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 152,
-      "percent": 71.36
+      "terminal": 153,
+      "percent": 71.83
     },
     "taxonomy": {
       "total": 13,
@@ -16675,31 +16675,21 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-media-source-url-control.tsx",
+      "laravel_destination": "",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "ADAPTED",
-      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-media-source-url-control.test.tsx",
-      "evidence": "AIMW-CONT-B44DA81C28 ContentExplorer media SourceUrl focused closure@5eb59f398c2660a5ee8fd2dc501f00da47a94d99: variants/laravel-aiwmweb/backend/resources/js/content-explorer-media-source-url-control.tsx; focused-closure:AIMW-CONT-B44DA81C28; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-media-source-url-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-media-source-url-terminality.json",
+      "migration_state": "PENDING",
+      "acceptance_test": "",
+      "evidence": "",
       "reconciliation": {
-        "decision": "ADAPTED",
-        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "AIMW-CONT-B44DA81C28 ContentExplorer media SourceUrl focused closure",
-        "source_sha": "5eb59f398c2660a5ee8fd2dc501f00da47a94d99",
-        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-media-source-url-control.tsx",
-        "evidence_mode": "focused_closure_contract",
-        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-media-source-url-terminality.json",
-        "signals": [
-          "operation:AIMW-CONT-B44DA81C28",
-          "production-marker:variants/laravel-aiwmweb/backend/resources/js/content-explorer-media-source-url-control.tsx",
-          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-media-source-url-control.test.tsx",
-          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-media-source-url-terminality.json",
-          "scope:operation-specific",
-          "test:tenant-isolation"
-        ]
+        "decision": "PENDING",
+        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
+        "source_label": null,
+        "source_sha": null,
+        "destination_path": null
       }
     },
     {
@@ -32836,21 +32826,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/app-data-grid-select-all-filtered-control.ts",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AppDataGridSelectAllFilteredTerminalityTest.php",
+      "evidence": "AIMW-SYNC-3BFC8AF183 AppDataGrid SelectAllFilteredAsync focused closure@1ff9dc8840ff2a6d204298b0620bcb23d28af0c1: variants/laravel-aiwmweb/backend/resources/js/app-data-grid-select-all-filtered-control.ts; focused-closure:AIMW-SYNC-3BFC8AF183; test:variants/laravel-aiwmweb/backend/tests/Feature/AppDataGridSelectAllFilteredTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/app-data-grid-select-all-filtered-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-SYNC-3BFC8AF183 AppDataGrid SelectAllFilteredAsync focused closure",
+        "source_sha": "1ff9dc8840ff2a6d204298b0620bcb23d28af0c1",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/app-data-grid-select-all-filtered-control.ts",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/app-data-grid-select-all-filtered-terminality.json",
+        "signals": [
+          "operation:AIMW-SYNC-3BFC8AF183",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/app-data-grid-select-all-filtered-control.ts",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/AppDataGridSelectAllFilteredTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/app-data-grid-select-all-filtered-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -37295,6 +37295,7 @@
       "AIMW-CONT-A6867078EA",
       "AIMW-CONT-A6EA54E66D",
       "AIMW-CONT-B1024628D9",
+      "AIMW-CONT-B44DA81C28",
       "AIMW-CONT-B60F3F750B",
       "AIMW-CONT-B6BB292F85",
       "AIMW-CONT-BB31987A53",
@@ -37347,7 +37348,6 @@
       "AIMW-SYNC-3389FB622C",
       "AIMW-SYNC-33EE696FF7",
       "AIMW-SYNC-38D8A24B15",
-      "AIMW-SYNC-3BFC8AF183",
       "AIMW-SYNC-3E7DCF4C71",
       "AIMW-SYNC-419C403EFB",
       "AIMW-SYNC-425B82511E",
@@ -38613,7 +38613,6 @@
       "AIMW-CONT-A93DE991C0",
       "AIMW-CONT-AC737C80BF",
       "AIMW-CONT-B1E9E1D6B0",
-      "AIMW-CONT-B44DA81C28",
       "AIMW-CONT-B9E6EFF3DF",
       "AIMW-CONT-BCE1211CE3",
       "AIMW-CONT-C178278FCB",
@@ -38690,6 +38689,7 @@
       "AIMW-SYNC-1778E3F6B5",
       "AIMW-SYNC-26F2BF8EE8",
       "AIMW-SYNC-2A8778C6EA",
+      "AIMW-SYNC-3BFC8AF183",
       "AIMW-SYNC-461B1075DE",
       "AIMW-SYNC-4E3C0156FC",
       "AIMW-SYNC-4E969573BB",
@@ -39398,10 +39398,10 @@
         ]
       },
       {
-        "label": "AIMW-CONT-B44DA81C28 ContentExplorer media SourceUrl focused closure",
-        "sha": "5eb59f398c2660a5ee8fd2dc501f00da47a94d99",
+        "label": "AIMW-SYNC-3BFC8AF183 AppDataGrid SelectAllFilteredAsync focused closure",
+        "sha": "1ff9dc8840ff2a6d204298b0620bcb23d28af0c1",
         "operation_ids": [
-          "AIMW-CONT-B44DA81C28"
+          "AIMW-SYNC-3BFC8AF183"
         ]
       }
     ],
