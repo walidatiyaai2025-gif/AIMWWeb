@@ -1,56 +1,59 @@
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import {
-    workspaceRoutes,
-    type FrontendContext,
-} from '../core';
+import type { FrontendContext } from '../core';
 import { LocaleProvider } from '../i18n';
 import {
     ROLES_START_CREATE_OPERATION_ID,
     RolesStartCreateControl,
 } from '../roles-start-create-control';
 
-const rolesRoute = workspaceRoutes.find((route) => route.key === 'roles')!;
-
-function context(withCreateAction: boolean): FrontendContext {
+function context(permissions: string[]): FrontendContext {
     return {
         user: { id: 1, name: 'Owner', email: 'owner@example.test' },
         tenant: { slug: 'alpha', name: 'Alpha' },
         tenants: [{ slug: 'alpha', name: 'Alpha' }],
-        permissions: ['tenant.view', 'roles.view', 'roles.manage'],
+        permissions,
         connectors: [],
         capabilities: {},
         api: { roles: '/tenants/alpha/admin/roles' },
-        actions: withCreateAction
-            ? {
-                'roles.create': {
-                    endpoint: '/tenants/alpha/admin/roles',
-                    method: 'POST',
-                    fields: [
-                        { key: 'name', type: 'text', label: { en: 'Role name', ar: 'اسم الدور' }, required: true },
-                    ],
-                },
-            }
-            : {},
+        actions: {},
     };
 }
 
 afterEach(() => {
-    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
 });
 
 describe('AIMW-CONT-6CB3D0BE1B RolesPermissions StartCreate', () => {
-    it('opens the existing authoritative roles.create contract without issuing a request', () => {
-        const onAvailable = vi.fn();
-        const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    it('fails closed when roles.manage is absent', () => {
+        render(
+            <LocaleProvider>
+                <RolesStartCreateControl
+                    context={context(['tenant.view', 'roles.view'])}
+                    onCreated={() => undefined}
+                />
+            </LocaleProvider>,
+        );
+
+        expect(screen.queryByRole('button', { name: /New role/i })).not.toBeInTheDocument();
+    });
+
+    it('opens a clean create state without a request, then uses the real role endpoint and reconciles', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(
+            new Response(JSON.stringify({ id: 9, name: 'support-agent', permissions: [] }), {
+                status: 201,
+                headers: { 'Content-Type': 'application/json' },
+            }),
+        );
+        vi.stubGlobal('fetch', fetchMock);
+        const onCreated = vi.fn().mockResolvedValue(undefined);
 
         render(
             <LocaleProvider>
                 <RolesStartCreateControl
-                    context={context(true)}
-                    route={rolesRoute}
-                    onAvailable={onAvailable}
+                    context={context(['tenant.view', 'roles.view', 'roles.manage'])}
+                    onCreated={onCreated}
                 />
             </LocaleProvider>,
         );
@@ -61,40 +64,38 @@ describe('AIMW-CONT-6CB3D0BE1B RolesPermissions StartCreate', () => {
 
         fireEvent.click(trigger);
 
-        expect(onAvailable).toHaveBeenCalledTimes(1);
-        expect(onAvailable).toHaveBeenCalledWith(context(true).actions['roles.create']);
-        expect(fetchSpy).not.toHaveBeenCalled();
-    });
+        expect(fetchMock).not.toHaveBeenCalled();
+        expect(await screen.findByRole('dialog', { name: /Create role/i })).toBeInTheDocument();
+        const input = screen.getByRole('textbox', { name: /Role name/i });
+        expect(input).toHaveValue('');
 
-    it('fails closed when the server does not advertise roles.create', () => {
-        render(
-            <LocaleProvider>
-                <RolesStartCreateControl
-                    context={context(false)}
-                    route={rolesRoute}
-                    onAvailable={() => undefined}
-                />
-            </LocaleProvider>,
+        fireEvent.change(input, { target: { value: ' support-agent ' } });
+        fireEvent.click(screen.getByRole('button', { name: /^Create$/i }));
+
+        await waitFor(() => expect(onCreated).toHaveBeenCalledTimes(1));
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        expect(fetchMock).toHaveBeenCalledWith(
+            '/tenants/alpha/admin/roles',
+            expect.objectContaining({
+                method: 'POST',
+                body: JSON.stringify({ name: 'support-agent', permissions: [] }),
+                credentials: 'same-origin',
+            }),
         );
-
-        const trigger = screen.getByRole('button', { name: /New role/i });
-        expect(trigger).toBeDisabled();
-        expect(screen.getByText(/backend integration/i)).toBeInTheDocument();
+        await waitFor(() => expect(screen.queryByRole('dialog', { name: /Create role/i })).not.toBeInTheDocument());
     });
 
-    it('stays disabled while another role operation is in progress', () => {
+    it('stays disabled while authoritative role data is refreshing', () => {
         render(
             <LocaleProvider>
                 <RolesStartCreateControl
-                    context={context(true)}
-                    route={rolesRoute}
+                    context={context(['tenant.view', 'roles.view', 'roles.manage'])}
                     busy
-                    onAvailable={() => undefined}
+                    onCreated={() => undefined}
                 />
             </LocaleProvider>,
         );
 
         expect(screen.getByRole('button', { name: /New role/i })).toBeDisabled();
-        expect(screen.getByText(/role operation is in progress/i)).toBeInTheDocument();
     });
 });
