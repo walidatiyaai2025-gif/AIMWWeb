@@ -24,8 +24,13 @@
     "reuse": "Extends the existing canonical Media toolbar; no duplicate media workspace or API path is introduced."
   },
   "security": {
-    "permissions": ["tenant.view", "content.view"],
-    "required_capabilities": ["media"],
+    "permissions": [
+      "tenant.view",
+      "content.view"
+    ],
+    "required_capabilities": [
+      "media"
+    ],
     "tenant_navigation": "tenantUrl encodes the authoritative tenant slug",
     "site_authority": "The control renders only when the server context exposes the authoritative site-scoped Media API.",
     "foreign_tenant": "server 404/fail closed",
@@ -41,9 +46,15 @@
     "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/media-global-link-control.test.tsx"
   },
   "scope_guards": {
-    "claimed_operations": ["AIMW-MEDI-56F4EF0AFB"],
+    "claimed_operations": [
+      "AIMW-MEDI-56F4EF0AFB"
+    ],
     "sibling_operations_claimed": false,
     "aspnet_product_modified": false,
     "variant_boundary": "variants/laravel-aiwmweb/**"
+  },
+  "materialization": {
+    "generated_head": "3db69e27992d63076fe4d591bf8fa134afc78160",
+    "exact_head_retrigger": true
   }
 }
