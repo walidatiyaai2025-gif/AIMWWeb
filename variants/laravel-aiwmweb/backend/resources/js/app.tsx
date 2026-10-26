@@ -59,6 +59,7 @@ import { MySessionsAdminLinkControl } from './my-sessions-admin-link-control';
 import { OperationsHubReloadControl } from './operations-hub-reload-control';
 import { PagesPostsLinkControl } from './pages-posts-link-control';
 import { MediaPagesLinkControl } from './media-pages-link-control';
+import { MediaBackToSitesControl } from './media-back-to-sites-control';
 import { NotFoundPage, SiteDetailsRoute, WorkspacePage } from './pages';
 import { PostsExecutionLinkControl } from './posts-execution-link-control';
 import { RuntimeErrorBoundary } from './runtime-error-boundary';
@@ -99,7 +100,15 @@ const queryClient = new QueryClient({
 
 type OutletState = { context: FrontendContext };
 
-function ContextFailure({ error, retry }: { error: unknown; retry: () => void }) {
+function ContextFailure({
+    error,
+    retry,
+    mediaTenantSlug,
+}: {
+    error: unknown;
+    retry: () => void;
+    mediaTenantSlug?: string | null;
+}) {
     const { locale } = useLocale();
     const apiError = error instanceof ApiError ? error : null;
     const isAuth = apiError?.status === 401;
@@ -108,6 +117,7 @@ function ContextFailure({ error, retry }: { error: unknown; retry: () => void })
         <div className="bootstrap-state">
             <StatePanel tone={isForbidden ? 'danger' : 'warning'} title={isAuth ? (locale === 'ar' ? 'يلزم تسجيل الدخول' : 'Sign-in required') : isForbidden ? (locale === 'ar' ? 'الوصول مرفوض' : 'Access denied') : (locale === 'ar' ? 'تعذر تحميل سياق الحساب' : 'Tenant context unavailable')}>
                 <p>{apiError?.message ?? (locale === 'ar' ? 'لم يكتمل طلب سياق الواجهة.' : 'The frontend context request did not complete.')}</p>
+                {mediaTenantSlug ? <MediaBackToSitesControl tenantSlug={mediaTenantSlug} error={error} /> : null}
                 {isAuth ? <p>{locale === 'ar' ? 'لم يتم اختراع تدفق دخول محلي؛ يلزم دمج مصادقة Laravel من قائد التكامل.' : 'No local fake sign-in is provided; the Laravel authentication flow must be integrated by the backend authority.'}</p> : null}
                 <button type="button" className="btn" onClick={retry}>{locale === 'ar' ? 'إعادة المحاولة' : 'Retry'}</button>
             </StatePanel>
@@ -119,6 +129,7 @@ function TenantBootstrap() {
     const { tenantSlug } = useParams();
     const location = useLocation();
     const activeSite = new URLSearchParams(location.search).get('site');
+    const isMediaWorkspace = location.pathname.endsWith('/module/media');
     const contextUrl = `/tenants/${encodeURIComponent(tenantSlug ?? '')}/context${activeSite ? `?site=${encodeURIComponent(activeSite)}` : ''}`;
     const query = useQuery({
         queryKey: ['frontend-context', tenantSlug, activeSite],
@@ -127,7 +138,13 @@ function TenantBootstrap() {
     });
 
     if (query.isLoading) return <div className="bootstrap-state"><LoadingState /></div>;
-    if (query.error) return <ContextFailure error={query.error} retry={() => query.refetch()} />;
+    if (query.error) return (
+        <ContextFailure
+            error={query.error}
+            retry={() => query.refetch()}
+            mediaTenantSlug={isMediaWorkspace ? tenantSlug : null}
+        />
+    );
     if (!query.data) return <ContextFailure error={new Error('Tenant context returned no data.')} retry={() => query.refetch()} />;
 
     const context = withApprovalQueueEndpoint(query.data);
