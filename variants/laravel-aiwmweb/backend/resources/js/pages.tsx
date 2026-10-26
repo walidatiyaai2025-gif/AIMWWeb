@@ -30,6 +30,7 @@ import { AUTOMATION_PHASE_ACTION_OPERATIONS, AUTOMATION_PHASE_REFRESH_OPERATIONS
 import { AuthoritativeReconciliationError, mutateThenReconcile } from './reconciliation';
 import { ContentExplorerWordPressLinkControl } from './content-explorer-wordpress-link-control';
 import { ContentExplorerMediaSourceUrlControl } from './content-explorer-media-source-url-control';
+import { GlobalMediaSourceUrlOperationBinding } from './global-media-source-url-control';
 import { ContentExplorerPreviewPanel } from './content-explorer-preview-panel';
 import { CONTENT_EXPLORER_CONTENT_TAB_RESET_EVENT } from './content-explorer-content-tab-control';
 import { ContentExplorerPagination } from './content-explorer-previous-page-control';
@@ -851,7 +852,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             </span>
                         ) : route.key === 'media' && endpoint ? (row) => (
                             <span className="site-row-actions">
-                                <ContentExplorerMediaSourceUrlControl value={row.source_url} />
+                                <GlobalMediaSourceUrlOperationBinding value={row.source_url}>
+                                    <ContentExplorerMediaSourceUrlControl value={row.source_url} />
+                                </GlobalMediaSourceUrlOperationBinding>
                                 <MediaDeleteControl
                                     context={context}
                                     endpoint={endpoint}
