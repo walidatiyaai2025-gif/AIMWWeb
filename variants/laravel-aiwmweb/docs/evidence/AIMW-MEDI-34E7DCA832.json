@@ -19,13 +19,17 @@
     "production_control": "variants/laravel-aiwmweb/backend/resources/js/media-manager-row-source-url-control.tsx",
     "integration": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
     "operation_marker": "AIMW-MEDI-34E7DCA832",
-    "authoritative_value": "row.source_url from the tenant-scoped media API response",
+    "authoritative_value": "row.source_url from the tenant-scoped media API response; the new operation wrapper composes the existing hardened child anchor",
     "loading_empty_error": "ResourceContent owns authoritative query loading/error/empty states before row actions render.",
-    "independent_mutation_added": false
+    "independent_mutation_added": false,
+    "sibling_controls_preserved": [
+      "ContentExplorerMediaSourceUrlControl / AIMW-CONT-B44DA81C28",
+      "MediaManagerEditingSourceUrlControl / AIMW-MEDI-03A0D722AD"
+    ]
   },
   "security_boundary": {
     "tenant_selector": "server-provided active tenant and tenant-scoped media endpoint",
-    "source_url_policy": "absolute http/https only; credentials, malformed values, whitespace mutations and non-web schemes fail closed",
+    "source_url_policy": "wrapper reuses the existing absolute http/https credential-free URL validator; unsafe values fail closed before the sole child anchor renders",
     "external_link": "target=_blank with rel=noopener noreferrer",
     "network_effect": "navigation only; no server or WordPress mutation"
   },
@@ -33,15 +37,20 @@
     "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/media-manager-row-source-url-control.test.tsx",
     "coverage": [
       "exact canonical operation identity",
-      "authoritative row SourceUrl rendering",
-      "localized Open file semantics",
-      "hardened external-link attributes",
+      "authoritative row SourceUrl composition",
+      "single localized Open file action (no duplicate UI)",
+      "existing sibling operation wiring preserved",
+      "hardened external-link attributes inherited from the existing child control",
       "unsafe URL fail-closed behavior",
+      "tenant-scoped media read and foreign-tenant 404",
       "navigation-only no mutation behavior"
-    ]
+    ],
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/MediaManagerRowSourceUrlTerminalityTest.php"
   },
   "scope_guards": {
-    "claimed_operations": ["AIMW-MEDI-34E7DCA832"],
+    "claimed_operations": [
+      "AIMW-MEDI-34E7DCA832"
+    ],
     "sibling_operations_claimed": false,
     "aspnet_product_modified": false,
     "generated_reconciliation_hand_edited": false,
