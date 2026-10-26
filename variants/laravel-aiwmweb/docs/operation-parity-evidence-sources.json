@@ -2133,8 +2133,8 @@
     },
     {
       "label": "AIMW-MEDI-3444B17C11 GlobalMediaExplorer SourceUrl focused closure",
-      "sha": "da6785eecc410cf76c8f183f4890040729801999",
-      "observed_pr_head": "da6785eecc410cf76c8f183f4890040729801999",
+      "sha": "3f1644de50c46ce3144eefd427eec5b3af0ad406",
+      "observed_pr_head": "3f1644de50c46ce3144eefd427eec5b3af0ad406",
       "operation_ids": [
         "AIMW-MEDI-3444B17C11"
       ]
