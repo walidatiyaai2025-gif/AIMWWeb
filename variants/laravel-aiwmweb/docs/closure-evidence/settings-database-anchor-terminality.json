@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #815 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-932A09E4A9",
+  "terminal_state": "ADAPTED",
+  "source": "src/AIWordPressManager.Web/Components/Pages/Settings.razor",
+  "source_action": "#database -> #database",
+  "destination": "variants/laravel-aiwmweb/backend/resources/js/settings-database-anchor-control.tsx",
+  "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-database-anchor-control.test.tsx",
+  "backend_test": "variants/laravel-aiwmweb/backend/tests/Feature/SettingsDatabaseAnchorTerminalityTest.php",
+  "runtime": "browser-native same-document fragment navigation to a real database settings target on the authenticated tenant settings surface; optional System Health navigation is tenant-derived and permission-gated",
+  "authorization": "tenant.view or wildcard for the canonical control; diagnostics.view or wildcard only for the supporting System Health link",
+  "server_mutation": false,
+  "external_mutation": false,
+  "network_request": false,
+  "only_operation_claimed": "AIMW-CONT-932A09E4A9",
+  "materialized": false,
+  "evidence_source_sha": null
+}
