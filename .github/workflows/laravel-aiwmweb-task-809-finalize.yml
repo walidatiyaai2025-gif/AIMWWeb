@@ -57,6 +57,13 @@ jobs:
                   if operation not in item.get('operation_ids', [])
               ]
               sources[key].append(entry)
+
+          # Keep the complete manifest for the committed result, but scope this
+          # incremental materialization pass to the one newly claimed operation.
+          Path('/tmp/operation-parity-evidence-sources-full.json').write_text(
+              json.dumps(sources, indent=2) + '\n'
+          )
+          sources['focused_closure_operation_sources'] = [entry]
           sources_path.write_text(json.dumps(sources, indent=2) + '\n')
           PY
       - name: Apply focused closure evidence
@@ -66,6 +73,9 @@ jobs:
           OUT_MD=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
           TMP_SUMMARY=/tmp/operation-parity-summary.json
           python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+      - name: Restore complete evidence manifest
+        run: |
+          cp /tmp/operation-parity-evidence-sources-full.json variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json
       - name: Commit generated reconciliation and remove task workflow
         run: |
           set -euo pipefail
