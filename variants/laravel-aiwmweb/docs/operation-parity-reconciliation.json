@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 822,
-    "pending": 109,
+    "adapted": 824,
+    "pending": 107,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 822,
-    "overall_parity_percent": 88.29
+    "terminal": 824,
+    "overall_parity_percent": 88.51
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 344,
-    "pending": 102,
+    "terminal": 345,
+    "pending": 101,
     "blocked": 0,
-    "percent": 77.13
+    "percent": 77.35
   },
   "domains": {
     "ai": {
@@ -203,12 +203,12 @@
     "sync": {
       "total": 213,
       "ported": 0,
-      "adapted": 153,
-      "pending": 60,
+      "adapted": 154,
+      "pending": 59,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 153,
-      "percent": 71.83
+      "terminal": 154,
+      "percent": 72.3
     },
     "taxonomy": {
       "total": 13,
@@ -33020,21 +33020,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/app-data-grid-sort-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AppDataGridToggleSortTerminalityTest.php",
+      "evidence": "AIMW-SYNC-0108E40967 AppDataGrid ToggleSortAsync focused closure@8f53d8947413f1747d2195bc3b0a9970c45f9717: variants/laravel-aiwmweb/backend/resources/js/app-data-grid-sort-control.tsx; focused-closure:AIMW-SYNC-0108E40967; test:variants/laravel-aiwmweb/backend/tests/Feature/AppDataGridToggleSortTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/app-data-grid-toggle-sort-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-SYNC-0108E40967 AppDataGrid ToggleSortAsync focused closure",
+        "source_sha": "8f53d8947413f1747d2195bc3b0a9970c45f9717",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/app-data-grid-sort-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/app-data-grid-toggle-sort-terminality.json",
+        "signals": [
+          "operation:AIMW-SYNC-0108E40967",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/app-data-grid-sort-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/AppDataGridToggleSortTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/app-data-grid-toggle-sort-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -37399,12 +37409,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 344,
-      "pending": 102,
+      "adapted": 345,
+      "pending": 101,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 344,
-      "percent": 77.13
+      "terminal": 345,
+      "percent": 77.35
     }
   },
   "pending_operation_ids_by_domain": {
@@ -37473,7 +37483,6 @@
     "settings": [],
     "sites": [],
     "sync": [
-      "AIMW-SYNC-0108E40967",
       "AIMW-SYNC-0239B0E6A3",
       "AIMW-SYNC-078D172C71",
       "AIMW-SYNC-1A20057999",
@@ -38900,6 +38909,7 @@
       "AIMW-SITE-9F9F2977B5",
       "AIMW-SITE-D7DF8247B4",
       "AIMW-SITE-E3EA44AD3F",
+      "AIMW-SYNC-0108E40967",
       "AIMW-SYNC-0DFEE862FA",
       "AIMW-SYNC-0EDB4AB9FC",
       "AIMW-SYNC-0FF542A678",
@@ -39722,10 +39732,17 @@
         "operation_ids": [
           "AIMW-CONT-A3A2CD23B6"
         ]
+      },
+      {
+        "label": "AIMW-SYNC-0108E40967 AppDataGrid ToggleSortAsync focused closure",
+        "sha": "8f53d8947413f1747d2195bc3b0a9970c45f9717",
+        "operation_ids": [
+          "AIMW-SYNC-0108E40967"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 114,
-    "focused_closure_contract_count": 344,
+    "focused_closure_operation_scoped_count": 115,
+    "focused_closure_contract_count": 345,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
