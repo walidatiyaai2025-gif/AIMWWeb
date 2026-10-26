@@ -24,6 +24,7 @@ import { ApplicationUsersClearSearchControl } from './application-users-clear-se
 import { ApplicationUsersSearchControl } from './application-users-search-control';
 import { ApplicationUsersRolesPermissionsLinkControl } from './application-users-roles-permissions-link-control';
 import { ApplicationUsersStartCreateControl } from './application-users-start-create-control';
+import { RolesPermissionsStartCreateControl } from './roles-permissions-start-create-control';
 import { runAuthoritativeBackupReload } from './backup-reload-control';
 import { prepareActionRequest } from './action-contract';
 import { AUTOMATION_PHASE_ACTION_OPERATIONS, AUTOMATION_PHASE_REFRESH_OPERATIONS, SCHEDULE_CANCEL_EDIT_OPERATION_ID } from './automation-phase-controls';
@@ -625,6 +626,16 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             />
                         </>
                     ) : null}
+                    {route.key === 'roles' ? (
+                        <RolesPermissionsStartCreateControl
+                            context={context}
+                            busy={query.isFetching}
+                            onCreated={async () => {
+                                const refreshed = await query.refetch();
+                                if (refreshed.error) throw refreshed.error;
+                            }}
+                        />
+                    ) : null}
                     {route.key === 'sites' ? (
                         <button
                             type="button"
@@ -715,7 +726,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                     {route.key === 'site-reliability' ? (
                         <SiteReliabilityOperationHistoryLinkControl context={context} />
                     ) : null}
-                    {route.controls?.map((actionKey) => {
+                    {route.controls?.filter((actionKey) => !(route.key === 'roles' && actionKey === 'roles.create')).map((actionKey) => {
                         const canonicalOperation = AUTOMATION_PHASE_ACTION_OPERATIONS[actionKey];
                         return (
                             <span key={actionKey} data-canonical-operation={canonicalOperation}>
