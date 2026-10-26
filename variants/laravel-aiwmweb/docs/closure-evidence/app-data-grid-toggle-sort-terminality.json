@@ -17,27 +17,31 @@
     "tenant_owned": true,
     "risk": "low",
     "verification": "rendered/read response matches authoritative source",
-    "behavior": "ToggleSortAsync flips the descending flag, resets the current page to 1, and raises SortChanged with the new direction; rows are ordered case-insensitively through SortKeySelector."
+    "behavior": "ToggleSortAsync flips the descending flag, resets CurrentPage to 1, raises SortChanged with the new direction, and AppDataGrid orders the filtered collection before applying pagination."
   },
   "laravel_adaptation": {
-    "shared_contract": "variants/laravel-aiwmweb/backend/resources/js/app-data-grid-sort-control.tsx",
+    "shared_control": "variants/laravel-aiwmweb/backend/resources/js/app-data-grid-sort-control.tsx",
     "consumer_wiring": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/EmailNotificationController.php",
+    "service": "variants/laravel-aiwmweb/backend/app/Email/Services/EmailDeliveryService.php",
     "real_consumer": "tenant-scoped Email Delivery History",
     "consumer_api": "GET /api/v1/tenants/{tenant}/email/deliveries",
-    "sort_key_mapping": "Email History maps SortKeySelector to created_at with delivery_id fallback over the authoritative rows returned for the current tenant page.",
+    "sort_key_mapping": "The real Laravel consumer maps the generic SortKeySelector contract to EmailDelivery.created_at with id as a deterministic tie-breaker.",
     "control_binding": "data-canonical-operation=AIMW-SYNC-0108E40967",
     "semantics": [
       "toggle the descending flag exactly once per activation",
       "reset the consumer page to 1 on every sort activation",
-      "render ascending/descending accessible state and matching directional icon",
-      "sort a copied row collection without mutating authoritative query data",
+      "include the new direction in the authoritative Email History query key and request",
+      "apply ascending or descending ordering to the tenant-scoped query before forPage pagination",
+      "preserve the existing latest-first service default when callers do not opt into the AppDataGrid sort parameter",
+      "render accessible ascending/descending state and matching directional icon",
       "perform no persistence, WordPress, queue, cache, provider, or secret mutation"
     ],
     "fake_or_demo_data": false
   },
   "authorization_and_isolation": {
     "consumer_authorization": "auth + tenant.context + tenant.manage; route workspace also diagnostics.view",
-    "tenant_context": "server-provided FrontendContext plus backend tenant boundary",
+    "tenant_context": "server-provided FrontendContext plus backend TenantContext global scope",
     "foreign_tenant_semantics": "404 fail closed",
     "direct_tenant_override": false,
     "tenant_owned": true
@@ -49,7 +53,8 @@
     "queue_runtime": "not used",
     "cache_mutation": "not used",
     "secrets": "not read or written",
-    "authoritative_reread_on_page_reset": true,
+    "authoritative_reread_on_sort_change": true,
+    "sort_before_pagination": true,
     "fake_success_path": "none"
   },
   "acceptance_tests": {
@@ -57,9 +62,10 @@
       "file": "variants/laravel-aiwmweb/backend/resources/js/__tests__/app-data-grid-sort-control.test.tsx",
       "coverage": [
         "exact descending-flag toggle",
-        "case-insensitive ascending and descending ordering without source-array mutation",
         "exact canonical operation marker and aria-pressed state",
-        "Email History page reset to 1 with a fresh tenant-scoped read",
+        "ascending request on initial Email History read",
+        "page reset to 1 plus server-side descending sort request after activation",
+        "authoritative server order rendered without a client-only page sort",
         "no mutation request from sort activation"
       ]
     },
@@ -67,8 +73,9 @@
       "file": "variants/laravel-aiwmweb/backend/tests/Feature/AppDataGridToggleSortTerminalityTest.php",
       "coverage": [
         "exact canonical ledger identity/domain/kind/source/control",
-        "source ToggleSortAsync contract",
-        "production shared contract and Email History consumer binding",
+        "source ToggleSortAsync contract and sort-before-pagination ordering",
+        "production shared control, query parameter, controller and service binding",
+        "ascending and descending ordering over the full authoritative tenant set before pagination",
         "read-only tenant-scoped Email History endpoint",
         "foreign-tenant 404 fail-closed behavior"
       ]
