@@ -25689,7 +25689,7 @@
         "destination_path": null
       }
     },
-    {
+{
       "operation_id": "AIMW-MEDI-727FAEEB01",
       "kind": "visible_control",
       "domain": "media",
@@ -38259,16 +38259,6 @@
           "AIMW-CONT-BB31987A53"
         ],
         "explicit_operation_evidence_ids": []
-      },
-      {
-        "label": "AIMW-MEDI-727FAEEB01 GlobalMediaExplorer interpolated links focused closure",
-        "sha": "6a43bf171876e55f77606087b6209d7c61a40c91",
-        "domains": [],
-        "supporting_only": false,
-        "operation_ids": [
-          "AIMW-MEDI-727FAEEB01"
-        ],
-        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -38305,7 +38295,6 @@
       "53d1178f4ec9e1a9134650bf9d3ac22a68ccf081",
       "57308368978c1bcb1e2a7083e1ecbf540baadc8d",
       "57fe4921dca136e740609224a03b5d5feac5ab93",
-      "6a43bf171876e55f77606087b6209d7c61a40c91",
       "70d7c83bf326d6be7114d8a61dbc89bfdbfd28ed",
       "75ab4dcf2045786b875fc315000ca0c6de095b2e",
       "7c0e7c7e63216994d1e433b95f7fc83959281a0f",
