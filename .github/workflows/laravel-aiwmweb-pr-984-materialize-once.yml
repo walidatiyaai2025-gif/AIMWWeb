@@ -1,0 +1,55 @@
+name: Laravel AIWMWeb PR 984 Materialize Once
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-AIMW-SYNC-3BFC8AF183-select-all-filtered
+    paths:
+      - '.github/workflows/laravel-aiwmweb-pr-984-materialize-once.yml'
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - name: Install exact official reconciliation artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          ARTIFACT_ID=12624533128
+          EXPECTED_ZIP_SHA=f2717afe5c68c3327881bae3653c0d92620cd19546806048d51119d22f178f6c
+          ZIP=/tmp/laravel-aiwmweb-operation-parity-reconciliation.zip
+          curl --fail --silent --show-error --location \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip" \
+            --output "${ZIP}"
+          echo "${EXPECTED_ZIP_SHA}  ${ZIP}" | sha256sum --check
+          unzip -p "${ZIP}" operation-parity-reconciliation.json > variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          unzip -p "${ZIP}" operation-parity-reconciliation.md > variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          python - <<'PY'
+          import json
+          p='variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'
+          d=json.load(open(p, encoding='utf-8'))
+          row=next(x for x in d['operations'] if x['operation_id']=='AIMW-SYNC-3BFC8AF183')
+          assert row['migration_state']=='ADAPTED', row
+          assert row['reconciliation']['source_sha']=='1ff9dc8840ff2a6d204298b0620bcb23d28af0c1', row
+          assert row['laravel_destination']=='variants/laravel-aiwmweb/backend/resources/js/app-data-grid-select-all-filtered-control.ts', row
+          PY
+      - name: Commit official materialization and remove one-shot workflow
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/laravel-aiwmweb-pr-984-materialize-once.yml
+          git add variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(laravel): materialize AIMW-SYNC-3BFC8AF183 parity"
+          git push origin "HEAD:${{ github.ref_name }}"
