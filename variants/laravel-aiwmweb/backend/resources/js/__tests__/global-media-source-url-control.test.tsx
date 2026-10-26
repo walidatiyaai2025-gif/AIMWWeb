@@ -3,16 +3,19 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import {
     CONTENT_EXPLORER_MEDIA_SOURCE_URL_OPERATION_ID,
+    ContentExplorerMediaSourceUrlControl,
 } from '../content-explorer-media-source-url-control';
 import {
     GLOBAL_MEDIA_SOURCE_URL_OPERATION_ID,
-    GlobalMediaSourceUrlControl,
+    GlobalMediaSourceUrlOperationBinding,
 } from '../global-media-source-url-control';
 import { LocaleProvider } from '../i18n';
 
 const renderControl = (value: unknown) => render(
     <LocaleProvider>
-        <GlobalMediaSourceUrlControl value={value} />
+        <GlobalMediaSourceUrlOperationBinding value={value}>
+            <ContentExplorerMediaSourceUrlControl value={value} />
+        </GlobalMediaSourceUrlOperationBinding>
     </LocaleProvider>,
 );
 
