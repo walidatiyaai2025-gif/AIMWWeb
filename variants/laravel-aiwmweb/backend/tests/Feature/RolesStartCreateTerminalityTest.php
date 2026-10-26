@@ -52,8 +52,9 @@ final class RolesStartCreateTerminalityTest extends TestCase
         );
         $this->assertStringContainsString('route.key === \'roles\'', $pages);
         $this->assertStringContainsString('<RolesStartCreateControl', $pages);
+        $this->assertStringContainsString('route.controls?.map((actionKey) => {', $pages);
         $this->assertStringContainsString(
-            '!(route.key === \'roles\' && actionKey === \'roles.create\')',
+            'route.key === \'roles\' && actionKey === \'roles.create\'',
             $pages,
         );
     }
