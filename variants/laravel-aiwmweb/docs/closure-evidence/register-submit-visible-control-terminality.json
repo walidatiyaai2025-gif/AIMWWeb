@@ -50,5 +50,14 @@
     "duplicate_registration_behavior_added": false,
     "aspnet_product_modified": false,
     "generated_reconciliation_hand_edited": false
+  },
+  "materialization": {
+    "reconciliation_commit": "515fc809ded061698aed3676c143a3f38c984bf2",
+    "terminal_total": 808,
+    "pending_total": 123,
+    "overall_parity_percent": 86.79,
+    "visible_controls_terminal": 330,
+    "visible_controls_pending": 116,
+    "visible_controls_percent": 73.99
   }
 }
