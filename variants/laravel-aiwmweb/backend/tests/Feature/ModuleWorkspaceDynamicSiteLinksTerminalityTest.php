@@ -65,7 +65,7 @@ final class ModuleWorkspaceDynamicSiteLinksTerminalityTest extends TestCase
         $this->assertStringContainsString("tenantUrl(context.tenant.slug, '/explorer')", $control);
         $this->assertStringContainsString('encodeURIComponent(String(site.id))', $control);
         $this->assertStringContainsString(
-            "<ModuleWorkspaceLoadSitesControl context={context} route={route} />",
+            '<ModuleWorkspaceLoadSitesControl context={context} route={route} />',
             $app,
         );
     }
