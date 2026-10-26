@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #921 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-MEDI-34E7DCA832",
+  "domain": "media",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "route_screen": "/sites/{SiteId:guid}/media",
+    "visible_control": "@L[ -> @item.SourceUrl",
+    "source": "src/AIWordPressManager.Web/Components/Pages/MediaManager.razor",
+    "source_intent": "Expose each authoritative MediaManager row SourceUrl as the localized Open file action.",
+    "tenant_owned": true,
+    "mutation": false,
+    "external_dependency": "WordPress"
+  },
+  "laravel_adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/media-manager-row-source-url-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "operation_marker": "AIMW-MEDI-34E7DCA832",
+    "authoritative_value": "row.source_url from the tenant-scoped media API response",
+    "loading_empty_error": "ResourceContent owns authoritative query loading/error/empty states before row actions render.",
+    "independent_mutation_added": false
+  },
+  "security_boundary": {
+    "tenant_selector": "server-provided active tenant and tenant-scoped media endpoint",
+    "source_url_policy": "absolute http/https only; credentials, malformed values, whitespace mutations and non-web schemes fail closed",
+    "external_link": "target=_blank with rel=noopener noreferrer",
+    "network_effect": "navigation only; no server or WordPress mutation"
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/media-manager-row-source-url-control.test.tsx",
+    "coverage": [
+      "exact canonical operation identity",
+      "authoritative row SourceUrl rendering",
+      "localized Open file semantics",
+      "hardened external-link attributes",
+      "unsafe URL fail-closed behavior",
+      "navigation-only no mutation behavior"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-MEDI-34E7DCA832"],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "mutation_added": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "branch": "worker/921-media-manager-row-source-url",
+    "issue": 921
+  }
+}
