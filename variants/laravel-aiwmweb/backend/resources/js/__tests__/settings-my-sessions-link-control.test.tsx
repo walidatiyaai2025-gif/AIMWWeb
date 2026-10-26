@@ -51,7 +51,7 @@ describe(`${SETTINGS_MY_SESSIONS_LINK_OPERATION_ID} Settings My Sessions link`, 
 
         rerender(
             <LocaleProvider>
-                <SettingsMySessionsLinkControl context={context(['sessions.view', 'sessions.manage'])} />
+                <SettingsMySessionsLinkControl context={context(['sessions.view'])} />
             </LocaleProvider>,
         );
         expect(screen.queryByRole('link', { name: /Open my sessions/i })).not.toBeInTheDocument();
@@ -68,7 +68,7 @@ describe(`${SETTINGS_MY_SESSIONS_LINK_OPERATION_ID} Settings My Sessions link`, 
         window.localStorage.setItem('aiwm.locale', 'ar');
         render(
             <LocaleProvider>
-                <SettingsMySessionsLinkControl context={context(['sessions.view'])} />
+                <SettingsMySessionsLinkControl context={context(['sessions.view', 'sessions.manage'])} />
             </LocaleProvider>,
         );
 

@@ -1320,17 +1320,25 @@
       ]
     },
     {
-      "label": "AIMW-CONT-A6EA54E66D Settings My Sessions link focused closure",
-      "sha": "b667c577671b6e619fae97f1648fd4fe38c60d89",
-      "observed_pr_head": "b667c577671b6e619fae97f1648fd4fe38c60d89",
+      "label": "AIMW-CONT-932A09E4A9 Settings database anchor focused closure",
+      "sha": "9f9ec64983b33f3bf5bba7d5e8d4d59e97c4994f",
+      "observed_pr_head": "9f9ec64983b33f3bf5bba7d5e8d4d59e97c4994f",
       "operation_ids": [
-        "AIMW-CONT-A6EA54E66D"
+        "AIMW-CONT-932A09E4A9"
       ]
     }
   ],
   "excluded_sources": [],
   "known_composition_blockers": [],
   "focused_closure_operation_sources": [
+    {
+      "label": "AIMW-CONT-DF6FFA9D87 Site Connection dynamic links focused closure",
+      "sha": "34c048bb089fcd460d222bd74b52c9e9ca0b1248",
+      "observed_pr_head": "34c048bb089fcd460d222bd74b52c9e9ca0b1248",
+      "operation_ids": [
+        "AIMW-CONT-DF6FFA9D87"
+      ]
+    },
     {
       "label": "AIMW-SYNC-26F2BF8EE8 ApplicationUsers SearchClickedAsync focused closure",
       "sha": "9ef1547ac9d36a40c53ec79b552ac5020ee2ec3f",
@@ -2140,11 +2148,29 @@
       ]
     },
     {
-      "label": "AIMW-CONT-A6EA54E66D Settings My Sessions link focused closure",
-      "sha": "b667c577671b6e619fae97f1648fd4fe38c60d89",
-      "observed_pr_head": "b667c577671b6e619fae97f1648fd4fe38c60d89",
+      "label": "AIMW-CONT-932A09E4A9 Settings database anchor focused closure",
+      "sha": "9f9ec64983b33f3bf5bba7d5e8d4d59e97c4994f",
+      "observed_pr_head": "9f9ec64983b33f3bf5bba7d5e8d4d59e97c4994f",
       "operation_ids": [
-        "AIMW-CONT-A6EA54E66D"
+        "AIMW-CONT-932A09E4A9"
+      ]
+    },
+    {
+      "label": "AIMW-MEDI-03A0D722AD MediaManager editing SourceUrl focused closure",
+      "sha": "722d48b5c7c7d27badfabecc88fb4c1df3877d86",
+      "observed_pr_head": "722d48b5c7c7d27badfabecc88fb4c1df3877d86",
+      "operation_ids": [
+        "AIMW-MEDI-03A0D722AD"
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "label": "AIMW-MEDI-F55A549341 GlobalMediaExplorer Posts link focused closure",
+      "sha": "f591fcf2f3c5927111c5a8e8cff479be4b4b04c1",
+      "observed_pr_head": "f591fcf2f3c5927111c5a8e8cff479be4b4b04c1",
+      "operation_ids": [
+        "AIMW-MEDI-F55A549341"
       ]
     }
   ]

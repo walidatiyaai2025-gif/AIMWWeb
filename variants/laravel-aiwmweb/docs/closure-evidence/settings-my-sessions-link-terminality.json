@@ -58,7 +58,7 @@
     "aspnet_product_modified": false,
     "generated_reconciliation_hand_edited": false
   },
-  "materialized": true,
-  "evidence_source_sha": "b667c577671b6e619fae97f1648fd4fe38c60d89",
+  "materialized": false,
+  "evidence_source_sha": null,
   "post_materialization_gate_trigger": "exact-head CI after official task materialization"
 }
