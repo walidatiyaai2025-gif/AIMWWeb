@@ -49,5 +49,10 @@
     "base_composition_sha": "b585953378ad270980cffce7a3d755e48aa8b47f",
     "branch": "worker/855-site-reliability-operations-route",
     "issue": 855
-  }
+  },
+  "materialization": {
+    "generated_head": "87beb3a26294014e2cc0d54b2eaa8bd412596656",
+    "exact_head_retrigger": true
+  },
+  "materialized": true
 }
