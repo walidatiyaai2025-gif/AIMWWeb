@@ -49,6 +49,7 @@ import { MediaDeleteControl } from './media-delete-control';
 import { NotificationOpenControl } from './notification-open-control';
 import { PagesWordPressLinkControl } from './pages-wordpress-link-control';
 import { PostsWordPressLinkControl } from './posts-wordpress-link-control';
+import { RolesStartCreateControl } from './roles-start-create-control';
 import { SiteOperationsExportControl } from './site-operations-export-control';
 import { SiteOperationsSitesLinkControl } from './site-operations-sites-link-control';
 import {
@@ -625,6 +626,14 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             />
                         </>
                     ) : null}
+                    {route.key === 'roles' ? (
+                        <RolesStartCreateControl
+                            context={context}
+                            route={route}
+                            busy={mutation.isPending}
+                            onAvailable={(contract) => setDialog({ key: 'roles.create', contract })}
+                        />
+                    ) : null}
                     {route.key === 'sites' ? (
                         <button
                             type="button"
@@ -715,7 +724,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                     {route.key === 'site-reliability' ? (
                         <SiteReliabilityOperationHistoryLinkControl context={context} />
                     ) : null}
-                    {route.controls?.map((actionKey) => {
+                    {route.controls?.filter((actionKey) => !(route.key === 'roles' && actionKey === 'roles.create')).map((actionKey) => {
                         const canonicalOperation = AUTOMATION_PHASE_ACTION_OPERATIONS[actionKey];
                         return (
                             <span key={actionKey} data-canonical-operation={canonicalOperation}>
