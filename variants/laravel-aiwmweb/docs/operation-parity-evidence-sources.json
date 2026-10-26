@@ -2042,14 +2042,6 @@
       "operation_ids": [
         "AIMW-EMAI-7E1D4105B0"
       ]
-    },
-    {
-      "label": "AIMW-CONT-7F2BC55FF4 ModuleWorkspace canonical destination focused closure",
-      "sha": "54b912928df074202caa915822509b70c585afd4",
-      "observed_pr_head": "54b912928df074202caa915822509b70c585afd4",
-      "operation_ids": [
-        "AIMW-CONT-7F2BC55FF4"
-      ]
     }
   ]
 }
