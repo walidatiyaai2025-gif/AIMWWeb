@@ -1372,6 +1372,14 @@
           "security_mode": "tenant_selected"
         }
       }
+    },
+    {
+      "label": "AIMW-CONT-6700342002 Settings SetRose focused closure",
+      "sha": "f2dc3210543d17028ab24c2e865eec2a966bf8ad",
+      "observed_pr_head": "f2dc3210543d17028ab24c2e865eec2a966bf8ad",
+      "operation_ids": [
+        "AIMW-CONT-6700342002"
+      ]
     }
   ],
   "excluded_sources": [],
@@ -2255,6 +2263,14 @@
       "observed_pr_head": "061b4e751ac9f58a5c92cb59568f638e73d19dbc",
       "operation_ids": [
         "AIMW-CONT-A3A2CD23B6"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-6700342002 Settings SetRose focused closure",
+      "sha": "f2dc3210543d17028ab24c2e865eec2a966bf8ad",
+      "observed_pr_head": "f2dc3210543d17028ab24c2e865eec2a966bf8ad",
+      "operation_ids": [
+        "AIMW-CONT-6700342002"
       ]
     }
   ],

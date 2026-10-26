@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 823,
-    "pending": 108,
+    "adapted": 824,
+    "pending": 107,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 823,
-    "overall_parity_percent": 88.4
+    "terminal": 824,
+    "overall_parity_percent": 88.51
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 344,
-    "pending": 102,
+    "terminal": 345,
+    "pending": 101,
     "blocked": 0,
-    "percent": 77.13
+    "percent": 77.35
   },
   "domains": {
     "ai": {
@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 129,
-      "pending": 35,
+      "adapted": 130,
+      "pending": 34,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 129,
-      "percent": 78.66
+      "terminal": 130,
+      "percent": 79.27
     },
     "email": {
       "total": 82,
@@ -19231,21 +19231,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/settings-set-rose-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-set-rose-control.test.tsx",
+      "evidence": "AIMW-CONT-6700342002 Settings SetRose focused closure@f2dc3210543d17028ab24c2e865eec2a966bf8ad: variants/laravel-aiwmweb/backend/resources/js/settings-set-rose-control.tsx; focused-closure:AIMW-CONT-6700342002; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-set-rose-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/settings-set-rose-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-6700342002 Settings SetRose focused closure",
+        "source_sha": "f2dc3210543d17028ab24c2e865eec2a966bf8ad",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/settings-set-rose-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/settings-set-rose-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-6700342002",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/settings-set-rose-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-set-rose-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/settings-set-rose-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -37399,12 +37409,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 344,
-      "pending": 102,
+      "adapted": 345,
+      "pending": 101,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 344,
-      "percent": 77.13
+      "terminal": 345,
+      "percent": 77.35
     }
   },
   "pending_operation_ids_by_domain": {
@@ -37428,7 +37438,6 @@
       "AIMW-CONT-6187F8DF8A",
       "AIMW-CONT-6458D3030B",
       "AIMW-CONT-659BEF8765",
-      "AIMW-CONT-6700342002",
       "AIMW-CONT-69B5134C7E",
       "AIMW-CONT-6B051BD8C0",
       "AIMW-CONT-6B6790BE84",
@@ -38395,6 +38404,16 @@
           "AIMW-CONT-47007EE040"
         ],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "AIMW-CONT-6700342002 Settings SetRose focused closure",
+        "sha": "f2dc3210543d17028ab24c2e865eec2a966bf8ad",
+        "domains": [],
+        "supporting_only": false,
+        "operation_ids": [
+          "AIMW-CONT-6700342002"
+        ],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -38475,6 +38494,7 @@
       "ed3f8fa663b105d8b8105b56eb22fc7399baa8f4",
       "ef875ba3118ce78b45f0d6fc3a1e46ccc5c722d8",
       "f22da647d324acde8f962c40453e2e3f852ad1b8",
+      "f2dc3210543d17028ab24c2e865eec2a966bf8ad",
       "f3ddc770f717710aa290c0790dd87b5a03550100",
       "fa06abdfabc3d435386644615f7d59f3adb49d94",
       "fb068134c2ad60111bd376f4f400c1bd247394ca",
@@ -38798,6 +38818,7 @@
       "AIMW-CONT-5BE26C7AB5",
       "AIMW-CONT-607ACDF4D8",
       "AIMW-CONT-63EDB4BA6F",
+      "AIMW-CONT-6700342002",
       "AIMW-CONT-6AB0ED6C83",
       "AIMW-CONT-6CB3D0BE1B",
       "AIMW-CONT-6E22D74EE0",
@@ -39722,10 +39743,17 @@
         "operation_ids": [
           "AIMW-CONT-A3A2CD23B6"
         ]
+      },
+      {
+        "label": "AIMW-CONT-6700342002 Settings SetRose focused closure",
+        "sha": "f2dc3210543d17028ab24c2e865eec2a966bf8ad",
+        "operation_ids": [
+          "AIMW-CONT-6700342002"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 114,
-    "focused_closure_contract_count": 344,
+    "focused_closure_operation_scoped_count": 115,
+    "focused_closure_contract_count": 345,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
