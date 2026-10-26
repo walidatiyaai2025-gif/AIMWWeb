@@ -47,6 +47,7 @@ import { LiveSystemStatusRefreshControl } from './live-system-status-refresh-con
 import { EmailHistoryFiltersControl, type EmailHistoryFilterState } from './email-history-filters-control';
 import { GlobalUsersFullManagementControl } from './global-users-full-management-control';
 import { MediaDeleteControl } from './media-delete-control';
+import { GlobalMediaInterpolatedLinksControl } from './media-interpolated-links-control';
 import { NotificationOpenControl } from './notification-open-control';
 import { PagesInterpolatedLinksControl } from './pages-interpolated-links-control';
 import { PagesWordPressLinkControl } from './pages-wordpress-link-control';
@@ -851,6 +852,11 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             </span>
                         ) : route.key === 'media' && endpoint ? (row) => (
                             <span className="site-row-actions">
+                                <GlobalMediaInterpolatedLinksControl
+                                    tenantSlug={context.tenant.slug}
+                                    siteId={row.site_id}
+                                />
+                                <span aria-hidden="true"> · </span>
                                 <ContentExplorerMediaSourceUrlControl value={row.source_url} />
                                 <MediaDeleteControl
                                     context={context}
