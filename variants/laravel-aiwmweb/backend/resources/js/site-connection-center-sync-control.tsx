@@ -2,15 +2,18 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { ApiError, apiRequest, type FrontendContext } from './core';
 import { useLocale } from './i18n';
+import { safeExternalSiteUrl } from './site-details-site-url-control';
 
 export const SITE_CONNECTION_CENTER_SYNC_OPERATION_ID = 'AIMW-BILL-3762C05261';
 export const SITE_CONNECTION_CENTER_COPY_DIAGNOSTICS_OPERATION_ID = 'AIMW-BILL-D4E1DA62D9';
 export const SITE_CONNECTION_CENTER_RETEST_OPERATION_ID = 'AIMW-BILL-E747D0E843';
+export const SITE_CONNECTION_CENTER_SITE_URL_OPERATION_ID = 'AIMW-CONT-63EDB4BA6F';
 
 type ConnectionSnapshot = {
     site: {
         id: number;
         name: string;
+        url?: unknown;
         connection_status?: string | null;
     };
     connection: string;
@@ -31,11 +34,11 @@ type OperationHistoryPayload = { items: OperationHistoryItem[] };
 type SyncRun = { id: number; status: string; processed?: number; failure?: string | null };
 
 export function formatSiteDiagnosticsReport(connection: ConnectionSnapshot, history: OperationHistoryItem[]): string {
-    const site = connection.site as ConnectionSnapshot['site'] & { url?: string | null; wordpress_version?: string | null; language_code?: string | null; last_verified_at?: string | null };
+    const site = connection.site as ConnectionSnapshot['site'] & { wordpress_version?: string | null; language_code?: string | null; last_verified_at?: string | null };
     const lines = [
         'AI WordPress Manager - Site Diagnostics',
         `Site: ${site.name}`,
-        `URL: ${site.url ?? '—'}`,
+        `URL: ${typeof site.url === 'string' ? site.url : '—'}`,
         `Status: ${site.connection_status ?? connection.connection ?? '—'}`,
         `WordPress: ${site.wordpress_version ?? '—'}`,
         `Language: ${site.language_code ?? '—'}`,
@@ -213,6 +216,8 @@ export function SiteConnectionCenterSyncControl({ context }: { context: Frontend
         return <div className="state-panel state-warning">{locale === 'ar' ? 'معرّف الموقع غير صالح.' : 'Invalid site identifier.'}</div>;
     }
 
+    const siteUrl = safeExternalSiteUrl(connection?.site.url);
+
     return (
         <div className="workspace-stack" data-canonical-operation={SITE_CONNECTION_CENTER_SYNC_OPERATION_ID}>
             <section className="hero-panel">
@@ -255,6 +260,24 @@ export function SiteConnectionCenterSyncControl({ context }: { context: Frontend
 
             {error ? <div role="alert" className="state-panel state-danger">{error}</div> : null}
             {message ? <div role="status" className="state-panel state-success">{message}</div> : null}
+
+            <section
+                className="workspace-card"
+                aria-label={locale === 'ar' ? 'رابط موقع WordPress' : 'WordPress site URL'}
+                data-canonical-operation={SITE_CONNECTION_CENTER_SITE_URL_OPERATION_ID}
+            >
+                <span className="workspace-kicker">{locale === 'ar' ? 'الموقع المباشر' : 'LIVE SITE'}</span>
+                {!connection && !error ? (
+                    <p aria-busy="true">{locale === 'ar' ? 'جارٍ تحميل رابط الموقع…' : 'Loading site URL…'}</p>
+                ) : siteUrl ? (
+                    <a href={siteUrl} target="_blank" rel="noopener noreferrer">
+                        <strong>{locale === 'ar' ? 'فتح الموقع' : 'Visit site'}</strong>
+                        <small style={{ display: 'block' }}>{siteUrl} ↗</small>
+                    </a>
+                ) : connection ? (
+                    <p>{locale === 'ar' ? 'رابط الموقع غير متاح.' : 'Site URL unavailable.'}</p>
+                ) : null}
+            </section>
 
             <section className="workspace-card">
                 <strong>{locale === 'ar' ? 'حالة الاتصال' : 'Connection'}: {connection?.connection ?? '—'}</strong>

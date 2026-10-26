@@ -3,6 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
     buildSiteOperationsCsv,
+    siteOperationsCsvRow,
     SITE_OPERATIONS_EXPORT_OPERATION_ID,
     SiteOperationsExportControl,
 } from '../site-operations-export-control';
@@ -33,6 +34,25 @@ describe('AIMW-BILL-582319B640 Site Operations ExportCsvAsync', () => {
         expect(csv).toContain('sync.posts,Failed,1250,12');
         expect(csv).toContain('"Failed, retry\nrequired"');
         expect(csv).toContain('"{""code"":""timeout""}"');
+    });
+
+    it('keeps mapped row cells intact before CSV escaping', () => {
+        const row = siteOperationsCsvRow({
+            site_id: 7,
+            site: { id: 7, name: 'Alpha, "Main"' },
+            operation: 'sync.posts',
+            status: 'failed',
+            message: 'Failed, retry',
+            details: { code: 'timeout,network' },
+            affected_records: 12,
+            started_at: '2026-10-12T01:00:00Z',
+            completed_at: '2026-10-12T01:00:01.250Z',
+        });
+
+        expect(row).toHaveLength(10);
+        expect(row[1]).toBe('Alpha, "Main"');
+        expect(row[8]).toBe('Failed, retry');
+        expect(row[9]).toBe('{"code":"timeout,network"}');
     });
 
     it('fails closed when there are no authoritative rows to export', () => {
