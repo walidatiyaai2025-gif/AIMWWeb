@@ -20,10 +20,10 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 ## Visible controls
 
 - Total: **446**
-- Terminal: **345**
-- Pending: **101**
+- Terminal: **344**
+- Pending: **102**
 - Blocked: **0**
-- Parity: **77.35%**
+- Parity: **77.13%**
 
 ## By domain
 
@@ -54,9 +54,9 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | api | 31 | 0 | 31 | 0 | 0 | 0 | 31 | 100.00% |
 | background_job | 21 | 0 | 21 | 0 | 0 | 0 | 21 | 100.00% |
-| route | 84 | 0 | 77 | 7 | 0 | 0 | 77 | 91.67% |
+| route | 84 | 0 | 78 | 6 | 0 | 0 | 78 | 92.86% |
 | service | 349 | 0 | 349 | 0 | 0 | 0 | 349 | 100.00% |
-| visible_control | 446 | 0 | 345 | 101 | 0 | 0 | 345 | 77.35% |
+| visible_control | 446 | 0 | 344 | 102 | 0 | 0 | 344 | 77.13% |
 
 ## Reproducibility / guard results
 
@@ -66,7 +66,9 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - Totals reconcile: **PASS**
 - Evidence references exist for terminal code rows: **PASS**
 - Explicit route contracts: **44**
-- Focused visible-control contracts: **1**
+- Focused visible-control contracts: **344**
+- Focused service contracts: **32**
+- Focused background-job contracts: **7**
 - Unpushed countable sources: **0**
 - Frontend placeholder terminals: **0**
 - BLOCKED excluded from progress: **PASS**
@@ -106,13 +108,13 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-CONT-38FC74B9DE`
 - `AIMW-CONT-40CD7F080F`
 - `AIMW-CONT-4147188AB1`
-- `AIMW-CONT-47007EE040`
 - `AIMW-CONT-47C0477703`
 - `AIMW-CONT-50DF6B23CC`
 - `AIMW-CONT-566A1899F1`
 - `AIMW-CONT-6187F8DF8A`
 - `AIMW-CONT-6458D3030B`
 - `AIMW-CONT-659BEF8765`
+- `AIMW-CONT-6700342002`
 - `AIMW-CONT-69B5134C7E`
 - `AIMW-CONT-6B051BD8C0`
 - `AIMW-CONT-6B6790BE84`
