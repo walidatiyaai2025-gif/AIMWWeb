@@ -42,6 +42,7 @@ import { ContentExplorerBackToSitesControl } from './content-explorer-back-to-si
 import { ContentExplorerClearSelectionControl } from './content-explorer-clear-selection-control';
 import { CurrentUserLogsControl } from './current-user-logs-control';
 import { DashboardSitesNavigationControl } from './dashboard-sites-navigation-control';
+import { DashboardSystemHealthNavigationControl } from './dashboard-system-health-navigation-control';
 import { DashboardSitesQuickAccessControl } from './dashboard-sites-quick-access-control';
 import { DashboardMediaNavigationControl } from './dashboard-media-navigation-control';
 import { LiveSystemStatusRefreshControl } from './live-system-status-refresh-control';
@@ -223,6 +224,7 @@ function DashboardContent({ context, route }: { context: FrontendContext; route:
                 <div><span className="workspace-kicker">LIVE TENANT DATA</span><h2>{locale === 'ar' ? 'ملخص التشغيل' : 'Operational summary'}</h2><p>{locale === 'ar' ? 'تُعرض المؤشرات فقط عندما يعيدها خادم Laravel للحساب الحالي.' : 'Metrics render only when the Laravel backend returns them for the active tenant.'}</p></div>
                 <LiveSystemStatusRefreshControl busy={query.isFetching} onClick={() => query.refetch()} />
                 <DashboardSitesNavigationControl context={context} />
+                <DashboardSystemHealthNavigationControl context={context} />
                 <DashboardSitesQuickAccessControl context={context} />
                 <DashboardMediaNavigationControl context={context} />
             </section>

@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 127,
-      "pending": 37,
+      "adapted": 128,
+      "pending": 36,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 127,
-      "percent": 77.44
+      "terminal": 128,
+      "percent": 78.05
     },
     "email": {
       "total": 82,
@@ -17715,21 +17715,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/dashboard-system-health-navigation-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/dashboard-system-health-navigation-control.test.tsx",
+      "evidence": "AIMW-CONT-A3A2CD23B6 Dashboard System Health navigation focused closure@061b4e751ac9f58a5c92cb59568f638e73d19dbc: variants/laravel-aiwmweb/backend/resources/js/dashboard-system-health-navigation-control.tsx; focused-closure:AIMW-CONT-A3A2CD23B6; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/dashboard-system-health-navigation-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/dashboard-system-health-navigation-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-A3A2CD23B6 Dashboard System Health navigation focused closure",
+        "source_sha": "061b4e751ac9f58a5c92cb59568f638e73d19dbc",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/dashboard-system-health-navigation-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/dashboard-system-health-navigation-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-A3A2CD23B6",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/dashboard-system-health-navigation-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/dashboard-system-health-navigation-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/dashboard-system-health-navigation-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -37418,7 +37428,6 @@
       "AIMW-CONT-918BE3DBF1",
       "AIMW-CONT-98918A6C27",
       "AIMW-CONT-9F0D652C67",
-      "AIMW-CONT-A3A2CD23B6",
       "AIMW-CONT-A6867078EA",
       "AIMW-CONT-B1024628D9",
       "AIMW-CONT-B60F3F750B",
@@ -38784,6 +38793,7 @@
       "AIMW-CONT-9D5E269773",
       "AIMW-CONT-9EDE4C1141",
       "AIMW-CONT-A31317B378",
+      "AIMW-CONT-A3A2CD23B6",
       "AIMW-CONT-A5D88995F3",
       "AIMW-CONT-A6EA54E66D",
       "AIMW-CONT-A93DE991C0",
@@ -39678,6 +39688,13 @@
         "sha": "39a76ccfb6f1ec1255d102b10ab37e81ec061082",
         "operation_ids": [
           "AIMW-MEDI-8F93BEDD59"
+        ]
+      },
+      {
+        "label": "AIMW-CONT-A3A2CD23B6 Dashboard System Health navigation focused closure",
+        "sha": "061b4e751ac9f58a5c92cb59568f638e73d19dbc",
+        "operation_ids": [
+          "AIMW-CONT-A3A2CD23B6"
         ]
       }
     ],
