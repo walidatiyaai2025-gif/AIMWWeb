@@ -61,7 +61,7 @@ final class ModuleWorkspaceDynamicSiteLinksTerminalityTest extends TestCase
         $this->assertStringContainsString(self::OPERATION_ID, $control);
         $this->assertStringContainsString('data-testid="seo-site-link"', $control);
         $this->assertStringContainsString('data-testid="seo-content-explorer-link"', $control);
-        $this->assertStringContainsString("tenantUrl(context.tenant.slug, `/sites/${site.id}/seo`)", $control);
+        $this->assertStringContainsString('tenantUrl(context.tenant.slug, `/sites/${site.id}/seo`)', $control);
         $this->assertStringContainsString("tenantUrl(context.tenant.slug, '/explorer')", $control);
         $this->assertStringContainsString('encodeURIComponent(String(site.id))', $control);
         $this->assertStringContainsString(
