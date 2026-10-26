@@ -6,19 +6,28 @@ on:
       - worker/794-register-button-control-2
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
+  pull_request:
+    branches:
+      - worker/laravel-aiwmweb-closure-composition
+    paths:
+      - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
+      - 'variants/laravel-aiwmweb/docs/closure-evidence/register-submit-visible-control-terminality.json'
+      - '.github/workflows/laravel-aiwmweb-task-parity-materialize-794.yml'
 
 permissions:
   contents: write
 
 jobs:
   materialize:
+    if: github.event_name == 'push' || github.event.pull_request.head.ref == 'worker/794-register-button-control-2'
     runs-on: ubuntu-latest
     env:
       PYTHONHASHSEED: '0'
+      MATERIALIZE_BRANCH: ${{ github.head_ref || github.ref_name }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.ref_name }}
+          ref: ${{ env.MATERIALIZE_BRANCH }}
           fetch-depth: 0
       - name: Fetch exact evidence refs
         run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
@@ -46,4 +55,4 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "chore(laravel): materialize parity for AIMW-CONT-7D7BCD462F"
-          git push origin "HEAD:${{ github.ref_name }}"
+          git push origin "HEAD:${MATERIALIZE_BRANCH}"
