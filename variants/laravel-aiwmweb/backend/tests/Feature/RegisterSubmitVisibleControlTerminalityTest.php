@@ -3,7 +3,12 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\RegisterController;
+use App\Models\Permission;
+use App\Models\Role;
+use App\Models\Tenant;
+use App\Models\TenantMembership;
 use App\Models\User;
+use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -73,11 +78,39 @@ final class RegisterSubmitVisibleControlTerminalityTest extends TestCase
 
     public function test_public_surface_cannot_be_rebound_to_a_tenant_and_authenticated_users_still_leave_register(): void
     {
-        $this->get('/tenants/foreign/register')->assertNotFound();
-
         $user = User::factory()->create();
+        $this->membership($user, 'alpha', ['tenant.view']);
+
+        $this->actingAs($user)
+            ->get('/tenants/foreign/register')
+            ->assertNotFound();
+
         $this->actingAs($user)
             ->get('/register')
             ->assertRedirect('/');
+    }
+
+    /** @param list<string> $permissions */
+    private function membership(User $user, string $slug, array $permissions): void
+    {
+        $tenant = Tenant::query()->create(['name' => ucfirst($slug), 'slug' => $slug]);
+        $context = app(TenantContext::class);
+        $context->activate($tenant);
+
+        $membership = TenantMembership::query()->create([
+            'user_id' => $user->id,
+            'status' => 'active',
+        ]);
+        $role = Role::query()->create([
+            'name' => "register-submit-visible-{$slug}-{$user->id}",
+        ]);
+
+        foreach ($permissions as $permissionName) {
+            $permission = Permission::query()->firstOrCreate(['name' => $permissionName]);
+            $role->permissions()->attach($permission, ['tenant_id' => $tenant->id]);
+        }
+
+        $membership->roles()->attach($role, ['tenant_id' => $tenant->id]);
+        $context->forget();
     }
 }
