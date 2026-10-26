@@ -54,7 +54,7 @@ final class SiteConnectionDynamicLinksTerminalityTest extends TestCase
         $control = (string) file_get_contents(resource_path('js/site-connection-center-sync-control.tsx'));
 
         $this->assertStringContainsString('href="@($"/sites/{Id}")"', $source);
-        $this->assertStringContainsString("wp-admin/profile.php", $source);
+        $this->assertStringContainsString('wp-admin/profile.php', $source);
         $this->assertStringContainsString('href="@($"/sites/{Id}/explorer")"', $source);
         $this->assertStringContainsString('href="@($"/module/execution?siteId={Id}")"', $source);
 
