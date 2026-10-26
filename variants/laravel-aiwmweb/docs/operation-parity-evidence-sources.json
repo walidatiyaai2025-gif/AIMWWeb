@@ -1254,6 +1254,46 @@
       "operation_ids": [
         "AIMW-CONT-7957ECC794"
       ]
+    },
+    {
+      "label": "AIMW-CONT-FE6EE5740C Content Explorer ClosePreview focused closure",
+      "sha": "e4aacb50a551a0cd0bb5a45b2a95eb7a5d641c9e",
+      "observed_pr_head": "e4aacb50a551a0cd0bb5a45b2a95eb7a5d641c9e",
+      "operation_ids": [
+        "AIMW-CONT-FE6EE5740C"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-7EF5524637 Operations Hub Manage sites focused closure",
+      "sha": "e4aacb50a551a0cd0bb5a45b2a95eb7a5d641c9e",
+      "observed_pr_head": "e4aacb50a551a0cd0bb5a45b2a95eb7a5d641c9e",
+      "operation_ids": [
+        "AIMW-CONT-7EF5524637"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-63EDB4BA6F SiteConnectionCenter SiteUrl focused closure",
+      "sha": "e4aacb50a551a0cd0bb5a45b2a95eb7a5d641c9e",
+      "observed_pr_head": "e4aacb50a551a0cd0bb5a45b2a95eb7a5d641c9e",
+      "operation_ids": [
+        "AIMW-CONT-63EDB4BA6F"
+      ]
+    },
+    {
+      "label": "AIMW-SYNC-EB9202408A AppDataGrid ExportCsvAsync focused closure",
+      "sha": "e4aacb50a551a0cd0bb5a45b2a95eb7a5d641c9e",
+      "observed_pr_head": "e4aacb50a551a0cd0bb5a45b2a95eb7a5d641c9e",
+      "operation_ids": [
+        "AIMW-SYNC-EB9202408A"
+      ]
+    },
+    {
+      "label": "AIMW-EMAI-7E1D4105B0 Site Email CancelEdit focused closure",
+      "sha": "e4aacb50a551a0cd0bb5a45b2a95eb7a5d641c9e",
+      "observed_pr_head": "e4aacb50a551a0cd0bb5a45b2a95eb7a5d641c9e",
+      "operation_ids": [
+        "AIMW-EMAI-7E1D4105B0"
+      ]
     }
   ],
   "excluded_sources": [],
@@ -1961,6 +2001,46 @@
         "AIMW-BILL-BC093D6418",
         "AIMW-BILL-D307963B59",
         "AIMW-BILL-EE42461195"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-FE6EE5740C Content Explorer ClosePreview focused closure",
+      "sha": "e4aacb50a551a0cd0bb5a45b2a95eb7a5d641c9e",
+      "observed_pr_head": "e4aacb50a551a0cd0bb5a45b2a95eb7a5d641c9e",
+      "operation_ids": [
+        "AIMW-CONT-FE6EE5740C"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-7EF5524637 Operations Hub Manage sites focused closure",
+      "sha": "e4aacb50a551a0cd0bb5a45b2a95eb7a5d641c9e",
+      "observed_pr_head": "e4aacb50a551a0cd0bb5a45b2a95eb7a5d641c9e",
+      "operation_ids": [
+        "AIMW-CONT-7EF5524637"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-63EDB4BA6F SiteConnectionCenter SiteUrl focused closure",
+      "sha": "e4aacb50a551a0cd0bb5a45b2a95eb7a5d641c9e",
+      "observed_pr_head": "e4aacb50a551a0cd0bb5a45b2a95eb7a5d641c9e",
+      "operation_ids": [
+        "AIMW-CONT-63EDB4BA6F"
+      ]
+    },
+    {
+      "label": "AIMW-SYNC-EB9202408A AppDataGrid ExportCsvAsync focused closure",
+      "sha": "e4aacb50a551a0cd0bb5a45b2a95eb7a5d641c9e",
+      "observed_pr_head": "e4aacb50a551a0cd0bb5a45b2a95eb7a5d641c9e",
+      "operation_ids": [
+        "AIMW-SYNC-EB9202408A"
+      ]
+    },
+    {
+      "label": "AIMW-EMAI-7E1D4105B0 Site Email CancelEdit focused closure",
+      "sha": "e4aacb50a551a0cd0bb5a45b2a95eb7a5d641c9e",
+      "observed_pr_head": "e4aacb50a551a0cd0bb5a45b2a95eb7a5d641c9e",
+      "operation_ids": [
+        "AIMW-EMAI-7E1D4105B0"
       ]
     },
     {
