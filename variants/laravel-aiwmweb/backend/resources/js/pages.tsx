@@ -18,7 +18,7 @@ import { CONTENT_HUB_WORKSPACE_URL_OPERATION_ID, contentHubWorkspaceUrl, isConte
 import { AiCenterGenerateControl } from './ai-center-generate-control';
 import { AdminBillingSupportClearSearchControl } from './admin-billing-support-clear-search-control';
 import { APP_DATA_GRID_PREVIOUS_PAGE_OPERATION_ID } from './app-data-grid-previous-page-control';
-import { AppDataGridSortControl, sortAppDataGridRows } from './app-data-grid-sort-control';
+import { AppDataGridSortControl } from './app-data-grid-sort-control';
 import { AppSearchBox } from './app-search-box';
 import { AccountProfileEmailSettingsLinkControl } from './account-profile-email-settings-link-control';
 import { ApplicationUsersClearSearchControl } from './application-users-clear-search-control';
@@ -332,10 +332,11 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         ...(emailHistoryFilters.siteId ? { site_id: emailHistoryFilters.siteId } : {}),
         ...(emailHistoryFilters.status ? { status: emailHistoryFilters.status } : {}),
         ...(emailHistoryFilters.correlation.trim() ? { correlation: emailHistoryFilters.correlation.trim() } : {}),
+        sort_desc: appDataGridSortDescending ? '1' : '0',
     } : {};
     const resourceFilters = { ...taxonomyFilter, ...emailHistoryQueryFilters };
     const query = useQuery(route.key === 'email-history' ? {
-        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType, emailHistoryFilters.siteId, emailHistoryFilters.status, emailHistoryFilters.correlation],
+        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType, emailHistoryFilters.siteId, emailHistoryFilters.status, emailHistoryFilters.correlation, appDataGridSortDescending],
         queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, resourceFilters)),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     } : {
@@ -516,13 +517,6 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         : route.key === 'site-operations'
             ? filterSiteOperationsRows(collection.rows, search, siteOperationsFilters)
             : collection.rows;
-    const appDataGridRows = route.key === 'email-history'
-        ? sortAppDataGridRows(
-            visibleRows,
-            (row) => String(row.created_at ?? row.delivery_id ?? ''),
-            appDataGridSortDescending,
-        )
-        : visibleRows;
     const connectedSiteCount = route.key === 'sites' ? collection.rows.filter(isSiteConnectedRow).length : 0;
     const reviewSiteCount = route.key === 'sites' ? collection.rows.filter(isSiteReviewRow).length : 0;
     const serverErrors = mutation.error instanceof ApiError ? mutation.error.validation : {};
@@ -829,7 +823,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                 ) : null}
                 {visibleRows.length ? (
                     <DataTable
-                        rows={appDataGridRows}
+                        rows={visibleRows}
                         renderActions={route.key === 'site-reliability' ? (row) => (
                             <SiteReliabilityConnectionLinkControl tenantSlug={context.tenant.slug} siteId={row.site_id} />
                         ) : route.key === 'explorer' ? (row) => {
