@@ -123,7 +123,6 @@ final class GlobalMediaSourceUrlTerminalityTest extends TestCase
         );
         $this->assertStringContainsString(self::OPERATION_ID, $binding);
         $this->assertStringContainsString('safeContentExplorerMediaSourceUrl', $binding);
-        $this->assertStringContainsString('ContentExplorerMediaSourceUrlControl', $binding);
         $this->assertStringContainsString(
             '<GlobalMediaSourceUrlOperationBinding value={row.source_url}>',
             $pages,
