@@ -61,7 +61,7 @@
   ],
   "provenance": {
     "base_branch": "worker/laravel-aiwmweb-closure-composition",
-    "base_composition_sha": "bfd0eccb76a1dd2aa1d5c979e4cbd158df27086b",
+    "base_composition_sha": "6f3e2f14074afe33bcdb97ee785bd44676cc6f31",
     "branch": "worker/797-roles-start-create"
   },
   "ci_state": "PENDING_EXACT_HEAD"
