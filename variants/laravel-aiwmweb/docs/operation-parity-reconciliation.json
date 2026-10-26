@@ -38451,6 +38451,16 @@
           "AIMW-CONT-6EC0601E18"
         ],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "AIMW-SYNC-9ABD7DEDBB ApplicationUsers RequestResetPassword focused closure",
+        "sha": "074d884454491d355765278a9bc52bef88cbb82d",
+        "domains": [],
+        "supporting_only": false,
+        "operation_ids": [
+          "AIMW-SYNC-9ABD7DEDBB"
+        ],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -38469,6 +38479,7 @@
     "missing_terminal_evidence_operation_ids": [],
     "pushed_source_shas_verified": [
       "0074d9dc9ec10fe1e7c64e40f4e1c7166c03cf01",
+      "074d884454491d355765278a9bc52bef88cbb82d",
       "0df86d6e260b6b7d6748fb8ffdf8f03517405cec",
       "18191b10b7909f3670ccbde3dc41025202cb7ca5",
       "2497296794e0f1fde94d8c0fd30babb047c912ae",

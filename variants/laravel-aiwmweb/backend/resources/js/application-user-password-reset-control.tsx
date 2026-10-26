@@ -5,6 +5,7 @@ import { apiRequest, isPathMatch, type FrontendContext } from './core';
 import { useLocale } from './i18n';
 
 export const APPLICATION_USER_PASSWORD_RESET_OPERATION_ID = 'AIMW-BILL-3BE40F2E00';
+export const APPLICATION_USER_REQUEST_RESET_PASSWORD_OPERATION_ID = 'AIMW-SYNC-9ABD7DEDBB';
 
 type Member = {
     id: number;
@@ -30,6 +31,8 @@ export function ApplicationUserPasswordResetControl({ context }: { context: Fron
     const [password, setPassword] = useState('');
     const [passwordConfirmation, setPasswordConfirmation] = useState('');
     const [confirmationIdentity, setConfirmationIdentity] = useState('');
+    const [reviewRequested, setReviewRequested] = useState(false);
+    const [reviewError, setReviewError] = useState('');
     const [success, setSuccess] = useState('');
 
     const membersQuery = useQuery({
@@ -70,13 +73,34 @@ export function ApplicationUserPasswordResetControl({ context }: { context: Fron
                 : `Password reset persisted for ${result.user.email}; ${result.revoked_sessions} session(s) were revoked.`);
             void membersQuery.refetch();
         },
-        onMutate: () => setSuccess(''),
+        onMutate: () => { setSuccess(''); setReviewError(''); },
         onSettled: () => {
             setPassword('');
             setPasswordConfirmation('');
             setConfirmationIdentity('');
+            setReviewRequested(false);
+            setReviewError('');
         },
     });
+
+    const requestResetReview = () => {
+        if (resetMutation.isPending) return;
+        setSuccess('');
+        setReviewError('');
+        if (! selected?.user) {
+            setReviewError(locale === 'ar' ? 'اختر مستخدمًا أولًا.' : 'Select an application user first.');
+            return;
+        }
+        if (! password.trim()) {
+            setReviewError(locale === 'ar' ? 'كلمة المرور الجديدة مطلوبة.' : 'A new password is required.');
+            return;
+        }
+        if (password !== passwordConfirmation) {
+            setReviewError(locale === 'ar' ? 'تأكيد كلمة المرور غير مطابق.' : 'New password confirmation does not match.');
+            return;
+        }
+        setReviewRequested(true);
+    };
 
     if (! onApplicationUsers || ! canManage || ! membersEndpoint) return null;
 
@@ -93,13 +117,16 @@ export function ApplicationUserPasswordResetControl({ context }: { context: Fron
             </div>
             <form onSubmit={(event) => {
                 event.preventDefault();
-                if (! resetMutation.isPending) resetMutation.mutate();
+                if (! reviewRequested || resetMutation.isPending) return;
+                resetMutation.mutate();
             }}>
                 <label>
                     {locale === 'ar' ? 'المستخدم' : 'User'}
                     <select value={membershipId} onChange={(event) => {
                         setMembershipId(event.target.value);
                         setConfirmationIdentity('');
+                        setReviewRequested(false);
+                        setReviewError('');
                         setSuccess('');
                     }} disabled={resetMutation.isPending || membersQuery.isLoading} required>
                         <option value="">{locale === 'ar' ? 'اختر مستخدمًا' : 'Select a user'}</option>
@@ -116,13 +143,43 @@ export function ApplicationUserPasswordResetControl({ context }: { context: Fron
                     {locale === 'ar' ? 'تأكيد كلمة المرور' : 'Confirm password'}
                     <input type="password" autoComplete="new-password" minLength={8} value={passwordConfirmation} onChange={(event) => setPasswordConfirmation(event.target.value)} disabled={resetMutation.isPending} required />
                 </label>
-                <label>
-                    {locale === 'ar' ? 'اكتب بريد المستخدم للتأكيد' : 'Type the target email to confirm'}
-                    <input type="email" autoComplete="off" value={confirmationIdentity} onChange={(event) => setConfirmationIdentity(event.target.value)} disabled={resetMutation.isPending} placeholder={selected?.user?.email ?? ''} required />
-                </label>
-                <button type="submit" className="btn" disabled={resetMutation.isPending || ! selected?.user}>
-                    {resetMutation.isPending ? (locale === 'ar' ? 'جارٍ التنفيذ…' : 'Resetting…') : (locale === 'ar' ? 'إعادة تعيين كلمة المرور' : 'Reset password')}
-                </button>
+                {reviewRequested ? (
+                    <label>
+                        {locale === 'ar' ? 'اكتب بريد المستخدم للتأكيد' : 'Type the target email to confirm'}
+                        <input type="email" autoComplete="off" value={confirmationIdentity} onChange={(event) => setConfirmationIdentity(event.target.value)} disabled={resetMutation.isPending} placeholder={selected?.user?.email ?? ''} required />
+                    </label>
+                ) : null}
+                {! reviewRequested ? (
+                    <button
+                        type="button"
+                        className="btn"
+                        data-canonical-operation={APPLICATION_USER_REQUEST_RESET_PASSWORD_OPERATION_ID}
+                        disabled={resetMutation.isPending}
+                        onClick={requestResetReview}
+                    >
+                        {locale === 'ar' ? 'مراجعة وإعادة تعيين' : 'Review reset'}
+                    </button>
+                ) : (
+                    <div className="state-panel" data-testid="application-user-reset-review">
+                        <strong>{locale === 'ar' ? 'تأكيد إعادة تعيين كلمة المرور' : 'Confirm password reset'}</strong>
+                        <p>{locale === 'ar'
+                            ? `سيتم استبدال كلمة مرور ${selected?.user?.email ?? ''}. اكتب البريد للتأكيد ثم نفّذ.`
+                            : `The password for ${selected?.user?.email ?? ''} will be replaced. Type the email to confirm, then continue.`}</p>
+                        <div className="toolbar-actions">
+                            <button type="button" className="btn" disabled={resetMutation.isPending} onClick={() => {
+                                setReviewRequested(false);
+                                setConfirmationIdentity('');
+                                setReviewError('');
+                            }}>
+                                {locale === 'ar' ? 'إلغاء' : 'Cancel'}
+                            </button>
+                            <button type="submit" className="btn" disabled={resetMutation.isPending || ! confirmationIdentity.trim()}>
+                                {resetMutation.isPending ? (locale === 'ar' ? 'جارٍ التنفيذ…' : 'Resetting…') : (locale === 'ar' ? 'إعادة تعيين كلمة المرور' : 'Reset password')}
+                            </button>
+                        </div>
+                    </div>
+                )}
+                {reviewError ? <p role="alert">{reviewError}</p> : null}
                 {error ? <p role="alert">{error}</p> : null}
                 {success ? <p role="status">{success}</p> : null}
             </form>
