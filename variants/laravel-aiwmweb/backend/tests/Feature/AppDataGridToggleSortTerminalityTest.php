@@ -203,6 +203,6 @@ final class AppDataGridToggleSortTerminalityTest extends TestCase
 
         $context->forget();
 
-        return $delivery->fresh();
+        return $delivery;
     }
 }
