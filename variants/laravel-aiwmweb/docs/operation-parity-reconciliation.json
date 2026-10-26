@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 806,
-    "pending": 125,
+    "adapted": 807,
+    "pending": 124,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 806,
-    "overall_parity_percent": 86.57
+    "terminal": 807,
+    "overall_parity_percent": 86.68
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 328,
-    "pending": 118,
+    "terminal": 329,
+    "pending": 117,
     "blocked": 0,
-    "percent": 73.54
+    "percent": 73.77
   },
   "domains": {
     "ai": {
@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 117,
-      "pending": 47,
+      "adapted": 118,
+      "pending": 46,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 117,
-      "percent": 71.34
+      "terminal": 118,
+      "percent": 71.95
     },
     "email": {
       "total": 82,
@@ -18272,21 +18272,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Http/Controllers/RegisterController.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RegisterSubmitVisibleControlTerminalityTest.php",
+      "evidence": "AIMW-CONT-7D7BCD462F Register submit button visible-control focused closure@2c3faa510ea70908b4f1aca4fb42dba574f0e810: variants/laravel-aiwmweb/backend/app/Http/Controllers/RegisterController.php; focused-closure:AIMW-CONT-7D7BCD462F; test:variants/laravel-aiwmweb/backend/tests/Feature/RegisterSubmitVisibleControlTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/register-submit-visible-control-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-7D7BCD462F Register submit button visible-control focused closure",
+        "source_sha": "2c3faa510ea70908b4f1aca4fb42dba574f0e810",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/RegisterController.php",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/register-submit-visible-control-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-7D7BCD462F",
+          "production-marker:variants/laravel-aiwmweb/backend/app/Http/Controllers/RegisterController.php",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/RegisterSubmitVisibleControlTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/register-submit-visible-control-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -37226,12 +37236,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 328,
-      "pending": 118,
+      "adapted": 329,
+      "pending": 117,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 328,
-      "percent": 73.54
+      "terminal": 329,
+      "percent": 73.77
     }
   },
   "pending_operation_ids_by_domain": {
@@ -37262,7 +37272,6 @@
       "AIMW-CONT-6B051BD8C0",
       "AIMW-CONT-6B6790BE84",
       "AIMW-CONT-6EC0601E18",
-      "AIMW-CONT-7D7BCD462F",
       "AIMW-CONT-7D83B09470",
       "AIMW-CONT-7F2BC55FF4",
       "AIMW-CONT-80EE7CA296",
@@ -38567,6 +38576,7 @@
       "AIMW-CONT-71F54E3BA6",
       "AIMW-CONT-73E4F88038",
       "AIMW-CONT-7957ECC794",
+      "AIMW-CONT-7D7BCD462F",
       "AIMW-CONT-7EF5524637",
       "AIMW-CONT-83908F2D7C",
       "AIMW-CONT-85394A0E55",
@@ -39358,10 +39368,17 @@
         "operation_ids": [
           "AIMW-CONT-6CB3D0BE1B"
         ]
+      },
+      {
+        "label": "AIMW-CONT-7D7BCD462F Register submit button visible-control focused closure",
+        "sha": "2c3faa510ea70908b4f1aca4fb42dba574f0e810",
+        "operation_ids": [
+          "AIMW-CONT-7D7BCD462F"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 98,
-    "focused_closure_contract_count": 328,
+    "focused_closure_operation_scoped_count": 99,
+    "focused_closure_contract_count": 329,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
