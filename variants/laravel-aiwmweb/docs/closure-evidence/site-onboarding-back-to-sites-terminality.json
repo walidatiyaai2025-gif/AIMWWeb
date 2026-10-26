@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #830 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-6EC0601E18",
+  "domain": "content",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "source": "src/AIWordPressManager.Web/Components/Pages/SiteOnboarding.razor",
+  "source_action": "@(L.IsArabic ? -> /sites",
+  "destination": "variants/laravel-aiwmweb/backend/resources/js/site-onboarding-save-test-sync-control.tsx",
+  "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-onboarding-back-to-sites-control.test.tsx",
+  "backend_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteOnboardingBackToSitesTerminalityTest.php",
+  "runtime": "render source-equivalent Back to sites and View all sites controls as tenant-qualified navigation inside the existing sites.manage onboarding boundary",
+  "server_mutation": false,
+  "external_mutation": false,
+  "tenant_permission": "sites.manage",
+  "only_operation_claimed": "AIMW-CONT-6EC0601E18",
+  "materialized": true
+}
