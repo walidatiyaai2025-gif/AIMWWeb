@@ -2621,14 +2621,6 @@
       ]
     },
     {
-      "label": "AIMW-TAXO-602DE140EB Global Taxonomy result Explorer focused closure",
-      "sha": "f82e8d0c446a26223bfa84142ee5c500ba884986",
-      "observed_pr_head": "f82e8d0c446a26223bfa84142ee5c500ba884986",
-      "operation_ids": [
-        "AIMW-TAXO-602DE140EB"
-      ]
-    },
-    {
       "label": "AIMW-SYNC-ABE31C5C4E shared AppDialog CloseAsync focused closure",
       "sha": "04ac78be2516607922772e857ee8f832e95bf229",
       "observed_pr_head": "04ac78be2516607922772e857ee8f832e95bf229",
@@ -2764,6 +2756,14 @@
       "observed_pr_head": "a3035a6b8171254cb4da58d2be95f7197685f0b5",
       "operation_ids": [
         "AIMW-CONT-40CD7F080F"
+      ]
+    },
+    {
+      "label": "AIMW-TAXO-602DE140EB Global Taxonomy row links focused closure",
+      "sha": "df0ebcecc13a5449b8241a92f3710d0ad100cd5a",
+      "observed_pr_head": "df0ebcecc13a5449b8241a92f3710d0ad100cd5a",
+      "operation_ids": [
+        "AIMW-TAXO-602DE140EB"
       ]
     }
   ],
