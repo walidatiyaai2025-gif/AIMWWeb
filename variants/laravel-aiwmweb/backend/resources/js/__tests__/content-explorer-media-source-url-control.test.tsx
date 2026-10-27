@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import {
     CONTENT_EXPLORER_MEDIA_SOURCE_URL_OPERATION_ID,
+    GLOBAL_MEDIA_SOURCE_URL_OPERATION_ID,
     ContentExplorerMediaSourceUrlControl,
     safeContentExplorerMediaSourceUrl,
 } from '../content-explorer-media-source-url-control';
@@ -27,6 +28,8 @@ describe('AIMW-CONT-B44DA81C28 Content Explorer media SourceUrl link', () => {
             CONTENT_EXPLORER_MEDIA_SOURCE_URL_OPERATION_ID,
         );
         expect(CONTENT_EXPLORER_MEDIA_SOURCE_URL_OPERATION_ID).toBe('AIMW-CONT-B44DA81C28');
+        expect(link).toHaveAttribute('data-canonical-global-media-operation', GLOBAL_MEDIA_SOURCE_URL_OPERATION_ID);
+        expect(GLOBAL_MEDIA_SOURCE_URL_OPERATION_ID).toBe('AIMW-MEDI-3444B17C11');
     });
 
     it('fails closed for empty, unsafe, credential-bearing, relative and malformed URLs', () => {
