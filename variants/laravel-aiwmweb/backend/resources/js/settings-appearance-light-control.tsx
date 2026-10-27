@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import type { FrontendContext } from './core';
 import { useLocale } from './i18n';
+import { SETTINGS_APPEARANCE_TARGET_ID } from './settings-appearance-anchor-control';
 
 export const SETTINGS_SET_LIGHT_OPERATION_ID = 'AIMW-CONT-4961F90970';
 export const SETTINGS_SET_DARK_OPERATION_ID = 'AIMW-CONT-EDC262499D';
@@ -47,7 +48,7 @@ export function SettingsAppearanceLightControl({ context }: { context: FrontendC
     };
 
     return (
-        <section className="toolbar-panel" aria-label={locale === 'ar' ? 'وضع العرض' : 'Display mode'}>
+        <section id={SETTINGS_APPEARANCE_TARGET_ID} className="toolbar-panel" aria-label={locale === 'ar' ? 'وضع العرض' : 'Display mode'} data-settings-section="appearance">
             <div>
                 <span className="workspace-kicker">APPEARANCE</span>
                 <strong>{locale === 'ar' ? 'وضع العرض' : 'Display mode'}</strong>
