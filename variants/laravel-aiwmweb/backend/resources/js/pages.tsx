@@ -81,6 +81,7 @@ const SITES_SHOW_ALL_OPERATION_ID = 'AIMW-CONT-C178278FCB';
 const SITES_SHOW_CONNECTED_OPERATION_ID = 'AIMW-CONT-E346398EAD';
 const SITES_SHOW_REVIEW_OPERATION_ID = 'AIMW-CONT-CA17F05024';
 export const COMMENTS_SEARCH_OPERATION_ID = 'AIMW-SYNC-4E3C0156FC';
+export const WORDPRESS_USERS_SEARCH_OPERATION_ID = 'AIMW-SYNC-E6888B0B4D';
 export const AI_CENTER_METADATA_REFRESH_OPERATION_ID = 'AIMW-AI-953A6C0D98';
 export const NOTIFICATION_INBOX_RELOAD_OPERATION_ID = 'AIMW-EMAI-12A6FEB2FF';
 
@@ -598,9 +599,11 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         <button
                             type="submit"
                             className="btn"
-                            data-canonical-operation={route.key === 'comments' ? COMMENTS_SEARCH_OPERATION_ID : undefined}
-                            disabled={route.key === 'comments' && query.isFetching}
-                            aria-busy={route.key === 'comments' && query.isFetching ? 'true' : 'false'}
+                            data-canonical-operation={route.key === 'wp-users'
+                                ? WORDPRESS_USERS_SEARCH_OPERATION_ID
+                                : (route.key === 'comments' ? COMMENTS_SEARCH_OPERATION_ID : undefined)}
+                            disabled={(route.key === 'comments' || route.key === 'wp-users') && query.isFetching}
+                            aria-busy={(route.key === 'comments' || route.key === 'wp-users') && query.isFetching ? 'true' : 'false'}
                         >
                             {text(commonText.search)}
                         </button>
