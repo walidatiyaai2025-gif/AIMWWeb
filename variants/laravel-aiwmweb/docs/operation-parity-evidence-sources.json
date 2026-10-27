@@ -2733,6 +2733,14 @@
           "security_mode": "tenant_bound"
         }
       }
+    },
+    {
+      "label": "AIMW-CONT-38FC74B9DE OpenAddFormClicked focused closure",
+      "sha": "4310579559e99af191a0bc829b2d2c07f478430c",
+      "observed_pr_head": "4310579559e99af191a0bc829b2d2c07f478430c",
+      "operation_ids": [
+        "AIMW-CONT-38FC74B9DE"
+      ]
     }
   ],
   "sources": [
