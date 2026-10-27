@@ -83,6 +83,7 @@ const SITES_SHOW_ALL_OPERATION_ID = 'AIMW-CONT-C178278FCB';
 const SITES_SHOW_CONNECTED_OPERATION_ID = 'AIMW-CONT-E346398EAD';
 const SITES_SHOW_REVIEW_OPERATION_ID = 'AIMW-CONT-CA17F05024';
 export const COMMENTS_SEARCH_OPERATION_ID = 'AIMW-SYNC-4E3C0156FC';
+export const COMMENTS_REFRESH_CLICK_OPERATION_ID = 'AIMW-SYNC-D5CE5A213B';
 export const WORDPRESS_USERS_SEARCH_OPERATION_ID = 'AIMW-SYNC-E6888B0B4D';
 export const AI_CENTER_METADATA_REFRESH_OPERATION_ID = 'AIMW-AI-953A6C0D98';
 export const NOTIFICATION_INBOX_RELOAD_OPERATION_ID = 'AIMW-EMAI-12A6FEB2FF';
@@ -549,7 +550,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         ? ((query.data as CollectionEnvelope).meta ?? null)
         : null;
     const aiCenterSites = Array.isArray(aiCenterMeta?.sites) ? aiCenterMeta.sites : [];
-    const refreshOperationId = route.key === 'notifications'
+    const refreshOperationId = route.key === 'comments'
+        ? COMMENTS_REFRESH_CLICK_OPERATION_ID
+        : route.key === 'notifications'
         ? NOTIFICATION_INBOX_RELOAD_OPERATION_ID
         : route.key === 'site-operations'
         ? SITE_OPERATIONS_RELOAD_OPERATION_ID
@@ -757,8 +760,8 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         data-canonical-operation={refreshOperationId}
                         data-canonical-load-operation={readOperations?.load}
                         data-canonical-refresh-operation={readOperations?.refresh}
-                        disabled={(route.key === 'ai-center' || route.key === 'backups' || route.key === 'site-operations' || route.key === 'site-reliability') && query.isFetching}
-                        aria-busy={(route.key === 'ai-center' || route.key === 'backups' || route.key === 'site-operations' || route.key === 'site-reliability') && query.isFetching ? 'true' : 'false'}
+                        disabled={(route.key === 'comments' || route.key === 'ai-center' || route.key === 'backups' || route.key === 'site-operations' || route.key === 'site-reliability') && query.isFetching}
+                        aria-busy={(route.key === 'comments' || route.key === 'ai-center' || route.key === 'backups' || route.key === 'site-operations' || route.key === 'site-reliability') && query.isFetching ? 'true' : 'false'}
                         onClick={() => void refreshWorkspace()}
                     >
                         {route.key === 'ai-center'
