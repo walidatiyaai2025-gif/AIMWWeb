@@ -2463,7 +2463,7 @@
     {
       "label": "AIMW-CONT-47C0477703 Roles Permissions application-users link focused closure",
       "sha": "0e77fc47b0d0beaa85bbe8380a7c09a35e7b0ed9",
-      "observed_pr_head": "8f444250f636265f729f74c412540aa477c7dcc1",
+      "observed_pr_head": "0e77fc47b0d0beaa85bbe8380a7c09a35e7b0ed9",
       "operation_ids": [
         "AIMW-CONT-47C0477703"
       ]
@@ -2494,8 +2494,8 @@
     },
     {
       "label": "AIMW-CONT-6187F8DF8A SiteDataSnapshot dynamic navigation focused closure",
-      "sha": "4b05986bebb8b8b3366d9e43d62f84315478a6ab",
-      "observed_pr_head": "4b05986bebb8b8b3366d9e43d62f84315478a6ab",
+      "sha": "7b0dbdc988c1b8eb10bbb85ace1a338b44cc7f10",
+      "observed_pr_head": "7b0dbdc988c1b8eb10bbb85ace1a338b44cc7f10",
       "operation_ids": [
         "AIMW-CONT-6187F8DF8A"
       ]
@@ -2550,72 +2550,72 @@
     },
     {
       "label": "AIMW-TAXO-A96714F338 ContentExplorer SetCategoriesTab focused closure",
-      "sha": "ea888fcd6ebf498ae33f0008d1bf36e68b7bc900",
-      "observed_pr_head": "ea888fcd6ebf498ae33f0008d1bf36e68b7bc900",
+      "sha": "8a6cd643bbbb86fbbea57dfa000b307caebd9df5",
+      "observed_pr_head": "8a6cd643bbbb86fbbea57dfa000b307caebd9df5",
       "operation_ids": [
         "AIMW-TAXO-A96714F338"
       ]
     },
     {
       "label": "AIMW-SYNC-E6888B0B4D GlobalUsersWorkspace SearchAsync focused closure",
-      "sha": "f069d62dd50a2daef8e165e0e49662aeabc0f5ff",
-      "observed_pr_head": "f069d62dd50a2daef8e165e0e49662aeabc0f5ff",
+      "sha": "53efeaedd096d7cc550a2b918d79538c20234004",
+      "observed_pr_head": "53efeaedd096d7cc550a2b918d79538c20234004",
       "operation_ids": [
         "AIMW-SYNC-E6888B0B4D"
       ]
     },
     {
       "label": "AIMW-SYNC-C18ED1F753 AppDataGrid ExportAsync issue #986 focused closure",
-      "sha": "6daf84840c1b9e983467e86590dea7443b215e2a",
-      "observed_pr_head": "6daf84840c1b9e983467e86590dea7443b215e2a",
+      "sha": "06a91c8c3c66eeded4ce6a583be9403e455ee929",
+      "observed_pr_head": "06a91c8c3c66eeded4ce6a583be9403e455ee929",
       "operation_ids": [
         "AIMW-SYNC-C18ED1F753"
       ]
     },
     {
       "label": "AIMW-SYNC-FF579F0EBF AppDataGrid ClearFiltersAsync issue #988 focused closure",
-      "sha": "d5216873756dac1018cbbc71ca230c742c95c885",
-      "observed_pr_head": "d5216873756dac1018cbbc71ca230c742c95c885",
+      "sha": "2d3fed5692ca985340fbf3ea5d546a93c24022a6",
+      "observed_pr_head": "2d3fed5692ca985340fbf3ea5d546a93c24022a6",
       "operation_ids": [
         "AIMW-SYNC-FF579F0EBF"
       ]
     },
     {
       "label": "AIMW-EMAI-9EB09C490D GlobalNotifications logs link focused closure",
-      "sha": "9cce562db83e91fa979e9b2b4840a4c0e7aa8e98",
-      "observed_pr_head": "9cce562db83e91fa979e9b2b4840a4c0e7aa8e98",
+      "sha": "df19b98346550312e664cfc6211a52f442cbfabe",
+      "observed_pr_head": "df19b98346550312e664cfc6211a52f442cbfabe",
       "operation_ids": [
         "AIMW-EMAI-9EB09C490D"
       ]
     },
     {
       "label": "AIMW-CONT-CA4920CBC8 Site Data Snapshot Back to sites focused closure",
-      "sha": "57f6197482089607a05d783173bbdb61d20aa063",
-      "observed_pr_head": "57f6197482089607a05d783173bbdb61d20aa063",
+      "sha": "09faa6e6ec81724f596b69beb4417476875aa1b5",
+      "observed_pr_head": "09faa6e6ec81724f596b69beb4417476875aa1b5",
       "operation_ids": [
         "AIMW-CONT-CA4920CBC8"
       ]
     },
     {
       "label": "AIMW-SYNC-CDE0C219B5 AppBulkActionBar ClearAsync focused closure",
-      "sha": "1f0c20f58091b308ac5117dccca06cc0c1f02301",
-      "observed_pr_head": "1f0c20f58091b308ac5117dccca06cc0c1f02301",
+      "sha": "ba3902b77daf371e0cb1888b968603efcada9944",
+      "observed_pr_head": "ba3902b77daf371e0cb1888b968603efcada9944",
       "operation_ids": [
         "AIMW-SYNC-CDE0C219B5"
       ]
     },
     {
       "label": "AIMW-SYNC-9DFB5B4FF9 AppConfirmDialog ConfirmClickedAsync focused closure",
-      "sha": "62b97ef5553d0d713c048a9b5fd9a07c46c51f72",
-      "observed_pr_head": "62b97ef5553d0d713c048a9b5fd9a07c46c51f72",
+      "sha": "5e26a7b6e78fdd9aa756938f5818cefd06be0775",
+      "observed_pr_head": "5e26a7b6e78fdd9aa756938f5818cefd06be0775",
       "operation_ids": [
         "AIMW-SYNC-9DFB5B4FF9"
       ]
     },
     {
       "label": "AIMW-CONT-4147188AB1 Site Operations Details link focused closure",
-      "sha": "713239c5b0b452e3a60fd952bb600cc8af39c372",
-      "observed_pr_head": "45f7d7aa3984b5a96e4a95f2c15bd3846e35cb53",
+      "sha": "057f5ff57f8ecf4bd3c1fbb5ec70364ae60b0abe",
+      "observed_pr_head": "057f5ff57f8ecf4bd3c1fbb5ec70364ae60b0abe",
       "operation_ids": [
         "AIMW-CONT-4147188AB1"
       ]
@@ -2662,8 +2662,8 @@
     },
     {
       "label": "AIMW-CONT-9F0D652C67 Site Onboarding route closure",
-      "sha": "83f6f1c0527256491d55c03822baeee68dafd8e7",
-      "observed_pr_head": "83f6f1c0527256491d55c03822baeee68dafd8e7",
+      "sha": "2528451fe89bcaa5817ccab8042d7a952d418435",
+      "observed_pr_head": "2528451fe89bcaa5817ccab8042d7a952d418435",
       "domains": [
         "content"
       ],
@@ -2684,8 +2684,8 @@
     },
     {
       "label": "AIMW-CONT-50DF6B23CC Site Connection canonical route terminality",
-      "sha": "a74ebc132c028d0f7d35faa76c42dd7043f0f598",
-      "observed_pr_head": "a74ebc132c028d0f7d35faa76c42dd7043f0f598",
+      "sha": "d13feb86b4cce959c14c0c99ec10286df53715e5",
+      "observed_pr_head": "d13feb86b4cce959c14c0c99ec10286df53715e5",
       "domains": [
         "content"
       ],
@@ -2706,8 +2706,8 @@
     },
     {
       "label": "AIMW-CONT-98918A6C27 Site Offline Data canonical route terminality",
-      "sha": "ab94c8a2b0da6a98c6fe9d846fd55edd256f4717",
-      "observed_pr_head": "ab94c8a2b0da6a98c6fe9d846fd55edd256f4717",
+      "sha": "f3983282840300791080ad528c24cb79e489498d",
+      "observed_pr_head": "f3983282840300791080ad528c24cb79e489498d",
       "domains": [
         "content"
       ],
@@ -2728,32 +2728,32 @@
     },
     {
       "label": "AIMW-CONT-38FC74B9DE OpenAddFormClicked focused closure",
-      "sha": "4310579559e99af191a0bc829b2d2c07f478430c",
-      "observed_pr_head": "4310579559e99af191a0bc829b2d2c07f478430c",
+      "sha": "a882b922d9cba3854b4055edcafb1a69cedcb11a",
+      "observed_pr_head": "a882b922d9cba3854b4055edcafb1a69cedcb11a",
       "operation_ids": [
         "AIMW-CONT-38FC74B9DE"
       ]
     },
     {
       "label": "AIMW-CONT-B1024628D9 WordPress Users back-to-sites focused closure",
-      "sha": "b3c7f630984758df20a7620eb27f90e25ee1f0ca",
-      "observed_pr_head": "b3c7f630984758df20a7620eb27f90e25ee1f0ca",
+      "sha": "32e943a79b403f99b9a82d92e9458374f47f49f0",
+      "observed_pr_head": "32e943a79b403f99b9a82d92e9458374f47f49f0",
       "operation_ids": [
         "AIMW-CONT-B1024628D9"
       ]
     },
     {
       "label": "AIMW-TAXO-D6126926AD Content Explorer SetTagsTab focused closure",
-      "sha": "33a922c849f85d21435870ee3e373311cd36e418",
-      "observed_pr_head": "33a922c849f85d21435870ee3e373311cd36e418",
+      "sha": "44ef6805b00bd3d0739b4817281c23402321f8d0",
+      "observed_pr_head": "44ef6805b00bd3d0739b4817281c23402321f8d0",
       "operation_ids": [
         "AIMW-TAXO-D6126926AD"
       ]
     },
     {
       "label": "AIMW-CONT-40CD7F080F SiteReliability ApplyFilters focused closure",
-      "sha": "a3035a6b8171254cb4da58d2be95f7197685f0b5",
-      "observed_pr_head": "a3035a6b8171254cb4da58d2be95f7197685f0b5",
+      "sha": "7b0dbdc988c1b8eb10bbb85ace1a338b44cc7f10",
+      "observed_pr_head": "7b0dbdc988c1b8eb10bbb85ace1a338b44cc7f10",
       "operation_ids": [
         "AIMW-CONT-40CD7F080F"
       ]
@@ -2792,8 +2792,8 @@
     },
     {
       "label": "AIMW-CONT-916E34454C Site Reliability direct route closure",
-      "sha": "d2cd0c4eaeb27c7b2f94eb3e8b70466a2c89c3a3",
-      "observed_pr_head": "d2cd0c4eaeb27c7b2f94eb3e8b70466a2c89c3a3",
+      "sha": "bd926f86f35bc4cc3ab0441c69f18341a3f4a799",
+      "observed_pr_head": "bd926f86f35bc4cc3ab0441c69f18341a3f4a799",
       "domains": [
         "content"
       ],
