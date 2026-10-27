@@ -2478,8 +2478,8 @@
     },
     {
       "label": "AIMW-CONT-6187F8DF8A SiteDataSnapshot dynamic navigation focused closure",
-      "sha": "eb2702200c127d872b374657fad1610362c88daa",
-      "observed_pr_head": "eb2702200c127d872b374657fad1610362c88daa",
+      "sha": "0f33d79230ebc900052dac8fe84c0b1e1dedcce0",
+      "observed_pr_head": "0f33d79230ebc900052dac8fe84c0b1e1dedcce0",
       "operation_ids": [
         "AIMW-CONT-6187F8DF8A"
       ]
@@ -2526,8 +2526,8 @@
     },
     {
       "label": "AIMW-CONT-1456BE001F Welcome primary CTA action focused closure",
-      "sha": "29a6ebf46a75eadba8a888a97bf210faa578fcae",
-      "observed_pr_head": "29a6ebf46a75eadba8a888a97bf210faa578fcae",
+      "sha": "1256b897dcbb9489ba3d0ea1c15b17b3ba5c91e8",
+      "observed_pr_head": "1256b897dcbb9489ba3d0ea1c15b17b3ba5c91e8",
       "operation_ids": [
         "AIMW-CONT-1456BE001F"
       ]

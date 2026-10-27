@@ -32,8 +32,7 @@ final class AccountEmailRecipientService
         string $emailAddress,
         ?string $displayName,
         bool $enabled,
-    ): AccountEmailRecipient
-    {
+    ): AccountEmailRecipient {
         $this->authorizer->authorize('tenant.manage');
         $email = $this->normalizeEmail($emailAddress);
         $normalized = mb_strtoupper($email, 'UTF-8');
