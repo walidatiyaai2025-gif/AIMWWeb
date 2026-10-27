@@ -2689,6 +2689,28 @@
           "security_mode": "tenant_selected"
         }
       }
+    },
+    {
+      "label": "AIMW-CONT-50DF6B23CC Site Connection canonical route terminality",
+      "sha": "a74ebc132c028d0f7d35faa76c42dd7043f0f598",
+      "observed_pr_head": "a74ebc132c028d0f7d35faa76c42dd7043f0f598",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "operation_ids": [
+        "AIMW-CONT-50DF6B23CC"
+      ],
+      "route_api_provenance": {
+        "AIMW-CONT-50DF6B23CC": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteConnectionRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteConnectionRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-connection-route-terminality.json",
+          "security_mode": "tenant_bound"
+        }
+      }
     }
   ],
   "sources": [
