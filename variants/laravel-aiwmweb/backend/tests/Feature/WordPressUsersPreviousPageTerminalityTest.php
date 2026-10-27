@@ -44,7 +44,7 @@ final class WordPressUsersPreviousPageTerminalityTest extends TestCase
             $pages,
         );
         $this->assertStringContainsString('data-canonical-operation={previousOperationId}', $components);
-        $this->assertStringContainsString('onClick={() => onPage(page - 1)}', $components);
+        $this->assertStringContainsString('onClick={() => onPage(previousAppDataGridPage(page))}', $components);
         $this->assertStringContainsString('disabled={page <= 1}', $components);
     }
 
