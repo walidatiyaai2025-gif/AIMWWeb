@@ -2539,6 +2539,14 @@
       "operation_ids": [
         "AIMW-TAXO-A96714F338"
       ]
+    },
+    {
+      "label": "AIMW-SYNC-E6888B0B4D GlobalUsersWorkspace SearchAsync focused closure",
+      "sha": "f069d62dd50a2daef8e165e0e49662aeabc0f5ff",
+      "observed_pr_head": "f069d62dd50a2daef8e165e0e49662aeabc0f5ff",
+      "operation_ids": [
+        "AIMW-SYNC-E6888B0B4D"
+      ]
     }
   ],
   "sources": [
