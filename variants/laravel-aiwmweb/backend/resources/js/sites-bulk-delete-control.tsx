@@ -117,14 +117,13 @@ export function SitesBulkDeleteControl({ context }: { context: FrontendContext }
                             clearText={locale === 'ar' ? 'مسح التحديد' : 'Clear selection'}
                             clearAriaLabel={locale === 'ar' ? 'مسح تحديد المواقع' : 'Clear site selection'}
                             onClear={() => setSelected(new Set())}
-                        >
-                            <AppDataGridClearSelectionControl
-                                locale={locale}
-                                selectedCount={selectedIds.length}
-                                busy={mutation.isPending}
-                                onClearSelection={() => setSelected(new Set())}
-                            />
-                        </AppBulkActionClearControl>
+                        />
+                        <AppDataGridClearSelectionControl
+                            locale={locale}
+                            selectedCount={selectedIds.length}
+                            busy={mutation.isPending}
+                            onClearSelection={() => setSelected(new Set())}
+                        />
                         <button
                             type="button"
                             className="btn"
