@@ -1,11 +1,12 @@
 import React, { FormEvent, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { ApiError, apiRequest, type FrontendContext } from './core';
+import { ApiError, apiRequest, tenantUrl, type FrontendContext } from './core';
 import { useLocale } from './i18n';
 import { SyncFormActionsControl } from './sync-form-actions-control';
 
 export const SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID = 'AIMW-BILL-2EF6B8A27A';
 export const SITE_ONBOARDING_NEXT_OPERATION_ID = 'AIMW-BILL-5DE86937F7';
+export const SITE_ONBOARDING_BACK_TO_SITES_OPERATION_ID = 'AIMW-CONT-6EC0601E18';
 
 type Locale = 'en' | 'ar';
 
@@ -78,6 +79,11 @@ export function validateOnboardingStep(
     return null;
 }
 
+export function siteOnboardingBackToSitesHref(tenantSlug: string): string | null {
+    if (!tenantSlug.trim() || /[\\/]/.test(tenantSlug)) return null;
+    return tenantUrl(tenantSlug, '/sites');
+}
+
 function nextIdempotencyKey(): string {
     if (typeof globalThis.crypto?.randomUUID === 'function') return globalThis.crypto.randomUUID();
     return `site-onboarding-${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -140,6 +146,9 @@ export function SiteOnboardingSaveTestSyncControl({ context }: { context: Fronte
 
     if (!canManage || !endpoint) return null;
 
+    const backToSitesHref = siteOnboardingBackToSitesHref(context.tenant.slug);
+    if (!backToSitesHref) return null;
+
     const error = mutation.error;
     const errorMessage = error instanceof ApiError
         ? error.message
@@ -196,6 +205,14 @@ export function SiteOnboardingSaveTestSyncControl({ context }: { context: Fronte
                             : 'Enter the site profile, then WordPress credentials, then review them before save, test and synchronization.'}
                     </p>
                 </div>
+                <a
+                    className="btn"
+                    href={backToSitesHref}
+                    data-canonical-operation={SITE_ONBOARDING_BACK_TO_SITES_OPERATION_ID}
+                    data-source-control="Back to sites"
+                >
+                    ← {locale === 'ar' ? 'العودة للمواقع' : 'Back to sites'}
+                </a>
             </section>
 
             <form className="toolbar-panel" onSubmit={submit}>
@@ -324,6 +341,14 @@ export function SiteOnboardingSaveTestSyncControl({ context }: { context: Fronte
                     <span>{result.site.connection_status} / {result.site.health_state}</span>
                     {result.sync ? <span>{locale === 'ar' ? 'المزامنة' : 'Sync'}: {result.sync.status}</span> : null}
                     {result.message ? <p>{result.message}</p> : null}
+                    <a
+                        className="btn"
+                        href={backToSitesHref}
+                        data-canonical-operation={SITE_ONBOARDING_BACK_TO_SITES_OPERATION_ID}
+                        data-source-control="View all sites"
+                    >
+                        {locale === 'ar' ? 'عرض كل المواقع' : 'View all sites'}
+                    </a>
                 </section>
             ) : null}
         </section>

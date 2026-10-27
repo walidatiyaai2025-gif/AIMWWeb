@@ -1,0 +1,111 @@
+{
+  "operation_id": "AIMW-CONT-1C2443112C",
+  "domain": "content",
+  "kind": "route",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/UsersManager.razor",
+    "route_screen": "/sites/{SiteId:guid}/users",
+    "visible_control": "Open/render route",
+    "behavior": "Open the selected site's WordPress Users manager, load authoritative WordPress users for that owned site, and render deterministic loading, failure, empty, and live-data states without synthesizing demo rows."
+  },
+  "laravel_adaptation": {
+    "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+    "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+    "workspace_path": "/tenants/{tenant}/module/users",
+    "source_route": "GET /tenants/{tenant}/sites/{site}/users",
+    "route_name": "canonical.site.wordpress-users",
+    "canonical_operation_id": "AIMW-CONT-1C2443112C",
+    "authoritative_read": "GET /api/v1/tenants/{tenant}/sites/{site}/users",
+    "read_controller": "App\\\\Http\\\\Controllers\\\\WordPressUsersController::index",
+    "frontend_route": "wp-users -> /module/users -> WorkspacePage -> ResourceContent",
+    "behavior": "The explicit tenant/site source route authorizes tenant.view and sites.view, resolves the site under TenantContext, binds the owned site in canonical_site_id, and redirects to the existing real React WordPress Users workspace. Tenant context publishes the exact site-scoped users API; ResourceContent performs the authoritative read and provides loading, error, empty, retry, pagination, and live-data rendering."
+  },
+  "runtime_path": [
+    "/tenants/{tenant}/sites/{site}/users",
+    "web + auth + tenant.context",
+    "CanonicalWorkspaceRouteController::redirectSite",
+    "TenantAuthorizer tenant.view + sites.view",
+    "tenant-scoped Site::findOrFail(site)",
+    "canonical_site_id session binding",
+    "/tenants/{tenant}/module/users?site={site}",
+    "/tenants/{tenant}/context?site={site}",
+    "/api/v1/tenants/{tenant}/sites/{site}/users",
+    "WordPressUsersController::index",
+    "NativeWordPressRestPath::list(site, users, query)",
+    "React ResourceContent authoritative rendering"
+  ],
+  "authorization": {
+    "authentication": "auth",
+    "tenant_context": "tenant.context",
+    "permissions": [
+      "tenant.view",
+      "sites.view"
+    ],
+    "guest_semantics": "authentication middleware blocks the tenant-owned route before render",
+    "missing_permission_semantics": "403 fail closed",
+    "foreign_tenant_semantics": "404 fail closed",
+    "direct_id_semantics": "the numeric site ID is resolved through the active tenant-scoped Site model before redirect or WordPress access"
+  },
+  "tenant_isolation": {
+    "tenant_owned": true,
+    "server_derived_ownership": "TenantContext is established from the authenticated active membership; the route tenant slug and Site global scope prevent cross-tenant site substitution.",
+    "idor_proof": "Focused acceptance proves an Alpha user cannot open Beta's site through either an Alpha route with Beta's site ID or a direct Beta tenant route, and the authoritative users API also returns 404 before WordPress access."
+  },
+  "wordpress_boundary": {
+    "transport": "Native WordPress REST through the existing NativeWordPressRestPath",
+    "credentials": "server-side SiteCredential only; credentials are never rendered into the browser context",
+    "route_mutation": false,
+    "remote_read": "GET WordPress /wp-json/wp/v2/users with server-owned site credentials and page/search/role query",
+    "connector_requirement": "No new Connector requirement is introduced by this route operation.",
+    "failure_semantics": "WordPress/API failures are surfaced through the existing API error path and React QueryError; no local success or demo rows are fabricated."
+  },
+  "rendering_semantics": {
+    "loading": "ResourceContent returns LoadingState while the authoritative query is pending.",
+    "error": "ResourceContent renders QueryError with retry on authoritative read failure.",
+    "empty": "An empty server collection renders the explicit empty state and states that sample rows are not synthesized.",
+    "success": "Only rows returned by the real site-scoped users API are passed to DataTable.",
+    "refresh_and_pagination": "Existing ResourceContent refetch/pagination semantics remain authoritative and side-effect free for this GET operation."
+  },
+  "mutation_boundary": {
+    "selected_operation": "GET/read route only; no CSRF-bearing mutation is introduced.",
+    "existing_save_operation": "AIMW-BILL-D307963B59 remains the separate authoritative WordPress user create/update mutation.",
+    "existing_working_state_operation": "AIMW-CONT-346657AD9D remains the separate Save/Saving duplicate-submit control.",
+    "sibling_operations_claimed": false
+  },
+  "acceptance_tests": [
+    "Tests\\\\Feature\\\\WordPressUsersRouteTerminalityTest::test_exact_canonical_operation_is_the_site_wordpress_users_route",
+    "Tests\\\\Feature\\\\WordPressUsersRouteTerminalityTest::test_site_route_is_explicit_guarded_operation_bound_and_read_only",
+    "Tests\\\\Feature\\\\WordPressUsersRouteTerminalityTest::test_authorized_site_route_binds_owned_site_and_opens_real_users_workspace_contract",
+    "Tests\\\\Feature\\\\WordPressUsersRouteTerminalityTest::test_users_api_reads_authoritative_wordpress_state_for_the_owned_site",
+    "Tests\\\\Feature\\\\WordPressUsersRouteTerminalityTest::test_empty_and_failure_states_are_truthful_and_not_synthesized",
+    "Tests\\\\Feature\\\\WordPressUsersRouteTerminalityTest::test_missing_permission_and_foreign_tenant_site_fail_closed_before_wordpress_access",
+    "Tests\\\\Feature\\\\WordPressUsersRouteTerminalityTest::test_existing_users_save_mutation_remains_a_separate_canonical_operation"
+  ],
+  "scope_guards": {
+    "exactly_one_operation": true,
+    "claimed_operations": [
+      "AIMW-CONT-1C2443112C"
+    ],
+    "save_operation_claimed": false,
+    "working_state_operation_claimed": false,
+    "start_create_operation_claimed": false,
+    "back_to_explorer_operation_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "variant_boundary": "variants/laravel-aiwmweb/** only"
+  },
+  "provenance": {
+    "pcc_source_sha": "e0b223302e354b2f5d1271f910679e305fe64efc",
+    "project_id": "AIMWWEB",
+    "target_scope": "VARIANT",
+    "target_variant": "LARAVEL_AIWMWEB",
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "branch": "worker/laravel-aiwmweb-AIMW-CONT-1C2443112C-users-route"
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "The canonical site WordPress Users route is now explicit, operation-bound, permission-guarded and tenant-scoped; it binds only an owned site, opens the existing real Laravel/React Users workspace, and reads authoritative WordPress state through the existing server-side site users API with truthful loading/error/empty behavior."
+  }
+}

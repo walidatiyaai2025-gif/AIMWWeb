@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #879 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-1456BE001F",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/welcome",
+    "source": "src/AIWordPressManager.Web/Components/Pages/Welcome.razor",
+    "source_operation_key": "visible:Welcome.razor:/welcome:window.location.href=@PrimaryCtaHref",
+    "source_intent": "Navigate from the workspace preview action to the authoritative primary CTA destination.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "route": "GET /welcome",
+    "route_name": "public.welcome",
+    "route_controller": "App\\Http\\Controllers\\PublicWelcomeReadController",
+    "production_view": "variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
+    "operation_marker": "AIMW-CONT-1456BE001F",
+    "guest_destination": "/register",
+    "authenticated_destination": "/",
+    "localized_labels": [
+      "Action",
+      "\u0625\u062c\u0631\u0627\u0621"
+    ]
+  },
+  "security": {
+    "route_scope": "existing web-only anonymous public welcome route",
+    "tenant_context_required": false,
+    "tenant_selector_consumed": false,
+    "direct_object_surface": false,
+    "tenant_boundary": "canonical public route has no tenant parameter and the destination is derived only from server authentication state",
+    "mutation_added": false,
+    "secret_exposure_added": false,
+    "authorization_weakened": false
+  },
+  "acceptance": {
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/WelcomePrimaryCtaActionTerminalityTest.php",
+    "coverage": [
+      "ASP.NET source PrimaryCtaHref navigation semantics are verified",
+      "guest navigation resolves to /register",
+      "authenticated navigation resolves to /",
+      "English and Arabic action labels render",
+      "existing PublicWelcomeReadController remains authoritative",
+      "public Welcome remains tenant-neutral and read-only",
+      "POST /welcome remains rejected with 405"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-1456BE001F"
+    ],
+    "sibling_operations_claimed": false,
+    "existing_welcome_route_replaced": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "mutation_added": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "daca8d4130ff0048a920cf96900d023ca6b3e8a9",
+    "branch": "worker/879-welcome-primary-cta-action"
+  },
+  "materialized": true,
+  "evidence_source_sha": "29a6ebf46a75eadba8a888a97bf210faa578fcae"
+}

@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "operation_id": "AIMW-CONT-38FC74B9DE",
+  "domain": "content",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "source_file": "src/AIWordPressManager.Web/Components/Pages/Sites.razor",
+  "source_control": "OpenAddFormClicked",
+  "destination": "variants/laravel-aiwmweb/backend/resources/js/sites-save-control.tsx",
+  "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/sites-open-add-form-control.test.tsx",
+  "security_test": "variants/laravel-aiwmweb/backend/tests/Feature/SitesOpenAddFormTerminalityTest.php",
+  "behavior": "The Add site control opens a clean local add form and does not perform a save request.",
+  "server_mutation": false,
+  "only_operation_claimed": "AIMW-CONT-38FC74B9DE"
+}

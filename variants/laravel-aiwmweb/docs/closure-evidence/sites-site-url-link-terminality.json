@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #862 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation": {
+    "operation_id": "AIMW-CONT-44A3B8E551",
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/sites",
+    "visible_control": "@site.SiteUrl -> @site.SiteUrl",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/Sites.razor",
+    "mutation": false,
+    "tenant_owned": true,
+    "terminal_state": "ADAPTED"
+  },
+  "source_semantics": {
+    "authoritative_value": "Each rendered Sites row uses the persisted site's SiteUrl value returned by the tenant-scoped Sites read model.",
+    "link_behavior": "The source renders SiteUrl as the visible anchor text and href, opens it in a new tab, and applies noopener.",
+    "read_only": "Opening the URL is navigation only; it does not mutate local state, enqueue work, or fabricate provider success."
+  },
+  "laravel_adaptation": {
+    "frontend": "resources/js/sites-site-url-link-control.tsx binds AIMW-CONT-44A3B8E551 only to the Sites SiteUrl external link.",
+    "workspace_wiring": "resources/js/pages.tsx renders the control only for the real Sites ResourceContent rows using site_url when present and the existing authoritative url field as the compatibility alias.",
+    "url_safety": "Only absolute credential-free HTTP(S) URLs are rendered. Unsafe or malformed values fail closed with no synthetic fallback link.",
+    "read_contract": "The link consumes the Sites query row already returned for the active tenant; it performs no additional request and no mutation."
+  },
+  "tenant_isolation": {
+    "surface_permission": "sites.view",
+    "active_tenant": "The Sites workspace and Sites query are resolved for the authenticated active tenant; foreign tenant workspaces fail closed.",
+    "authoritative_row": "The visible URL comes from the tenant-owned Site row, never from user-entered client state."
+  },
+  "acceptance": {
+    "backend_test": "backend/tests/Feature/SitesSiteUrlLinkTerminalityTest.php",
+    "frontend_test": "resources/js/__tests__/sites-site-url-link-control.test.tsx",
+    "proofs": [
+      "exact canonical operation identity and non-mutation metadata",
+      "source-equivalent visible URL and external-link semantics",
+      "production operation marker only on the real Sites URL link control",
+      "legacy url compatibility still points to the same authoritative Site row value",
+      "unsafe schemes, credentials, relative URLs and malformed values fail closed",
+      "tenant-scoped Sites data excludes foreign tenant rows",
+      "missing sites.view returns 403 and foreign tenant workspace returns 404"
+    ]
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "86865c168d7792287a6323439b08b8d8e35205ff",
+    "branch": "worker/862-sites-siteurl-link"
+  },
+  "scope": {
+    "only_operation_claimed": "AIMW-CONT-44A3B8E551",
+    "aspnet_modified": false,
+    "generated_reconciliation_modified": false,
+    "backend_mutation_modified": false,
+    "fake_success": false
+  },
+  "materialization": {
+    "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-862.yml",
+    "operation_state": "ADAPTED",
+    "generated_reconciliation_required": true
+  }
+}

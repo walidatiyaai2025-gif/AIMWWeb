@@ -27,12 +27,26 @@ final class AdministrationService
         private readonly Redactor $redactor,
     ) {}
 
-    public function members(): array
+    public function members(?string $search = null): array
     {
-        return TenantMembership::query()
-            ->with(['user:id,name,email', 'roles:id,name'])
-            ->orderBy('id')
-            ->get()
+        $query = TenantMembership::query()
+            ->with(['user:id,name,email', 'roles:id,name']);
+
+        $term = Str::upper(trim($search ?? ''));
+        if ($term !== '') {
+            $escaped = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $term);
+            $query->whereHas('user', fn ($userQuery) => $userQuery
+                ->whereRaw("UPPER(name) LIKE ? ESCAPE '!'", ['%'.$escaped.'%']));
+        }
+
+        $memberships = $query->orderBy('id')->get();
+        if ($term !== '') {
+            $memberships = $memberships
+                ->sortBy(fn (TenantMembership $membership): string => Str::lower((string) ($membership->user?->name ?? '')))
+                ->values();
+        }
+
+        return $memberships
             ->map(fn (TenantMembership $membership) => [
                 'id' => $membership->id,
                 'status' => $membership->status,
