@@ -3,9 +3,10 @@ name: Laravel AIWMWeb Task Parity Materialize 999
 on:
   push:
     branches:
-      - worker/999-global-taxonomy-posts-link
+      - worker/laravel-aiwmweb-AIMW-TAXO-602DE140EB-global-taxonomy-links
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
+      - '.github/workflows/laravel-aiwmweb-task-parity-materialize-999.yml'
 
 permissions:
   contents: write
@@ -47,3 +48,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "chore(laravel): materialize parity for AIMW-TAXO-602DE140EB"
           git push origin "HEAD:${{ github.ref_name }}"
+
+# Final exact-head verification after official materialization.
