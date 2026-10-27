@@ -2463,7 +2463,7 @@
     {
       "label": "AIMW-CONT-47C0477703 Roles Permissions application-users link focused closure",
       "sha": "0e77fc47b0d0beaa85bbe8380a7c09a35e7b0ed9",
-      "observed_pr_head": "8f444250f636265f729f74c412540aa477c7dcc1",
+      "observed_pr_head": "0e77fc47b0d0beaa85bbe8380a7c09a35e7b0ed9",
       "operation_ids": [
         "AIMW-CONT-47C0477703"
       ]
@@ -2494,8 +2494,8 @@
     },
     {
       "label": "AIMW-CONT-6187F8DF8A SiteDataSnapshot dynamic navigation focused closure",
-      "sha": "4b05986bebb8b8b3366d9e43d62f84315478a6ab",
-      "observed_pr_head": "4b05986bebb8b8b3366d9e43d62f84315478a6ab",
+      "sha": "7b0dbdc988c1b8eb10bbb85ace1a338b44cc7f10",
+      "observed_pr_head": "7b0dbdc988c1b8eb10bbb85ace1a338b44cc7f10",
       "operation_ids": [
         "AIMW-CONT-6187F8DF8A"
       ]
@@ -2598,8 +2598,8 @@
     },
     {
       "label": "AIMW-SYNC-CDE0C219B5 AppBulkActionBar ClearAsync focused closure",
-      "sha": "1f0c20f58091b308ac5117dccca06cc0c1f02301",
-      "observed_pr_head": "1f0c20f58091b308ac5117dccca06cc0c1f02301",
+      "sha": "ba3902b77daf371e0cb1888b968603efcada9944",
+      "observed_pr_head": "ba3902b77daf371e0cb1888b968603efcada9944",
       "operation_ids": [
         "AIMW-SYNC-CDE0C219B5"
       ]
