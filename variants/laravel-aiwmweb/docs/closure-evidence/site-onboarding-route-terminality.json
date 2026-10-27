@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #831 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_base_branch": "worker/laravel-aiwmweb-closure-composition",
+  "canonical_base_sha": "fbef37965980ec1cfc8fa4101501578e65e03bec",
+  "operation_id": "AIMW-CONT-9F0D652C67",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "route",
+    "route_screen": "/sites/onboarding",
+    "source": "src/AIWordPressManager.Web/Components/Pages/SiteOnboarding.razor",
+    "source_intent": "Open and render the authenticated tenant-scoped WordPress site onboarding wizard backed by the existing real Laravel onboarding flow.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "route": "GET /tenants/{tenant}/sites/onboarding",
+    "route_name": "canonical.site.onboarding",
+    "action": "App\\Http\\Controllers\\CanonicalWorkspaceRouteController@show",
+    "middleware": [
+      "web",
+      "auth",
+      "tenant.context"
+    ],
+    "workspace_permissions": [
+      "tenant.view",
+      "sites.manage"
+    ],
+    "frontend_route": "/tenants/:tenantSlug/sites/onboarding",
+    "frontend_route_key": "site-connect",
+    "real_control": "variants/laravel-aiwmweb/backend/resources/js/site-onboarding-save-test-sync-control.tsx",
+    "existing_visible_control_marker": "canonical_operation_id=AIMW-SITE-E3EA44AD3F",
+    "route_operation_marker": "canonical_route_operation_id=AIMW-CONT-9F0D652C67"
+  },
+  "authoritative_behavior": {
+    "render": "The explicit route renders the real SPA shell, whose onboarding path resolves to SiteOnboardingSaveTestSyncControl.",
+    "loading_error_result": "The real onboarding control owns pending, validation, API error, retry-token and authoritative result/synchronization states.",
+    "external_boundary": "The route itself performs no WordPress call; the separate existing onboarding mutation owns real WordPress validation and synchronization.",
+    "fake_success": false
+  },
+  "security": {
+    "authentication": "required",
+    "tenant_context": "server-resolved active membership",
+    "permission": "tenant.view + sites.manage",
+    "foreign_tenant": "404/fail closed",
+    "missing_permission": "403/fail closed",
+    "caller_identity_override": false,
+    "direct_object_id_surface": false,
+    "read_only": true
+  },
+  "sibling_separation": {
+    "sites_connect_route": {
+      "route": "/tenants/{tenant}/sites/connect",
+      "visible_operation_id": "AIMW-SITE-E3EA44AD3F",
+      "route_operation_id": "AIMW-CONT-BF5F72F4F9",
+      "unchanged": true
+    },
+    "save_test_sync_mutation": {
+      "route": "POST /api/tenants/{tenant}/sites/onboarding",
+      "operation_id": "AIMW-BILL-2EF6B8A27A",
+      "unchanged": true
+    },
+    "continue_control": {
+      "operation_id": "AIMW-BILL-5DE86937F7",
+      "unchanged": true
+    }
+  },
+  "acceptance": {
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteOnboardingRouteTerminalityTest.php",
+    "proofs": [
+      "exact canonical source route identity",
+      "explicit GET/HEAD route with independent canonical route-operation marker",
+      "existing visible-control operation marker preserved",
+      "web + auth + tenant.context middleware",
+      "tenant.view + sites.manage authorization",
+      "real React onboarding route and SiteOnboardingSaveTestSyncControl wiring",
+      "guest redirect and missing-permission 403",
+      "foreign-tenant 404",
+      "caller query identity cannot override tenant context",
+      "GET is read-only and web-route POST is rejected",
+      "sibling /sites/connect route operation remains separate"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-9F0D652C67"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "retry_v2_final_lineage_created": false
+  }
+}
