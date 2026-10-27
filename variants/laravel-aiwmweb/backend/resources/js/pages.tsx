@@ -368,10 +368,13 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         period_days: siteReliabilityFilters.periodDays,
         minimum_operations: siteReliabilityFilters.minimumOperations,
     } : {};
-    const mediaQueryFilters: Record<string, string> = route.key === 'media' ? {
-        ...(mediaResetState.mediaType === 'all' ? {} : { mime_type: mediaResetState.mediaType }),
-        per_page: String(mediaResetState.pageSize),
-    } : {};
+    const mediaQueryFilters: Record<string, string> = {};
+    if (route.key === 'media') {
+        mediaQueryFilters.per_page = String(mediaResetState.pageSize);
+        if (mediaResetState.mediaType !== 'all') {
+            mediaQueryFilters.mime_type = mediaResetState.mediaType;
+        }
+    }
     const resourceFilters = { ...taxonomyFilter, ...emailHistoryQueryFilters, ...siteReliabilityQueryFilters, ...mediaQueryFilters };
     const query = useQuery(route.key === 'email-history' ? {
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType, emailHistoryFilters.siteId, emailHistoryFilters.status, emailHistoryFilters.correlation, appDataGridSortDescending],
