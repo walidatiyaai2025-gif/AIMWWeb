@@ -9,6 +9,7 @@ use App\Models\TenantMembership;
 use App\Models\User;
 use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Tests\TestCase;
 
 final class SiteConnectionBackToSitesTerminalityTest extends TestCase
@@ -85,6 +86,8 @@ final class SiteConnectionBackToSitesTerminalityTest extends TestCase
         $this->get('/tenants/alpha/sites')
             ->assertOk()
             ->assertSee('id="app"', false);
+
+        Auth::logout();
 
         $this->getJson('/api/tenants/alpha/sites')
             ->assertUnauthorized();
