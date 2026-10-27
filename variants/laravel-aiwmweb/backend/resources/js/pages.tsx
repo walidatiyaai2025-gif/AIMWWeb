@@ -72,6 +72,7 @@ import {
     type SiteOperationsFilterState,
 } from './site-operations-filters-control';
 import { SiteReliabilityConnectionLinkControl } from './site-reliability-connection-link-control';
+import { GlobalTaxonomySiteLinksControl } from './global-taxonomy-site-links-control';
 import { SiteReliabilityFiltersControl, siteReliabilityDefaultFilters, type SiteReliabilityFilterState } from './site-reliability-filters-control';
 import { SitesSiteUrlLinkControl } from './sites-site-url-link-control';
 import { SitesInterpolatedLinksControl } from './sites-interpolated-links-control';
@@ -946,6 +947,8 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                                 <ContentExplorerWordPressLinkControl value={row.link} />
                             </span>
                             );
+                        } : route.key === 'taxonomy' ? (row) => (
+                            <GlobalTaxonomySiteLinksControl context={context} siteId={row.site_id ?? row.siteId} />
                         } : route.key === 'sites' ? (row) => (
                             <span className="site-row-actions">
                                 <SitesInterpolatedLinksControl tenantSlug={context.tenant.slug} siteId={row.id} />
