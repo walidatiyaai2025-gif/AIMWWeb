@@ -25,16 +25,18 @@ class AiPromptTemplateRestoreVisibleControlTerminalityTest extends TestCase
 
     public function test_exact_canonical_operation_is_the_pending_restore_control_and_source_requires_append_only_restore(): void
     {
-        $row = $this->canonicalRow(self::OPERATION_ID);
+        $evidence = $this->closureEvidence();
+        $row = $evidence['operation'];
 
-        $this->assertNotNull($row);
+        $this->assertSame(self::OPERATION_ID, $row['operation_id']);
         $this->assertSame('ai', $row['domain']);
         $this->assertSame('visible_control', $row['kind']);
         $this->assertSame('/settings/ai-prompts', $row['route_screen']);
         $this->assertSame('src/AIWordPressManager.Web/Components/Pages/AIPromptTemplates.razor', $row['current_source']);
         $this->assertStringContainsString('Restore', $row['visible_control']);
         $this->assertTrue((bool) $row['tenant_owned']);
-        $this->assertNotSame('BLOCKED', $row['migration_state']);
+        $this->assertSame('ADAPTED', $row['terminal_state']);
+        $this->assertSame('ADAPTED', $evidence['terminality']['state']);
 
         $source = file_get_contents(base_path('../../../src/AIWordPressManager.Web/Components/Pages/AIPromptTemplates.razor'));
         $this->assertStringContainsString('Restoring never rewrites history; it creates a new revision from the selected historical content.', $source);
@@ -184,16 +186,14 @@ class AiPromptTemplateRestoreVisibleControlTerminalityTest extends TestCase
         $this->assertSame(0, AuditEvent::query()->withoutGlobalScopes()->where('event', 'ai.prompt.changed')->count());
     }
 
-    private function canonicalRow(string $operationId): ?array
+    private function closureEvidence(): array
     {
-        $payload = json_decode(
-            file_get_contents(base_path('../docs/operation-parity-reconciliation.json')),
+        return json_decode(
+            file_get_contents(base_path('../docs/closure-evidence/ai-prompt-templates-restore-terminality.json')),
             true,
             512,
             JSON_THROW_ON_ERROR,
         );
-
-        return collect($payload['operations'])->firstWhere('operation_id', $operationId);
     }
 
     private function membership(User $user, string $slug, array $permissions): Tenant
