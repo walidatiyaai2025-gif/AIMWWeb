@@ -20,6 +20,12 @@
                     href="/tenants/{{ rawurlencode($tenant) }}/sites/{{ $site->getKey() }}/connection"
                     data-canonical-operation="AIMW-CONT-0154E7772B"
                 >{{ app()->getLocale() === 'ar' ? 'مركز الاتصال' : 'Connection center' }}</a>
+                @if ($canViewEmailHistory)
+                    <a
+                        href="{{ route('canonical.workspace.email-history', ['tenant' => $tenant], false) }}"
+                        data-canonical-operation="AIMW-EMAI-01F5713C4F"
+                    >{{ app()->getLocale() === 'ar' ? 'سجل الإرسال' : 'Delivery history' }}</a>
+                @endif
             </nav>
         </header>
 
