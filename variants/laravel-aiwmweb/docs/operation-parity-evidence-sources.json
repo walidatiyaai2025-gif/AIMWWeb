@@ -2547,6 +2547,14 @@
       "operation_ids": [
         "AIMW-SYNC-E6888B0B4D"
       ]
+    },
+    {
+      "label": "AIMW-SYNC-C18ED1F753 AppDataGrid ExportAsync issue #986 focused closure",
+      "sha": "6daf84840c1b9e983467e86590dea7443b215e2a",
+      "observed_pr_head": "6daf84840c1b9e983467e86590dea7443b215e2a",
+      "operation_ids": [
+        "AIMW-SYNC-C18ED1F753"
+      ]
     }
   ],
   "sources": [
