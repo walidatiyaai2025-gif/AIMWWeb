@@ -27,35 +27,95 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Run official parity materializer
+      - name: Run official focused visible-control materializer
         run: |
           set -euo pipefail
           OUT_JSON=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
           OUT_MD=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
           TMP_SUMMARY=/tmp/operation-parity-summary.json
-          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
-          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
-          python variants/laravel-aiwmweb/tools/apply_platform_admin_route_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
-          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
-          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
-          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
-          python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
-      - name: Assert #826 is terminal
+          MANIFEST=variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json
+          ORIGINAL_MANIFEST=/tmp/operation-parity-evidence-sources.original.json
+
+          cp "$MANIFEST" "$ORIGINAL_MANIFEST"
+          restore_manifest() {
+            cp "$ORIGINAL_MANIFEST" "$MANIFEST"
+          }
+          trap restore_manifest EXIT
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json")
+          manifest = json.loads(path.read_text(encoding="utf-8"))
+          allowed = {
+              "AIMW-CONT-6187F8DF8A",
+              "AIMW-CONT-47C0477703",
+              "AIMW-SYNC-CDE0C219B5",
+          }
+          kept = []
+          seen = set()
+          for source in manifest.get("focused_closure_operation_sources", []):
+              ids = {str(value).strip() for value in source.get("operation_ids", []) if str(value).strip()}
+              if ids & allowed:
+                  kept.append(source)
+                  seen.update(ids & allowed)
+
+          missing = sorted(allowed - seen)
+          if missing:
+              raise SystemExit("missing focused sources: " + ", ".join(missing))
+
+          manifest["focused_closure_operation_sources"] = kept
+          path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+          print("TASK_SCOPED_FOCUSED_SOURCES=" + ",".join(sorted(seen)))
+          PY
+
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py \
+            --input "$OUT_JSON" \
+            --output "$OUT_JSON" \
+            --summary-output "$TMP_SUMMARY" \
+            --markdown-output "$OUT_MD" \
+            --check-total 931
+
+          restore_manifest
+          trap - EXIT
+
+      - name: Assert target and merged blocker provenance are terminal
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          data = json.loads(Path("variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json").read_text())
-          row = next(row for row in data["operations"] if row["operation_id"] == "AIMW-CONT-6187F8DF8A")
-          if row["migration_state"] not in {"PORTED", "ADAPTED", "VERIFIED_UNAVAILABLE_EXTERNAL"}:
-              raise SystemExit(f"#826 remained {row['migration_state']}")
-          print(f"#826={row['migration_state']}")
+
+          expected = {
+              "AIMW-CONT-6187F8DF8A",
+              "AIMW-CONT-47C0477703",
+              "AIMW-SYNC-CDE0C219B5",
+          }
+          data = json.loads(
+              Path("variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json")
+              .read_text(encoding="utf-8")
+          )
+          rows = {row["operation_id"]: row for row in data["operations"]}
+          terminal = {"PORTED", "ADAPTED", "VERIFIED_UNAVAILABLE_EXTERNAL"}
+          failures = {
+              op: rows.get(op, {}).get("migration_state", "MISSING")
+              for op in expected
+              if rows.get(op, {}).get("migration_state") not in terminal
+          }
+          if failures:
+              raise SystemExit(f"non-terminal focused operations: {failures}")
+          for op in sorted(expected):
+              print(f"{op}={rows[op]['migration_state']}")
           PY
+
       - name: Commit generated reconciliation
         run: |
           set -euo pipefail
           git add variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
-          if git diff --cached --quiet; then exit 0; fi
+          if git diff --cached --quiet; then
+            echo "Focused reconciliation already materialized."
+            exit 0
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "chore(laravel): materialize parity for AIMW-CONT-6187F8DF8A"

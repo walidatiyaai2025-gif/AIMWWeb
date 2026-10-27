@@ -14,9 +14,7 @@ final class AccountEmailRecipientService
 
     public function __construct(
         private readonly TenantAuthorizer $authorizer,
-    )
-    {
-    }
+    ) {}
 
     /** @return Collection<int, AccountEmailRecipient> */
     public function listAsync(): Collection

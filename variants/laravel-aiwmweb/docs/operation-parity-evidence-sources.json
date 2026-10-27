@@ -2446,8 +2446,8 @@
     },
     {
       "label": "AIMW-CONT-47C0477703 Roles Permissions application-users link focused closure",
-      "sha": "40239602f055af20b61f92eee74132f2dcfaa78b",
-      "observed_pr_head": "40239602f055af20b61f92eee74132f2dcfaa78b",
+      "sha": "0e77fc47b0d0beaa85bbe8380a7c09a35e7b0ed9",
+      "observed_pr_head": "0e77fc47b0d0beaa85bbe8380a7c09a35e7b0ed9",
       "operation_ids": [
         "AIMW-CONT-47C0477703"
       ]
@@ -2582,8 +2582,8 @@
     },
     {
       "label": "AIMW-SYNC-CDE0C219B5 AppBulkActionBar ClearAsync focused closure",
-      "sha": "1f0c20f58091b308ac5117dccca06cc0c1f02301",
-      "observed_pr_head": "1f0c20f58091b308ac5117dccca06cc0c1f02301",
+      "sha": "ba3902b77daf371e0cb1888b968603efcada9944",
+      "observed_pr_head": "ba3902b77daf371e0cb1888b968603efcada9944",
       "operation_ids": [
         "AIMW-SYNC-CDE0C219B5"
       ]
