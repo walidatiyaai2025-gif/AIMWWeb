@@ -2811,6 +2811,14 @@
           "security_mode": "tenant_selected"
         }
       }
+    },
+    {
+      "label": "AIMW-CONT-BCAD1E3A49 Operations Hub Site Operations navigation focused closure",
+      "sha": "557c6edf4339a381e7c4a99b51e605be0031be99",
+      "observed_pr_head": "557c6edf4339a381e7c4a99b51e605be0031be99",
+      "operation_ids": [
+        "AIMW-CONT-BCAD1E3A49"
+      ]
     }
   ],
   "sources": [
@@ -2820,14 +2828,6 @@
       "observed_pr_head": "f591fcf2f3c5927111c5a8e8cff479be4b4b04c1",
       "operation_ids": [
         "AIMW-MEDI-F55A549341"
-      ]
-    },
-    {
-      "label": "AIMW-CONT-BCAD1E3A49 Operations Hub Site Operations navigation focused closure",
-      "sha": "557c6edf4339a381e7c4a99b51e605be0031be99",
-      "observed_pr_head": "557c6edf4339a381e7c4a99b51e605be0031be99",
-      "operation_ids": [
-        "AIMW-CONT-BCAD1E3A49"
       ]
     }
   ]
