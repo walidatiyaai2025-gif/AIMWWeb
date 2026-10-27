@@ -20,6 +20,12 @@
                     href="/tenants/{{ rawurlencode($tenant) }}/sites/{{ $site->getKey() }}/connection"
                     data-canonical-operation="AIMW-CONT-0154E7772B"
                 >{{ app()->getLocale() === 'ar' ? 'مركز الاتصال' : 'Connection center' }}</a>
+                @if ($canViewEmailHistory)
+                    <a
+                        href="{{ route('canonical.workspace.email-history', ['tenant' => $tenant], false) }}"
+                        data-canonical-operation="AIMW-EMAI-01F5713C4F"
+                    >{{ app()->getLocale() === 'ar' ? 'سجل الإرسال' : 'Delivery history' }}</a>
+                @endif
             </nav>
         </header>
 
@@ -73,7 +79,7 @@
                         <p role="alert">{{ $message }}</p>
                     @enderror
 
-                    <button type="submit" data-canonical-operation="AIMW-BILL-5C15471E4B">Save changes</button>
+                    <button type="submit" data-canonical-operation="AIMW-BILL-5C15471E4B" data-canonical-control-operation="AIMW-CONT-E1A7A8CAA7">{{ app()->getLocale() === 'ar' ? 'حفظ التغييرات' : 'Save changes' }}</button>
                 </form>
             </section>
         @endif
@@ -110,7 +116,7 @@
                         Application Password
                         <input type="password" name="application_password" minlength="8" maxlength="1024" autocomplete="new-password" required>
                     </label>
-                    <button type="submit" data-canonical-operation="AIMW-BILL-723BEA8F1D">Save &amp; Test</button>
+                    <button type="submit" data-canonical-operation="AIMW-BILL-723BEA8F1D" data-canonical-control-operation="AIMW-CONT-E1A7A8CAA7">{{ app()->getLocale() === 'ar' ? 'حفظ واختبار' : 'Save and test' }}</button>
                 </form>
 
                 @if ($credential)

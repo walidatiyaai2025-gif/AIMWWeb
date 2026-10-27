@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #817 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-C49C37E2C9",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/settings",
+    "source": "src/AIWordPressManager.Web/Components/Pages/Settings.razor",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Pages/Settings.razor:/settings:OpenAccessibility [OpenAccessibility]",
+    "source_intent": "Open the Accessibility & display center and let the user persist text-size, density, contrast and reduced-motion preferences.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_runtime": {
+    "implementation": "src/AIWordPressManager.Web/wwwroot/js/accessibility-center.js",
+    "storage_keys": [
+      "aiwm-accessibility-font",
+      "aiwm-accessibility-density",
+      "aiwm-accessibility-contrast",
+      "aiwm-accessibility-motion"
+    ],
+    "document_state": [
+      "data-font-scale",
+      "data-density",
+      "data-contrast",
+      "data-reduced-motion"
+    ]
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/settings-open-accessibility-control.tsx",
+    "production_consumer": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "dialog_id": "settings-accessibility-display-center",
+    "storage_semantics": "same source localStorage keys and default values",
+    "applied_state": "document root accessibility data attributes plus scoped runtime CSS",
+    "network_request": false,
+    "server_mutation": false
+  },
+  "security": {
+    "authenticated_tenant_context": true,
+    "frontend_visibility": "tenant.view or wildcard",
+    "cross_tenant_data_access": false,
+    "external_request": false,
+    "fake_success": false
+  },
+  "acceptance": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-open-accessibility-control.test.tsx",
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/SettingsOpenAccessibilityTerminalityTest.php",
+    "coverage": [
+      "exact OpenAccessibility source action and canonical operation identity",
+      "real open/close accessibility dialog",
+      "persisted text-size, density, contrast and reduced-motion preferences",
+      "reset to source defaults",
+      "tenant-scoped Settings surface",
+      "no HTTP or server mutation"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-C49C37E2C9"
+    ],
+    "existing_accessibility_anchor_operation_preserved": "AIMW-CONT-6AB0ED6C83",
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  }
+}

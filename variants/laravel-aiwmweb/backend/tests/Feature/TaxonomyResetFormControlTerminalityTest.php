@@ -58,7 +58,7 @@ final class TaxonomyResetFormControlTerminalityTest extends TestCase
         $this->assertStringContainsString('const closeAndReset = () =>', $components);
         $this->assertStringContainsString('setValues({});', $components);
         $this->assertStringContainsString('setErrors({});', $components);
-        $this->assertStringContainsString('data-canonical-operation={isTaxonomyResetForm ? TAXONOMY_RESET_FORM_OPERATION_ID : undefined}', $components);
+        $this->assertStringContainsString('data-canonical-operation={isWordPressUsersResetForm ? WORDPRESS_USERS_RESET_FORM_OPERATION_ID : isTaxonomyResetForm ? TAXONOMY_RESET_FORM_OPERATION_ID : undefined}', $components);
 
         $this->assertStringContainsString('const closeActionDialog = () =>', $pages);
         $this->assertStringContainsString('mutation.reset();', $pages);

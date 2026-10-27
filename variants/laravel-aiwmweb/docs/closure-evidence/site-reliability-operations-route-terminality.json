@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #855 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-47007EE040",
+  "domain": "content",
+  "kind": "route",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "source_file": "src/AIWordPressManager.Web/Components/Pages/SiteReliability.razor",
+  "source_route": "/operations/reliability",
+  "source_action": "Open/render route",
+  "laravel_route": "GET /tenants/{tenant}/operations/reliability",
+  "route_name": "canonical.alias.operations-reliability",
+  "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+  "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+  "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteReliabilityOperationsRouteTerminalityTest.php",
+  "security": {
+    "middleware": [
+      "auth",
+      "tenant.context"
+    ],
+    "authorization": [
+      "sites.view"
+    ],
+    "foreign_tenant": "404",
+    "missing_permission": "403"
+  },
+  "semantics": {
+    "read_only": true,
+    "tenant_scoped_redirect": "/tenants/{tenant}/site-reliability",
+    "authoritative_read_api": "GET /tenants/{tenant}/route-api/site-reliability",
+    "live_health_claim": false,
+    "fake_success": false
+  },
+  "render_states": {
+    "loading": "shared Laravel LoadingState while the authoritative query is pending",
+    "error": "shared QueryError exposes bounded retry without replacing failures with empty data",
+    "success": "real tenant-scoped retained reliability rows from RouteApiAdapterController::siteReliability"
+  },
+  "scope": {
+    "exactly_one_operation": true,
+    "aspnet_runtime_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "sibling_route_claimed": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "b585953378ad270980cffce7a3d755e48aa8b47f",
+    "branch": "worker/855-site-reliability-operations-route",
+    "issue": 855
+  },
+  "materialization": {
+    "generated_head": "87beb3a26294014e2cc0d54b2eaa8bd412596656",
+    "exact_head_retrigger": true
+  },
+  "materialized": true
+}

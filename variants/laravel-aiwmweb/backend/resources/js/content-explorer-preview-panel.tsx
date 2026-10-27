@@ -3,6 +3,7 @@ import { safeContentExplorerExternalUrl } from './content-explorer-wordpress-lin
 import { useLocale } from './i18n';
 
 export const CONTENT_EXPLORER_PREVIEW_LINK_OPERATION_ID = 'AIMW-CONT-37B4B4BEC4';
+export const CONTENT_EXPLORER_CLOSE_PREVIEW_OPERATION_ID = 'AIMW-CONT-FE6EE5740C';
 
 export type ContentExplorerPreviewRow = Record<string, unknown>;
 
@@ -32,7 +33,13 @@ export function ContentExplorerPreviewPanel({
                     <span className="workspace-kicker">{locale === 'ar' ? 'معاينة المحتوى' : 'CONTENT PREVIEW'}</span>
                     <h2>{title}</h2>
                 </div>
-                <button type="button" className="icon-button" onClick={onClose} aria-label={locale === 'ar' ? 'إغلاق المعاينة' : 'Close preview'}>×</button>
+                <button
+                    type="button"
+                    className="icon-button"
+                    onClick={onClose}
+                    aria-label={locale === 'ar' ? 'إغلاق المعاينة' : 'Close preview'}
+                    data-canonical-operation={CONTENT_EXPLORER_CLOSE_PREVIEW_OPERATION_ID}
+                >×</button>
             </header>
             <div className="explorer-preview-meta">
                 {type ? <span>{type}</span> : null}
