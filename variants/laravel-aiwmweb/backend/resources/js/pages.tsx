@@ -949,7 +949,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             );
                         } : route.key === 'taxonomy' ? (row) => (
                             <GlobalTaxonomySiteLinksControl context={context} siteId={row.site_id ?? row.siteId} />
-                        } : route.key === 'sites' ? (row) => (
+                        ) : route.key === 'sites' ? (row) => (
                             <span className="site-row-actions">
                                 <SitesInterpolatedLinksControl tenantSlug={context.tenant.slug} siteId={row.id} />
                                 <span aria-hidden="true"> · </span>

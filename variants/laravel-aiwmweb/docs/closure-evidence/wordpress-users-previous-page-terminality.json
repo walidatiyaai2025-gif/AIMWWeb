@@ -29,7 +29,7 @@
     "permission": "sites.view",
     "ownership": "tenant-owned site",
     "wordpress_resource": "/wp-json/wp/v2/users",
-    "previous_behavior": "onPage(page - 1) updates the query key and performs the authoritative GET for the prior page.",
+    "previous_behavior": "previousAppDataGridPage(page) computes the guarded page - 1 transition, updates the query key, and performs the authoritative GET for the prior page.",
     "first_page_guard": "disabled={page <= 1}",
     "automatic_mutation_retry": false,
     "mutation": false
