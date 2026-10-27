@@ -1457,11 +1457,11 @@
       ]
     },
     {
-      "label": "AIMW-EMAI-8C9768BCD0 Email History ClearFiltersAsync focused closure",
-      "sha": "7eaa2aad0fa7ab11c62198aebbaf238f47397568",
-      "observed_pr_head": "7eaa2aad0fa7ab11c62198aebbaf238f47397568",
+      "label": "AIMW-SYNC-B78216241F WordPress Users PreviousPage focused closure",
+      "sha": "4f539b8e0798dff587795b07a01f465f3087deb1",
+      "observed_pr_head": "4f539b8e0798dff587795b07a01f465f3087deb1",
       "operation_ids": [
-        "AIMW-EMAI-8C9768BCD0"
+        "AIMW-SYNC-B78216241F"
       ]
     }
   ],
@@ -2454,7 +2454,7 @@
     },
     {
       "label": "AIMW-CONT-47C0477703 Roles Permissions application-users link focused closure",
-      "sha": "8f444250f636265f729f74c412540aa477c7dcc1",
+      "sha": "0e77fc47b0d0beaa85bbe8380a7c09a35e7b0ed9",
       "observed_pr_head": "8f444250f636265f729f74c412540aa477c7dcc1",
       "operation_ids": [
         "AIMW-CONT-47C0477703"
@@ -2534,8 +2534,8 @@
     },
     {
       "label": "AIMW-CONT-1456BE001F Welcome primary CTA action focused closure",
-      "sha": "29a6ebf46a75eadba8a888a97bf210faa578fcae",
-      "observed_pr_head": "29a6ebf46a75eadba8a888a97bf210faa578fcae",
+      "sha": "1256b897dcbb9489ba3d0ea1c15b17b3ba5c91e8",
+      "observed_pr_head": "1256b897dcbb9489ba3d0ea1c15b17b3ba5c91e8",
       "operation_ids": [
         "AIMW-CONT-1456BE001F"
       ]
@@ -2637,11 +2637,19 @@
       ]
     },
     {
-      "label": "AIMW-EMAI-8C9768BCD0 Email History ClearFiltersAsync focused closure",
-      "sha": "7eaa2aad0fa7ab11c62198aebbaf238f47397568",
-      "observed_pr_head": "7eaa2aad0fa7ab11c62198aebbaf238f47397568",
+      "label": "AIMW-SYNC-33EE696FF7 Global Posts PublishSelectedAsync focused closure",
+      "sha": "f1083ce6f2a8134e673faa7f77b1db75eb04a8ff",
+      "observed_pr_head": "f1083ce6f2a8134e673faa7f77b1db75eb04a8ff",
       "operation_ids": [
-        "AIMW-EMAI-8C9768BCD0"
+        "AIMW-SYNC-33EE696FF7"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-10AFCDF334 WordPress Users ResetFormClicked focused closure",
+      "sha": "ebac4556fbb99fd25925b5ee1947c285bc0b2176",
+      "observed_pr_head": "ebac4556fbb99fd25925b5ee1947c285bc0b2176",
+      "operation_ids": [
+        "AIMW-CONT-10AFCDF334"
       ]
     }
   ],

@@ -6,7 +6,6 @@ use Tests\TestCase;
 
 final class EmailHistoryClearFiltersTerminalityTest extends TestCase
 {
-    // Temporary CI trigger for exact Pint diff; removed in the recovery commit.
     private const OPERATION_ID = 'AIMW-EMAI-8C9768BCD0';
 
     public function test_clear_filters_adapts_to_the_existing_tenant_safe_grid_clear_contract(): void

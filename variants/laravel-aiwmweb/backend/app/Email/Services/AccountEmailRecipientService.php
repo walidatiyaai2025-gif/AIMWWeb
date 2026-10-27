@@ -14,8 +14,7 @@ final class AccountEmailRecipientService
 
     public function __construct(
         private readonly TenantAuthorizer $authorizer,
-    )
-    {}
+    ) {}
 
     /** @return Collection<int, AccountEmailRecipient> */
     public function listAsync(): Collection
@@ -33,8 +32,7 @@ final class AccountEmailRecipientService
         string $emailAddress,
         ?string $displayName,
         bool $enabled,
-    ): AccountEmailRecipient
-    {
+    ): AccountEmailRecipient {
         $this->authorizer->authorize('tenant.manage');
         $email = $this->normalizeEmail($emailAddress);
         $normalized = mb_strtoupper($email, 'UTF-8');

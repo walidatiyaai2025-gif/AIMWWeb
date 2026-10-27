@@ -88,12 +88,13 @@ export const WORDPRESS_USERS_SEARCH_OPERATION_ID = 'AIMW-SYNC-E6888B0B4D';
 export const AI_CENTER_METADATA_REFRESH_OPERATION_ID = 'AIMW-AI-953A6C0D98';
 export const NOTIFICATION_INBOX_RELOAD_OPERATION_ID = 'AIMW-EMAI-12A6FEB2FF';
 
-const COLLECTION_READ_OPERATIONS: Partial<Record<string, { load: string; previous?: string; refresh?: string }>> = {
+const COLLECTION_READ_OPERATIONS: Partial<Record<string, { load?: string; previous?: string; refresh?: string }>> = {
     comments: { load: 'AIMW-SYNC-12F15A0A80', previous: 'AIMW-SYNC-CB01197D47', refresh: 'AIMW-SYNC-DBD736FACC' },
     media: { load: 'AIMW-SYNC-4E969573BB', previous: 'AIMW-SYNC-F340B5445A' },
     pages: { load: 'AIMW-SYNC-112E6B9631', previous: 'AIMW-SYNC-EF652932D6' },
     posts: { load: 'AIMW-SYNC-12C023E4CC', previous: 'AIMW-SYNC-0EDB4AB9FC' },
     taxonomy: { load: 'AIMW-SYNC-5CF2AC6243', previous: 'AIMW-SYNC-C8C380E7F8' },
+    'wp-users': { previous: 'AIMW-SYNC-B78216241F' },
 };
 
 const CONTENT_WORKSPACE_LOAD_OPERATION_ID = 'AIMW-SYNC-CD6F1FB97B';

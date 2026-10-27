@@ -6,6 +6,11 @@ import { useLocale } from './i18n';
 import { PostsInterpolatedLinksControl } from './posts-interpolated-links-control';
 import { SyncAppConfirmDialogCancelControl } from './sync-app-confirm-dialog-cancel-control';
 import {
+    GLOBAL_POSTS_PUBLISH_SELECTED_OPERATION_ID,
+    buildGlobalPostsPublishPayload,
+    globalPostsPublishEndpoint,
+} from './global-posts-publish-selected-control';
+import {
     GLOBAL_POSTS_CONFIRM_TRASH_OPERATION_ID,
     buildGlobalPostsTrashPayload,
     globalPostsEndpoint,
@@ -28,6 +33,13 @@ type GlobalPostsEnvelope = {
     last_page: number;
 };
 
+type PublishResult = {
+    state: 'queued';
+    count: number;
+    site_jobs: number;
+    jobs: Array<{ site_id: number; count: number; state: 'queued' }>;
+};
+
 type TrashResult = {
     succeeded: number;
     failed: number;
@@ -48,6 +60,7 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
     const [selected, setSelected] = useState<Set<string>>(new Set());
     const [confirmOpen, setConfirmOpen] = useState(false);
     const endpoint = globalPostsEndpoint(context.tenant.slug);
+    const publishEndpoint = globalPostsPublishEndpoint(context.tenant.slug);
     const canView = hasPermission(context, 'content.view');
     const canEdit = hasPermission(context, 'content.edit');
     const enabled = Boolean(endpoint && canView);
@@ -65,6 +78,32 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
             .map((row) => ({ site_id: row.site_id, wordpress_id: row.wordpress_id } satisfies GlobalPostTrashTarget)),
         [rows, selected],
     );
+
+    const publishMutation = useMutation({
+        mutationFn: async (targets: GlobalPostTrashTarget[]) => {
+            if (!publishEndpoint) throw new Error('Global posts publish endpoint is unavailable.');
+
+            return apiRequest<PublishResult>(publishEndpoint, {
+                method: 'POST',
+                body: JSON.stringify(buildGlobalPostsPublishPayload(targets)),
+            });
+        },
+        onSuccess: (result) => {
+            setSelected(new Set());
+            notify(
+                locale === 'ar'
+                    ? `تمت إضافة ${result.count} مقال إلى ${result.site_jobs} مهمة نشر حسب الموقع.`
+                    : `Queued ${result.count} post(s) as ${result.site_jobs} site publish job(s).`,
+                'success',
+            );
+        },
+        onError: (error) => notify(
+            error instanceof Error
+                ? error.message
+                : (locale === 'ar' ? 'تعذر إضافة المقالات المحددة إلى مهام النشر.' : 'Selected posts could not be queued for publishing.'),
+            'error',
+        ),
+    });
 
     const mutation = useMutation({
         mutationFn: async (targets: GlobalPostTrashTarget[]) => {
@@ -111,8 +150,10 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
 
     if (!enabled) return null;
 
+    const busy = mutation.isPending || publishMutation.isPending;
+
     const toggle = (row: GlobalPageRow) => {
-        if (mutation.isPending || row.status === 'trash') return;
+        if (busy || row.status === 'trash') return;
         const key = `${row.site_id}:${row.wordpress_id}`;
         setSelected((current) => {
             const next = new Set(current);
@@ -146,9 +187,20 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
                     <div className="toolbar-actions">
                         <button
                             type="button"
+                            className="btn primary"
+                            data-canonical-operation={GLOBAL_POSTS_PUBLISH_SELECTED_OPERATION_ID}
+                            disabled={!canEdit || busy || selectedTargets.length === 0}
+                            onClick={() => publishMutation.mutate(selectedTargets)}
+                        >
+                            {publishMutation.isPending
+                                ? (locale === 'ar' ? 'جارٍ إضافة مهام النشر…' : 'Queueing publish jobs…')
+                                : (locale === 'ar' ? 'نشر المحدد' : 'Publish selected')}
+                        </button>
+                        <button
+                            type="button"
                             className="btn danger"
                             data-canonical-operation={GLOBAL_POSTS_CONFIRM_TRASH_OPERATION_ID}
-                            disabled={!canEdit || mutation.isPending || selectedTargets.length === 0}
+                            disabled={!canEdit || busy || selectedTargets.length === 0}
                             onClick={() => setConfirmOpen(true)}
                         >
                             {locale === 'ar' ? 'نقل المحدد لسلة المهملات' : 'Move selected to trash'}
@@ -156,7 +208,7 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
                         <button
                             type="button"
                             className="btn"
-                            disabled={mutation.isPending || selectedTargets.length === 0}
+                            disabled={busy || selectedTargets.length === 0}
                             onClick={() => setSelected(new Set())}
                         >
                             {locale === 'ar' ? 'مسح التحديد' : 'Clear selection'}
@@ -182,7 +234,7 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
                                                 <input
                                                     type="checkbox"
                                                     checked={selected.has(key)}
-                                                    disabled={mutation.isPending || row.status === 'trash'}
+                                                    disabled={busy || row.status === 'trash'}
                                                     onChange={() => toggle(row)}
                                                     aria-label={`${locale === 'ar' ? 'تحديد' : 'Select'} ${row.title || key}`}
                                                 />

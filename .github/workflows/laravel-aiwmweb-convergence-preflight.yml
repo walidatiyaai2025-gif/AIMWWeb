@@ -60,12 +60,7 @@ jobs:
 
       - name: Strict Pint gate
         working-directory: variants/laravel-aiwmweb/backend
-        shell: bash
-        run: |
-          set -euo pipefail
-          vendor/bin/pint app/Email/Services/AccountEmailRecipientService.php app/Http/Controllers/EmailNotificationController.php
-          git diff -- app/Email/Services/AccountEmailRecipientService.php app/Http/Controllers/EmailNotificationController.php
-          exit 1
+        run: vendor/bin/pint --test
 
       - name: SQLite migrate fresh
         working-directory: variants/laravel-aiwmweb/backend
