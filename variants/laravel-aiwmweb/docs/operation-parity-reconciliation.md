@@ -8,22 +8,22 @@ Authority: AIMWWeb Issue #257. Evidence-only reconciliation; no feature completi
 |---|---:|
 | TOTAL | 931 |
 | PORTED | 0 |
-| ADAPTED | 831 |
-| PENDING | 100 |
+| ADAPTED | 873 |
+| PENDING | 58 |
 | BLOCKED | 0 |
 | VERIFIED_UNAVAILABLE_EXTERNAL | 0 |
-| TERMINAL | 831 |
-| OVERALL_PARITY_PERCENT | 89.26% |
+| TERMINAL | 873 |
+| OVERALL_PARITY_PERCENT | 93.77% |
 
 Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`; `BLOCKED` is not progress.
 
 ## Visible controls
 
 - Total: **446**
-- Terminal: **352**
-- Pending: **94**
+- Terminal: **389**
+- Pending: **57**
 - Blocked: **0**
-- Parity: **78.92%**
+- Parity: **87.22%**
 
 ## By domain
 
@@ -35,18 +35,18 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | backup | 14 | 0 | 14 | 0 | 0 | 0 | 14 | 100.00% |
 | billing | 178 | 0 | 178 | 0 | 0 | 0 | 178 | 100.00% |
 | comments | 8 | 0 | 8 | 0 | 0 | 0 | 8 | 100.00% |
-| content | 164 | 0 | 133 | 31 | 0 | 0 | 133 | 81.10% |
-| email | 82 | 0 | 77 | 5 | 0 | 0 | 77 | 93.90% |
+| content | 164 | 0 | 158 | 6 | 0 | 0 | 158 | 96.34% |
+| email | 82 | 0 | 81 | 1 | 0 | 0 | 81 | 98.78% |
 | identity | 7 | 0 | 7 | 0 | 0 | 0 | 7 | 100.00% |
-| media | 15 | 0 | 10 | 5 | 0 | 0 | 10 | 66.67% |
+| media | 15 | 0 | 13 | 2 | 0 | 0 | 13 | 86.67% |
 | operations | 5 | 0 | 5 | 0 | 0 | 0 | 5 | 100.00% |
 | platform | 18 | 0 | 18 | 0 | 0 | 0 | 18 | 100.00% |
 | reports | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 100.00% |
 | seo | 24 | 0 | 24 | 0 | 0 | 0 | 24 | 100.00% |
 | settings | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 100.00% |
 | sites | 12 | 0 | 12 | 0 | 0 | 0 | 12 | 100.00% |
-| sync | 213 | 0 | 157 | 56 | 0 | 0 | 157 | 73.71% |
-| taxonomy | 13 | 0 | 10 | 3 | 0 | 0 | 10 | 76.92% |
+| sync | 213 | 0 | 164 | 49 | 0 | 0 | 164 | 77.00% |
+| taxonomy | 13 | 0 | 13 | 0 | 0 | 0 | 13 | 100.00% |
 
 ## By kind
 
@@ -54,9 +54,9 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | api | 31 | 0 | 31 | 0 | 0 | 0 | 31 | 100.00% |
 | background_job | 21 | 0 | 21 | 0 | 0 | 0 | 21 | 100.00% |
-| route | 84 | 0 | 78 | 6 | 0 | 0 | 78 | 92.86% |
+| route | 84 | 0 | 83 | 1 | 0 | 0 | 83 | 98.81% |
 | service | 349 | 0 | 349 | 0 | 0 | 0 | 349 | 100.00% |
-| visible_control | 446 | 0 | 352 | 94 | 0 | 0 | 352 | 78.92% |
+| visible_control | 446 | 0 | 389 | 57 | 0 | 0 | 389 | 87.22% |
 
 ## Reproducibility / guard results
 
@@ -66,7 +66,9 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - Totals reconcile: **PASS**
 - Evidence references exist for terminal code rows: **PASS**
 - Explicit route contracts: **44**
-- Focused visible-control contracts: **352**
+- Focused visible-control contracts: **389**
+- Focused service contracts: **32**
+- Focused background-job contracts: **7**
 - Unpushed countable sources: **0**
 - Frontend placeholder terminals: **0**
 - BLOCKED excluded from progress: **PASS**
@@ -97,57 +99,25 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 
 - None
 
-### content (31)
+### content (6)
 
-- `AIMW-CONT-10AFCDF334`
-- `AIMW-CONT-1456BE001F`
 - `AIMW-CONT-2752ED9351`
-- `AIMW-CONT-349017BDF5`
-- `AIMW-CONT-38FC74B9DE`
-- `AIMW-CONT-40CD7F080F`
-- `AIMW-CONT-4147188AB1`
-- `AIMW-CONT-50DF6B23CC`
-- `AIMW-CONT-566A1899F1`
 - `AIMW-CONT-6458D3030B`
-- `AIMW-CONT-659BEF8765`
-- `AIMW-CONT-69B5134C7E`
 - `AIMW-CONT-6B051BD8C0`
-- `AIMW-CONT-6B6790BE84`
-- `AIMW-CONT-7D83B09470`
-- `AIMW-CONT-80EE7CA296`
-- `AIMW-CONT-8C19E4E3B2`
-- `AIMW-CONT-916E34454C`
-- `AIMW-CONT-918BE3DBF1`
-- `AIMW-CONT-98918A6C27`
-- `AIMW-CONT-9F0D652C67`
 - `AIMW-CONT-A6867078EA`
-- `AIMW-CONT-B1024628D9`
-- `AIMW-CONT-B60F3F750B`
 - `AIMW-CONT-B6BB292F85`
-- `AIMW-CONT-BCAD1E3A49`
 - `AIMW-CONT-C49C37E2C9`
-- `AIMW-CONT-CA4920CBC8`
-- `AIMW-CONT-CF4BE4EC3B`
-- `AIMW-CONT-ED2F1E1572`
-- `AIMW-CONT-EE659E3F13`
 
-### email (5)
+### email (1)
 
-- `AIMW-EMAI-01F5713C4F`
 - `AIMW-EMAI-0AA71A5EF6`
-- `AIMW-EMAI-10F3C44369`
-- `AIMW-EMAI-8C9768BCD0`
-- `AIMW-EMAI-9EB09C490D`
 
 ### identity (0)
 
 - None
 
-### media (5)
+### media (2)
 
-- `AIMW-MEDI-3444B17C11`
-- `AIMW-MEDI-34E7DCA832`
-- `AIMW-MEDI-727FAEEB01`
 - `AIMW-MEDI-799B36D113`
 - `AIMW-MEDI-F55A549341`
 
@@ -175,7 +145,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 
 - None
 
-### sync (56)
+### sync (49)
 
 - `AIMW-SYNC-0239B0E6A3`
 - `AIMW-SYNC-078D172C71`
@@ -186,10 +156,8 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-SYNC-2A256826D2`
 - `AIMW-SYNC-2C6ADCE34C`
 - `AIMW-SYNC-3389FB622C`
-- `AIMW-SYNC-33EE696FF7`
 - `AIMW-SYNC-38D8A24B15`
 - `AIMW-SYNC-3E7DCF4C71`
-- `AIMW-SYNC-419C403EFB`
 - `AIMW-SYNC-425B82511E`
 - `AIMW-SYNC-45A3B43BB9`
 - `AIMW-SYNC-476CDB769B`
@@ -206,16 +174,13 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-SYNC-8C35E9A7A0`
 - `AIMW-SYNC-9504A57CAE`
 - `AIMW-SYNC-9B87CACA17`
-- `AIMW-SYNC-9DFB5B4FF9`
 - `AIMW-SYNC-AA26ED0909`
-- `AIMW-SYNC-ABE31C5C4E`
 - `AIMW-SYNC-AE16CF49C6`
 - `AIMW-SYNC-B11D963A9E`
 - `AIMW-SYNC-B78216241F`
 - `AIMW-SYNC-B83AB5A666`
 - `AIMW-SYNC-B955324F04`
 - `AIMW-SYNC-BDBA0B4F01`
-- `AIMW-SYNC-C18ED1F753`
 - `AIMW-SYNC-C1B6FA6677`
 - `AIMW-SYNC-C43EFD36B1`
 - `AIMW-SYNC-CC2B584BC4`
@@ -225,17 +190,13 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-SYNC-E0791EA9E9`
 - `AIMW-SYNC-E3EB27C678`
 - `AIMW-SYNC-E51F091C0B`
-- `AIMW-SYNC-E6888B0B4D`
 - `AIMW-SYNC-ECAB44A389`
 - `AIMW-SYNC-ED1442005E`
 - `AIMW-SYNC-EE7D7534DF`
 - `AIMW-SYNC-EEFDDFFF87`
 - `AIMW-SYNC-F7BCCD650C`
 - `AIMW-SYNC-FD27B795ED`
-- `AIMW-SYNC-FF579F0EBF`
 
-### taxonomy (3)
+### taxonomy (0)
 
-- `AIMW-TAXO-602DE140EB`
-- `AIMW-TAXO-A96714F338`
-- `AIMW-TAXO-D6126926AD`
+- None
