@@ -170,7 +170,7 @@
                                             @csrf
                                             <button
                                                 type="submit"
-                                                data-canonical-operation="AIMW-AI-D5FAAA34DD"
+                                                data-ai-prompt-restore="true"
                                                 @disabled((int) $revision->version === (int) $template->current_version)
                                             >Restore</button>
                                         </form>

@@ -1471,6 +1471,28 @@
       "operation_ids": [
         "AIMW-EMAI-8C9768BCD0"
       ]
+    },
+    {
+      "label": "AIMW-CONT-9F0D652C67 Site Onboarding route closure",
+      "sha": "2528451fe89bcaa5817ccab8042d7a952d418435",
+      "observed_pr_head": "2528451fe89bcaa5817ccab8042d7a952d418435",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "operation_ids": [
+        "AIMW-CONT-9F0D652C67"
+      ],
+      "route_api_provenance": {
+        "AIMW-CONT-9F0D652C67": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SitesConnectRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteOnboardingRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteOnboardingRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-onboarding-route-terminality.json",
+          "security_mode": "tenant_selected"
+        }
+      }
     }
   ],
   "excluded_sources": [],
@@ -2661,28 +2683,6 @@
       ]
     },
     {
-      "label": "AIMW-CONT-9F0D652C67 Site Onboarding route closure",
-      "sha": "2528451fe89bcaa5817ccab8042d7a952d418435",
-      "observed_pr_head": "2528451fe89bcaa5817ccab8042d7a952d418435",
-      "domains": [
-        "content"
-      ],
-      "supporting_only": true,
-      "operation_ids": [
-        "AIMW-CONT-9F0D652C67"
-      ],
-      "route_api_provenance": {
-        "AIMW-CONT-9F0D652C67": {
-          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SitesConnectRouteServiceProvider.php",
-          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
-          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteOnboardingRouteTerminalityTest.php",
-          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteOnboardingRouteTerminalityTest.php",
-          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-onboarding-route-terminality.json",
-          "security_mode": "tenant_selected"
-        }
-      }
-    },
-    {
       "label": "AIMW-CONT-50DF6B23CC Site Connection canonical route terminality",
       "sha": "d13feb86b4cce959c14c0c99ec10286df53715e5",
       "observed_pr_head": "d13feb86b4cce959c14c0c99ec10286df53715e5",
@@ -2811,14 +2811,6 @@
           "security_mode": "tenant_selected"
         }
       }
-    },
-    {
-      "label": "AIMW-AI-D5FAAA34DD AI Prompt Restore focused closure",
-      "sha": "bb053831baaa3e60871e60b1c1be79a9cc9e0f5f",
-      "observed_pr_head": "bb053831baaa3e60871e60b1c1be79a9cc9e0f5f",
-      "operation_ids": [
-        "AIMW-AI-D5FAAA34DD"
-      ]
     }
   ],
   "sources": [

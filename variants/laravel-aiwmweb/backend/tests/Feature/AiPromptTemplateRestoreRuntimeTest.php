@@ -17,27 +17,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
-class AiPromptTemplateRestoreVisibleControlTerminalityTest extends TestCase
+class AiPromptTemplateRestoreRuntimeTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const OPERATION_ID = 'AIMW-AI-D5FAAA34DD';
-
-    public function test_exact_canonical_operation_is_the_pending_restore_control_and_source_requires_append_only_restore(): void
+    public function test_source_requires_append_only_restore_semantics(): void
     {
-        $evidence = $this->closureEvidence();
-        $row = $evidence['operation'];
-
-        $this->assertSame(self::OPERATION_ID, $row['operation_id']);
-        $this->assertSame('ai', $row['domain']);
-        $this->assertSame('visible_control', $row['kind']);
-        $this->assertSame('/settings/ai-prompts', $row['route_screen']);
-        $this->assertSame('src/AIWordPressManager.Web/Components/Pages/AIPromptTemplates.razor', $row['current_source']);
-        $this->assertStringContainsString('Restore', $row['visible_control']);
-        $this->assertTrue((bool) $row['tenant_owned']);
-        $this->assertSame('ADAPTED', $row['terminal_state']);
-        $this->assertSame('ADAPTED', $evidence['terminality']['state']);
-
         $source = file_get_contents(base_path('../../../src/AIWordPressManager.Web/Components/Pages/AIPromptTemplates.razor'));
         $this->assertStringContainsString('Restoring never rewrites history; it creates a new revision from the selected historical content.', $source);
         $this->assertStringContainsString('Disabled="@(version.Revision == _selected.Revision)"', $source);
@@ -67,7 +52,7 @@ class AiPromptTemplateRestoreVisibleControlTerminalityTest extends TestCase
         $this->actingAs($user)->get('/tenants/alpha/settings/ai-prompts')
             ->assertOk()
             ->assertSee('Restoring never rewrites history; it creates a new revision from the selected historical content.')
-            ->assertSee('data-canonical-operation="'.self::OPERATION_ID.'"', false)
+            ->assertSee('data-ai-prompt-restore="true"', false)
             ->assertSee('/tenants/alpha/settings/ai-prompts/alpha.rewrite/revisions/1/restore', false)
             ->assertSee('/tenants/alpha/settings/ai-prompts/alpha.rewrite/revisions/2/restore', false)
             ->assertSee('Restore revision r1 of alpha.rewrite as a new revision?')
@@ -184,16 +169,6 @@ class AiPromptTemplateRestoreVisibleControlTerminalityTest extends TestCase
         $this->assertSame(2, $lockedFresh->current_version);
         $this->assertSame('Current {{content}} prompt.', $lockedFresh->user_template);
         $this->assertSame(0, AuditEvent::query()->withoutGlobalScopes()->where('event', 'ai.prompt.changed')->count());
-    }
-
-    private function closureEvidence(): array
-    {
-        return json_decode(
-            file_get_contents(base_path('../docs/closure-evidence/ai-prompt-templates-restore-terminality.json')),
-            true,
-            512,
-            JSON_THROW_ON_ERROR,
-        );
     }
 
     private function membership(User $user, string $slug, array $permissions): Tenant
