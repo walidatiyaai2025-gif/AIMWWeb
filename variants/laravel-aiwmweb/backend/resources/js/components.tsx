@@ -391,6 +391,8 @@ export function ActionDialog({
     const firstFieldRef = useRef<HTMLInputElement>(null);
     const isTaxonomySaveSubmit = actionKey === 'taxonomy.manage';
     const isTaxonomyResetForm = actionKey === 'taxonomy.manage';
+    const isWordPressUsersResetForm = actionKey === 'wordpress-users.save';
+    const isResetForm = isTaxonomyResetForm || isWordPressUsersResetForm;
 
     const closeAndReset = () => {
         setValues({});
@@ -476,11 +478,11 @@ export function ActionDialog({
                         <button
                             type="button"
                             className="btn"
-                            onClick={isTaxonomyResetForm ? closeAndReset : onClose}
+                            onClick={isResetForm ? closeAndReset : onClose}
                             disabled={busy}
-                            data-canonical-operation={isTaxonomyResetForm ? TAXONOMY_RESET_FORM_OPERATION_ID : undefined}
+                            data-canonical-operation={isWordPressUsersResetForm ? WORDPRESS_USERS_RESET_FORM_OPERATION_ID : isTaxonomyResetForm ? TAXONOMY_RESET_FORM_OPERATION_ID : undefined}
                         >
-                            {isTaxonomyResetForm ? (locale === 'ar' ? 'إلغاء' : 'Cancel') : text(commonText.close)}
+                            {isResetForm ? (locale === 'ar' ? 'إلغاء' : 'Cancel') : text(commonText.close)}
                         </button>
                         {actionKey === 'wordpress-users.save' ? (
                             <WordPressUsersWorkingStateControl busy={busy} locale={locale} />
