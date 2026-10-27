@@ -381,9 +381,13 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, siteReliabilityFilters.periodDays, siteReliabilityFilters.minimumOperations],
         queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, siteReliabilityQueryFilters)),
         enabled: state.state === 'enabled' && Boolean(endpoint),
+    } : route.key === 'media' ? {
+        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, mediaResetState.mediaType, mediaResetState.pageSize],
+        queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, mediaQueryFilters)),
+        enabled: state.state === 'enabled' && Boolean(endpoint),
     } : {
-        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType, mediaResetState.mediaType, mediaResetState.pageSize],
-        queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, resourceFilters)),
+        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType],
+        queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, taxonomyFilter)),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     });
 
