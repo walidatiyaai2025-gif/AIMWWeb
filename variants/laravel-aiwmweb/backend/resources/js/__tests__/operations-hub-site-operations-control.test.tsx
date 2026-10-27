@@ -46,6 +46,7 @@ describe('AIMW-CONT-BCAD1E3A49 Operations Hub site-operation history navigation'
         const link = screen.getByRole('link', { name: /Site Operations/i });
         expect(link).toHaveAttribute('href', '/tenants/alpha/site-operations');
         expect(link).toHaveAttribute('data-canonical-operation', OPERATIONS_HUB_SITE_OPERATIONS_OPERATION_ID);
+        expect(link).not.toHaveAttribute('target');
         expect(OPERATIONS_HUB_SITE_OPERATIONS_OPERATION_ID).toBe('AIMW-CONT-BCAD1E3A49');
     });
 
