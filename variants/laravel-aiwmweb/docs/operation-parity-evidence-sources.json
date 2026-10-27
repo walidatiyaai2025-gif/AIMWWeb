@@ -2595,6 +2595,14 @@
       "operation_ids": [
         "AIMW-SYNC-9DFB5B4FF9"
       ]
+    },
+    {
+      "label": "AIMW-CONT-4147188AB1 Site Operations Details link focused closure",
+      "sha": "713239c5b0b452e3a60fd952bb600cc8af39c372",
+      "observed_pr_head": "45f7d7aa3984b5a96e4a95f2c15bd3846e35cb53",
+      "operation_ids": [
+        "AIMW-CONT-4147188AB1"
+      ]
     }
   ],
   "sources": [
