@@ -2811,6 +2811,14 @@
           "security_mode": "tenant_selected"
         }
       }
+    },
+    {
+      "label": "AIMW-AI-D5FAAA34DD AI Prompt Restore focused closure",
+      "sha": "bb053831baaa3e60871e60b1c1be79a9cc9e0f5f",
+      "observed_pr_head": "bb053831baaa3e60871e60b1c1be79a9cc9e0f5f",
+      "operation_ids": [
+        "AIMW-AI-D5FAAA34DD"
+      ]
     }
   ],
   "sources": [
