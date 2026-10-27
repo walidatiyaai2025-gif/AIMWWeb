@@ -72,6 +72,7 @@ import {
     type SiteOperationsFilterState,
 } from './site-operations-filters-control';
 import { SiteReliabilityConnectionLinkControl } from './site-reliability-connection-link-control';
+import { SiteReliabilityFiltersControl, siteReliabilityDefaultFilters, type SiteReliabilityFilterState } from './site-reliability-filters-control';
 import { SitesSiteUrlLinkControl } from './sites-site-url-link-control';
 import { SitesInterpolatedLinksControl } from './sites-interpolated-links-control';
 import { SitesSystemHealthLinkControl } from './sites-system-health-link-control';
@@ -321,6 +322,8 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     }, [route.key]);
     const [siteOperationsFilters, setSiteOperationsFilters] = useState<SiteOperationsFilterState>(() => siteOperationsDefaultFilters());
     const [siteOperationsExportResetToken, setSiteOperationsExportResetToken] = useState(0);
+    const [siteReliabilityDraft, setSiteReliabilityDraft] = useState<SiteReliabilityFilterState>(() => siteReliabilityDefaultFilters());
+    const [siteReliabilityFilters, setSiteReliabilityFilters] = useState<SiteReliabilityFilterState>(() => siteReliabilityDefaultFilters());
     const [taxonomyType, setTaxonomyType] = useState<'category' | 'post_tag'>('category');
 
     useEffect(() => {
@@ -355,10 +358,18 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const emailHistoryActiveFilterCount = route.key === 'email-history'
         ? [emailHistoryFilters.siteId, emailHistoryFilters.status, emailHistoryFilters.correlation.trim()].filter(Boolean).length
         : 0;
-    const resourceFilters = { ...taxonomyFilter, ...emailHistoryQueryFilters };
+    const siteReliabilityQueryFilters: Record<string, string> = route.key === 'site-reliability' ? {
+        period_days: siteReliabilityFilters.periodDays,
+        minimum_operations: siteReliabilityFilters.minimumOperations,
+    } : {};
+    const resourceFilters = { ...taxonomyFilter, ...emailHistoryQueryFilters, ...siteReliabilityQueryFilters };
     const query = useQuery(route.key === 'email-history' ? {
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType, emailHistoryFilters.siteId, emailHistoryFilters.status, emailHistoryFilters.correlation, appDataGridSortDescending],
         queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, resourceFilters)),
+        enabled: state.state === 'enabled' && Boolean(endpoint),
+    } : route.key === 'site-reliability' ? {
+        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, siteReliabilityFilters.periodDays, siteReliabilityFilters.minimumOperations],
+        queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, siteReliabilityQueryFilters)),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     } : {
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType],
@@ -436,6 +447,16 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
             && next.correlation === emailHistoryFilters.correlation;
         setPage(1);
         setEmailHistoryFilters(next);
+        if (unchanged) await query.refetch();
+    };
+
+    const applySiteReliabilityFilters = async (next: SiteReliabilityFilterState): Promise<void> => {
+        if (route.key !== 'site-reliability' || !endpoint || query.isFetching) return;
+        const unchanged = page === 1
+            && next.periodDays === siteReliabilityFilters.periodDays
+            && next.minimumOperations === siteReliabilityFilters.minimumOperations;
+        setPage(1);
+        setSiteReliabilityFilters(next);
         if (unchanged) await query.refetch();
     };
 
@@ -606,6 +627,15 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         value={siteOperationsFilters}
                         onChange={setSiteOperationsFilters}
                         onReset={resetSiteOperationsFilters}
+                    />
+                ) : null}
+                {route.key === 'site-reliability' ? (
+                    <SiteReliabilityFiltersControl
+                        locale={locale}
+                        value={siteReliabilityDraft}
+                        busy={query.isFetching}
+                        onChange={setSiteReliabilityDraft}
+                        onApply={(next) => { void applySiteReliabilityFilters(next); }}
                     />
                 ) : null}
                 <form className="search-form" onSubmit={(event) => {
