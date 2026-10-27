@@ -1423,6 +1423,14 @@
           "security_mode": "tenant_bound"
         }
       }
+    },
+    {
+      "label": "AIMW-CONT-EE659E3F13 Sites Open focused closure",
+      "sha": "7b97d9ec0b5444902db23058d61f35fe89758dd0",
+      "observed_pr_head": "7b97d9ec0b5444902db23058d61f35fe89758dd0",
+      "operation_ids": [
+        "AIMW-CONT-EE659E3F13"
+      ]
     }
   ],
   "excluded_sources": [],
@@ -2370,6 +2378,14 @@
       "observed_pr_head": "0684ad36ea8aece7186d11097e34619148197736",
       "operation_ids": [
         "AIMW-MEDI-3444B17C11"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-EE659E3F13 Sites Open focused closure",
+      "sha": "7b97d9ec0b5444902db23058d61f35fe89758dd0",
+      "observed_pr_head": "7b97d9ec0b5444902db23058d61f35fe89758dd0",
+      "operation_ids": [
+        "AIMW-CONT-EE659E3F13"
       ]
     }
   ],

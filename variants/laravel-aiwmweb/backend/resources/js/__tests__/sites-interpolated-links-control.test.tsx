@@ -9,6 +9,7 @@ import { WorkspacePage } from '../pages';
 import {
     normalizeAuthoritativeSiteId,
     SITES_INTERPOLATED_LINKS_OPERATION_ID,
+    SITES_OPEN_OPERATION_ID,
     SitesInterpolatedLinksControl,
     sitesInterpolatedDestinations,
 } from '../sites-interpolated-links-control';
@@ -72,10 +73,12 @@ describe(`${SITES_INTERPOLATED_LINKS_OPERATION_ID} Sites interpolated links`, ()
 
         renderWorkspace();
 
-        const dashboard = await screen.findByRole('link', { name: 'Dashboard' });
+        const dashboard = await screen.findByRole('link', { name: 'Open' });
         const contentLink = screen.getByRole('link', { name: 'Content' });
 
+        expect(SITES_OPEN_OPERATION_ID).toBe('AIMW-CONT-EE659E3F13');
         expect(dashboard).toHaveAttribute('href', '/tenants/alpha%20team/sites/11');
+        expect(dashboard).toHaveAttribute('data-canonical-operation', SITES_OPEN_OPERATION_ID);
         expect(contentLink).toHaveAttribute('href', '/tenants/alpha%20team/explorer?site=11');
         expect(dashboard.parentElement).toHaveAttribute('data-canonical-operation', SITES_INTERPOLATED_LINKS_OPERATION_ID);
         expect(fetchMock).toHaveBeenCalledTimes(1);
