@@ -19,6 +19,7 @@ import { AiCenterGenerateControl } from './ai-center-generate-control';
 import { AdminBillingSupportClearSearchControl } from './admin-billing-support-clear-search-control';
 import { APP_DATA_GRID_PREVIOUS_PAGE_OPERATION_ID } from './app-data-grid-previous-page-control';
 import { AppDataGridSortControl } from './app-data-grid-sort-control';
+import { AppDataGridClearFiltersControl } from './app-data-grid-clear-filters-control';
 import { AppSearchBox } from './app-search-box';
 import { AccountProfileEmailSettingsLinkControl } from './account-profile-email-settings-link-control';
 import { ApplicationUsersClearSearchControl } from './application-users-clear-search-control';
@@ -338,6 +339,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         ...(emailHistoryFilters.correlation.trim() ? { correlation: emailHistoryFilters.correlation.trim() } : {}),
         sort_desc: appDataGridSortDescending ? '1' : '0',
     } : {};
+    const emailHistoryActiveFilterCount = route.key === 'email-history'
+        ? [emailHistoryFilters.siteId, emailHistoryFilters.status, emailHistoryFilters.correlation.trim()].filter(Boolean).length
+        : 0;
     const resourceFilters = { ...taxonomyFilter, ...emailHistoryQueryFilters };
     const query = useQuery(route.key === 'email-history' ? {
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType, emailHistoryFilters.siteId, emailHistoryFilters.status, emailHistoryFilters.correlation, appDataGridSortDescending],
@@ -420,6 +424,22 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         setPage(1);
         setEmailHistoryFilters(next);
         if (unchanged) await query.refetch();
+    };
+
+    const clearEmailHistoryGridFilters = async (): Promise<void> => {
+        if (route.key !== 'email-history' || !endpoint || query.isFetching) return;
+
+        const cleared: EmailHistoryFilterState = { siteId: '', status: '', correlation: '' };
+        setEmailHistoryDraft(cleared);
+        setEmailHistoryFilters(cleared);
+        setSearchInput('');
+        setSearch('');
+        setPage(1);
+        await queryClient.fetchQuery({
+            queryKey: ['workspace', context.tenant.slug, route.key, endpoint, 1, '', taxonomyType, '', '', '', appDataGridSortDescending],
+            queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint, 1, '', { sort_desc: appDataGridSortDescending ? '1' : '0' })),
+            staleTime: 0,
+        });
     };
 
     const refreshWorkspace = async (): Promise<void> => {
@@ -549,6 +569,18 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         busy={query.isFetching}
                         onChange={setEmailHistoryDraft}
                         onApply={() => { void applyEmailHistoryFilters(); }}
+                    />
+                ) : null}
+                {route.key === 'email-history' ? (
+                    <AppDataGridClearFiltersControl
+                        locale={locale}
+                        searchValue={search}
+                        activeFilterCount={emailHistoryActiveFilterCount}
+                        busy={query.isFetching}
+                        onSearchInputChange={setSearchInput}
+                        onPageChange={setPage}
+                        onSearchChanged={setSearch}
+                        onClearFiltersRequested={clearEmailHistoryGridFilters}
                     />
                 ) : null}
                 {route.key === 'site-operations' ? (

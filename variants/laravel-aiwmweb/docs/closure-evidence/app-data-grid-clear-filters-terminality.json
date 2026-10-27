@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "leaf_issue": 988,
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-FF579F0EBF",
+  "domain": "sync",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Shared/AppDataGrid.razor",
+    "route_screen": "component:AppDataGrid",
+    "visible_control": "@ClearFiltersText [ClearFiltersAsync]",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Shared/AppDataGrid.razor:component:AppDataGrid:@ClearFiltersText [ClearFiltersAsync]",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "verification": "rendered/read response matches authoritative source",
+    "behavior": "ClearFiltersAsync clears the grid search text, resets the current page to 1, raises SearchChanged with an empty value, then invokes the caller ClearFiltersRequested callback."
+  },
+  "laravel_adaptation": {
+    "shared_control": "variants/laravel-aiwmweb/backend/resources/js/app-data-grid-clear-filters-control.tsx",
+    "runtime_wiring": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "real_consumer": "Email Delivery History",
+    "consumer_api": "GET /api/v1/tenants/{tenant}/email/deliveries",
+    "control_binding": "data-canonical-operation=AIMW-SYNC-FF579F0EBF",
+    "semantics": [
+      "clear the applied grid search and visible search input",
+      "reset pagination to page 1 before callback execution",
+      "raise the adapted SearchChanged empty value",
+      "clear applied site/status/correlation filters through the caller callback",
+      "perform a fresh authoritative unfiltered tenant read",
+      "render nothing when no effective search/filter is active",
+      "suppress duplicate activation while the authoritative workspace is busy"
+    ],
+    "fake_or_demo_data": false
+  },
+  "authorization_and_isolation": {
+    "consumer_permission": "diagnostics.view",
+    "tenant_context": "server-provided FrontendContext endpoint plus backend tenant boundary",
+    "foreign_site_semantics": "404 fail closed",
+    "direct_id_override": false,
+    "tenant_owned": true
+  },
+  "semantics": {
+    "mutation": false,
+    "persistence_mutation": false,
+    "wordpress_mutation": false,
+    "queue_runtime": "not used",
+    "cache_mutation": "not used",
+    "secrets": "not read or written",
+    "authoritative_reread": true,
+    "fake_success_path": "none"
+  },
+  "acceptance_tests": {
+    "frontend": {
+      "file": "variants/laravel-aiwmweb/backend/resources/js/__tests__/app-data-grid-clear-filters-control.test.tsx",
+      "coverage": [
+        "exact source ordering for input clear, page reset, SearchChanged, and ClearFiltersRequested",
+        "effective-active-filter visibility",
+        "exact canonical operation marker",
+        "busy duplicate suppression",
+        "Email History integration performs fresh unfiltered page-1 tenant request"
+      ]
+    },
+    "php": {
+      "file": "variants/laravel-aiwmweb/backend/tests/Feature/AppDataGridClearFiltersTerminalityTest.php",
+      "coverage": [
+        "exact canonical ledger identity/domain/kind/source/control",
+        "production control and runtime wiring",
+        "filtered then unfiltered authoritative tenant reads",
+        "read-only delivery row count",
+        "foreign-tenant site ID 404 fail-closed"
+      ]
+    }
+  },
+  "implementation": {
+    "implementation_and_tests_sha": "fc2b7b74b1e064c239d1ad1e0e9dc02d07f8f5d5",
+    "materializer_workflow_sha": "d8fb8c8398150c8fe60036e1f0eef51f321d9d95"
+  },
+  "scope_guards": {
+    "exactly_one_operation": true,
+    "sibling_app_data_grid_operations_claimed": false,
+    "aspnet_runtime_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "retry_or_replacement_lineage_created": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "The Laravel shared control preserves the source AppDataGrid ClearFiltersAsync ordering and is wired to a real tenant-scoped Email History consumer whose clear callback performs an authoritative unfiltered reread. Focused frontend and PHP tests prove the canonical marker, read-only semantics, and tenant fail-closed behavior."
+  }
+}
