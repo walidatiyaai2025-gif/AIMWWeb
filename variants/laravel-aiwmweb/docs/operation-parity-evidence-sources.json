@@ -2789,14 +2789,6 @@
       ]
     },
     {
-      "label": "AIMW-IDEN-2387758315 CurrentUser About Build focused closure",
-      "sha": "089175514992e3f1b83e9539b832941b3581e995",
-      "observed_pr_head": "089175514992e3f1b83e9539b832941b3581e995",
-      "operation_ids": [
-        "AIMW-IDEN-2387758315"
-      ]
-    },
-    {
       "label": "AIMW-COMM-85A340C8BC Comments Back to Sites focused closure",
       "sha": "50971ff19dc977ceea921028945365075c66c50b",
       "observed_pr_head": "50971ff19dc977ceea921028945365075c66c50b",
