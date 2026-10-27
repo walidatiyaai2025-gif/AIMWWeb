@@ -34,6 +34,7 @@ import { ContentExplorerWordPressLinkControl } from './content-explorer-wordpres
 import { ContentExplorerMediaSourceUrlControl } from './content-explorer-media-source-url-control';
 import { ContentExplorerPreviewPanel } from './content-explorer-preview-panel';
 import { CONTENT_EXPLORER_CONTENT_TAB_RESET_EVENT } from './content-explorer-content-tab-control';
+import { requestedTaxonomyTypeFromLocation } from './content-explorer-tags-tab-control';
 import { ContentExplorerPagination } from './content-explorer-previous-page-control';
 import {
     ContentExplorerSelectAllFilteredControl,
@@ -321,6 +322,15 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const [siteOperationsFilters, setSiteOperationsFilters] = useState<SiteOperationsFilterState>(() => siteOperationsDefaultFilters());
     const [siteOperationsExportResetToken, setSiteOperationsExportResetToken] = useState(0);
     const [taxonomyType, setTaxonomyType] = useState<'category' | 'post_tag'>('category');
+
+    useEffect(() => {
+        if (route.key !== 'taxonomy') return;
+        const requestedTaxonomyType = requestedTaxonomyTypeFromLocation();
+        if (requestedTaxonomyType === 'post_tag') {
+            setPage(1);
+            setTaxonomyType('post_tag');
+        }
+    }, [route.key]);
     const [emailHistoryDraft, setEmailHistoryDraft] = useState<EmailHistoryFilterState>({ siteId: '', status: '', correlation: '' });
     const [emailHistoryFilters, setEmailHistoryFilters] = useState<EmailHistoryFilterState>({ siteId: '', status: '', correlation: '' });
     const [dialog, setDialog] = useState<{ key: string; contract: ActionContract } | null>(null);
