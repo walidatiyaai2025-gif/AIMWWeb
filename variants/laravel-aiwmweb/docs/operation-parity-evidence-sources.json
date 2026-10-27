@@ -2811,6 +2811,13 @@
       "operation_ids": [
         "AIMW-BILL-5E8896CD58"
       ]
+    },
+    {
+      "label": "AIMW-SYNC-419C403EFB ContentExplorer ApplyFilters focused closure",
+      "sha": "5e6da6a4a10a5eb663638a309527e66934999d58",
+      "operation_ids": [
+        "AIMW-SYNC-419C403EFB"
+      ]
     }
   ],
   "sources": [
