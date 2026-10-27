@@ -50,7 +50,7 @@ final class ContentExplorerResetFiltersTerminalityTest extends TestCase
         $this->assertStringContainsString('queryClient.fetchQuery({', $pages);
         $this->assertStringContainsString("endpointWithQuery(trustedEndpoint, 1, '')", $pages);
         $this->assertStringContainsString("\$auth->authorize('sites.view')", $controller);
-        $this->assertStringContainsString("Site::query()->findOrFail(\$site)", $controller);
+        $this->assertStringContainsString('Site::query()->findOrFail($site)', $controller);
     }
 
     public function test_reset_defaults_reread_unfiltered_records_and_never_cross_a_tenant(): void
