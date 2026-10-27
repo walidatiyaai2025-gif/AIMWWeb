@@ -48,26 +48,35 @@ jobs:
 
           path = Path("variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json")
           manifest = json.loads(path.read_text(encoding="utf-8"))
-          allowed = {
+          expected = {
               "AIMW-CONT-6187F8DF8A",
               "AIMW-CONT-47C0477703",
               "AIMW-SYNC-CDE0C219B5",
+          }
+          reconciliation = json.loads(
+              Path("variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json")
+              .read_text(encoding="utf-8")
+          )
+          rows = {row["operation_id"]: row for row in reconciliation["operations"]}
+          pending = {
+              op for op in expected
+              if rows.get(op, {}).get("migration_state") == "PENDING"
           }
           kept = []
           seen = set()
           for source in manifest.get("focused_closure_operation_sources", []):
               ids = {str(value).strip() for value in source.get("operation_ids", []) if str(value).strip()}
-              if ids & allowed:
+              if ids & pending:
                   kept.append(source)
-                  seen.update(ids & allowed)
+                  seen.update(ids & pending)
 
-          missing = sorted(allowed - seen)
+          missing = sorted(pending - seen)
           if missing:
-              raise SystemExit("missing focused sources: " + ", ".join(missing))
+              raise SystemExit("missing pending focused sources: " + ", ".join(missing))
 
           manifest["focused_closure_operation_sources"] = kept
           path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-          print("TASK_SCOPED_FOCUSED_SOURCES=" + ",".join(sorted(seen)))
+          print("TASK_SCOPED_PENDING_SOURCES=" + ",".join(sorted(seen)))
           PY
 
           python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py \

@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #946 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-33EE696FF7",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-SYNC-33EE696FF7",
+    "terminal_state": "ADAPTED",
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "/module/posts",
+    "source": "src/AIWordPressManager.Web/Components/Pages/GlobalPostsExplorer.razor",
+    "source_control": "PublishSelectedAsync",
+    "source_intent": "Group selected posts by site and queue a publish job for each owned WordPress site.",
+    "mutation": true,
+    "tenant_owned": true,
+    "risk": "high"
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/global-posts-confirm-trash-widget.tsx",
+    "helper": "variants/laravel-aiwmweb/backend/resources/js/global-posts-publish-selected-control.ts",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/GlobalPostsPublishController.php",
+    "route": "POST /api/v1/tenants/{tenant}/global-posts/publish",
+    "queue_job": "variants/laravel-aiwmweb/backend/app/Jobs/BulkContentMutationJob.php",
+    "permission": "content.edit",
+    "grouping": "one tenant-aware unique BulkContentMutationJob per selected site",
+    "action": "publish"
+  },
+  "security": {
+    "tenant_context_required": true,
+    "site_and_content_lookup_tenant_scoped": true,
+    "caller_owned_identity_fields_rejected": true,
+    "foreign_tenant": "404",
+    "foreign_site": "422 before queue dispatch",
+    "missing_content_edit": "403",
+    "duplicate_targets": "422 before queue dispatch",
+    "fake_success": false
+  },
+  "acceptance": {
+    "backend_test": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalPostsPublishSelectedTerminalityTest.php",
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-posts-publish-selected-terminality.test.ts",
+    "proofs": [
+      "exact canonical PublishSelectedAsync operation identity",
+      "shared existing selection UI with no duplicate posts table",
+      "tenant-derived endpoint and server-owned actor identity",
+      "multi-site selection grouped into one unique queued publish job per site",
+      "guest, missing permission, foreign tenant, foreign site, identity injection and duplicate targets fail closed"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-33EE696FF7"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "9cc22b82c837d7320f8b382a75dfd4db90d45810",
+    "worker_branch": "worker/laravel-aiwmweb-AIMW-SYNC-33EE696FF7-publish-selected"
+  }
+}

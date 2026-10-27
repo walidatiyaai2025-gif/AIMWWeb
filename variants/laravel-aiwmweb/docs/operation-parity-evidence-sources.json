@@ -2447,7 +2447,7 @@
     {
       "label": "AIMW-CONT-47C0477703 Roles Permissions application-users link focused closure",
       "sha": "0e77fc47b0d0beaa85bbe8380a7c09a35e7b0ed9",
-      "observed_pr_head": "0e77fc47b0d0beaa85bbe8380a7c09a35e7b0ed9",
+      "observed_pr_head": "8f444250f636265f729f74c412540aa477c7dcc1",
       "operation_ids": [
         "AIMW-CONT-47C0477703"
       ]
@@ -2478,8 +2478,8 @@
     },
     {
       "label": "AIMW-CONT-6187F8DF8A SiteDataSnapshot dynamic navigation focused closure",
-      "sha": "9cc22b82c837d7320f8b382a75dfd4db90d45810",
-      "observed_pr_head": "9cc22b82c837d7320f8b382a75dfd4db90d45810",
+      "sha": "eb2702200c127d872b374657fad1610362c88daa",
+      "observed_pr_head": "eb2702200c127d872b374657fad1610362c88daa",
       "operation_ids": [
         "AIMW-CONT-6187F8DF8A"
       ]
@@ -2626,6 +2626,14 @@
       "observed_pr_head": "bd6dd4938992bb2c9b3b79617d9b7c8fd9f75ed3",
       "operation_ids": [
         "AIMW-EMAI-01F5713C4F"
+      ]
+    },
+    {
+      "label": "AIMW-SYNC-33EE696FF7 Global Posts PublishSelectedAsync focused closure",
+      "sha": "f1083ce6f2a8134e673faa7f77b1db75eb04a8ff",
+      "observed_pr_head": "f1083ce6f2a8134e673faa7f77b1db75eb04a8ff",
+      "operation_ids": [
+        "AIMW-SYNC-33EE696FF7"
       ]
     }
   ],
