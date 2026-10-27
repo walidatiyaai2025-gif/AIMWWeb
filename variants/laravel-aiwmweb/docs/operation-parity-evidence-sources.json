@@ -1455,6 +1455,14 @@
       "operation_ids": [
         "AIMW-CONT-69B5134C7E"
       ]
+    },
+    {
+      "label": "AIMW-SYNC-B78216241F WordPress Users PreviousPage focused closure",
+      "sha": "4f539b8e0798dff587795b07a01f465f3087deb1",
+      "observed_pr_head": "4f539b8e0798dff587795b07a01f465f3087deb1",
+      "operation_ids": [
+        "AIMW-SYNC-B78216241F"
+      ]
     }
   ],
   "excluded_sources": [],
@@ -2478,8 +2486,8 @@
     },
     {
       "label": "AIMW-CONT-6187F8DF8A SiteDataSnapshot dynamic navigation focused closure",
-      "sha": "0f33d79230ebc900052dac8fe84c0b1e1dedcce0",
-      "observed_pr_head": "0f33d79230ebc900052dac8fe84c0b1e1dedcce0",
+      "sha": "b8194ccde472758b0e16c2207aa4020c7ae2ccdf",
+      "observed_pr_head": "b8194ccde472758b0e16c2207aa4020c7ae2ccdf",
       "operation_ids": [
         "AIMW-CONT-6187F8DF8A"
       ]
@@ -2634,6 +2642,14 @@
       "observed_pr_head": "f1083ce6f2a8134e673faa7f77b1db75eb04a8ff",
       "operation_ids": [
         "AIMW-SYNC-33EE696FF7"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-10AFCDF334 WordPress Users ResetFormClicked focused closure",
+      "sha": "ebac4556fbb99fd25925b5ee1947c285bc0b2176",
+      "observed_pr_head": "ebac4556fbb99fd25925b5ee1947c285bc0b2176",
+      "operation_ids": [
+        "AIMW-CONT-10AFCDF334"
       ]
     }
   ],

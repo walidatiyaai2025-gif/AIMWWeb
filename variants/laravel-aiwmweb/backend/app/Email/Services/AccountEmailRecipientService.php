@@ -32,7 +32,8 @@ final class AccountEmailRecipientService
         string $emailAddress,
         ?string $displayName,
         bool $enabled,
-    ): AccountEmailRecipient {
+    ): AccountEmailRecipient
+    {
         $this->authorizer->authorize('tenant.manage');
         $email = $this->normalizeEmail($emailAddress);
         $normalized = mb_strtoupper($email, 'UTF-8');
@@ -44,7 +45,8 @@ final class AccountEmailRecipientService
             $normalized,
             $display,
             $enabled,
-        ): AccountEmailRecipient {
+        ): AccountEmailRecipient
+    {
             $recipient = AccountEmailRecipient::query()
                 ->whereKey($recipientId)
                 ->lockForUpdate()
@@ -54,7 +56,8 @@ final class AccountEmailRecipientService
                 ->where('normalized_email_address', $normalized)
                 ->where('id', '<>', $recipientId)
                 ->exists();
-            if ($duplicate) {
+            if ($duplicate)
+    {
                 throw ValidationException::withMessages([
                     'email_address' => 'This email address is already configured for the active account.',
                 ]);
@@ -85,13 +88,16 @@ final class AccountEmailRecipientService
     private function normalizeEmail(string $emailAddress): string
     {
         $clean = trim($emailAddress);
-        if ($clean === '') {
+        if ($clean === '')
+    {
             throw ValidationException::withMessages(['email_address' => 'Email address is required.']);
         }
-        if (mb_strlen($clean) > 320) {
+        if (mb_strlen($clean) > 320)
+    {
             throw ValidationException::withMessages(['email_address' => 'Email address is too long.']);
         }
-        if (filter_var($clean, FILTER_VALIDATE_EMAIL) === false) {
+        if (filter_var($clean, FILTER_VALIDATE_EMAIL) === false)
+    {
             throw ValidationException::withMessages(['email_address' => 'Enter a valid email address.']);
         }
 
@@ -101,10 +107,12 @@ final class AccountEmailRecipientService
     private function normalizeDisplayName(?string $displayName): ?string
     {
         $clean = trim((string) $displayName);
-        if ($clean === '') {
+        if ($clean === '')
+    {
             return null;
         }
-        if (mb_strlen($clean) > 120) {
+        if (mb_strlen($clean) > 120)
+    {
             throw ValidationException::withMessages(['display_name' => 'Display name is too long.']);
         }
 
