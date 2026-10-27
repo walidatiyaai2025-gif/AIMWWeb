@@ -2446,8 +2446,8 @@
     },
     {
       "label": "AIMW-CONT-47C0477703 Roles Permissions application-users link focused closure",
-      "sha": "40239602f055af20b61f92eee74132f2dcfaa78b",
-      "observed_pr_head": "40239602f055af20b61f92eee74132f2dcfaa78b",
+      "sha": "0e77fc47b0d0beaa85bbe8380a7c09a35e7b0ed9",
+      "observed_pr_head": "8f444250f636265f729f74c412540aa477c7dcc1",
       "operation_ids": [
         "AIMW-CONT-47C0477703"
       ]
@@ -2626,6 +2626,14 @@
       "observed_pr_head": "bd6dd4938992bb2c9b3b79617d9b7c8fd9f75ed3",
       "operation_ids": [
         "AIMW-EMAI-01F5713C4F"
+      ]
+    },
+    {
+      "label": "AIMW-SYNC-33EE696FF7 Global Posts PublishSelectedAsync focused closure",
+      "sha": "f1083ce6f2a8134e673faa7f77b1db75eb04a8ff",
+      "observed_pr_head": "f1083ce6f2a8134e673faa7f77b1db75eb04a8ff",
+      "operation_ids": [
+        "AIMW-SYNC-33EE696FF7"
       ]
     }
   ],

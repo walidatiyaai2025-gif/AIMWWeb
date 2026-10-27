@@ -5,6 +5,7 @@ use App\Http\Controllers\ContentApiController;
 use App\Http\Controllers\ContentExplorerReadController;
 use App\Http\Controllers\EmailNotificationController;
 use App\Http\Controllers\GlobalPagesTrashController;
+use App\Http\Controllers\GlobalPostsPublishController;
 use App\Http\Controllers\GlobalPostsTrashController;
 use App\Http\Controllers\LegacyNotificationReadController;
 use App\Http\Controllers\PlatformReadController;
@@ -138,6 +139,9 @@ Route::prefix('v1/tenants/{tenant}')
             ->name('api.v1.global-pages.trash');
         Route::get('/global-posts', [GlobalPostsTrashController::class, 'index'])
             ->name('api.v1.global-posts.index');
+        Route::post('/global-posts/publish', [GlobalPostsPublishController::class, 'publish'])
+            ->defaults('canonical_operation_id', GlobalPostsPublishController::OPERATION_ID)
+            ->name('api.v1.global-posts.publish');
         Route::post('/global-posts/trash', [GlobalPostsTrashController::class, 'trash'])
             ->defaults('canonical_operation_id', GlobalPostsTrashController::OPERATION_ID)
             ->name('api.v1.global-posts.trash');
