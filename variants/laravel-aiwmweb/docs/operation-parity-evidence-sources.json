@@ -2587,6 +2587,14 @@
       "operation_ids": [
         "AIMW-SYNC-CDE0C219B5"
       ]
+    },
+    {
+      "label": "AIMW-SYNC-9DFB5B4FF9 AppConfirmDialog ConfirmClickedAsync focused closure",
+      "sha": "62b97ef5553d0d713c048a9b5fd9a07c46c51f72",
+      "observed_pr_head": "62b97ef5553d0d713c048a9b5fd9a07c46c51f72",
+      "operation_ids": [
+        "AIMW-SYNC-9DFB5B4FF9"
+      ]
     }
   ],
   "sources": [

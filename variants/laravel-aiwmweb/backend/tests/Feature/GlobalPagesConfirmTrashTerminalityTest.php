@@ -24,11 +24,15 @@ final class GlobalPagesConfirmTrashTerminalityTest extends TestCase
 
     private const OPERATION_ID = 'AIMW-BILL-C499965699';
 
+    private const APP_CONFIRM_DIALOG_CONFIRM_OPERATION_ID = 'AIMW-SYNC-9DFB5B4FF9';
+
     public function test_source_contract_route_and_visible_control_are_bound(): void
     {
         $source = (string) file_get_contents(base_path('../../../src/AIWordPressManager.Web/Components/Pages/GlobalPagesExplorer.razor'));
         $app = (string) file_get_contents(resource_path('js/app.tsx'));
         $widget = (string) file_get_contents(resource_path('js/global-pages-confirm-trash-widget.tsx'));
+        $confirmControl = (string) file_get_contents(resource_path('js/sync-app-confirm-dialog-confirm-control.tsx'));
+        $confirmDialogSource = (string) file_get_contents(base_path('../../../src/AIWordPressManager.Web/Components/Shared/AppConfirmDialog.razor'));
 
         $this->assertStringContainsString('ConfirmTrashAsync', $source);
         $this->assertStringContainsString('GlobalContentBulkPolicy.GroupBySite', $source);
@@ -37,8 +41,19 @@ final class GlobalPagesConfirmTrashTerminalityTest extends TestCase
         $this->assertStringContainsString('GlobalPagesConfirmTrashControl', $app);
         $this->assertStringContainsString('GLOBAL_PAGES_CONFIRM_TRASH_OPERATION_ID', $widget);
         $this->assertStringContainsString('setConfirmOpen(true)', $widget);
-        $this->assertStringContainsString('mutation.mutate(selectedTargets)', $widget);
+        $this->assertStringNotContainsString('mutation.mutate(selectedTargets)', $widget);
         $this->assertStringContainsString('await query.refetch()', $widget);
+        $this->assertStringContainsString('OnClick="ConfirmClickedAsync"', $confirmDialogSource);
+        $this->assertStringContainsString('Disabled="@(!CanConfirm)"', $confirmDialogSource);
+        $this->assertStringContainsString('Busy="@Busy"', $confirmDialogSource);
+        $this->assertStringContainsString('if (!CanConfirm) return;', $confirmDialogSource);
+        $this->assertStringContainsString(self::APP_CONFIRM_DIALOG_CONFIRM_OPERATION_ID, $confirmControl);
+        $this->assertStringContainsString('data-source-handler="ConfirmClickedAsync"', $confirmControl);
+        $this->assertStringContainsString('confirmationMatches', $confirmControl);
+        $this->assertStringNotContainsString('apiRequest', $confirmControl);
+        $this->assertStringNotContainsString('fetch(', $confirmControl);
+        $this->assertStringContainsString('SyncAppConfirmDialogConfirmControl', $widget);
+        $this->assertStringContainsString('mutation.mutateAsync(selectedTargets)', $widget);
 
         $route = Route::getRoutes()->match(
             Request::create('/api/v1/tenants/alpha/global-pages/trash', 'POST'),

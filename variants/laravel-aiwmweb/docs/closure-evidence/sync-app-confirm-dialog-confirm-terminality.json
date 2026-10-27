@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #981 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-9DFB5B4FF9",
+  "domain": "sync",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-SYNC-9DFB5B4FF9",
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "component:AppConfirmDialog",
+    "source": "src/AIWordPressManager.Web/Components/Shared/AppConfirmDialog.razor",
+    "source_intent": "ConfirmClickedAsync invokes only the supplied OnConfirm callback and fails closed while Busy or when the typed-confirmation contract does not match.",
+    "tenant_owned": true,
+    "mutation": false,
+    "risk": "high"
+  },
+  "laravel_adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/sync-app-confirm-dialog-confirm-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/global-pages-confirm-trash-widget.tsx",
+    "operation_marker": "AIMW-SYNC-9DFB5B4FF9",
+    "source_handler_marker": "ConfirmClickedAsync",
+    "behavior": "The shared Laravel confirm control mirrors AppConfirmDialog confirm guards, prevents duplicate dispatch, supports caller-provided typed-confirmation match state, and delegates only to the authoritative caller callback. The real Global Pages trash confirmation mounts the control and awaits its existing tenant-scoped WordPress mutation.",
+    "fake_success_path": "none",
+    "independent_request_added": false
+  },
+  "security_boundary": {
+    "tenant_context": "The Global Pages consumer remains bound to the authenticated active tenant and its existing tenant.context route.",
+    "permission": "content.edit",
+    "authorization_test": "GlobalPagesConfirmTrashTerminalityTest asserts a content.view-only user receives 403.",
+    "tenant_isolation_test": "GlobalPagesConfirmTrashTerminalityTest asserts an editor cannot mutate the foreign beta tenant and receives 404.",
+    "authoritative_external_state": "The existing Global Pages endpoint re-reads WordPress state before trash mutation and idempotently reconciles already-trashed pages."
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/sync-app-confirm-dialog-confirm-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalPagesConfirmTrashTerminalityTest.php",
+    "coverage": [
+      "exact AIMW-SYNC-9DFB5B4FF9 production and test markers",
+      "exact ConfirmClickedAsync source-handler marker",
+      "Busy and disabled fail-closed behavior",
+      "typed-confirmation mismatch fail-closed behavior",
+      "duplicate confirm dispatch suppression",
+      "no request or mutation inside the shared confirm control",
+      "content.edit authorization boundary with 403 proof",
+      "foreign tenant 404 isolation proof",
+      "real authoritative WordPress trash consumer"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-SYNC-9DFB5B4FF9"],
+    "sibling_operations_claimed": false,
+    "cancel_operation_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "2506cc2b7fcb262e008f117916498ab1447877ff",
+    "branch": "worker/981-app-confirm-dialog-confirm-control",
+    "issue": 981
+  },
+  "materialization": {
+    "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-981.yml",
+    "generated_reconciliation_required": true
+  }
+}
