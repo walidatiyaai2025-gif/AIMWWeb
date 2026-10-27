@@ -2797,8 +2797,8 @@
     },
     {
       "label": "AIMW-SYNC-627C90DC5C ContentExplorer ResetFiltersAsync focused closure",
-      "sha": "ba5ec7c72bfb6d15a0166c730aaae2f216be44c5",
-      "observed_pr_head": "ba5ec7c72bfb6d15a0166c730aaae2f216be44c5",
+      "sha": "976352913cf2a5025ea8e3701143c8b19adb9312",
+      "observed_pr_head": "976352913cf2a5025ea8e3701143c8b19adb9312",
       "operation_ids": [
         "AIMW-SYNC-627C90DC5C"
       ]
