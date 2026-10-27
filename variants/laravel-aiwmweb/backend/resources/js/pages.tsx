@@ -52,6 +52,7 @@ import { LiveSystemStatusRefreshControl } from './live-system-status-refresh-con
 import { EMAIL_HISTORY_CLEAR_FILTERS_OPERATION_ID, EmailHistoryFiltersControl, type EmailHistoryFilterState } from './email-history-filters-control';
 import { GlobalUsersFullManagementControl } from './global-users-full-management-control';
 import { MediaDeleteControl } from './media-delete-control';
+import { authoritativeGlobalMediaEndpoint, globalMediaResetState, GlobalMediaResetControl } from './global-media-reset-control';
 import { GlobalMediaInterpolatedLinksControl } from './media-interpolated-links-control';
 import { MediaBackToSitesControl } from './media-back-to-sites-control';
 import { MediaManagerEditingSourceUrlControl } from './media-manager-editing-source-url-control';
@@ -306,6 +307,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const [searchInput, setSearchInput] = useState('');
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
+    const [mediaResetState, setMediaResetState] = useState(() => globalMediaResetState());
     const [appDataGridSortDescending, setAppDataGridSortDescending] = useState(false);
     const applicationUsersSearchInFlight = useRef(false);
     const [sitesFilter, setSitesFilter] = useState<'all' | 'connected' | 'review'>('all');
@@ -339,7 +341,10 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const [emailHistoryFilters, setEmailHistoryFilters] = useState<EmailHistoryFilterState>({ siteId: '', status: '', correlation: '' });
     const [dialog, setDialog] = useState<{ key: string; contract: ActionContract } | null>(null);
     const state = resolveCapability(context, route);
-    const endpoint = route.apiKey ? context.api[route.apiKey] : undefined;
+    const routeEndpoint = route.apiKey ? context.api[route.apiKey] : undefined;
+    const endpoint = route.key === 'media'
+        ? (authoritativeGlobalMediaEndpoint(context) ?? undefined)
+        : routeEndpoint;
     const readOperations = COLLECTION_READ_OPERATIONS[route.key];
     const canEditExplorerContent = context.permissions.includes('*') || context.permissions.includes('content.edit');
 
@@ -363,7 +368,11 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         period_days: siteReliabilityFilters.periodDays,
         minimum_operations: siteReliabilityFilters.minimumOperations,
     } : {};
-    const resourceFilters = { ...taxonomyFilter, ...emailHistoryQueryFilters, ...siteReliabilityQueryFilters };
+    const mediaQueryFilters: Record<string, string> = route.key === 'media' ? {
+        ...(mediaResetState.mediaType === 'all' ? {} : { mime_type: mediaResetState.mediaType }),
+        per_page: String(mediaResetState.pageSize),
+    } : {};
+    const resourceFilters = { ...taxonomyFilter, ...emailHistoryQueryFilters, ...siteReliabilityQueryFilters, ...mediaQueryFilters };
     const query = useQuery(route.key === 'email-history' ? {
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType, emailHistoryFilters.siteId, emailHistoryFilters.status, emailHistoryFilters.correlation, appDataGridSortDescending],
         queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, resourceFilters)),
@@ -373,8 +382,8 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, siteReliabilityQueryFilters)),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     } : {
-        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType],
-        queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, taxonomyFilter)),
+        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType, mediaResetState.mediaType, mediaResetState.pageSize],
+        queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, resourceFilters)),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     });
 
@@ -473,6 +482,24 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         await queryClient.fetchQuery({
             queryKey: ['workspace', context.tenant.slug, route.key, endpoint, 1, '', taxonomyType, '', '', '', appDataGridSortDescending],
             queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint, 1, '', { sort_desc: appDataGridSortDescending ? '1' : '0' })),
+            staleTime: 0,
+        });
+    };
+
+    const resetGlobalMediaFilters = async (): Promise<void> => {
+        if (route.key !== 'media' || !endpoint || query.isFetching) return;
+
+        const reset = globalMediaResetState();
+        setSearchInput(reset.search);
+        setSearch(reset.search);
+        setPage(reset.page);
+        setMediaResetState(reset);
+
+        await queryClient.fetchQuery({
+            queryKey: ['workspace', context.tenant.slug, route.key, endpoint, reset.page, reset.search, taxonomyType, reset.mediaType, reset.pageSize],
+            queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint, reset.page, reset.search, {
+                per_page: String(reset.pageSize),
+            })),
             staleTime: 0,
         });
     };
@@ -637,6 +664,14 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         busy={query.isFetching}
                         onChange={setSiteReliabilityDraft}
                         onApply={(next) => { void applySiteReliabilityFilters(next); }}
+                    />
+                ) : null}
+                {route.key === 'media' ? (
+                    <GlobalMediaResetControl
+                        locale={locale}
+                        busy={query.isFetching}
+                        available={Boolean(endpoint)}
+                        onReset={() => { void resetGlobalMediaFilters(); }}
                     />
                 ) : null}
                 <form className="search-form" onSubmit={(event) => {
