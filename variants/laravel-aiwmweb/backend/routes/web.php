@@ -379,6 +379,12 @@ Route::prefix('/tenants/{tenant}')
         Route::get('/module/schedules', 'show')->defaults('workspace_permissions', 'operations.manage,automation.view')->name('canonical.workspace.schedules');
         Route::get('/module/execution', 'show')->defaults('workspace_permissions', 'operations.manage,execution.view')->name('canonical.workspace.execution');
 
+        Route::get('/module/{key}', 'show')
+            ->defaults('workspace_permissions', 'tenant.view')
+            ->defaults('canonical_operation_id', 'AIMW-CONT-80EE7CA296')
+            ->where('key', '[A-Za-z0-9][A-Za-z0-9-]{0,63}')
+            ->name('canonical.workspace.module-fallback');
+
         Route::get('/sites/{site}/snapshot', 'showSite')->defaults('workspace_permissions', 'sites.view')->defaults('canonical_operation_id', 'AIMW-CONT-6D14B76763')->whereNumber('site')->name('canonical.site.snapshot');
         Route::get('/sites/{site}/operations', 'showSite')->defaults('workspace_permissions', 'sites.view')->defaults('canonical_operation_id', 'AIMW-CONT-55FA799054')->whereNumber('site')->name('canonical.site.operations');
 
