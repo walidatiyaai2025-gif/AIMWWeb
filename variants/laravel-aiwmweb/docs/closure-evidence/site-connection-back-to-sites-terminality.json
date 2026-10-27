@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #824 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-8C19E4E3B2",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/sites/{Id:guid}/connection | /sites/{Id:guid}/operations",
+    "source": "src/AIWordPressManager.Web/Components/Pages/SiteConnectionCenter.razor",
+    "source_control": "@(L.IsArabic ? -> /sites",
+    "source_intent": "When the requested Site Connection Center site is not found, offer a read-only path back to the Sites list.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/site-connection-center-sync-control.tsx",
+    "production_wiring": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "authoritative_not_found": "404 from the tenant/site-bound connection or operations read",
+    "destination_builder": "tenantUrl(context.tenant.slug, '/sites')",
+    "destination": "/tenants/{tenant}/sites",
+    "availability": "rendered only for authoritative ApiError 404; generic failures and successful site reads do not render the action"
+  },
+  "security": {
+    "tenant_source": "authenticated FrontendContext.tenant.slug only",
+    "caller_tenant_override": false,
+    "direct_site_identifier_in_destination": false,
+    "destination_guard": "web + auth + tenant.context with tenant.view/sites.view workspace authorization",
+    "foreign_tenant": "fails closed",
+    "mutation_added": false,
+    "external_call_added": false,
+    "fake_success": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-connection-back-to-sites.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteConnectionBackToSitesTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation identity",
+      "authoritative 404-only visibility",
+      "generic error does not manufacture source action",
+      "successful site read hides not-found action",
+      "tenant-qualified destination derived from active context",
+      "foreign-tenant destination rejection",
+      "missing-site read remains read-only"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-8C19E4E3B2"
+    ],
+    "connection_route_operation_claimed": false,
+    "operations_route_operation_claimed": false,
+    "site_url_operation_claimed": false,
+    "sync_or_retest_operation_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "duplicate_branch_created": false
+  }
+}

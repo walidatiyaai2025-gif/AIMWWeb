@@ -8,6 +8,7 @@ export const SITE_CONNECTION_CENTER_SYNC_OPERATION_ID = 'AIMW-BILL-3762C05261';
 export const SITE_CONNECTION_CENTER_COPY_DIAGNOSTICS_OPERATION_ID = 'AIMW-BILL-D4E1DA62D9';
 export const SITE_CONNECTION_CENTER_RETEST_OPERATION_ID = 'AIMW-BILL-E747D0E843';
 export const SITE_CONNECTION_CENTER_SITE_URL_OPERATION_ID = 'AIMW-CONT-63EDB4BA6F';
+export const SITE_CONNECTION_CENTER_BACK_TO_SITES_OPERATION_ID = 'AIMW-CONT-8C19E4E3B2';
 export const SITE_CONNECTION_CENTER_DYNAMIC_LINKS_OPERATION_ID = 'AIMW-CONT-DF6FFA9D87';
 
 type ConnectionSnapshot = {
@@ -135,6 +136,7 @@ export function SiteConnectionCenterSyncControl({ context }: { context: Frontend
     const [message, setMessage] = useState('');
     const [copying, setCopying] = useState(false);
     const [retesting, setRetesting] = useState(false);
+    const [siteNotFound, setSiteNotFound] = useState(false);
 
     const reload = useCallback(async () => {
         if (!endpoints) throw new ApiError('Invalid active site.', 404, 'invalid_site');
@@ -150,6 +152,7 @@ export function SiteConnectionCenterSyncControl({ context }: { context: Frontend
 
         setConnection(nextConnection);
         setHistory(Array.isArray(nextOperations.items) ? nextOperations.items : []);
+        setSiteNotFound(false);
 
         return { connection: nextConnection, operations: nextOperations };
     }, [endpoints?.connection, endpoints?.operations, siteId]);
@@ -159,6 +162,7 @@ export function SiteConnectionCenterSyncControl({ context }: { context: Frontend
         reload().catch((cause: unknown) => {
             setConnection(null);
             setHistory([]);
+            setSiteNotFound(cause instanceof ApiError && cause.status === 404);
             setError(cause instanceof Error ? cause.message : 'Connection center unavailable.');
         });
     }, [reload]);
@@ -300,7 +304,21 @@ export function SiteConnectionCenterSyncControl({ context }: { context: Frontend
                 </div>
             </section>
 
-            {error ? <div role="alert" className="state-panel state-danger">{error}</div> : null}
+            {error ? (
+                <div role="alert" className="state-panel state-danger">
+                    <p>{error}</p>
+                    {siteNotFound ? (
+                        <a
+                            className="btn primary"
+                            href={tenantUrl(context.tenant.slug, '/sites')}
+                            data-testid="site-connection-back-to-sites"
+                            data-canonical-operation={SITE_CONNECTION_CENTER_BACK_TO_SITES_OPERATION_ID}
+                        >
+                            {locale === 'ar' ? 'العودة للمواقع' : 'Back to sites'}
+                        </a>
+                    ) : null}
+                </div>
+            ) : null}
             {message ? <div role="status" className="state-panel state-success">{message}</div> : null}
 
             <section
