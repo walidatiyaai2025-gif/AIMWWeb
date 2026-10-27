@@ -127,6 +127,7 @@ final class ContentExplorerResetFiltersTerminalityTest extends TestCase
         }
         $member->roles()->attach($role, ['tenant_id' => $tenant->id]);
         $tenantContext->forget();
+
         return $member->fresh('tenant');
     }
 
