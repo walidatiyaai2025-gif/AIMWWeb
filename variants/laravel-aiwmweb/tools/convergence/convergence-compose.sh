@@ -31,11 +31,31 @@ git config user.email "convergence-preflight@example.invalid"
 
 for row in "${manifest_values[@]:1}"; do
     IFS='|' read -r pr branch sha role <<<"$row"
-    git fetch --no-tags origin "$branch"
+
+    # Historical authority branches are cleanup candidates and may legitimately
+    # disappear after their product work is integrated. The pinned immutable SHA,
+    # not the continued existence of the branch name, is the convergence input.
+    if git cat-file -e "${sha}^{commit}" 2>/dev/null; then
+        continue
+    fi
+
+    if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+        git fetch --no-tags origin "$branch"
+    elif [[ -n "$pr" ]] && git ls-remote --exit-code origin "refs/pull/$pr/head" >/dev/null 2>&1; then
+        git fetch --no-tags origin "refs/pull/$pr/head"
+    else
+        git fetch --no-tags origin "$sha"
+    fi
     git cat-file -e "${sha}^{commit}"
 done
 # #260 is the logical Site/Connector authority even though #269 transports its tree.
-git fetch --no-tags origin feature/laravel-aiwmweb-demo-vertical-slice
+if ! git cat-file -e "85b83ce53ce6be434176964bc77ced6beefa6e68^{commit}" 2>/dev/null; then
+    if git ls-remote --exit-code --heads origin feature/laravel-aiwmweb-demo-vertical-slice >/dev/null 2>&1; then
+        git fetch --no-tags origin feature/laravel-aiwmweb-demo-vertical-slice
+    else
+        git fetch --no-tags origin refs/pull/260/head
+    fi
+fi
 
 # Reconstruct the pinned authority graph in an isolated worktree. The previous
 # preflight checked out the historical manifest base in the primary workspace,

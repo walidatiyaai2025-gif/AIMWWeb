@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-AI-44DD850CE4",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "ai",
+    "kind": "visible_control",
+    "route_screen": "/settings/ai-providers",
+    "source": "src/AIWordPressManager.Web/Components/Pages/AIProviderSettings.razor",
+    "source_intent": "in-page Runtime behavior navigation via #runtime",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/views/ai/provider-settings.blade.php",
+    "host_route": "GET /tenants/{tenant}/settings/ai-providers",
+    "target": "#runtime",
+    "target_section": "section#runtime",
+    "route_authority": "tenant.settings.ai-providers",
+    "route_controller": "App\\Http\\Controllers\\AiProviderSettingsReadController",
+    "route_permission": "settings.manage",
+    "route_middleware": [
+      "auth",
+      "tenant.context"
+    ],
+    "semantics": "non-mutating same-document navigation to a truthful read-only runtime-behavior section on the already authorized active-tenant provider settings document"
+  },
+  "security": {
+    "tenant_selector": "none; the fragment remains inside the already authorized active-tenant document",
+    "guest_destination": "redirect to canonical /login before the document renders",
+    "missing_settings_manage": "direct host route fails 403",
+    "foreign_tenant": "direct host route fails 404",
+    "direct_resource_id": false,
+    "server_mutation": false,
+    "provider_mutation": false,
+    "runtime_settings_mutation": false,
+    "fake_success": false,
+    "secret_disclosure_added": false,
+    "saved_api_key_material_rendered": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/AiProviderRuntimeAnchorTerminalityTest.php",
+    "coverage": [
+      "canonical PENDING-or-generator-ADAPTED row identity for the exact operation",
+      "exact production operation marker",
+      "exact href #runtime and section id runtime pairing",
+      "host route remains settings.manage protected and tenant scoped",
+      "guest redirect, missing-permission 403, and foreign-tenant 404 fail-closed behavior",
+      "no caller-supplied tenant/provider identifier in the control",
+      "no provider or runtime-settings mutation surface",
+      "saved provider secret material remains unrendered"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-AI-44DD850CE4"
+    ],
+    "provider_mutation_added": false,
+    "runtime_settings_mutation_added": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "claim_base_sha": "8cdb235e01f3c049764aae2306326629f7c8d76a",
+    "claim_issue_comment": 5563612096,
+    "branch": "worker/laravel-aiwmweb-AIMW-AI-44DD850CE4-slot0118",
+    "reason": "canonical source exposes a same-document #runtime navigation control and section while the Laravel provider settings document already had governed tenant-scoped runtime readiness data but lacked the canonical fragment control and target"
+  },
+  "ci_policy": {
+    "required": [
+      "PR Plan Link",
+      "Laravel AIWMWeb Cross-Domain Security",
+      "Laravel AIWMWeb Acceptance",
+      "Laravel AIWMWeb Parity Reconciliation",
+      "Laravel AIWMWeb Closure Evidence Audit",
+      "Laravel AIWMWeb Convergence Preflight"
+    ],
+    "exact_final_pushed_head_required": true,
+    "status_at_evidence_commit": "pending exact-head repository validation and canonical generator-backed reconciliation"
+  }
+}

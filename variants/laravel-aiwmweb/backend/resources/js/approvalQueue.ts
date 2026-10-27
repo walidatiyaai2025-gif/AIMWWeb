@@ -9,6 +9,7 @@ export function withApprovalQueueEndpoint(context: FrontendContext): FrontendCon
         api: {
             ...context.api,
             approvals: `/api/tenants/${encodeURIComponent(context.tenant.slug)}/approvals`,
+            'ai-center': context.api['ai-center'] ?? `/api/tenants/${encodeURIComponent(context.tenant.slug)}/ai-center`,
         },
     };
 }

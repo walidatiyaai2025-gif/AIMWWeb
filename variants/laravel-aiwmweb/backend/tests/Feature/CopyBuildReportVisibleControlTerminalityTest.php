@@ -16,13 +16,15 @@ class CopyBuildReportVisibleControlTerminalityTest extends TestCase
 {
     use RefreshDatabase;
 
+    private const OPERATION_ID = 'AIMW-SYNC-68B372C9FE';
+
     protected function setUp(): void
     {
         parent::setUp();
         $this->withoutVite();
     }
 
-    public function test_exact_canonical_operation_is_the_pending_copy_build_report_visible_control(): void
+    public function test_exact_canonical_operation_is_generator_backed_adapted_copy_build_report_control(): void
     {
         $payload = json_decode(
             file_get_contents(base_path('../docs/operation-parity-reconciliation.json')),
@@ -30,7 +32,7 @@ class CopyBuildReportVisibleControlTerminalityTest extends TestCase
             512,
             JSON_THROW_ON_ERROR,
         );
-        $row = collect($payload['operations'])->firstWhere('operation_id', 'AIMW-SYNC-68B372C9FE');
+        $row = collect($payload['operations'])->firstWhere('operation_id', self::OPERATION_ID);
 
         $this->assertNotNull($row);
         $this->assertSame('visible_control', $row['kind']);
@@ -41,7 +43,27 @@ class CopyBuildReportVisibleControlTerminalityTest extends TestCase
         $this->assertFalse($row['mutation']);
         $this->assertTrue($row['tenant_owned']);
         $this->assertSame('low', $row['risk']);
-        $this->assertSame('PENDING', $row['migration_state']);
+        $this->assertSame('ADAPTED', $row['migration_state']);
+        $this->assertSame(
+            'variants/laravel-aiwmweb/backend/resources/views/platform/about-build.blade.php',
+            $row['laravel_destination'],
+        );
+        $this->assertSame(
+            'variants/laravel-aiwmweb/backend/tests/Feature/CopyBuildReportVisibleControlTerminalityTest.php',
+            $row['acceptance_test'],
+        );
+        $this->assertSame('focused_closure_contract', $row['reconciliation']['evidence_mode']);
+        $this->assertSame(
+            'variants/laravel-aiwmweb/docs/closure-evidence/copy-build-report-visible-control.json',
+            $row['reconciliation']['evidence_path'],
+        );
+        $this->assertContains(self::OPERATION_ID, $payload['validation']['focused_closure_contract_terminals']);
+        $this->assertSame(931, $payload['totals']['total']);
+        $this->assertSame(
+            $payload['totals']['total'],
+            $payload['totals']['terminal'] + $payload['totals']['pending'] + $payload['totals']['blocked'],
+        );
+        $this->assertTrue((bool) ($payload['validation']['passed'] ?? false));
         $this->assertSame('rendered/read response matches authoritative source', $row['verification']);
     }
 
@@ -55,6 +77,7 @@ class CopyBuildReportVisibleControlTerminalityTest extends TestCase
             $response = $this->actingAs($user)->get("/tenants/alpha/{$path}");
             $response->assertOk()
                 ->assertSee('data-copy-build-report', false)
+                ->assertSee('data-canonical-operation="'.self::OPERATION_ID.'"', false)
                 ->assertSee('Copy build report')
                 ->assertSee('data-copy-build-success', false)
                 ->assertSee('data-copy-build-error', false)

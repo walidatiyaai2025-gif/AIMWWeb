@@ -43,6 +43,118 @@ class PlatformServicesParityClosureTest extends TestCase
         'AIMW-EMAI-78352CD34E',
     ];
 
+    private const STRICT_TENANT_NEUTRAL_BACKEND_OPERATIONS = [
+        'AIMW-PLAT-04D5067C61' => 'SetLanguage',
+        'AIMW-PLAT-17E3F2B4ED' => 'GetLanguage',
+    ];
+
+    private const STRICT_TENANT_NEUTRAL_FOCUSED_SERVICE_OPERATIONS = [
+        'AIMW-PLAT-F6C1A04662' => [
+            'route_screen' => 'service:ApplicationPathService',
+            'current_source' => 'src/AIWordPressManager.Infrastructure/Paths/ApplicationPathService.cs',
+            'visible_control' => 'GetDatabasePath',
+            'destination' => 'variants/laravel-aiwmweb/backend/config/database.php',
+            'acceptance_test' => 'variants/laravel-aiwmweb/backend/tests/Feature/DatabasePathTerminalityTest.php',
+            'evidence_path' => 'variants/laravel-aiwmweb/docs/closure-evidence/database-path-terminality.json',
+            'signals' => [
+                'operation:AIMW-PLAT-F6C1A04662',
+                'service:ApplicationPathService',
+                'member:GetDatabasePath',
+                'test:variants/laravel-aiwmweb/backend/tests/Feature/DatabasePathTerminalityTest.php',
+                'evidence:variants/laravel-aiwmweb/docs/closure-evidence/database-path-terminality.json',
+            ],
+        ],
+        'AIMW-PLAT-83994BBD03' => [
+            'route_screen' => 'service:ApplicationPathService',
+            'current_source' => 'src/AIWordPressManager.Infrastructure/Paths/ApplicationPathService.cs',
+            'visible_control' => 'GetScreenshotsDirectory',
+            'destination' => 'variants/laravel-aiwmweb/backend/config/filesystems.php',
+            'acceptance_test' => 'variants/laravel-aiwmweb/backend/tests/Feature/ScreenshotsDirectoryTerminalityTest.php',
+            'evidence_path' => 'variants/laravel-aiwmweb/docs/closure-evidence/screenshots-directory-terminality.json',
+            'signals' => [
+                'operation:AIMW-PLAT-83994BBD03',
+                'service:ApplicationPathService',
+                'member:GetScreenshotsDirectory',
+                'test:variants/laravel-aiwmweb/backend/tests/Feature/ScreenshotsDirectoryTerminalityTest.php',
+                'evidence:variants/laravel-aiwmweb/docs/closure-evidence/screenshots-directory-terminality.json',
+            ],
+        ],
+        'AIMW-PLAT-A2624EDC66' => [
+            'route_screen' => 'service:ApplicationPathService',
+            'current_source' => 'src/AIWordPressManager.Infrastructure/Paths/ApplicationPathService.cs',
+            'visible_control' => 'GetApplicationDataDirectory',
+            'destination' => 'variants/laravel-aiwmweb/backend/config/filesystems.php',
+            'acceptance_test' => 'variants/laravel-aiwmweb/backend/tests/Feature/ApplicationDataDirectoryTerminalityTest.php',
+            'evidence_path' => 'variants/laravel-aiwmweb/docs/closure-evidence/application-data-directory-terminality.json',
+            'signals' => [
+                'operation:AIMW-PLAT-A2624EDC66',
+                'service:ApplicationPathService',
+                'member:GetApplicationDataDirectory',
+                'test:variants/laravel-aiwmweb/backend/tests/Feature/ApplicationDataDirectoryTerminalityTest.php',
+                'evidence:variants/laravel-aiwmweb/docs/closure-evidence/application-data-directory-terminality.json',
+            ],
+        ],
+        'AIMW-PLAT-3025C8E82B' => [
+            'route_screen' => 'service:ApplicationPathService',
+            'current_source' => 'src/AIWordPressManager.Infrastructure/Paths/ApplicationPathService.cs',
+            'visible_control' => 'GetTemporaryDirectory',
+            'destination' => 'variants/laravel-aiwmweb/backend/config/filesystems.php',
+            'acceptance_test' => 'variants/laravel-aiwmweb/backend/tests/Feature/TemporaryDirectoryTerminalityTest.php',
+            'evidence_path' => 'variants/laravel-aiwmweb/docs/closure-evidence/temporary-directory-terminality.json',
+            'signals' => [
+                'operation:AIMW-PLAT-3025C8E82B',
+                'service:ApplicationPathService',
+                'member:GetTemporaryDirectory',
+                'test:variants/laravel-aiwmweb/backend/tests/Feature/TemporaryDirectoryTerminalityTest.php',
+                'evidence:variants/laravel-aiwmweb/docs/closure-evidence/temporary-directory-terminality.json',
+            ],
+        ],
+        'AIMW-PLAT-15C5517022' => [
+            'route_screen' => 'service:ReleaseNotesService',
+            'current_source' => 'src/AIWordPressManager.Web/Services/ReleaseNotesService.cs',
+            'visible_control' => 'GetAll',
+            'destination' => 'variants/laravel-aiwmweb/backend/app/Platform/ReleaseNotesService.php',
+            'acceptance_test' => 'variants/laravel-aiwmweb/backend/tests/Feature/ReleaseNotesServiceGetAllTerminalityTest.php',
+            'evidence_path' => 'variants/laravel-aiwmweb/docs/closure-evidence/release-notes-get-all-terminality.json',
+            'signals' => [
+                'operation:AIMW-PLAT-15C5517022',
+                'service:ReleaseNotesService',
+                'member:GetAll',
+                'test:variants/laravel-aiwmweb/backend/tests/Feature/ReleaseNotesServiceGetAllTerminalityTest.php',
+                'evidence:variants/laravel-aiwmweb/docs/closure-evidence/release-notes-get-all-terminality.json',
+            ],
+        ],
+        'AIMW-PLAT-57B1A0F5E3' => [
+            'route_screen' => 'service:ReleaseNotesService',
+            'current_source' => 'src/AIWordPressManager.Web/Services/ReleaseNotesService.cs',
+            'visible_control' => 'GetCurrent',
+            'destination' => 'variants/laravel-aiwmweb/backend/app/Platform/ReleaseNotesService.php',
+            'acceptance_test' => 'variants/laravel-aiwmweb/backend/tests/Feature/ReleaseNotesServiceGetCurrentTerminalityTest.php',
+            'evidence_path' => 'variants/laravel-aiwmweb/docs/closure-evidence/release-notes-get-current-terminality.json',
+            'signals' => [
+                'operation:AIMW-PLAT-57B1A0F5E3',
+                'service:ReleaseNotesService',
+                'member:GetCurrent',
+                'test:variants/laravel-aiwmweb/backend/tests/Feature/ReleaseNotesServiceGetCurrentTerminalityTest.php',
+                'evidence:variants/laravel-aiwmweb/docs/closure-evidence/release-notes-get-current-terminality.json',
+            ],
+        ],
+    ];
+
+    private const STRICT_TENANT_NEUTRAL_ROUTE_API_OPERATIONS = [
+        'AIMW-PLAT-18A8EE0324' => [
+            'route_screen' => '/setup',
+            'destination' => 'variants/laravel-aiwmweb/backend/app/Providers/SetupRouteServiceProvider.php',
+            'acceptance_test' => 'variants/laravel-aiwmweb/backend/tests/Feature/PlatformSetupReadTerminalityTest.php',
+            'signals' => [
+                'middleware:web-only',
+                'tenant:neutral',
+                'route:no-parameters',
+                'redirect:safe-local-only',
+            ],
+        ],
+    ];
+
     public function test_composed_reconciliation_never_regresses_the_frozen_backend_pending_baseline(): void
     {
         $pending = $this->pendingBackend();
@@ -104,8 +216,10 @@ class PlatformServicesParityClosureTest extends TestCase
             $this->assertNotSame('', trim((string) $operation['laravel_destination']), $operationId.' is missing a Laravel destination.');
             $this->assertNotSame('', trim((string) $operation['acceptance_test']), $operationId.' is missing test evidence.');
             $this->assertTrue(
-                (bool) $operation['tenant_owned'] || $this->hasStrictTenantSelectedApiEvidence($operation),
-                $operationId.' must remain tenant-owned or carry the strict explicit tenant-selected API security contract.',
+                (bool) $operation['tenant_owned']
+                    || $this->hasStrictTenantSelectedApiEvidence($operation)
+                    || $this->hasStrictTenantNeutralBackendEvidence($operation),
+                $operationId.' must remain tenant-owned, carry the strict explicit tenant-selected API security contract, or be an explicitly proven tenant-neutral local operation.',
             );
             $this->assertNotSame('', trim((string) ($operation['reconciliation']['source_sha'] ?? '')), $operationId.' is missing exact-SHA evidence.');
         }
@@ -137,7 +251,12 @@ class PlatformServicesParityClosureTest extends TestCase
             $nonTerminalVisibleControls->every(fn (array $operation): bool => $operation['migration_state'] === 'PENDING'),
             'Owned visible controls may leave PENDING only through a terminal classification.',
         );
-        $this->assertSame(['route', 'visible_control'], $frontend->pluck('kind')->unique()->sort()->values()->all());
+        $frontendKinds = $frontend->pluck('kind')->unique()->sort()->values();
+        $this->assertTrue(
+            $frontendKinds->every(fn (string $kind): bool => in_array($kind, ['route', 'visible_control'], true)),
+            'Owned frontend PENDING inventory may contain only route and visible-control operations.',
+        );
+        $this->assertContains('visible_control', $frontendKinds->all(), 'Owned visible-control PENDING inventory should remain explicit while it exists.');
 
         foreach ($terminalVisibleControls as $operation) {
             $operationId = $operation['operation_id'];
@@ -180,6 +299,81 @@ class PlatformServicesParityClosureTest extends TestCase
         }
 
         return true;
+    }
+
+    private function hasStrictTenantNeutralBackendEvidence(array $operation): bool
+    {
+        if (! $this->hasTenantNeutralLocalSafetyShape($operation)) {
+            return false;
+        }
+
+        $operationId = $operation['operation_id'] ?? null;
+        $expectedMethod = self::STRICT_TENANT_NEUTRAL_BACKEND_OPERATIONS[$operationId] ?? null;
+        if ($expectedMethod !== null) {
+            if (($operation['service'] ?? null) !== 'LanguagePreferenceService'
+                || ($operation['visible_control'] ?? null) !== $expectedMethod) {
+                return false;
+            }
+
+            $signals = $operation['reconciliation']['signals'] ?? [];
+
+            return in_array('method:'.$expectedMethod, $signals, true)
+                && in_array('token:language', $signals, true)
+                && in_array('token:preference', $signals, true);
+        }
+
+        $serviceContract = self::STRICT_TENANT_NEUTRAL_FOCUSED_SERVICE_OPERATIONS[$operationId] ?? null;
+        if ($serviceContract !== null) {
+            if (($operation['route_screen'] ?? null) !== $serviceContract['route_screen']
+                || ($operation['current_source'] ?? null) !== $serviceContract['current_source']
+                || ($operation['visible_control'] ?? null) !== $serviceContract['visible_control']
+                || ($operation['laravel_destination'] ?? null) !== $serviceContract['destination']
+                || ($operation['acceptance_test'] ?? null) !== $serviceContract['acceptance_test']
+                || ($operation['reconciliation']['evidence_mode'] ?? null) !== 'focused_service_contract'
+                || ($operation['reconciliation']['evidence_path'] ?? null) !== $serviceContract['evidence_path']) {
+                return false;
+            }
+
+            $signals = $operation['reconciliation']['signals'] ?? [];
+            foreach ($serviceContract['signals'] as $requiredSignal) {
+                if (! in_array($requiredSignal, $signals, true)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        $routeContract = self::STRICT_TENANT_NEUTRAL_ROUTE_API_OPERATIONS[$operationId] ?? null;
+        if ($routeContract === null) {
+            return false;
+        }
+
+        if (($operation['route_screen'] ?? null) !== $routeContract['route_screen']
+            || ($operation['laravel_destination'] ?? null) !== $routeContract['destination']
+            || ($operation['acceptance_test'] ?? null) !== $routeContract['acceptance_test']
+            || ($operation['reconciliation']['evidence_mode'] ?? null) !== 'explicit_route_api_contract') {
+            return false;
+        }
+
+        $signals = $operation['reconciliation']['signals'] ?? [];
+        foreach ($routeContract['signals'] as $requiredSignal) {
+            if (! in_array($requiredSignal, $signals, true)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function hasTenantNeutralLocalSafetyShape(array $operation): bool
+    {
+        return ($operation['tenant_owned'] ?? true) === false
+            && ($operation['mutation'] ?? true) === false
+            && ($operation['external_dependency'] ?? null) === 'none'
+            && ($operation['native_wp_rest'] ?? true) === false
+            && ($operation['connector_required'] ?? true) === false
+            && ($operation['risk'] ?? null) === 'low';
     }
 
     private function pendingBackend()

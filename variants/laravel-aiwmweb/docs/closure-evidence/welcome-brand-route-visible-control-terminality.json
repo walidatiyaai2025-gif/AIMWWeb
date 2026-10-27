@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-AI-4C07560F0B",
+  "domain": "ai",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/Welcome.razor",
+    "route_screen": "/welcome",
+    "scanner_visible_control": "AI WordPress Manager -> /welcome",
+    "resolved_control": "public AI WordPress Manager brand self-navigation anchor",
+    "source_target": "/welcome",
+    "behavior": "The public AI WordPress Manager brand returns to the canonical anonymous welcome route.",
+    "allow_anonymous": true,
+    "tenant_owned": true,
+    "mutation": false,
+    "risk": "low"
+  },
+  "laravel_adaptation": {
+    "route_provider": "backend/app/Providers/PublicWelcomeRouteServiceProvider.php",
+    "action": "backend/app/Http/Controllers/PublicWelcomeReadController.php",
+    "view": "backend/resources/views/ai/welcome.blade.php",
+    "control_binding": "data-canonical-operation=AIMW-AI-4C07560F0B",
+    "target_contract": "/welcome",
+    "adaptation_reason": "A dedicated web-only public route and identity-neutral view preserve the canonical anonymous brand self-navigation without resolving tenant or user authority.",
+    "fake_or_demo_data": false
+  },
+  "authorization": {
+    "authentication": "none; canonical source is AllowAnonymous",
+    "tenant_context": "none",
+    "route_middleware": "web only",
+    "tenant_scoped_alias": "not registered; 404"
+  },
+  "tenant_isolation": {
+    "proof": "Anonymous and authenticated callers receive the same identity-neutral welcome content, authenticated user sentinels are absent, and /tenants/{tenant}/welcome is not registered.",
+    "caller_override_probe": "The route has no route parameters and the visible control cannot select or interpolate a tenant identity."
+  },
+  "semantics": {
+    "persistence_mutation": false,
+    "external_dependency": "none for this public brand-navigation operation",
+    "approval_required": false,
+    "authoritative_tenant_context": false,
+    "cross_tenant_disclosure": false,
+    "fake_success_path": "none"
+  },
+  "acceptance_tests": {
+    "php": {
+      "file": "backend/tests/Feature/WelcomeBrandRouteVisibleControlTerminalityTest.php",
+      "coverage": [
+        "exact canonical operation identity and source metadata",
+        "explicit web-only public /welcome route",
+        "absence of auth and tenant.context middleware",
+        "exact operation marker and /welcome brand href",
+        "anonymous and authenticated response identity neutrality",
+        "authenticated user name and email non-disclosure",
+        "tenant-scoped welcome alias returns 404"
+      ]
+    }
+  },
+  "implementation": {
+    "baseline_composition_sha": "65df9dca149d02879ae8e4fac0ac02ea9b546e42",
+    "validated_implementation_sha": "57a196f4fa8c6bd81c799e72f2ae1bf47f83aa01",
+    "validated_ci": {
+      "acceptance_run": 34134145238,
+      "parity_reconciliation_run": 34134145220,
+      "cross_domain_security_run": 34134145195,
+      "pr_plan_link_run": 34134145235,
+      "result": "PASS"
+    }
+  },
+  "scope_guards": {
+    "exactly_one_operation": true,
+    "generated_reconciliation_edited": false,
+    "reference_product_modified": false,
+    "second_operation_started": false,
+    "force_push_performed": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "The canonical public brand self-navigation is implemented as a real Laravel /welcome control on an anonymous web-only route with operation-linked production/test evidence and deterministic identity non-disclosure proof."
+  }
+}

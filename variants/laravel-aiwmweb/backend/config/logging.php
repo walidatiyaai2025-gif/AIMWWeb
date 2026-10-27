@@ -7,6 +7,14 @@ use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
 use Monolog\Processor\PsrLogMessageProcessor;
 
+/*
+| Canonical native-framework parity marker:
+| AIMW-OPER-55C6982761 ApplicationPathService.GetLogsDirectory
+|
+| Laravel owns this operation through storage_path('logs'); the marker binds the
+| existing production logging configuration to the canonical service/member
+| without introducing a duplicate path-service abstraction.
+*/
 return [
     'default' => env('LOG_CHANNEL', 'stack'),
 

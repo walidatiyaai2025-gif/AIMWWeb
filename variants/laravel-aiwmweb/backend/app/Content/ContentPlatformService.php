@@ -91,6 +91,37 @@ final class ContentPlatformService
         return $remote;
     }
 
+    public function assertContentVersion(int $siteId, string $type, int $remoteId, array $expected): ContentItem
+    {
+        abort_unless(in_array($type, ['post', 'page'], true), 404);
+
+        $item = ContentItem::query()
+            ->where('site_id', $siteId)
+            ->where('type', $type)
+            ->where('remote_id', $remoteId)
+            ->firstOrFail();
+
+        $resource = $type === 'post' ? 'posts' : 'pages';
+        $this->guardConflict($siteId, $resource, $item, $expected);
+
+        return $item->refresh();
+    }
+
+    public function reconcileContentItem(int $siteId, string $type, int $remoteId): ContentItem
+    {
+        abort_unless(in_array($type, ['post', 'page'], true), 404);
+
+        $resource = $type === 'post' ? 'posts' : 'pages';
+        $remote = $this->remote->get($siteId, $resource, $remoteId);
+        $this->upsertRemote($siteId, $resource, $remote);
+
+        return ContentItem::query()
+            ->where('site_id', $siteId)
+            ->where('type', $type)
+            ->where('remote_id', $remoteId)
+            ->firstOrFail();
+    }
+
     public function restoreRevision(int $siteId, ContentItem $item, ContentRevision $revision): array
     {
         abort_unless($item->site_id === $siteId && $revision->site_id === $siteId && $revision->content_item_id === $item->id, 404);

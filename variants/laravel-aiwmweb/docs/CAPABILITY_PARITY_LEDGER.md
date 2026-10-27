@@ -17,7 +17,7 @@ Unknown work is `PENDING`. Terminal states are only `PORTED`, `ADAPTED`, `VERIFI
 - CONNECTOR_REQUIRED: **16**
 - NATIVE_REST: **449**
 - LARAVEL_ONLY: **116**
-- DEAD_FUNCTION_FINDINGS_REQUIRING_REVIEW: **0**
+- DEAD_FUNCTION_FINDINGS_REQUIRING_REVIEW: **5**
 
 Completion % = `(PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL + BLOCKED) / TOTAL_OPERATIONS × 100`. `BLOCKED` is terminal accounting only when the blocker and evidence are explicit; it is not a success claim.
 

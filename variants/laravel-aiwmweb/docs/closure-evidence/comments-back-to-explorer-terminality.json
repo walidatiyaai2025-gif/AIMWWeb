@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-COMM-2B682F7BEC",
+    "domain": "comments",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/CommentsManager.razor",
+    "source_screen": "/sites/{SiteId:guid}/comments",
+    "source_control": "BackToExplorer",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_behavior": {
+    "summary": "CommentsManager exposes localized BackToExplorer navigation from the currently loaded site Comments Manager to that same site's Explorer.",
+    "side_effect": "navigation only",
+    "success_semantics": "navigation only; no WordPress, local persistence, queue, cache, schedule, provider, or secret mutation is performed"
+  },
+  "laravel_adaptation": {
+    "visible_control": "variants/laravel-aiwmweb/backend/resources/js/comments-back-to-explorer-control.tsx",
+    "runtime_wiring": "CommentsBackToExplorerControl is mounted only by RouteElement for route.key === 'comments' on the real tenant Comments workspace.",
+    "destination": "/tenants/{tenant}/explorer?site={active_site}",
+    "destination_derivation": "tenant slug and active_site.id are taken from the authenticated server FrontendContext; active_site must agree with the same-origin tenant-qualified api.comments contract before navigation is exposed",
+    "caller_selected_destination": false,
+    "placeholder_or_catch_all_success": false,
+    "demo_or_sample_data": false
+  },
+  "runtime_path": [
+    "authenticated browser session enters /tenants/{tenant}/module/comments?site={site} under auth and tenant.context",
+    "TenantBootstrap requests /tenants/{tenant}/context?site={site} through same-origin apiRequest credentials",
+    "tenant.context resolves an active membership for the authenticated user and the route tenant slug",
+    "the context endpoint requires tenant.view and resolves the optional site through tenant-scoped Site::query()->findOrFail",
+    "only a tenant-owned resolved site becomes active_site and receives the matching api.comments contract",
+    "the control requires the existing Comments workspace capability, preserving content.view and comments.read connector scope",
+    "the control independently requires Explorer's sites.view permission and respects any explicit disabled explorer capability state without inventing a nonexistent explorer API contract",
+    "the control verifies api.comments origin, encoded tenant slug, active site id, and absence of query/fragment overrides",
+    "the destination is derived from tenantUrl(context.tenant.slug, '/explorer') plus the server-derived active_site.id",
+    "navigation reloads /tenants/{tenant}/explorer?site={site}; TenantBootstrap then rereads /context?site={site}, reapplying authenticated tenant and tenant-scoped site resolution",
+    "navigation reports no domain mutation or fabricated success state"
+  ],
+  "authorization": {
+    "session": "Laravel authenticated same-origin session is required by server routes/context; no local fake sign-in is introduced",
+    "source_workspace": [
+      "auth",
+      "tenant.context",
+      "tenant.view",
+      "content.view",
+      "comments.read connector capability"
+    ],
+    "destination_workspace": [
+      "auth",
+      "tenant.context",
+      "tenant.view",
+      "sites.view"
+    ],
+    "guest_context": "401",
+    "missing_tenant_view": "403",
+    "missing_content_view": "control hidden through Comments capability",
+    "missing_sites_view": "control hidden",
+    "missing_comments_read": "control hidden",
+    "explicit_comments_disable": "control hidden",
+    "explicit_explorer_disable": "control hidden",
+    "foreign_tenant": "404",
+    "foreign_site_direct_id": "404"
+  },
+  "tenant_isolation": {
+    "active_tenant_resolution": "tenant.context binds the route tenant to the authenticated user's active membership",
+    "active_site_resolution": "server-side tenant-scoped Site::query()->findOrFail on the authenticated context request",
+    "api_contract_match": "control requires /api/v1/tenants/{encoded active tenant}/sites/{active_site.id}/comments exactly",
+    "same_origin_required": true,
+    "query_or_fragment_override_rejected": true,
+    "foreign_origin_rejected": true,
+    "caller_site_override": false,
+    "caller_tenant_override": false
+  },
+  "runtime_semantics": {
+    "read_only": true,
+    "input_validation": "active_site.id must be a positive safe integer; comments authority must be a parseable same-origin exact path with no query or fragment override",
+    "csrf_write_path": "not applicable; this canonical control issues navigation only and no write request",
+    "persistence": "no Site, Comment, Connector, or tenant persistence change",
+    "authoritative_reread": "destination TenantBootstrap rereads the tenant context and selected site from the server after navigation",
+    "truthful_success": "there is no success receipt or status; the link is absent whenever authority or capability is inconsistent",
+    "idempotency": "repeated navigation is side-effect free",
+    "retry": "no domain retry is introduced; only normal read/context loading behavior applies",
+    "cancellation": "not applicable; navigation starts no background/domain operation",
+    "queue_cache_scheduler": "none introduced",
+    "secret_exposure": "none; the control consumes only tenant slug, numeric site id, permissions/capability metadata, and a same-origin API path",
+    "wordpress_connector_safety": "no WordPress mutation or Connector write is performed by the control",
+    "provider_safety": "no AI, billing, mail, or other provider call is performed",
+    "audit_or_receipt": "not applicable because no domain mutation occurs",
+    "sample_demo_fake_success": false
+  },
+  "acceptance_tests": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/comments-back-to-explorer-control.test.tsx",
+    "php_feature": "variants/laravel-aiwmweb/backend/tests/Feature/CommentsBackToExplorerControlTerminalityTest.php",
+    "proof": [
+      "exact canonical operation marker and source-equivalent Back to Explorer navigation",
+      "server-authoritative active_site destination",
+      "same-origin active_site/api.comments agreement mandatory",
+      "foreign tenant, foreign site, foreign origin, query override, and fragment override fail closed",
+      "tenant.view, content.view, sites.view, comments.read, explicit Comments disable, and explicit Explorer disable fail closed",
+      "guest context is unauthorized and foreign direct site ids return not found",
+      "authorized destination rereads authoritative tenant/site context",
+      "authoritative Site persistence remains unchanged",
+      "no API mutation, CSRF write, queue/cache/scheduler, secret, WordPress mutation, Connector write, provider call, demo data, or fake success"
+    ]
+  },
+  "validation": {
+    "focused_validation_head": "95c7d89089516e41a3be87ec8b810d639c7ef714",
+    "workflow_run": 35109813395,
+    "workflow_job": 104840278108,
+    "result": "PASS",
+    "php_tenant_idor": "PASS",
+    "php_tests": "5 passed / 40 assertions",
+    "typescript_typecheck": "PASS",
+    "react_control": "PASS (12 tests)"
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-COMM-2B682F7BEC",
+    "second_operation_started": false,
+    "aspnet_reference_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "security_assertions_weakened": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true,
+    "reason": "The source BackToExplorer behavior is implemented as a tenant-qualified, server-authority-derived, read-only Laravel Comments control. It requires authenticated tenant context, Comments and Explorer authorization boundaries, rejects mismatched/foreign site authority, rereads server context at the destination, exposes no secrets or mutation surface, and fails closed whenever the required authority is absent or inconsistent."
+  },
+  "recovery_validation": {
+    "base_authority_sha": "a7e16fd9a1e7a59874d1e9c19f9e51e2ebf962ee",
+    "validation_input_sha": "0b92eb096cce1db331bef3d20e29c786c1823e73",
+    "workflow_run": 35127903507,
+    "pre_materialization_php_security_methods": "PASS (4 focused methods)",
+    "typescript_typecheck": "PASS",
+    "react_control": "PASS (12 tests)",
+    "pint": "PASS",
+    "result": "PASS"
+  }
+}

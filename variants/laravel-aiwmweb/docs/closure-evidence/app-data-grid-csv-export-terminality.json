@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #987 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-EB9202408A",
+  "domain": "sync",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Shared/AppDataGrid.razor",
+    "route_screen": "component:AppDataGrid",
+    "visible_control": "@ExportText [ExportCsvAsync]",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Shared/AppDataGrid.razor:component:AppDataGrid:@ExportText [ExportCsvAsync]",
+    "behavior": "When CsvRowSelector is present, the visible export control is disabled for an empty filtered collection, maps the current sorted authoritative rows through CsvRowSelector, and invokes the CSV downloader with the configured filename and headers.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_adaptation": {
+    "shared_contract": "variants/laravel-aiwmweb/backend/resources/js/app-data-grid-csv-export-control.ts",
+    "real_consumer": "variants/laravel-aiwmweb/backend/resources/js/site-operations-export-control.tsx",
+    "consumer_api": "GET /tenants/{tenant}/route-api/site-operations",
+    "consumer_permission": "execution.view",
+    "semantics": [
+      "reuse the existing Site Operations CSV action without duplicate UX",
+      "preserve empty-row disabled behavior",
+      "map the authoritative currently displayed rows before the browser CSV download",
+      "introduce no server, WordPress, queue, cache, billing, provider, or secret mutation"
+    ],
+    "fake_or_demo_data": false
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-EB9202408A"
+    ],
+    "sibling_app_data_grid_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "retry_or_replacement_lineage_created": false
+  },
+  "materialized": true,
+  "evidence_source_sha": "cb59f548bb2501797c6f0c3b32017f838ac0c486"
+}

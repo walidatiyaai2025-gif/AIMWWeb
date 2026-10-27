@@ -2,11 +2,19 @@
 
 use App\Http\Controllers\AiUsageReadController;
 use App\Http\Controllers\ContentApiController;
+use App\Http\Controllers\ContentExplorerReadController;
 use App\Http\Controllers\EmailNotificationController;
+use App\Http\Controllers\GlobalPagesTrashController;
+use App\Http\Controllers\GlobalPostsPublishController;
+use App\Http\Controllers\GlobalPostsTrashController;
 use App\Http\Controllers\LegacyNotificationReadController;
 use App\Http\Controllers\PlatformReadController;
 use App\Http\Controllers\SeoRemediationClosureController;
+use App\Http\Controllers\SiteSyncCancellationController;
 use App\Http\Controllers\SyncApiController;
+use App\Http\Controllers\WordPressUsersController;
+use App\Sync\GlobalSynchronizationAcceptRemoteService;
+use App\Sync\GlobalSynchronizationConflictReviewService;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['web', 'auth'])->controller(PlatformReadController::class)->group(function (): void {
@@ -20,13 +28,35 @@ Route::middleware(['web', 'auth'])
 Route::post('v1/sync/webhooks/connector', [SyncApiController::class, 'webhook']);
 
 Route::prefix('v1/tenants/{tenant}/sites/{site}')->middleware(['web', 'tenant.context'])->group(function () {
+    Route::get('explorer', ContentExplorerReadController::class)
+        ->middleware('auth')
+        ->defaults('canonical_operation_id', ContentExplorerReadController::OPERATION_ID)
+        ->name('canonical.api.content-explorer.read');
     Route::get('content/{type}', [ContentApiController::class, 'index']);
     Route::post('content/{type}', [ContentApiController::class, 'store']);
+    Route::get('content/{type}/{wordpressId}/editor', [ContentApiController::class, 'editor'])
+        ->middleware('auth')
+        ->whereNumber('wordpressId')
+        ->name('api.v1.content.editor.show');
+    Route::patch('content/{type}/{wordpressId}/editor', [ContentApiController::class, 'saveEditor'])
+        ->middleware('auth')
+        ->whereNumber('wordpressId')
+        ->defaults('canonical_operation_id', ContentApiController::CONTENT_EDITOR_SAVE_OPERATION_ID)
+        ->name('api.v1.content.editor.save');
+    Route::post('content/{type}/{wordpressId}/editor/approval', [ContentApiController::class, 'submitEditorForApproval'])
+        ->middleware('auth')
+        ->whereNumber('wordpressId')
+        ->defaults('canonical_operation_id', ContentApiController::CONTENT_EDITOR_SUBMIT_APPROVAL_OPERATION_ID)
+        ->name('api.v1.content.editor.submit-approval');
     Route::get('content/items/{content}', [ContentApiController::class, 'show']);
     Route::patch('content/items/{content}', [ContentApiController::class, 'update']);
     Route::post('content/items/{content}/state', [ContentApiController::class, 'state']);
     Route::delete('content/items/{content}', [ContentApiController::class, 'destroy']);
     Route::post('content/bulk', [ContentApiController::class, 'bulk']);
+    Route::post('content/bulk/trash', [ContentApiController::class, 'bulkTrash'])
+        ->middleware('auth')
+        ->defaults('canonical_operation_id', ContentApiController::CONTENT_EXPLORER_BULK_TRASH_OPERATION_ID)
+        ->name('api.v1.content.explorer.bulk-trash');
     Route::get('content/items/{content}/revisions', [ContentApiController::class, 'revisions']);
     Route::get('content/items/{content}/revisions/compare/{from}/{to}', [ContentApiController::class, 'compareRevisions']);
     Route::post('content/items/{content}/revisions/{revision}/restore', [ContentApiController::class, 'restoreRevision']);
@@ -34,12 +64,23 @@ Route::prefix('v1/tenants/{tenant}/sites/{site}')->middleware(['web', 'tenant.co
     Route::get('media', [ContentApiController::class, 'media']);
     Route::post('media', [ContentApiController::class, 'uploadMedia']);
     Route::patch('media/{media}', [ContentApiController::class, 'updateMedia']);
-    Route::delete('media/{media}', [ContentApiController::class, 'deleteMedia']);
+    Route::delete('media/{media}', [ContentApiController::class, 'deleteMedia'])
+        ->middleware('auth')
+        ->defaults('canonical_operation_id', ContentApiController::MEDIA_DELETE_OPERATION_ID)
+        ->name('api.v1.media.delete-permanently');
 
     Route::get('comments', [ContentApiController::class, 'comments']);
     Route::post('comments/{comment}/action', [ContentApiController::class, 'commentAction']);
     Route::post('comments/{comment}/reply', [ContentApiController::class, 'replyComment']);
     Route::post('comments/bulk', [ContentApiController::class, 'bulkComments']);
+
+    Route::get('users', [WordPressUsersController::class, 'index'])
+        ->middleware('auth')
+        ->name('api.v1.wordpress-users.index');
+    Route::post('users/save', [WordPressUsersController::class, 'save'])
+        ->middleware('auth')
+        ->defaults('canonical_operation_id', WordPressUsersController::SAVE_OPERATION_ID)
+        ->name('api.v1.wordpress-users.save');
 
     Route::get('taxonomy', [ContentApiController::class, 'taxonomy']);
     Route::get('taxonomy/discover', [ContentApiController::class, 'discoverTaxonomy']);
@@ -50,11 +91,26 @@ Route::prefix('v1/tenants/{tenant}/sites/{site}')->middleware(['web', 'tenant.co
     Route::post('taxonomy/bulk-assign', [ContentApiController::class, 'bulkAssignTerms']);
 
     Route::post('sync', [SyncApiController::class, 'start']);
+    Route::post('sync/accept-remote', [SyncApiController::class, 'acceptRemote'])
+        ->middleware('auth')
+        ->defaults('canonical_operation_id', GlobalSynchronizationAcceptRemoteService::OPERATION_ID)
+        ->name('api.v1.sites.sync.accept-remote');
     Route::get('sync', [SyncApiController::class, 'index']);
+    Route::get('sync/active', [SiteSyncCancellationController::class, 'active'])
+        ->middleware('auth')
+        ->name('api.v1.sites.sync.active');
+    Route::post('sync/cancel', [SiteSyncCancellationController::class, 'cancel'])
+        ->middleware('auth')
+        ->defaults('canonical_operation_id', SiteSyncCancellationController::OPERATION_ID)
+        ->name('api.v1.sites.sync.cancel');
     Route::get('sync/runs/{run}', [SyncApiController::class, 'show']);
     Route::post('sync/runs/{run}/resume', [SyncApiController::class, 'resume']);
     Route::post('sync/items/{item}/retry', [SyncApiController::class, 'retryItem']);
     Route::get('sync/diagnostics', [SyncApiController::class, 'diagnostics']);
+    Route::get('sync/review-conflicts', [SyncApiController::class, 'reviewConflicts'])
+        ->middleware('auth')
+        ->defaults('canonical_operation_id', GlobalSynchronizationConflictReviewService::OPERATION_ID)
+        ->name('api.v1.sites.sync.review-conflicts');
     Route::get('conflicts', [SyncApiController::class, 'conflicts']);
     Route::post('conflicts/{conflict}/resolve', [SyncApiController::class, 'resolveConflict']);
 
@@ -68,6 +124,7 @@ Route::prefix('v1/tenants/{tenant}/sites/{site}/seo/remediations')
     ->group(function (): void {
         Route::get('/proposals', [SeoRemediationClosureController::class, 'proposals']);
         Route::get('/history', [SeoRemediationClosureController::class, 'history']);
+        Route::post('/failed/retry', [SeoRemediationClosureController::class, 'retryFailed']);
         Route::post('/executions/{execution}/undo', [SeoRemediationClosureController::class, 'undo']);
     });
 
@@ -75,6 +132,19 @@ Route::prefix('v1/tenants/{tenant}')
     ->middleware(['auth', 'tenant.context'])
     ->group(function (): void {
         Route::get('/ai/usage', [AiUsageReadController::class, 'index'])->name('canonical.api.ai-usage');
+        Route::get('/global-pages', [GlobalPagesTrashController::class, 'index'])
+            ->name('api.v1.global-pages.index');
+        Route::post('/global-pages/trash', [GlobalPagesTrashController::class, 'trash'])
+            ->defaults('canonical_operation_id', GlobalPagesTrashController::OPERATION_ID)
+            ->name('api.v1.global-pages.trash');
+        Route::get('/global-posts', [GlobalPostsTrashController::class, 'index'])
+            ->name('api.v1.global-posts.index');
+        Route::post('/global-posts/publish', [GlobalPostsPublishController::class, 'publish'])
+            ->defaults('canonical_operation_id', GlobalPostsPublishController::OPERATION_ID)
+            ->name('api.v1.global-posts.publish');
+        Route::post('/global-posts/trash', [GlobalPostsTrashController::class, 'trash'])
+            ->defaults('canonical_operation_id', GlobalPostsTrashController::OPERATION_ID)
+            ->name('api.v1.global-posts.trash');
         Route::get('/notifications', [EmailNotificationController::class, 'index']);
         Route::get('/notifications/unread-count', [EmailNotificationController::class, 'unreadCount']);
         Route::post('/notifications/{notification}/read', [EmailNotificationController::class, 'markRead']);
@@ -84,7 +154,18 @@ Route::prefix('v1/tenants/{tenant}')
         Route::get('/notification-preferences/tenant', [EmailNotificationController::class, 'tenantPreferences']);
         Route::put('/notification-preferences/tenant', [EmailNotificationController::class, 'saveTenantPreference']);
         Route::get('/email/configuration', [EmailNotificationController::class, 'configuration']);
-        Route::put('/email/configuration', [EmailNotificationController::class, 'saveConfiguration']);
+        Route::put('/email/configuration', [EmailNotificationController::class, 'saveConfiguration'])
+            ->defaults('canonical_operation_id', 'AIMW-EMAI-00CC1272F6')
+            ->name('api.v1.email.configuration.save');
+        Route::get('/email/recipients', [EmailNotificationController::class, 'accountRecipients'])
+            ->name('api.v1.email.recipients.index');
+        Route::patch('/email/recipients/{recipient}', [EmailNotificationController::class, 'updateAccountRecipient'])
+            ->defaults('canonical_operation_id', 'AIMW-EMAI-10F3C44369')
+            ->whereNumber('recipient')
+            ->name('api.v1.email.recipients.update');
+        Route::delete('/email/configuration/secret', [EmailNotificationController::class, 'clearConfigurationSecret'])
+            ->defaults('canonical_operation_id', 'AIMW-EMAI-54E7EEFB15')
+            ->name('api.v1.email.configuration.secret.clear');
         Route::post('/email/configuration/diagnose', [EmailNotificationController::class, 'diagnose']);
         Route::get('/email/templates', [EmailNotificationController::class, 'templates']);
         Route::put('/email/templates/{stableId}/{locale}', [EmailNotificationController::class, 'saveTemplate']);

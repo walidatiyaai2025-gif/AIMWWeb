@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #773 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-4D6C928D75",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-CONT-4D6C928D75",
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/content | /module/content",
+    "source": "src/AIWordPressManager.Web/Components/Pages/GlobalContentHub.razor",
+    "source_intent": "When a site-scoped content hub is active, provide All sites navigation back to the tenant-wide /content hub.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/content-hub-all-sites-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "destination": "/tenants/{tenant}/content",
+    "operation_marker": "AIMW-CONT-4D6C928D75",
+    "site_context": "validated tenant context via /tenants/{tenant}/context?site={id}"
+  },
+  "security": {
+    "permission": "content.view",
+    "tenant_destination": "server-derived active tenant slug",
+    "foreign_tenant": "404/fail closed",
+    "foreign_site_context": "404/fail closed",
+    "mutation_added": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-hub-all-sites-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentHubAllSitesControlTerminalityTest.php"
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-CONT-4D6C928D75"],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false
+  }
+}

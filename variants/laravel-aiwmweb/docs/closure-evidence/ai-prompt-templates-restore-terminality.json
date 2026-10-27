@@ -10,7 +10,7 @@
     "visible_control": "Restore historical prompt revision",
     "current_source": "src/AIWordPressManager.Web/Components/Pages/AIPromptTemplates.razor",
     "tenant_owned": true,
-    "terminal_state": "PENDING_CI"
+    "terminal_state": "ADAPTED"
   },
   "source_semantics": {
     "history_rule": "Restoring never rewrites history; it creates a new revision from the selected historical content.",
@@ -21,8 +21,7 @@
   },
   "laravel_adaptation": {
     "view": "variants/laravel-aiwmweb/backend/resources/views/ai/prompt-templates.blade.php",
-    "route_file": "variants/laravel-aiwmweb/backend/routes/ai-prompt-restore.php",
-    "bootstrap_wiring": "variants/laravel-aiwmweb/backend/bootstrap/app.php",
+    "route_file": "variants/laravel-aiwmweb/backend/app/Providers/AiPromptTemplatesRouteServiceProvider.php",
     "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AiPromptTemplateRestoreController.php",
     "existing_registry_primitive": "variants/laravel-aiwmweb/backend/app/AI/Platform/Services/PromptRegistryService.php::restore",
     "append_only_fix": "Restore passes forceRevision=true so a restore always creates a new revision even when the target snapshot equals current state; normal Save deduplication is unchanged.",
@@ -33,7 +32,11 @@
   },
   "security": {
     "required_permission": "settings.manage",
-    "middleware": ["web", "auth", "tenant.context"],
+    "middleware": [
+      "web",
+      "auth",
+      "tenant.context"
+    ],
     "tenant_slug_guard": true,
     "template_lookup": "tenant-scoped AiPromptTemplate stable_key lookup",
     "revision_lookup": "revision must belong to the tenant-scoped selected template",
@@ -53,7 +56,7 @@
   },
   "acceptance": {
     "test": "variants/laravel-aiwmweb/backend/tests/Feature/AiPromptTemplateRestoreVisibleControlTerminalityTest.php",
-    "ci_status": "pending exact-head GitHub Actions verification",
+    "ci_status": "exact-head GitHub Actions required before merge",
     "proofs": [
       "exact canonical operation identity and source semantics",
       "explicit guarded POST route and controller wiring",
@@ -68,7 +71,9 @@
     ]
   },
   "scope": {
-    "claimed_operations": ["AIMW-AI-D5FAAA34DD"],
+    "claimed_operations": [
+      "AIMW-AI-D5FAAA34DD"
+    ],
     "excluded_operations": [
       "AIMW-AI-825B2F5A38",
       "AIMW-AI-79AE29D6B3",
@@ -80,11 +85,11 @@
   },
   "provenance": {
     "base_branch": "worker/laravel-aiwmweb-closure-composition",
-    "claim_base_sha": "421017c717fc32eb1a0c58468a034d29aca6c577",
+    "claim_base_sha": "c74d856f73bc20ff63c71c8f3df87f978ab56cd6",
     "worker_branch": "worker/laravel-AIMW-AI-D5FAAA34DD-ai-prompts-restore",
     "claim_comment_id": 5475703978
   },
   "terminality": {
-    "state": "PENDING_CI"
+    "state": "ADAPTED"
   }
 }

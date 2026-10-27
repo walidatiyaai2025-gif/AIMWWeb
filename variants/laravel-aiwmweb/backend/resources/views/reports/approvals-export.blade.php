@@ -11,6 +11,11 @@
         <p>BUSINESS INTELLIGENCE</p>
         <h1>Reports &amp; Exports</h1>
         <p>Live reports from real application data.</p>
+        <a
+            data-canonical-operation="AIMW-BILL-A6E9CF63BC"
+            href="{{ request()->getRequestUri() }}"
+            aria-label="Refresh reports"
+        >Refresh</a>
     </section>
 
     <section data-canonical-operation="AIMW-SYNC-D8581471A2">
@@ -36,6 +41,36 @@
                         <td>{{ $site['name'] }}</td>
                         <td>{{ $site['url'] }}</td>
                         <td>{{ $site['status'] }}</td>
+                    </tr>
+                @endforeach
+                </tbody>
+            </table>
+        @endif
+    </section>
+
+    <section data-canonical-operation="AIMW-BILL-5E76AD4FAE">
+        <header>
+            <h2>Content planner report</h2>
+            @if ($canExport)
+                <a href="{{ $plannerDownloadUrl }}" download="content-planner-report.csv">CSV</a>
+            @else
+                <span aria-disabled="true">CSV — reports.manage required</span>
+            @endif
+        </header>
+
+        @if ($plannerRows->isEmpty())
+            <p>No content planner rows are available for this tenant.</p>
+        @else
+            <table>
+                <thead>
+                <tr><th>Title</th><th>Site</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                @foreach ($plannerRows->take(12) as $row)
+                    <tr>
+                        <td>{{ $row['title'] }}</td>
+                        <td>{{ $row['site'] }}</td>
+                        <td>{{ $row['status'] }}</td>
                     </tr>
                 @endforeach
                 </tbody>

@@ -34,7 +34,7 @@
     "source_tenant_context": "not resolved",
     "destination_tenant_context": "not resolved",
     "permission": "none; navigation-only operation performs no privileged read or mutation",
-    "security_result": "Neither source nor destination exposes a tenant/user/resource route parameter; the existing safe error diagnostics contract remains unchanged."
+    "security_result": "Neither source nor destination exposes a tenant/user/resource route parameter; a tenant-shaped direct path is rejected with 404 and the existing safe error diagnostics contract remains unchanged."
   },
   "semantics": {
     "mutation": false,
@@ -48,34 +48,39 @@
   "acceptance_tests": {
     "file": "backend/tests/Feature/ErrorBackDashboardTerminalityTest.php",
     "coverage": [
-      "exact canonical PENDING operation identity and source metadata",
+      "exact canonical ADAPTED operation identity and source metadata",
       "actual rendered Back to dashboard text, exact href=/, and exact operation marker",
       "real canonical.error source route and real public root destination route",
       "zero source/destination route parameters and no auth or tenant-context escalation",
+      "tenant-shaped direct Error path fails closed with 404 and does not expose the canonical control",
       "safe request/correlation diagnostics preserved while query secrets remain undisclosed",
-      "sibling /Error controls explicitly remain outside this closure unit"
+      "sibling /Error controls explicitly remain outside this recovery unit"
     ]
   },
   "implementation": {
-    "base_branch": "worker/laravel-aiwmweb-closure-composition",
-    "base_sha": "3b6dd1be88fbf6fb605fa246be90318bc733a367",
-    "worker_branch": "worker/laravel-AIMW-CONT-85394A0E55-error-back-dashboard"
+    "original_base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "original_base_sha": "3b6dd1be88fbf6fb605fa246be90318bc733a367",
+    "original_worker_branch": "worker/laravel-AIMW-CONT-85394A0E55-error-back-dashboard",
+    "original_merge_sha": "09e544d60a768c14483380edbc8d47912b8d7ef0",
+    "recovery_base_sha": "f753e377c7ccd22e01cd2fe4338cdbdfcb24e8ff",
+    "recovery_branch": "worker/laravel-AIMW-CONT-85394A0E55-evidence-recovery"
   },
   "scope_guards": {
     "exactly_one_operation": true,
+    "production_implementation_changed_in_recovery": false,
     "sibling_open_logs_operation_modified": false,
     "sibling_copy_error_details_operation_modified": false,
-    "generated_reconciliation_edited": false,
     "aspnet_current_product_modified": false,
-    "merge_performed": false
+    "manual_parity_count_edit": false,
+    "force_push_performed": false
   },
   "ci_policy": {
-    "authority": "GitHub Actions on the exact final pushed PR head",
+    "authority": "GitHub Actions on the exact final pushed recovery head",
     "required_before_final_handoff": true,
     "evidence_file_does_not_embed_mutable_run_ids": true
   },
   "terminality": {
-    "candidate_state": "ADAPTED",
-    "basis": "Real user-visible source-equivalent navigation is bound to the exact canonical operation and reaches a real explicit destination. Final VERIFIED_TASK_COMPLETE additionally requires exact-head CI success."
+    "state": "ADAPTED",
+    "basis": "The previously merged production implementation remains source-equivalent and bound to the exact canonical operation. Recovery updates only stale evidence/test contracts required by the current exact-SHA focused visible-control verifier; final closure still requires official reconciliation and exact-head CI success."
   }
 }

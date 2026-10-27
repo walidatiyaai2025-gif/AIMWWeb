@@ -10,6 +10,7 @@
         .brand { margin-bottom: 6px; font-size: 24px; font-weight: 750; }
         .sub { margin-bottom: 22px; color: #9ca3af; }
         .error { margin-bottom: 16px; padding: 11px 12px; border: 1px solid #ef444455; border-radius: 10px; background: #7f1d1d33; color: #fecaca; font-size: 13px; }
+        .success { margin-bottom: 16px; padding: 11px 12px; border: 1px solid #10b98155; border-radius: 10px; background: #064e3b55; color: #a7f3d0; font-size: 13px; }
         label { display: block; margin: 14px 0 6px; }
         input { width: 100%; box-sizing: border-box; padding: 12px; border: 1px solid #374151; border-radius: 9px; background: #0b0f17; color: #fff; }
         button { width: 100%; margin-top: 20px; padding: 12px; border: 0; border-radius: 9px; background: #10b981; color: #062a1f; font-weight: 800; cursor: pointer; }
@@ -22,14 +23,18 @@
     <div class="brand">AI WordPress Manager</div>
     <div class="sub">Sign in to continue to your workspace</div>
 
+    @if (request()->boolean('registered'))
+        <div class="success" role="status">Account created. Sign in to continue.</div>
+    @endif
+
     @if ($error !== '')
         <div class="error" role="alert">{{ $error }}</div>
     @endif
 
     <input type="hidden" name="returnUrl" value="{{ $returnUrl }}">
 
-    <label for="login-email">Email</label>
-    <input id="login-email" type="email" name="email" autocomplete="username" required autofocus>
+    <label for="login-identifier">Username or email</label>
+    <input id="login-identifier" type="text" name="email" autocomplete="username" required autofocus>
 
     <label for="login-password">Password</label>
     <input id="login-password" type="password" name="password" autocomplete="current-password" required>

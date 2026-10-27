@@ -66,7 +66,11 @@ class BillingPlatformTest extends TestCase
         [$tenant,$membership] = $this->tenantMember('alpha');
         $this->configurePlan('pro', 4900, 'P-PRO');
         $this->actingAs($membership->user)->postJson('/api/v1/tenants/alpha/billing/trial')->assertCreated();
-        $checkout = $this->actingAs($membership->user)->postJson('/api/v1/tenants/alpha/billing/checkout', ['plan_code' => 'pro'])->assertCreated()->assertJsonPath('data.status', 'PENDING_PROVIDER_CONFIRMATION');
+        $checkout = $this->actingAs($membership->user)
+            ->withHeader('Idempotency-Key', 'billing-platform-checkout-alpha-0001')
+            ->postJson('/api/v1/tenants/alpha/billing/checkout', ['plan_code' => 'pro'])
+            ->assertCreated()
+            ->assertJsonPath('data.status', 'PENDING_PROVIDER_CONFIRMATION');
         $this->assertStringContainsString('approve.test', $checkout->json('data.approval_url'));
         $context = app(TenantContext::class);
         $context->activate($tenant, $membership);

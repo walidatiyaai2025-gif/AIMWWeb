@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #835 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-CONT-4147188AB1",
+    "domain": "content",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/SiteOperationsOverview.razor",
+    "source_screen": "/site-operations | /operations/sites",
+    "source_control": "dynamic Details / تفاصيل row navigation to /operations/sites/{OperationId}",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "verification": "authoritative row state only; invalid identifiers and unauthorized tenant context fail closed"
+  },
+  "source_behavior": {
+    "summary": "Each retained Site Operations row exposes a bilingual Details action to the operation-details route.",
+    "side_effect": "navigation only",
+    "wordpress_behavior": "none; this control does not call or mutate WordPress",
+    "render_states": {
+      "loading": "no operation rows and therefore no Details links",
+      "error": "no operation rows and therefore no Details links",
+      "empty": "no operation rows and therefore no Details links",
+      "loaded": "one Details link per authoritative operation row with a valid operation identifier"
+    }
+  },
+  "laravel_adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/site-operations-details-link-control.tsx",
+    "production_page": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "operation_marker": "AIMW-CONT-4147188AB1",
+    "identifier": "persisted tenant-scoped SiteOperationHistory correlation_id UUID",
+    "target_builder": "tenantUrl(context.tenant.slug, '/operations/sites/{correlation_id}')",
+    "target_route": "/tenants/{tenant}/operations/sites/{operationId}",
+    "target_route_name": "canonical.alias.operations-site-details",
+    "target_controller": "App\\Http\\Controllers\\SiteOperationDetailsReadController",
+    "placeholder_or_catch_all": false,
+    "demo_or_sample_data": false,
+    "navigation_mode": "browser-native hard navigation to the server-rendered Laravel details route; React Router does not intercept this destination"
+  },
+  "authorization": {
+    "source_workspace_permission": "execution.view",
+    "destination_middleware": [
+      "web",
+      "auth",
+      "tenant.context"
+    ],
+    "destination_permission": "execution.view",
+    "missing_permission": "403",
+    "foreign_tenant_without_membership": "404",
+    "cross_tenant_operation_uuid": "404",
+    "malformed_operation_uuid": "404"
+  },
+  "tenant_isolation": {
+    "tenant_source": "authenticated server-provided FrontendContext tenant slug",
+    "row_source": "GET /tenants/{tenant}/route-api/site-operations",
+    "row_scope": "SiteOperationHistory shared tenant scope under TenantContext",
+    "destination_read": "SiteOperationDetailsReadController resolves only the active tenant correlation_id",
+    "caller_controlled_external_redirect": false
+  },
+  "runtime_semantics": {
+    "read_only": true,
+    "persistence": "none",
+    "mutation": false,
+    "queue_cache_scheduler": "none",
+    "success_toast": false,
+    "identifier_validation": "strict UUID validation before rendering the navigation control and again in the destination controller",
+    "authoritative_reread": "destination GET resolves the current persisted tenant-scoped SiteOperationHistory record",
+    "idempotency": "repeated navigation is side-effect free"
+  },
+  "acceptance_tests": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-operations-details-link-control.test.tsx",
+    "php_feature": "variants/laravel-aiwmweb/backend/tests/Feature/SiteOperationsDetailsLinkTerminalityTest.php",
+    "proof": [
+      "exact canonical operation marker and bilingual Details label",
+      "source-equivalent /operations/sites alias",
+      "tenant-derived URL and strict UUID guard",
+      "no control for malformed or missing correlation IDs",
+      "execution.view fail closed",
+      "server-authoritative list correlation_id opens the matching persisted details record",
+      "foreign tenant and cross-tenant correlation UUID fail closed",
+      "read-only operation history count remains unchanged",
+      "control renders without a React Router provider, proving the server-rendered details route is reached by hard navigation"
+    ]
+  },
+  "generator_evidence_source": {
+    "sha": "09a2c5660cacf66effc3a1c4dc51f3dffeebbf56",
+    "note": "Immutable pushed implementation, focused tests, and task materializer workflow snapshot preceding this evidence commit."
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-CONT-4147188AB1",
+    "sibling_site_operations_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "mutation_added": false,
+    "force_push_performed": false,
+    "react_router_server_route_interception": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true,
+    "reason": "The source Site Operations Details row navigation uses an authoritative tenant-scoped correlation UUID and browser-native navigation to the existing server-rendered Laravel details route; invalid identity/permission/tenant state fails closed, no SPA catch-all can intercept the destination, no mutation or fake success is added, and focused frontend/Laravel security coverage proves the contract."
+  },
+  "materialization": {
+    "reconciliation_commit": "2694ec616504251ea92bcb1e298df76cf318c663",
+    "canonical_total": 931,
+    "candidate_terminal": 774,
+    "candidate_pending": 157,
+    "candidate_blocked": 0,
+    "candidate_parity_percent": 83.14,
+    "operation_state": "ADAPTED",
+    "generated_reconciliation_hand_edited": false
+  }
+}

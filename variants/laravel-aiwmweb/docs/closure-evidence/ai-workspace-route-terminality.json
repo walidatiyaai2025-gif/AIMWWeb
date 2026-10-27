@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-AI-8EE4F9F6FC",
+    "domain": "ai",
+    "kind": "route",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/WorkspaceHub.razor",
+    "source_route": "/ai-workspace",
+    "source_control": "Open/render route",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_behavior": {
+    "summary": "Authenticated read-only AI Workspace hub with the canonical AI heading, real-workspaces notice, Select Site navigation, and exactly four operational workspace cards.",
+    "cards_in_source_order": [
+      {"key": "ai-center", "label": "AI Center", "href": "/ai-center"},
+      {"key": "ai-providers", "label": "AI Providers", "href": "/settings/ai-providers"},
+      {"key": "ai-prompts", "label": "Prompt Templates", "href": "/settings/ai-prompts"},
+      {"key": "approvals", "label": "Approvals", "href": "/approvals"}
+    ],
+    "read_semantics": "The route renders navigation only; it owns no provider call, credential mutation, approval mutation, or child-workspace mutation."
+  },
+  "laravel_adaptation": {
+    "workspace_route": "/tenants/{tenant}/ai-workspace",
+    "workspace_route_name": "canonical.workspace.ai-workspace",
+    "workspace_route_provider": "App\\Providers\\AiWorkspaceRouteServiceProvider",
+    "workspace_controller": "App\\Http\\Controllers\\CanonicalWorkspaceRouteController::show",
+    "frontend_component": "resources/js/ai-workspace-hub.tsx",
+    "frontend_router": "resources/js/app.tsx explicit ai-workspace child route",
+    "tenant_prefix_reason": "Laravel AIWMWeb is explicitly tenant-addressed under /tenants/{tenant}; canonical child href semantics are preserved inside that tenant boundary.",
+    "adapted_child_hrefs": [
+      "/tenants/{tenant}/ai-center",
+      "/tenants/{tenant}/settings/ai-providers",
+      "/tenants/{tenant}/settings/ai-prompts",
+      "/tenants/{tenant}/approvals"
+    ],
+    "child_operation_credit": "none; this evidence closes only AIMW-AI-8EE4F9F6FC",
+    "site_context": "not required; the canonical hub is account/tenant navigation and renders truthfully with zero connected sites",
+    "generated_reconciliation_modified_by_hand": false
+  },
+  "authorization": {
+    "middleware": ["web", "auth", "tenant.context"],
+    "permission": "tenant.view",
+    "guest": "redirect to canonical login",
+    "missing_permission": "403",
+    "foreign_tenant": "404",
+    "caller_supplied_resource_ids": "none"
+  },
+  "tenant_and_security_contract": {
+    "active_tenant_source": "tenant.context middleware plus TenantAuthorizer in CanonicalWorkspaceRouteController",
+    "tenant_a_to_tenant_b": "404",
+    "link_construction": "all hub links derive from context.tenant.slug and encodeURIComponent; no caller-supplied tenant path fragment is trusted",
+    "secret_surface": "none",
+    "mutation_surface": "none",
+    "idor_surface": "no site/user/membership identifier is accepted by the route"
+  },
+  "render_contract": {
+    "title_en": "AI Workspace",
+    "description_en": "Manage the AI center, providers, and prompt templates in their real workspaces.",
+    "notice_en": "Real workspaces only",
+    "notice_detail_en": "Every card below opens an implemented workspace. Static readiness badges and non-actionable prototype cards have been removed.",
+    "select_site": true,
+    "card_count": 4,
+    "bilingual": true,
+    "prototype_readiness_cards": false
+  },
+  "acceptance_tests": {
+    "php_feature": [
+      "AiWorkspaceRouteTerminalityTest::test_exact_canonical_operation_is_the_adapted_ai_workspace_route",
+      "AiWorkspaceRouteTerminalityTest::test_route_is_explicit_guarded_and_carries_exact_operation_provenance",
+      "AiWorkspaceRouteTerminalityTest::test_authorized_tenant_member_renders_the_real_spa_without_requiring_site_context",
+      "AiWorkspaceRouteTerminalityTest::test_guest_missing_permission_and_cross_tenant_direct_access_fail_closed",
+      "AiWorkspaceRouteTerminalityTest::test_route_exposes_no_caller_supplied_site_user_or_membership_identifier"
+    ],
+    "frontend_vitest": [
+      "renders the canonical read-only AI workspace heading and real-workspaces notice",
+      "renders exactly the four canonical cards in source order with tenant-qualified destinations",
+      "preserves the source card labels and descriptions without prototype readiness content",
+      "encodes the authoritative tenant slug in every navigation target"
+    ],
+    "repository_gates_required": [
+      "Laravel AIWMWeb Parity Reconciliation",
+      "Laravel AIWMWeb Closure Evidence Audit",
+      "Laravel AIWMWeb Cross-Domain Security",
+      "Laravel AIWMWeb Convergence Preflight",
+      "Laravel AIWMWeb Acceptance",
+      "PR Plan Link"
+    ]
+  },
+  "implementation_snapshot_sha": "55fbde2e91052fad2d2f0db9e6925926bbbc682e",
+  "validation_state_at_evidence_commit": "implementation and focused tests are committed; repository PR gates are intentionally recorded after this evidence-bearing snapshot is enrolled and executed",
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-AI-8EE4F9F6FC",
+    "second_operation_started": false,
+    "reference_product_modified": false,
+    "denominator_modified": false,
+    "child_routes_terminalized_by_this_evidence": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "evidence_recorded": true,
+    "reason": "The canonical /ai-workspace read-only hub is explicitly registered inside Laravel's authenticated tenant boundary, renders the canonical source copy and four-card navigation contract, fails closed for unauthorized and foreign-tenant access, and introduces no mutation or fabricated runtime success. Final terminal credit remains generator-controlled and contingent on exact-head repository gates."
+  }
+}

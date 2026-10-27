@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "handoff_issue": 632,
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-9414B3FFEF",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/admin/billing-support",
+    "source": "src/AIWordPressManager.Web/Components/Pages/AdminBillingSupport.razor",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Pages/AdminBillingSupport.razor:/admin/billing-support:SearchAsync:SearchAsync",
+    "source_intent": "Search active-tenant billing support subscriptions by member identity, active account identifier, or exact PayPal subscription reference while returning only bounded masked support data",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminBillingSupportController.php",
+    "route": "GET /api/tenants/{tenant}/billing/admin/subscriptions?q={query}",
+    "workspace": "GET /tenants/{tenant}/admin/billing-support",
+    "frontend_contract": "variants/laravel-aiwmweb/backend/config/frontend_actions.php",
+    "frontend_request_binding": "variants/laravel-aiwmweb/backend/resources/js/action-contract.ts",
+    "frontend_workspace": "variants/laravel-aiwmweb/backend/resources/js/core.ts",
+    "platform_admin_required": true,
+    "tenant_context_required": true,
+    "result_limit": 50,
+    "query_length_max": 200
+  },
+  "semantics": {
+    "blank_query": "returns the newest at most 50 subscriptions for the active tenant",
+    "member_identity": "exact case-insensitive active-tenant username, email, or display name match",
+    "account_identifier": "exact active tenant numeric ID or slug",
+    "paypal_reference": "exact provider subscription reference is matched through the stored SHA-256 lookup hash",
+    "provider_reference_output": "masked only; raw encrypted provider reference is never returned",
+    "ordering": "updated_at descending then id descending"
+  },
+  "security": {
+    "tenant_selector": "server-owned tenant.context only",
+    "subscription_ownership": "TenantSubscription global tenant scope prevents foreign subscription disclosure",
+    "member_lookup": "membership tenant_id is correlated to the already tenant-scoped subscription row and active membership only",
+    "caller_owned_fields": [
+      "tenant_id",
+      "account_id",
+      "provider_subscription_id",
+      "provider_subscription_hash",
+      "limit"
+    ],
+    "caller_owned_fields_policy": "prohibited",
+    "provider_secret_disclosure_added": false,
+    "raw_provider_reference_returned": false,
+    "mutation": false,
+    "audit_required": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/AdminBillingSearchTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/admin-billing-search-terminality.test.ts",
+    "coverage": [
+      "exact canonical operation identity and route marker",
+      "auth plus tenant.context plus platform-admin middleware",
+      "active-tenant member username search",
+      "active account slug and numeric identifier search",
+      "exact PayPal reference lookup through stored hash",
+      "provider reference masking with no raw reference disclosure",
+      "blank query bounded to 50 rows",
+      "foreign tenant provider reference returns no results",
+      "guest and non-admin denial",
+      "caller-owned tenant/provider/limit fields rejected",
+      "GET query encoding without body or idempotency key",
+      "foreign frontend tenant contract fails closed"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-BILL-9414B3FFEF"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "provider_secret_disclosure_added": false,
+    "mutation_added": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "0f1b127c3b9c1d5bb7111170c2b697870f8d1ca4",
+    "branch": "worker/laravel-aiwmweb-AIMW-BILL-9414B3FFEF-search"
+  }
+}

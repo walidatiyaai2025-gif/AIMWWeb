@@ -8,6 +8,7 @@ use App\Jobs\SendEmailDeliveryJob;
 use App\Models\AuditEvent;
 use App\Models\EmailDelivery;
 use App\Models\MailConfiguration;
+use App\Models\Site;
 use App\Services\AuditLogger;
 use App\Tenancy\TenantLock;
 use Illuminate\Database\QueryException;
@@ -144,22 +145,90 @@ final class EmailDeliveryService
         }
     }
 
-    public function history(): array
+    /**
+     * @param  array{site_id?:int|string|null,status?:string|null,correlation?:string|null,search?:string|null,page?:int|string|null,per_page?:int|string|null,sort_desc?:bool|string|int|null}  $filters
+     * @return array{data:array<int, array<string, mixed>>,total:int,current_page:int,last_page:int}
+     */
+    public function history(array $filters = []): array
     {
-        return EmailDelivery::query()->latest()->limit(250)->get()->map(fn (EmailDelivery $delivery) => [
-            'delivery_id' => $delivery->delivery_id,
-            'notification_id' => $delivery->in_app_notification_id,
-            'recipient' => $this->mask((string) $delivery->recipient),
-            'template' => $delivery->template_stable_id,
-            'status' => $delivery->status,
-            'attempt' => $delivery->attempt_count,
-            'provider_message_id' => $delivery->provider_message_id,
-            'failure_category' => $delivery->failure_category,
-            'failure_message' => $delivery->failure_message,
-            'created_at' => $delivery->created_at?->toIso8601String(),
-            'sent_at' => $delivery->sent_at?->toIso8601String(),
-            'failed_at' => $delivery->failed_at?->toIso8601String(),
-        ])->all();
+        $query = EmailDelivery::query();
+
+        $siteId = (int) ($filters['site_id'] ?? 0);
+        if ($siteId > 0) {
+            Site::query()->findOrFail($siteId);
+
+            $query->whereIn(
+                'mail_configuration_id',
+                MailConfiguration::query()->where('site_id', $siteId)->select('id'),
+            );
+        }
+
+        $status = strtoupper(trim((string) ($filters['status'] ?? '')));
+        if ($status !== '') {
+            $query->where('status', $status);
+        }
+
+        $correlation = trim((string) ($filters['correlation'] ?? ''));
+        if ($correlation !== '') {
+            $query->where(function ($builder) use ($correlation): void {
+                $builder->where('event_id', $correlation)
+                    ->orWhere('delivery_id', $correlation);
+            });
+        }
+
+        $search = trim((string) ($filters['search'] ?? ''));
+        if ($search !== '') {
+            $query->where(function ($builder) use ($search): void {
+                $builder->where('template_stable_id', 'like', '%'.$search.'%')
+                    ->orWhere('status', 'like', '%'.strtoupper($search).'%')
+                    ->orWhere('delivery_id', $search)
+                    ->orWhere('event_id', $search);
+            });
+        }
+
+        $page = max((int) ($filters['page'] ?? 1), 1);
+        $perPage = min(max((int) ($filters['per_page'] ?? 50), 1), 100);
+        $total = (clone $query)->count();
+        $lastPage = max((int) ceil($total / $perPage), 1);
+        if ($page > $lastPage) {
+            $page = $lastPage;
+        }
+
+        if (array_key_exists('sort_desc', $filters)) {
+            $sortDescending = filter_var($filters['sort_desc'], FILTER_VALIDATE_BOOLEAN);
+            $direction = $sortDescending ? 'desc' : 'asc';
+            $query->orderBy('created_at', $direction)->orderBy('id', $direction);
+        } else {
+            $query->latest();
+        }
+
+        $rows = $query
+            ->forPage($page, $perPage)
+            ->get()
+            ->map(fn (EmailDelivery $delivery) => [
+                'delivery_id' => $delivery->delivery_id,
+                'correlation_id' => $delivery->event_id,
+                'notification_id' => $delivery->in_app_notification_id,
+                'recipient' => $this->mask((string) $delivery->recipient),
+                'template' => $delivery->template_stable_id,
+                'status' => $delivery->status,
+                'attempt' => $delivery->attempt_count,
+                'max_attempts' => $delivery->max_attempts,
+                'provider_message_id' => $delivery->provider_message_id,
+                'failure_category' => $delivery->failure_category,
+                'failure_message' => $delivery->failure_message,
+                'created_at' => $delivery->created_at?->toIso8601String(),
+                'sent_at' => $delivery->sent_at?->toIso8601String(),
+                'failed_at' => $delivery->failed_at?->toIso8601String(),
+            ])
+            ->all();
+
+        return [
+            'data' => $rows,
+            'total' => $total,
+            'current_page' => $page,
+            'last_page' => $lastPage,
+        ];
     }
 
     private function recordFailure(EmailDelivery $delivery, EmailTransportException $exception): array

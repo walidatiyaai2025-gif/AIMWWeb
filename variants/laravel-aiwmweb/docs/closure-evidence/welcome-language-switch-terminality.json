@@ -1,0 +1,20 @@
+{
+  "authority": "AIMWWeb Issue #257",
+  "operation_id": "AIMW-BILL-3EAD5A351E",
+  "domain": "billing",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/Welcome.razor",
+    "behavior": "Switch language toggles English/Arabic and reloads the public page."
+  },
+  "laravel_adaptation": {
+    "control_file": "variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
+    "action_file": "variants/laravel-aiwmweb/backend/app/Http/Controllers/PublicWelcomeReadController.php",
+    "behavior": "A real same-origin navigation toggles only en/ar, stores a session locale and server-renders all public page content with matching lang and dir. Unsupported or structured input is ignored; no caller-provided return URL or tenant is accepted. Works without JavaScript or localStorage."
+  },
+  "acceptance_tests": [
+    "variants/laravel-aiwmweb/backend/tests/Feature/WelcomeLanguageSwitchTerminalityTest.php"
+  ],
+  "tenant_isolation": "Canonical source is anonymous. This control remains identity-neutral with no tenant alias; tests prove foreign tenant path is 404, tenant/user query input has no authority, and authenticated user data is absent. No tenant data or credentials are read."
+}

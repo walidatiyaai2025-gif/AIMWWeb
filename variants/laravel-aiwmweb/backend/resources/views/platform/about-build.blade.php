@@ -30,7 +30,7 @@
 
         <section aria-labelledby="build-actions">
             <h2 id="build-actions">Build actions</h2>
-            <button type="button" data-copy-build-report aria-busy="false">Copy build report</button>
+            <button type="button" data-copy-build-report data-canonical-operation="AIMW-SYNC-68B372C9FE" aria-busy="false">Copy build report</button>
             <p data-copy-build-success role="status" hidden>Build report copied. The browser confirmed that the report was written to the clipboard.</p>
             <div data-copy-build-error role="alert" hidden>
                 <p data-copy-build-error-message>The browser did not confirm a clipboard write. No copy success was reported; you can retry.</p>

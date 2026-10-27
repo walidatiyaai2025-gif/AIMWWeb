@@ -5,9 +5,13 @@ on:
     branches:
       - main
       - lead/laravel-aiwmweb-final-convergence
+      - worker/laravel-aiwmweb-closure-composition
     paths:
       - 'variants/laravel-aiwmweb/**'
       - '.github/workflows/laravel-aiwmweb-convergence-preflight.yml'
+  push:
+    branches:
+      - worker/laravel-aiwmweb-closure-composition
   workflow_dispatch:
 
 permissions:

@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #975 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_base_branch": "worker/laravel-aiwmweb-closure-composition",
+  "canonical_base_sha": "d688fc1985fb200bfec02b769caf481dc5a45d5b",
+  "canonical_operation": {
+    "operation_id": "AIMW-SYNC-0DFEE862FA",
+    "domain": "sync",
+    "kind": "visible_control",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/SystemHealth.razor",
+    "source_screen": "/system-health",
+    "source_control": "RefreshClickedAsync / Run checks",
+    "mutation": false,
+    "tenant_owned": true,
+    "terminal_state": "ADAPTED",
+    "verification": "explicit refresh performs a fresh authoritative tenant System Health read; in-flight duplicate clicks are blocked and failed reads do not display stale success"
+  },
+  "source_behavior": {
+    "initial_read": "OnInitializedAsync calls RefreshAsync",
+    "explicit_control": "RefreshClickedAsync delegates to RefreshAsync",
+    "duplicate_guard": "isLoading returns before starting a second check",
+    "authoritative_read": "SystemHealthWebService.CheckAsync",
+    "failure": "snapshot is cleared and a real error replaces any prior success"
+  },
+  "laravel_adaptation": {
+    "page_route": "GET /tenants/{tenant}/system-health",
+    "read_endpoint": "GET /api/tenants/{tenant}/system-health",
+    "controller": "App\\\\Http\\\\Controllers\\\\SystemHealthReadController",
+    "service": "App\\\\Services\\\\RuntimeHealthService::ready",
+    "workspace": "variants/laravel-aiwmweb/backend/resources/js/system-health-workspace.tsx",
+    "control": "variants/laravel-aiwmweb/backend/resources/js/system-health-refresh-control.tsx",
+    "placeholder_or_fake_success": false
+  },
+  "authorization_and_isolation": {
+    "session": "required",
+    "active_tenant": "tenant.context plus response tenant identity validation",
+    "permissions": [
+      "tenant.view",
+      "diagnostics.view"
+    ],
+    "foreign_tenant": "404/fail closed",
+    "caller_tenant_override": false,
+    "secrets": "RuntimeHealthService response contains health status fields only; test sentinel is not rendered"
+  },
+  "runtime_path": [
+    "SystemHealthRefreshControl remains visible for loading/error retry states once tenant authority is valid",
+    "Run checks invokes React Query refetch against the existing real tenant System Health GET endpoint",
+    "refreshing plus a local in-flight ref prevent duplicate user-triggered reads while a check is running",
+    "the control advertises the exact canonical operation ID",
+    "on query error the workspace suppresses retained data and renders the authoritative error state instead of stale success",
+    "successful refetch replaces the snapshot from the server; no mutation or synthetic success path is added"
+  ],
+  "tests": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/SystemHealthRefreshTerminalityTest.php",
+    "typescript": "variants/laravel-aiwmweb/backend/resources/js/__tests__/system-health-refresh-terminality.test.tsx"
+  },
+  "scope_guards": {
+    "only_operation": "AIMW-SYNC-0DFEE862FA",
+    "sibling_controls_claimed": false,
+    "route_operation_claimed": false,
+    "copy_summary_operation_claimed": false,
+    "logs_operation_claimed": false,
+    "aspnet_runtime_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "implementation_sha": "90f6940f907a2ea641e04adcda871d6a228b4765",
+  "materialized_reconciliation_sha": "2edee612121485402c7e1e869d8de9393a82cfa3",
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true
+  }
+}

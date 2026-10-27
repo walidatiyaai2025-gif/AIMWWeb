@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "handoff_issue": 639,
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-DDA412F087",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/backups | /module/backups",
+    "source": "src/AIWordPressManager.Web/Components/Pages/BackupRestore.razor",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Pages/BackupRestore.razor:/backups | /module/backups:CreateAsync:CreateAsync",
+    "mutation": true,
+    "tenant_owned": true,
+    "risk": "high"
+  },
+  "laravel_runtime": {
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/BackupCreateController.php",
+    "service": "variants/laravel-aiwmweb/backend/app/Backup/TenantBackupCreateService.php",
+    "route": "POST /api/tenants/{tenant}/backups",
+    "storage": "Laravel local disk under backups/tenant-{tenant_id}",
+    "metadata_table": "backup_archives",
+    "archive_format": "gzip-compressed JSON",
+    "verification": "SHA-256 byte verification plus gzip decode and canonical tenant/operation reread"
+  },
+  "source_semantics": {
+    "administrator_only": true,
+    "note_optional": true,
+    "recovery_secret_optional": true,
+    "recovery_secret_confirmation_required_when_present": true,
+    "recovery_secret_persisted": false,
+    "wrapped_recovery_material_verified_before_success": true
+  },
+  "security": {
+    "tenant_context": "server resolved",
+    "platform_admin_required": true,
+    "caller_tenant_actor_path_hash_fields": "prohibited",
+    "protected_fields_without_recovery": "redacted",
+    "protected_fields_with_recovery": "AES-256-GCM with per-backup data key",
+    "data_key_wrapping": "PBKDF2-SHA256 200000 iterations + AES-256-GCM",
+    "plain_recovery_secret_persisted": false,
+    "fake_success": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/BackupCreateTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/backup-create-terminality.test.ts",
+    "coverage": [
+      "canonical route marker",
+      "auth + tenant.context + platform.admin",
+      "guest/non-admin/foreign-tenant fail closed",
+      "real archive stored and reread",
+      "SHA-256 verification",
+      "authoritative metadata persistence",
+      "optional wrapped recovery path",
+      "plain recovery secret non-persistence",
+      "caller-owned path/hash/identity rejection",
+      "active-tenant frontend contract"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-BILL-DDA412F087"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "branch": "worker/laravel-aiwmweb-AIMW-BILL-DDA412F087-backup-create"
+  }
+}

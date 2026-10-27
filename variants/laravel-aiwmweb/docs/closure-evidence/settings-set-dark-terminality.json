@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #820 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-EDC262499D",
+  "terminal_state": "ADAPTED",
+  "source": "src/AIWordPressManager.Web/Components/Pages/Settings.razor",
+  "source_action": "SetDark",
+  "destination": "variants/laravel-aiwmweb/backend/resources/js/settings-appearance-light-control.tsx",
+  "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-appearance-dark-control.test.tsx",
+  "backend_test": "variants/laravel-aiwmweb/backend/tests/Feature/SettingsSetDarkTerminalityTest.php",
+  "runtime": "persist aiwm.mode=dark and apply html data-mode=dark plus color-scheme=dark",
+  "server_mutation": false,
+  "external_mutation": false,
+  "only_operation_claimed": "AIMW-CONT-EDC262499D",
+  "materialized": true,
+  "evidence_source_sha": "bfab191167739a9b43cbc6e8dff049689ce00b54"
+}

@@ -1,0 +1,60 @@
+{
+  "operation_id": "AIMW-EMAI-B2CFCF818C",
+  "domain": "email",
+  "kind": "route",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/AccountEmailSettings.razor",
+    "route_screen": "/account/email-settings",
+    "behavior": "Open/render the authenticated account email settings route. The source keeps saved SMTP passwords encrypted and never displays them after saving."
+  },
+  "laravel_adaptation": {
+    "workspace_route": "GET /tenants/{tenant}/account/email-settings",
+    "route_name": "canonical.workspace.account-email-settings",
+    "route_provider": "App\\Providers\\AccountEmailSettingsRouteServiceProvider",
+    "controller": "App\\Http\\Controllers\\CanonicalWorkspaceRouteController@show",
+    "operation_marker": "AIMW-EMAI-B2CFCF818C",
+    "behavior": "Render the production workspace shell for the active authenticated tenant member without serializing email configuration or secret material in the route response."
+  },
+  "authorization": {
+    "session_boundary": "web",
+    "authentication": "auth",
+    "tenant_context": "tenant.context",
+    "permission": "tenant.view",
+    "guest_semantics": "redirect to canonical login",
+    "missing_permission_semantics": "403",
+    "foreign_tenant_semantics": "404",
+    "idor_surface": "Only the tenant route parameter is caller supplied; no user, site, provider, secret, or password identifier is accepted."
+  },
+  "secrets_boundary": {
+    "source_semantics": "Saved SMTP passwords are encrypted and are represented only as a saved-password boolean in the source UI; they are never displayed after saving.",
+    "route_semantics": "The adapted GET route returns only the application shell and does not read, serialize, log, or expose SMTP/provider credentials.",
+    "mutation": false,
+    "csrf": "No mutation occurs on this GET route; Laravel web-session CSRF protections remain applicable to separate mutation endpoints."
+  },
+  "tenant_isolation": {
+    "tenant_owned": true,
+    "proof": "Tenant context resolution and TenantAuthorizer fail closed: a member without tenant.view receives 403 and a member of another tenant cannot resolve the foreign tenant route and receives 404."
+  },
+  "semantics": {
+    "read_only": true,
+    "idempotent": true,
+    "retry_safe": true,
+    "queue_cache_scheduler": "not used by this route operation",
+    "wordpress_connector": "not used by this route operation",
+    "ai_provider": "not used by this route operation",
+    "success_truthfulness": "200 only after session, tenant context, and RBAC authorization; otherwise redirect/403/404 fail closed."
+  },
+  "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AccountEmailSettingsRouteTerminalityTest.php",
+  "implementation_paths": [
+    "variants/laravel-aiwmweb/backend/app/Providers/AccountEmailSettingsRouteServiceProvider.php",
+    "variants/laravel-aiwmweb/backend/bootstrap/providers.php"
+  ],
+  "reconciliation_authority": {
+    "total_operations": 931,
+    "generated_reconciliation_edited": false,
+    "required_generator": "variants/laravel-aiwmweb/tools/finalize_operation_parity.py plus repository evidence applicators"
+  },
+  "scope": "Exactly one canonical operation is closed by this evidence. Account email settings visible controls remain independently PENDING until separately claimed and proven."
+}

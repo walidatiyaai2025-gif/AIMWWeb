@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #720",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-54E4003BE9",
+  "domain": "billing",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/Sites.razor",
+    "route_screen": "/sites",
+    "visible_control": "SaveAsync [SaveAsync]",
+    "behavior": "Creates or edits the site profile, validates name and HTTP/HTTPS URL, persists the profile, then reloads authoritative Sites state.",
+    "tenant_owned": true,
+    "risk": "high"
+  },
+  "laravel_adaptation": {
+    "frontend_control": "variants/laravel-aiwmweb/backend/resources/js/sites-save-control.tsx",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteManagementController.php",
+    "routes": "variants/laravel-aiwmweb/backend/routes/web.php",
+    "create_contract": "POST /api/tenants/{tenant}/sites",
+    "update_contract": "PATCH /api/tenants/{tenant}/sites/{site}",
+    "authorization": "sites.manage",
+    "tenant_isolation": "server-derived tenant.context; exact tenant slug match; tenant-scoped site lookup; foreign site 404",
+    "caller_override_policy": "Only name and url are accepted by update; tenant_id/status are rejected. Site tenant_id is server-derived by the tenant model scope.",
+    "authoritative_reconciliation": "React rereads the tenant Sites collection and confirms exact persisted name/url before reporting success.",
+    "fake_success_path": "none"
+  },
+  "acceptance_tests": [
+    "variants/laravel-aiwmweb/backend/tests/Feature/SitesSaveTerminalityTest.php",
+    "variants/laravel-aiwmweb/backend/resources/js/__tests__/sites-save-control.test.tsx"
+  ],
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "The canonical Sites SaveAsync is wired to real tenant-scoped Laravel persistence for create/edit, fails closed on authorization and cross-tenant identifiers, and reports success only after authoritative reread."
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "task_id": "AIMW-PLAT-04D5067C61",
+  "operation_id": "AIMW-PLAT-04D5067C61",
+  "terminal_state": "ADAPTED",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "authority": {
+    "issue": 257,
+    "canonical_base_sha": "d352543f2f3c52383670f2c25e3a3b7ed04fb7f8",
+    "claim_comment_id": 5482321710,
+    "worker_branch": "worker/platform-AIMW-PLAT-04D5067C61-set-language-closure-20260831"
+  },
+  "canonical_operation": {
+    "operation_id": "AIMW-PLAT-04D5067C61",
+    "kind": "service",
+    "domain": "platform",
+    "service": "LanguagePreferenceService",
+    "member": "SetLanguage",
+    "source": "src/AIWordPressManager.Web/Localization/LanguagePreferenceService.cs",
+    "mutation": false
+  },
+  "decision": "ADAPTED",
+  "rationale": "Laravel preserves the desktop SetLanguage browser-preference contract through its native queued-cookie factory: supported en/ar values are retained, unsupported values fall back to en, the preference lasts one year, SameSite is Lax, HttpOnly is disabled for the UI preference, and Secure follows the current HTTPS request.",
+  "destination": {
+    "production": "variants/laravel-aiwmweb/backend/app/Platform/Localization/LanguagePreferenceCookieWriter.php",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SetLanguagePreferenceTerminalityTest.php"
+  },
+  "runtime_behavior": {
+    "cookie_name": "AIWM.Language",
+    "supported_languages": ["en", "ar"],
+    "fallback_language": "en",
+    "supported_match": "case-insensitive with original supported value preserved",
+    "expiry_minutes": 525600,
+    "path": "/",
+    "http_only": false,
+    "same_site": "lax",
+    "secure": "mirrors current request HTTPS state",
+    "production_probe": "resolve writer from Laravel container and inspect the actual queued response cookie"
+  },
+  "security": {
+    "tenant_state_mutated": false,
+    "authorization_weakened": false,
+    "secret_material_exposed": false,
+    "cookie_secure_on_https": true
+  },
+  "acceptance": [
+    "canonical operation provenance is pinned to AIMW-PLAT-04D5067C61",
+    "supported ar/en values are queued under AIWM.Language",
+    "unsupported values fall back to en",
+    "source-compatible case-insensitive acceptance is preserved",
+    "cookie lifetime and SameSite/HttpOnly contract match the desktop operation",
+    "HTTPS requests produce a Secure cookie"
+  ],
+  "scope_exclusions": [
+    "AIMW-PLAT-17E3F2B4ED / GetLanguage",
+    "language switcher UI",
+    "locale middleware",
+    "tenant settings",
+    "translation resources"
+  ],
+  "validation": {
+    "exact_head_ci_required": true,
+    "authoritative_generator_required": true
+  }
+}

@@ -3,26 +3,38 @@
 namespace App\Http\Controllers;
 
 use App\Authorization\TenantAuthorizer;
+use App\Models\Site;
+use App\Models\TenantMembership;
 use App\Operations\AdministrationService;
 use App\Operations\OperationsControlPlaneService;
+use App\Tenancy\TenantContext;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class AdminOperationsController extends Controller
 {
+    public const OPERATIONS_HUB_RELOAD_OPERATION_ID = 'AIMW-BILL-2C2CB8CBAC';
+
     public function __construct(
         private readonly TenantAuthorizer $authorizer,
         private readonly AdministrationService $administration,
         private readonly OperationsControlPlaneService $operations,
+        private readonly TenantContext $context,
     ) {}
 
-    public function members(string $tenant): JsonResponse
+    public function members(Request $request, string $tenant): JsonResponse
     {
         $this->authorizer->authorize('tenant.view');
+        $data = $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+        ]);
 
-        return response()->json(['data' => $this->administration->members()]);
+        return response()->json(['data' => $this->administration->members($data['search'] ?? null)]);
     }
 
     public function addMember(Request $request, string $tenant): JsonResponse
@@ -64,11 +76,99 @@ final class AdminOperationsController extends Controller
         return response()->json($this->administration->saveRole($role, $data['name'], $data['permissions'] ?? [], (int) $request->user()->getAuthIdentifier()), $role ? 200 : 201);
     }
 
-    public function sessions(Request $request, string $tenant): JsonResponse
+    public function sessions(Request $request, string $tenant): JsonResponse|View
     {
-        $this->authorizer->authorize('sessions.manage');
+        if ($request->expectsJson()) {
+            $this->authorizer->authorize('sessions.manage');
 
-        return response()->json(['data' => $this->administration->sessions((int) $request->user()->getAuthIdentifier(), $this->sessionId($request))]);
+            return response()->json([
+                'data' => $this->administration->sessions(
+                    (int) $request->user()->getAuthIdentifier(),
+                    $this->sessionId($request),
+                ),
+            ]);
+        }
+
+        $this->authorizer->authorize('members.manage');
+        abort_unless($this->context->tenant()->slug === $tenant, 404);
+
+        $memberships = TenantMembership::query()
+            ->where('status', 'active')
+            ->with([
+                'user:id,name,email',
+                'roles:id,name',
+            ])
+            ->orderBy('id')
+            ->get();
+
+        $membersByUserId = $memberships
+            ->filter(fn (TenantMembership $membership): bool => $membership->user !== null)
+            ->keyBy(fn (TenantMembership $membership): int => (int) $membership->user_id);
+
+        $userIds = $membersByUserId->keys()->all();
+        $lifetimeSeconds = max(1, (int) config('session.lifetime', 120)) * 60;
+        $now = now();
+        $activeAfter = $now->getTimestamp() - $lifetimeSeconds;
+        $currentSessionId = $this->sessionId($request);
+
+        $rows = empty($userIds)
+            ? collect()
+            : DB::table((string) config('session.table', 'sessions'))
+                ->whereIn('user_id', $userIds)
+                ->where('last_activity', '>', $activeAfter)
+                ->orderByDesc('last_activity')
+                ->orderBy('id')
+                ->get([
+                    'id',
+                    'user_id',
+                    'ip_address',
+                    'user_agent',
+                    'last_activity',
+                ]);
+
+        $sessions = $rows->map(function (object $row) use ($membersByUserId, $lifetimeSeconds, $currentSessionId): array {
+            /** @var TenantMembership $membership */
+            $membership = $membersByUserId->get((int) $row->user_id);
+            $lastActivity = Carbon::createFromTimestampUTC((int) $row->last_activity);
+            $role = $membership->roles
+                ->pluck('name')
+                ->filter()
+                ->sort(SORT_NATURAL | SORT_FLAG_CASE)
+                ->first() ?? 'member';
+
+            return [
+                'user_name' => (string) $membership->user->name,
+                'role' => (string) $role,
+                'last_activity' => $lastActivity,
+                'expires_at' => $lastActivity->copy()->addSeconds($lifetimeSeconds),
+                'ip_address' => filled($row->ip_address) ? (string) $row->ip_address : null,
+                'user_agent' => filled($row->user_agent) ? (string) $row->user_agent : null,
+                'is_current' => $currentSessionId !== null && hash_equals($currentSessionId, (string) $row->id),
+            ];
+        })->values();
+
+        $activeAccounts = $sessions
+            ->groupBy(fn (array $session): string => $session['user_name'].'|'.$session['role'])
+            ->map(function ($group): array {
+                $first = $group->first();
+
+                return [
+                    'user_name' => $first['user_name'],
+                    'role' => $first['role'],
+                    'active_sessions' => $group->count(),
+                    'has_current_session' => $group->contains(fn (array $session): bool => $session['is_current']),
+                ];
+            })
+            ->sortBy(fn (array $account): string => mb_strtolower($account['user_name']))
+            ->values();
+
+        return view('admin.application-sessions', [
+            'tenant' => $this->context->tenant(),
+            'sessions' => $sessions,
+            'activeAccounts' => $activeAccounts,
+            'now' => $now,
+            'operationId' => 'AIMW-CONT-6B051BD8C0',
+        ]);
     }
 
     public function revokeSession(Request $request, string $tenant, string $session): JsonResponse
@@ -149,6 +249,52 @@ final class AdminOperationsController extends Controller
         $this->authorizer->authorize('operations.manage');
 
         return response()->json($this->operations->approveAutomationRun($run, (int) $request->user()->getAuthIdentifier()));
+    }
+
+    public function operationsHub(string $tenant): JsonResponse
+    {
+        $this->authorizer->authorize('operations.manage');
+        $this->authorizer->authorize('execution.view');
+
+        $sites = Site::query()
+            ->orderBy('id')
+            ->get()
+            ->map(static fn (Site $site): array => [
+                'id' => (int) $site->getKey(),
+                'name' => (string) $site->name,
+                'status' => (string) $site->status,
+                'connection_status' => (string) $site->connection_status,
+                'health_state' => (string) $site->health_state,
+                'last_verified_at' => $site->last_verified_at?->toIso8601String(),
+                'last_sync_at' => $site->last_sync_at?->toIso8601String(),
+            ])
+            ->values()
+            ->all();
+
+        $operations = collect($this->operations->operations())
+            ->map(static fn (array $operation): array => [
+                'id' => (int) ($operation['id'] ?? 0),
+                'type' => (string) ($operation['type'] ?? ''),
+                'status' => (string) ($operation['status'] ?? ''),
+                'subject_type' => $operation['subject_type'] ?? null,
+                'started_at' => $operation['started_at'] ?? null,
+                'completed_at' => $operation['completed_at'] ?? null,
+                'updated_at' => $operation['updated_at'] ?? null,
+            ])
+            ->values()
+            ->all();
+
+        return response()->json([
+            'data' => [
+                'sites' => $sites,
+                'operations' => $operations,
+            ],
+            'meta' => [
+                'operation_id' => self::OPERATIONS_HUB_RELOAD_OPERATION_ID,
+                'tenant' => $tenant,
+                'refreshed_at' => now()->toIso8601String(),
+            ],
+        ]);
     }
 
     public function operations(Request $request, string $tenant): JsonResponse

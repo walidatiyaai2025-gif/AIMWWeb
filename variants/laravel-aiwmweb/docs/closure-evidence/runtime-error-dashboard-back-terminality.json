@@ -1,0 +1,73 @@
+{
+  "authority": "Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-PLAT-AF47A254FE",
+  "domain": "platform",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Routes.razor",
+    "visible_control": "/ -> /",
+    "user_visible_text": "Back to dashboard",
+    "behavior": "The canonical router/error surfaces expose a native anchor to the application root. Activating it performs ordinary root navigation without a mutation or client-supplied tenant/resource identifier."
+  },
+  "laravel_adaptation": {
+    "file": "variants/laravel-aiwmweb/backend/resources/js/runtime-error-dashboard-back-control.tsx",
+    "consumer": "variants/laravel-aiwmweb/backend/resources/js/runtime-error-boundary.tsx",
+    "control": "RuntimeErrorDashboardBackControl",
+    "operation_marker": "AIMW-PLAT-AF47A254FE",
+    "destination": "/",
+    "behavior": "The real runtime-error surface renders a native anchor with literal href '/'. Browser document navigation issues a fresh GET to Laravel's existing root route; no React Router tenant route, API mutation, callback success shim, or copied failure URL is used."
+  },
+  "authorization": {
+    "authentication_change": "none",
+    "rbac_change": "none",
+    "session_or_csrf_change": "none",
+    "reason": "This operation is read-only GET navigation. Existing Laravel server routing remains authoritative for session/authentication behavior after the request; no privileged state-changing endpoint is introduced and CSRF is therefore not applicable."
+  },
+  "tenant_isolation": {
+    "canonical_tenant_owned": false,
+    "route_tenant_derivation": "none",
+    "idor_surface": "none",
+    "proof": "The destination is the literal root '/'. The control neither accepts nor derives a tenant, site, resource ID, query string, or fragment from the failing URL, preventing cross-tenant/direct-ID propagation."
+  },
+  "runtime_boundaries": {
+    "queue": "not used",
+    "cache": "not used",
+    "scheduler": "not used",
+    "secrets": "not read, copied, rendered, or written",
+    "wordpress_connector": "not used",
+    "ai_provider": "not used"
+  },
+  "semantics": {
+    "mutation": false,
+    "read_only_navigation": true,
+    "native_document_navigation": true,
+    "authoritative_reread": "fresh GET / handled by the existing Laravel root route",
+    "truthful_success": "no synthetic success state; the browser leaves the error surface only through actual navigation",
+    "audit_receipt": "not applicable; no application mutation",
+    "fake_success_path": "none"
+  },
+  "acceptance_tests": [
+    {
+      "file": "variants/laravel-aiwmweb/backend/resources/js/__tests__/runtime-error-dashboard-back.test.tsx",
+      "coverage": "native anchor role, literal root href, exact canonical operation marker, and rejection of tenant/resource/query/fragment/API carry-over"
+    }
+  ],
+  "generator_evidence_source": {
+    "sha": "8dc16e2fce62a471e258b256fca6301574428063",
+    "note": "Immutable pushed implementation-and-test snapshot preceding the evidence commit; the official focused-closure source manifest is materialized from the subsequent branch snapshot that includes this evidence file."
+  },
+  "scope_guards": {
+    "exactly_one_operation": true,
+    "aspnet_current_product_modified": false,
+    "second_operation_started": false,
+    "manual_parity_count_edit": false,
+    "force_push_performed": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "A real source-equivalent root navigation is wired into the production runtime-error surface under the exact canonical operation ID and covered by deterministic focused frontend tests; terminal state is valid only after official generator-backed reconciliation isolates this operation's transition."
+  }
+}

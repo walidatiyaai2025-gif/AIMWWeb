@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-AUTO-8836C7A28A",
+  "terminal_state": "ADAPTED",
+  "canonical_operation": {
+    "kind": "service",
+    "domain": "automation",
+    "source": "src/AIWordPressManager.Web/Services/ExecutionCenterService.cs",
+    "service": "ExecutionCenterService.TryStartExternal",
+    "mutation": true,
+    "tenant_owned": true,
+    "risk": "high"
+  },
+  "source_semantics": {
+    "identity": "The canonical Guid job id maps to the existing Laravel operation_executions.correlation_id exposed by EnqueueExternal as job_id; the internal numeric row id is never accepted as the canonical identifier.",
+    "selection": "For the requested owner, TryStartExternal changes only an External execution currently Waiting and returns whether exactly one row changed.",
+    "state_transition": "Waiting maps to queued and Running maps to running; a successful start sets started_at to now and clears completed_at and failure without manufacturing progress or processed-item changes.",
+    "activity": "Exactly one Info activity with message Approved change execution started. is appended only when the state transition succeeds."
+  },
+  "laravel_adaptation": {
+    "service": "App\\Execution\\ExecutionCenterExternalStartService",
+    "member": "tryStartExternal",
+    "ledger_mapping": "The operation reuses the tenant-owned operation_executions and operation_logs control plane established by ExecutionCenterService.EnqueueExternal; no second execution ledger is introduced.",
+    "tenant_owner_scope": "The active TenantContext supplies tenant identity; operations.manage is authorized server-side; the active membership user must equal ownerUserId; the row lookup repeats tenant_id, canonical correlation_id and requested_by_user_id constraints under a transaction row lock.",
+    "external_mode_mapping": "Canonical ExecutionMode.External is preserved in operation_executions.payload.execution_mode and is required before starting.",
+    "state_mapping": "Canonical Waiting/Running map to queued/running. A successful transition sets started_at, clears completed_at and failure, and leaves progress, attempts and payload work counters unchanged.",
+    "activity_mapping": "A successful transition writes exactly one info operation_log with source ExecutionCenterService.TryStartExternal and operation ID AIMW-AUTO-8836C7A28A; missing, duplicate or ineligible starts write no activity.",
+    "external_runtime_boundary": "This adapter records the control-plane start state only and does not execute or claim WordPress/provider work."
+  },
+  "service_closure_contract": {
+    "implementation_sha": "6541e945d8e4ab31cdff0cb1e2fd49b9ec35f4f3",
+    "destination_path": "variants/laravel-aiwmweb/backend/app/Execution/ExecutionCenterExternalStartService.php",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ExecutionCenterTryStartExternalTerminalityTest.php"
+  },
+  "acceptance": {
+    "proofs": [
+      "exact canonical service/domain/source/member and operation ID AIMW-AUTO-8836C7A28A",
+      "canonical Guid job identity is preserved through correlation_id/job_id rather than the internal numeric row id",
+      "only queued External rows owned by the active tenant membership transition to running",
+      "successful start sets started_at and clears completed_at/failure without synthetic progress",
+      "exactly one canonical Info start activity is created and duplicate start cannot append another",
+      "missing, already-running and non-External rows safely return false without activity",
+      "wrong owner and missing operations.manage authorization fail closed",
+      "foreign-tenant execution/log rows are explicitly absent from the active tenant view and the authoritative owner row remains unchanged",
+      "missing TenantContext and invalid typed identity fail closed before persistence"
+    ],
+    "external_runtime": "No live WordPress/provider/email/payment/DNS/manual evidence is required: TryStartExternal changes only local execution-control metadata and explicitly does not perform the external operation."
+  },
+  "scope": {
+    "only_operation_claimed": "AIMW-AUTO-8836C7A28A",
+    "second_operation_started": false,
+    "reference_product_modified": false,
+    "denominator_modified": false,
+    "generated_parity_modified_manually": false,
+    "force_push": false,
+    "owner_manual_evidence_required": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "claim_base_sha": "f130e438ea12c23dc453f3dcd6c1771802e1bec6",
+    "worker_branch": "worker/laravel-aiwmweb-AIMW-AUTO-8836C7A28A-slot0244",
+    "claim_comment": 5627393266
+  }
+}

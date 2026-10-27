@@ -1,0 +1,385 @@
+name: Laravel AIWMWeb Merged Branch Cleanup
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+      - lead/laravel-aiwmweb-final-convergence
+      - worker/laravel-aiwmweb-closure-composition
+  push:
+    branches:
+      - worker/laravel-aiwmweb-closure-composition
+    paths:
+      - '.github/workflows/laravel-aiwmweb-branch-cleanup.yml'
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Report eligible branches without deleting them'
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+  issues: read
+  pull-requests: read
+
+concurrency:
+  group: laravel-aiwmweb-branch-cleanup
+  cancel-in-progress: false
+
+jobs:
+  delete-merged-head:
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete safe merged task branch
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branchName = context.payload.pull_request.head.ref;
+            const permanent = new Set([
+              'main',
+              'lead/laravel-aiwmweb-final-convergence',
+              'worker/laravel-aiwmweb-closure-composition',
+            ]);
+            const managedPrefixes = [
+              'worker/',
+              'recovery/',
+              'feat/',
+              'fix/',
+              'test/',
+              'release/',
+              'chore/',
+              'docs/',
+              'closure/',
+              'manager/',
+              'tmp/',
+              'checkpoint/',
+            ];
+
+            if (permanent.has(branchName)) {
+              core.info(`Protected integration branch; keep ${branchName}.`);
+              return;
+            }
+            if (!managedPrefixes.some(prefix => branchName.startsWith(prefix))) {
+              core.info(`Unmanaged branch prefix; keep ${branchName}.`);
+              return;
+            }
+
+            try {
+              await github.rest.git.deleteRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: `heads/${branchName}`,
+              });
+              core.notice(`Deleted merged branch: ${branchName}`);
+            } catch (error) {
+              const message = error.message || error.response?.data?.message || '';
+              if (
+                error.status === 404 ||
+                (error.status === 422 && /Reference does not exist/i.test(message))
+              ) {
+                core.info(`Branch ${branchName} already deleted.`);
+                return;
+              }
+              throw error;
+            }
+
+  sweep-obsolete-branches:
+    if: >-
+      github.event_name == 'push' ||
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sweep safely merged or fully-contained task branches
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const dryRun =
+              context.eventName === 'workflow_dispatch' &&
+              String(context.payload.inputs?.dry_run ?? 'true').toLowerCase() === 'true';
+            const permanent = new Set([
+              'main',
+              'lead/laravel-aiwmweb-final-convergence',
+              'worker/laravel-aiwmweb-closure-composition',
+            ]);
+            const integrationBranches = [...permanent];
+            const managedPrefixes = [
+              'worker/',
+              'recovery/',
+              'feat/',
+              'fix/',
+              'test/',
+              'release/',
+              'chore/',
+              'docs/',
+              'closure/',
+              'manager/',
+              'tmp/',
+              'checkpoint/',
+            ];
+            const GRACE_HOURS = 1;
+            const graceMs = GRACE_HOURS * 60 * 60 * 1000;
+            const now = Date.now();
+
+            core.info(`Sweep mode: ${dryRun ? 'DRY-RUN' : 'DELETE'}.`);
+
+            const { data: rateLimit } = await github.rest.rateLimit.get();
+            const remaining = rateLimit.resources?.core?.remaining ?? 0;
+            if (remaining < 1200) {
+              core.warning(`Skipping backlog sweep: only ${remaining} core API calls remain.`);
+              return;
+            }
+
+            const branches = await github.paginate(github.rest.repos.listBranches, {
+              owner,
+              repo,
+              per_page: 100,
+            });
+            const openPulls = await github.paginate(github.rest.pulls.list, {
+              owner,
+              repo,
+              state: 'open',
+              per_page: 100,
+            });
+            const closedPulls = await github.paginate(github.rest.pulls.list, {
+              owner,
+              repo,
+              state: 'closed',
+              per_page: 100,
+            });
+
+            const openPrRefs = new Set();
+            for (const pr of openPulls) {
+              if (pr.head.repo?.full_name === `${owner}/${repo}`) {
+                openPrRefs.add(pr.head.ref);
+              }
+              if (pr.base.repo?.full_name === `${owner}/${repo}`) {
+                openPrRefs.add(pr.base.ref);
+              }
+            }
+
+            const activeIssueBranches = new Set();
+            const rememberBranchRefs = text => {
+              if (!text) return;
+              const regex = /^\s*(?:[-*]\s*)?`?(?:canonical[_\s-]*task[_\s-]*branch|task[_\s-]*branch|canonical\s+branch|branch)`?\s*:\s*`?([A-Za-z0-9._/-]+)`?\s*$/gim;
+              let match;
+              while ((match = regex.exec(text)) !== null) {
+                activeIssueBranches.add(match[1]);
+              }
+            };
+
+            const openIssues = (
+              await github.paginate(github.rest.issues.listForRepo, {
+                owner,
+                repo,
+                state: 'open',
+                per_page: 100,
+              })
+            ).filter(issue => !issue.pull_request);
+
+            for (const issue of openIssues) {
+              rememberBranchRefs(issue.body || '');
+              const comments = await github.paginate(github.rest.issues.listComments, {
+                owner,
+                repo,
+                issue_number: issue.number,
+                per_page: 100,
+              });
+              for (const comment of comments) {
+                rememberBranchRefs(comment.body || '');
+              }
+            }
+
+            const mergedExactHeads = new Map();
+            for (const pr of closedPulls) {
+              if (
+                !pr.merged_at ||
+                !permanent.has(pr.base.ref) ||
+                pr.head.repo?.full_name !== `${owner}/${repo}`
+              ) {
+                continue;
+              }
+              mergedExactHeads.set(`${pr.head.ref}\n${pr.head.sha}`, pr);
+            }
+
+            const deleted = [];
+            const wouldDelete = [];
+            const kept = [];
+
+            for (const branch of branches) {
+              const name = branch.name;
+
+              if (permanent.has(name)) {
+                kept.push([name, 'permanent-integration']);
+                continue;
+              }
+              if (!managedPrefixes.some(prefix => name.startsWith(prefix))) {
+                kept.push([name, 'unmanaged-prefix']);
+                continue;
+              }
+              if (branch.protected) {
+                kept.push([name, 'protected']);
+                continue;
+              }
+              if (openPrRefs.has(name)) {
+                kept.push([name, 'open-pr-head-or-base']);
+                continue;
+              }
+              if (activeIssueBranches.has(name)) {
+                kept.push([name, 'open-issue-branch-state']);
+                continue;
+              }
+
+              const exactMerged = mergedExactHeads.get(`${name}\n${branch.commit.sha}`);
+              if (exactMerged) {
+                const reason = `exact-merged-pr#${exactMerged.number}-into-${exactMerged.base.ref}`;
+                if (dryRun) {
+                  wouldDelete.push([name, reason]);
+                  core.notice(`Dry-run: would delete obsolete branch ${name} (${reason}).`);
+                  continue;
+                }
+
+                try {
+                  await github.rest.git.deleteRef({
+                    owner,
+                    repo,
+                    ref: `heads/${name}`,
+                  });
+                  deleted.push([name, reason]);
+                  core.notice(
+                    `Deleted obsolete branch ${name} (exact merged PR #${exactMerged.number}).`,
+                  );
+                } catch (error) {
+                  const message = error.message || error.response?.data?.message || '';
+                  if (
+                    error.status !== 404 &&
+                    !(error.status === 422 && /Reference does not exist/i.test(message))
+                  ) {
+                    throw error;
+                  }
+                }
+                continue;
+              }
+
+              let commit;
+              try {
+                ({ data: commit } = await github.rest.repos.getCommit({
+                  owner,
+                  repo,
+                  ref: branch.commit.sha,
+                }));
+              } catch (error) {
+                kept.push([name, 'commit-inspection-failed']);
+                core.warning(`Could not inspect ${name}: ${error.message}`);
+                continue;
+              }
+
+              const committedAt =
+                commit.commit?.committer?.date ||
+                commit.commit?.author?.date ||
+                null;
+              const ageMs = committedAt ? now - Date.parse(committedAt) : 0;
+              if (!committedAt || ageMs < graceMs) {
+                kept.push([name, `grace-period(<${GRACE_HOURS}h)`]);
+                continue;
+              }
+
+              let containedIn = null;
+              for (const integration of integrationBranches) {
+                if (integration === name) continue;
+                try {
+                  const { data: comparison } = await github.rest.repos.compareCommits({
+                    owner,
+                    repo,
+                    base: integration,
+                    head: name,
+                  });
+                  if (comparison.ahead_by === 0) {
+                    containedIn = integration;
+                    break;
+                  }
+                } catch (error) {
+                  core.warning(
+                    `Compare failed for ${name} against ${integration}: ${error.message}`,
+                  );
+                }
+              }
+
+              if (!containedIn) {
+                kept.push([name, 'unique-or-unverified-commits']);
+                continue;
+              }
+
+              const reason = `fully-contained-in-${containedIn}`;
+              if (dryRun) {
+                wouldDelete.push([name, reason]);
+                core.notice(`Dry-run: would delete obsolete branch ${name} (${reason}).`);
+                continue;
+              }
+
+              try {
+                await github.rest.git.deleteRef({
+                  owner,
+                  repo,
+                  ref: `heads/${name}`,
+                });
+                deleted.push([name, reason]);
+                core.notice(`Deleted obsolete branch ${name} (contained in ${containedIn}).`);
+              } catch (error) {
+                const message = error.message || error.response?.data?.message || '';
+                if (
+                  error.status !== 404 &&
+                  !(error.status === 422 && /Reference does not exist/i.test(message))
+                ) {
+                  throw error;
+                }
+              }
+            }
+
+            core.info(`Deleted: ${deleted.length}`);
+            core.info(`Would delete: ${wouldDelete.length}`);
+            core.info(`Kept: ${kept.length}`);
+            await core.summary
+              .addHeading('Laravel AIWMWeb branch garbage collection')
+              .addTable([
+                [
+                  { data: 'Mode', header: true },
+                  { data: 'Deleted', header: true },
+                  { data: 'Would delete', header: true },
+                  { data: 'Kept', header: true },
+                ],
+                [
+                  dryRun ? 'DRY-RUN' : 'DELETE',
+                  String(deleted.length),
+                  String(wouldDelete.length),
+                  String(kept.length),
+                ],
+              ])
+              .addHeading('Deleted', 3)
+              .addList(deleted.map(([name, reason]) => `${name} — ${reason}`))
+              .addHeading('Dry-run candidates', 3)
+              .addList(wouldDelete.map(([name, reason]) => `${name} — ${reason}`))
+              .addHeading('Safety', 3)
+              .addList([
+                'never delete permanent integration branches',
+                'never delete protected branches',
+                'never delete branches used by open PRs',
+                'never delete branches referenced by open Issue branch state',
+                'delete exact merged heads only when merged into a permanent integration branch',
+                `for containment-only cleanup, wait at least ${GRACE_HOURS} hour and require zero commits ahead of a permanent integration branch`,
+                'manual workflow dispatch defaults to dry-run and performs no deletion unless explicitly disabled',
+                'scheduled sweeps run in delete mode',
+              ])
+              .write();

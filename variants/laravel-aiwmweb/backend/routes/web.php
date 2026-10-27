@@ -1,21 +1,30 @@
 <?php
 
 use App\Authorization\TenantAuthorizer;
+use App\Backup\TenantBackupCreateService;
 use App\Frontend\ActionContractRegistry;
 use App\Http\Controllers\AccessDeniedReadController;
+use App\Http\Controllers\AdminBillingSupportController;
 use App\Http\Controllers\AdminOperationsController;
 use App\Http\Controllers\AiPromptTemplateSaveController;
 use App\Http\Controllers\AiPromptTemplatesReadController;
+use App\Http\Controllers\AiProviderSettingsReadController;
+use App\Http\Controllers\BackupCreateController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BillingPlanAdminController;
+use App\Http\Controllers\CanonicalEmailScheduleController;
 use App\Http\Controllers\CanonicalWorkspaceRouteController;
+use App\Http\Controllers\ConfigurationValidationController;
+use App\Http\Controllers\ContentPlannerController;
 use App\Http\Controllers\DemoController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\PayPalWebhookController;
 use App\Http\Controllers\RouteApiAdapterController;
 use App\Http\Controllers\SeoController;
+use App\Http\Controllers\SiteDataSnapshotController;
 use App\Http\Controllers\SiteDiagnosticsController;
 use App\Http\Controllers\SiteManagementController;
+use App\Http\Controllers\SiteOnboardingController;
 use App\Models\Connector;
 use App\Models\Site;
 use App\Models\TenantMembership;
@@ -33,18 +42,68 @@ Route::post('/api/logout', [DemoController::class, 'logout'])->middleware('auth'
 
 Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->group(function () {
     Route::get('/sites', [SiteManagementController::class, 'index']);
-    Route::post('/sites', [SiteManagementController::class, 'store']);
+    Route::post('/sites/onboarding', [SiteOnboardingController::class, 'store'])
+        ->defaults('canonical_operation_id', SiteOnboardingController::OPERATION_ID)
+        ->name('canonical.api.site-onboarding.save-test-sync');
+    Route::post('/sites', [SiteManagementController::class, 'store'])
+        ->defaults('canonical_operation_id', SiteManagementController::SAVE_OPERATION_ID)
+        ->name('canonical.api.sites.save.create');
     Route::get('/sites/{site}', [SiteManagementController::class, 'show']);
-    Route::patch('/sites/{site}', [SiteManagementController::class, 'update']);
+    Route::patch('/sites/{site}', [SiteManagementController::class, 'update'])
+        ->defaults('canonical_operation_id', SiteManagementController::SAVE_OPERATION_ID)
+        ->name('canonical.api.sites.save.update');
     Route::delete('/sites/{site}', [SiteManagementController::class, 'destroy']);
     Route::post('/sites/{site}/pairing', [DemoController::class, 'pairing']);
     Route::get('/sites/{site}/connector', [DemoController::class, 'connector']);
     Route::put('/sites/{site}/connector/scopes', [DemoController::class, 'scopes']);
     Route::post('/sites/{site}/connector/rotate', [DemoController::class, 'rotate']);
     Route::delete('/sites/{site}/connector', [DemoController::class, 'revoke']);
-    Route::post('/sites/{site}/verify', [DemoController::class, 'verify']);
-    Route::post('/sites/{site}/sync', [DemoController::class, 'sync']);
+    Route::post('/sites/{site}/verify', [DemoController::class, 'verify'])
+        ->defaults('canonical_operation_id', DemoController::SAVE_AND_TEST_OPERATION_ID)
+        ->name('canonical.api.site-details.save-and-test');
+    Route::post('/sites/{site}/sync', [DemoController::class, 'sync'])
+        ->defaults('canonical_operation_id', DemoController::SITE_DETAILS_SYNC_OPERATION_ID)
+        ->name('canonical.api.site-details.synchronize');
+    Route::get('/sites/{site}/snapshot', SiteDataSnapshotController::class)
+        ->defaults('canonical_operation_id', SiteDataSnapshotController::OPERATION_ID)
+        ->name('canonical.api.site-data-snapshot');
     Route::get('/sync-runs/{run}', [DemoController::class, 'syncStatus']);
+    Route::get('/billing/admin/subscriptions', [AdminBillingSupportController::class, 'index'])
+        ->middleware('platform.admin')
+        ->defaults('canonical_operation_id', AdminBillingSupportController::SEARCH_OPERATION_ID)
+        ->name('canonical.api.billing-support.index');
+    Route::post('/billing/admin/subscriptions/{subscription}/reactivate', [AdminBillingSupportController::class, 'reactivate'])
+        ->middleware('platform.admin')
+        ->whereNumber('subscription')
+        ->defaults('canonical_operation_id', AdminBillingSupportController::REACTIVATE_OPERATION_ID)
+        ->name('canonical.api.billing-support.reactivate');
+    Route::post('/billing/admin/subscriptions/{subscription}/grace', [AdminBillingSupportController::class, 'grantGrace'])
+        ->middleware('platform.admin')
+        ->whereNumber('subscription')
+        ->defaults('canonical_operation_id', AdminBillingSupportController::GRANT_GRACE_OPERATION_ID)
+        ->name('canonical.api.billing-support.grant-grace');
+    Route::post('/billing/admin/subscriptions/{subscription}/suspend', [AdminBillingSupportController::class, 'suspend'])
+        ->middleware('platform.admin')
+        ->whereNumber('subscription')
+        ->defaults('canonical_operation_id', AdminBillingSupportController::SUSPEND_OPERATION_ID)
+        ->name('canonical.api.billing-support.suspend');
+    Route::post('/billing/admin/subscriptions/{subscription}/reconcile', [AdminBillingSupportController::class, 'reconcilePayPal'])
+        ->middleware('platform.admin')
+        ->whereNumber('subscription')
+        ->defaults('canonical_operation_id', AdminBillingSupportController::RECONCILE_OPERATION_ID)
+        ->name('canonical.api.billing-support.reconcile');
+    Route::post('/backups', BackupCreateController::class)
+        ->middleware('platform.admin')
+        ->defaults('canonical_operation_id', TenantBackupCreateService::OPERATION_ID)
+        ->name('canonical.api.backups.create');
+    Route::get('/email/schedules', [CanonicalEmailScheduleController::class, 'index'])->name('canonical.api.email-schedules.index');
+    Route::post('/email/schedules', [CanonicalEmailScheduleController::class, 'store'])
+        ->defaults('canonical_operation_id', CanonicalEmailScheduleController::CREATE_OPERATION_ID)
+        ->name('canonical.api.email-schedules.create');
+    Route::get('/content-planner/items', [ContentPlannerController::class, 'index'])->name('canonical.api.content-planner');
+    Route::post('/content-planner/items/save', [ContentPlannerController::class, 'save'])
+        ->defaults('canonical_operation_id', ContentPlannerController::SAVE_OPERATION_ID)
+        ->name('canonical.api.content-planner.save');
     Route::get('/sites/{site}/content', [DemoController::class, 'content']);
     Route::post('/sites/{site}/audits', [DemoController::class, 'audit']);
     Route::get('/audits/{audit}/findings', [DemoController::class, 'findings']);
@@ -56,7 +115,9 @@ Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->
     Route::get('/executions/{execution}/receipt', [DemoController::class, 'receipt']);
 
     Route::get('/sites/{site}/seo/audits', [SeoController::class, 'audits']);
-    Route::post('/sites/{site}/seo/audits', [SeoController::class, 'startAudit']);
+    Route::post('/sites/{site}/seo/audits', [SeoController::class, 'startAudit'])
+        ->defaults('canonical_operation_id', SeoController::RUN_FULL_AUDIT_OPERATION_ID)
+        ->name('canonical.api.seo.audit.run');
     Route::get('/sites/{site}/seo/audits/{audit}/findings', [SeoController::class, 'findings']);
     Route::get('/sites/{site}/seo/metadata/{type}/{remoteId}', [SeoController::class, 'metadata']);
     Route::get('/sites/{site}/seo/content/{content}/provider', [SeoController::class, 'provider']);
@@ -67,7 +128,9 @@ Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->
     Route::post('/sites/{site}/seo/executions/{execution}/retry', [SeoController::class, 'retry']);
 
     Route::get('/sites/{site}/connection', [SiteDiagnosticsController::class, 'status']);
-    Route::post('/sites/{site}/connection/recheck', [SiteDiagnosticsController::class, 'recheck']);
+    Route::post('/sites/{site}/connection/recheck', [SiteDiagnosticsController::class, 'recheck'])
+        ->defaults('canonical_operation_id', SiteDiagnosticsController::RETEST_OPERATION_ID)
+        ->name('canonical.api.site-connection.retest');
     Route::post('/sites/{site}/connection/reconnect', [SiteDiagnosticsController::class, 'reconnect']);
     Route::post('/sites/{site}/connection/disconnect', [SiteDiagnosticsController::class, 'disconnect']);
     Route::get('/sites/{site}/capabilities', [SiteDiagnosticsController::class, 'capabilities']);
@@ -96,8 +159,11 @@ Route::prefix('api/v1/billing')->group(function () {
 Route::middleware(['auth', 'tenant.context'])->prefix('api/v1/tenants/{tenant}/billing')->group(function () {
     Route::get('/subscription', [BillingController::class, 'current']);
     Route::post('/trial', [BillingController::class, 'trial']);
-    Route::post('/checkout', [BillingController::class, 'checkout']);
+    Route::post('/checkout', [BillingController::class, 'checkout'])
+        ->defaults('canonical_operation_id', BillingController::CHECKOUT_OPERATION_ID)
+        ->name('api.v1.billing.checkout');
     Route::post('/cancel', [BillingController::class, 'cancel']);
+    Route::post('/reactivate', [BillingController::class, 'reactivate']);
     Route::post('/change-plan', [BillingController::class, 'changePlan']);
     Route::get('/entitlements', [BillingController::class, 'entitlements']);
     Route::get('/usage', [BillingController::class, 'usage']);
@@ -105,10 +171,19 @@ Route::middleware(['auth', 'tenant.context'])->prefix('api/v1/tenants/{tenant}/b
 });
 
 Route::middleware(['auth', 'tenant.context'])->group(function (): void {
+    Route::get('/tenants/{tenant}/configuration-validation/report', [ConfigurationValidationController::class, 'show'])
+        ->defaults('canonical_operation_id', ConfigurationValidationController::COPY_REPORT_OPERATION_ID)
+        ->name('tenant.configuration-validation.report');
+    Route::post('/tenants/{tenant}/configuration-validation/run', [ConfigurationValidationController::class, 'run'])
+        ->defaults('canonical_operation_id', ConfigurationValidationController::RUN_VALIDATION_OPERATION_ID)
+        ->name('tenant.configuration-validation.run');
     Route::get('/tenants/{tenant}/settings/ai-prompts', AiPromptTemplatesReadController::class)
         ->name('tenant.settings.ai-prompts');
     Route::patch('/tenants/{tenant}/settings/ai-prompts/{template}', AiPromptTemplateSaveController::class)
         ->name('tenant.settings.ai-prompts.save');
+    Route::get('/tenants/{tenant}/settings/ai-providers', AiProviderSettingsReadController::class)
+        ->defaults('canonical_operation_id', 'AIMW-AI-58FABCCEDB')
+        ->name('tenant.settings.ai-providers');
 
     Route::get('/tenants/{tenant}/context', function (ActionContractRegistry $actionRegistry) {
         $context = app(TenantContext::class);
@@ -145,21 +220,29 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
         $actions = $actionRegistry->contracts($tenantModel, $permissions, $site);
 
         $api = [
+            'dashboard' => "/api/dashboard?tenant={$tenant}",
             'sites' => "/api/tenants/{$tenant}/sites",
             'operations' => "/tenants/{$tenant}/admin/operations",
+            'operations-hub' => "/tenants/{$tenant}/admin/operations-hub",
             'automation' => "/tenants/{$tenant}/admin/automations",
             'schedules' => "/tenants/{$tenant}/admin/schedules",
             'execution' => "/tenants/{$tenant}/admin/operations",
             'site-operations' => "/tenants/{$tenant}/route-api/site-operations",
+            'site-reliability' => "/tenants/{$tenant}/route-api/site-reliability",
             'notifications' => "/api/v1/tenants/{$tenant}/notifications",
             'email-history' => "/api/v1/tenants/{$tenant}/email/deliveries",
+            'email-schedules' => "/api/tenants/{$tenant}/email/schedules",
             'reports' => "/tenants/{$tenant}/route-api/report-exports",
             'logs' => "/tenants/{$tenant}/admin/logs",
             'diagnostics' => "/tenants/{$tenant}/admin/diagnostics",
             'backups' => "/tenants/{$tenant}/admin/backups",
+            'configuration-validation' => "/tenants/{$tenant}/configuration-validation/report",
+            'configuration-validation-run' => "/tenants/{$tenant}/configuration-validation/run",
             'ai-usage' => "/api/v1/tenants/{$tenant}/ai/usage",
             'account.billing' => "/tenants/{$tenant}/route-api/billing-overview",
+            'admin-billing-support' => "/api/tenants/{$tenant}/billing/admin/subscriptions",
             'account.profile' => "/tenants/{$tenant}/route-api/account-profile",
+            'content-planner' => "/api/tenants/{$tenant}/content-planner/items",
             'application-users' => "/tenants/{$tenant}/admin/members",
             'roles' => "/tenants/{$tenant}/admin/roles",
             'sessions' => "/tenants/{$tenant}/admin/sessions",
@@ -168,11 +251,13 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
             $siteId = (int) $site->getKey();
             $api += [
                 'sites.detail.'.$siteId => "/api/tenants/{$tenant}/sites/{$siteId}",
+                'explorer' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/explorer",
                 'posts' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/content/post",
                 'pages' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/content/page",
                 'media' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/media",
                 'comments' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/comments",
                 'taxonomy' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/taxonomy",
+                'wp-users' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/users",
                 'sync' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/sync",
                 'seo-audit' => "/api/tenants/{$tenant}/sites/{$siteId}/seo/audits",
             ];
@@ -199,7 +284,9 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
         Route::get('/roles', 'roles');
         Route::post('/roles', 'saveRole');
         Route::put('/roles/{role}', 'saveRole');
-        Route::get('/sessions', 'sessions');
+        Route::get('/sessions', 'sessions')
+            ->defaults('canonical_operation_id', 'AIMW-CONT-6B051BD8C0')
+            ->name('canonical.application-sessions');
         Route::delete('/sessions/others', 'revokeOtherSessions');
         Route::delete('/sessions/{session}', 'revokeSession');
         Route::get('/settings/platform', 'platformSettings');
@@ -213,6 +300,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
         Route::put('/automations/{rule}', 'saveAutomation');
         Route::post('/automations/{rule}/trigger', 'triggerAutomation');
         Route::post('/automation-runs/{run}/approve', 'approveAutomation');
+        Route::get('/operations-hub', 'operationsHub')->name('canonical.api.operations-hub.reload');
         Route::get('/operations', 'operations');
         Route::get('/operations/{operation}', 'operation');
         Route::post('/operations/{operation}/cancel', 'cancelOperation');
@@ -234,6 +322,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
     Route::prefix('/tenants/{tenant}/route-api')->controller(RouteApiAdapterController::class)->group(function (): void {
         Route::get('/report-exports', 'reportExports')->name('canonical.api.report-exports');
         Route::get('/site-operations', 'siteOperations')->name('canonical.api.site-operations');
+        Route::get('/site-reliability', 'siteReliability')->name('canonical.api.site-reliability');
         Route::get('/billing-overview', 'billingOverview')->name('canonical.api.billing-overview');
         Route::get('/account-profile', 'accountProfile')->name('canonical.api.account-profile');
     });
@@ -245,41 +334,83 @@ Route::prefix('/tenants/{tenant}')
     ->group(function (): void {
         Route::get('/sites', 'show')->defaults('workspace_permissions', 'tenant.view,sites.view')->name('canonical.workspace.sites');
         Route::get('/sites/{site}', 'showSite')->defaults('workspace_permissions', 'tenant.view,sites.view')->whereNumber('site')->name('canonical.site.details');
+        Route::get('/sites/{site}/content/{contentType}/{wordpressId}/edit', 'showContentEditor')
+            ->defaults('workspace_permissions', 'content.view')
+            ->defaults('canonical_operation_id', 'AIMW-CONT-2C02B7A328')
+            ->name('canonical.site.content-editor');
         Route::get('/notifications', 'show')->defaults('workspace_permissions', 'tenant.view,notifications.view')->name('canonical.workspace.notifications');
+        Route::get('/email/schedules', 'show')->defaults('workspace_permissions', 'operations.manage')->defaults('canonical_operation_id', 'AIMW-EMAI-F77DB6435F')->name('canonical.workspace.email-schedules');
         Route::get('/email/history', 'show')->defaults('workspace_permissions', 'tenant.manage,diagnostics.view')->name('canonical.workspace.email-history');
         Route::get('/module/backups', 'show')->defaults('workspace_permissions', 'backup.manage,backups.view')->name('canonical.workspace.backups');
+        Route::get('/module/configuration', 'show')->defaults('workspace_permissions', 'settings.manage')->defaults('canonical_operation_id', 'AIMW-CONT-F90125AE87')->name('canonical.workspace.configuration-validation');
         Route::get('/module/logs', 'show')->defaults('workspace_permissions', 'operations.manage,diagnostics.view')->name('canonical.workspace.logs');
         Route::get('/module/ai-usage', 'show')->defaults('workspace_permissions', 'tenant.view,ai.viewUsage')->defaults('canonical_operation_id', 'AIMW-AI-1E1BF9CEDC')->name('canonical.workspace.ai-usage');
         Route::get('/operations', 'show')->defaults('workspace_permissions', 'operations.manage,execution.view')->name('canonical.workspace.operations');
+        Route::get('/operations-workspace', 'show')->defaults('workspace_permissions', 'tenant.view')->defaults('canonical_operation_id', 'AIMW-CONT-C6C7F24B03')->name('canonical.workspace.operations-workspace');
         Route::get('/admin/users', 'show')->defaults('workspace_permissions', 'tenant.view,users.view')->name('canonical.workspace.admin-users');
+        Route::get('/admin/billing-support', 'show')->middleware('platform.admin')->defaults('workspace_permissions', '')->name('canonical.workspace.admin-billing-support');
         Route::get('/account/sessions', 'show')->defaults('workspace_permissions', 'sessions.manage,sessions.view')->name('canonical.workspace.account-sessions');
         Route::get('/account/profile', 'show')->defaults('workspace_permissions', 'tenant.view')->name('canonical.workspace.account-profile');
         Route::get('/account/billing', 'show')->defaults('workspace_permissions', 'billing.view')->name('canonical.workspace.account-billing');
 
+        Route::get('/explorer', 'showSiteBound')
+            ->defaults('workspace_permissions', 'sites.view')
+            ->defaults('canonical_operation_id', 'AIMW-CONT-5CF47CBE2A')
+            ->name('canonical.workspace.explorer');
+        Route::get('/content', 'show')->defaults('workspace_permissions', 'content.view')->defaults('canonical_operation_id', 'AIMW-CONT-65F2819526')->name('canonical.workspace.content-hub');
+        Route::get('/content-workspace', 'show')->defaults('workspace_permissions', 'content.view')->defaults('canonical_operation_id', 'AIMW-CONT-E4275AE57F')->name('canonical.workspace.content-workspace');
+        Route::get('/module/content', 'redirect')->defaults('workspace_permissions', 'content.view')->defaults('workspace_target', '/content')->defaults('canonical_operation_id', 'AIMW-CONT-859135B2D1')->name('canonical.alias.module-content');
+
         Route::get('/module/posts', 'showSiteBound')->defaults('workspace_permissions', 'content.view')->name('canonical.workspace.posts');
-        Route::get('/module/pages', 'showSiteBound')->defaults('workspace_permissions', 'content.view')->name('canonical.workspace.pages');
+        Route::get('/module/pages', 'show')->defaults('workspace_permissions', 'content.view')->name('canonical.workspace.pages');
         Route::get('/module/media', 'showSiteBound')->defaults('workspace_permissions', 'content.view')->name('canonical.workspace.media');
         Route::get('/module/comments', 'showSiteBound')->defaults('workspace_permissions', 'content.view')->name('canonical.workspace.comments');
         Route::get('/module/taxonomy', 'showSiteBound')->defaults('workspace_permissions', 'content.view')->name('canonical.workspace.taxonomy');
+        Route::get('/module/users', 'showSiteBound')
+            ->defaults('workspace_permissions', 'tenant.view,sites.view')
+            ->defaults('canonical_operation_id', 'AIMW-CONT-C3EC665880')
+            ->name('canonical.workspace.wordpress-users');
         Route::get('/module/sync', 'showSiteBound')->defaults('workspace_permissions', 'content.view,sync.view')->name('canonical.workspace.sync');
 
         Route::get('/module/reports', 'show')->defaults('workspace_permissions', 'reports.view')->name('canonical.workspace.reports');
         Route::get('/site-operations', 'show')->defaults('workspace_permissions', 'execution.view')->name('canonical.workspace.site-operations');
+        Route::get('/site-reliability', 'show')->defaults('workspace_permissions', 'sites.view')->defaults('canonical_operation_id', 'AIMW-CONT-916E34454C')->name('canonical.workspace.site-reliability');
         Route::get('/automation-center', 'show')->defaults('workspace_permissions', 'operations.manage,automation.view')->name('canonical.workspace.automation');
         Route::get('/module/schedules', 'show')->defaults('workspace_permissions', 'operations.manage,automation.view')->name('canonical.workspace.schedules');
         Route::get('/module/execution', 'show')->defaults('workspace_permissions', 'operations.manage,execution.view')->name('canonical.workspace.execution');
 
+        Route::get('/module/{key}', 'show')
+            ->defaults('workspace_permissions', 'tenant.view')
+            ->defaults('canonical_operation_id', 'AIMW-CONT-80EE7CA296')
+            ->where('key', '[A-Za-z0-9][A-Za-z0-9-]{0,63}')
+            ->name('canonical.workspace.module-fallback');
+
+        Route::get('/sites/{site}/snapshot', 'showSite')->defaults('workspace_permissions', 'sites.view')->defaults('canonical_operation_id', 'AIMW-CONT-6D14B76763')->whereNumber('site')->name('canonical.site.snapshot');
+        Route::get('/sites/{site}/operations', 'showSite')->defaults('workspace_permissions', 'sites.view')->defaults('canonical_operation_id', 'AIMW-CONT-55FA799054')->whereNumber('site')->name('canonical.site.operations');
+
+        Route::get('/sites/{site}/connection', 'showSite')->defaults('workspace_permissions', 'sites.view')->defaults('canonical_operation_id', 'AIMW-CONT-50DF6B23CC')->whereNumber('site')->name('canonical.site.connection');
+
+        Route::get('/sites/{site}/offline-data', 'showSite')->defaults('workspace_permissions', 'sites.view')->defaults('canonical_operation_id', 'AIMW-CONT-98918A6C27')->whereNumber('site')->name('canonical.site.offline-data');
+
         Route::get('/sites/{site}/comments', 'redirectSite')->defaults('workspace_permissions', 'content.view')->defaults('workspace_target', '/module/comments')->whereNumber('site')->name('canonical.site.comments');
         Route::get('/sites/{site}/media', 'redirectSite')->defaults('workspace_permissions', 'content.view')->defaults('workspace_target', '/module/media')->whereNumber('site')->name('canonical.site.media');
         Route::get('/sites/{site}/taxonomy', 'redirectSite')->defaults('workspace_permissions', 'content.view')->defaults('workspace_target', '/module/taxonomy')->whereNumber('site')->name('canonical.site.taxonomy');
+        Route::get('/sites/{site}/users', 'redirectSite')
+            ->defaults('workspace_permissions', 'tenant.view,sites.view')
+            ->defaults('workspace_target', '/module/users')
+            ->defaults('canonical_operation_id', 'AIMW-CONT-1C2443112C')
+            ->whereNumber('site')
+            ->name('canonical.site.wordpress-users');
 
         Route::get('/admin/application-users', 'redirect')->defaults('workspace_permissions', 'tenant.view,users.view')->defaults('workspace_target', '/admin/users')->name('canonical.alias.application-users');
         Route::get('/settings/sessions', 'redirect')->defaults('workspace_permissions', 'sessions.manage,sessions.view')->defaults('workspace_target', '/account/sessions')->name('canonical.alias.settings-sessions');
         Route::get('/logs', 'redirect')->defaults('workspace_permissions', 'operations.manage,diagnostics.view')->defaults('workspace_target', '/module/logs')->name('canonical.alias.logs');
         Route::get('/operations/hub', 'redirect')->defaults('workspace_permissions', 'operations.manage,execution.view')->defaults('workspace_target', '/operations')->name('canonical.alias.operations-hub');
         Route::get('/backups', 'redirect')->defaults('workspace_permissions', 'backup.manage,backups.view')->defaults('workspace_target', '/module/backups')->name('canonical.alias.backups');
+        Route::get('/configuration-validation', 'redirect')->defaults('workspace_permissions', 'settings.manage')->defaults('workspace_target', '/module/configuration')->defaults('canonical_operation_id', 'AIMW-CONT-95341D9AB0')->name('canonical.alias.configuration-validation');
         Route::get('/reports', 'redirect')->defaults('workspace_permissions', 'reports.view')->defaults('workspace_target', '/module/reports')->name('canonical.alias.reports');
         Route::get('/operations/sites', 'redirect')->defaults('workspace_permissions', 'execution.view')->defaults('workspace_target', '/site-operations')->name('canonical.alias.operations-sites');
+        Route::get('/operations/reliability', 'redirect')->defaults('workspace_permissions', 'sites.view')->defaults('workspace_target', '/site-reliability')->defaults('canonical_operation_id', 'AIMW-CONT-47007EE040')->name('canonical.alias.operations-reliability');
         Route::get('/automation-schedules', 'redirect')->defaults('workspace_permissions', 'operations.manage,automation.view')->defaults('workspace_target', '/module/schedules')->name('canonical.alias.automation-schedules');
         Route::get('/execution-center', 'redirect')->defaults('workspace_permissions', 'operations.manage,execution.view')->defaults('workspace_target', '/module/execution')->name('canonical.alias.execution-center');
     });

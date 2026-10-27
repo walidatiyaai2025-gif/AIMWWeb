@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #990 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-F7CE702C7D",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "sync",
+    "kind": "visible_control",
+    "source": "src/AIWordPressManager.Web/Components/Shared/AppFilterBar.razor",
+    "source_intent": "Render shared filter controls and metadata with a clear action that exists only for active filters with a callback and is blocked while busy.",
+    "mutation": false
+  },
+  "laravel_runtime": {
+    "production_component": "variants/laravel-aiwmweb/backend/resources/js/app-filter-bar.tsx::AppFilterBar",
+    "production_consumer": "variants/laravel-aiwmweb/backend/resources/js/ai-usage-load-workspace.tsx",
+    "operation_marker": "AIMW-SYNC-F7CE702C7D",
+    "clear_contract": "caller-supplied callback only",
+    "busy_guard": "busy or in-flight state disables clear and suppresses duplicate callback invocation",
+    "active_filter_guard": "clear is rendered only when activeFilterCount > 0 and a clear callback exists"
+  },
+  "state_and_security": {
+    "client_request_added_by_shared_control": false,
+    "server_mutation_added": false,
+    "wordpress_mutation_added": false,
+    "identity_override_surface": false,
+    "authorization": "AI Usage consumer requires tenant.view + ai.viewUsage; missing ai.viewUsage returns 403.",
+    "tenant_isolation": "Foreign-site filter input returns 404 and no cross-tenant usage data is rendered."
+  },
+  "source_semantics": {
+    "search_region": "role=search with caller-provided aria label",
+    "active_filter_state": "active count is a polite live status",
+    "no_filter_state": "NoFiltersText renders only when the active count is zero",
+    "applied_filters": "rendered only when active count is greater than zero",
+    "clear_visible_when": "ActiveFilterCount > 0 && ClearRequested.HasDelegate",
+    "clear_handler": "Busy ? Task.CompletedTask : ClearRequested.InvokeAsync()"
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/app-filter-bar-clear-control.test.tsx",
+    "existing_consumer_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/ai-usage-load-workspace.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/AppFilterBarClearControlTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation marker",
+      "active-filter clear visibility",
+      "busy duplicate-clear suppression",
+      "no-filter empty metadata state",
+      "applied-filter chip visibility",
+      "callback-only shared control with no request or mutation",
+      "real AI Usage site-filter consumer",
+      "missing permission returns 403",
+      "foreign tenant site returns 404"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-SYNC-F7CE702C7D"],
+    "sibling_shared_controls_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "d3e6c6703de2e08ac8138629e71d78ea3c3f2253",
+    "branch": "worker/990-app-filter-bar-clear-control",
+    "issue": 990
+  },
+  "materialization": {
+    "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-990.yml",
+    "generated_reconciliation_required": true
+  }
+}

@@ -32,7 +32,7 @@ class AiCenterRefreshApprovalStatusTerminalityTest extends TestCase
         $operation = collect($ledger['operations'])->firstWhere('operation_id', 'AIMW-AI-168B406674');
 
         $this->assertNotNull($operation);
-        $this->assertSame('PENDING', $operation['migration_state']);
+        $this->assertSame('ADAPTED', $operation['migration_state']);
         $this->assertSame('visible_control', $operation['kind']);
         $this->assertSame('ai', $operation['domain']);
         $this->assertSame('/ai-center', $operation['route_screen']);

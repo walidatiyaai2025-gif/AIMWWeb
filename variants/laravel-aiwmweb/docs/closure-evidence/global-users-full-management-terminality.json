@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #781 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_base_branch": "worker/laravel-aiwmweb-closure-composition",
+  "canonical_base_sha": "7499103bb76b1b1e9eec098a9b8236dc14960a3e",
+  "canonical_operation": {
+    "operation_id": "AIMW-CONT-B9E6EFF3DF",
+    "domain": "content",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/GlobalUsersWorkspace.razor",
+    "source_screen": "/module/users",
+    "source_control": "@(L.IsArabic ? -> @($",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_behavior": {
+    "action": "When an owned WordPress site is selected, expose the Full user management action and navigate to /sites/{selectedSiteId}/users.",
+    "label_en": "Full user management",
+    "label_ar": "الإدارة الكاملة",
+    "site_identity": "selected owned-site identifier",
+    "external_effect": "Navigation only; the control does not mutate WordPress or application state."
+  },
+  "laravel_adaptation": {
+    "workspace": "/tenants/{tenant}/module/users",
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/global-users-full-management-control.tsx",
+    "runtime_mount": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "destination": "/tenants/{tenant}/sites/{site}/users",
+    "destination_route": "canonical.site.wordpress-users",
+    "destination_permissions": ["tenant.view", "sites.view"],
+    "destination_behavior": "The guarded Laravel route re-resolves the tenant-scoped Site, binds canonical_site_id, then redirects to the WordPress users workspace with the site query.",
+    "authoritative_site_contracts": [
+      "FrontendContext.active_site.id",
+      "FrontendContext.api.sites.detail.{id}",
+      "FrontendContext.api.wp-users"
+    ]
+  },
+  "runtime_path": [
+    "authenticated tenant bootstrap resolves FrontendContext and the server-owned active_site",
+    "the wp-users workspace capability requires sites.view, users.read connector scope, and the authoritative wp-users API contract",
+    "the control additionally requires tenant.view because the canonical destination route requires tenant.view and sites.view",
+    "the active site id must be a positive safe integer and must match both server-advertised Site Details and WordPress Users API paths",
+    "navigation uses the active tenant slug from FrontendContext and the server-bound active site only",
+    "the canonical destination route re-resolves the Site under the active tenant before rebinding the session",
+    "no HTTP request is fired by the control itself and no success state is synthesized"
+  ],
+  "authorization_and_isolation": {
+    "session": "required by tenant bootstrap and canonical destination",
+    "tenant_source": "server-resolved FrontendContext.tenant.slug",
+    "site_source": "server-resolved FrontendContext.active_site plus exact API binding",
+    "permissions": ["tenant.view", "sites.view"],
+    "connector_scope": "users.read",
+    "foreign_tenant_site": "404 through tenant-scoped Site resolution",
+    "missing_sites_view": "403 on the canonical destination and no rendered control",
+    "caller_selected_tenant": false
+  },
+  "secret_and_external_policy": {
+    "secrets_read_or_exposed": false,
+    "wordpress_or_connector_mutation": false,
+    "server_mutation_by_control": false,
+    "queue_or_scheduler_effect": false,
+    "fake_or_demo_success": false
+  },
+  "acceptance_tests": {
+    "frontend_path": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-users-full-management-control.test.tsx",
+    "php_path": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalUsersFullManagementTerminalityTest.php",
+    "proof": [
+      "exact canonical operation marker",
+      "English and Arabic source-equivalent labels",
+      "tenant-derived encoded destination",
+      "positive authoritative active-site validation",
+      "exact Site Details and WordPress Users API bindings",
+      "connector-capability fail closed",
+      "missing permission fail closed",
+      "foreign-tenant Site 404",
+      "no frontend request or mutation"
+    ]
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-CONT-B9E6EFF3DF",
+    "sibling_controls_terminalized": false,
+    "aspnet_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true,
+    "reason": "The source Full user management navigation is represented by a real Laravel control that is exposed only for an authoritative tenant-bound active WordPress site and routes through the existing guarded site-users binding without performing or fabricating a mutation."
+  }
+}

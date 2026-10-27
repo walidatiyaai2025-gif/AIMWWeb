@@ -1,0 +1,120 @@
+{
+  "operation_id": "AIMW-BILL-DA1A53D8A1",
+  "domain": "billing",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_operation": {
+    "operation_id": "AIMW-BILL-DA1A53D8A1",
+    "domain": "billing",
+    "kind": "visible_control",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/SiteOperationsMaintenance.razor",
+    "route_screen": "/operations/maintenance | /site-operations/maintenance",
+    "visible_control": "RunCleanupAsync [RunCleanupAsync]",
+    "risk": "critical",
+    "tenant_owned": true
+  },
+  "source_semantics": {
+    "confirmation": "The authoritative control requires _confirmation.Trim() == CLEANUP and a positive removable preview before cleanup.",
+    "browser_cancel_boundary": "RunCleanupAsync invokes a browser confirm dialog and performs no cleanup if the user cancels or confirmation cannot be opened.",
+    "mutation": "Maintenance.CleanupAsync removes eligible operation-history rows according to the selected retention policy.",
+    "truthful_success": "The source rereads Maintenance.GetSnapshotAsync after the mutation before presenting final visible state."
+  },
+  "laravel_adaptation": {
+    "route": "POST /tenants/{tenant}/site-operations/maintenance/cleanup",
+    "route_name": "canonical.workspace.site-operations-maintenance.cleanup",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteOperationsMaintenanceCleanupController.php",
+    "provider": "variants/laravel-aiwmweb/backend/app/Providers/SiteOperationsMaintenanceRouteServiceProvider.php",
+    "view": "variants/laravel-aiwmweb/backend/resources/views/site-operations-maintenance.blade.php",
+    "service": "variants/laravel-aiwmweb/backend/app/Sites/SiteOperationHistoryService.php",
+    "canonical_operation_id": "AIMW-BILL-DA1A53D8A1"
+  },
+  "runtime_path": [
+    "authenticated web session",
+    "auth middleware",
+    "tenant.context active membership resolution",
+    "SiteOperationsMaintenanceCleanupController",
+    "TenantAuthorizer execution.view",
+    "TenantAuthorizer operations.manage",
+    "route tenant slug equality against active TenantContext",
+    "authenticated actor ID equality against active membership user_id",
+    "allow-listed older_than_days and keep_latest validation",
+    "exact trimmed CLEANUP confirmation",
+    "tenant-scoped SiteOperationHistoryService preview",
+    "transactional tenant-scoped cleanup with bounded DB retry",
+    "authoritative getStorageInfo and previewCleanup reread",
+    "redirect success only after persisted counts reconcile"
+  ],
+  "authentication_authorization": {
+    "session": "Laravel auth session is mandatory.",
+    "active_tenant": "ResolveTenantContext establishes the active tenant only from an authenticated active membership.",
+    "permissions": [
+      "execution.view",
+      "operations.manage"
+    ],
+    "missing_permission": "403 fail closed",
+    "foreign_tenant": "404 fail closed",
+    "direct_id_surface": "No site/history/tenant/actor ID is accepted as a route parameter or trusted request field."
+  },
+  "tenant_and_identity_ownership": {
+    "model_scope": "SiteOperationHistory extends DomainModel, whose BelongsToTenant concern applies TenantScope to reads/deletes and server-assigns tenant_id on creation.",
+    "actor_identity": "The controller derives the authenticated user ID from request->user() and verifies it equals TenantContext membership.user_id; caller actor_user_id is ignored.",
+    "caller_tenant_identity": "The controller uses TenantContext tenant slug and never consumes caller tenant_id.",
+    "foreign_row_proof": "Focused acceptance seeds Alpha and Beta histories and proves Alpha cleanup removes only Alpha rows while Beta rows remain unchanged."
+  },
+  "validation_and_confirmation": {
+    "older_than_days": [30, 60, 90, 180, 365],
+    "keep_latest": [50, 100, 250, 500],
+    "confirmation": "trimmed value must equal exact uppercase CLEANUP",
+    "invalid_input": "422 before destructive write",
+    "no_eligible_rows": "409; no success is reported",
+    "browser_confirmation": "The rendered form adds a window.confirm cancellation boundary before submission."
+  },
+  "csrf": {
+    "middleware": "web",
+    "token": "Blade cleanup form renders @csrf.",
+    "exceptions": "bootstrap/app.php excludes only api/v1/billing/webhooks/paypal; this cleanup route is not exempt."
+  },
+  "persistence_and_truthfulness": {
+    "transaction": "SiteOperationHistoryService::cleanup executes inside DB::transaction with 3 bounded retry attempts.",
+    "precondition": "A real tenant-scoped preview must report at least one removable row.",
+    "mutation_result": "The service returns real removed_count and remaining_count from the database.",
+    "authoritative_reread": "The controller rereads tenant-scoped storage and preview after cleanup.",
+    "success_gate": "Success is emitted only when after-count equals service remaining_count, equals before-count minus removed_count, and reread preview total_count equals after-count.",
+    "fake_success": "No sample/demo/static success path exists."
+  },
+  "idempotency_retry_cancellation": {
+    "retry": "The database transaction uses a bounded retry count of 3 for transactional failures.",
+    "replay": "After a successful cleanup with no further eligible rows, the same request returns 409 and performs no additional mutation.",
+    "cancellation": "User cancellation exists before submission through browser confirmation; no asynchronous cancellation is fabricated after the synchronous transaction begins."
+  },
+  "secret_and_external_boundaries": {
+    "secret_non_exposure": "The form/controller contain no password, API key, client secret, provider secret or credential fields; malicious extra secret input is ignored and not echoed.",
+    "wordpress_connector": "No WordPress or Connector call is performed.",
+    "payment_provider": "No billing/payment provider call is performed despite the canonical scanner domain/dependency classification.",
+    "ai_provider": "No AI provider is called.",
+    "queue_cache_scheduler": "No queue, cache or scheduler side effect is introduced."
+  },
+  "focused_tests": [
+    "Tests\\Feature\\SiteOperationsMaintenanceCleanupTerminalityTest::test_exact_critical_canonical_cleanup_operation_is_terminalized",
+    "Tests\\Feature\\SiteOperationsMaintenanceCleanupTerminalityTest::test_cleanup_route_and_rendered_control_are_web_auth_tenant_csrf_and_operation_bound",
+    "Tests\\Feature\\SiteOperationsMaintenanceCleanupTerminalityTest::test_cleanup_control_is_hidden_without_manage_permission_and_server_authorization_still_fails_closed",
+    "Tests\\Feature\\SiteOperationsMaintenanceCleanupTerminalityTest::test_guest_foreign_tenant_and_invalid_policy_or_confirmation_fail_before_any_delete",
+    "Tests\\Feature\\SiteOperationsMaintenanceCleanupTerminalityTest::test_real_cleanup_deletes_only_active_tenant_rows_and_reports_success_after_authoritative_reread",
+    "Tests\\Feature\\SiteOperationsMaintenanceCleanupTerminalityTest::test_retry_after_success_fails_closed_without_additional_mutation",
+    "Tests\\Feature\\SiteOperationsMaintenanceCleanupTerminalityTest::test_source_transaction_and_failure_contracts_preserve_confirmation_reread_retry_and_secret_boundaries"
+  ],
+  "scope_guards": {
+    "exactly_one_canonical_operation": true,
+    "no_other_parity_claim": true,
+    "source_aspnet_modified": false,
+    "manual_reconciliation_count_edit": false,
+    "assertion_weakening": false,
+    "fabricated_live_evidence": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "The critical cleanup control now reaches a real Laravel destructive runtime that is authenticated, tenant-scoped, permission-gated, CSRF-protected, allow-list validated, confirmation-gated, transactionally persisted, foreign-tenant safe, replay fail-closed, secret-free, and truthful only after authoritative reread."
+  }
+}

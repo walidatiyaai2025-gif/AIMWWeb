@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-AI-387F3E5D5F",
+  "domain": "ai",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/SiteDetails.razor",
+    "route_screen": "/sites/{Id:guid}",
+    "scanner_visible_control": "button control 10",
+    "resolved_control": "Save & Test submit button inside the credentials EditForm",
+    "handler": "SaveAndTestAsync",
+    "behavior": "The source submits the current WordPress credential form, saves the credential, tests connectivity, clears the application-password field, and reloads authoritative Site Details state.",
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_adaptation": {
+    "frontend_control": "backend/resources/js/site-details-save-test-control.tsx",
+    "control_binding": "data-canonical-operation=AIMW-AI-387F3E5D5F",
+    "site_details_wiring": "backend/resources/js/site-details-back-control.tsx",
+    "detail_contract": "GET /api/tenants/{tenant}/sites/{site}",
+    "verify_contract": "POST /api/tenants/{tenant}/sites/{site}/verify",
+    "verify_controller": "App\\Http\\Controllers\\DemoController::verify",
+    "credential_authority": "App\\Models\\Connector.encrypted_secret",
+    "adaptation_reason": "Laravel uses paired connector credentials rather than duplicating the desktop application's manually entered WordPress application-password store. Save & Test therefore tests the already-saved paired connector secret and persists verification state while retaining the stronger connector protocol boundary.",
+    "secret_storage": "Connector.encrypted_secret is encrypted at rest and Hidden from serialization.",
+    "browser_secret_policy": "The control sends no credential body and never reads, renders, or echoes encrypted_secret or an application password.",
+    "authoritative_reconciliation": "After the verify POST succeeds, the control rereads the exact advertised Site Details API; reconciliation failure is surfaced as an authoritative reconciliation error rather than fake success.",
+    "fake_or_demo_data": false
+  },
+  "authorization": {
+    "authentication": "auth",
+    "tenant_context": "tenant.context",
+    "permission": "connector.manage",
+    "site_lookup": "tenant-scoped Site model findOrFail",
+    "missing_permission_semantics": "403",
+    "foreign_tenant_or_site_semantics": "404"
+  },
+  "tenant_isolation": {
+    "proof": "The focused tests retain explicit foreign/cross-tenant 404 semantics, derive the verify URL only from the exact server-advertised tenant Site Details contract, reject caller-shaped or external URLs, and rely on the existing tenant-scoped Site and Connector models.",
+    "caller_override_probe": "Only /api/tenants/{tenant}/sites/{positive-integer} is accepted as a derivation source; query strings, traversal-shaped paths and absolute foreign origins fail closed."
+  },
+  "semantics": {
+    "persistence_mutation": true,
+    "wordpress_mutation": false,
+    "external_dependency": "paired WordPress connector health endpoint",
+    "approval_required": false,
+    "retry_safe": true,
+    "authoritative_reread": true,
+    "secret_redaction": true,
+    "fake_success_path": "none"
+  },
+  "acceptance_tests": {
+    "php": {
+      "file": "backend/tests/Feature/SiteDetailsSaveTestControlTerminalityTest.php",
+      "coverage": [
+        "exact canonical operation marker",
+        "existing POST verify route wiring",
+        "connector.manage authorization",
+        "tenant-scoped Site lookup",
+        "connector verification persistence",
+        "encrypted and hidden connector secret",
+        "foreign tenant 404 and missing permission 403 focused contract"
+      ]
+    },
+    "frontend": {
+      "file": "backend/resources/js/__tests__/site-details-save-test-control.test.tsx",
+      "coverage": [
+        "exact canonical operation marker",
+        "GET Site Details -> POST verify -> authoritative GET Site Details sequence",
+        "no application-password or encrypted-secret request body",
+        "permission-denied control fails closed",
+        "strict tenant-scoped verify endpoint derivation",
+        "cross-tenant 404 and authorization 403 contract"
+      ]
+    }
+  },
+  "implementation": {
+    "baseline_composition_sha": "659240c3a0b45fa652d180dfc64de6025016a18e",
+    "implementation_sha_before_evidence": "f8b994f136134f0789ce26371cc9271089e6e24c"
+  },
+  "scope_guards": {
+    "exactly_one_operation": true,
+    "generated_reconciliation_edited": false,
+    "reference_product_modified": false,
+    "parallel_secret_store_created": false,
+    "second_operation_started": false,
+    "force_push_performed": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "The canonical Site Details Save & Test control is now a real production Laravel control over the existing tenant-scoped paired connector credential. It preserves connector.manage authorization, tenant/site isolation, encrypted secret storage and authoritative post-action reread, with focused deterministic frontend and PHP security tests and no fabricated live WordPress evidence."
+  }
+}

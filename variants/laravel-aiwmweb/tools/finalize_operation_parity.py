@@ -147,6 +147,10 @@ def finalize_summary(payload: dict, rows: list[dict], manifest: dict) -> None:
         "(PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL) / TOTAL * 100"
     )
     payload["classification_policy"]["blocked_progress_policy"] = "not_counted"
+    payload["classification_policy"]["operation_scoped_source_policy"] = (
+        "a countable source declaring operation_ids may contribute generic evidence only to those canonical IDs; "
+        "the normal code, tenant/security, and test thresholds still apply"
+    )
     payload["classification_policy"]["explicit_route_policy"] = (
         "route rows remain pending unless an exact pushed source declares operation_evidence "
         "and the generator verifies route, auth/tenant action, test, and evidence links"
@@ -192,6 +196,7 @@ def finalize_summary(payload: dict, rows: list[dict], manifest: dict) -> None:
                 "sha": source["sha"],
                 "domains": source.get("domains", []),
                 "supporting_only": bool(source.get("supporting_only", False)),
+                "operation_ids": sorted(str(operation_id) for operation_id in source.get("operation_ids", [])),
                 "explicit_operation_evidence_ids": sorted((source.get("operation_evidence") or {}).keys()),
             }
             for source in manifest["countable_sources"]
@@ -214,6 +219,22 @@ def validate(rows: list[dict], payload: dict, manifest: dict, snapshots: list[re
         errors.append(f"blank operation IDs: {blank_ids}")
     if invalid_states:
         errors.append(f"invalid statuses: {', '.join(invalid_states)}")
+
+    known_operation_ids = set(operation_ids)
+    scoped_ids = [
+        str(operation_id)
+        for source in manifest["countable_sources"]
+        for operation_id in source.get("operation_ids", [])
+        if str(operation_id)
+    ]
+    unknown_scoped_ids = sorted(set(scoped_ids) - known_operation_ids)
+    duplicate_scoped_ids = sorted(
+        operation_id for operation_id, count in Counter(scoped_ids).items() if count > 1
+    )
+    if unknown_scoped_ids:
+        errors.append("operation-scoped evidence references unknown IDs: " + ", ".join(unknown_scoped_ids))
+    if duplicate_scoped_ids:
+        errors.append("operation-scoped evidence duplicates ownership: " + ", ".join(duplicate_scoped_ids))
 
     source_presence: dict[str, bool] = {}
     for source in manifest["countable_sources"]:
@@ -291,6 +312,8 @@ def validate(rows: list[dict], payload: dict, manifest: dict, snapshots: list[re
         "blank_operation_ids": blank_ids,
         "allowed_statuses_only": not invalid_states,
         "invalid_statuses": invalid_states,
+        "operation_scoped_unknown_ids": unknown_scoped_ids,
+        "operation_scoped_duplicate_ids": duplicate_scoped_ids,
         "status_totals_reconcile": state_total == expected,
         "terminal_excludes_blocked": totals["terminal"] == expected_terminal,
         "terminal_evidence_references_exist": not missing_evidence_refs,

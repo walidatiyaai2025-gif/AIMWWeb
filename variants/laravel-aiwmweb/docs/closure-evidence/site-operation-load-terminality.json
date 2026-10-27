@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #730",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-B26D5099F8",
+  "domain": "billing",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/SiteOperationDetails.razor",
+    "route_screen": "/operations/sites/{OperationId:guid} | /site-operations/{OperationId:guid}",
+    "visible_control": "LoadAsync [LoadAsync]",
+    "behavior": "Load the requested retained site-operation record for the authenticated tenant, derive site display context from authoritative tenant-owned data, fail closed for unavailable or cross-tenant identifiers, and perform no mutation.",
+    "tenant_owned": true,
+    "mutation": false,
+    "risk": "low"
+  },
+  "laravel_adaptation": {
+    "production_controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteOperationDetailsReadController.php",
+    "production_view": "variants/laravel-aiwmweb/backend/resources/views/operations/site-operation-details.blade.php",
+    "authoritative_read": "SiteOperationHistoryService::getByCorrelationId inside active TenantContext",
+    "operation_marker": "AIMW-BILL-B26D5099F8",
+    "route_methods": [
+      "GET",
+      "HEAD"
+    ],
+    "authorization": "execution.view",
+    "tenant_isolation": "auth + tenant.context + explicit route-tenant match + tenant-scoped SiteOperationHistory query",
+    "not_found": "Invalid UUID, unavailable record, foreign tenant and cross-tenant correlation identifiers fail closed as 404.",
+    "mutation": false,
+    "external_call": false,
+    "fake_success_path": "none",
+    "error_state": "Retained-history storage/read failure renders a dedicated 503 state with a Retry link bound to the same canonical LoadAsync operation; it is not presented as not-found."
+  },
+  "security_boundary": {
+    "authentication": "Laravel auth middleware",
+    "tenant_context": "tenant.context activates the authenticated tenant membership and the controller rejects route-tenant mismatch",
+    "permission": "execution.view is re-authorized before the read",
+    "foreign_tenant": "focused feature coverage proves foreign tenant and cross-tenant correlation GUID reads return 404",
+    "secret_non_exposure": "retained operation details are redacted before rendering",
+    "direct_object_identifier": "correlation UUID is resolved only inside active tenant scope"
+  },
+  "acceptance_tests": [
+    "variants/laravel-aiwmweb/backend/tests/Feature/SiteOperationDetailsRouteTerminalityTest.php — binds AIMW-BILL-B26D5099F8 to the real tenant-scoped read, proves no persistence mutation, authoritative rendering, redaction, and guest/permission/foreign-tenant/cross-tenant fail-closed behavior.",
+    "The focused feature test also verifies the dedicated 503 storage-failure view, canonical Retry marker, and explicit non-404 failure copy."
+  ],
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "The canonical LoadAsync behavior is backed by the real tenant-scoped retained operation-history read, renders authoritative data without mutation, distinguishes unavailable records from storage/read failures, and preserves the source fail-closed security boundary."
+  },
+  "scope_exclusions": [
+    "No ASP.NET runtime changes",
+    "No adjacent Copy report, Back, or Execution Center operations are claimed",
+    "No payment-provider state is fabricated",
+    "No persistence mutation is introduced",
+    "No manual generated parity-count edit"
+  ]
+}

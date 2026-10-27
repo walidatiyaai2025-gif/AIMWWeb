@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #854 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-CONT-40CD7F080F",
+    "domain": "content",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/SiteReliability.razor",
+    "source_screen": "/site-reliability | /operations/reliability",
+    "source_control": "ApplyFilters [ApplyFilters]",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_behavior": {
+    "summary": "Apply the selected retained-history period and minimum-operation threshold, rebuilding recorded connection/synchronization reliability rows.",
+    "defaults": {
+      "period_days": 30,
+      "minimum_operations": 1
+    },
+    "allowed_period_days": [
+      7,
+      30,
+      90
+    ],
+    "allowed_minimum_operations": [
+      1,
+      3,
+      5,
+      10
+    ],
+    "ordering": "success rate ascending, then total operations descending",
+    "live_health_claim": false
+  },
+  "laravel_adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/site-reliability-filters-control.tsx",
+    "production_page": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "backend_action": "RouteApiAdapterController::siteReliability",
+    "endpoint": "GET /tenants/{tenant}/route-api/site-reliability?period_days={7|30|90}&minimum_operations={1|3|5|10}",
+    "operation_marker": "AIMW-CONT-40CD7F080F",
+    "authoritative_data": "tenant-scoped SiteOperationHistory retained records",
+    "behavior": "Draft selections remain local until Apply; Apply changes the authoritative query, and unchanged filters force a real refetch."
+  },
+  "authorization": {
+    "permission": "sites.view",
+    "middleware": [
+      "auth",
+      "tenant.context"
+    ],
+    "foreign_tenant": "404",
+    "invalid_filter_values": "422",
+    "browser_tenant_override": false
+  },
+  "runtime_semantics": {
+    "read_only": true,
+    "mutation": false,
+    "wordpress_mutation": false,
+    "reliability_records": "connection, synchron*, or sync operation names only",
+    "period_filter": "server filters started_at using the applied period_days",
+    "minimum_filter": "server removes grouped sites below the applied minimum_operations",
+    "retention_limit": 2000,
+    "fake_success_path": "none",
+    "live_health_monitor": false
+  },
+  "acceptance_tests": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-reliability-filters-control.test.tsx",
+    "php_feature": "variants/laravel-aiwmweb/backend/tests/Feature/SiteReliabilityApplyFiltersTerminalityTest.php",
+    "proof": [
+      "exact canonical operation marker and source 30/1 defaults",
+      "7/30/90 day period semantics",
+      "1/3/5/10 minimum-operation semantics",
+      "busy duplicate suppression",
+      "invalid forged filter values return 422",
+      "sites.view permission denial",
+      "foreign tenant 404 isolation",
+      "read-only operation history count",
+      "non-reliability history excluded"
+    ]
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-CONT-40CD7F080F",
+    "sibling_site_reliability_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "mutation_added": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "4fb6455bb93186e5e0bf3165ac6261dbad3feb4c",
+    "branch": "worker/854-site-reliability-apply-filters",
+    "issue": 854
+  },
+  "materialization": {
+    "reconciliation_commit": "4655d8e1f0b3d87a2972a7fc83fa66d32bd7e55a",
+    "canonical_total": 931,
+    "candidate_terminal": 774,
+    "candidate_pending": 157,
+    "candidate_blocked": 0,
+    "candidate_parity_percent": 83.14,
+    "operation_state": "ADAPTED",
+    "generated_reconciliation_hand_edited": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true,
+    "reason": "The source ApplyFilters control now drives a tenant-authorized authoritative retained-history query with the exact supported periods and minimum-operation thresholds, truthful busy/error behavior, fail-closed validation, and focused tenant-isolation coverage."
+  }
+}

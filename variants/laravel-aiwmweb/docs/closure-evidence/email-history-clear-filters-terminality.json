@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "operation_id": "AIMW-EMAI-8C9768BCD0",
+  "domain": "email",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "source_file": "src/AIWordPressManager.Web/Components/Pages/EmailDeliveryHistory.razor",
+  "source_control": "ClearFiltersAsync [ClearFiltersAsync]",
+  "destination": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+  "shared_control": "variants/laravel-aiwmweb/backend/resources/js/app-data-grid-clear-filters-control.tsx",
+  "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/email-history-apply-filters-terminality.test.tsx",
+  "security_test": "variants/laravel-aiwmweb/backend/tests/Feature/EmailHistoryClearFiltersTerminalityTest.php",
+  "behavior": "Adapt Email History ClearFiltersAsync to the existing shared clear-filters action: clear draft/applied filters and search, reset page one, and re-read authoritative tenant history without rendering a duplicate control.",
+  "server_mutation": false,
+  "only_operation_claimed": "AIMW-EMAI-8C9768BCD0"
+}

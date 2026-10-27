@@ -10,6 +10,7 @@ on:
       - main
       - worker/laravel-aiwmweb-acceptance-parity
       - worker/laravel-aiwmweb-production-runtime
+      - worker/laravel-aiwmweb-closure-composition
     paths:
       - 'variants/laravel-aiwmweb/**'
       - '.github/workflows/laravel-aiwmweb.yml'

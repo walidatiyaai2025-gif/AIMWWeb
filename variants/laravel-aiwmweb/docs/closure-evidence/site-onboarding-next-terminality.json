@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #728",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-5DE86937F7",
+  "domain": "billing",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/SiteOnboarding.razor",
+    "route_screen": "/sites/connect | /sites/onboarding",
+    "visible_control": "Continue [NextAsync]",
+    "behavior": "Advance the onboarding wizard only after validating the current step: required site name plus HTTP/HTTPS URL on step 1, then required WordPress username plus Application Password length >= 8 on step 2. No persistence or external call occurs during NextAsync.",
+    "tenant_owned": true,
+    "mutation": false,
+    "risk": "low"
+  },
+  "laravel_adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/site-onboarding-save-test-sync-control.tsx",
+    "operation_marker": "AIMW-BILL-5DE86937F7",
+    "flow": "Three-step React onboarding wizard. Continue validates only the active step, keeps the user on the current step on failure, advances exactly one step on success, and reaches a read-only review step before the pre-existing Save/Test/Sync operation.",
+    "authorization": "Control renders only when authoritative FrontendContext permissions contain sites.manage (or *).",
+    "network_request": false,
+    "persistence_mutation": false,
+    "external_call": false,
+    "secret_handling": "Application Password is rendered only as a password input during step 2 and is masked in the review step; NextAsync never transmits it.",
+    "fake_success_path": "none"
+  },
+  "security_boundary": {
+    "authentication": "Inherited from the authenticated tenant React bootstrap.",
+    "tenant_context": "Uses the server-authored FrontendContext for the active tenant; NextAsync accepts no tenant or object identifier.",
+    "permission": "sites.manage gates the entire onboarding control.",
+    "caller_supplied_tenant_selector": "none",
+    "direct_object_identifier": "none",
+    "csrf": "not applicable because NextAsync performs no HTTP request",
+    "secret_non_exposure": "The secret is not rendered in review text and is not sent until the separate Save/Test/Sync operation.",
+    "truthful_success": "No success message or server state is claimed by Continue; it only changes local wizard step state."
+  },
+  "acceptance_tests": [
+    "variants/laravel-aiwmweb/backend/tests/Feature/SiteOnboardingSaveTestAndSyncTerminalityTest.php — binds AIMW-BILL-5DE86937F7 to the client-only Continue control and carries the real guest / missing-permission / foreign-tenant assertNotFound boundary for the onboarding surface",
+    "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-onboarding-save-test-sync-ui-terminality.test.tsx — validates source-equivalent step gating, no API call, masked secret, and permission denial",
+    "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-onboarding-save-test-sync-terminality.test.ts — preserves the independent Save/Test/Sync endpoint contract"
+  ],
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "The canonical NextAsync control is now a distinct real production control with exact source validation semantics and no mutation or fabricated success."
+  },
+  "scope_exclusions": [
+    "No ASP.NET runtime changes",
+    "No claim over SaveTestAndSyncAsync (AIMW-BILL-2EF6B8A27A)",
+    "No persistence or WordPress request is performed by NextAsync",
+    "No manual generated parity-count edit"
+  ]
+}

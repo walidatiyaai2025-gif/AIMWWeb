@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-AI-6701FB22AE",
+  "domain": "ai",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/AIProviderSettings.razor",
+    "route_screen": "/settings/ai-providers",
+    "scanner_visible_control": "@(L.IsArabic ? [ConfirmRemovalAndSaveAsync]",
+    "resolved_control": "Confirm API key removal / Remove keys and save",
+    "source_action": "ConfirmRemovalAndSaveAsync",
+    "behavior": "The source opens a sensitive-action confirmation for selected stored provider credentials, requires the exact REMOVE confirmation, clears the selected encrypted credentials through the settings service, completes the save path, and reloads authoritative provider settings before reporting success.",
+    "scanner_mutation": false,
+    "resolved_destructive_effect": true,
+    "tenant_owned": true
+  },
+  "laravel_adaptation": {
+    "ui_control": "backend/resources/views/ai/provider-settings.blade.php",
+    "route_provider": "backend/app/Providers/AiProviderApiKeyRemovalRouteServiceProvider.php",
+    "action": "backend/app/Http/Controllers/AiProviderApiKeyRemovalController.php",
+    "settings_boundary": "backend/app/AI/Platform/Services/AIProviderSettingsAdministrationService.php",
+    "secret_and_readiness_service": "backend/app/AI/Platform/Services/ProviderConfigService.php",
+    "control_binding": "AIMW-AI-6701FB22AE",
+    "target_contract": "DELETE /tenants/{tenant}/settings/ai-providers/{provider}/api-key",
+    "confirmation_contract": "confirmation must equal REMOVE exactly",
+    "adaptation_reason": "The current Laravel provider-settings workspace is an authoritative server-rendered read model and does not expose the source page's co-located unsaved enablement/model/priority edit buffer. This focused adaptation therefore preserves exactly the destructive confirmation intent for one persisted provider credential: the selected tenant-owned encrypted credential is deleted, readiness is reset and audited, then the guarded provider-settings route is reloaded. Separate provider-setting edit/save controls remain independent canonical operations and are not claimed here.",
+    "fake_or_demo_data": false
+  },
+  "authorization": {
+    "authentication": "required",
+    "permission": "settings.manage",
+    "tenant_context": "tenant.context middleware",
+    "route_tenant_match": "controller rejects a route tenant that differs from the active TenantContext",
+    "provider_authority": "AiProviderProfile uses BelongsToTenant; provider lookup executes inside the active tenant context",
+    "caller_selected_secret": false
+  },
+  "tenant_isolation": {
+    "proof": "Focused acceptance proves an authenticated settings manager cannot delete through a foreign tenant route and that the foreign tenant's encrypted secret remains present.",
+    "caller_override_probe": "The request selects only a provider key inside the already-authorized active tenant; it cannot submit tenant ownership, secret storage name, ciphertext, or another tenant's provider ID."
+  },
+  "semantics": {
+    "persistence_mutation": true,
+    "secret_storage": "ProviderSecretStore clears only the selected AiProviderProfile secret",
+    "readiness_after_clear": "NotConfigured with API credential is not configured error and refreshed readiness_checked_at",
+    "audit_event": "ai.provider.credential_cleared",
+    "audit_secret_redaction": true,
+    "authoritative_reread": "successful DELETE redirects to tenant.settings.ai-providers; the subsequent guarded GET serializes current persisted provider state and no longer renders the removal control when no stored credential exists",
+    "failed_confirmation_behavior": "validation error; no credential or readiness mutation",
+    "missing_permission_behavior": "HTTP 403; credential preserved",
+    "foreign_tenant_behavior": "HTTP 404; foreign credential preserved",
+    "external_dependency": "No live AI provider call or provider success is required or claimed.",
+    "cross_tenant_disclosure": false,
+    "fake_success_path": "none"
+  },
+  "acceptance_tests": {
+    "php": {
+      "file": "backend/tests/Feature/AiProviderConfirmApiKeyRemovalTerminalityTest.php",
+      "coverage": [
+        "exact canonical operation identity, source, route and visible-control metadata",
+        "explicit authenticated tenant-context DELETE route with canonical operation provenance",
+        "source-equivalent impact, recovery, exact REMOVE and Remove keys and save confirmation text",
+        "secret material never rendered",
+        "non-exact confirmation fails without mutation",
+        "exact confirmation clears only the selected encrypted credential",
+        "provider readiness reset and credential-cleared audit without secret disclosure",
+        "authoritative provider-settings reread after mutation",
+        "settings.manage authorization",
+        "foreign-tenant route isolation with secret preservation"
+      ]
+    }
+  },
+  "implementation": {
+    "baseline_composition_sha": "df5a23e397e118005367d0fa351e8e1f80269468",
+    "validated_implementation_sha": "b91bc3672f644e4db5c1927505ec74ae6a6ef2c6",
+    "validated_ci": {
+      "acceptance": {
+        "run_id": 34159273675,
+        "conclusion": "success"
+      },
+      "cross_domain_security": {
+        "run_id": 34159273683,
+        "conclusion": "success"
+      },
+      "pr_plan_link": {
+        "run_id": 34159273699,
+        "conclusion": "success"
+      }
+    }
+  },
+  "scope_guards": {
+    "exactly_one_operation": true,
+    "generated_reconciliation_edited": false,
+    "reference_product_modified": false,
+    "second_operation_started": false,
+    "owner_or_live_provider_evidence_manufactured": false,
+    "force_push_performed": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "The canonical typed destructive confirmation is bound to a real Laravel control and explicit tenant-guarded mutation path, requires exact REMOVE confirmation, deletes the selected encrypted credential through the existing provider secret boundary, resets and audits readiness without exposing secret material, and returns through an authoritative provider-state reread."
+  }
+}

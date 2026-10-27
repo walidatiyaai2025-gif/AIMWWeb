@@ -26,6 +26,7 @@
         .note { padding: 14px; border-radius: 12px; background: rgba(59, 130, 246, .09); border: 1px solid rgba(96, 165, 250, .25); }
         .actions { margin-top: 24px; display: flex; gap: 10px; flex-wrap: wrap; }
         .button { display: inline-flex; align-items: center; justify-content: center; padding: 10px 16px; border: 0; border-radius: 10px; background: #2563eb; color: #fff; font: inherit; font-weight: 700; text-decoration: none; cursor: pointer; }
+        .button.secondary { background: #1e293b; border: 1px solid rgba(148, 163, 184, .25); }
         .button:disabled { cursor: wait; opacity: .65; }
         .copy-status { margin: 12px 0 0; }
         .copy-error { margin-top: 12px; }
@@ -52,6 +53,9 @@
 
             <div class="actions">
                 <button class="button" type="button" data-copy-error-details data-canonical-operation="AIMW-SYNC-89777052CB" aria-busy="false">Copy error details</button>
+                @if ($logsHref !== null)
+                    <a class="button secondary" href="{{ $logsHref }}" data-canonical-operation="AIMW-CONT-8B3518EF80">Open logs</a>
+                @endif
                 <a class="button" href="/" data-canonical-operation="AIMW-CONT-85394A0E55">Back to dashboard</a>
             </div>
             <p class="copy-status" data-copy-error-success role="status" hidden>Error details copied. The browser confirmed the clipboard write.</p>

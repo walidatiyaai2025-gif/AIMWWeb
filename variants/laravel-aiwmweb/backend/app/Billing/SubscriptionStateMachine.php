@@ -7,7 +7,7 @@ use App\Billing\Exceptions\InvalidSubscriptionTransition;
 
 final class SubscriptionStateMachine
 {
-    private const ALLOWED = ['TRIALING' => ['ACTIVE', 'CANCELLED', 'EXPIRED'], 'ACTIVE' => ['PAST_DUE', 'GRACE', 'SUSPENDED', 'CANCELLED', 'EXPIRED'], 'PAST_DUE' => ['ACTIVE', 'GRACE', 'SUSPENDED', 'CANCELLED'], 'GRACE' => ['ACTIVE', 'SUSPENDED', 'CANCELLED', 'EXPIRED'], 'SUSPENDED' => ['ACTIVE', 'CANCELLED', 'EXPIRED'], 'CANCELLED' => ['ACTIVE'], 'EXPIRED' => ['ACTIVE']];
+    private const ALLOWED = ['TRIALING' => ['ACTIVE', 'SUSPENDED', 'CANCELLED', 'EXPIRED'], 'ACTIVE' => ['PAST_DUE', 'GRACE', 'SUSPENDED', 'CANCELLED', 'EXPIRED'], 'PAST_DUE' => ['ACTIVE', 'GRACE', 'SUSPENDED', 'CANCELLED'], 'GRACE' => ['ACTIVE', 'SUSPENDED', 'CANCELLED', 'EXPIRED'], 'SUSPENDED' => ['ACTIVE', 'CANCELLED', 'EXPIRED'], 'CANCELLED' => ['ACTIVE'], 'EXPIRED' => ['ACTIVE']];
 
     public function assert(SubscriptionState $from, SubscriptionState $to): void
     {

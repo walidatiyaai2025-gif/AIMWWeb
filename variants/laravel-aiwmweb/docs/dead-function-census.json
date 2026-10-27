@@ -1,5 +1,46 @@
 {
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
-  "findings": []
+  "findings": [
+    {
+      "kind": "explicit_simulation",
+      "severity": "high",
+      "source": "variants/laravel-aiwmweb/backend/app/Execution/ExecutionCenterCancelService.php",
+      "line": 17,
+      "snippet": "* not execute, simulate, or manufacture work or progress.",
+      "status": "OPEN_REVIEW"
+    },
+    {
+      "kind": "explicit_simulation",
+      "severity": "high",
+      "source": "variants/laravel-aiwmweb/backend/resources/js/__tests__/error-copy-details.test.ts",
+      "line": 72,
+      "snippet": "it('never emits fake success on failure and allows a successful retry', async () => {",
+      "status": "OPEN_REVIEW"
+    },
+    {
+      "kind": "explicit_simulation",
+      "severity": "high",
+      "source": "variants/laravel-aiwmweb/backend/resources/js/__tests__/acceptance.test.tsx",
+      "line": 122,
+      "snippet": "it('surfaces validation failures without fake success', async () => {",
+      "status": "OPEN_REVIEW"
+    },
+    {
+      "kind": "explicit_simulation",
+      "severity": "high",
+      "source": "variants/laravel-aiwmweb/backend/resources/js/__tests__/ai-center-copy-output.test.tsx",
+      "line": 99,
+      "snippet": "renderControl('Suggestion that must not fake success');",
+      "status": "OPEN_REVIEW"
+    },
+    {
+      "kind": "explicit_simulation",
+      "severity": "high",
+      "source": "variants/laravel-aiwmweb/backend/resources/js/__tests__/about-build-copy-report.test.ts",
+      "line": 77,
+      "snippet": "it('never emits fake success on clipboard failure and a retry can succeed', async () => {",
+      "status": "OPEN_REVIEW"
+    }
+  ]
 }

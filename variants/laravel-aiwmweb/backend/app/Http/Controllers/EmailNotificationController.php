@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Authorization\TenantAuthorizer;
+use App\Email\Services\AccountEmailRecipientService;
 use App\Email\Services\EmailDeliveryService;
 use App\Email\Services\EmailTemplateService;
 use App\Email\Services\MailConfigurationService;
@@ -87,6 +88,42 @@ final class EmailNotificationController extends Controller
         return response()->json($this->configuration->get((string) $request->query('key', 'default')));
     }
 
+    public function accountRecipients(
+        string $tenant,
+        AccountEmailRecipientService $recipients,
+    ): JsonResponse {
+        $this->authorizer->authorize('tenant.manage');
+
+        return response()->json([
+            'data' => $recipients->listAsync()
+                ->map(fn ($recipient): array => $recipients->serialize($recipient))
+                ->values(),
+        ]);
+    }
+
+    public function updateAccountRecipient(
+        Request $request,
+        string $tenant,
+        int $recipient,
+        AccountEmailRecipientService $recipients,
+    ): JsonResponse {
+        $this->authorizer->authorize('tenant.manage');
+        $data = $request->validate([
+            'email_address' => ['required', 'email:rfc', 'max:320'],
+            'display_name' => ['nullable', 'string', 'max:120'],
+            'is_enabled' => ['required', 'boolean'],
+        ]);
+
+        $updated = $recipients->updateAsync(
+            $recipient,
+            (string) $data['email_address'],
+            isset($data['display_name']) ? (string) $data['display_name'] : null,
+            (bool) $data['is_enabled'],
+        );
+
+        return response()->json($recipients->serialize($updated));
+    }
+
     public function saveConfiguration(Request $request, string $tenant): JsonResponse
     {
         $this->authorizer->authorize('tenant.manage');
@@ -100,6 +137,17 @@ final class EmailNotificationController extends Controller
         $key = (string) ($data['configuration_key'] ?? 'default');
 
         return response()->json($this->configuration->serialize($this->configuration->save($key, $data)));
+    }
+
+    public function clearConfigurationSecret(Request $request, string $tenant): JsonResponse
+    {
+        $this->authorizer->authorize('tenant.manage');
+        $data = $request->validate([
+            'configuration_key' => ['nullable', 'string', 'max:160'],
+        ]);
+        $key = (string) ($data['configuration_key'] ?? 'default');
+
+        return response()->json($this->configuration->serialize($this->configuration->clearSecret($key)));
     }
 
     public function diagnose(Request $request, string $tenant): JsonResponse
@@ -127,10 +175,19 @@ final class EmailNotificationController extends Controller
         return response()->json($this->templates->serialize($this->templates->save($stableId, $locale, $data)));
     }
 
-    public function deliveries(string $tenant): JsonResponse
+    public function deliveries(Request $request, string $tenant): JsonResponse
     {
         $this->authorizer->authorize('tenant.manage');
+        $filters = $request->validate([
+            'site_id' => ['nullable', 'integer', 'min:1'],
+            'status' => ['nullable', 'in:QUEUED,SENDING,RETRYING,SENT,FAILED,SUPPRESSED'],
+            'correlation' => ['nullable', 'string', 'max:100'],
+            'search' => ['nullable', 'string', 'max:100'],
+            'page' => ['nullable', 'integer', 'min:1'],
+            'per_page' => ['nullable', 'integer', 'between:1,100'],
+            'sort_desc' => ['nullable', 'boolean'],
+        ]);
 
-        return response()->json($this->deliveries->history());
+        return response()->json($this->deliveries->history($filters));
     }
 }

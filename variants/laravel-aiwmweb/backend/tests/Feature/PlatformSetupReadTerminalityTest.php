@@ -14,13 +14,18 @@ class PlatformSetupReadTerminalityTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_canonical_setup_get_is_anonymous_and_resolves_to_real_controller(): void
+    private const OPERATION_ID = 'AIMW-PLAT-18A8EE0324';
+
+    public function test_canonical_setup_get_is_operation_linked_anonymous_and_resolves_to_real_controller(): void
     {
+        $this->assertSame('AIMW-PLAT-18A8EE0324', self::OPERATION_ID);
+
         $route = Route::getRoutes()->getByName('canonical.api.setup');
 
         $this->assertNotNull($route);
         $this->assertSame(SetupReadController::class, $route->getActionName());
         $this->assertContains('GET', $route->methods());
+        $this->assertSame('setup', $route->uri());
         $this->assertContains('web', $route->gatherMiddleware());
         $this->assertNotContains('auth', $route->gatherMiddleware());
         $this->assertNotContains('tenant.context', $route->gatherMiddleware());
@@ -71,5 +76,27 @@ class PlatformSetupReadTerminalityTest extends TestCase
             ->assertSee('Database reachable:')
             ->assertSee('no')
             ->assertDontSee('must-never-render');
+    }
+
+    public function test_completed_setup_ignores_caller_redirect_targets_and_uses_fixed_landing_page(): void
+    {
+        $password = 'correct-horse-battery-staple';
+
+        $this->post('/setup', [
+            'tenant_name' => 'Setup proof tenant',
+            'admin_name' => 'Setup proof user',
+            'admin_email' => 'setup-proof@example.test',
+            'admin_password' => $password,
+            'admin_password_confirmation' => $password,
+        ])->assertRedirect('/');
+
+        $status = app(DatabaseSetupReadService::class)->status();
+        $this->assertTrue($status['complete']);
+        $this->assertTrue($status['identity_ready']);
+
+        $response = $this->get('/setup?returnUrl=https%3A%2F%2Fevil.example%2Fphish');
+
+        $response->assertRedirect('/');
+        $this->assertStringNotContainsString('evil.example', (string) $response->headers->get('Location'));
     }
 }

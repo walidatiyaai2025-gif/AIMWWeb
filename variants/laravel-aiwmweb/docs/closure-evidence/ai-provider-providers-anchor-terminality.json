@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-AI-4F6B6584E4",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "ai",
+    "kind": "visible_control",
+    "route_screen": "/settings/ai-providers",
+    "source": "src/AIWordPressManager.Web/Components/Pages/AIProviderSettings.razor",
+    "source_intent": "in-page Providers navigation via #providers",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/views/ai/provider-settings.blade.php",
+    "host_route": "GET /tenants/{tenant}/settings/ai-providers",
+    "target": "#providers",
+    "target_section": "section#providers",
+    "route_authority": "tenant.settings.ai-providers",
+    "route_controller": "App\\Http\\Controllers\\AiProviderSettingsReadController",
+    "route_permission": "settings.manage",
+    "route_middleware": [
+      "auth",
+      "tenant.context"
+    ],
+    "semantics": "non-mutating same-document navigation to the persisted tenant provider registry"
+  },
+  "security": {
+    "tenant_selector": "none; the fragment stays within the already authorized active-tenant document",
+    "guest_destination": "redirect to canonical /login before the document renders",
+    "missing_settings_manage": "direct host route fails 403",
+    "foreign_tenant": "direct host route fails 404",
+    "direct_resource_id": false,
+    "server_mutation": false,
+    "provider_mutation": false,
+    "fake_success": false,
+    "secret_disclosure_added": false,
+    "saved_api_key_material_rendered": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/AiProviderProvidersAnchorTerminalityTest.php",
+    "coverage": [
+      "generator-backed ADAPTED canonical row identity",
+      "exact production operation marker",
+      "exact href #providers and section id providers pairing",
+      "host route remains settings.manage protected and tenant scoped",
+      "guest redirect, missing-permission 403, and foreign-tenant 404 fail-closed behavior",
+      "no caller-supplied tenant/provider identifier in the control",
+      "no provider mutation surface",
+      "saved provider secret material remains unrendered"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-AI-4F6B6584E4"
+    ],
+    "provider_mutation_added": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "claim_base_sha": "575bdb258a9eb986fa8512ae9c9f62bb651d277b",
+    "claim_issue_comment": 5559227486,
+    "branch": "worker/laravel-aiwmweb-AIMW-AI-4F6B6584E4-providers-anchor",
+    "reason": "canonical source exposes a same-document #providers navigation control while the Laravel provider settings document already had the provider registry but lacked the canonical fragment control and target id"
+  },
+  "ci_policy": {
+    "required": [
+      "PR Plan Link",
+      "Laravel AIWMWeb Cross-Domain Security",
+      "Laravel AIWMWeb Acceptance",
+      "Laravel AIWMWeb Parity Reconciliation",
+      "Laravel AIWMWeb Closure Evidence Audit",
+      "Laravel AIWMWeb Convergence Preflight"
+    ],
+    "exact_final_pushed_head_required": true,
+    "status_at_evidence_commit": "pending generator-backed reconciliation and exact-head repository validation"
+  }
+}

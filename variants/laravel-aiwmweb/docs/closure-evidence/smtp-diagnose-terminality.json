@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #745",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-EE42461195",
+  "terminal_state": "ADAPTED",
+  "branch": "worker/laravel-aiwmweb-AIMW-BILL-EE42461195-diagnose",
+  "evidence_head_sha": "3ea07627594d72d84e51f10ded08807a622d55d7",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Shared/SmtpDiagnosticsPanel.razor",
+    "control": "DiagnoseAsync [DiagnoseAsync]",
+    "semantics": "saved profile only; diagnostics checks DNS and TCP port; no test message"
+  },
+  "laravel_adaptation": {
+    "route": "POST /tenants/{tenant}/sites/{site}/email-diagnostics/diagnose",
+    "service": "SmtpDiagnosticsService::diagnose",
+    "probe": "NativeSmtpConnectionProbe",
+    "checks": [
+      "saved SMTP configuration",
+      "DNS resolution",
+      "TCP port connectivity"
+    ],
+    "sends_mail": false,
+    "permission": "settings.manage",
+    "tenant_site_isolation": true
+  },
+  "focused_test": "variants/laravel-aiwmweb/backend/tests/Feature/SmtpDiagnosticsDiagnoseTerminalityTest.php",
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-BILL-EE42461195",
+    "send_test_not_claimed": "AIMW-BILL-BC093D6418",
+    "aspnet_runtime_modified": false
+  }
+}

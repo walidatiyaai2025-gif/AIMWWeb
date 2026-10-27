@@ -12,7 +12,9 @@
         .access-denied-code { display: inline-block; margin-bottom: 10px; font-size: 13px; font-weight: 900; letter-spacing: .16em; color: #f87171; }
         h1 { margin: 0 0 10px; font-size: clamp(28px, 4vw, 42px); }
         p { margin: 0 auto 22px; max-width: 440px; line-height: 1.65; color: #94a3b8; }
+        .actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
         .btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 16px; border-radius: 10px; background: #2563eb; color: #fff; text-decoration: none; font-weight: 700; }
+        .btn.secondary { background: transparent; border: 1px solid rgba(148, 163, 184, .45); }
         .btn:focus-visible { outline: 3px solid #93c5fd; outline-offset: 3px; }
     </style>
 </head>
@@ -22,7 +24,12 @@
             <span class="access-denied-code">403</span>
             <h1 id="access-denied-title">Access denied</h1>
             <p>You are signed in, but your account does not have permission to open this page.</p>
-            <a class="btn primary" href="/" data-canonical-operation="AIMW-CONT-9D5E269773">Return home</a>
+            <div class="actions">
+                <a class="btn primary" href="/" data-canonical-operation="AIMW-CONT-9D5E269773">Return home</a>
+                @if (! empty($profileUrl))
+                    <a class="btn secondary" href="{{ $profileUrl }}" data-canonical-operation="AIMW-IDEN-03760967D1">Open my account</a>
+                @endif
+            </div>
         </section>
     </main>
 </body>

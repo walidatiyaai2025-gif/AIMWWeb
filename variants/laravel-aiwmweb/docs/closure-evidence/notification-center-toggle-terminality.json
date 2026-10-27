@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #894 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-EMAI-8E3B0AACD6",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-EMAI-8E3B0AACD6",
+    "domain": "email",
+    "kind": "visible_control",
+    "route_screen": "component:NotificationCenter",
+    "visible_control": "@(L.IsArabic ? [ToggleAsync]",
+    "source": "src/AIWordPressManager.Web/Components/Layout/NotificationCenter.razor",
+    "source_intent": "Toggle the global notification center and, when opened, refresh it from the authoritative current-tenant notification read model.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/notification-center-toggle-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "endpoint": "/api/v1/tenants/{tenant}/notifications",
+    "operation_marker": "AIMW-EMAI-8E3B0AACD6",
+    "toggle_semantics": "closed-to-open performs an authoritative GET; open-to-closed performs no read or mutation",
+    "render_states": [
+      "loading",
+      "empty",
+      "error",
+      "authoritative notification rows"
+    ]
+  },
+  "security": {
+    "workspace_permission": "notifications.view",
+    "tenant_endpoint": "server-advertised FrontendContext api.notifications for the active tenant",
+    "foreign_tenant": "404/fail closed",
+    "mutation_added": false,
+    "secret_exposure_added": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/notification-center-toggle-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/NotificationCenterToggleTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation identity and ASP.NET source intent",
+      "global topbar toggle semantics",
+      "authoritative current-tenant GET on open only",
+      "deterministic loading, empty, error and populated states",
+      "permission fail-closed behavior",
+      "foreign tenant API access fails closed",
+      "no mutation introduced"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-EMAI-8E3B0AACD6"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "core_variant_modified": false,
+    "mutation_added": false,
+    "destructive_migration": false
+  }
+}

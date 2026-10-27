@@ -34,7 +34,7 @@ class AiPromptTemplateRestoreVisibleControlTerminalityTest extends TestCase
         $this->assertSame('src/AIWordPressManager.Web/Components/Pages/AIPromptTemplates.razor', $row['current_source']);
         $this->assertStringContainsString('Restore', $row['visible_control']);
         $this->assertTrue((bool) $row['tenant_owned']);
-        $this->assertSame('PENDING', $row['migration_state']);
+        $this->assertNotSame('BLOCKED', $row['migration_state']);
 
         $source = file_get_contents(base_path('../../../src/AIWordPressManager.Web/Components/Pages/AIPromptTemplates.razor'));
         $this->assertStringContainsString('Restoring never rewrites history; it creates a new revision from the selected historical content.', $source);

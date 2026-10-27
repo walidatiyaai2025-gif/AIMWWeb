@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "task_id": "AIMW-BILL-90CF990147",
+  "operation_id": "AIMW-BILL-90CF990147",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "terminal_state": "ADAPTED",
+  "authority": {
+    "issue": 257,
+    "claim_comment_id": 5650548129,
+    "canonical_base_sha": "75ea2b5c221ef4793faf2c5fbe6ae1da854f3d4c",
+    "worker_branch": "worker/laravel-aiwmweb-AIMW-BILL-90CF990147-slot0318",
+    "pull_request": 494
+  },
+  "canonical_operation": {
+    "kind": "service",
+    "domain": "billing",
+    "service": "InternalLinkSuggestionService",
+    "member": "GenerateAsync",
+    "source": "src/AIWordPressManager.Persistence/Planning/InternalLinkSuggestionService.cs",
+    "mutation": false
+  },
+  "service_closure_contract": {
+    "implementation_sha": "b5b678a32bcb2bf896ba58155a31c2e554e4c71b",
+    "destination_path": "variants/laravel-aiwmweb/backend/app/Services/InternalLinkSuggestionService.php",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/InternalLinkSuggestionServiceTerminalityTest.php"
+  },
+  "decision": "ADAPTED_LARAVEL_NATIVE",
+  "rationale": "The Laravel service preserves the canonical InternalLinkSuggestionService.GenerateAsync semantics while enforcing tenant-scoped site/content resolution and authorization. The exact pushed implementation and focused test are operation-linked and cover deterministic filtering, overlap/confidence calculation, existing-link suppression, result capping, cross-tenant isolation, and authorization failure.",
+  "validation": {
+    "focused_test": "InternalLinkSuggestionServiceTerminalityTest",
+    "exact_head_ci_required": true,
+    "generator_backed_reconciliation_required": true
+  },
+  "scope_exclusions": [
+    "all operations other than AIMW-BILL-90CF990147",
+    "manual denominator or parity-count edits",
+    "ASP.NET/reference-product mutation",
+    "owner/manual/live-production evidence"
+  ]
+}

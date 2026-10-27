@@ -1,0 +1,86 @@
+name: Laravel AIWMWeb Task Parity Materialize
+# trigger: merged-composition-parity
+# exact-composition-head: b477d1e8ee63d2fcf8b0ab48ded2851c28049ee3
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-closure-composition
+    paths:
+      - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
+      - 'variants/laravel-aiwmweb/docs/closure-evidence/**'
+      - '.github/workflows/laravel-aiwmweb-task-parity-materialize.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - name: Fetch exact evidence refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run official parity materializer
+        run: |
+          set -euo pipefail
+          OUT_JSON=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          OUT_MD=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          TMP_SUMMARY=/tmp/operation-parity-summary.json
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_platform_admin_route_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+      - name: Commit generated reconciliation
+        run: |
+          set -euo pipefail
+          OUT_JSON=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          OUT_MD=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          TMP_SUMMARY=/tmp/operation-parity-summary.json
+
+          materialize() {
+            python variants/laravel-aiwmweb/tools/finalize_operation_parity.py --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+            python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+            python variants/laravel-aiwmweb/tools/apply_platform_admin_route_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+            python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+            python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+            python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+            python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+          }
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          for attempt in 1 2 3; do
+            git add "$OUT_JSON" "$OUT_MD"
+            if git diff --cached --quiet; then
+              echo "Reconciliation already materialized at current composition head."
+              exit 0
+            fi
+
+            git commit -m "chore(laravel): materialize merged composition parity"
+            if git push origin "HEAD:${{ github.ref_name }}"; then
+              exit 0
+            fi
+
+            if [ "$attempt" -eq 3 ]; then
+              echo "Materialization push lost the composition race after $attempt attempts." >&2
+              exit 1
+            fi
+
+            echo "Composition moved during materialization; rebuilding from latest remote head (attempt $((attempt + 1))/3)."
+            git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+            git reset --hard "origin/${{ github.ref_name }}"
+            materialize
+          done

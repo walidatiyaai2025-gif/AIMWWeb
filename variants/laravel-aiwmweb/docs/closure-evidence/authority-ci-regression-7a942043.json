@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "unit_type": "authoritative_ci_regression_repair",
+  "canonical_base_branch": "worker/laravel-aiwmweb-closure-composition",
+  "regressed_authority_sha": "7a942043183b0b45bf8d27870a4ff313c4e43ecf",
+  "previous_green_authority_sha": "7d78df9daf657d3e765afb6b322db22e26c9b725",
+  "introducing_pr": 572,
+  "canonical_operation": {
+    "operation_id": "AIMW-BILL-812D1C53B6",
+    "new_claim": false,
+    "state_transition": false,
+    "generated_count_change": false
+  },
+  "failure": {
+    "required_gates": [
+      "tenant-core-sqlite",
+      "mysql-production-like",
+      "Convergence Preflight composed-working-tree"
+    ],
+    "stage": "full php artisan test / PHPUnit suite",
+    "migrations_passed": true,
+    "pint_passed": true,
+    "runtime_adjunct_gates_passed": true,
+    "exact_failure": "SubscriptionPlanEnabledTerminalityTest::test_route_is_session_authenticated_tenant_scoped_csrf_capable_and_visible expected App\\Http\\Controllers\\SubscriptionPlanEnabledController@__invoke but Laravel reports an invokable class route action as App\\Http\\Controllers\\SubscriptionPlanEnabledController"
+  },
+  "repair": {
+    "production_runtime_changed": false,
+    "security_assertions_removed": false,
+    "test_contract_corrected": true,
+    "correct_action_name": "App\\Http\\Controllers\\SubscriptionPlanEnabledController",
+    "invokable_method_still_asserted": true,
+    "middleware_assertions_retained": [
+      "web",
+      "auth",
+      "tenant.context"
+    ],
+    "csrf_visible_form_assertion_retained": true,
+    "tenant_rbac_idor_retry_audit_tests_retained": true
+  },
+  "diagnostic_evidence": {
+    "before_head": "1b7fc3bd7590acf921b0c476a81e34d3c61526dd",
+    "before_workflow_run": 35251620865,
+    "before_exit_code": 1,
+    "before_result": "863 passed, 1 failed, 9183 assertions",
+    "repair_head": "0eb9475f78bc19234e07178b697cff8e103deb06",
+    "after_workflow_run": 35251886975,
+    "after_exit_code": 0,
+    "after_result": "864 passed, 9190 assertions"
+  },
+  "scope_guards": {
+    "new_canonical_operation_claimed": false,
+    "canonical_reconciliation_hand_edited": false,
+    "reference_aspnet_runtime_modified": false,
+    "security_weakened": false,
+    "force_push": false,
+    "temporary_diagnostic_workflow_must_not_merge": true,
+    "independent_newplan_claim_untouched": "AIMW-BILL-F73C7348C3",
+    "independent_open_pr_untouched": 573
+  }
+}

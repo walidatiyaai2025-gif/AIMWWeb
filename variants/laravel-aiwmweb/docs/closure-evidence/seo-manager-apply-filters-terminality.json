@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #691",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-B9C3030764",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/sites/{Id:guid}/seo",
+    "visible_control": "ApplyFiltersAsync [ApplyFiltersAsync]",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/SeoManager.razor",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/seo-visible-controls.tsx",
+    "route": "/tenants/{tenant}/sites/{site}/seo",
+    "authorization": "auth + tenant.context + tenant.view + seo.view",
+    "tenant_scope": "active tenant membership and site ownership",
+    "read_model": "persisted SEO audits/findings plus presentation links",
+    "action": "Analyze refreshes authoritative Laravel SEO findings and resets pagination to page 1",
+    "fake_success": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/SeoManagerApplyFiltersTerminalityTest.php",
+    "assertions": [
+      "exact canonical operation marker exists in production UI",
+      "ApplyFilters performs authoritative Laravel refresh",
+      "successful refresh emits truthful feedback",
+      "tenant/site boundary remains fail closed",
+      "cross-tenant site access returns not found"
+    ]
+  }
+}

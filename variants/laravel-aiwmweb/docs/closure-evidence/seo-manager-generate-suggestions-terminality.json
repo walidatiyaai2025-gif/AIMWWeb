@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #693",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-E3C47C563B",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/sites/{Id:guid}/seo",
+    "visible_control": "GenerateSuggestionsAsync [GenerateSuggestionsAsync]",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/SeoManager.razor",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/seo-visible-controls.tsx",
+    "service": "variants/laravel-aiwmweb/backend/app/Services/SeoManagerService.php::generateAiProposal",
+    "endpoint": "/api/tenants/{tenant}/sites/{site}/seo/findings/{finding}/ai-proposal",
+    "authorization": "auth + tenant.context + seo.view",
+    "tenant_scope": "active tenant membership and site ownership",
+    "action": "Generate suggestions requests reviewable AI proposals for every persisted finding and stores only client-side review state",
+    "mutation_boundary": "no WordPress mutation; proposals remain review-only until governed approval preparation",
+    "fake_success": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/SeoManagerGenerateSuggestionsTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/seo-visible-controls.test.tsx",
+    "assertions": [
+      "exact canonical operation marker in production control",
+      "real per-finding AI proposal contract",
+      "aggregate usable suggestion feedback",
+      "no WordPress mutation during generation",
+      "cross-tenant site access returns not found"
+    ]
+  }
+}

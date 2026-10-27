@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #733",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-8F4FA80ED6",
+  "domain": "billing",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/SiteReliability.razor",
+    "route_screen": "/site-reliability | /operations/reliability",
+    "visible_control": "ReloadAsync [ReloadAsync]",
+    "behavior": "Reload tenant-owned sites and retained operation history, rebuild recorded connection/synchronization reliability signals, expose loading/error/retry state truthfully, and never claim live health.",
+    "tenant_owned": true,
+    "mutation": false,
+    "risk": "low"
+  },
+  "laravel_adaptation": {
+    "production_page": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "reload_contract": "variants/laravel-aiwmweb/backend/resources/js/site-reliability-reload-control.ts",
+    "authoritative_endpoint": "GET /tenants/{tenant}/route-api/site-reliability",
+    "backend_action": "RouteApiAdapterController::siteReliability using tenant-scoped Site and SiteOperationHistoryService::getAll(2000)",
+    "operation_marker": "AIMW-BILL-8F4FA80ED6",
+    "loading": "Refresh is disabled and aria-busy while the authoritative reliability query is fetching.",
+    "success": "Success is classified only after query.refetch resolves without an error.",
+    "failure": "Error-bearing or rejected refetches remain failed and are surfaced through the existing retryable query error state.",
+    "authorization": "sites.view",
+    "tenant_isolation": "auth + tenant.context + tenant-scoped DomainModel queries",
+    "mutation": false,
+    "external_call": false,
+    "fake_success_path": "none",
+    "live_health_claim": false
+  },
+  "acceptance_tests": [
+    "resources/js/__tests__/site-reliability-reload-control.test.ts — duplicate suppression, success only after clean refetch, truthful error/rejection.",
+    "tests/Feature/SiteReliabilityReloadTerminalityTest.php — tenant-only reliability aggregation, connection/sync filtering, read-only behavior, permission denial, foreign-tenant 404, route middleware."
+  ],
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "The canonical ReloadAsync control is bound to a real tenant-scoped retained-history read, blocks duplicate reloads, never fabricates live health, and has focused authorization/isolation/read-only coverage."
+  },
+  "scope_exclusions": [
+    "No ASP.NET runtime changes",
+    "No ApplyFilters behavior or adjacent reliability controls are claimed",
+    "No payment-provider state is fabricated",
+    "No mutation endpoint is introduced",
+    "No manual generated parity-count edit"
+  ]
+}

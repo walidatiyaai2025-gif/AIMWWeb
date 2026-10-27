@@ -1,3 +1,4 @@
+import { AppDialogCloseControl } from './app-dialog-close-control';
 import React, {
     createContext,
     useCallback,
@@ -7,6 +8,7 @@ import React, {
     useRef,
     useState,
 } from 'react';
+import { previousAppDataGridPage } from './app-data-grid-previous-page-control';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
     capabilityReason,
@@ -21,6 +23,7 @@ import {
     type WorkspaceRoute,
 } from './core';
 import { commonText, useLocale } from './i18n';
+import { WordPressUsersWorkingStateControl } from './wordpress-users-working-state-control';
 
 interface Toast {
     id: number;
@@ -28,9 +31,12 @@ interface Toast {
     message: string;
 }
 
+export const GLOBAL_NOTIFICATION_LOGS_OPERATION_ID = 'AIMW-EMAI-9EB09C490D';
+
 const ToastContext = createContext<{ notify: (message: string, tone?: Toast['tone']) => void } | null>(null);
 
-export function ToastProvider({ children }: { children: React.ReactNode }) {
+export function ToastProvider({ children, logsHref }: { children: React.ReactNode; logsHref?: string }) {
+    const { locale } = useLocale();
     const [toasts, setToasts] = useState<Toast[]>([]);
     const nextId = useRef(0);
 
@@ -46,7 +52,16 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             <div className="toast-stack" aria-live="polite" aria-atomic="false">
                 {toasts.map((toast) => (
                     <div key={toast.id} className={`toast toast-${toast.tone}`} role={toast.tone === 'error' ? 'alert' : 'status'}>
-                        {toast.message}
+                        <span>{toast.message}</span>
+                        {toast.tone === 'error' && toast.message.trim() && logsHref ? (
+                            <a
+                                className="toast-log-link"
+                                href={logsHref}
+                                data-canonical-operation={GLOBAL_NOTIFICATION_LOGS_OPERATION_ID}
+                            >
+                                {locale === 'ar' ? 'عرض التفاصيل في السجلات' : 'View details in logs'}
+                            </a>
+                        ) : null}
                     </div>
                 ))}
             </div>
@@ -60,26 +75,168 @@ export function useToast() {
     return value;
 }
 
+export const STATE_PANEL_RETRY_OPERATION_ID = 'AIMW-SYNC-AE544B4684';
+
 export function StatePanel({
     tone = 'neutral',
     title,
     children,
     action,
+    onRetry,
+    retryBusy = false,
+    retryText,
+    retryingText,
+    retryAriaLabel,
 }: {
     tone?: 'neutral' | 'warning' | 'danger';
     title: string;
     children: React.ReactNode;
     action?: React.ReactNode;
+    onRetry?: () => void;
+    retryBusy?: boolean;
+    retryText?: string;
+    retryingText?: string;
+    retryAriaLabel?: string;
 }) {
+    const { locale } = useLocale();
+    const effectiveRetryText = retryText ?? (locale === 'ar' ? 'حاول مرة أخرى' : 'Try again');
+    const effectiveRetryingText = retryingText ?? (locale === 'ar' ? 'جارٍ المحاولة مرة أخرى…' : 'Trying again...');
+    const retryControl = onRetry ? (
+        <button
+            type="button"
+            className="btn"
+            data-canonical-operation={STATE_PANEL_RETRY_OPERATION_ID}
+            aria-label={retryAriaLabel ?? effectiveRetryText}
+            aria-busy={retryBusy ? 'true' : 'false'}
+            disabled={retryBusy}
+            onClick={() => {
+                if (!retryBusy) onRetry();
+            }}
+        >
+            <span aria-hidden="true">↻</span>
+            <span>{retryBusy ? effectiveRetryingText : effectiveRetryText}</span>
+        </button>
+    ) : null;
+
     return (
-        <section className={`state-panel state-${tone}`} role={tone === 'danger' ? 'alert' : 'status'}>
+        <section
+            className={`state-panel state-${tone}`}
+            role={tone === 'danger' ? 'alert' : 'status'}
+            aria-busy={retryBusy ? 'true' : undefined}
+        >
             <div className="state-icon" aria-hidden="true">{tone === 'danger' ? '!' : tone === 'warning' ? '◷' : '◇'}</div>
             <div className="state-copy">
                 <h2>{title}</h2>
                 <div>{children}</div>
             </div>
-            {action ? <div className="state-action">{action}</div> : null}
+            {(retryControl || action) ? (
+                <div className="state-action">
+                    {retryControl}
+                    {action}
+                </div>
+            ) : null}
         </section>
+    );
+}
+
+
+export const STATE_BANNER_RETRY_OPERATION_ID = 'AIMW-SYNC-8719C812DC';
+
+type StateBannerKind = 'info' | 'success' | 'warning' | 'error' | 'offline' | 'cached' | 'partial';
+
+function normalizeStateBannerKind(kind: string): StateBannerKind {
+    const normalized = kind.trim().toLowerCase();
+    if (normalized === 'success') return 'success';
+    if (normalized === 'warning') return 'warning';
+    if (normalized === 'error' || normalized === 'danger') return 'error';
+    if (normalized === 'offline') return 'offline';
+    if (normalized === 'cached' || normalized === 'stale') return 'cached';
+    if (normalized === 'partial') return 'partial';
+    return 'info';
+}
+
+export function StateBanner({
+    title,
+    kind = 'info',
+    description,
+    freshnessText,
+    icon,
+    busy = false,
+    assertive = false,
+    retryText,
+    retryingText,
+    retryAriaLabel,
+    onRetry,
+    action,
+}: {
+    title: string;
+    kind?: string;
+    description?: string;
+    freshnessText?: string;
+    icon?: string;
+    busy?: boolean;
+    assertive?: boolean;
+    retryText?: string;
+    retryingText?: string;
+    retryAriaLabel?: string;
+    onRetry?: () => void;
+    action?: React.ReactNode;
+}) {
+    const { locale } = useLocale();
+    const normalizedKind = normalizeStateBannerKind(kind);
+    const effectiveRetryText = retryText ?? (locale === 'ar' ? 'إعادة المحاولة' : 'Retry');
+    const effectiveRetryingText = retryingText ?? (locale === 'ar' ? 'جارٍ إعادة المحاولة…' : 'Retrying...');
+    const effectiveIcon = icon ?? ({
+        success: '✓',
+        warning: '!',
+        error: '×',
+        offline: '⌁',
+        cached: '◷',
+        partial: '◐',
+        info: 'i',
+    } satisfies Record<StateBannerKind, string>)[normalizedKind];
+    const isAssertive = assertive || normalizedKind === 'error';
+
+    const retryControl = onRetry ? (
+        <button
+            type="button"
+            className="btn"
+            data-canonical-operation={STATE_BANNER_RETRY_OPERATION_ID}
+            aria-label={retryAriaLabel ?? effectiveRetryText}
+            aria-busy={busy ? 'true' : 'false'}
+            disabled={busy}
+            onClick={() => {
+                if (!busy) onRetry();
+            }}
+        >
+            <span aria-hidden="true">↻</span>
+            <span>{busy ? effectiveRetryingText : effectiveRetryText}</span>
+        </button>
+    ) : null;
+
+    return (
+        <aside
+            className={`state-banner state-banner-${normalizedKind}`}
+            role={isAssertive ? 'alert' : 'status'}
+            aria-live={isAssertive ? 'assertive' : 'polite'}
+            aria-atomic="true"
+            aria-busy={busy ? 'true' : 'false'}
+            data-state={normalizedKind}
+            data-retains-content="true"
+        >
+            <span className="state-banner-icon" aria-hidden="true">{effectiveIcon}</span>
+            <div className="state-banner-content">
+                <strong>{title}</strong>
+                {description ? <span>{description}</span> : null}
+                {freshnessText ? <small>{freshnessText}</small> : null}
+            </div>
+            {(retryControl || action) ? (
+                <div className="state-banner-actions">
+                    {retryControl}
+                    {action}
+                </div>
+            ) : null}
+        </aside>
     );
 }
 
@@ -92,7 +249,13 @@ export function LoadingState() {
     );
 }
 
-export function DataTable({ rows }: { rows: Array<Record<string, unknown>> }) {
+export function DataTable({
+    rows,
+    renderActions,
+}: {
+    rows: Array<Record<string, unknown>>;
+    renderActions?: (row: Record<string, unknown>) => React.ReactNode;
+}) {
     const { locale } = useLocale();
     const preferred = ['id', 'title', 'name', 'status', 'type', 'site', 'updated_at', 'updatedAt', 'created_at'];
     const available = new Set(rows.flatMap((row) => Object.keys(row)));
@@ -110,12 +273,16 @@ export function DataTable({ rows }: { rows: Array<Record<string, unknown>> }) {
         <div className="table-scroll" tabIndex={0} role="region" aria-label={locale === 'ar' ? 'جدول البيانات' : 'Data table'}>
             <table className="data-table">
                 <thead>
-                    <tr>{fallbackColumns.map((column) => <th key={column} scope="col">{column.replaceAll('_', ' ')}</th>)}</tr>
+                    <tr>
+                        {fallbackColumns.map((column) => <th key={column} scope="col">{column.replaceAll('_', ' ')}</th>)}
+                        {renderActions ? <th scope="col">{locale === 'ar' ? 'إجراءات' : 'Actions'}</th> : null}
+                    </tr>
                 </thead>
                 <tbody>
                     {rows.map((row, index) => (
                         <tr key={String(row.id ?? index)}>
                             {fallbackColumns.map((column) => <td key={column}>{format(row[column])}</td>)}
+                            {renderActions ? <td>{renderActions(row)}</td> : null}
                         </tr>
                     ))}
                 </tbody>
@@ -139,12 +306,18 @@ export function Pagination({
     if (lastPage <= 1) return null;
     return (
         <nav className="pagination" aria-label={locale === 'ar' ? 'ترقيم الصفحات' : 'Pagination'}>
-            <button type="button" className="btn" data-canonical-operation={previousOperationId} onClick={() => onPage(page - 1)} disabled={page <= 1}>{text(commonText.previous)}</button>
+            <button type="button" className="btn" data-canonical-operation={previousOperationId} onClick={() => onPage(previousAppDataGridPage(page))} disabled={page <= 1}>{text(commonText.previous)}</button>
             <span aria-live="polite">{locale === 'ar' ? `صفحة ${page} من ${lastPage}` : `Page ${page} of ${lastPage}`}</span>
             <button type="button" className="btn" onClick={() => onPage(page + 1)} disabled={page >= lastPage}>{text(commonText.next)}</button>
         </nav>
     );
 }
+
+export const WORDPRESS_USERS_START_CREATE_OPERATION_ID = 'AIMW-CONT-BCE1211CE3';
+export const WORDPRESS_USERS_RESET_FORM_OPERATION_ID = 'AIMW-CONT-10AFCDF334';
+export const TAXONOMY_START_CREATE_OPERATION_ID = 'AIMW-TAXO-005925568C';
+export const TAXONOMY_SAVE_SUBMIT_OPERATION_ID = 'AIMW-TAXO-39CDD7EF81';
+export const TAXONOMY_RESET_FORM_OPERATION_ID = 'AIMW-TAXO-5D39DA68B7';
 
 export function ActionButton({
     route,
@@ -161,7 +334,18 @@ export function ActionButton({
     const state = resolveCapability(context, route, actionKey);
     const contract = context.actions[actionKey];
     const enabled = state.state === 'enabled' && Boolean(contract);
-    const label = actionKey.split('.').slice(-1)[0].replaceAll('-', ' ').replaceAll('_', ' ');
+    const isWordPressUsersStartCreate = route.key === 'wp-users' && actionKey === 'wordpress-users.save';
+    const isTaxonomyStartCreate = route.key === 'taxonomy' && actionKey === 'taxonomy.manage';
+    const label = isTaxonomyStartCreate
+        ? (locale === 'ar' ? 'إضافة جديد' : 'Add new')
+        : isWordPressUsersStartCreate
+            ? (locale === 'ar' ? 'إضافة مستخدم' : 'Add user')
+            : actionKey.split('.').slice(-1)[0].replaceAll('-', ' ').replaceAll('_', ' ');
+    const canonicalOperation = isTaxonomyStartCreate
+        ? TAXONOMY_START_CREATE_OPERATION_ID
+        : isWordPressUsersStartCreate
+            ? WORDPRESS_USERS_START_CREATE_OPERATION_ID
+            : undefined;
     const reason = enabled ? '' : capabilityReason(state, locale);
 
     return (
@@ -172,6 +356,7 @@ export function ActionButton({
                 disabled={!enabled}
                 aria-disabled={!enabled}
                 title={reason || label}
+                data-canonical-operation={canonicalOperation}
                 onClick={() => contract && onAvailable(contract)}
             >
                 {label.charAt(0).toUpperCase() + label.slice(1)}
@@ -189,6 +374,7 @@ export function ActionDialog({
     onSubmit,
     busy,
     serverErrors,
+    showCloseButton = true,
 }: {
     open: boolean;
     actionKey: string;
@@ -197,12 +383,23 @@ export function ActionDialog({
     onSubmit: (values: Record<string, string | number>) => void;
     busy: boolean;
     serverErrors: Record<string, string[]>;
+    showCloseButton?: boolean;
 }) {
     const { locale, text } = useLocale();
     const [values, setValues] = useState<Record<string, string>>({});
     const [errors, setErrors] = useState<Record<string, string>>({});
     const dialogRef = useRef<HTMLDivElement>(null);
     const firstFieldRef = useRef<HTMLInputElement>(null);
+    const isTaxonomySaveSubmit = actionKey === 'taxonomy.manage';
+    const isTaxonomyResetForm = actionKey === 'taxonomy.manage';
+    const isWordPressUsersResetForm = actionKey === 'wordpress-users.save';
+    const isResetForm = isTaxonomyResetForm || isWordPressUsersResetForm;
+
+    const closeAndReset = () => {
+        setValues({});
+        setErrors({});
+        onClose();
+    };
 
     useEffect(() => {
         if (!open) return;
@@ -248,7 +445,7 @@ export function ActionDialog({
                         <span className="workspace-kicker">ACTION</span>
                         <h2 id="action-dialog-title">{actionKey}</h2>
                     </div>
-                    <button type="button" className="icon-button" onClick={onClose} aria-label={text(commonText.close)}>×</button>
+                    <AppDialogCloseControl onClose={onClose} showCloseButton={showCloseButton} ariaLabel={text(commonText.close)} />
                 </header>
                 <form onSubmit={submit} noValidate>
                     {fields.length === 0 ? (
@@ -279,8 +476,32 @@ export function ActionDialog({
                         </label>
                     ))}
                     <footer className="dialog-actions">
-                        <button type="button" className="btn" onClick={onClose} disabled={busy}>{text(commonText.close)}</button>
-                        <button type="submit" className="btn primary" disabled={busy}>{busy ? text(commonText.loading) : text(commonText.submit)}</button>
+                        <button
+                            type="button"
+                            className="btn"
+                            onClick={isResetForm ? closeAndReset : onClose}
+                            disabled={busy}
+                            data-canonical-operation={isWordPressUsersResetForm ? WORDPRESS_USERS_RESET_FORM_OPERATION_ID : isTaxonomyResetForm ? TAXONOMY_RESET_FORM_OPERATION_ID : undefined}
+                        >
+                            {isResetForm ? (locale === 'ar' ? 'إلغاء' : 'Cancel') : text(commonText.close)}
+                        </button>
+                        {actionKey === 'wordpress-users.save' ? (
+                            <WordPressUsersWorkingStateControl busy={busy} locale={locale} />
+                        ) : (
+                            <button
+                                type="submit"
+                                className="btn primary"
+                                disabled={busy}
+                                aria-busy={busy ? 'true' : 'false'}
+                                data-canonical-operation={isTaxonomySaveSubmit ? TAXONOMY_SAVE_SUBMIT_OPERATION_ID : undefined}
+                            >
+                                {isTaxonomySaveSubmit
+                                    ? (busy
+                                        ? (locale === 'ar' ? 'جارٍ الحفظ' : 'Saving')
+                                        : (locale === 'ar' ? 'حفظ' : 'Save'))
+                                    : (busy ? text(commonText.loading) : text(commonText.submit))}
+                            </button>
+                        )}
                     </footer>
                 </form>
             </div>
@@ -404,6 +625,15 @@ export function AppShell({ context, children }: { context: FrontendContext; chil
         document.documentElement.dataset.mode = mode;
         window.localStorage.setItem('aiwm.mode', mode);
     }, [mode]);
+
+    useEffect(() => {
+        const syncAppearanceMode = (event: Event) => {
+            const next = (event as CustomEvent<{ mode?: unknown }>).detail?.mode;
+            if (next === 'dark' || next === 'light') setMode(next);
+        };
+        window.addEventListener('aiwm:appearance-mode', syncAppearanceMode);
+        return () => window.removeEventListener('aiwm:appearance-mode', syncAppearanceMode);
+    }, []);
 
     useEffect(() => {
         const handler = (event: KeyboardEvent) => {

@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #914 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-MEDI-0694CEEBBA",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "media",
+    "kind": "visible_control",
+    "route_screen": "/module/media",
+    "source": "src/AIWordPressManager.Web/Components/Pages/GlobalMediaExplorer.razor",
+    "source_control": "/module/pages -> /module/pages",
+    "source_intent": "Open the Pages workspace from Global Media Explorer without changing media state."
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/media-pages-link-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "destination": "/tenants/{tenant}/module/pages",
+    "operation_marker": "AIMW-MEDI-0694CEEBBA"
+  },
+  "security": {
+    "permissions": [
+      "tenant.view",
+      "content.view"
+    ],
+    "required_capabilities": [
+      "media",
+      "pages"
+    ],
+    "connector_scopes": [
+      "media.read",
+      "pages.read"
+    ],
+    "tenant_navigation": "tenantUrl encodes the authoritative tenant slug",
+    "foreign_tenant": "server 404/fail closed"
+  },
+  "authoritative_state": {
+    "source_media": "existing tenant/site-scoped Media API",
+    "destination_pages": "existing tenant/site-scoped Pages API",
+    "synthetic_media": false,
+    "mutation": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/media-pages-link-control.test.tsx"
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-MEDI-0694CEEBBA"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false
+  }
+}

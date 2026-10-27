@@ -11,6 +11,9 @@ composition contains all of the following for one canonical operation:
 - tenant/security assertions when the canonical row requires them.
 
 Anything that cannot satisfy the contract remains PENDING.
+
+The focused source is the latest pushed closure composition, not a historical
+per-operation feature SHA, so previously terminal focused controls stay refreshable.
 """
 from __future__ import annotations
 
@@ -116,7 +119,144 @@ def security_contract(row: dict[str, Any], tests: list[reconcile.FileEvidence]) 
     return True, signals
 
 
-def apply(payload: dict[str, Any], manifest: dict[str, Any]) -> list[str]:
+def apply_operation_scoped_sources(
+    payload: dict[str, Any], manifest: dict[str, Any]
+) -> tuple[list[str], list[dict[str, Any]]]:
+    rows_by_id = {str(row.get("operation_id") or ""): row for row in payload.get("operations", [])}
+    applied: list[str] = []
+    provenance: list[dict[str, Any]] = []
+    seen_operations: set[str] = set()
+
+    for source_spec in manifest.get("focused_closure_operation_sources", []):
+        if not isinstance(source_spec, dict):
+            raise SystemExit("focused_closure_operation_sources entries must be objects")
+        source_sha = str(source_spec.get("sha") or "").strip()
+        label = str(source_spec.get("label") or "Operation-scoped focused closure source").strip()
+        operation_ids = {
+            str(value).strip()
+            for value in source_spec.get("operation_ids", [])
+            if str(value).strip()
+        }
+        if not source_sha or not operation_ids:
+            raise SystemExit("operation-scoped focused closure source requires sha and operation_ids")
+        duplicate_scope = sorted(operation_ids & seen_operations)
+        if duplicate_scope:
+            raise SystemExit(
+                "operation-scoped focused closure ownership is duplicated: " + ", ".join(duplicate_scope)
+            )
+        seen_operations.update(operation_ids)
+        if not finalize.source_is_pushed(source_sha):
+            raise SystemExit(
+                f"operation-scoped focused closure source is not reachable from a pushed remote ref: {source_sha}"
+            )
+
+        snapshot = reconcile.load_snapshot({
+            "label": label,
+            "sha": source_sha,
+            "domains": sorted({str(rows_by_id[op].get("domain")) for op in operation_ids if op in rows_by_id}),
+            "supporting_only": True,
+            "operation_ids": sorted(operation_ids),
+        })
+        evidence_by_operation: dict[str, tuple[str, dict[str, Any]]] = {}
+        for path in evidence_paths(source_sha):
+            document = load_evidence(source_sha, path)
+            if not document:
+                continue
+            op_id = operation_id(document)
+            if op_id not in operation_ids:
+                continue
+            state = terminal_state(document)
+            row = rows_by_id.get(op_id or "")
+            if not op_id or state not in TERMINAL_STATES or row is None or row.get("kind") != "visible_control":
+                continue
+            if op_id in evidence_by_operation:
+                first_path = evidence_by_operation[op_id][0]
+                raise SystemExit(
+                    f"operation-scoped focused closure evidence is duplicated for {op_id}: {first_path}, {path}"
+                )
+            evidence_by_operation[op_id] = (path, document)
+
+        missing = sorted(operation_ids - set(evidence_by_operation))
+        if missing:
+            raise SystemExit(
+                "operation-scoped focused closure evidence is missing terminal documents: " + ", ".join(missing)
+            )
+
+        for op_id in sorted(operation_ids):
+            row = rows_by_id.get(op_id)
+            if row is None:
+                raise SystemExit(f"operation-scoped focused closure references unknown operation: {op_id}")
+            if row.get("kind") != "visible_control":
+                raise SystemExit(f"operation-scoped focused closure requires visible_control row: {op_id}")
+            if str(row.get("migration_state") or "") != "PENDING":
+                raise SystemExit(f"operation-scoped focused closure would double-count terminal operation: {op_id}")
+
+            path, document = evidence_by_operation[op_id]
+            state = terminal_state(document)
+            domain = evidence_domain(document)
+            kind = evidence_kind(document)
+            if domain and domain != str(row.get("domain")):
+                raise SystemExit(
+                    f"operation-scoped focused closure domain mismatch for {op_id}: {domain} != {row.get('domain')}"
+                )
+            if kind and kind != "visible_control":
+                raise SystemExit(f"operation-scoped focused closure kind mismatch for {op_id}: {kind}")
+            if state not in TERMINAL_STATES:
+                raise SystemExit(f"operation-scoped focused closure is not terminal: {op_id}")
+
+            markers = sorted((file for file in snapshot.code if op_id in file.text), key=lambda file: file.path)
+            tests = sorted((file for file in snapshot.tests if op_id in file.text), key=lambda file: file.path)
+            if not markers or not tests:
+                raise SystemExit(f"operation-scoped focused closure lacks production/test operation marker: {op_id}")
+            security_ok, security_signals = security_contract(row, tests)
+            if not security_ok:
+                raise SystemExit(
+                    f"operation-scoped focused closure lacks required security acceptance: {op_id}: "
+                    + ", ".join(security_signals)
+                )
+
+            marker_file = markers[0]
+            test_file = tests[0]
+            row["migration_state"] = state
+            row["laravel_destination"] = marker_file.path
+            row["acceptance_test"] = test_file.path
+            row["evidence"] = (
+                f"{label}@{source_sha}: {marker_file.path}; focused-closure:{op_id}; "
+                f"test:{test_file.path}; evidence:{path}"
+            )
+            row["reconciliation"] = {
+                "decision": state,
+                "reason": (
+                    "Exact pushed operation-scoped focused closure evidence is linked to the canonical "
+                    "operation ID in production code and focused acceptance tests; sibling focused closures "
+                    "cannot be counted by this source."
+                ),
+                "source_label": label,
+                "source_sha": source_sha,
+                "destination_path": marker_file.path,
+                "evidence_mode": "focused_closure_contract",
+                "evidence_path": path,
+                "signals": [
+                    f"operation:{op_id}",
+                    f"production-marker:{marker_file.path}",
+                    f"test:{test_file.path}",
+                    f"evidence:{path}",
+                    "scope:operation-specific",
+                    *security_signals,
+                ],
+            }
+            applied.append(op_id)
+
+        provenance.append({
+            "label": label,
+            "sha": source_sha,
+            "operation_ids": sorted(operation_ids),
+        })
+
+    return applied, provenance
+
+
+def apply(payload: dict[str, Any], manifest: dict[str, Any]) -> tuple[list[str], list[str]]:
     source_sha = str(manifest.get("focused_closure_evidence_source_sha") or "").strip()
     if not source_sha:
         raise SystemExit("manifest must declare focused_closure_evidence_source_sha")
@@ -151,9 +291,17 @@ def apply(payload: dict[str, Any], manifest: dict[str, Any]) -> list[str]:
         evidence_by_operation[op_id] = (path, document)
 
     applied: list[str] = []
+    refreshed: list[str] = []
     for op_id in sorted(evidence_by_operation):
         row = rows_by_id[op_id]
-        if row.get("migration_state") != "PENDING":
+        current_state = str(row.get("migration_state") or "")
+        current_reconciliation = row.get("reconciliation") or {}
+        refresh_existing = (
+            current_state in TERMINAL_STATES
+            and isinstance(current_reconciliation, dict)
+            and current_reconciliation.get("evidence_mode") == "focused_closure_contract"
+        )
+        if current_state != "PENDING" and not refresh_existing:
             continue
 
         path, document = evidence_by_operation[op_id]
@@ -184,7 +332,8 @@ def apply(payload: dict[str, Any], manifest: dict[str, Any]) -> list[str]:
 
         marker = markers[0]
         test = tests[0]
-        row["migration_state"] = state
+        decision = current_state if refresh_existing else state
+        row["migration_state"] = decision
         row["laravel_destination"] = marker.path
         row["acceptance_test"] = test.path
         row["evidence"] = (
@@ -192,7 +341,7 @@ def apply(payload: dict[str, Any], manifest: dict[str, Any]) -> list[str]:
             f"focused-closure:{op_id}; test:{test.path}; evidence:{path}"
         )
         row["reconciliation"] = {
-            "decision": state,
+            "decision": decision,
             "reason": (
                 "Exact pushed focused closure evidence is linked to the canonical operation ID "
                 "in production code and focused acceptance tests; tenant/security assertions are "
@@ -211,7 +360,13 @@ def apply(payload: dict[str, Any], manifest: dict[str, Any]) -> list[str]:
                 *security_signals,
             ],
         }
-        applied.append(op_id)
+        if refresh_existing:
+            refreshed.append(op_id)
+        else:
+            applied.append(op_id)
+
+    scoped_applied, scoped_provenance = apply_operation_scoped_sources(payload, manifest)
+    applied.extend(scoped_applied)
 
     finalize.finalize_summary(payload, payload["operations"], manifest)
     payload["classification_policy"]["focused_visible_control_policy"] = (
@@ -248,8 +403,12 @@ def apply(payload: dict[str, Any], manifest: dict[str, Any]) -> list[str]:
         errors.append("focused closure processing counted BLOCKED or PENDING as terminal")
 
     validation["focused_closure_source_sha"] = source_sha
-    validation["focused_closure_contract_terminals"] = applied
+    validation["focused_closure_contract_terminals"] = sorted(applied)
+    validation["focused_closure_operation_sources"] = scoped_provenance
+    validation["focused_closure_operation_scoped_count"] = len(scoped_applied)
     validation["focused_closure_contract_count"] = len(applied)
+    validation["focused_closure_provenance_refreshed"] = refreshed
+    validation["focused_closure_provenance_refreshed_count"] = len(refreshed)
     validation["route_or_visible_placeholder_terminals"] = placeholder_terminals
     validation["frontend_placeholders_not_counted"] = not placeholder_terminals
     validation["status_totals_reconcile"] = state_total == len(payload["operations"])
@@ -259,7 +418,7 @@ def apply(payload: dict[str, Any], manifest: dict[str, Any]) -> list[str]:
     if errors:
         raise SystemExit("focused closure validation failed:\n- " + "\n- ".join(errors))
 
-    return applied
+    return applied, refreshed
 
 
 def main() -> int:
@@ -278,7 +437,7 @@ def main() -> int:
             f"expected {args.check_total} canonical operations, found {len(payload.get('operations', []))}"
         )
 
-    applied = apply(payload, manifest)
+    applied, refreshed = apply(payload, manifest)
     args.output.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     if args.summary_output:
         compact = {key: value for key, value in payload.items() if key != "operations"}
@@ -297,6 +456,10 @@ def main() -> int:
 
     totals = payload["totals"]
     print(f"FOCUSED_VISIBLE_CONTROLS_APPLIED={len(applied)}")
+    print(
+        "FOCUSED_VISIBLE_CONTROLS_PROVENANCE_REFRESHED="
+        f"{payload.get('validation', {}).get('focused_closure_provenance_refreshed_count', 0)}"
+    )
     print(f"TERMINAL={totals['terminal']}")
     print(f"PENDING={totals['pending']}")
     print(f"PARITY_PERCENT={totals['overall_parity_percent']:.2f}")

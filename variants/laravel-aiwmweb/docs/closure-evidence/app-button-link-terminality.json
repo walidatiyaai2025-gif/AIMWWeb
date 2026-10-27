@@ -1,0 +1,71 @@
+{
+  "authority": "Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-PLAT-827A8F1C0D",
+  "domain": "platform",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Shared/AppButton.razor",
+    "route_screen": "component:AppButton",
+    "visible_control": "@Title -> @EffectiveHref",
+    "behavior": "When Href is nonblank, AppButton renders an anchor whose effective href is the supplied Href unless Disabled; it preserves Target, Title, accessible labeling, aria-busy and aria-pressed, removes disabled links from tab order, renders busy/icon/content state, and does not wire the button OnClick callback into the link branch."
+  },
+  "laravel_adaptation": {
+    "file": "variants/laravel-aiwmweb/backend/resources/js/app-button.tsx",
+    "component": "AppButton",
+    "operation_marker": "AIMW-PLAT-827A8F1C0D",
+    "runtime_consumer": "none required for the shared component contract",
+    "behavior": "The production React AppButton selects the anchor branch only for a nonblank href, preserves href/target/title/aria state and visible content, removes href and forces tabIndex=-1 when disabled, ignores the button onClick callback in the link branch, and retains a consumer-specific canonicalOperationId separately from the shared link component identity. Whitespace href falls through to the already-terminal native button branch."
+  },
+  "authorization": {
+    "component_authority": "none",
+    "rbac_change": "none",
+    "reason": "This shared navigation control grants no permission and invokes no backend operation; route authorization remains owned by the destination surface."
+  },
+  "tenant_isolation": {
+    "tenant_selector": "none",
+    "direct_object_id": "none",
+    "idor_surface": "none",
+    "proof": "The shared component accepts no tenant/resource identifier and performs no lookup or persistence. It renders only the caller-supplied navigation target, matching the canonical component contract."
+  },
+  "degraded_and_retry_semantics": {
+    "disabled": "Disabled=true removes the effective href, sets aria-disabled=true, and removes the anchor from sequential keyboard navigation with tabIndex=-1.",
+    "busy": "aria-busy and spinner state are exposed without inventing completion or success.",
+    "retry": "No internal retry is performed; navigation/runtime retry semantics belong to the destination surface.",
+    "fake_success_path": "none"
+  },
+  "persistence_and_runtime": {
+    "mutation": "none in the shared component",
+    "persistence": "none",
+    "queue": "none",
+    "cache": "none",
+    "wordpress": "none",
+    "provider": "none",
+    "secrets": "none"
+  },
+  "acceptance_tests": [
+    {
+      "file": "variants/laravel-aiwmweb/backend/resources/js/__tests__/app-button-link-control.test.tsx",
+      "coverage": "exact canonical marker, nonblank anchor branch, href/target/title, disabled EffectiveHref removal and tab exclusion, no link-branch OnClick dispatch, busy/pressed accessibility, whitespace-Href fallback, and consumer-versus-component identity separation"
+    },
+    {
+      "file": "variants/laravel-aiwmweb/backend/resources/js/__tests__/app-button-click-control.test.tsx",
+      "coverage": "regression guard proving the already-terminal non-link click branch remains a native button with its existing canonical identity and interaction semantics"
+    }
+  ],
+  "scope_guards": {
+    "exactly_one_operation": true,
+    "link_href_branch_claimed": true,
+    "click_branch_reopened": false,
+    "aspnet_current_product_modified": false,
+    "manual_parity_count_edit": false,
+    "force_push_performed": false,
+    "backend_route_or_permission_change": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "Source-equivalent AppButton link behavior is implemented in the production React shared component and covered by deterministic focused acceptance, including fail-closed disabled navigation; no backend authority, tenant, persistence, or provider semantics are introduced."
+  }
+}

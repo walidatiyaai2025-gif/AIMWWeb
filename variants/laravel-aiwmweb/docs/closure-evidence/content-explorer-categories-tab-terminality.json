@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #997 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-TAXO-A96714F338",
+    "domain": "taxonomy",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/ContentExplorer.razor",
+    "source_screen": "/sites/{Id:guid}/explorer",
+    "source_control": "SetCategoriesTab [SetCategoriesTab]",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_behavior": {
+    "summary": "SetCategoriesTab clears the ContentExplorer selection/preview and switches the explorer to the selected site's authoritative WordPress categories.",
+    "side_effect": "read-only tab selection; no WordPress mutation"
+  },
+  "laravel_adaptation": {
+    "component": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-categories-tab-control.tsx",
+    "production_consumer": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "destination_workspace": "/module/taxonomy",
+    "authoritative_read": "GET /api/v1/tenants/{tenant}/sites/{site}/taxonomy?taxonomy=category",
+    "behavior": "The Laravel Content Explorer exposes Categories only when the server-selected active site and exact tenant/site Taxonomy API contract agree, then hands off to the existing canonical Taxonomy workspace. That workspace defaults to category and performs the real taxonomy=category read; no duplicate taxonomy state or fake tab success is introduced."
+  },
+  "authorization": {
+    "laravel_permissions": [
+      "tenant.view",
+      "sites.view",
+      "content.view"
+    ],
+    "connector_scope": "taxonomy.read",
+    "security_result": "The control grants no authority and is absent unless the existing Taxonomy route capability and exact server-issued Taxonomy endpoint validate."
+  },
+  "tenant_isolation": {
+    "canonical_tenant_owned": true,
+    "tenant_selector": "context.tenant.slug only",
+    "site_selector": "context.active_site.id only, cross-checked against context.api.taxonomy",
+    "foreign_tenant_fails_closed": true,
+    "foreign_site_fails_closed": true
+  },
+  "runtime_semantics": {
+    "mutation": false,
+    "read_only_navigation": true,
+    "wordpress_write": "none",
+    "fake_success": false,
+    "authoritative_external_state": "Existing Taxonomy workspace reads persisted WordPress taxonomy state through the tenant/site-scoped Taxonomy API with taxonomy=category."
+  },
+  "acceptance_tests": {
+    "file": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-categories-tab-control.test.tsx",
+    "coverage": [
+      "exact operation marker and Categories label",
+      "tenant-qualified canonical Taxonomy destination with authoritative site",
+      "mismatched site/tenant/cross-origin/query/fragment authority rejected",
+      "foreign tenant remains behind server 404 boundary",
+      "missing permissions/site/API/connector/capability fail closed"
+    ]
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-TAXO-A96714F338",
+    "second_operation_started": false,
+    "aspnet_reference_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "security_assertions_weakened": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true
+  }
+}

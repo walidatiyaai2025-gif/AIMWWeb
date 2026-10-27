@@ -6,6 +6,7 @@ use App\Authorization\TenantAuthorizer;
 use App\Models\Execution;
 use App\Models\Site;
 use App\Sites\SiteEntitlementHook;
+use App\Sites\SiteManagementService;
 use App\Tenancy\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,6 +15,8 @@ use RuntimeException;
 
 final class SiteManagementController extends Controller
 {
+    public const SAVE_OPERATION_ID = 'AIMW-BILL-54E4003BE9';
+
     public function index(TenantAuthorizer $auth): JsonResponse
     {
         $auth->authorize('tenant.view');
@@ -21,23 +24,91 @@ final class SiteManagementController extends Controller
         return response()->json(Site::query()->latest()->get());
     }
 
-    public function store(Request $request, TenantAuthorizer $auth, SiteEntitlementHook $entitlements): JsonResponse
-    {
+    public function store(
+        Request $request,
+        string $tenant,
+        TenantAuthorizer $auth,
+        SiteEntitlementHook $entitlements,
+        TenantContext $context,
+    ): JsonResponse {
         $auth->authorize('sites.manage');
+        abort_unless($tenant === $context->tenant()->slug, 404);
         try {
             $entitlements->assertCanCreate();
         } catch (RuntimeException $e) {
             return response()->json(['state' => 'CAPABILITY_DISABLED', 'message' => $e->getMessage()], 403);
         }
-        $data = $request->validate(['name' => 'required|string|max:255', 'url' => 'required|url|max:2048']);
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'url' => 'required|url|max:2048',
+            'id' => 'prohibited',
+            'tenant_id' => 'prohibited',
+            'status' => 'prohibited',
+        ]);
         $data['url'] = rtrim($data['url'], '/');
 
         return response()->json(Site::query()->create($data), 201);
     }
 
-    public function show(string $tenant, int|string $site, TenantAuthorizer $auth, TenantContext $context): JsonResponse
-    {
+    public function show(
+        string $tenant,
+        int|string $site,
+        TenantAuthorizer $auth,
+        TenantContext $context,
+        SiteManagementService $sites,
+    ): JsonResponse {
         $auth->authorize('tenant.view');
+        $auth->authorize('sites.view');
+        abort_unless($tenant === $context->tenant()->slug, 404);
+        abort_unless(is_int($site) || ctype_digit($site), 404);
+
+        $siteId = (int) $site;
+        abort_if($siteId < 1, 404);
+
+        $details = $sites->getDetails($siteId);
+        abort_if($details === null, 404);
+
+        return response()->json($details);
+    }
+
+    public function update(
+        Request $request,
+        string $tenant,
+        int|string $site,
+        TenantAuthorizer $auth,
+        TenantContext $context,
+    ): JsonResponse {
+        $auth->authorize('sites.manage');
+        abort_unless($tenant === $context->tenant()->slug, 404);
+        abort_unless(is_int($site) || ctype_digit($site), 404);
+        $siteId = (int) $site;
+        abort_if($siteId < 1, 404);
+
+        $model = Site::query()
+            ->withoutGlobalScopes()
+            ->where('tenant_id', $context->id())
+            ->whereKey($siteId)
+            ->firstOrFail();
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'url' => 'required|url|max:2048',
+            'id' => 'prohibited',
+            'tenant_id' => 'prohibited',
+            'status' => 'prohibited',
+        ]);
+        $data['url'] = rtrim($data['url'], '/');
+        $model->update($data);
+
+        return response()->json($model->fresh());
+    }
+
+    public function destroy(
+        string $tenant,
+        int|string $site,
+        TenantAuthorizer $auth,
+        TenantContext $context,
+    ): JsonResponse {
+        $auth->authorize('sites.manage');
         abort_unless($tenant === $context->tenant()->slug, 404);
         abort_unless(is_int($site) || ctype_digit($site), 404);
 
@@ -50,32 +121,24 @@ final class SiteManagementController extends Controller
             ->whereKey($siteId)
             ->firstOrFail();
 
-        return response()->json($model);
-    }
+        $activeExecutionExists = Execution::query()
+            ->withoutGlobalScopes()
+            ->where('tenant_id', $context->id())
+            ->where('site_id', $siteId)
+            ->whereIn('status', ['queued', 'running'])
+            ->exists();
+        abort_if($activeExecutionExists, 409, 'Active execution prevents deletion.');
 
-    public function update(Request $request, int $site, TenantAuthorizer $auth): JsonResponse
-    {
-        $auth->authorize('sites.manage');
-        $model = Site::query()->findOrFail($site);
-        $data = $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'url' => 'sometimes|required|url|max:2048',
-            'status' => 'sometimes|in:active,disabled',
-        ]);
-        if (isset($data['url'])) {
-            $data['url'] = rtrim($data['url'], '/');
-        }
-        $model->update($data);
+        DB::transaction(function () use ($model): void {
+            $model->delete();
+        });
 
-        return response()->json($model);
-    }
-
-    public function destroy(int $site, TenantAuthorizer $auth): JsonResponse
-    {
-        $auth->authorize('sites.manage');
-        $model = Site::query()->findOrFail($site);
-        abort_if(Execution::query()->where('site_id', $site)->whereIn('status', ['queued', 'running'])->exists(), 409, 'Active execution prevents deletion.');
-        $model->delete();
+        $stillExists = Site::query()
+            ->withoutGlobalScopes()
+            ->where('tenant_id', $context->id())
+            ->whereKey($siteId)
+            ->exists();
+        abort_if($stillExists, 409, 'Site deletion could not be verified.');
 
         return response()->json([], 204);
     }

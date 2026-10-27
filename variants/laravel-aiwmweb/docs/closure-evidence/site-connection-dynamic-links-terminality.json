@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #825 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-DF6FFA9D87",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/sites/{Id:guid}/connection | /sites/{Id:guid}/operations",
+    "source": "src/AIWordPressManager.Web/Components/Pages/SiteConnectionCenter.razor",
+    "source_control": "@($ -> @($",
+    "source_intent": "Preserve the Site Connection Center's site-bound dynamic navigation: site dashboard, Application Password management, local content, and Execution Center.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/site-connection-center-sync-control.tsx",
+    "production_wiring": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "authority": "GET /api/tenants/{tenant}/sites/{site}/connection",
+    "dashboard": "/tenants/{tenant}/sites/{site}",
+    "application_password": "{validated site.url without trailing slash}/wp-admin/profile.php",
+    "local_content": "/tenants/{tenant}/explorer?site={site}",
+    "execution": "/tenants/{tenant}/module/execution?siteId={site}",
+    "availability": "The navigation group renders only after authoritative connection state returns the same numeric site id as the route."
+  },
+  "security": {
+    "tenant_source": "authenticated FrontendContext.tenant.slug",
+    "site_source": "authoritative connection.site.id matched against the route site id",
+    "unsafe_external_scheme": "suppressed by safeExternalSiteUrl",
+    "external_target_rel": "noopener noreferrer",
+    "foreign_tenant_or_site": "fails closed before navigation renders",
+    "server_mutation_added": false,
+    "external_mutation_added": false,
+    "fake_success": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-connection-dynamic-links.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteConnectionDynamicLinksTerminalityTest.php",
+    "coverage": [
+      "all four source dynamic destinations",
+      "tenant-qualified Laravel route adaptation",
+      "authoritative route/site identity agreement",
+      "unsafe external URL suppression",
+      "404/error state hides dynamic navigation",
+      "guarded Site, Explorer, and Execution destination contracts",
+      "foreign tenant and foreign site rejection",
+      "read-only behavior"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-DF6FFA9D87"
+    ],
+    "back_to_sites_operation_claimed": false,
+    "site_url_operation_claimed": false,
+    "sync_copy_retest_operations_claimed": false,
+    "connection_or_operations_route_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "duplicate_branch_created": false
+  }
+}

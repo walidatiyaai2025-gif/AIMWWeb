@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #868 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-FBA95BDC1D",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/sites",
+    "source": "src/AIWordPressManager.Web/Components/Pages/Sites.razor",
+    "source_control": "Close [CloseForm]",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/sites-save-control.tsx",
+    "operation_marker": "AIMW-CONT-FBA95BDC1D",
+    "behavior": "Close hides the active site form, clears edit identity and draft name/URL, clears transient form message, and makes no request.",
+    "saving_guard": "Close is disabled and closeForm returns while the existing authoritative save mutation is pending.",
+    "reopen": "The local Add site control reopens a blank draft; existing Edit controls reopen with the selected authoritative row."
+  },
+  "security_and_truthfulness": {
+    "authentication_and_tenant_boundary": "The control remains hidden unless the frontend context exposes the exact active-tenant /api/tenants/{slug}/sites collection.",
+    "authorization": "sites.manage remains required before the form or close control renders.",
+    "network_on_close": false,
+    "server_mutation_on_close": false,
+    "wordpress_mutation_on_close": false,
+    "fake_success": false
+  },
+  "scope_boundary": {
+    "selected_operation": "AIMW-CONT-FBA95BDC1D only",
+    "save_operation": "AIMW-BILL-54E4003BE9 remains separate and unchanged.",
+    "cancel_wrapper": "The existing Cancel button invokes the same local close helper but does not claim a second canonical operation marker.",
+    "aspnet_runtime_modified": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/sites-close-form-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/SitesCloseFormTerminalityTest.php",
+    "coverage": [
+      "exact canonical identity",
+      "source-equivalent hide/reset semantics",
+      "no close request or mutation",
+      "pending-save close guard",
+      "foreign endpoint and missing sites.manage fail closed",
+      "reopen blank draft after close"
+    ]
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "6c385649043c4412cfaca1dbf13c6ac22459cd7a",
+    "branch": "worker/868-sites-close-form",
+    "issue": 868
+  }
+}
+
