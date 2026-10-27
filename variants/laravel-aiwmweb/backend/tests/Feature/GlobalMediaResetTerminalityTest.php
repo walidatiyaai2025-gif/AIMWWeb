@@ -46,9 +46,9 @@ final class GlobalMediaResetTerminalityTest extends TestCase
 
         $this->assertStringContainsString("authorize('content.view')", $controller);
         $this->assertStringContainsString('Site::query()->findOrFail($site);', $controller);
-        $this->assertStringContainsString("$request->query('search')", $controller);
-        $this->assertStringContainsString("$request->query('mime_type')", $controller);
-        $this->assertStringContainsString("$request->query('per_page', 30)", $controller);
+        $this->assertStringContainsString('$request->query(\'search\')', $controller);
+        $this->assertStringContainsString('$request->query(\'mime_type\')', $controller);
+        $this->assertStringContainsString('$request->query(\'per_page\', 30)', $controller);
     }
 
     public function test_reset_rereads_unfiltered_authoritative_media_for_the_active_tenant_site(): void
