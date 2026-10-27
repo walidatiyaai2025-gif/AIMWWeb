@@ -91,8 +91,7 @@ final class EmailNotificationController extends Controller
     public function accountRecipients(
         string $tenant,
         AccountEmailRecipientService $recipients,
-    ): JsonResponse
-    {
+    ): JsonResponse {
         $this->authorizer->authorize('tenant.manage');
 
         return response()->json([
@@ -107,8 +106,7 @@ final class EmailNotificationController extends Controller
         string $tenant,
         int $recipient,
         AccountEmailRecipientService $recipients,
-    ): JsonResponse
-    {
+    ): JsonResponse {
         $this->authorizer->authorize('tenant.manage');
         $data = $request->validate([
             'email_address' => ['required', 'email:rfc', 'max:320'],
