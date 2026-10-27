@@ -23,57 +23,66 @@ final class EmailNotificationController extends Controller
         private readonly EmailDeliveryService $deliveries,
     ) {}
 
-    public function index(Request $request, string $tenant): JsonResponse {
+    public function index(Request $request, string $tenant): JsonResponse
+    {
         $this->authorizer->authorize('tenant.view');
 
         return response()->json($this->notifications->listForCurrentUser($request->only(['unread', 'severity', 'source', 'per_page'])));
     }
 
-    public function unreadCount(string $tenant): JsonResponse {
+    public function unreadCount(string $tenant): JsonResponse
+    {
         $this->authorizer->authorize('tenant.view');
 
         return response()->json(['count' => $this->notifications->unreadCount()]);
     }
 
-    public function markRead(string $tenant, int $notification): JsonResponse {
+    public function markRead(string $tenant, int $notification): JsonResponse
+    {
         $this->authorizer->authorize('tenant.view');
 
         return response()->json($this->notifications->markRead($notification));
     }
 
-    public function markAllRead(string $tenant): JsonResponse {
+    public function markAllRead(string $tenant): JsonResponse
+    {
         $this->authorizer->authorize('tenant.view');
 
         return response()->json(['updated' => $this->notifications->markAllRead()]);
     }
 
-    public function userPreferences(string $tenant): JsonResponse {
+    public function userPreferences(string $tenant): JsonResponse
+    {
         $this->authorizer->authorize('tenant.view');
 
         return response()->json($this->notifications->preferences($this->context->membership()->user_id));
     }
 
-    public function saveUserPreference(Request $request, string $tenant): JsonResponse {
+    public function saveUserPreference(Request $request, string $tenant): JsonResponse
+    {
         $this->authorizer->authorize('tenant.view');
         $data = $request->validate(['category' => ['required', 'string', 'max:80'], 'mode' => ['required', 'in:immediate,digest,disabled'], 'locale' => ['nullable', 'in:en,ar']]);
 
         return response()->json($this->notifications->setPreference($data['category'], $data['mode'], $this->context->membership()->user_id, $data['locale'] ?? null));
     }
 
-    public function tenantPreferences(string $tenant): JsonResponse {
+    public function tenantPreferences(string $tenant): JsonResponse
+    {
         $this->authorizer->authorize('tenant.manage');
 
         return response()->json($this->notifications->preferences());
     }
 
-    public function saveTenantPreference(Request $request, string $tenant): JsonResponse {
+    public function saveTenantPreference(Request $request, string $tenant): JsonResponse
+    {
         $this->authorizer->authorize('tenant.manage');
         $data = $request->validate(['category' => ['required', 'string', 'max:80'], 'mode' => ['required', 'in:immediate,digest,disabled'], 'locale' => ['nullable', 'in:en,ar']]);
 
         return response()->json($this->notifications->setPreference($data['category'], $data['mode'], null, $data['locale'] ?? null));
     }
 
-    public function configuration(Request $request, string $tenant): JsonResponse {
+    public function configuration(Request $request, string $tenant): JsonResponse
+    {
         $this->authorizer->authorize('tenant.manage');
 
         return response()->json($this->configuration->get((string) $request->query('key', 'default')));
@@ -115,7 +124,8 @@ final class EmailNotificationController extends Controller
         return response()->json($recipients->serialize($updated));
     }
 
-    public function saveConfiguration(Request $request, string $tenant): JsonResponse {
+    public function saveConfiguration(Request $request, string $tenant): JsonResponse
+    {
         $this->authorizer->authorize('tenant.manage');
         $data = $request->validate([
             'configuration_key' => ['nullable', 'string', 'max:160'], 'site_id' => ['nullable', 'integer', 'min:1'], 'transport' => ['nullable', 'string'],
@@ -129,7 +139,8 @@ final class EmailNotificationController extends Controller
         return response()->json($this->configuration->serialize($this->configuration->save($key, $data)));
     }
 
-    public function clearConfigurationSecret(Request $request, string $tenant): JsonResponse {
+    public function clearConfigurationSecret(Request $request, string $tenant): JsonResponse
+    {
         $this->authorizer->authorize('tenant.manage');
         $data = $request->validate([
             'configuration_key' => ['nullable', 'string', 'max:160'],
@@ -139,19 +150,22 @@ final class EmailNotificationController extends Controller
         return response()->json($this->configuration->serialize($this->configuration->clearSecret($key)));
     }
 
-    public function diagnose(Request $request, string $tenant): JsonResponse {
+    public function diagnose(Request $request, string $tenant): JsonResponse
+    {
         $this->authorizer->authorize('tenant.manage');
 
         return response()->json($this->configuration->diagnose((string) $request->input('configuration_key', 'default')));
     }
 
-    public function templates(string $tenant): JsonResponse {
+    public function templates(string $tenant): JsonResponse
+    {
         $this->authorizer->authorize('tenant.manage');
 
         return response()->json($this->templates->all());
     }
 
-    public function saveTemplate(Request $request, string $tenant, string $stableId, string $locale): JsonResponse {
+    public function saveTemplate(Request $request, string $tenant, string $stableId, string $locale): JsonResponse
+    {
         $this->authorizer->authorize('tenant.manage');
         $data = $request->validate([
             'subject_template' => ['required', 'string', 'max:500'], 'html_template' => ['required', 'string', 'max:100000'],
@@ -161,7 +175,8 @@ final class EmailNotificationController extends Controller
         return response()->json($this->templates->serialize($this->templates->save($stableId, $locale, $data)));
     }
 
-    public function deliveries(Request $request, string $tenant): JsonResponse {
+    public function deliveries(Request $request, string $tenant): JsonResponse
+    {
         $this->authorizer->authorize('tenant.manage');
         $filters = $request->validate([
             'site_id' => ['nullable', 'integer', 'min:1'],
