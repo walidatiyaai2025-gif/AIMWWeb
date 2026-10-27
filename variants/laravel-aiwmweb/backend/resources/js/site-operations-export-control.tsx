@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { APP_DATA_GRID_CSV_EXPORT_OPERATION_ID, requestAppDataGridCsvExport } from './app-data-grid-csv-export-control';
+import { APP_DATA_GRID_EXPORT_REQUESTED_OPERATION_ID, requestAppDataGridExport } from './app-data-grid-export-requested-control';
 
 export const SITE_OPERATIONS_EXPORT_OPERATION_ID = 'AIMW-BILL-582319B640';
 
@@ -134,26 +135,28 @@ export function SiteOperationsExportControl({
         setError(null);
         let objectUrl: string | null = null;
         try {
-            let csv = '';
-            await requestAppDataGridCsvExport(
-                rows,
-                siteOperationsCsvRow,
-                async (selectedRows) => {
-                    csv = [
-                        SITE_OPERATIONS_CSV_HEADERS.map(csvCell).join(','),
-                        ...selectedRows.map((row) => row.map(csvCell).join(',')),
-                    ].join('\r\n');
-                },
-            );
-            const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8' });
-            objectUrl = URL.createObjectURL(blob);
-            const anchor = document.createElement('a');
-            anchor.href = objectUrl;
-            anchor.download = siteOperationsCsvFileName();
-            anchor.style.display = 'none';
-            document.body.appendChild(anchor);
-            anchor.click();
-            anchor.remove();
+            await requestAppDataGridExport(rows, async (exportRows) => {
+                let csv = '';
+                await requestAppDataGridCsvExport(
+                    exportRows,
+                    siteOperationsCsvRow,
+                    async (selectedRows) => {
+                        csv = [
+                            SITE_OPERATIONS_CSV_HEADERS.map(csvCell).join(','),
+                            ...selectedRows.map((row) => row.map(csvCell).join(',')),
+                        ].join('\r\n');
+                    },
+                );
+                const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8' });
+                objectUrl = URL.createObjectURL(blob);
+                const anchor = document.createElement('a');
+                anchor.href = objectUrl;
+                anchor.download = siteOperationsCsvFileName();
+                anchor.style.display = 'none';
+                document.body.appendChild(anchor);
+                anchor.click();
+                anchor.remove();
+            });
         } catch {
             setError(locale === 'ar'
                 ? 'تعذر بدء تنزيل ملف CSV. لم يتم عرض نجاح وهمي.'
@@ -171,6 +174,7 @@ export function SiteOperationsExportControl({
                 className="btn"
                 data-canonical-operation={SITE_OPERATIONS_EXPORT_OPERATION_ID}
                 data-canonical-app-data-grid-csv-operation={APP_DATA_GRID_CSV_EXPORT_OPERATION_ID}
+                data-canonical-export-requested-operation={APP_DATA_GRID_EXPORT_REQUESTED_OPERATION_ID}
                 disabled={!available}
                 title={availability}
                 onClick={() => { void exportCsv(); }}
