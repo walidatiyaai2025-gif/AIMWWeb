@@ -2813,6 +2813,13 @@
       ]
     },
     {
+      "label": "AIMW-SYNC-419C403EFB ContentExplorer ApplyFilters focused closure",
+      "sha": "5e6da6a4a10a5eb663638a309527e66934999d58",
+      "operation_ids": [
+        "AIMW-SYNC-419C403EFB"
+      ]
+    },
+    {
       "label": "AIMW-SYNC-9B87CACA17 GlobalMediaExplorer ResetAsync focused closure",
       "sha": "0a2cd64c317f19a2ab7547e13ff19979b4d9e567",
       "observed_pr_head": "0a2cd64c317f19a2ab7547e13ff19979b4d9e567",
