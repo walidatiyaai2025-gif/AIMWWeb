@@ -45,7 +45,8 @@ describe('AIMW-SYNC-627C90DC5C ContentExplorer ResetFiltersAsync', () => {
         const control = screen.getByRole('button', { name: 'Reset filters' });
         expect(control).toHaveAttribute('data-canonical-operation', CONTENT_EXPLORER_RESET_FILTERS_OPERATION_ID);
         fireEvent.click(control);
-        await waitFor(() => expect(reset).toHaveBeenCalledExactlyOnceWith('/api/v1/tenants/alpha/sites/7/explorer'));
+        await waitFor(() => expect(reset).toHaveBeenCalledTimes(1));
+        expect(reset).toHaveBeenCalledWith('/api/v1/tenants/alpha/sites/7/explorer');
     });
 
     it('fails closed on foreign tenant, foreign site, untrusted origins, and missing permissions', () => {
