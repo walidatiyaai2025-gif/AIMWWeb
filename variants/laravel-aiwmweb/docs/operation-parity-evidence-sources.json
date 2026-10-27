@@ -2478,8 +2478,8 @@
     },
     {
       "label": "AIMW-CONT-8C19E4E3B2 SiteConnection Back to sites focused closure",
-      "sha": "334ca775920f285a04f8f43a6933084388dc554e",
-      "observed_pr_head": "334ca775920f285a04f8f43a6933084388dc554e",
+      "sha": "91f4947e907c257f7ae0af4c9537880e81f11aa5",
+      "observed_pr_head": "91f4947e907c257f7ae0af4c9537880e81f11aa5",
       "operation_ids": [
         "AIMW-CONT-8C19E4E3B2"
       ]
