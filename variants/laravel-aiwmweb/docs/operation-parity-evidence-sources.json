@@ -2555,6 +2555,14 @@
       "operation_ids": [
         "AIMW-SYNC-C18ED1F753"
       ]
+    },
+    {
+      "label": "AIMW-SYNC-FF579F0EBF AppDataGrid ClearFiltersAsync issue #988 focused closure",
+      "sha": "d5216873756dac1018cbbc71ca230c742c95c885",
+      "observed_pr_head": "d5216873756dac1018cbbc71ca230c742c95c885",
+      "operation_ids": [
+        "AIMW-SYNC-FF579F0EBF"
+      ]
     }
   ],
   "sources": [
