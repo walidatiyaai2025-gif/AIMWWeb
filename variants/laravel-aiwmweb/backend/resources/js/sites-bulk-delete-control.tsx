@@ -4,6 +4,7 @@ import { ApiError, apiRequest, type FrontendContext } from './core';
 import { useToast } from './components';
 import { useLocale } from './i18n';
 import { AppDataGridClearSelectionControl } from './app-data-grid-clear-selection-control';
+import { AppBulkActionClearControl } from './app-bulk-action-clear-control';
 import { mutateThenReconcile } from './reconciliation';
 
 const OPERATION_ID = 'AIMW-BILL-337E4FF969';
@@ -110,12 +111,20 @@ export function SitesBulkDeleteControl({ context }: { context: FrontendContext }
                             onClick={toggleSelectAllVisible}
                             disabled={mutation.isPending}
                         >{allVisibleSelected ? (locale === 'ar' ? 'إلغاء تحديد الظاهر' : 'Clear visible') : (locale === 'ar' ? 'تحديد الظاهر' : 'Select visible')}</button>
-                        <AppDataGridClearSelectionControl
-                            locale={locale}
+                        <AppBulkActionClearControl
                             selectedCount={selectedIds.length}
                             busy={mutation.isPending}
-                            onClearSelection={() => setSelected(new Set())}
-                        />
+                            clearText={locale === 'ar' ? 'مسح التحديد' : 'Clear selection'}
+                            clearAriaLabel={locale === 'ar' ? 'مسح تحديد المواقع' : 'Clear site selection'}
+                            onClear={() => setSelected(new Set())}
+                        >
+                            <AppDataGridClearSelectionControl
+                                locale={locale}
+                                selectedCount={selectedIds.length}
+                                busy={mutation.isPending}
+                                onClearSelection={() => setSelected(new Set())}
+                            />
+                        </AppBulkActionClearControl>
                         <button
                             type="button"
                             className="btn"
