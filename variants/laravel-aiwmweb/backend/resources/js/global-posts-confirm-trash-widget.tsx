@@ -3,6 +3,8 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest, type FrontendContext } from './core';
 import { useToast } from './components';
 import { useLocale } from './i18n';
+import { PostsInterpolatedLinksControl } from './posts-interpolated-links-control';
+import { SyncAppConfirmDialogCancelControl } from './sync-app-confirm-dialog-cancel-control';
 import {
     GLOBAL_POSTS_CONFIRM_TRASH_OPERATION_ID,
     buildGlobalPostsTrashPayload,
@@ -186,7 +188,14 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
                                                 />
                                             </td>
                                             <td>{row.title || `#${row.wordpress_id}`}</td>
-                                            <td>{row.site_name || `#${row.site_id}`}</td>
+                                            <td>
+                                                <PostsInterpolatedLinksControl
+                                                    tenantSlug={context.tenant.slug}
+                                                    siteId={row.site_id}
+                                                    wordpressId={row.wordpress_id}
+                                                    siteName={row.site_name}
+                                                />
+                                            </td>
                                             <td>{row.status || '—'}</td>
                                         </tr>
                                     );
@@ -215,14 +224,12 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
                                     ? (locale === 'ar' ? 'جارٍ النقل…' : 'Moving…')
                                     : (locale === 'ar' ? 'تأكيد النقل' : 'Confirm trash')}
                             </button>
-                            <button
-                                type="button"
-                                className="btn"
-                                disabled={mutation.isPending}
-                                onClick={() => setConfirmOpen(false)}
-                            >
-                                {locale === 'ar' ? 'إلغاء' : 'Cancel'}
-                            </button>
+                            <SyncAppConfirmDialogCancelControl
+                                busy={mutation.isPending}
+                                cancelText={locale === 'ar' ? 'إلغاء' : 'Cancel'}
+                                onOpenChanged={(open) => setConfirmOpen(open)}
+                                onCancel={() => undefined}
+                            />
                         </div>
                     </section>
                 </div>

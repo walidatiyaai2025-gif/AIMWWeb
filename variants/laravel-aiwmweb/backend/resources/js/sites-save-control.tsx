@@ -3,7 +3,9 @@ import{useMutation,useQuery,useQueryClient}from'@tanstack/react-query';
 import{ApiError,apiRequest,type FrontendContext}from'./core';
 import{useLocale}from'./i18n';
 export const SITES_SAVE_OPERATION_ID='AIMW-BILL-54E4003BE9';
+export const SITES_SAVING_LABEL_OPERATION_ID='AIMW-CONT-2752ED9351';
 export const SITES_CLOSE_FORM_OPERATION_ID='AIMW-CONT-FBA95BDC1D';
+export const SITES_CLOSE_FORM_CLICKED_OPERATION_ID='AIMW-CONT-B60F3F750B';
 type SiteRow={id:number;name?:string;url?:string;status?:string};
 export const canonicalSitesSaveCollection=(c:FrontendContext)=>c.api.sites===`/api/tenants/${encodeURIComponent(c.tenant.slug)}/sites`?c.api.sites:null;
 const cleanUrl=(v:string)=>{try{const u=new URL(v.trim());return['http:','https:'].includes(u.protocol)?v.trim().replace(/\/+$/,''):null}catch{return null}};
@@ -24,7 +26,7 @@ export function SitesSaveControl({context}:{context:FrontendContext}){
   {formOpen?<form onSubmit={e=>{e.preventDefault();setMsg(null);m.mutate()}}>
    <label>{locale==='ar'?'الاسم':'Name'}<input aria-label={locale==='ar'?'الاسم':'Name'} value={name} onChange={e=>setName(e.target.value)} disabled={m.isPending}/></label>
    <label>{locale==='ar'?'الرابط':'URL'}<input aria-label="URL" value={url} onChange={e=>setUrl(e.target.value)} disabled={m.isPending}/></label>
-   <div className="toolbar-actions"><button type="submit" className="btn primary" data-canonical-operation={SITES_SAVE_OPERATION_ID} disabled={m.isPending}>{m.isPending?(locale==='ar'?'جارٍ الحفظ…':'Saving…'):(locale==='ar'?'حفظ':'Save')}</button><button type="button" className="btn" disabled={m.isPending} onClick={closeForm}>{locale==='ar'?'إلغاء':'Cancel'}</button></div>
+   <div className="toolbar-actions"><button type="submit" className="btn primary" data-canonical-operation={SITES_SAVE_OPERATION_ID} aria-busy={m.isPending} disabled={m.isPending}>{m.isPending?<span data-canonical-operation={SITES_SAVING_LABEL_OPERATION_ID} data-source-state="saving" aria-live="polite">{locale==='ar'?'جارٍ الحفظ…':'Saving…'}</span>:(locale==='ar'?'حفظ':'Save')}</button><button type="button" className="btn" data-canonical-operation={SITES_CLOSE_FORM_CLICKED_OPERATION_ID} data-source-handler="CloseFormClicked" disabled={m.isPending} onClick={closeForm}>{locale==='ar'?'إلغاء':'Cancel'}</button></div>
   </form>:<div className="toolbar-actions"><button type="button" className="btn primary" onClick={openAddForm}>{locale==='ar'?'إضافة موقع':'Add site'}</button></div>}
   {q.error?<p role="alert">{q.error instanceof Error?q.error.message:String(q.error)}</p>:null}
   {sites.length?<table className="data-table"><thead><tr><th>ID</th><th>Name</th><th>URL</th><th>Action</th></tr></thead><tbody>{sites.map(s=><tr key={s.id}><td>{s.id}</td><td>{s.name??'—'}</td><td>{s.url??'—'}</td><td><button type="button" className="btn" disabled={m.isPending} onClick={()=>{setFormOpen(true);setId(s.id);setName(s.name??'');setUrl(s.url??'');setMsg(null)}}>{locale==='ar'?'تعديل':'Edit'}</button></td></tr>)}</tbody></table>:null}

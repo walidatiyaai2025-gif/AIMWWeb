@@ -226,6 +226,7 @@ input::placeholder, textarea::placeholder { color: color-mix(in srgb, var(--mute
 .toast { padding: .78rem .9rem; border: 1px solid var(--border); border-radius: 11px; background: var(--surface); box-shadow: var(--shadow); font-size: .8rem; }
 .toast-success { border-color: color-mix(in srgb, var(--success) 45%, var(--border)); }
 .toast-error { border-color: color-mix(in srgb, var(--danger) 45%, var(--border)); }
+.toast-log-link { display: inline-flex; margin-block-start: .45rem; font-weight: 700; }
 .bootstrap-state, .fatal-error { min-height: 100vh; display: grid; place-items: center; padding: 1.5rem; background: var(--bg); }
 .bootstrap-state > *, .fatal-error > * { width: min(760px, 100%); }
 .fatal-error .panel { padding: 1.2rem; }

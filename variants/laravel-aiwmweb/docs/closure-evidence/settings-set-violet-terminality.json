@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #813 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_base_branch": "worker/laravel-aiwmweb-closure-composition",
+  "canonical_base_sha": "edcbfadbcb0a9eb2a011bb3ad0071f94f4b5e981",
+  "implementation_sha": "4059363436532d56ff0c7931dd45acf20c720a98",
+  "canonical_operation": {
+    "operation_id": "AIMW-CONT-7D83B09470",
+    "domain": "content",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/Settings.razor",
+    "source_screen": "/settings",
+    "source_control": "SetViolet [SetViolet]",
+    "mutation": false,
+    "verification": "focused deterministic frontend/PHP tests plus exact pushed production marker"
+  },
+  "source_behavior": {
+    "action": "SetViolet",
+    "theme": "violet",
+    "persist": "appTheme.set stores aiwm-color-theme=violet",
+    "apply": "the active document switches immediately to data-theme=violet"
+  },
+  "laravel_adaptation": {
+    "route": "/tenants/{tenant}/settings",
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/settings-accent-theme-violet-control.tsx",
+    "shell_runtime": "variants/laravel-aiwmweb/backend/resources/js/main-layout-parity-controls.tsx",
+    "shell_palette": "variants/laravel-aiwmweb/backend/resources/js/main-layout-parity-controls.css",
+    "storage_key": "aiwm-color-theme",
+    "theme_value": "violet",
+    "placeholder_or_fake_success": false
+  },
+  "runtime_path": [
+    "authenticated tenant bootstrap resolves FrontendContext before the Settings route renders",
+    "Settings route requires tenant.view and the control independently fails closed without tenant.view or wildcard permission",
+    "button applies only the fixed violet theme value and accepts no caller-supplied tenant, resource or destination",
+    "the control persists aiwm-color-theme=violet and updates document data-theme immediately",
+    "the shell already defines Violet as #8b5cf6 and consumes the same aiwm-color-theme contract",
+    "the control performs no fetch, server persistence, queue, cache, scheduler, WordPress, Connector, AI or provider mutation"
+  ],
+  "authorization_and_isolation": {
+    "session": "required by tenant bootstrap",
+    "active_tenant": "server-resolved FrontendContext",
+    "permission": "tenant.view or wildcard",
+    "foreign_tenant": "remains governed by tenant bootstrap; the control accepts no tenant input",
+    "direct_object_id": "not applicable",
+    "csrf": "not applicable because no HTTP mutation occurs"
+  },
+  "secret_and_external_policy": {
+    "secrets_read_or_exposed": false,
+    "wordpress_or_connector_effect": false,
+    "ai_or_provider_effect": false,
+    "server_mutation": false,
+    "fake_or_demo_success": false
+  },
+  "acceptance_tests": {
+    "frontend_path": "variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-accent-theme-violet-control.test.tsx",
+    "php_path": "variants/laravel-aiwmweb/backend/tests/Feature/SettingsSetVioletTerminalityTest.php",
+    "proof": [
+      "canonical operation marker is bound to the rendered Violet button",
+      "gold state switches to violet immediately and persists aiwm-color-theme",
+      "document data-theme and aria-pressed expose the authoritative read state",
+      "the operation performs no fetch call",
+      "missing tenant.view fails closed",
+      "foreign tenant route access remains 404"
+    ]
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-CONT-7D83B09470",
+    "sibling_controls_terminalized": false,
+    "generated_reconciliation_hand_edited": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true,
+    "reason": "The canonical Settings SetViolet control now drives the existing real Laravel theme runtime, persists and renders the Violet state immediately, fails closed outside the tenant Settings permission boundary, and introduces no server/external mutation or fabricated success path."
+  },
+  "materialized": true,
+  "evidence_source_sha": "4f4e50893af3533a8d326d0d41b450d8ffcfba43"
+}

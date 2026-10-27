@@ -7,6 +7,7 @@ import { AccountEmailSettingsHistoryLinkControl } from './account-email-settings
 import { AccountEmailSettingsSchedulesLinkControl } from './account-email-settings-schedules-link-control';
 import { AccountEmailSettingsClearPasswordControl } from './account-email-settings-clear-password-control';
 import { AccountEmailSettingsProfileForm } from './account-email-settings-profile-form';
+import { AccountEmailSettingsRecipientsControl } from './account-email-settings-recipients-control';
 
 type MailConfigurationSummary = {
     configuration_key?: string;
@@ -86,6 +87,7 @@ export function AccountEmailSettingsSummary({ context }: { context: FrontendCont
                     configuration={configuration}
                     onSaved={() => query.refetch()}
                 />
+                <AccountEmailSettingsRecipientsControl context={context} />
             </div>
         );
     }
@@ -110,6 +112,7 @@ export function AccountEmailSettingsSummary({ context }: { context: FrontendCont
                 configuration={configuration}
                 onSaved={() => query.refetch()}
             />
+            <AccountEmailSettingsRecipientsControl context={context} />
             <section className="panel" aria-label={locale === 'ar' ? 'تهيئة البريد الفعلية' : 'Authoritative mail configuration'}>
                 <dl className="contract-details">
                     <div><dt>{locale === 'ar' ? 'الحالة' : 'Status'}</dt><dd>{configuration.enabled ? (locale === 'ar' ? 'مفعّل' : 'Enabled') : (locale === 'ar' ? 'معطّل' : 'Disabled')}</dd></div>

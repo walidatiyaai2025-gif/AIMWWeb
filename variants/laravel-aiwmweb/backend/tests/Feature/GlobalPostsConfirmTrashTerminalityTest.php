@@ -27,8 +27,10 @@ final class GlobalPostsConfirmTrashTerminalityTest extends TestCase
     public function test_source_contract_route_and_visible_control_are_bound(): void
     {
         $source = (string) file_get_contents(base_path('../../../src/AIWordPressManager.Web/Components/Pages/GlobalPostsExplorer.razor'));
+        $confirmDialogSource = (string) file_get_contents(base_path('../../../src/AIWordPressManager.Web/Components/Shared/AppConfirmDialog.razor'));
         $app = (string) file_get_contents(resource_path('js/app.tsx'));
         $widget = (string) file_get_contents(resource_path('js/global-posts-confirm-trash-widget.tsx'));
+        $cancelControl = (string) file_get_contents(resource_path('js/sync-app-confirm-dialog-cancel-control.tsx'));
 
         $this->assertStringContainsString('ConfirmTrashAsync', $source);
         $this->assertStringContainsString('GlobalContentBulkPolicy.GroupBySite', $source);
@@ -39,6 +41,19 @@ final class GlobalPostsConfirmTrashTerminalityTest extends TestCase
         $this->assertStringContainsString('setConfirmOpen(true)', $widget);
         $this->assertStringContainsString('mutation.mutate(selectedTargets)', $widget);
         $this->assertStringContainsString('await query.refetch()', $widget);
+
+        $this->assertStringContainsString('OnClick="CancelClickedAsync"', $confirmDialogSource);
+        $this->assertStringContainsString('Disabled="@Busy"', $confirmDialogSource);
+        $this->assertStringContainsString('private async Task CancelClickedAsync', $confirmDialogSource);
+        $this->assertStringContainsString('await OpenChanged.InvokeAsync(false);', $confirmDialogSource);
+        $this->assertStringContainsString('await OnCancel.InvokeAsync();', $confirmDialogSource);
+        $this->assertStringContainsString('AIMW-SYNC-2A8778C6EA', $cancelControl);
+        $this->assertStringContainsString('data-source-handler="CancelClickedAsync"', $cancelControl);
+        $this->assertStringContainsString('await onOpenChanged(false);', $cancelControl);
+        $this->assertStringContainsString('await onCancel();', $cancelControl);
+        $this->assertStringNotContainsString('apiRequest', $cancelControl);
+        $this->assertStringNotContainsString('fetch(', $cancelControl);
+        $this->assertStringContainsString('SyncAppConfirmDialogCancelControl', $widget);
 
         $route = Route::getRoutes()->match(
             Request::create('/api/v1/tenants/alpha/global-posts/trash', 'POST'),

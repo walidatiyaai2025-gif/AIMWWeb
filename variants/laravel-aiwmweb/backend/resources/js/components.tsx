@@ -1,3 +1,4 @@
+import { AppDialogCloseControl } from './app-dialog-close-control';
 import React, {
     createContext,
     useCallback,
@@ -7,6 +8,7 @@ import React, {
     useRef,
     useState,
 } from 'react';
+import { previousAppDataGridPage } from './app-data-grid-previous-page-control';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
     capabilityReason,
@@ -29,9 +31,12 @@ interface Toast {
     message: string;
 }
 
+export const GLOBAL_NOTIFICATION_LOGS_OPERATION_ID = 'AIMW-EMAI-9EB09C490D';
+
 const ToastContext = createContext<{ notify: (message: string, tone?: Toast['tone']) => void } | null>(null);
 
-export function ToastProvider({ children }: { children: React.ReactNode }) {
+export function ToastProvider({ children, logsHref }: { children: React.ReactNode; logsHref?: string }) {
+    const { locale } = useLocale();
     const [toasts, setToasts] = useState<Toast[]>([]);
     const nextId = useRef(0);
 
@@ -47,7 +52,16 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             <div className="toast-stack" aria-live="polite" aria-atomic="false">
                 {toasts.map((toast) => (
                     <div key={toast.id} className={`toast toast-${toast.tone}`} role={toast.tone === 'error' ? 'alert' : 'status'}>
-                        {toast.message}
+                        <span>{toast.message}</span>
+                        {toast.tone === 'error' && toast.message.trim() && logsHref ? (
+                            <a
+                                className="toast-log-link"
+                                href={logsHref}
+                                data-canonical-operation={GLOBAL_NOTIFICATION_LOGS_OPERATION_ID}
+                            >
+                                {locale === 'ar' ? 'عرض التفاصيل في السجلات' : 'View details in logs'}
+                            </a>
+                        ) : null}
                     </div>
                 ))}
             </div>
@@ -292,7 +306,7 @@ export function Pagination({
     if (lastPage <= 1) return null;
     return (
         <nav className="pagination" aria-label={locale === 'ar' ? 'ترقيم الصفحات' : 'Pagination'}>
-            <button type="button" className="btn" data-canonical-operation={previousOperationId} onClick={() => onPage(page - 1)} disabled={page <= 1}>{text(commonText.previous)}</button>
+            <button type="button" className="btn" data-canonical-operation={previousOperationId} onClick={() => onPage(previousAppDataGridPage(page))} disabled={page <= 1}>{text(commonText.previous)}</button>
             <span aria-live="polite">{locale === 'ar' ? `صفحة ${page} من ${lastPage}` : `Page ${page} of ${lastPage}`}</span>
             <button type="button" className="btn" onClick={() => onPage(page + 1)} disabled={page >= lastPage}>{text(commonText.next)}</button>
         </nav>
@@ -359,6 +373,7 @@ export function ActionDialog({
     onSubmit,
     busy,
     serverErrors,
+    showCloseButton = true,
 }: {
     open: boolean;
     actionKey: string;
@@ -367,6 +382,7 @@ export function ActionDialog({
     onSubmit: (values: Record<string, string | number>) => void;
     busy: boolean;
     serverErrors: Record<string, string[]>;
+    showCloseButton?: boolean;
 }) {
     const { locale, text } = useLocale();
     const [values, setValues] = useState<Record<string, string>>({});
@@ -426,7 +442,7 @@ export function ActionDialog({
                         <span className="workspace-kicker">ACTION</span>
                         <h2 id="action-dialog-title">{actionKey}</h2>
                     </div>
-                    <button type="button" className="icon-button" onClick={onClose} aria-label={text(commonText.close)}>×</button>
+                    <AppDialogCloseControl onClose={onClose} showCloseButton={showCloseButton} ariaLabel={text(commonText.close)} />
                 </header>
                 <form onSubmit={submit} noValidate>
                     {fields.length === 0 ? (

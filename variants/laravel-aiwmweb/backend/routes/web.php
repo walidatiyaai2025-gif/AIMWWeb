@@ -220,6 +220,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
         $actions = $actionRegistry->contracts($tenantModel, $permissions, $site);
 
         $api = [
+            'dashboard' => "/api/dashboard?tenant={$tenant}",
             'sites' => "/api/tenants/{$tenant}/sites",
             'operations' => "/tenants/{$tenant}/admin/operations",
             'operations-hub' => "/tenants/{$tenant}/admin/operations-hub",
@@ -365,6 +366,10 @@ Route::prefix('/tenants/{tenant}')
         Route::get('/module/media', 'showSiteBound')->defaults('workspace_permissions', 'content.view')->name('canonical.workspace.media');
         Route::get('/module/comments', 'showSiteBound')->defaults('workspace_permissions', 'content.view')->name('canonical.workspace.comments');
         Route::get('/module/taxonomy', 'showSiteBound')->defaults('workspace_permissions', 'content.view')->name('canonical.workspace.taxonomy');
+        Route::get('/module/users', 'showSiteBound')
+            ->defaults('workspace_permissions', 'tenant.view,sites.view')
+            ->defaults('canonical_operation_id', 'AIMW-CONT-C3EC665880')
+            ->name('canonical.workspace.wordpress-users');
         Route::get('/module/sync', 'showSiteBound')->defaults('workspace_permissions', 'content.view,sync.view')->name('canonical.workspace.sync');
 
         Route::get('/module/reports', 'show')->defaults('workspace_permissions', 'reports.view')->name('canonical.workspace.reports');
@@ -373,6 +378,15 @@ Route::prefix('/tenants/{tenant}')
         Route::get('/automation-center', 'show')->defaults('workspace_permissions', 'operations.manage,automation.view')->name('canonical.workspace.automation');
         Route::get('/module/schedules', 'show')->defaults('workspace_permissions', 'operations.manage,automation.view')->name('canonical.workspace.schedules');
         Route::get('/module/execution', 'show')->defaults('workspace_permissions', 'operations.manage,execution.view')->name('canonical.workspace.execution');
+
+        Route::get('/module/{key}', 'show')
+            ->defaults('workspace_permissions', 'tenant.view')
+            ->defaults('canonical_operation_id', 'AIMW-CONT-80EE7CA296')
+            ->where('key', '[A-Za-z0-9][A-Za-z0-9-]{0,63}')
+            ->name('canonical.workspace.module-fallback');
+
+        Route::get('/sites/{site}/snapshot', 'showSite')->defaults('workspace_permissions', 'sites.view')->defaults('canonical_operation_id', 'AIMW-CONT-6D14B76763')->whereNumber('site')->name('canonical.site.snapshot');
+        Route::get('/sites/{site}/operations', 'showSite')->defaults('workspace_permissions', 'sites.view')->defaults('canonical_operation_id', 'AIMW-CONT-55FA799054')->whereNumber('site')->name('canonical.site.operations');
 
         Route::get('/sites/{site}/comments', 'redirectSite')->defaults('workspace_permissions', 'content.view')->defaults('workspace_target', '/module/comments')->whereNumber('site')->name('canonical.site.comments');
         Route::get('/sites/{site}/media', 'redirectSite')->defaults('workspace_permissions', 'content.view')->defaults('workspace_target', '/module/media')->whereNumber('site')->name('canonical.site.media');
@@ -392,7 +406,7 @@ Route::prefix('/tenants/{tenant}')
         Route::get('/configuration-validation', 'redirect')->defaults('workspace_permissions', 'settings.manage')->defaults('workspace_target', '/module/configuration')->defaults('canonical_operation_id', 'AIMW-CONT-95341D9AB0')->name('canonical.alias.configuration-validation');
         Route::get('/reports', 'redirect')->defaults('workspace_permissions', 'reports.view')->defaults('workspace_target', '/module/reports')->name('canonical.alias.reports');
         Route::get('/operations/sites', 'redirect')->defaults('workspace_permissions', 'execution.view')->defaults('workspace_target', '/site-operations')->name('canonical.alias.operations-sites');
-        Route::get('/operations/reliability', 'redirect')->defaults('workspace_permissions', 'sites.view')->defaults('workspace_target', '/site-reliability')->name('canonical.alias.operations-reliability');
+        Route::get('/operations/reliability', 'redirect')->defaults('workspace_permissions', 'sites.view')->defaults('workspace_target', '/site-reliability')->defaults('canonical_operation_id', 'AIMW-CONT-47007EE040')->name('canonical.alias.operations-reliability');
         Route::get('/automation-schedules', 'redirect')->defaults('workspace_permissions', 'operations.manage,automation.view')->defaults('workspace_target', '/module/schedules')->name('canonical.alias.automation-schedules');
         Route::get('/execution-center', 'redirect')->defaults('workspace_permissions', 'operations.manage,execution.view')->defaults('workspace_target', '/module/execution')->name('canonical.alias.execution-center');
     });

@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #798 under #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-CONT-9CF12067E6",
+    "domain": "content",
+    "kind": "route",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/RolesPermissions.razor",
+    "source_screen": "/admin/roles-permissions",
+    "source_control": "Open/render route",
+    "mutation": false,
+    "risk": "low"
+  },
+  "source_behavior": {
+    "authorization": "ApplicationPermissionCatalog.SettingsManage",
+    "read_surface": "custom roles, permission counts, active state and user role assignments",
+    "authoritative_reads": [
+      "ApplicationRoleAdministrationService.ListAsync",
+      "ApplicationUserAdministrationService.ListAsync",
+      "ApplicationUserAdministrationService.GetAssignableRolesAsync"
+    ],
+    "loading_state": "Loading roles / loading the access matrix",
+    "empty_state": "No custom roles yet",
+    "route_side_effect": "none"
+  },
+  "laravel_adaptation": {
+    "route": "/tenants/{tenant}/admin/roles-permissions",
+    "method": "GET",
+    "route_name": "canonical.workspace.roles-permissions",
+    "provider": "variants/laravel-aiwmweb/backend/app/Providers/RolesPermissionsRouteServiceProvider.php",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php#show",
+    "frontend_route": "variants/laravel-aiwmweb/backend/resources/js/app.tsx#admin/roles-permissions",
+    "workspace": "roles",
+    "authoritative_endpoint": "/tenants/{tenant}/admin/roles",
+    "authoritative_data": "tenant-scoped Laravel roles returned by AdministrationService",
+    "operation_marker": "AIMW-CONT-9CF12067E6",
+    "render_states": "shared ResourceContent loading, query error/retry, truthful empty state and live DataTable rows"
+  },
+  "authorization_and_isolation": {
+    "session": "required",
+    "tenant_context": "required",
+    "permission_mapping": "roles.view for the read-only workspace route; role mutations remain separately guarded by roles.manage",
+    "foreign_tenant": "404/fail closed",
+    "missing_roles_view": "403/fail closed",
+    "foreign_tenant_roles_exposed": false
+  },
+  "runtime_semantics": {
+    "read_only_route": true,
+    "get_mutation": false,
+    "placeholder": false,
+    "fake_success": false,
+    "deterministic_loading_state": true,
+    "deterministic_empty_state": true,
+    "deterministic_error_state": true,
+    "authoritative_read": true
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-CONT-9CF12067E6",
+    "roles_refresh_operation_claimed": false,
+    "role_create_operation_claimed": false,
+    "role_assignment_operation_claimed": false,
+    "aspnet_runtime_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "focused_test": "variants/laravel-aiwmweb/backend/tests/Feature/RolesPermissionsRouteTerminalityTest.php",
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "tenant_isolation_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true
+  }
+}

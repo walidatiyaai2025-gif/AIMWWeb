@@ -3,6 +3,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest, type FrontendContext } from './core';
 import { useToast } from './components';
 import { useLocale } from './i18n';
+import { SyncAppConfirmDialogConfirmControl } from './sync-app-confirm-dialog-confirm-control';
 import {
     GLOBAL_PAGES_CONFIRM_TRASH_OPERATION_ID,
     buildGlobalPagesTrashPayload,
@@ -205,16 +206,14 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
                             ? `سيتم تغيير ${selectedTargets.length} صفحة محددة عبر مواقع WordPress الحية.`
                             : `This will change ${selectedTargets.length} selected page(s) across live WordPress sites.`}</p>
                         <div className="toolbar-actions">
-                            <button
-                                type="button"
-                                className="btn danger"
-                                disabled={mutation.isPending || selectedTargets.length === 0}
-                                onClick={() => mutation.mutate(selectedTargets)}
-                            >
-                                {mutation.isPending
-                                    ? (locale === 'ar' ? 'جارٍ النقل…' : 'Moving…')
-                                    : (locale === 'ar' ? 'تأكيد النقل' : 'Confirm trash')}
-                            </button>
+                            <SyncAppConfirmDialogConfirmControl
+                                busy={mutation.isPending}
+                                disabled={selectedTargets.length === 0}
+                                confirmText={locale === 'ar' ? 'تأكيد النقل' : 'Confirm trash'}
+                                busyText={locale === 'ar' ? 'جارٍ النقل…' : 'Moving…'}
+                                confirmIcon=""
+                                onConfirm={() => mutation.mutateAsync(selectedTargets).catch(() => undefined)}
+                            />
                             <button
                                 type="button"
                                 className="btn"

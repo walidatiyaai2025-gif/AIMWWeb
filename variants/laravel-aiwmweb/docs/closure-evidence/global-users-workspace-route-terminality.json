@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #782 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-C3EC665880",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "route",
+    "route_screen": "/module/users",
+    "source": "src/AIWordPressManager.Web/Components/Pages/GlobalUsersWorkspace.razor",
+    "source_action": "Open/render route",
+    "source_intent": "Open the tenant-scoped WordPress Users workspace and render authoritative users for an explicitly bound connected site.",
+    "mutation": false,
+    "tenant_owned": true,
+    "external_dependency": "WordPress",
+    "risk": "low"
+  },
+  "laravel_adaptation": {
+    "route": "GET /tenants/{tenant}/module/users",
+    "route_name": "canonical.workspace.wordpress-users",
+    "action": "CanonicalWorkspaceRouteController@showSiteBound",
+    "frontend_route": "wp-users /module/users",
+    "authoritative_read": "GET /api/v1/tenants/{tenant}/sites/{site}/users",
+    "site_context": "Explicit ?site=, previously bound tenant session site, or the tenant's sole site; multiple sites without an explicit/session selection fail closed with 409.",
+    "loading_empty_error": "Existing ResourceContent uses the real wp-users API and preserves loading, empty and retryable error states without fabricated rows.",
+    "independent_api_added": false,
+    "independent_ui_added": false
+  },
+  "security": {
+    "middleware": [
+      "web",
+      "auth",
+      "tenant.context"
+    ],
+    "permissions": [
+      "tenant.view",
+      "sites.view"
+    ],
+    "tenant_isolation": "Site lookup uses the active TenantContext global scope; foreign tenant/site access fails closed.",
+    "caller_selectable_identity": "Only the site query can select a tenant-owned positive integer site; tenant/user query parameters cannot replace authenticated context.",
+    "read_only": true
+  },
+  "acceptance": {
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalUsersWorkspaceRouteTerminalityTest.php",
+    "coverage": [
+      "exact canonical route identity and ASP.NET source",
+      "explicit GET/HEAD-only Laravel route",
+      "showSiteBound active-site binding",
+      "tenant.view + sites.view authorization",
+      "real wp-users context endpoint",
+      "real WordPressUsersController index route",
+      "React wp-users workspace registration and real ResourceContent renderer",
+      "guest redirect and missing-permission 403",
+      "foreign tenant/site 404 isolation",
+      "multiple-site no-selection 409 and invalid site 422",
+      "query identity cannot override authenticated tenant",
+      "no tenant/site/membership mutation"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-C3EC665880"
+    ],
+    "sibling_user_controls_claimed": false,
+    "wordpress_user_save_claimed": false,
+    "full_management_link_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "0c4f5e770d5395ee820e6608e8f1e75911df7d24",
+    "branch": "worker/782-global-users-route",
+    "issue": 782
+  },
+  "materialization": {
+    "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-782.yml",
+    "generated_reconciliation_required": true
+  },
+  "server_mutation": false,
+  "external_mutation": false,
+  "only_operation_claimed": "AIMW-CONT-C3EC665880",
+  "materialized": true,
+  "evidence_source_sha": "eaceb34cbf5beb25952bfff61c291aba01d78130"
+}

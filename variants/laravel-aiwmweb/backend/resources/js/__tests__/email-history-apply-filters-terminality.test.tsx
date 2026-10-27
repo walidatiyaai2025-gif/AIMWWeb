@@ -85,7 +85,12 @@ describe(`${EMAIL_HISTORY_APPLY_FILTERS_OPERATION_ID} ApplyFiltersAsync`, () => 
         expect(EMAIL_HISTORY_APPLY_FILTERS_OPERATION_ID).toBe('AIMW-EMAI-F8E8A2BEE9');
     });
 
-    it('clears every draft/applied filter and reloads the authoritative unfiltered first page', async () => {
+
+    it('clears Email History filters through the existing shared clear control without rendering a duplicate action', async () => {
+        const clearPayload = {
+            data: [{ delivery_id: 'all', correlation_id: 'all', status: 'FAILED', template: 'all' }],
+            total: 1, current_page: 1, last_page: 1,
+        };
         const fetchMock = vi.fn()
             .mockResolvedValueOnce(new Response(JSON.stringify({
                 data: [{ delivery_id: 'before', correlation_id: 'old', status: 'QUEUED', template: 'before' }],
@@ -95,10 +100,9 @@ describe(`${EMAIL_HISTORY_APPLY_FILTERS_OPERATION_ID} ApplyFiltersAsync`, () => 
                 data: [{ delivery_id: 'filtered', correlation_id: 'trace-1', status: 'SENT', template: 'filtered' }],
                 total: 1, current_page: 1, last_page: 1,
             }), { status: 200, headers: { 'content-type': 'application/json' } }))
-            .mockResolvedValueOnce(new Response(JSON.stringify({
-                data: [{ delivery_id: 'all', correlation_id: 'all', status: 'FAILED', template: 'all' }],
-                total: 1, current_page: 1, last_page: 1,
-            }), { status: 200, headers: { 'content-type': 'application/json' } }));
+            .mockImplementation(() => Promise.resolve(new Response(JSON.stringify(clearPayload), {
+                status: 200, headers: { 'content-type': 'application/json' },
+            })));
         vi.stubGlobal('fetch', fetchMock);
 
         renderWorkspace();
@@ -109,16 +113,17 @@ describe(`${EMAIL_HISTORY_APPLY_FILTERS_OPERATION_ID} ApplyFiltersAsync`, () => 
         fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
         expect(await screen.findByRole('cell', { name: 'SENT' })).toBeInTheDocument();
 
-        const clear = screen.getByRole('button', { name: 'Clear' });
-        expect(clear).toHaveAttribute('data-canonical-operation', EMAIL_HISTORY_CLEAR_FILTERS_OPERATION_ID);
-        fireEvent.click(clear);
+        const clearButtons = screen.getAllByRole('button', { name: 'Clear filters' });
+        expect(clearButtons).toHaveLength(1);
+        expect(clearButtons[0]).toHaveAttribute('data-canonical-operation-alias', EMAIL_HISTORY_CLEAR_FILTERS_OPERATION_ID);
+        fireEvent.click(clearButtons[0]);
 
         expect(await screen.findByRole('cell', { name: 'FAILED' })).toBeInTheDocument();
         expect(screen.getByPlaceholderText('Site ID')).toHaveValue(null);
         expect(screen.getByRole('combobox', { name: 'Status' })).toHaveValue('');
         expect(screen.getByPlaceholderText('Correlation ID')).toHaveValue('');
-        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
-        const url = String(fetchMock.mock.calls[2]?.[0]);
+        await waitFor(() => expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(3));
+        const url = String(fetchMock.mock.calls.at(-1)?.[0]);
         expect(url).toContain('/api/v1/tenants/alpha/email/deliveries?page=1');
         expect(url).not.toContain('site_id=');
         expect(url).not.toContain('status=');

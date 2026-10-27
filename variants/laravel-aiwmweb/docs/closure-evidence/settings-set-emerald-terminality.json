@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #807 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-566A1899F1",
+  "terminal_state": "ADAPTED",
+  "source": "src/AIWordPressManager.Web/Components/Pages/Settings.razor",
+  "source_action": "SetEmerald",
+  "destination": "variants/laravel-aiwmweb/backend/resources/js/settings-accent-theme-emerald-control.tsx",
+  "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-accent-theme-emerald-control.test.tsx",
+  "backend_test": "variants/laravel-aiwmweb/backend/tests/Feature/SettingsSetEmeraldTerminalityTest.php",
+  "runtime": "reuse canonical aiwm-color-theme persistence and apply html data-theme=emerald, backed by the existing emerald CSS variable palette",
+  "server_mutation": false,
+  "external_mutation": false,
+  "tenant_permission": "tenant.view",
+  "only_operation_claimed": "AIMW-CONT-566A1899F1",
+  "materialized": true,
+  "evidence_source_sha": "4663fa63629c7c00ece7e26f99a84f48fbebbc55"
+}

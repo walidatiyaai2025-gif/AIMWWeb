@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #983 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-2E94028E4E",
+  "domain": "sync",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Shared/AppDataGrid.razor",
+    "route_screen": "component:AppDataGrid",
+    "visible_control": "@ClearSelectionText [ClearSelectionAsync]",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Shared/AppDataGrid.razor:component:AppDataGrid:@ClearSelectionText [ClearSelectionAsync]",
+    "behavior": "When the shared grid has selected keys, ClearSelectionAsync clears the local selected-key set and then invokes SelectionChanged with the now-empty collection. The action is selection-state only and does not persist or call WordPress.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "verification": "rendered/read response matches authoritative source"
+  },
+  "laravel_adaptation": {
+    "shared_contract": "variants/laravel-aiwmweb/backend/resources/js/app-data-grid-clear-selection-control.tsx",
+    "real_consumer": "variants/laravel-aiwmweb/backend/resources/js/sites-bulk-delete-control.tsx",
+    "consumer_route": "/tenants/{tenant}/sites",
+    "consumer_api": "/api/tenants/{tenant}/sites",
+    "consumer_permission": "sites.manage",
+    "semantics": [
+      "the existing Sites Clear selection action remains the single visible control; no duplicate button or parallel workflow is introduced",
+      "the shared contract clears browser-local selection first and then raises the optional empty-selection callback, matching AppDataGrid ClearSelectionCoreAsync ordering",
+      "the control renders only while at least one authoritative Sites row is selected",
+      "the real consumer clears only the selected IDs already loaded from the active tenant-scoped Sites collection",
+      "clear selection issues no DELETE, POST, PUT, PATCH, WordPress, queue, cache, billing, or secret operation",
+      "the owning Sites mutation busy state disables the control to avoid racing a destructive operation"
+    ],
+    "fake_or_demo_data": false
+  },
+  "security": {
+    "tenant_context": "auth + tenant.context on the owning Sites workspace",
+    "authorization": "sites.manage",
+    "foreign_tenant_access": "404 fail closed on the authoritative Sites API before foreign rows can reach the control",
+    "caller_owned_tenant_override_added": false,
+    "secret_disclosure_added": false,
+    "external_mutation_added": false,
+    "fake_success": false
+  },
+  "acceptance_tests": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/app-data-grid-clear-selection-control.test.tsx",
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/AppDataGridClearSelectionTerminalityTest.php",
+    "proofs": [
+      "exact canonical operation marker and source-operation key",
+      "source-equivalent clear-local-then-notify ordering",
+      "existing Sites clear-selection UI reused rather than duplicated",
+      "no mutation request while clearing selected rows",
+      "busy-state fail-closed behavior",
+      "foreign tenant authoritative Sites API returns 404"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-2E94028E4E"
+    ],
+    "sibling_app_data_grid_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "retry_or_replacement_lineage_created": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "Laravel now binds the exact AppDataGrid ClearSelectionAsync contract to the already-existing tenant-scoped Sites clear-selection action through one reusable shared control. Focused frontend and PHP tests prove source ordering, no mutation, canonical identity, authoritative API tenancy, and foreign-tenant fail-closed behavior."
+  }
+}
