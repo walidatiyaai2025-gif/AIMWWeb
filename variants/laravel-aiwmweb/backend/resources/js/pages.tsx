@@ -48,7 +48,7 @@ import { DashboardSystemHealthNavigationControl } from './dashboard-system-healt
 import { DashboardSitesQuickAccessControl } from './dashboard-sites-quick-access-control';
 import { DashboardMediaNavigationControl } from './dashboard-media-navigation-control';
 import { LiveSystemStatusRefreshControl } from './live-system-status-refresh-control';
-import { EmailHistoryFiltersControl, type EmailHistoryFilterState } from './email-history-filters-control';
+import { EMAIL_HISTORY_CLEAR_FILTERS_OPERATION_ID, EmailHistoryFiltersControl, type EmailHistoryFilterState } from './email-history-filters-control';
 import { GlobalUsersFullManagementControl } from './global-users-full-management-control';
 import { MediaDeleteControl } from './media-delete-control';
 import { GlobalMediaInterpolatedLinksControl } from './media-interpolated-links-control';
@@ -579,6 +579,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                 {route.key === 'email-history' ? (
                     <AppDataGridClearFiltersControl
                         locale={locale}
+                        canonicalOperationAlias={EMAIL_HISTORY_CLEAR_FILTERS_OPERATION_ID}
                         searchValue={search}
                         activeFilterCount={emailHistoryActiveFilterCount}
                         busy={query.isFetching}
