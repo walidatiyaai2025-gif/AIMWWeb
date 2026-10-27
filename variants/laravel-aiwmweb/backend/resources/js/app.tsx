@@ -23,7 +23,7 @@ import { CommentsCommentLinksControl } from './comments-comment-link-control';
 import { CommentsContentHubLink } from './comments-content-hub-link';
 import { CommentsManageSiteControl } from './comments-manage-site-control';
 import { ConfigurationValidationCopyReportControl } from './configuration-validation-copy-report';
-import { ApiError, apiRequest, workspaceRoutes, type FrontendContext, type WorkspaceRoute } from './core';
+import { ApiError, apiRequest, tenantUrl, workspaceRoutes, type FrontendContext, type WorkspaceRoute } from './core';
 import { AppShell, LoadingState, StatePanel, ToastProvider } from './components';
 import { ContentExplorerBulkTrashControl } from './content-explorer-bulk-trash-widget';
 import { ContentExplorerDynamicLinksControl } from './content-explorer-dynamic-links-control';
@@ -162,7 +162,7 @@ function TenantBootstrap() {
     const context = withApprovalQueueEndpoint(query.data);
 
     return (
-        <ToastProvider>
+        <ToastProvider logsHref={tenantUrl(context.tenant.slug, '/logs')}>
             <AppShell context={context}>
                 <CurrentUserSiteDetailsControl context={context} />
                 <MainLayoutParityControls context={context} />

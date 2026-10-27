@@ -30,9 +30,12 @@ interface Toast {
     message: string;
 }
 
+export const GLOBAL_NOTIFICATION_LOGS_OPERATION_ID = 'AIMW-EMAI-9EB09C490D';
+
 const ToastContext = createContext<{ notify: (message: string, tone?: Toast['tone']) => void } | null>(null);
 
-export function ToastProvider({ children }: { children: React.ReactNode }) {
+export function ToastProvider({ children, logsHref }: { children: React.ReactNode; logsHref?: string }) {
+    const { locale } = useLocale();
     const [toasts, setToasts] = useState<Toast[]>([]);
     const nextId = useRef(0);
 
@@ -48,7 +51,16 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             <div className="toast-stack" aria-live="polite" aria-atomic="false">
                 {toasts.map((toast) => (
                     <div key={toast.id} className={`toast toast-${toast.tone}`} role={toast.tone === 'error' ? 'alert' : 'status'}>
-                        {toast.message}
+                        <span>{toast.message}</span>
+                        {toast.tone === 'error' && toast.message.trim() && logsHref ? (
+                            <a
+                                className="toast-log-link"
+                                href={logsHref}
+                                data-canonical-operation={GLOBAL_NOTIFICATION_LOGS_OPERATION_ID}
+                            >
+                                {locale === 'ar' ? 'عرض التفاصيل في السجلات' : 'View details in logs'}
+                            </a>
+                        ) : null}
                     </div>
                 ))}
             </div>

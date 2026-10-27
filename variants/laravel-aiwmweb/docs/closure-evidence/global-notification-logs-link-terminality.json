@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #912 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-EMAI-9EB09C490D",
+  "domain": "email",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "source_file": "src/AIWordPressManager.Web/Components/Shared/GlobalNotifications.razor",
+  "source_control": "/logs -> /logs",
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/components.tsx::ToastProvider",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/app.tsx::TenantBootstrap",
+    "route_screen": "component:GlobalNotifications",
+    "adaptation": "Laravel's global ToastProvider is the transient notification surface. For a non-empty error toast it renders the canonical bilingual logs action and receives only the active tenant's logs alias from TenantBootstrap.",
+    "destination": "/tenants/{tenant}/logs -> /tenants/{tenant}/module/logs",
+    "operation_marker": "AIMW-EMAI-9EB09C490D"
+  },
+  "behavior": {
+    "server_mutation": false,
+    "network_request_on_render": false,
+    "only_error_notifications": true,
+    "requires_non_empty_error_detail": true,
+    "informational_and_success_notifications_do_not_render_link": true
+  },
+  "security": {
+    "tenant_scope": "tenantUrl(context.tenant.slug, '/logs') binds the link to the active tenant",
+    "route_middleware": ["auth", "tenant.context"],
+    "required_permissions": ["operations.manage", "diagnostics.view"],
+    "authorized_destination": "/tenants/{tenant}/module/logs",
+    "missing_permission": "403/fail closed",
+    "foreign_tenant": "404/fail closed"
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-notification-logs-link.test.tsx",
+    "security_test": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalNotificationLogsLinkTerminalityTest.php"
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-EMAI-9EB09C490D",
+    "notification_dismiss_operation_claimed": false,
+    "notification_center_operations_claimed": false,
+    "logs_route_operation_reimplemented": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  }
+}
