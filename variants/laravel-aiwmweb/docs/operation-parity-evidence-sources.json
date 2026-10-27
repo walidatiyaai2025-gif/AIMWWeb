@@ -2603,6 +2603,14 @@
       "operation_ids": [
         "AIMW-CONT-4147188AB1"
       ]
+    },
+    {
+      "label": "AIMW-TAXO-602DE140EB Global Taxonomy result Explorer focused closure",
+      "sha": "f82e8d0c446a26223bfa84142ee5c500ba884986",
+      "observed_pr_head": "f82e8d0c446a26223bfa84142ee5c500ba884986",
+      "operation_ids": [
+        "AIMW-TAXO-602DE140EB"
+      ]
     }
   ],
   "sources": [
