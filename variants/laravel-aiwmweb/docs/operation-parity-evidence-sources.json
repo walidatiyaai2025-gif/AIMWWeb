@@ -1493,6 +1493,72 @@
           "security_mode": "tenant_selected"
         }
       }
+    },
+    {
+      "label": "AIMW-CONT-50DF6B23CC Site Connection canonical route terminality",
+      "sha": "d13feb86b4cce959c14c0c99ec10286df53715e5",
+      "observed_pr_head": "d13feb86b4cce959c14c0c99ec10286df53715e5",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "operation_ids": [
+        "AIMW-CONT-50DF6B23CC"
+      ],
+      "route_api_provenance": {
+        "AIMW-CONT-50DF6B23CC": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteConnectionRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteConnectionRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-connection-route-terminality.json",
+          "security_mode": "tenant_bound"
+        }
+      }
+    },
+    {
+      "label": "AIMW-CONT-98918A6C27 Site Offline Data canonical route terminality",
+      "sha": "f3983282840300791080ad528c24cb79e489498d",
+      "observed_pr_head": "f3983282840300791080ad528c24cb79e489498d",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "operation_ids": [
+        "AIMW-CONT-98918A6C27"
+      ],
+      "route_api_provenance": {
+        "AIMW-CONT-98918A6C27": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteOfflineDataRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteOfflineDataRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-offline-data-route-terminality.json",
+          "security_mode": "tenant_bound"
+        }
+      }
+    },
+    {
+      "label": "AIMW-CONT-916E34454C Site Reliability direct route closure",
+      "sha": "bd926f86f35bc4cc3ab0441c69f18341a3f4a799",
+      "observed_pr_head": "bd926f86f35bc4cc3ab0441c69f18341a3f4a799",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "operation_ids": [
+        "AIMW-CONT-916E34454C"
+      ],
+      "route_api_provenance": {
+        "AIMW-CONT-916E34454C": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteReliabilityRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteReliabilityRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-reliability-route-terminality.json",
+          "security_mode": "tenant_selected"
+        }
+      }
     }
   ],
   "excluded_sources": [],
@@ -2683,50 +2749,6 @@
       ]
     },
     {
-      "label": "AIMW-CONT-50DF6B23CC Site Connection canonical route terminality",
-      "sha": "d13feb86b4cce959c14c0c99ec10286df53715e5",
-      "observed_pr_head": "d13feb86b4cce959c14c0c99ec10286df53715e5",
-      "domains": [
-        "content"
-      ],
-      "supporting_only": true,
-      "operation_ids": [
-        "AIMW-CONT-50DF6B23CC"
-      ],
-      "route_api_provenance": {
-        "AIMW-CONT-50DF6B23CC": {
-          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
-          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
-          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteConnectionRouteTerminalityTest.php",
-          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteConnectionRouteTerminalityTest.php",
-          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-connection-route-terminality.json",
-          "security_mode": "tenant_bound"
-        }
-      }
-    },
-    {
-      "label": "AIMW-CONT-98918A6C27 Site Offline Data canonical route terminality",
-      "sha": "f3983282840300791080ad528c24cb79e489498d",
-      "observed_pr_head": "f3983282840300791080ad528c24cb79e489498d",
-      "domains": [
-        "content"
-      ],
-      "supporting_only": true,
-      "operation_ids": [
-        "AIMW-CONT-98918A6C27"
-      ],
-      "route_api_provenance": {
-        "AIMW-CONT-98918A6C27": {
-          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
-          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
-          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteOfflineDataRouteTerminalityTest.php",
-          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteOfflineDataRouteTerminalityTest.php",
-          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-offline-data-route-terminality.json",
-          "security_mode": "tenant_bound"
-        }
-      }
-    },
-    {
       "label": "AIMW-CONT-38FC74B9DE OpenAddFormClicked focused closure",
       "sha": "a882b922d9cba3854b4055edcafb1a69cedcb11a",
       "observed_pr_head": "a882b922d9cba3854b4055edcafb1a69cedcb11a",
@@ -2789,28 +2811,6 @@
       "operation_ids": [
         "AIMW-BILL-5E8896CD58"
       ]
-    },
-    {
-      "label": "AIMW-CONT-916E34454C Site Reliability direct route closure",
-      "sha": "bd926f86f35bc4cc3ab0441c69f18341a3f4a799",
-      "observed_pr_head": "bd926f86f35bc4cc3ab0441c69f18341a3f4a799",
-      "domains": [
-        "content"
-      ],
-      "supporting_only": true,
-      "operation_ids": [
-        "AIMW-CONT-916E34454C"
-      ],
-      "route_api_provenance": {
-        "AIMW-CONT-916E34454C": {
-          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
-          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
-          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteReliabilityRouteTerminalityTest.php",
-          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteReliabilityRouteTerminalityTest.php",
-          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-reliability-route-terminality.json",
-          "security_mode": "tenant_selected"
-        }
-      }
     },
     {
       "label": "AIMW-CONT-BCAD1E3A49 Operations Hub Site Operations navigation focused closure",
