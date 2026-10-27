@@ -49,6 +49,7 @@
   "provenance": {
     "canonical_branch": "worker/933-global-media-reset",
     "base_composition_sha": "3a8da828e35aa3f607a1f598af827d77ef6234d3",
-    "implementation_sha": "d942a1c4fafe00dbcd2c106ca456e92fab3118a3"
+    "implementation_sha": "29d56fd55c5ce7e5b8c00d9aa2f4315e7d3d5ee5",
+    "composition_reconcile_sha": "fa4b672f1dc55b8cb90660ee2307d26cede2451b"
   }
 }
