@@ -21,12 +21,16 @@
         h1 { margin: 16px 0 20px; max-width: 760px; font-size: clamp(42px, 6vw, 78px); line-height: .98; letter-spacing: -.055em; }
         .lead { margin: 0; max-width: 700px; color: #aabbd1; font-size: clamp(17px, 2vw, 21px); line-height: 1.7; }
         .hero-actions { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+        .hero-primary { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 10px 16px; color: #06111e; text-decoration: none; font-weight: 850; border: 1px solid #72e2d1; border-radius: 11px; background: #72e2d1; }
+        .hero-primary:hover, .hero-primary:focus-visible { background: #8ce9dc; border-color: #8ce9dc; outline: none; }
         .hero-secondary { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; color: #d9e7fb; text-decoration: none; font-weight: 800; border: 1px solid rgba(255,255,255,.14); border-radius: 11px; background: rgba(255,255,255,.035); }
         .hero-secondary:hover, .hero-secondary:focus-visible { border-color: rgba(114,226,209,.55); outline: none; }
         .proof { margin-top: 32px; display: flex; flex-wrap: wrap; gap: 12px; color: #c9d8ec; }
         .proof span { padding: 10px 13px; border: 1px solid rgba(255,255,255,.1); border-radius: 999px; background: rgba(255,255,255,.035); }
         .panel { padding: 28px; border: 1px solid rgba(255,255,255,.1); border-radius: 24px; background: linear-gradient(180deg, rgba(20,35,59,.92), rgba(8,18,32,.92)); box-shadow: 0 30px 80px rgba(0,0,0,.32); }
         .panel-kicker { color: #91a4bf; font-size: 11px; font-weight: 800; letter-spacing: .14em; }
+        .panel-action { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; margin: 0 0 18px; padding: 8px 12px; border: 1px solid rgba(114,226,209,.45); border-radius: 10px; color: #72e2d1; text-decoration: none; font-weight: 800; }
+        .panel-action:hover, .panel-action:focus-visible { background: rgba(114,226,209,.08); outline: none; }
         .panel h2 { margin: 12px 0 18px; font-size: 24px; }
         .rows { display: grid; gap: 10px; }
         .row { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 14px 15px; border-radius: 14px; background: rgba(255,255,255,.045); }
@@ -52,6 +56,12 @@
         .price small { font-size: 13px; color: #91a4bf; font-weight: 650; }
         .price-cta { display: inline-flex; justify-content: center; align-items: center; min-height: 44px; padding: 10px 14px; border-radius: 11px; background: #72e2d1; color: #06111e; text-decoration: none; font-weight: 850; }
         .pricing-empty { padding: 18px; border: 1px solid rgba(255,255,255,.1); border-radius: 14px; color: #aabbd1; background: rgba(255,255,255,.03); }
+        .public-footer { min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-top: 1px solid rgba(255,255,255,.08); color: #91a4bf; }
+        .footer-brand { color: inherit; text-decoration: none; font-weight: 750; }
+        .footer-brand:hover, .footer-brand:focus-visible { color: #72e2d1; outline: none; }
+        .footer-nav { display: flex; align-items: center; gap: 16px; }
+        .footer-nav a { color: #d9e7fb; text-decoration: none; font-weight: 750; }
+        .footer-nav a:hover, .footer-nav a:focus-visible { color: #72e2d1; outline: none; }
         @media (max-width: 820px) { .hero { grid-template-columns: 1fr; padding: 48px 0; } .panel { order: -1; } .workflow-head, .pricing-head { align-items: start; flex-direction: column; } .workflow-grid { grid-template-columns: 1fr 1fr; } }
         @media (max-width: 560px) { .workflow-grid { grid-template-columns: 1fr; } }
     </style>
@@ -83,6 +93,11 @@
             >{{ $welcomeLocale === 'ar' ? 'طريقة العمل' : 'Workflow' }}</a>
             <a
                 class="signin"
+                href="#pricing"
+                data-canonical-operation="AIMW-CONT-3C205B1901"
+            >{{ $welcomeLocale === 'ar' ? 'الخطط' : 'Pricing' }}</a>
+            <a
+                class="signin"
                 href="#security"
                 data-canonical-operation="AIMW-CONT-6458D3030B"
             >{{ $welcomeLocale === 'ar' ? 'الأمان' : 'Security' }}</a>
@@ -90,7 +105,13 @@
                 href="{{ route('public.welcome', ['lang' => $welcomeLocale === 'ar' ? 'en' : 'ar'], false) }}"
                 lang="{{ $welcomeLocale === 'ar' ? 'en' : 'ar' }}"
                 aria-label="{{ $welcomeLocale === 'ar' ? 'Switch to English' : 'التبديل إلى العربية' }}">{{ $welcomeLocale === 'ar' ? 'EN' : 'AR' }}</a>
-            <a class="signin" href="/login">{{ $welcomeLocale === 'ar' ? 'تسجيل الدخول' : 'Sign in' }}</a>
+            <a
+                class="signin"
+                href="{{ $isAuthenticated ? '/' : '/login' }}"
+                data-canonical-operation="AIMW-CONT-9EDE4C1141"
+            >{{ $isAuthenticated
+                ? ($welcomeLocale === 'ar' ? 'لوحة التحكم' : 'Dashboard')
+                : ($welcomeLocale === 'ar' ? 'تسجيل الدخول' : 'Sign in') }}</a>
         </header>
 
         <main
@@ -103,6 +124,13 @@
                 <h1>{{ $welcomeLocale === 'ar' ? 'أدر ووردبريس كنظام واحد.' : 'Operate WordPress as one system.' }}</h1>
                 <p class="lead">{{ $welcomeLocale === 'ar' ? 'بوابة عامة لإدارة ووردبريس بالذكاء الاصطناعي. سجل الدخول للوصول إلى مواقع حسابك والعمليات والمحتوى وتحسين محركات البحث والأتمتة عبر مسارات التطبيق المحمية.' : 'A public, identity-neutral entry point for AI WordPress Manager. Sign in to reach tenant-owned sites, operations, content, SEO and automation through their protected application routes.' }}</p>
                 <div class="hero-actions">
+                    <a
+                        class="hero-primary"
+                        href="{{ $isAuthenticated ? '/' : route('register', [], false) }}"
+                        data-canonical-operation="AIMW-CONT-DD56664FDA"
+                    >{{ $isAuthenticated
+                        ? ($welcomeLocale === 'ar' ? 'فتح مساحة العمل' : 'Open workspace')
+                        : ($welcomeLocale === 'ar' ? 'ابدأ مجانًا' : 'Start free trial') }} <span aria-hidden="true">→</span></a>
                     <a
                         class="hero-secondary"
                         href="#workspace-preview"
@@ -124,6 +152,12 @@
             >
                 <div class="panel-kicker">{{ $welcomeLocale === 'ar' ? 'نظرة عامة على العمليات' : 'OPERATIONS OVERVIEW' }}</div>
                 <h2>{{ $welcomeLocale === 'ar' ? 'طبقة إدارة واحدة' : 'One operating layer' }}</h2>
+                <a
+                    class="panel-action"
+                    href="{{ $isAuthenticated ? '/' : route('register', [], false) }}"
+                    data-canonical-operation="AIMW-CONT-1456BE001F"
+                    aria-label="{{ $welcomeLocale === 'ar' ? 'فتح مساحة العمل' : 'Open workspace' }}"
+                >+ {{ $welcomeLocale === 'ar' ? 'إجراء' : 'Action' }}</a>
                 <div class="rows">
                     <div class="row"><span>{{ $welcomeLocale === 'ar' ? 'المواقع' : 'Sites' }}</span><b>{{ $welcomeLocale === 'ar' ? 'متصلة' : 'Connected' }}</b></div>
                     <div class="row"><span>{{ $welcomeLocale === 'ar' ? 'المحتوى' : 'Content' }}</span><b>{{ $welcomeLocale === 'ar' ? 'مُدار' : 'Managed' }}</b></div>
@@ -213,7 +247,12 @@
             </div>
         </section>
 
-        <section class="pricing" id="pricing" aria-label="{{ $welcomeLocale === 'ar' ? 'خطط الاشتراك' : 'Subscription plans' }}">
+        <section
+            class="pricing"
+            id="pricing"
+            data-pricing-anchor-target="AIMW-CONT-3C205B1901"
+            aria-label="{{ $welcomeLocale === 'ar' ? 'خطط الاشتراك' : 'Subscription plans' }}"
+        >
             <div class="pricing-head">
                 <div>
                     <div class="eyebrow">{{ $welcomeLocale === 'ar' ? 'خطط من كتالوج المنتج' : 'LIVE PRODUCT CATALOG' }}</div>
@@ -267,6 +306,18 @@
                 </div>
             @endif
         </section>
+
+        <footer class="public-footer" aria-label="Public footer">
+            <a
+                class="footer-brand"
+                href="{{ route('public.welcome', [], false) }}"
+                data-canonical-operation="AIMW-CONT-C7CB5EE184"
+                aria-label="AI WordPress Manager"
+            >AI WordPress Manager · Operations OS</a>
+            <nav class="footer-nav" aria-label="Footer navigation">
+                <a href="/login" data-canonical-operation="AIMW-CONT-247E791DA7">Sign in</a>
+            </nav>
+        </footer>
     </div>
 </body>
 </html>

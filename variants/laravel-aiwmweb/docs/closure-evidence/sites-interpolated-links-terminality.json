@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #861 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation": {
+    "operation_id": "AIMW-CONT-3A4E69E5D8",
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/sites",
+    "visible_control": "@($ -> @($",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/Sites.razor",
+    "mutation": false,
+    "tenant_owned": true,
+    "terminal_state": "ADAPTED"
+  },
+  "source_semantics": {
+    "scanner_identity": "The canonical census scanner truncates Razor interpolated href attributes at the nested quote, so the two dynamic Sites anchors dedupe to the single canonical fingerprint @($ -> @($.",
+    "dashboard_link": "Each authoritative site card links to /sites/{site.Id}.",
+    "content_link": "Each authoritative site card links to /sites/{site.Id}/explorer.",
+    "read_only": "Both controls are navigation only and do not mutate local or WordPress state."
+  },
+  "laravel_adaptation": {
+    "frontend": "resources/js/sites-interpolated-links-control.tsx binds AIMW-CONT-3A4E69E5D8 only to the Sites row internal navigation pair.",
+    "workspace_wiring": "resources/js/pages.tsx supplies the active tenant slug plus the authoritative row.id returned by the tenant-scoped Sites collection.",
+    "dashboard_destination": "/tenants/{tenant}/sites/{id}",
+    "content_destination": "/tenants/{tenant}/explorer?site={id}",
+    "content_context": "TenantBootstrap consumes the site query parameter as the active site context, preserving the source intent of opening the selected site's content explorer.",
+    "id_safety": "Only a positive safe integer site id is accepted; malformed, missing, negative, fractional, padded, or path-like values fail closed with no link.",
+    "request_contract": "The control derives navigation from the already-authorized Sites read row and performs no extra API request or mutation."
+  },
+  "tenant_isolation": {
+    "surface_permission": "sites.view",
+    "active_tenant": "The tenant slug is taken from FrontendContext and the id is taken from the active tenant's authoritative Sites query.",
+    "foreign_tenant": "Existing tenant context middleware and membership checks fail closed for a workspace the user does not own.",
+    "no_caller_tenant_override": true
+  },
+  "acceptance": {
+    "backend_test": "backend/tests/Feature/SitesInterpolatedLinksTerminalityTest.php",
+    "frontend_test": "resources/js/__tests__/sites-interpolated-links-control.test.tsx",
+    "proofs": [
+      "exact canonical operation identity and PENDING source ledger row",
+      "both source dynamic href semantics represented by the deduped operation",
+      "authoritative row id drives Dashboard and Content destinations",
+      "active tenant slug drives tenant-scoped destinations",
+      "malformed ids fail closed",
+      "no additional request or mutation is introduced",
+      "tenant-scoped Sites data excludes foreign tenant rows",
+      "missing sites.view returns 403 and foreign tenant workspace returns 404"
+    ]
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "3f03d675ee2812126748c2318a46c3f8dedafbe4",
+    "branch": "worker/861-sites-interpolated-control",
+    "issue": 861,
+    "authority_issue": 257
+  },
+  "scope": {
+    "only_operation_claimed": "AIMW-CONT-3A4E69E5D8",
+    "sibling_sites_operations_claimed": false,
+    "aspnet_modified": false,
+    "generated_reconciliation_modified": false,
+    "backend_mutation_modified": false,
+    "fake_success": false
+  },
+  "materialization": {
+    "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-861.yml",
+    "operation_state": "ADAPTED",
+    "generated_reconciliation_required": true
+  }
+}

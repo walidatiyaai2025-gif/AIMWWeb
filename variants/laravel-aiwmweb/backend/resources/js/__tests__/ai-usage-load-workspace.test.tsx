@@ -2,6 +2,7 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AI_USAGE_LOAD_OPERATION_ID, AiUsageLoadWorkspace } from '../ai-usage-load-workspace';
+import { APP_FILTER_BAR_CLEAR_OPERATION_ID } from '../app-filter-bar';
 import type { FrontendContext, WorkspaceRoute } from '../core';
 import { LocaleProvider } from '../i18n';
 
@@ -132,7 +133,9 @@ describe(`${AI_USAGE_LOAD_OPERATION_ID} AI Usage LoadAsync`, () => {
 
         expect(await screen.findByText('Refresh failed — showing last successful data')).toBeInTheDocument();
         expect(screen.getByText('openai / gpt-test')).toBeInTheDocument();
-        expect(screen.getByRole('alert')).toHaveTextContent('usage backend unavailable');
+        expect(screen.getByText('usage backend unavailable')).toBeInTheDocument();
+        expect(screen.getByText('Refresh failed — showing last successful data').closest('[data-retains-content="true"]'))
+            .toHaveAttribute('data-state', 'cached');
 
         fireEvent.click(screen.getByRole('button', { name: 'Retry refresh' }));
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
@@ -150,4 +153,30 @@ describe(`${AI_USAGE_LOAD_OPERATION_ID} AI Usage LoadAsync`, () => {
         await waitFor(() => expect(fetchMock).not.toHaveBeenCalled());
         expect(screen.queryByRole('button', { name: /Refresh/i })).not.toBeInTheDocument();
     });
+    it('clears the authoritative site filter through AppFilterBar and reloads the unfiltered scope', async () => {
+        const fetchMock = vi.fn()
+            .mockImplementationOnce(() => ok())
+            .mockImplementationOnce(() => ok(payload()))
+            .mockImplementationOnce(() => ok(payload()));
+        vi.stubGlobal('fetch', fetchMock);
+
+        renderWorkspace();
+        const siteFilter = await screen.findByLabelText('Choose site to filter usage history');
+
+        fireEvent.change(siteFilter, { target: { value: '17' } });
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+        expect(fetchMock.mock.calls[1][0]).toBe(`${endpoint}?site=17`);
+
+        const clear = screen.getByRole('button', { name: 'Clear site filter' });
+        expect(clear).toHaveAttribute('data-canonical-operation', APP_FILTER_BAR_CLEAR_OPERATION_ID);
+        expect(screen.getByText('active filter')).toBeInTheDocument();
+
+        fireEvent.click(clear);
+
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+        expect(fetchMock.mock.calls[2][0]).toBe(endpoint);
+        await waitFor(() => expect(siteFilter).toHaveValue(''));
+        expect(screen.getByText('Showing all sites')).toBeInTheDocument();
+    });
+
 });

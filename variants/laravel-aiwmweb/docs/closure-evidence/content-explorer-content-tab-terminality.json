@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #764 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-93B6E02ACF",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/sites/{Id:guid}/explorer",
+    "source": "src/AIWordPressManager.Web/Components/Pages/ContentExplorer.razor",
+    "source_control": "SetContentTab [SetContentTab]",
+    "source_intent": "Select the Content tab and clear the current selection and preview without mutation.",
+    "mutation": false,
+    "tenant_owned": true,
+    "external_dependency": "WordPress",
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-content-tab-control.tsx",
+    "production_consumer": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "preview_reset_consumer": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "selection_reset_consumer": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-bulk-trash-widget.tsx",
+    "authority": "FrontendContext.active_site plus exact same-origin context.api.explorer tenant/site contract",
+    "behavior": "Laravel Explorer is already the content view, so selecting Content keeps that tab active and broadcasts a local UI reset consumed by both the preview and bulk-selection state. It performs no request and no mutation."
+  },
+  "security": {
+    "permissions": ["tenant.view", "sites.view"],
+    "active_site_required": true,
+    "exact_explorer_endpoint_required": true,
+    "cross_origin_endpoint": "rejected",
+    "foreign_tenant": "404/fail closed",
+    "foreign_site": "404/fail closed",
+    "network_side_effect": "none",
+    "mutation_added": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-content-tab-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentExplorerContentTabTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation marker",
+      "source SetContentTab semantics",
+      "authoritative tenant/site Explorer binding",
+      "preview reset",
+      "bulk selection reset",
+      "no API or mutation side effect",
+      "permission and cross-tenant/site fail-closed behavior"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-CONT-93B6E02ACF"],
+    "preview_external_link_operation_claimed": false,
+    "preview_editor_link_operation_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "authorization_weakened": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "88bcd3d351297a834f0f00b9eb82adf6dbdc1135",
+    "branch": "worker/764-content-explorer-content-tab",
+    "issue": 764
+  },
+  "materialization": {
+    "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-764.yml",
+    "generated_reconciliation_required": true
+  }
+}

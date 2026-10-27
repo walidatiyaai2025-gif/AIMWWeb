@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #770 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-F9015FDB11",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/sites/{Id:guid}/explorer",
+    "source": "src/AIWordPressManager.Web/Components/Pages/ContentExplorer.razor",
+    "source_control": "ClearSelection [ClearSelection]",
+    "source_intent": "When editable Content Explorer selection exists, clear the current in-browser selected content set without mutating WordPress.",
+    "mutation": false,
+    "tenant_owned": true,
+    "external_dependency": "WordPress",
+    "risk": "low"
+  },
+  "source_behavior": {
+    "visibility": "The source clear control is present only while selected content exists and Content.Edit is available.",
+    "action": "ClearSelection synchronously empties the explorer _selected HashSet.",
+    "busy_behavior": "The source disables the clear control while bulk work is being queued.",
+    "external_effect": "none"
+  },
+  "laravel_runtime": {
+    "control": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-clear-selection-control.tsx",
+    "production_consumer": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "selection_state": "ResourceContent.explorerSelectedKeys",
+    "behavior": "The canonical clear control empties only the active tenant Explorer's browser selection state and performs no API, WordPress, queue, cache, provider, or persistence mutation.",
+    "existing_authoritative_read": "GET /api/v1/tenants/{tenant}/sites/{site}/explorer"
+  },
+  "security": {
+    "permission": "content.edit or wildcard",
+    "active_tenant": "inherited from the authenticated FrontendContext that owns ResourceContent",
+    "caller_selectable_tenant": false,
+    "caller_selectable_site": false,
+    "identity_payload": false,
+    "server_mutation": false,
+    "wordpress_mutation": false,
+    "secrets_exposed": false,
+    "foreign_tenant_or_site": "authoritative Explorer context returns 404 before tenant-owned selection state can be exposed"
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-clear-selection-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentExplorerClearSelectionTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation marker",
+      "exact source ClearSelection semantics",
+      "real explorerSelectedKeys state is emptied",
+      "control hidden without content.edit or without selected rows",
+      "busy state disables clearing",
+      "English and Arabic accessible labels",
+      "no HTTP or WordPress mutation",
+      "foreign tenant/site Explorer context fails closed with 404"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-F9015FDB11"
+    ],
+    "select_all_filtered_operation_claimed": false,
+    "page_selection_operation_claimed": false,
+    "bulk_mutation_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "backend_mutation_added": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "7781ba013039e5b775e8f0ab44a29c92c476e243",
+    "branch": "worker/770-content-explorer-clear-selection",
+    "issue": 770
+  },
+  "materialization": {
+    "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-770.yml",
+    "generated_reconciliation_required": true
+  },
+  "server_mutation": false,
+  "external_mutation": false,
+  "only_operation_claimed": "AIMW-CONT-F9015FDB11",
+  "materialized": true,
+  "evidence_source_sha": "45f29f77f325389420a117426ae033ccced327a2"
+}

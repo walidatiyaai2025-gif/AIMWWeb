@@ -2,8 +2,10 @@
 
 use App\Http\Controllers\AiUsageReadController;
 use App\Http\Controllers\ContentApiController;
+use App\Http\Controllers\ContentExplorerReadController;
 use App\Http\Controllers\EmailNotificationController;
 use App\Http\Controllers\GlobalPagesTrashController;
+use App\Http\Controllers\GlobalPostsPublishController;
 use App\Http\Controllers\GlobalPostsTrashController;
 use App\Http\Controllers\LegacyNotificationReadController;
 use App\Http\Controllers\PlatformReadController;
@@ -26,6 +28,10 @@ Route::middleware(['web', 'auth'])
 Route::post('v1/sync/webhooks/connector', [SyncApiController::class, 'webhook']);
 
 Route::prefix('v1/tenants/{tenant}/sites/{site}')->middleware(['web', 'tenant.context'])->group(function () {
+    Route::get('explorer', ContentExplorerReadController::class)
+        ->middleware('auth')
+        ->defaults('canonical_operation_id', ContentExplorerReadController::OPERATION_ID)
+        ->name('canonical.api.content-explorer.read');
     Route::get('content/{type}', [ContentApiController::class, 'index']);
     Route::post('content/{type}', [ContentApiController::class, 'store']);
     Route::get('content/{type}/{wordpressId}/editor', [ContentApiController::class, 'editor'])
@@ -133,6 +139,9 @@ Route::prefix('v1/tenants/{tenant}')
             ->name('api.v1.global-pages.trash');
         Route::get('/global-posts', [GlobalPostsTrashController::class, 'index'])
             ->name('api.v1.global-posts.index');
+        Route::post('/global-posts/publish', [GlobalPostsPublishController::class, 'publish'])
+            ->defaults('canonical_operation_id', GlobalPostsPublishController::OPERATION_ID)
+            ->name('api.v1.global-posts.publish');
         Route::post('/global-posts/trash', [GlobalPostsTrashController::class, 'trash'])
             ->defaults('canonical_operation_id', GlobalPostsTrashController::OPERATION_ID)
             ->name('api.v1.global-posts.trash');
@@ -148,6 +157,12 @@ Route::prefix('v1/tenants/{tenant}')
         Route::put('/email/configuration', [EmailNotificationController::class, 'saveConfiguration'])
             ->defaults('canonical_operation_id', 'AIMW-EMAI-00CC1272F6')
             ->name('api.v1.email.configuration.save');
+        Route::get('/email/recipients', [EmailNotificationController::class, 'accountRecipients'])
+            ->name('api.v1.email.recipients.index');
+        Route::patch('/email/recipients/{recipient}', [EmailNotificationController::class, 'updateAccountRecipient'])
+            ->defaults('canonical_operation_id', 'AIMW-EMAI-10F3C44369')
+            ->whereNumber('recipient')
+            ->name('api.v1.email.recipients.update');
         Route::delete('/email/configuration/secret', [EmailNotificationController::class, 'clearConfigurationSecret'])
             ->defaults('canonical_operation_id', 'AIMW-EMAI-54E7EEFB15')
             ->name('api.v1.email.configuration.secret.clear');

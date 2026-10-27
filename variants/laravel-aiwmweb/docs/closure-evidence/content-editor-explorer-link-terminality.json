@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #755 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-607ACDF4D8",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/sites/{SiteId:guid}/content/{ContentType}/{WordPressId:int}/edit",
+    "source": "src/AIWordPressManager.Web/Components/Pages/ContentEditor.razor",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Pages/ContentEditor.razor:/sites/{SiteId:guid}/content/{ContentType}/{WordPressId:int}/edit:@ExplorerUrl:@ExplorerUrl",
+    "source_intent": "Navigate from the Content Editor back to the same authoritative site's ExplorerUrl.",
+    "mutation": false,
+    "tenant_owned": true,
+    "external_dependency": "WordPress",
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/content-editor-save-control.tsx",
+    "control": "ContentEditorExplorerLinkControl",
+    "helper": "authoritativeContentEditorExplorerHref",
+    "target": "/tenants/{tenant}/explorer?site={activeSiteId}",
+    "semantics": "The adapted control derives the Explorer destination only after the route site ID matches the authoritative active_site supplied by tenant context and the editor endpoint matches the same tenant/site plus a valid post/page WordPress identity.",
+    "operation_marker": "AIMW-CONT-607ACDF4D8"
+  },
+  "authorization_and_isolation": {
+    "required_permissions": [
+      "tenant.view",
+      "sites.view"
+    ],
+    "editor_visibility": "inherits the already-authorized Content Editor loaded state",
+    "explorer_capability": "explicit Explorer capability, when present, must be enabled; absence does not fabricate an unavailable API contract",
+    "route_site_matches_active_site": true,
+    "editor_endpoint_same_origin": true,
+    "editor_endpoint_same_tenant": true,
+    "editor_endpoint_same_site": true,
+    "foreign_site_context": "404 fail closed",
+    "foreign_tenant_context": "404 fail closed",
+    "caller_tenant_override": false,
+    "caller_site_override": false
+  },
+  "rendering_and_navigation": {
+    "loading_error_empty_behavior": "The Explorer control is rendered only after the authoritative Content Editor snapshot is loaded, so it inherits the editor loading/error/not-found states.",
+    "navigation_only": true,
+    "server_mutation": false,
+    "provider_mutation": false,
+    "fake_success": false,
+    "target_uses_active_site": true
+  },
+  "mutation_boundary": {
+    "selected_operation": "Back-to-Explorer visible navigation control only.",
+    "content_editor_route_operation": "AIMW-CONT-2C02B7A328 remains separate.",
+    "wordpress_link_operation": "AIMW-CONT-2C51372C70 remains separate.",
+    "save_operation": "AIMW-BILL-42F7590F00 remains separate.",
+    "approval_operation": "AIMW-BILL-F5686193FE remains separate.",
+    "sibling_operations_claimed": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-editor-explorer-link-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentEditorExplorerLinkTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation identity",
+      "source ExplorerUrl semantics",
+      "authoritative active-site match",
+      "tenant/site-scoped editor endpoint validation",
+      "tenant and sites permission gates",
+      "explicit Explorer disablement gate",
+      "cross-tenant and cross-site fail-closed context",
+      "navigation-only no-mutation boundary"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-607ACDF4D8"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "variant_boundary": "variants/laravel-aiwmweb/** only"
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "9191cf178662bfa2106bfacd780597410dae93b6",
+    "branch": "worker/755-content-editor-explorer-link"
+  }
+}

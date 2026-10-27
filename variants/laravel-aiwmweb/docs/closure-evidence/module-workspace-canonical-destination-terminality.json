@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "leaf_issue": "#789",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-7F2BC55FF4",
+  "terminal_state": "ADAPTED",
+  "domain": "content",
+  "kind": "visible_control",
+  "operation": {
+    "operation_id": "AIMW-CONT-7F2BC55FF4",
+    "domain": "content",
+    "kind": "visible_control",
+    "terminal_state": "ADAPTED",
+    "route_screen": "/module/{Key}",
+    "source": "src/AIWordPressManager.Web/Components/Pages/ModuleWorkspace.razor",
+    "source_action": "@destination -> @destination",
+    "source_intent": "For ModuleWorkspace keys backed by completed real workspaces, replace prototype content with an actionable Open real workspace destination. The source destination map covers approvals, AI providers, and prompt templates.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_adaptation": {
+    "component": "variants/laravel-aiwmweb/backend/resources/js/ai-workspace-hub.tsx",
+    "production_consumer": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "adaptation_reason": "Laravel AIWMWeb already exposes the three source destinations as real tenant-scoped workspaces in the consolidated AI Workspace hub, so the transitional ModuleWorkspace card is adapted onto those real destination anchors instead of adding a second redirect screen.",
+    "destination_map": {
+      "ai-providers": "/tenants/{tenant}/settings/ai-providers",
+      "ai-prompts": "/tenants/{tenant}/settings/ai-prompts",
+      "approvals": "/tenants/{tenant}/approvals"
+    },
+    "permissions": {
+      "ai-providers": ["settings.manage"],
+      "ai-prompts": ["settings.manage"],
+      "approvals": ["tenant.view", "approvals.view"]
+    },
+    "behavior": "Read-only tenant-qualified navigation to implemented workspaces. The existing AI workspace card operation remains intact; this source operation is attached as secondary provenance only to the three matching destination anchors."
+  },
+  "security": {
+    "tenant_context_required": true,
+    "tenant_slug_percent_encoded": true,
+    "destination_permission_checked_before_render": true,
+    "destination_routes_authenticated": true,
+    "foreign_tenant_access_rejected": true,
+    "server_mutation_added": false,
+    "fake_success": false
+  },
+  "acceptance": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/ai-workspace-hub.test.tsx",
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/ModuleWorkspaceCanonicalDestinationTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation identity and source @destination anchor",
+      "exact source destination map for approvals, AI providers, and prompt templates",
+      "tenant-qualified destination hrefs",
+      "permission-based visibility",
+      "authenticated tenant.context route guards",
+      "settings.manage and approvals.view authorization",
+      "foreign-tenant 404 isolation",
+      "navigation-only behavior with no API mutation"
+    ],
+    "source_snapshot_note": "Production marker, focused frontend/PHP tests, and this evidence document are co-located in the exact pushed source SHA registered by operation-parity-evidence-sources.json."
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-7F2BC55FF4"
+    ],
+    "aspnet_product_modified": false,
+    "sibling_operations_claimed": false,
+    "generated_reconciliation_hand_edited": false,
+    "duplicate_branch_created": false
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #827 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-6D14B76763",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "route",
+    "route_screen": "/sites/{Id:guid}/snapshot",
+    "source": "src/AIWordPressManager.Web/Components/Pages/SiteDataSnapshot.razor",
+    "source_intent": "Open and render the tenant-owned local data snapshot.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "route": "GET /tenants/{tenant}/sites/{site}/snapshot",
+    "route_name": "canonical.site.snapshot",
+    "action": "CanonicalWorkspaceRouteController@showSite",
+    "permission": "sites.view",
+    "operation_marker": "AIMW-CONT-6D14B76763",
+    "authoritative_read": "GET /api/tenants/{tenant}/sites/{site}/snapshot",
+    "authoritative_read_action": "SiteDataSnapshotController",
+    "frontend_route": "/sites/:siteId/snapshot",
+    "frontend_control": "SiteDataSnapshotSyncControl"
+  },
+  "security": {
+    "route_middleware": ["web", "auth", "tenant.context"],
+    "site_binding": "tenant-scoped Site model lookup",
+    "foreign_site": "404/fail closed",
+    "missing_permission": "403/fail closed",
+    "mutation_added": false
+  },
+  "render_states": {
+    "loading": "real local snapshot read drives loading state",
+    "empty": "zero cached records render the real empty snapshot values",
+    "error": "tenant/site/API failures fail closed or surface through the existing control",
+    "freshness": "snapshot endpoint returns cached totals and latest synchronization state"
+  },
+  "acceptance": {
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteSnapshotRouteTerminalityTest.php"
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-CONT-6D14B76763"],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "4fb6455bb93186e5e0bf3165ac6261dbad3feb4c",
+    "branch": "worker/827-site-snapshot-route",
+    "issue": 827
+  }
+}
