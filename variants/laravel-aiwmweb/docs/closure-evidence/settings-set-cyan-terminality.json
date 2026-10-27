@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #803 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-349017BDF5",
+  "terminal_state": "ADAPTED",
+  "source": "src/AIWordPressManager.Web/Components/Pages/Settings.razor",
+  "source_action": "SetCyan",
+  "destination": "variants/laravel-aiwmweb/backend/resources/js/settings-accent-theme-cyan-control.tsx",
+  "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-accent-theme-cyan-control.test.tsx",
+  "backend_test": "variants/laravel-aiwmweb/backend/tests/Feature/SettingsSetCyanTerminalityTest.php",
+  "runtime": "reuse canonical aiwm-color-theme persistence and apply html data-theme=cyan, backed by the existing cyan CSS variable palette",
+  "server_mutation": false,
+  "external_mutation": false,
+  "tenant_permission": "tenant.view",
+  "only_operation_claimed": "AIMW-CONT-349017BDF5",
+  "materialized": true
+}
