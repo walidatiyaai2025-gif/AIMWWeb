@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #864 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-B60F3F750B",
+  "domain": "content",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "source": "src/AIWordPressManager.Web/Components/Pages/Sites.razor",
+  "source_action": "CloseFormClicked",
+  "destination": "variants/laravel-aiwmweb/backend/resources/js/sites-save-control.tsx",
+  "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/sites-close-form-clicked-control.test.tsx",
+  "backend_test": "variants/laravel-aiwmweb/backend/tests/Feature/SitesCloseFormClickedTerminalityTest.php",
+  "runtime": "The existing authoritative tenant Sites form reuses its closeForm state transition for the Cancel control: while save is pending it is disabled; otherwise it closes the form, clears edit identity, resets name/url, and introduces no server or WordPress mutation.",
+  "server_mutation": false,
+  "external_mutation": false,
+  "tenant_permission": "sites.manage",
+  "sibling_operation_preserved": "AIMW-CONT-FBA95BDC1D remains the distinct header × CloseForm control",
+  "only_operation_claimed": "AIMW-CONT-B60F3F750B",
+  "materialized": true,
+  "synchronized_composition_sha": "66d82d1b9a88ae55a1cefa744476b784781e54f8",
+  "reconciliation_materialized_commit": "ea5adc1624d981b7a3896f9727d02f82ef1057c7"
+}
