@@ -2470,24 +2470,24 @@
     },
     {
       "label": "AIMW-CONT-B60F3F750B Sites CloseFormClicked focused closure",
-      "sha": "79b06047f006175b2b88d31b6234061f6fc9d887",
-      "observed_pr_head": "79b06047f006175b2b88d31b6234061f6fc9d887",
+      "sha": "f3e9a589ffda25d6d3c406ce1e4240e0c529070a",
+      "observed_pr_head": "f3e9a589ffda25d6d3c406ce1e4240e0c529070a",
       "operation_ids": [
         "AIMW-CONT-B60F3F750B"
       ]
     },
     {
       "label": "AIMW-CONT-8C19E4E3B2 SiteConnection Back to sites focused closure",
-      "sha": "91f4947e907c257f7ae0af4c9537880e81f11aa5",
-      "observed_pr_head": "91f4947e907c257f7ae0af4c9537880e81f11aa5",
+      "sha": "639071da93049133df95163150a48b166e86e26d",
+      "observed_pr_head": "639071da93049133df95163150a48b166e86e26d",
       "operation_ids": [
         "AIMW-CONT-8C19E4E3B2"
       ]
     },
     {
       "label": "AIMW-CONT-7D83B09470 Settings SetViolet focused closure",
-      "sha": "4f4e50893af3533a8d326d0d41b450d8ffcfba43",
-      "observed_pr_head": "4f4e50893af3533a8d326d0d41b450d8ffcfba43",
+      "sha": "037fda84db3c676aca47a48978933d75fb877034",
+      "observed_pr_head": "037fda84db3c676aca47a48978933d75fb877034",
       "operation_ids": [
         "AIMW-CONT-7D83B09470"
       ]
@@ -2502,40 +2502,40 @@
     },
     {
       "label": "AIMW-CONT-918BE3DBF1 Settings appearance anchor focused closure",
-      "sha": "7734d8585ebefc4b86c70da42dee9cd4ae4cd5b4",
-      "observed_pr_head": "7734d8585ebefc4b86c70da42dee9cd4ae4cd5b4",
+      "sha": "959e2e38e87a14d1bb7eadc8774a92927d5f0829",
+      "observed_pr_head": "959e2e38e87a14d1bb7eadc8774a92927d5f0829",
       "operation_ids": [
         "AIMW-CONT-918BE3DBF1"
       ]
     },
     {
       "label": "AIMW-CONT-6B6790BE84 Settings SetSlate focused closure",
-      "sha": "43603a25eb856bc8177092cd59dc841cd3d87e0c",
-      "observed_pr_head": "43603a25eb856bc8177092cd59dc841cd3d87e0c",
+      "sha": "0f33d79230ebc900052dac8fe84c0b1e1dedcce0",
+      "observed_pr_head": "0f33d79230ebc900052dac8fe84c0b1e1dedcce0",
       "operation_ids": [
         "AIMW-CONT-6B6790BE84"
       ]
     },
     {
       "label": "AIMW-CONT-659BEF8765 Settings SetOcean focused closure",
-      "sha": "49596fcfa9088e7246805c8c9d05121856e32f8e",
-      "observed_pr_head": "49596fcfa9088e7246805c8c9d05121856e32f8e",
+      "sha": "90e06b51973eda047a5245e1c40b0747d211fa83",
+      "observed_pr_head": "90e06b51973eda047a5245e1c40b0747d211fa83",
       "operation_ids": [
         "AIMW-CONT-659BEF8765"
       ]
     },
     {
       "label": "AIMW-CONT-CF4BE4EC3B Settings SetAmber focused closure",
-      "sha": "cac8083eace9ea28010b06dbbeb5eccd6b89410f",
-      "observed_pr_head": "cac8083eace9ea28010b06dbbeb5eccd6b89410f",
+      "sha": "60edc1dfdb7fe486fda89a94182746898d39c877",
+      "observed_pr_head": "60edc1dfdb7fe486fda89a94182746898d39c877",
       "operation_ids": [
         "AIMW-CONT-CF4BE4EC3B"
       ]
     },
     {
       "label": "AIMW-CONT-566A1899F1 Settings SetEmerald focused closure",
-      "sha": "4663fa63629c7c00ece7e26f99a84f48fbebbc55",
-      "observed_pr_head": "4663fa63629c7c00ece7e26f99a84f48fbebbc55",
+      "sha": "7a93149971e151d7ddbc46a3c9f89928d2d7376f",
+      "observed_pr_head": "7a93149971e151d7ddbc46a3c9f89928d2d7376f",
       "operation_ids": [
         "AIMW-CONT-566A1899F1"
       ]
