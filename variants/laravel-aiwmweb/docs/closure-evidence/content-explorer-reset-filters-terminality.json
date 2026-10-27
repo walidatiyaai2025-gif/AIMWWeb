@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #928 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-627C90DC5C",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "/sites/{Id:guid}/explorer",
+    "source": "src/AIWordPressManager.Web/Components/Pages/ContentExplorer.razor",
+    "source_control": "ResetFiltersAsync [ResetFiltersAsync]",
+    "source_intent": "Clear the current Content Explorer query/type/status filters, restart at page 1, and read current authoritative tenant/site content.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-reset-filters-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx::ResourceContent",
+    "read_source": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentExplorerReadController.php",
+    "endpoint": "GET /api/v1/tenants/{tenant}/sites/{site}/explorer?page=1",
+    "behavior": "The Explorer search-form Reset clears its controlled search draft and committed query, resets page 1 and local preview/selection, and forces an uncached authoritative tenant/site Explorer GET; no server mutation is made. Generic Explorer has no standalone type/status draft; the reset request omits both so the server defaults to all.",
+    "loading_error_behavior": "Reset is disabled while the Explorer request is fetching; failures surface as errors and no success is fabricated.",
+    "busy_guard": true
+  },
+  "security": {
+    "required_frontend_permissions": [
+      "tenant.view",
+      "sites.view"
+    ],
+    "site_binding": "exact signed-in tenant slug plus server-issued active_site.id/context.api.explorer",
+    "backend_permission": "sites.view",
+    "exact_same_origin_endpoint": true,
+    "foreign_tenant_site": "404/fail closed",
+    "missing_permission": "403/fail closed",
+    "no_caller_owned_tenant_override": true,
+    "no_external_write": true
+  },
+  "acceptance": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-reset-filters-control.test.tsx",
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/ContentExplorerResetFiltersTerminalityTest.php",
+    "coverage": [
+      "operation marker and Reset button",
+      "exact tenant/site endpoint contract",
+      "foreign tenant, foreign site, external origin, and permission fail-close",
+      "in-flight duplicate prevention",
+      "failure without success",
+      "source ResetFiltersAsync contract",
+      "unfiltered authoritative GET after filtered GET",
+      "foreign tenant/site IDOR response",
+      "missing permission 403"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-627C90DC5C"
+    ],
+    "apply_filters_sibling_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "authorization_weakened": false,
+    "new_branch_replacement": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "branch": "worker/928-content-explorer-reset-filters",
+    "issue": 928
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "runtime_wired": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true
+  }
+}
