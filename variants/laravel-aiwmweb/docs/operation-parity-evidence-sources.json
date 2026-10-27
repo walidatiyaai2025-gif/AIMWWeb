@@ -2646,8 +2646,8 @@
     },
     {
       "label": "AIMW-CONT-10AFCDF334 WordPress Users ResetFormClicked focused closure",
-      "sha": "ebac4556fbb99fd25925b5ee1947c285bc0b2176",
-      "observed_pr_head": "ebac4556fbb99fd25925b5ee1947c285bc0b2176",
+      "sha": "d059e6e1c519c50b771e3de0834f0d46e3f49490",
+      "observed_pr_head": "d059e6e1c519c50b771e3de0834f0d46e3f49490",
       "operation_ids": [
         "AIMW-CONT-10AFCDF334"
       ]
