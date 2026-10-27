@@ -72,5 +72,20 @@
     "runtime_wired": true,
     "focused_tests_present": true,
     "evidence_recorded": true
+  },
+  "materialization": {
+    "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-928.yml",
+    "run_id": 40581737173,
+    "generated_reconciliation_commit": "936b721bdf453dda3c448404886314b1b45ffa94",
+    "generated_ledger_totals": {
+      "total": 931,
+      "adapted": 873,
+      "pending": 58,
+      "blocked": 0,
+      "overall_parity_percent": 93.77
+    },
+    "official_generator": true,
+    "generated_reconciliation_hand_edited": false,
+    "exact_head_gates_must_run_after_bot_commit": true
   }
 }
