@@ -3,6 +3,7 @@ import { tenantUrl } from './core';
 import { useLocale } from './i18n';
 
 export const SITES_INTERPOLATED_LINKS_OPERATION_ID = 'AIMW-CONT-3A4E69E5D8';
+export const SITES_OPEN_OPERATION_ID = 'AIMW-CONT-EE659E3F13';
 
 export function normalizeAuthoritativeSiteId(value: unknown): string | null {
     if (typeof value === 'number') {
@@ -39,8 +40,8 @@ export function SitesInterpolatedLinksControl({
 
     return (
         <span className="site-internal-links" data-canonical-operation={SITES_INTERPOLATED_LINKS_OPERATION_ID}>
-            <a href={destinations.dashboard}>
-                {locale === 'ar' ? 'لوحة الموقع' : 'Dashboard'}
+            <a href={destinations.dashboard} data-canonical-operation={SITES_OPEN_OPERATION_ID}>
+                {locale === 'ar' ? 'فتح' : 'Open'}
             </a>
             <span aria-hidden="true"> · </span>
             <a href={destinations.explorer}>
