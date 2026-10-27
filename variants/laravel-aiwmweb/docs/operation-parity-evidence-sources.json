@@ -2470,8 +2470,8 @@
     },
     {
       "label": "AIMW-CONT-B60F3F750B Sites CloseFormClicked focused closure",
-      "sha": "c1eb4a4d8d73a50d2c462e838e6366085b7816de",
-      "observed_pr_head": "c1eb4a4d8d73a50d2c462e838e6366085b7816de",
+      "sha": "79b06047f006175b2b88d31b6234061f6fc9d887",
+      "observed_pr_head": "79b06047f006175b2b88d31b6234061f6fc9d887",
       "operation_ids": [
         "AIMW-CONT-B60F3F750B"
       ]
