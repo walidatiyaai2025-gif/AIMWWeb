@@ -50,6 +50,7 @@ import { LiveSystemStatusRefreshControl } from './live-system-status-refresh-con
 import { EmailHistoryFiltersControl, type EmailHistoryFilterState } from './email-history-filters-control';
 import { GlobalUsersFullManagementControl } from './global-users-full-management-control';
 import { MediaDeleteControl } from './media-delete-control';
+import { GlobalMediaInterpolatedLinksControl } from './media-interpolated-links-control';
 import { MediaBackToSitesControl } from './media-back-to-sites-control';
 import { MediaManagerEditingSourceUrlControl } from './media-manager-editing-source-url-control';
 import { MediaManagerRowSourceUrlControl } from './media-manager-row-source-url-control';
@@ -879,6 +880,11 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             </span>
                         ) : route.key === 'media' && endpoint ? (row) => (
                             <span className="site-row-actions">
+                                <GlobalMediaInterpolatedLinksControl
+                                    tenantSlug={context.tenant.slug}
+                                    siteId={row.site_id}
+                                />
+                                <span aria-hidden="true"> · </span>
                                 <MediaManagerRowSourceUrlControl value={row.source_url}>
                                     <MediaManagerEditingSourceUrlControl value={row.source_url}>
                                         <ContentExplorerMediaSourceUrlControl value={row.source_url} />
