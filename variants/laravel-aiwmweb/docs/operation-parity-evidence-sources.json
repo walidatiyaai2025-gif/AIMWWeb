@@ -1404,6 +1404,25 @@
       "operation_ids": [
         "AIMW-CONT-2752ED9351"
       ]
+    },
+    {
+      "label": "AIMW-CONT-80EE7CA296 ModuleWorkspace generic route focused closure",
+      "sha": "f18ece259c27f3615e7dfdeb9353c3e5052ab351",
+      "observed_pr_head": "f18ece259c27f3615e7dfdeb9353c3e5052ab351",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "route_api_provenance": {
+        "AIMW-CONT-80EE7CA296": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ModuleWorkspaceRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/ModuleWorkspaceRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/module-workspace-route-terminality.json",
+          "security_mode": "tenant_bound"
+        }
+      }
     }
   ],
   "excluded_sources": [],

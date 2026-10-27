@@ -55,6 +55,7 @@ import { MainLayoutParityControls } from './main-layout-parity-controls';
 import { NotificationCenterToggleControl } from './notification-center-toggle-control';
 import { ModuleWorkspaceLoadSitesControl } from './module-workspace-load-sites-control';
 import { ModuleWorkspaceBackToHomeControl } from './module-workspace-back-to-home-control';
+import { ModuleWorkspaceRouteFallback } from './module-workspace-route-fallback';
 import { MySessionsAdminLinkControl } from './my-sessions-admin-link-control';
 import { OperationsHubReloadControl } from './operations-hub-reload-control';
 import { PagesPostsLinkControl } from './pages-posts-link-control';
@@ -242,9 +243,25 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     return <WorkspacePage context={context} route={route} />;
 }
 
+function ModuleWorkspaceDynamicRoute() {
+    const { moduleKey } = useParams();
+    const normalizedKey = (moduleKey ?? '').trim().toLowerCase();
+    const route = workspaceRoutes.find((candidate) => candidate.path === `/module/${normalizedKey}`);
+
+    if (route) return <RouteElement route={route} />;
+
+    return <ModuleWorkspaceFallbackRoute />;
+}
+
 function ModuleWorkspaceFallbackRoute() {
     const { context } = useOutletContext<OutletState>();
-    return <ModuleWorkspaceBackToHomeControl context={context} />;
+    const { moduleKey } = useParams();
+
+    return (
+        <ModuleWorkspaceRouteFallback context={context} moduleKey={moduleKey ?? ''}>
+            <ModuleWorkspaceBackToHomeControl context={context} />
+        </ModuleWorkspaceRouteFallback>
+    );
 }
 
 function NotFoundElement() {
@@ -278,7 +295,7 @@ function AppRoutes() {
                         ? <Route key={route.key} index element={<RouteElement route={route} />} />
                         : <Route key={route.key} path={relative} element={<RouteElement route={route} />} />;
                 })}
-                <Route path="module/:moduleKey" element={<ModuleWorkspaceFallbackRoute />} />
+                <Route path="module/:moduleKey" element={<ModuleWorkspaceDynamicRoute />} />
                 <Route path="*" element={<NotFoundElement />} />
             </Route>
             <Route path="*" element={<OutsideTenantRoute />} />
