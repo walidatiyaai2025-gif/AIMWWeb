@@ -2491,6 +2491,14 @@
       "operation_ids": [
         "AIMW-CONT-918BE3DBF1"
       ]
+    },
+    {
+      "label": "AIMW-CONT-6B6790BE84 Settings SetSlate focused closure",
+      "sha": "43603a25eb856bc8177092cd59dc841cd3d87e0c",
+      "observed_pr_head": "43603a25eb856bc8177092cd59dc841cd3d87e0c",
+      "operation_ids": [
+        "AIMW-CONT-6B6790BE84"
+      ]
     }
   ],
   "sources": [
