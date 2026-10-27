@@ -2711,6 +2711,28 @@
           "security_mode": "tenant_bound"
         }
       }
+    },
+    {
+      "label": "AIMW-CONT-98918A6C27 Site Offline Data canonical route terminality",
+      "sha": "ab94c8a2b0da6a98c6fe9d846fd55edd256f4717",
+      "observed_pr_head": "ab94c8a2b0da6a98c6fe9d846fd55edd256f4717",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "operation_ids": [
+        "AIMW-CONT-98918A6C27"
+      ],
+      "route_api_provenance": {
+        "AIMW-CONT-98918A6C27": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteOfflineDataRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteOfflineDataRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-offline-data-route-terminality.json",
+          "security_mode": "tenant_bound"
+        }
+      }
     }
   ],
   "sources": [
