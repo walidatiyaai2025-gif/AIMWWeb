@@ -1,3 +1,4 @@
+import { AppDialogCloseControl } from './app-dialog-close-control';
 import React, {
     createContext,
     useCallback,
@@ -372,6 +373,7 @@ export function ActionDialog({
     onSubmit,
     busy,
     serverErrors,
+    showCloseButton = true,
 }: {
     open: boolean;
     actionKey: string;
@@ -380,6 +382,7 @@ export function ActionDialog({
     onSubmit: (values: Record<string, string | number>) => void;
     busy: boolean;
     serverErrors: Record<string, string[]>;
+    showCloseButton?: boolean;
 }) {
     const { locale, text } = useLocale();
     const [values, setValues] = useState<Record<string, string>>({});
@@ -439,7 +442,7 @@ export function ActionDialog({
                         <span className="workspace-kicker">ACTION</span>
                         <h2 id="action-dialog-title">{actionKey}</h2>
                     </div>
-                    <button type="button" className="icon-button" onClick={onClose} aria-label={text(commonText.close)}>×</button>
+                    <AppDialogCloseControl onClose={onClose} showCloseButton={showCloseButton} ariaLabel={text(commonText.close)} />
                 </header>
                 <form onSubmit={submit} noValidate>
                     {fields.length === 0 ? (
