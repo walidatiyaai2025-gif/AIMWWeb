@@ -18,11 +18,13 @@ If any lower layer conflicts with a higher layer, stop the conflicting action an
 Before implementation:
 1. reconstruct live GitHub state;
 2. verify the PCC route is `VARIANT -> LARAVEL_AIWMWEB -> variants/laravel-aiwmweb`;
-3. read `.ai/PROJECT.md`;
-4. read `.ai/CURRENT_STATE.md`, then verify dynamic facts against live GitHub and the canonical reconciliation;
-5. read `.ai/SKILL_ROUTER.md`;
-6. load only the skill files required for the task;
-7. read the task Issue/PR and overlapping active work.
+3. read `.pcc/LARAVEL_AIWMWEB_VARIANT_CHARTER.md`, including the Remaining parity closure execution constitution;
+4. read `.ai/PROJECT.md`;
+5. read `.ai/CURRENT_STATE.md`, then verify dynamic facts against live GitHub and the canonical reconciliation;
+6. read `.ai/SKILL_ROUTER.md`;
+7. load only the skill files required for the task;
+8. read the task Issue/PR and overlapping active work;
+9. verify the Manager/Lead has supplied the one canonical Task branch; Workers must not create another branch for the same Task.
 
 ## Skill execution contract
 
@@ -53,3 +55,8 @@ to reconstruct a fresh local summary. Use `--write` only when intentionally upda
 ## Definition of done
 
 A task is not done because code exists. Use the task-specific skill and the repository operating system to prove implementation, deterministic tests, security/tenant isolation, parity/evidence when applicable, exact-head CI, integration, and handoff.
+
+
+## Closure branch discipline
+
+The owner-amended branch/worker rules in `.pcc/LARAVEL_AIWMWEB_VARIANT_CHARTER.md` are mandatory for the remaining parity closure program. In particular: one canonical branch per Task for its full lifecycle; no Worker-created replacement branches; fresh duplicate-work race checks before writes; replacement Workers reuse the same branch; no more than 10 concurrent implementation Workers; and verified deletion of a canonical Task branch after its PR is merged and no unique unmerged commits remain.
