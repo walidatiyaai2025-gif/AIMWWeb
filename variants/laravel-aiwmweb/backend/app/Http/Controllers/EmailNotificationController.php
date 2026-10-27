@@ -21,7 +21,9 @@ final class EmailNotificationController extends Controller
         private readonly MailConfigurationService $configuration,
         private readonly EmailTemplateService $templates,
         private readonly EmailDeliveryService $deliveries,
-    ) {}
+    )
+    {
+    }
 
     public function index(Request $request, string $tenant): JsonResponse
     {
