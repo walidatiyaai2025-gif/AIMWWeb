@@ -153,6 +153,12 @@ Route::prefix('v1/tenants/{tenant}')
         Route::put('/email/configuration', [EmailNotificationController::class, 'saveConfiguration'])
             ->defaults('canonical_operation_id', 'AIMW-EMAI-00CC1272F6')
             ->name('api.v1.email.configuration.save');
+        Route::get('/email/recipients', [EmailNotificationController::class, 'accountRecipients'])
+            ->name('api.v1.email.recipients.index');
+        Route::patch('/email/recipients/{recipient}', [EmailNotificationController::class, 'updateAccountRecipient'])
+            ->defaults('canonical_operation_id', 'AIMW-EMAI-10F3C44369')
+            ->whereNumber('recipient')
+            ->name('api.v1.email.recipients.update');
         Route::delete('/email/configuration/secret', [EmailNotificationController::class, 'clearConfigurationSecret'])
             ->defaults('canonical_operation_id', 'AIMW-EMAI-54E7EEFB15')
             ->name('api.v1.email.configuration.secret.clear');
