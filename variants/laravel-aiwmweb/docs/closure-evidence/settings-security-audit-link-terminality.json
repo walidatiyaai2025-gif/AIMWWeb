@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #819 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-ED2F1E1572",
+  "terminal_state": "ADAPTED",
+  "source": "src/AIWordPressManager.Web/Components/Pages/Settings.razor",
+  "source_action": "/admin/security-audit -> /admin/security-audit",
+  "destination": "variants/laravel-aiwmweb/backend/resources/js/settings-security-audit-link-control.tsx",
+  "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-security-audit-link-control.test.tsx",
+  "backend_test": "variants/laravel-aiwmweb/backend/tests/Feature/SettingsSecurityAuditLinkTerminalityTest.php",
+  "runtime": "read-only navigation from authenticated tenant Settings to the existing server-rendered /admin/security-audit authority; the destination retains its platform.admin boundary and never accepts a caller-selected tenant",
+  "authorization": "tenant.view plus settings.manage (or wildcard) to expose the source-equivalent Settings control; destination additionally retains the existing platform.admin middleware",
+  "server_mutation": false,
+  "external_mutation": false,
+  "network_request": false,
+  "only_operation_claimed": "AIMW-CONT-ED2F1E1572",
+  "materialized": true,
+  "evidence_source_sha": "556cb52e40123fe1434bd5729e53fb866c956d33"
+}
