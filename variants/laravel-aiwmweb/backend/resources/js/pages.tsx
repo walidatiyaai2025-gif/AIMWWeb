@@ -62,6 +62,7 @@ import { PostsWordPressLinkControl } from './posts-wordpress-link-control';
 import { RolesApplicationUsersLinkControl } from './roles-application-users-link-control';
 import { RolesStartCreateControl } from './roles-start-create-control';
 import { SiteOperationsExportControl } from './site-operations-export-control';
+import { SiteOperationsDetailsLinkControl } from './site-operations-details-link-control';
 import { SiteOperationsSitesLinkControl } from './site-operations-sites-link-control';
 import {
     filterSiteOperationsRows,
@@ -865,7 +866,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                 {visibleRows.length ? (
                     <DataTable
                         rows={visibleRows}
-                        renderActions={route.key === 'site-reliability' ? (row) => (
+                        renderActions={route.key === 'site-operations' ? (row) => (
+                            <SiteOperationsDetailsLinkControl context={context} row={row} />
+                        ) : route.key === 'site-reliability' ? (row) => (
                             <SiteReliabilityConnectionLinkControl tenantSlug={context.tenant.slug} siteId={row.site_id} />
                         ) : route.key === 'explorer' ? (row) => {
                             const selectionKey = contentExplorerSelectionKey(row);
