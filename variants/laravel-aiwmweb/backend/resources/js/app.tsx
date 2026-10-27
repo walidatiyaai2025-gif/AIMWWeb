@@ -35,6 +35,7 @@ import { GlobalSynchronizationReviewConflictsControl } from './global-synchroniz
 import { ContentExplorerSynchronizeControl } from './content-explorer-synchronize-control';
 import { ContentExplorerExecutionLinkControl } from './content-explorer-execution-link-control';
 import { ContentExplorerContentTabControl } from './content-explorer-content-tab-control';
+import { ContentExplorerCategoriesTabControl } from './content-explorer-categories-tab-control';
 import { ContentExplorerMediaTabControl } from './content-explorer-media-tab-control';
 import { ContentEditorSaveControl } from './content-editor-save-control';
 import { ContentHubAllSitesControl } from './content-hub-all-sites-control';
@@ -224,7 +225,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     );
     if (route.key === 'dashboard') return <><DashboardExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'sites') return <><SitesSaveControl context={context} /><SitesRetestSelectedControl context={context} /><SitesDeleteControl context={context} /><SitesBulkDeleteControl context={context} /><WorkspacePage context={context} route={route} /></>;
-    if (route.key === 'explorer') return <><ContentExplorerContentTabControl context={context} /><ContentExplorerDynamicLinksControl context={context} /><ContentExplorerMediaTabControl context={context} /><ContentExplorerExecutionLinkControl context={context} /><ContentExplorerSynchronizeControl context={context} /><ContentExplorerBulkTrashControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'explorer') return <><ContentExplorerContentTabControl context={context} /><ContentExplorerCategoriesTabControl context={context} /><ContentExplorerDynamicLinksControl context={context} /><ContentExplorerMediaTabControl context={context} /><ContentExplorerExecutionLinkControl context={context} /><ContentExplorerSynchronizeControl context={context} /><ContentExplorerBulkTrashControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'content-hub') return <><ContentHubAllSitesControl context={context} /><ContentHubSiteLinksControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'content-planner') return <><ContentPlannerAiCenterLinkControl context={context} /><ContentPlannerExecutionLinkControl context={context} /><ContentPlannerNewItemControl context={context} /><ContentPlannerReloadControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'media') return <><MediaPagesLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;

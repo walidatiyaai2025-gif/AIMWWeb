@@ -2531,6 +2531,14 @@
       "operation_ids": [
         "AIMW-CONT-1456BE001F"
       ]
+    },
+    {
+      "label": "AIMW-TAXO-A96714F338 ContentExplorer SetCategoriesTab focused closure",
+      "sha": "ea888fcd6ebf498ae33f0008d1bf36e68b7bc900",
+      "observed_pr_head": "ea888fcd6ebf498ae33f0008d1bf36e68b7bc900",
+      "operation_ids": [
+        "AIMW-TAXO-A96714F338"
+      ]
     }
   ],
   "sources": [
