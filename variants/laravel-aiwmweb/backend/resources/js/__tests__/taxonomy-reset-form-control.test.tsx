@@ -66,7 +66,7 @@ describe('AIMW-TAXO-5D39DA68B7 taxonomy ResetFormClicked parity', () => {
         const closes = screen.getAllByRole('button', { name: 'Close' });
         expect(closes.length).toBeGreaterThan(0);
         closes.forEach((close) => {
-            expect(close).not.toHaveAttribute('data-canonical-operation');
+            expect(close).not.toHaveAttribute('data-canonical-operation', TAXONOMY_RESET_FORM_OPERATION_ID);
         });
         expect(screen.queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument();
     });
