@@ -8,7 +8,6 @@ import React, {
     useRef,
     useState,
 } from 'react';
-import { previousAppDataGridPage } from './app-data-grid-previous-page-control';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
     capabilityReason,
@@ -306,7 +305,7 @@ export function Pagination({
     if (lastPage <= 1) return null;
     return (
         <nav className="pagination" aria-label={locale === 'ar' ? 'ترقيم الصفحات' : 'Pagination'}>
-            <button type="button" className="btn" data-canonical-operation={previousOperationId} onClick={() => onPage(previousAppDataGridPage(page))} disabled={page <= 1}>{text(commonText.previous)}</button>
+            <button type="button" className="btn" data-canonical-operation={previousOperationId} onClick={() => onPage(page - 1)} disabled={page <= 1}>{text(commonText.previous)}</button>
             <span aria-live="polite">{locale === 'ar' ? `صفحة ${page} من ${lastPage}` : `Page ${page} of ${lastPage}`}</span>
             <button type="button" className="btn" onClick={() => onPage(page + 1)} disabled={page >= lastPage}>{text(commonText.next)}</button>
         </nav>
@@ -314,6 +313,7 @@ export function Pagination({
 }
 
 export const WORDPRESS_USERS_START_CREATE_OPERATION_ID = 'AIMW-CONT-BCE1211CE3';
+export const WORDPRESS_USERS_RESET_FORM_OPERATION_ID = 'AIMW-CONT-10AFCDF334';
 export const TAXONOMY_START_CREATE_OPERATION_ID = 'AIMW-TAXO-005925568C';
 export const TAXONOMY_SAVE_SUBMIT_OPERATION_ID = 'AIMW-TAXO-39CDD7EF81';
 export const TAXONOMY_RESET_FORM_OPERATION_ID = 'AIMW-TAXO-5D39DA68B7';
