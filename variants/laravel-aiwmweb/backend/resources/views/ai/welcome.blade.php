@@ -29,6 +29,8 @@
         .proof span { padding: 10px 13px; border: 1px solid rgba(255,255,255,.1); border-radius: 999px; background: rgba(255,255,255,.035); }
         .panel { padding: 28px; border: 1px solid rgba(255,255,255,.1); border-radius: 24px; background: linear-gradient(180deg, rgba(20,35,59,.92), rgba(8,18,32,.92)); box-shadow: 0 30px 80px rgba(0,0,0,.32); }
         .panel-kicker { color: #91a4bf; font-size: 11px; font-weight: 800; letter-spacing: .14em; }
+        .panel-action { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; margin: 0 0 18px; padding: 8px 12px; border: 1px solid rgba(114,226,209,.45); border-radius: 10px; color: #72e2d1; text-decoration: none; font-weight: 800; }
+        .panel-action:hover, .panel-action:focus-visible { background: rgba(114,226,209,.08); outline: none; }
         .panel h2 { margin: 12px 0 18px; font-size: 24px; }
         .rows { display: grid; gap: 10px; }
         .row { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 14px 15px; border-radius: 14px; background: rgba(255,255,255,.045); }
@@ -150,6 +152,12 @@
             >
                 <div class="panel-kicker">{{ $welcomeLocale === 'ar' ? 'نظرة عامة على العمليات' : 'OPERATIONS OVERVIEW' }}</div>
                 <h2>{{ $welcomeLocale === 'ar' ? 'طبقة إدارة واحدة' : 'One operating layer' }}</h2>
+                <a
+                    class="panel-action"
+                    href="{{ $isAuthenticated ? '/' : route('register', [], false) }}"
+                    data-canonical-operation="AIMW-CONT-1456BE001F"
+                    aria-label="{{ $welcomeLocale === 'ar' ? 'فتح مساحة العمل' : 'Open workspace' }}"
+                >+ {{ $welcomeLocale === 'ar' ? 'إجراء' : 'Action' }}</a>
                 <div class="rows">
                     <div class="row"><span>{{ $welcomeLocale === 'ar' ? 'المواقع' : 'Sites' }}</span><b>{{ $welcomeLocale === 'ar' ? 'متصلة' : 'Connected' }}</b></div>
                     <div class="row"><span>{{ $welcomeLocale === 'ar' ? 'المحتوى' : 'Content' }}</span><b>{{ $welcomeLocale === 'ar' ? 'مُدار' : 'Managed' }}</b></div>
