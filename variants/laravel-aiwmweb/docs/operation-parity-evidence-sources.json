@@ -2571,6 +2571,14 @@
       "operation_ids": [
         "AIMW-EMAI-9EB09C490D"
       ]
+    },
+    {
+      "label": "AIMW-CONT-CA4920CBC8 Site Data Snapshot Back to sites focused closure",
+      "sha": "57f6197482089607a05d783173bbdb61d20aa063",
+      "observed_pr_head": "57f6197482089607a05d783173bbdb61d20aa063",
+      "operation_ids": [
+        "AIMW-CONT-CA4920CBC8"
+      ]
     }
   ],
   "sources": [
