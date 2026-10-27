@@ -2,6 +2,7 @@ import React from 'react';
 import type { Locale } from './core';
 
 export const EMAIL_HISTORY_APPLY_FILTERS_OPERATION_ID = 'AIMW-EMAI-F8E8A2BEE9';
+export const EMAIL_HISTORY_CLEAR_FILTERS_OPERATION_ID = 'AIMW-EMAI-8C9768BCD0';
 
 export type EmailHistoryFilterState = {
     siteId: string;

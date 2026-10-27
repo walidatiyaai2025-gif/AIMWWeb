@@ -34,6 +34,7 @@ import { ContentExplorerWordPressLinkControl } from './content-explorer-wordpres
 import { ContentExplorerMediaSourceUrlControl } from './content-explorer-media-source-url-control';
 import { ContentExplorerPreviewPanel } from './content-explorer-preview-panel';
 import { CONTENT_EXPLORER_CONTENT_TAB_RESET_EVENT } from './content-explorer-content-tab-control';
+import { requestedTaxonomyTypeFromLocation } from './content-explorer-tags-tab-control';
 import { ContentExplorerPagination } from './content-explorer-previous-page-control';
 import {
     ContentExplorerSelectAllFilteredControl,
@@ -48,7 +49,7 @@ import { DashboardSystemHealthNavigationControl } from './dashboard-system-healt
 import { DashboardSitesQuickAccessControl } from './dashboard-sites-quick-access-control';
 import { DashboardMediaNavigationControl } from './dashboard-media-navigation-control';
 import { LiveSystemStatusRefreshControl } from './live-system-status-refresh-control';
-import { EmailHistoryFiltersControl, type EmailHistoryFilterState } from './email-history-filters-control';
+import { EMAIL_HISTORY_CLEAR_FILTERS_OPERATION_ID, EmailHistoryFiltersControl, type EmailHistoryFilterState } from './email-history-filters-control';
 import { GlobalUsersFullManagementControl } from './global-users-full-management-control';
 import { MediaDeleteControl } from './media-delete-control';
 import { GlobalMediaInterpolatedLinksControl } from './media-interpolated-links-control';
@@ -71,6 +72,7 @@ import {
     type SiteOperationsFilterState,
 } from './site-operations-filters-control';
 import { SiteReliabilityConnectionLinkControl } from './site-reliability-connection-link-control';
+import { SiteReliabilityFiltersControl, siteReliabilityDefaultFilters, type SiteReliabilityFilterState } from './site-reliability-filters-control';
 import { SitesSiteUrlLinkControl } from './sites-site-url-link-control';
 import { SitesInterpolatedLinksControl } from './sites-interpolated-links-control';
 import { SitesSystemHealthLinkControl } from './sites-system-health-link-control';
@@ -320,7 +322,18 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     }, [route.key]);
     const [siteOperationsFilters, setSiteOperationsFilters] = useState<SiteOperationsFilterState>(() => siteOperationsDefaultFilters());
     const [siteOperationsExportResetToken, setSiteOperationsExportResetToken] = useState(0);
+    const [siteReliabilityDraft, setSiteReliabilityDraft] = useState<SiteReliabilityFilterState>(() => siteReliabilityDefaultFilters());
+    const [siteReliabilityFilters, setSiteReliabilityFilters] = useState<SiteReliabilityFilterState>(() => siteReliabilityDefaultFilters());
     const [taxonomyType, setTaxonomyType] = useState<'category' | 'post_tag'>('category');
+
+    useEffect(() => {
+        if (route.key !== 'taxonomy') return;
+        const requestedTaxonomyType = requestedTaxonomyTypeFromLocation();
+        if (requestedTaxonomyType === 'post_tag') {
+            setPage(1);
+            setTaxonomyType('post_tag');
+        }
+    }, [route.key]);
     const [emailHistoryDraft, setEmailHistoryDraft] = useState<EmailHistoryFilterState>({ siteId: '', status: '', correlation: '' });
     const [emailHistoryFilters, setEmailHistoryFilters] = useState<EmailHistoryFilterState>({ siteId: '', status: '', correlation: '' });
     const [dialog, setDialog] = useState<{ key: string; contract: ActionContract } | null>(null);
@@ -345,10 +358,18 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const emailHistoryActiveFilterCount = route.key === 'email-history'
         ? [emailHistoryFilters.siteId, emailHistoryFilters.status, emailHistoryFilters.correlation.trim()].filter(Boolean).length
         : 0;
-    const resourceFilters = { ...taxonomyFilter, ...emailHistoryQueryFilters };
+    const siteReliabilityQueryFilters: Record<string, string> = route.key === 'site-reliability' ? {
+        period_days: siteReliabilityFilters.periodDays,
+        minimum_operations: siteReliabilityFilters.minimumOperations,
+    } : {};
+    const resourceFilters = { ...taxonomyFilter, ...emailHistoryQueryFilters, ...siteReliabilityQueryFilters };
     const query = useQuery(route.key === 'email-history' ? {
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType, emailHistoryFilters.siteId, emailHistoryFilters.status, emailHistoryFilters.correlation, appDataGridSortDescending],
         queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, resourceFilters)),
+        enabled: state.state === 'enabled' && Boolean(endpoint),
+    } : route.key === 'site-reliability' ? {
+        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, siteReliabilityFilters.periodDays, siteReliabilityFilters.minimumOperations],
+        queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, siteReliabilityQueryFilters)),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     } : {
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType],
@@ -426,6 +447,16 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
             && next.correlation === emailHistoryFilters.correlation;
         setPage(1);
         setEmailHistoryFilters(next);
+        if (unchanged) await query.refetch();
+    };
+
+    const applySiteReliabilityFilters = async (next: SiteReliabilityFilterState): Promise<void> => {
+        if (route.key !== 'site-reliability' || !endpoint || query.isFetching) return;
+        const unchanged = page === 1
+            && next.periodDays === siteReliabilityFilters.periodDays
+            && next.minimumOperations === siteReliabilityFilters.minimumOperations;
+        setPage(1);
+        setSiteReliabilityFilters(next);
         if (unchanged) await query.refetch();
     };
 
@@ -579,6 +610,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                 {route.key === 'email-history' ? (
                     <AppDataGridClearFiltersControl
                         locale={locale}
+                        canonicalOperationAlias={EMAIL_HISTORY_CLEAR_FILTERS_OPERATION_ID}
                         searchValue={search}
                         activeFilterCount={emailHistoryActiveFilterCount}
                         busy={query.isFetching}
@@ -595,6 +627,15 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         value={siteOperationsFilters}
                         onChange={setSiteOperationsFilters}
                         onReset={resetSiteOperationsFilters}
+                    />
+                ) : null}
+                {route.key === 'site-reliability' ? (
+                    <SiteReliabilityFiltersControl
+                        locale={locale}
+                        value={siteReliabilityDraft}
+                        busy={query.isFetching}
+                        onChange={setSiteReliabilityDraft}
+                        onApply={(next) => { void applySiteReliabilityFilters(next); }}
                     />
                 ) : null}
                 <form className="search-form" onSubmit={(event) => {

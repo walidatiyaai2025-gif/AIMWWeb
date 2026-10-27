@@ -21,6 +21,7 @@ export async function clearAppDataGridFilters(callbacks: AppDataGridClearFilters
 
 export function AppDataGridClearFiltersControl({
     locale,
+    canonicalOperationAlias,
     searchValue,
     activeFilterCount,
     busy = false,
@@ -30,6 +31,7 @@ export function AppDataGridClearFiltersControl({
     onClearFiltersRequested,
 }: {
     locale: Locale;
+    canonicalOperationAlias?: string;
     searchValue: string;
     activeFilterCount: number;
     busy?: boolean;
@@ -62,6 +64,7 @@ export function AppDataGridClearFiltersControl({
             type="button"
             className="btn"
             data-canonical-operation={APP_DATA_GRID_CLEAR_FILTERS_OPERATION_ID}
+            data-canonical-operation-alias={canonicalOperationAlias}
             data-source-operation-key={APP_DATA_GRID_CLEAR_FILTERS_SOURCE_OPERATION_KEY}
             disabled={busy || clearing}
             aria-busy={busy || clearing ? 'true' : 'false'}
