@@ -1,0 +1,66 @@
+name: Laravel #954 Official Parity Materialization
+# One-shot official parity materializer for canonical operation #954 only.
+
+on:
+  push:
+    branches:
+      - worker/954-global-sync-connect-site-link
+    paths:
+      - '.github/workflows/laravel-954-materialize-on-push.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch exact evidence refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Materialize via official seven-step generators
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PYTHONHASHSEED=0
+          p=variants/laravel-aiwmweb
+          j="$p/docs/operation-parity-reconciliation.json"
+          m="$p/docs/operation-parity-reconciliation.md"
+          t=/tmp/operation-parity-summary.json
+          python "$p/tools/finalize_operation_parity.py" --output "$j" --summary-output "$t" --markdown-output "$m" --check-total 931
+          for command in apply_tenant_neutral_route_evidence apply_platform_admin_route_evidence apply_explicit_route_api_provenance apply_focused_closure_evidence apply_focused_service_evidence apply_focused_background_job_evidence; do
+            python "$p/tools/$command.py" --input "$j" --output "$j" --summary-output "$t" --markdown-output "$m" --check-total 931
+          done
+
+      - name: Assert operation-only delta and commit exact generator output
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import subprocess
+          from pathlib import Path
+          p='variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'
+          original=json.loads(subprocess.check_output(['git','show','HEAD:'+p],text=True))
+          generated=json.loads(Path(p).read_text())
+          old={v['operation_id']:v['migration_state'] for v in original['operations']}
+          new={v['operation_id']:v['migration_state'] for v in generated['operations']}
+          assert old.keys()==new.keys(), 'denominator or ids changed'
+          changes={i:(old[i],new[i]) for i in old if old[i]!=new[i]}
+          assert changes == {'AIMW-SYNC-CC2B584BC4':('PENDING','ADAPTED')},f'unexpected reconciliation delta {changes}'
+          print('Official delta:',changes)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git diff --cached --quiet && exit 0
+          git commit -m 'build(laravel): official materialize #954 exact operation parity'
+          git push origin HEAD:"$GITHUB_REF_NAME"
