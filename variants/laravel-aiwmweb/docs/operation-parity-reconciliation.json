@@ -32000,31 +32000,21 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/global-synchronization-connect-site-link-control.tsx",
+      "laravel_destination": "",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "ADAPTED",
-      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-synchronization-connect-site-link-control.test.tsx",
-      "evidence": "Issue #954 Global Synchronization Connect a site guarded onboarding link@d6843eaa979c97eb7a1f98d5ae53aea98dec3b86: variants/laravel-aiwmweb/backend/resources/js/global-synchronization-connect-site-link-control.tsx; focused-closure:AIMW-SYNC-CC2B584BC4; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/global-synchronization-connect-site-link-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-synchronization-connect-site-link-terminality.json",
+      "migration_state": "PENDING",
+      "acceptance_test": "",
+      "evidence": "",
       "reconciliation": {
-        "decision": "ADAPTED",
-        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "Issue #954 Global Synchronization Connect a site guarded onboarding link",
-        "source_sha": "d6843eaa979c97eb7a1f98d5ae53aea98dec3b86",
-        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/global-synchronization-connect-site-link-control.tsx",
-        "evidence_mode": "focused_closure_contract",
-        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/global-synchronization-connect-site-link-terminality.json",
-        "signals": [
-          "operation:AIMW-SYNC-CC2B584BC4",
-          "production-marker:variants/laravel-aiwmweb/backend/resources/js/global-synchronization-connect-site-link-control.tsx",
-          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/global-synchronization-connect-site-link-control.test.tsx",
-          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-synchronization-connect-site-link-terminality.json",
-          "scope:operation-specific",
-          "test:tenant-isolation"
-        ]
+        "decision": "PENDING",
+        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
+        "source_label": null,
+        "source_sha": null,
+        "destination_path": null
       }
     },
     {
@@ -32123,21 +32113,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/global-synchronization-refresh-status-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-synchronization-refresh-status-control.test.ts",
+      "evidence": "Issue #953 Global Synchronization RefreshStatusAsync authoritative status@29061a04e90c5b89d4fe4cae40dadb5eede04b87: variants/laravel-aiwmweb/backend/resources/js/global-synchronization-refresh-status-control.tsx; focused-closure:AIMW-SYNC-9504A57CAE; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/global-synchronization-refresh-status-control.test.ts; evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-synchronization-refresh-status-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "Issue #953 Global Synchronization RefreshStatusAsync authoritative status",
+        "source_sha": "29061a04e90c5b89d4fe4cae40dadb5eede04b87",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/global-synchronization-refresh-status-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/global-synchronization-refresh-status-terminality.json",
+        "signals": [
+          "operation:AIMW-SYNC-9504A57CAE",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/global-synchronization-refresh-status-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/global-synchronization-refresh-status-control.test.ts",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-synchronization-refresh-status-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -38220,11 +38220,11 @@
       "AIMW-SYNC-7A726BAF5F",
       "AIMW-SYNC-7C77CF7F7A",
       "AIMW-SYNC-8C35E9A7A0",
-      "AIMW-SYNC-9504A57CAE",
       "AIMW-SYNC-9B87CACA17",
       "AIMW-SYNC-AE16CF49C6",
       "AIMW-SYNC-B78216241F",
       "AIMW-SYNC-B955324F04",
+      "AIMW-SYNC-CC2B584BC4",
       "AIMW-SYNC-D5CE5A213B",
       "AIMW-SYNC-DDC8657C2F",
       "AIMW-SYNC-E0791EA9E9",
@@ -39846,6 +39846,7 @@
       "AIMW-SYNC-8719C812DC",
       "AIMW-SYNC-89777052CB",
       "AIMW-SYNC-8D6F1C5EAA",
+      "AIMW-SYNC-9504A57CAE",
       "AIMW-SYNC-9ABD7DEDBB",
       "AIMW-SYNC-9DFB5B4FF9",
       "AIMW-SYNC-A9E956A4DA",
@@ -39860,7 +39861,6 @@
       "AIMW-SYNC-C43EFD36B1",
       "AIMW-SYNC-C8C380E7F8",
       "AIMW-SYNC-CB01197D47",
-      "AIMW-SYNC-CC2B584BC4",
       "AIMW-SYNC-CD6F1FB97B",
       "AIMW-SYNC-CDE0C219B5",
       "AIMW-SYNC-D805D5D9A8",
@@ -41150,10 +41150,10 @@
         ]
       },
       {
-        "label": "Issue #954 Global Synchronization Connect a site guarded onboarding link",
-        "sha": "d6843eaa979c97eb7a1f98d5ae53aea98dec3b86",
+        "label": "Issue #953 Global Synchronization RefreshStatusAsync authoritative status",
+        "sha": "29061a04e90c5b89d4fe4cae40dadb5eede04b87",
         "operation_ids": [
-          "AIMW-SYNC-CC2B584BC4"
+          "AIMW-SYNC-9504A57CAE"
         ]
       }
     ],
