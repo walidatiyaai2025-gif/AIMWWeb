@@ -1,6 +1,7 @@
 name: Laravel AIWMWeb Task Parity Materialize 974
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - worker/974-sites-disable-selected
@@ -46,6 +47,6 @@ jobs:
           if git diff --cached --quiet; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore(laravel): materialize parity for AIMW-SYNC-DDC8657C2F"
+          git commit -m "chore(laravel): materialize parity for AIMW-SYNC-45A3B43BB9"
           git push origin "HEAD:${{ github.ref_name }}"
 
