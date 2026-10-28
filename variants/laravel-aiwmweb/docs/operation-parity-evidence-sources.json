@@ -2994,6 +2994,14 @@
       "operation_ids": [
         "AIMW-SYNC-476CDB769B"
       ]
+    },
+    {
+      "label": "Issue #953 Global Synchronization RefreshStatusAsync authoritative status",
+      "sha": "29061a04e90c5b89d4fe4cae40dadb5eede04b87",
+      "observed_pr_head": "29061a04e90c5b89d4fe4cae40dadb5eede04b87",
+      "operation_ids": [
+        "AIMW-SYNC-9504A57CAE"
+      ]
     }
   ],
   "sources": [
