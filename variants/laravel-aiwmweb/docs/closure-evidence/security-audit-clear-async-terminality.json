@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #969 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-AA26ED0909",
+  "domain": "sync",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "route_screen": "/admin/security-audit",
+    "visible_control": "ClearAsync [ClearAsync]",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/SecurityAudit.razor",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "view": "variants/laravel-aiwmweb/backend/resources/views/security/audit.blade.php",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SecurityAuditReadController.php",
+    "method": "read-only GET /admin/security-audit without category, outcome, q or take",
+    "operation_marker": "AIMW-SYNC-AA26ED0909"
+  },
+  "behavior": "Clear is a real unfiltered GET to the existing protected Laravel audit reader. The server executes the authoritative tenant-membership-restricted DB query again rather than clearing only local UI or displaying fabricated success.",
+  "security": {
+    "authentication": "auth",
+    "authorization": "platform.admin",
+    "tenant_scope": "active tenant memberships only",
+    "foreign_tenant": "404",
+    "non_admin": "403",
+    "caller_tenant_override": "422",
+    "no_mutation": true
+  },
+  "acceptance": {
+    "backend_test": "variants/laravel-aiwmweb/backend/tests/Feature/SecurityAuditClearAsyncTerminalityTest.php",
+    "checks": [
+      "exact canonical operation and view marker",
+      "filtered read followed by unfiltered clear read",
+      "both visible active-tenant rows restored",
+      "foreign tenant audit excluded",
+      "no audit event mutations",
+      "guest 302 login, non-admin 403, foreign route 404, injected tenant scope 422"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-AA26ED0909"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "backend_schema_modified": false
+  },
+  "provenance": {
+    "integration_target": "worker/laravel-aiwmweb-closure-composition",
+    "composition_base_sha": "38c825c454ed031ba363ece20f125579c3672c4e",
+    "code_and_test_sha": "f04d05e79986c55089bc838beb0342773ea58d6b"
+  }
+}

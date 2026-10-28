@@ -39,15 +39,15 @@ final class GlobalMediaResetTerminalityTest extends TestCase
         $this->assertStringContainsString("mediaType: 'all'", $control);
         $this->assertStringContainsString('pageSize: 24', $control);
         $this->assertStringContainsString('page: 1', $control);
-        $this->assertStringContainsString('authoritativeGlobalMediaEndpoint(context)', $page);
+        $this->assertStringContainsString('authoritativeGlobalMediaApplyEndpoint(context)', $page);
         $this->assertStringContainsString('resetGlobalMediaFilters', $page);
         $this->assertStringContainsString('queryClient.fetchQuery', $page);
         $this->assertStringContainsString(
-            "queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, mediaResetState.mediaType, mediaResetState.pageSize]",
+            "queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, mediaAppliedFilters.mediaType, mediaAppliedFilters.pageSize]",
             $page,
         );
         $this->assertStringContainsString(
-            "queryKey: ['workspace', context.tenant.slug, route.key, endpoint, reset.page, reset.search, reset.mediaType, reset.pageSize]",
+            "queryKey: ['workspace', context.tenant.slug, route.key, endpoint, reset.page, reset.search, defaults.mediaType, defaults.pageSize]",
             $page,
         );
         $this->assertStringContainsString('per_page: String(reset.pageSize)', $page);

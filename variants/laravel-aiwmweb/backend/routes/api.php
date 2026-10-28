@@ -4,7 +4,9 @@ use App\Http\Controllers\AiUsageReadController;
 use App\Http\Controllers\ContentApiController;
 use App\Http\Controllers\ContentExplorerReadController;
 use App\Http\Controllers\EmailNotificationController;
+use App\Http\Controllers\GlobalPagesDraftController;
 use App\Http\Controllers\GlobalPagesTrashController;
+use App\Http\Controllers\GlobalPostsPrivateController;
 use App\Http\Controllers\GlobalPostsPublishController;
 use App\Http\Controllers\GlobalPostsTrashController;
 use App\Http\Controllers\LegacyNotificationReadController;
@@ -33,7 +35,7 @@ Route::prefix('v1/tenants/{tenant}/sites/{site}')->middleware(['web', 'tenant.co
         ->defaults('canonical_operation_id', ContentExplorerReadController::OPERATION_ID)
         ->name('canonical.api.content-explorer.read');
     Route::get('content/{type}', [ContentApiController::class, 'index']);
-    Route::post('content/{type}', [ContentApiController::class, 'store']);
+    Route::post('content/{type}', [ContentApiController::class, 'store'])->where('type', 'post|page');
     Route::get('content/{type}/{wordpressId}/editor', [ContentApiController::class, 'editor'])
         ->middleware('auth')
         ->whereNumber('wordpressId')
@@ -134,11 +136,17 @@ Route::prefix('v1/tenants/{tenant}')
         Route::get('/ai/usage', [AiUsageReadController::class, 'index'])->name('canonical.api.ai-usage');
         Route::get('/global-pages', [GlobalPagesTrashController::class, 'index'])
             ->name('api.v1.global-pages.index');
+        Route::post('/global-pages/draft', [GlobalPagesDraftController::class, 'draft'])
+            ->defaults('canonical_operation_id', GlobalPagesDraftController::OPERATION_ID)
+            ->name('api.v1.global-pages.draft');
         Route::post('/global-pages/trash', [GlobalPagesTrashController::class, 'trash'])
             ->defaults('canonical_operation_id', GlobalPagesTrashController::OPERATION_ID)
             ->name('api.v1.global-pages.trash');
         Route::get('/global-posts', [GlobalPostsTrashController::class, 'index'])
             ->name('api.v1.global-posts.index');
+        Route::post('/global-posts/private', [GlobalPostsPrivateController::class, 'makePrivate'])
+            ->defaults('canonical_operation_id', GlobalPostsPrivateController::OPERATION_ID)
+            ->name('api.v1.global-posts.private');
         Route::post('/global-posts/publish', [GlobalPostsPublishController::class, 'publish'])
             ->defaults('canonical_operation_id', GlobalPostsPublishController::OPERATION_ID)
             ->name('api.v1.global-posts.publish');
