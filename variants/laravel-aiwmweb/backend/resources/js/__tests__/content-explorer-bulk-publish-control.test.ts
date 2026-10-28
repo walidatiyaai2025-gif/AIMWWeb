@@ -5,9 +5,9 @@ import {
     buildContentExplorerBulkPublishPayload,
 } from '../content-explorer-bulk-publish-control';
 
-describe('AIMW-SYNC-DDC8657C2F ContentExplorer BulkPublishAsync', () => {
+describe('AIMW-SYNC-EE7D7534DF ContentExplorer BulkPublishAsync', () => {
     it('binds publish action to the current authenticated tenant/site endpoint', () => {
-        expect(CONTENT_EXPLORER_BULK_PUBLISH_OPERATION_ID).toBe('AIMW-SYNC-DDC8657C2F');
+        expect(CONTENT_EXPLORER_BULK_PUBLISH_OPERATION_ID).toBe('AIMW-SYNC-EE7D7534DF');
         expect(contentExplorerBulkPublishEndpoint('alpha', 7))
             .toBe('/api/v1/tenants/alpha/sites/7/content/bulk');
         expect(contentExplorerBulkPublishEndpoint('alpha/../foreign', 7)).toBeNull();
