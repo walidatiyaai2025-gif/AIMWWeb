@@ -20,10 +20,10 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 ## Visible controls
 
 - Total: **446**
-- Terminal: **417**
-- Pending: **29**
+- Terminal: **418**
+- Pending: **28**
 - Blocked: **0**
-- Parity: **93.50%**
+- Parity: **93.72%**
 
 ## By domain
 
@@ -45,7 +45,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | seo | 24 | 0 | 24 | 0 | 0 | 0 | 24 | 100.00% |
 | settings | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 100.00% |
 | sites | 12 | 0 | 12 | 0 | 0 | 0 | 12 | 100.00% |
-| sync | 213 | 0 | 192 | 21 | 0 | 0 | 192 | 90.14% |
+| sync | 213 | 0 | 193 | 20 | 0 | 0 | 193 | 90.61% |
 | taxonomy | 13 | 0 | 13 | 0 | 0 | 0 | 13 | 100.00% |
 
 ## By kind
@@ -56,7 +56,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | background_job | 21 | 0 | 21 | 0 | 0 | 0 | 21 | 100.00% |
 | route | 84 | 0 | 84 | 0 | 0 | 0 | 84 | 100.00% |
 | service | 349 | 0 | 349 | 0 | 0 | 0 | 349 | 100.00% |
-| visible_control | 446 | 0 | 417 | 29 | 0 | 0 | 417 | 93.50% |
+| visible_control | 446 | 0 | 418 | 28 | 0 | 0 | 418 | 93.72% |
 
 ## Reproducibility / guard results
 
@@ -66,7 +66,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - Totals reconcile: **PASS**
 - Evidence references exist for terminal code rows: **PASS**
 - Explicit route contracts: **44**
-- Focused visible-control contracts: **417**
+- Focused visible-control contracts: **418**
 - Focused service contracts: **32**
 - Focused background-job contracts: **7**
 - Unpushed countable sources: **0**
@@ -144,7 +144,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 
 - None
 
-### sync (21)
+### sync (20)
 
 - `AIMW-SYNC-21483C88FA`
 - `AIMW-SYNC-2A256826D2`
@@ -157,7 +157,6 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-SYNC-7A726BAF5F`
 - `AIMW-SYNC-7C77CF7F7A`
 - `AIMW-SYNC-8C35E9A7A0`
-- `AIMW-SYNC-9B87CACA17`
 - `AIMW-SYNC-AE16CF49C6`
 - `AIMW-SYNC-B78216241F`
 - `AIMW-SYNC-D5CE5A213B`
