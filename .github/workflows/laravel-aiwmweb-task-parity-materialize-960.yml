@@ -2,7 +2,7 @@ name: Laravel AIWMWeb Task Parity Materialize 960 (temporary)
 on:
   push:
     branches:
-      - worker/960-global-taxonomy-apply
+      - worker/960-global-users-previous
     paths:
       - '.github/workflows/laravel-aiwmweb-task-parity-materialize-960.yml'
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
