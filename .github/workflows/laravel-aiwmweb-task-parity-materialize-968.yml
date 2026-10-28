@@ -1,4 +1,5 @@
 name: Laravel AIWMWeb Task Parity Materialize 968 (temporary)
+# One-shot #968 parity refresh using the canonical seven-stage generator.
 on:
   push:
     branches:
