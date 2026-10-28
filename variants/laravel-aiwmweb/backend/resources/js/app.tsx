@@ -32,6 +32,7 @@ import { ContentExplorerDynamicLinksControl } from './content-explorer-dynamic-l
 import { GlobalPagesConfirmTrashControl } from './global-pages-confirm-trash-widget';
 import { GlobalPostsConfirmTrashControl } from './global-posts-confirm-trash-widget';
 import { GlobalTaxonomyPostsLinkControl } from './global-taxonomy-posts-link-control';
+import { GlobalTaxonomySyncLinkControl } from './global-taxonomy-sync-link-control';
 import { GlobalSynchronizationAcceptRemoteControl } from './global-synchronization-accept-remote-control';
 import { GlobalSynchronizationReviewConflictsControl } from './global-synchronization-review-conflicts-control';
 import { ContentExplorerSynchronizeControl } from './content-explorer-synchronize-control';
@@ -238,7 +239,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     if (route.key === 'seo-audit' || route.key === 'seo-suggestions') return <ModuleWorkspaceLoadSitesControl context={context} route={route} />;
     if (route.key === 'comments') return <><CommentsBackToSitesControl context={context} /><CommentsCommentLinksControl context={context} /><CommentsContentHubLink context={context} /><CommentsManageSiteControl context={context} /><WorkspacePage context={context} route={route} /><CommentsBackToExplorerControl context={context} /></>;
     if (route.key === 'wp-users') return <><WordPressUsersBackToSitesControl context={context} /><WordPressUsersBackToExplorerControl context={context} /><WorkspacePage context={context} route={route} /></>;
-    if (route.key === 'taxonomy') return <><TaxonomyBackToSitesControl context={context} /><GlobalTaxonomyPostsLinkControl context={context} /><TaxonomyBackToExplorerControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'taxonomy') return <><TaxonomyBackToSitesControl context={context} /><GlobalTaxonomyPostsLinkControl context={context} /><GlobalTaxonomySyncLinkControl context={context} /><TaxonomyBackToExplorerControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'approvals') return <ApprovalQueueRoute context={context} route={route} />;
     if (route.key === 'email-schedules') return <><EmailSchedulesHistoryLinkControl context={context} /><EmailSchedulesCreateControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'execution') return <><ExecutionConnectSiteControl context={context} /><WorkspacePage context={context} route={route} /></>;
