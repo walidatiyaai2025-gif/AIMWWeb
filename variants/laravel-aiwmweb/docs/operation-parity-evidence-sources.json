@@ -2796,6 +2796,14 @@
       ]
     },
     {
+      "label": "AIMW-SYNC-627C90DC5C ContentExplorer ResetFiltersAsync focused closure",
+      "sha": "976352913cf2a5025ea8e3701143c8b19adb9312",
+      "observed_pr_head": "976352913cf2a5025ea8e3701143c8b19adb9312",
+      "operation_ids": [
+        "AIMW-SYNC-627C90DC5C"
+      ]
+    },
+    {
       "label": "AIMW-SYNC-9B87CACA17 GlobalMediaExplorer ResetAsync focused closure",
       "sha": "0a2cd64c317f19a2ab7547e13ff19979b4d9e567",
       "observed_pr_head": "0a2cd64c317f19a2ab7547e13ff19979b4d9e567",

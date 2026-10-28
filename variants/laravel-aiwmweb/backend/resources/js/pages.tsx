@@ -34,6 +34,7 @@ import { ContentExplorerWordPressLinkControl } from './content-explorer-wordpres
 import { ContentExplorerMediaSourceUrlControl } from './content-explorer-media-source-url-control';
 import { ContentExplorerPreviewPanel } from './content-explorer-preview-panel';
 import { CONTENT_EXPLORER_CONTENT_TAB_RESET_EVENT } from './content-explorer-content-tab-control';
+import { ContentExplorerResetFiltersControl } from './content-explorer-reset-filters-control';
 import { requestedTaxonomyTypeFromLocation } from './content-explorer-tags-tab-control';
 import { ContentExplorerPagination } from './content-explorer-previous-page-control';
 import {
@@ -394,6 +395,33 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         enabled: state.state === 'enabled' && Boolean(endpoint),
     });
 
+    const resetContentExplorerFilters = async (trustedEndpoint: string): Promise<void> => {
+        if (
+            route.key !== 'explorer'
+            || state.state !== 'enabled'
+            || !endpoint
+            || endpoint !== trustedEndpoint
+        ) {
+            throw new Error('The active tenant/site Explorer read is not authorized.');
+        }
+
+        // Match the source ResetFiltersAsync contract: reset query/type/status to defaults,
+        // return to page one, and re-read authoritative tenant/site data.
+        // The generic Explorer grid has only a search draft; type/status live in its
+        // separate apply-filters control and are not claimed by this operation.
+        setSearchInput('');
+        setSearch('');
+        setPage(1);
+        setExplorerPreview(null);
+        setExplorerSelectedKeys(new Set());
+
+        await queryClient.fetchQuery({
+            queryKey: ['workspace', context.tenant.slug, route.key, trustedEndpoint, 1, '', taxonomyType],
+            queryFn: () => apiRequest<unknown>(endpointWithQuery(trustedEndpoint, 1, '')),
+            staleTime: 0,
+        });
+    };
+
     const applicationUsersSearchAuthorized = context.permissions.includes('*') || context.permissions.includes('members.manage');
     const searchApplicationUsers = async (): Promise<void> => {
         if (
@@ -736,6 +764,13 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             locale={locale}
                             authorized={applicationUsersClearAuthorized}
                             onClearRequested={clearApplicationUsersSearch}
+                        />
+                    ) : null}
+                    {route.key === 'explorer' ? (
+                        <ContentExplorerResetFiltersControl
+                            context={context}
+                            busy={query.isFetching}
+                            onResetRequested={resetContentExplorerFilters}
                         />
                     ) : null}
                     {route.key === 'admin-billing-support' ? (

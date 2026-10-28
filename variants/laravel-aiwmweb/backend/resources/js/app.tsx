@@ -27,6 +27,7 @@ import { ConfigurationValidationCopyReportControl } from './configuration-valida
 import { ApiError, apiRequest, tenantUrl, workspaceRoutes, type FrontendContext, type WorkspaceRoute } from './core';
 import { AppShell, LoadingState, StatePanel, ToastProvider } from './components';
 import { ContentExplorerBulkTrashControl } from './content-explorer-bulk-trash-widget';
+import { ContentExplorerApplyFiltersControl } from './content-explorer-apply-filters-control';
 import { ContentExplorerDynamicLinksControl } from './content-explorer-dynamic-links-control';
 import { GlobalPagesConfirmTrashControl } from './global-pages-confirm-trash-widget';
 import { GlobalPostsConfirmTrashControl } from './global-posts-confirm-trash-widget';
@@ -227,7 +228,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     );
     if (route.key === 'dashboard') return <><DashboardExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'sites') return <><SitesSaveControl context={context} /><SitesRetestSelectedControl context={context} /><SitesDeleteControl context={context} /><SitesBulkDeleteControl context={context} /><WorkspacePage context={context} route={route} /></>;
-    if (route.key === 'explorer') return <><ContentExplorerContentTabControl context={context} /><ContentExplorerTagsTabControl context={context} /><ContentExplorerCategoriesTabControl context={context} /><ContentExplorerDynamicLinksControl context={context} /><ContentExplorerMediaTabControl context={context} /><ContentExplorerExecutionLinkControl context={context} /><ContentExplorerSynchronizeControl context={context} /><ContentExplorerBulkTrashControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'explorer') return <><ContentExplorerContentTabControl context={context} /><ContentExplorerTagsTabControl context={context} /><ContentExplorerCategoriesTabControl context={context} /><ContentExplorerDynamicLinksControl context={context} /><ContentExplorerMediaTabControl context={context} /><ContentExplorerExecutionLinkControl context={context} /><ContentExplorerSynchronizeControl context={context} /><ContentExplorerApplyFiltersControl context={context} /><ContentExplorerBulkTrashControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'content-hub') return <><ContentHubAllSitesControl context={context} /><ContentHubSiteLinksControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'content-planner') return <><ContentPlannerAiCenterLinkControl context={context} /><ContentPlannerExecutionLinkControl context={context} /><ContentPlannerNewItemControl context={context} /><ContentPlannerReloadControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'media') return <><MediaPagesLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
