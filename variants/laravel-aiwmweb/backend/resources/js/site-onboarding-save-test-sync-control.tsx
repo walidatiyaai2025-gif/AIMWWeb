@@ -1,4 +1,4 @@
-import React, { FormEvent, useRef, useState } from 'react';
+import React, { FormEvent, useEffect, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { ApiError, apiRequest, tenantUrl, type FrontendContext } from './core';
 import { useLocale } from './i18n';
@@ -111,6 +111,32 @@ export function SiteOnboardingSaveTestSyncControl({ context }: { context: Fronte
     const [retryBusy, setRetryBusy] = useState(false);
     const [retryError, setRetryError] = useState('');
     const idempotencyKey = useRef<string | null>(null);
+
+    useEffect(() => {
+        const currentRun = result?.sync;
+        if (!currentRun || !['queued', 'running'].includes(currentRun.status)) return;
+        if (!Number.isSafeInteger(currentRun.id) || currentRun.id < 1) return;
+        const match = context.api.sites?.match(/^\/api\/tenants\/([^/?#]+)\/sites$/);
+        if (!match) return;
+        let active = true;
+        const runEndpoint = `/api/tenants/${match[1]}/sync-runs/${currentRun.id}`;
+        const interval = window.setInterval(() => {
+            void apiRequest<NonNullable<OnboardingResponse['sync']>>(runEndpoint)
+                .then((updated) => {
+                    if (!active || updated.id !== currentRun.id) return;
+                    setResult((previous) => previous?.sync?.id === currentRun.id
+                        ? { ...previous, sync: updated }
+                        : previous);
+                })
+                .catch(() => {
+                    // Do not infer success from a failed status request.
+                });
+        }, 1500);
+        return () => {
+            active = false;
+            window.clearInterval(interval);
+        };
+    }, [context.api.sites, result?.sync?.id, result?.sync?.status]);
 
     const resetRequestIdentity = () => {
         idempotencyKey.current = null;
