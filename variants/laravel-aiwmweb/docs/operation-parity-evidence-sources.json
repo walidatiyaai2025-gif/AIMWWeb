@@ -2892,6 +2892,14 @@
       ]
     },
     {
+      "label": "AIMW-SYNC-BDBA0B4F01 Site Onboarding OpenSiteAsync focused closure #971",
+      "sha": "0a311c8358b8eed1d5c1a54c4c7a1b630fe85729",
+      "observed_pr_head": "0a311c8358b8eed1d5c1a54c4c7a1b630fe85729",
+      "operation_ids": [
+        "AIMW-SYNC-BDBA0B4F01"
+      ]
+    },
+    {
       "label": "AIMW-SYNC-45A3B43BB9 Sites DisableSelectedAsync focused closure #974",
       "sha": "ba3d9b04f8e7738023e3750bf5c496475eaa308e",
       "observed_pr_head": "ba3d9b04f8e7738023e3750bf5c496475eaa308e",
