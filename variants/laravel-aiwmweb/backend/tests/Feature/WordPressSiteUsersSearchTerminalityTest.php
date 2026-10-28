@@ -88,6 +88,14 @@ final class WordPressSiteUsersSearchTerminalityTest extends TestCase
                 && ($query['roles'] ?? null) === 'editor';
         });
 
+        // Invalid role filters and non-scalar keywords must never reach WordPress REST.
+        $this->actingAs($user)
+            ->getJson("/api/v1/tenants/alpha/sites/{$site->id}/users?search=needle&role=unapproved-role")
+            ->assertUnprocessable();
+        $this->actingAs($user)
+            ->getJson("/api/v1/tenants/alpha/sites/{$site->id}/users?search%5B%5D=needle")
+            ->assertUnprocessable();
+
         $foreignUser = User::factory()->create();
         $foreignMembership = $this->membership($foreignUser, 'foreign', ['tenant.view', 'sites.view']);
         $foreignSite = $this->site($foreignMembership, 'https://foreign.example.test');

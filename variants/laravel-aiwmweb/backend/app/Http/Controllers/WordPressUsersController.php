@@ -20,6 +20,12 @@ final class WordPressUsersController extends Controller
         $auth->authorize('sites.view');
         Site::query()->findOrFail($site);
 
+        // Never trust the browser's role filter: validate before querying WordPress REST.
+        $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+            'role' => ['nullable', Rule::in(['all', 'administrator', 'editor', 'author', 'contributor', 'subscriber'])],
+        ]);
+
         $query = [
             'page' => max(1, $request->integer('page', 1)),
             'per_page' => min(max($request->integer('per_page', 50), 1), 100),
