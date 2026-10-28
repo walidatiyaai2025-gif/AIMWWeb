@@ -12,14 +12,15 @@ use App\Models\User;
 use App\Sync\GlobalSynchronizationAcceptRemoteService;
 use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Queue;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 final class GlobalSynchronizationRequestAcceptRemoteTerminalityTest extends TestCase
 {
     use RefreshDatabase;
+
     public function test_request_accept_remote_opens_confirmation_before_authoritative_full_sync(): void
     {
         $source = (string) file_get_contents(base_path('../../../src/AIWordPressManager.Web/Components/Pages/GlobalSynchronizationWorkspace.razor'));
@@ -36,6 +37,7 @@ final class GlobalSynchronizationRequestAcceptRemoteTerminalityTest extends Test
         $this->assertContains('auth', $route->gatherMiddleware());
         $this->assertContains('tenant.context', $route->gatherMiddleware());
     }
+
     public function test_request_accept_remote_cannot_dispatch_for_foreign_tenant_site(): void
     {
         Queue::fake();
@@ -68,5 +70,4 @@ final class GlobalSynchronizationRequestAcceptRemoteTerminalityTest extends Test
 
         Queue::assertNotPushed(ProcessSyncRunJob::class);
     }
-
 }
