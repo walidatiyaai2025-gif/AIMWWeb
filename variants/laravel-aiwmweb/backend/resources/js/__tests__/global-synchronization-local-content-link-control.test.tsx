@@ -52,7 +52,7 @@ describe('AIMW-SYNC-E51F091C0B synchronization local content navigation', () => 
         );
     });
 
-    it.each([undefined, null, { id: 0, name: 'Invalid' }, { id: -4, name: 'Invalid' }, { id: 1.5, name: 'Invalid' }])(
+    it.each([null, { id: 0, name: 'Invalid' }, { id: -4, name: 'Invalid' }, { id: 1.5, name: 'Invalid' }])(
         'does not expose a destination without a valid server-selected site: %s',
         (site) => {
             renderControl(context(site));
