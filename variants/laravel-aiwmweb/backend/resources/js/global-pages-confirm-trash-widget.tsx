@@ -113,7 +113,7 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
 
     const privateMutation = useMutation({
         mutationFn: async (targets: Array<{ site_id: number; wordpress_id: number }>) => {
-            if (!privateEndpoint) throw new Error('The private review operation is unavailable.');
+            if (!privateEndpoint) throw new Error('The private status operation is unavailable.');
             return apiRequest<{ operation_id: string; state: 'queued'; count: number; site_jobs: number }>(
                 privateEndpoint,
                 { method: 'POST', body: JSON.stringify(globalPagesPrivatePayload(targets)) },
@@ -127,12 +127,12 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
             setSelected(new Set());
             notify(
                 locale === 'ar'
-                    ? `تمت جدولة ${result.count} صفحة للمراجعة عبر ${result.site_jobs} مهمة. تحقق من الحالة بعد التنفيذ.`
-                    : `Queued ${result.count} pages for review across ${result.site_jobs} site job(s). Verify status after execution.`,
+                    ? `تمت جدولة ${result.count} صفحة لتحويلها إلى خاصة عبر ${result.site_jobs} مهمة. تحقق من الحالة بعد التنفيذ.`
+                    : `Queued ${result.count} pages for private status across ${result.site_jobs} site job(s). Verify status after execution.`,
                 'success',
             );
         },
-        onError: (error) => notify(error instanceof Error ? error.message : 'Could not queue selected pages for review.', 'error'),
+        onError: (error) => notify(error instanceof Error ? error.message : 'Could not queue selected pages as private.', 'error'),
     });
 
     const pendingMutation = useMutation({
@@ -276,9 +276,9 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
                             disabled={!canEdit || !privateEndpoint || busy || selectedTargets.length === 0}
                             onClick={() => privateMutation.mutate(selectedTargets)}
                         >
-                            {privateMutation.isPrivate
+                            {privateMutation.isPending
                                 ? (locale === 'ar' ? 'جارٍ جدولة المراجعة…' : 'Queueing review…')
-                                : (locale === 'ar' ? 'تحويل المحدد للمراجعة' : 'Private selected')}
+                                : (locale === 'ar' ? 'تحويل المحدد إلى خاص' : 'Private selected')}
                         </button>
                         <button
                             type="button"
