@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 897,
-    "pending": 34,
+    "adapted": 898,
+    "pending": 33,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 897,
-    "overall_parity_percent": 96.35
+    "terminal": 898,
+    "overall_parity_percent": 96.46
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 413,
-    "pending": 33,
+    "terminal": 414,
+    "pending": 32,
     "blocked": 0,
-    "percent": 92.6
+    "percent": 92.83
   },
   "domains": {
     "ai": {
@@ -203,12 +203,12 @@
     "sync": {
       "total": 213,
       "ported": 0,
-      "adapted": 188,
-      "pending": 25,
+      "adapted": 189,
+      "pending": 24,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 188,
-      "percent": 88.26
+      "terminal": 189,
+      "percent": 88.73
     },
     "taxonomy": {
       "total": 13,
@@ -32554,21 +32554,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/dashboard-refresh-clicked-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DashboardRefreshClickedTerminalityTest.php",
+      "evidence": "Issue #962 Dashboard RefreshClickedAsync tenant-scoped focused closure@a5bbcea64b94469f28544162b2d34223f354c75b: variants/laravel-aiwmweb/backend/resources/js/dashboard-refresh-clicked-control.tsx; focused-closure:AIMW-SYNC-8C35E9A7A0; test:variants/laravel-aiwmweb/backend/tests/Feature/DashboardRefreshClickedTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/dashboard-refresh-clicked-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "Issue #962 Dashboard RefreshClickedAsync tenant-scoped focused closure",
+        "source_sha": "a5bbcea64b94469f28544162b2d34223f354c75b",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/dashboard-refresh-clicked-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/dashboard-refresh-clicked-terminality.json",
+        "signals": [
+          "operation:AIMW-SYNC-8C35E9A7A0",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/dashboard-refresh-clicked-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/DashboardRefreshClickedTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/dashboard-refresh-clicked-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -38160,12 +38170,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 413,
-      "pending": 33,
+      "adapted": 414,
+      "pending": 32,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 413,
-      "percent": 92.6
+      "terminal": 414,
+      "percent": 92.83
     }
   },
   "pending_operation_ids_by_domain": {
@@ -38209,7 +38219,6 @@
       "AIMW-SYNC-6766C503DA",
       "AIMW-SYNC-7A726BAF5F",
       "AIMW-SYNC-7C77CF7F7A",
-      "AIMW-SYNC-8C35E9A7A0",
       "AIMW-SYNC-9504A57CAE",
       "AIMW-SYNC-9B87CACA17",
       "AIMW-SYNC-AE16CF49C6",
@@ -39836,6 +39845,7 @@
       "AIMW-SYNC-8409FB077A",
       "AIMW-SYNC-8719C812DC",
       "AIMW-SYNC-89777052CB",
+      "AIMW-SYNC-8C35E9A7A0",
       "AIMW-SYNC-8D6F1C5EAA",
       "AIMW-SYNC-9ABD7DEDBB",
       "AIMW-SYNC-9DFB5B4FF9",
@@ -41138,10 +41148,17 @@
         "operation_ids": [
           "AIMW-SYNC-476CDB769B"
         ]
+      },
+      {
+        "label": "Issue #962 Dashboard RefreshClickedAsync tenant-scoped focused closure",
+        "sha": "a5bbcea64b94469f28544162b2d34223f354c75b",
+        "operation_ids": [
+          "AIMW-SYNC-8C35E9A7A0"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 183,
-    "focused_closure_contract_count": 413,
+    "focused_closure_operation_scoped_count": 184,
+    "focused_closure_contract_count": 414,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
