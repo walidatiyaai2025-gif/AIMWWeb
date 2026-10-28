@@ -131,7 +131,7 @@ describe('AIMW-BILL-2EF6B8A27A onboarding browser proof', () => {
 
         renderControl();
         completeProfileStep('Alpha Site', 'https://alpha.example.test');
-        const secret = completeCredentialStep('wp-admin', 'application-secret-123');
+        completeCredentialStep('wp-admin', 'application-secret-123');
 
         const button = screen.getByRole('button', { name: 'Save, test and synchronize' });
         expect(button).toHaveAttribute('data-canonical-operation', SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID);
@@ -153,8 +153,10 @@ describe('AIMW-BILL-2EF6B8A27A onboarding browser proof', () => {
         expect(await screen.findByText('verified / healthy')).toBeInTheDocument();
         expect(screen.getByText('Sync: queued')).toBeInTheDocument();
 
-        fireEvent.click(screen.getByRole('button', { name: 'Previous' }));
-        expect(screen.getByLabelText('Application Password')).toHaveValue('');
+        // A successful onboarding is terminal: do not reopen a credential form or expose the secret.
+        expect(screen.queryByRole('button', { name: 'Previous' })).toBeNull();
+        expect(screen.queryByLabelText('Application Password')).toBeNull();
+        expect(screen.queryByText('application-secret-123')).not.toBeInTheDocument();
     });
 
     it('retries the failed saved profile only with the server-issued opaque retry token', async () => {
