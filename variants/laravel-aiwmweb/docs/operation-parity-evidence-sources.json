@@ -2949,8 +2949,8 @@
     },
     {
       "label": "AIMW-SYNC-E0791EA9E9 GlobalUsersWorkspace PreviousAsync focused closure #960",
-      "sha": "6b8b5485a4fa7074b3dfe9257ae174b59785f6ff",
-      "observed_pr_head": "6b8b5485a4fa7074b3dfe9257ae174b59785f6ff",
+      "sha": "ee65778c11019a99b638f09e789f63090b6d827e",
+      "observed_pr_head": "ee65778c11019a99b638f09e789f63090b6d827e",
       "operation_ids": [
         "AIMW-SYNC-E0791EA9E9"
       ]
