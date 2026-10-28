@@ -14,11 +14,17 @@ final class GlobalPagesTrashService
     {
         $query = ContentItem::query()->where('type', 'page');
 
+        if (isset($filters['site_id'])) {
+            $query->where('site_id', (int) $filters['site_id']);
+        }
+
         if ($search = trim((string) ($filters['search'] ?? ''))) {
             $query->where(function ($builder) use ($search): void {
                 $builder
                     ->where('title', 'like', "%{$search}%")
-                    ->orWhere('slug', 'like', "%{$search}%");
+                    ->orWhere('slug', 'like', "%{$search}%")
+                    ->orWhere('excerpt', 'like', "%{$search}%")
+                    ->orWhere('body', 'like', "%{$search}%");
             });
         }
 

@@ -3,6 +3,11 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest, type FrontendContext } from './core';
 import { useToast } from './components';
 import { useLocale } from './i18n';
+import {
+    DEFAULT_GLOBAL_PAGES_FILTERS,
+    globalPagesFilterUrl,
+    GlobalPagesApplyFiltersControl,
+} from './global-pages-apply-filters-control';
 import { GLOBAL_PAGES_DRAFT_SELECTED_OPERATION_ID, globalPagesDraftEndpoint, globalPagesDraftPayload } from './global-pages-draft-selected-control';
 import { SyncAppConfirmDialogConfirmControl } from './sync-app-confirm-dialog-confirm-control';
 import {
@@ -47,16 +52,27 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
     const { notify } = useToast();
     const [selected, setSelected] = useState<Set<string>>(new Set());
     const [confirmOpen, setConfirmOpen] = useState(false);
+    const [filterDraft, setFilterDraft] = useState(DEFAULT_GLOBAL_PAGES_FILTERS);
+    const [appliedFilters, setAppliedFilters] = useState(DEFAULT_GLOBAL_PAGES_FILTERS);
+    const [filterRevision, setFilterRevision] = useState(0);
     const endpoint = globalPagesEndpoint(context.tenant.slug);
     const draftEndpoint = globalPagesDraftEndpoint(context.tenant.slug);
     const canView = hasPermission(context, 'content.view');
     const canEdit = hasPermission(context, 'content.edit');
     const enabled = Boolean(endpoint && canView);
-
+    const sitesEndpoint = hasPermission(context, 'tenant.view')
+        ? '/api/tenants/' + encodeURIComponent(context.tenant.slug) + '/sites'
+        : null;
+    const sitesQuery = useQuery({
+        queryKey: ['global-pages-filter-sites', context.tenant.slug, sitesEndpoint],
+        queryFn: () => apiRequest<Array<{ id: number; name: string }>>(sitesEndpoint as string),
+        enabled: enabled && Boolean(sitesEndpoint),
+    });
+    const filterUrl = globalPagesFilterUrl(context.tenant.slug, appliedFilters);
     const query = useQuery({
-        queryKey: ['global-pages-confirm-trash', context.tenant.slug],
-        queryFn: () => apiRequest<GlobalPagesEnvelope>(`${endpoint}?per_page=100`),
-        enabled,
+        queryKey: ['global-pages-confirm-trash', context.tenant.slug, filterUrl, filterRevision],
+        queryFn: () => apiRequest<GlobalPagesEnvelope>(filterUrl as string),
+        enabled: enabled && Boolean(filterUrl),
     });
 
     const rows = Array.isArray(query.data?.data) ? query.data.data : [];
@@ -161,6 +177,25 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
                 </div>
                 <span className="count-badge">{selectedTargets.length}</span>
             </header>
+
+            <GlobalPagesApplyFiltersControl
+                value={filterDraft}
+                sites={Array.isArray(sitesQuery.data) ? sitesQuery.data : []}
+                busy={busy || query.isFetching}
+                siteSelectorAvailable={Boolean(sitesEndpoint) && !sitesQuery.isLoading && !sitesQuery.error}
+                onChange={setFilterDraft}
+                onApply={() => {
+                    if (busy || query.isFetching) return;
+                    setSelected(new Set());
+                    setAppliedFilters({ ...filterDraft });
+                    setFilterRevision((value) => value + 1);
+                }}
+            />
+            {sitesQuery.error ? (
+                <p role="alert">{locale === 'ar'
+                    ? 'تعذر تحميل المواقع. يمكن تطبيق البحث والحالة فقط.'
+                    : 'Sites could not be loaded. Search and status filters remain available.'}</p>
+            ) : null}
 
             {!canEdit ? (
                 <p role="alert">{locale === 'ar' ? 'تحتاج صلاحية تعديل المحتوى لتنفيذ هذا الإجراء.' : 'Content edit permission is required for this action.'}</p>
