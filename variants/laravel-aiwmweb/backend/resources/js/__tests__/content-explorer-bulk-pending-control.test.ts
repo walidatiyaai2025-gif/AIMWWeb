@@ -24,6 +24,15 @@ describe('AIMW-SYNC-DDC8657C2F ContentExplorer BulkPendingAsync', () => {
         expect(() => buildContentExplorerBulkPendingPayload([1.5])).toThrow();
     });
 
+    it('accepts the maximum 500 distinct local IDs without truncation', () => {
+        const ids = Array.from({ length: 500 }, (_, index) => index + 1);
+        expect(buildContentExplorerBulkPendingPayload(ids)).toEqual({
+            ids,
+            action: 'pending',
+            payload: {},
+        });
+    });
+
     it('enforces a bounded queue before the server 403 permission check and foreign-tenant 404 boundary', () => {
         expect(() => buildContentExplorerBulkPendingPayload(Array.from({ length: 501 }, (_, i) => i + 1))).toThrow();
         expect(contentExplorerBulkPendingEndpoint('foreign/path', 7)).toBeNull();
