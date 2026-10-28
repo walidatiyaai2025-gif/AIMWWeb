@@ -49,8 +49,8 @@
   "provenance": {
     "branch": "worker/964-media-batch-upload",
     "composition_base_sha": "8712399f99182b1c9c891fef894d7cccefe363b7",
-    "implementation_test_sha": "8a346b6fbc1b12292c24ce74c89b28c0008e1cd4",
-    "test_execution": "CI required; no local test execution evidence claimed"
+    "implementation_test_sha": "e03a650922f9192724d025eac97880c550bf694c",
+    "test_execution": "Previous CI: 1957 PHPUnit pass, one focused route-auth assertion failed; explicit auth middleware fixed in e03a650. Latest exact-head CI must pass before merge."
   },
   "scope": {
     "only_operation_claimed": "AIMW-SYNC-6766C503DA",
