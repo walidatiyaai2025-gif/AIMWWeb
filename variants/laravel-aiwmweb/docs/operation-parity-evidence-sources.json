@@ -2948,6 +2948,30 @@
       ]
     },
     {
+      "label": "Issue #936 Global Pages PendingSelectedAsync operation-scoped closure",
+      "sha": "d0a7f72e688bcdebcb2490efa446dbf313df9bc8",
+      "observed_pr_head": "d0a7f72e688bcdebcb2490efa446dbf313df9bc8",
+      "operation_ids": [
+        "AIMW-SYNC-3E7DCF4C71"
+      ]
+    },
+    {
+      "label": "Issue #937 Global Pages Open Synchronization operation-scoped closure",
+      "sha": "9ba2cab2d533b2ca787b10d339eba90553154b86",
+      "observed_pr_head": "9ba2cab2d533b2ca787b10d339eba90553154b86",
+      "operation_ids": [
+        "AIMW-SYNC-80B81C07B8"
+      ]
+    },
+    {
+      "label": "Issue #939 Global Pages PrivateSelectedAsync operation-scoped closure",
+      "sha": "fce15175987e2c4356559fe0674d19c61d22be5a",
+      "observed_pr_head": "fce15175987e2c4356559fe0674d19c61d22be5a",
+      "operation_ids": [
+        "AIMW-SYNC-C43EFD36B1"
+      ]
+    },
+    {
       "label": "AIMW-SYNC-E0791EA9E9 GlobalUsersWorkspace PreviousAsync focused closure #960",
       "sha": "ee65778c11019a99b638f09e789f63090b6d827e",
       "observed_pr_head": "ee65778c11019a99b638f09e789f63090b6d827e",
