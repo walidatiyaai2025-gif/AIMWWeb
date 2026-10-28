@@ -10,6 +10,7 @@ import {
 } from './global-pages-apply-filters-control';
 import { GLOBAL_PAGES_DRAFT_SELECTED_OPERATION_ID, globalPagesDraftEndpoint, globalPagesDraftPayload } from './global-pages-draft-selected-control';
 import { GLOBAL_PAGES_PENDING_SELECTED_OPERATION_ID, globalPagesPendingEndpoint, globalPagesPendingPayload } from './global-pages-pending-selected-control';
+import { GLOBAL_PAGES_PRIVATE_SELECTED_OPERATION_ID, globalPagesPrivateEndpoint, globalPagesPrivatePayload } from './global-pages-private-selected-control';
 import { SyncAppConfirmDialogConfirmControl } from './sync-app-confirm-dialog-confirm-control';
 import {
     GLOBAL_PAGES_CONFIRM_TRASH_OPERATION_ID,
@@ -59,6 +60,7 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
     const endpoint = globalPagesEndpoint(context.tenant.slug);
     const draftEndpoint = globalPagesDraftEndpoint(context.tenant.slug);
     const pendingEndpoint = globalPagesPendingEndpoint(context.tenant.slug);
+    const privateEndpoint = globalPagesPrivateEndpoint(context.tenant.slug);
     const canView = hasPermission(context, 'content.view');
     const canEdit = hasPermission(context, 'content.edit');
     const enabled = Boolean(endpoint && canView);
@@ -107,6 +109,30 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
             );
         },
         onError: (error) => notify(error instanceof Error ? error.message : 'Could not queue selected items.', 'error'),
+    });
+
+    const privateMutation = useMutation({
+        mutationFn: async (targets: Array<{ site_id: number; wordpress_id: number }>) => {
+            if (!privateEndpoint) throw new Error('The private status operation is unavailable.');
+            return apiRequest<{ operation_id: string; state: 'queued'; count: number; site_jobs: number }>(
+                privateEndpoint,
+                { method: 'POST', body: JSON.stringify(globalPagesPrivatePayload(targets)) },
+            );
+        },
+        onSuccess: (result) => {
+            if (result.operation_id !== GLOBAL_PAGES_PRIVATE_SELECTED_OPERATION_ID || result.state !== 'queued') {
+                notify('Unexpected operation response; refresh authoritative state before retrying.', 'error');
+                return;
+            }
+            setSelected(new Set());
+            notify(
+                locale === 'ar'
+                    ? `تمت جدولة ${result.count} صفحة لتحويلها إلى خاصة عبر ${result.site_jobs} مهمة. تحقق من الحالة بعد التنفيذ.`
+                    : `Queued ${result.count} pages for private status across ${result.site_jobs} site job(s). Verify status after execution.`,
+                'success',
+            );
+        },
+        onError: (error) => notify(error instanceof Error ? error.message : 'Could not queue selected pages as private.', 'error'),
     });
 
     const pendingMutation = useMutation({
@@ -176,7 +202,7 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
         ),
     });
 
-    const busy = mutation.isPending || draftMutation.isPending || pendingMutation.isPending;
+    const busy = mutation.isPending || draftMutation.isPending || pendingMutation.isPending || privateMutation.isPending;
 
     if (!enabled) return null;
 
@@ -242,6 +268,17 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
                             {draftMutation.isPending
                                 ? (locale === 'ar' ? 'جارٍ جدولة المسودات…' : 'Queueing drafts…')
                                 : (locale === 'ar' ? 'تحويل المحدد إلى مسودة' : 'Draft selected')}
+                        </button>
+                        <button
+                            type="button"
+                            className="btn"
+                            data-canonical-operation={GLOBAL_PAGES_PRIVATE_SELECTED_OPERATION_ID}
+                            disabled={!canEdit || !privateEndpoint || busy || selectedTargets.length === 0}
+                            onClick={() => privateMutation.mutate(selectedTargets)}
+                        >
+                            {privateMutation.isPending
+                                ? (locale === 'ar' ? 'جارٍ جدولة المراجعة…' : 'Queueing review…')
+                                : (locale === 'ar' ? 'تحويل المحدد إلى خاص' : 'Private selected')}
                         </button>
                         <button
                             type="button"
