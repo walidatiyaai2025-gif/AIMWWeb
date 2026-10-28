@@ -39,14 +39,20 @@ jobs:
           python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
           python - <<'PY'
           import json
-          old=json.load(open('/tmp/958-parity-before.json'))
+          import subprocess
           new=json.load(open('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'))
-          before={r['operation_id']:r['migration_state'] for r in old['operations']}
+          current=subprocess.run([
+              'git','show',
+              'origin/worker/laravel-aiwmweb-closure-composition:variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'
+          ],check=True,text=True,capture_output=True)
+          merged=json.loads(current.stdout)
+          before={r['operation_id']:r['migration_state'] for r in merged['operations']}
           after={r['operation_id']:r['migration_state'] for r in new['operations']}
+          assert len(before)==len(after)==931 and set(before)==set(after), 'Parity identities changed'
           changed={k:(before[k],after[k]) for k in before if before[k]!=after[k]}
-          assert changed.get('AIMW-SYNC-B955324F04')==('PENDING','ADAPTED') and set(changed).issubset({'AIMW-SYNC-5EE3F98A28','AIMW-SYNC-B955324F04'}), changed
+          assert changed=={'AIMW-SYNC-B955324F04':('PENDING','ADAPTED')}, changed
           assert new['totals']['total']==931
-          print('Exact staged #957+#958 parity delta:',changed)
+          print('Exact #958 new integration delta:',changed)
           PY
       - name: Commit generator-produced reconciliation
         run: |
