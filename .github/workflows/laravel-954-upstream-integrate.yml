@@ -1,0 +1,97 @@
+name: Laravel #954 Safe Upstream Integration and Official Parity
+
+on:
+  push:
+    branches:
+      - worker/954-global-sync-connect-site-link
+    paths:
+      - '.github/workflows/laravel-954-upstream-integrate.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Merge live composition without overwriting other operations
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+          source_base=origin/worker/laravel-aiwmweb-closure-composition
+          our_head="$(git rev-parse HEAD)"
+          git merge --no-ff --no-commit "$source_base" || true
+          test -f .git/MERGE_HEAD
+          python - <<'PY'
+          import subprocess
+          from pathlib import Path
+          import json
+
+          p='variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
+          j='variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'
+          m='variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md'
+          conflicts=subprocess.check_output(['git','diff','--name-only','--diff-filter=U'],text=True).splitlines()
+          allowed={p,j,m}
+          unexpected=set(conflicts)-allowed
+          if unexpected:
+              raise SystemExit(f'Cannot safely merge other workers files: {sorted(unexpected)}')
+          before=json.loads(subprocess.check_output(['git','show','HEAD:'+p],text=True))
+          upstream=json.loads(subprocess.check_output(['git','show','origin/worker/laravel-aiwmweb-closure-composition:'+p],text=True))
+          our_id='AIMW-SYNC-CC2B584BC4'
+          extra=[e for e in before['focused_closure_operation_sources'] if our_id in e.get('operation_ids',[])]
+          assert len(extra)==1, 'exact #954 source missing or duplicate'
+          assert not any(our_id in e.get('operation_ids',[]) for e in upstream['focused_closure_operation_sources']), 'upstream already owns #954'
+          upstream['focused_closure_operation_sources'].append(extra[0])
+          other_before={i for e in upstream['focused_closure_operation_sources'] for i in e.get('operation_ids',[])}
+          assert len(other_before)==len(set(other_before)), 'duplicate operation-scoped source ownership'
+          Path(p).write_text(json.dumps(upstream,indent=2,ensure_ascii=False)+'\n')
+          print('Reconciled manifest from authoritative upstream, retained #954 only and all upstream workers')
+          PY
+          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json
+          git checkout "$source_base" -- variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          test -z "$(git diff --name-only --diff-filter=U)"
+          git add variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git commit -m 'merge(laravel): reconcile #954 with live closure composition, preserve all workers'
+
+      - name: Run official parity generator and assert single-operation delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PYTHONHASHSEED=0
+          p=variants/laravel-aiwmweb
+          j="$p/docs/operation-parity-reconciliation.json"
+          m="$p/docs/operation-parity-reconciliation.md"
+          summary=/tmp/operation-parity-summary.json
+          cp "$j" /tmp/laravel-953-before-reconcile.json
+          python "$p/tools/finalize_operation_parity.py" --output "$j" --summary-output "$summary" --markdown-output "$m" --check-total 931
+          for script in apply_tenant_neutral_route_evidence apply_platform_admin_route_evidence apply_explicit_route_api_provenance apply_focused_closure_evidence apply_focused_service_evidence apply_focused_background_job_evidence; do
+            python "$p/tools/$script.py" --input "$j" --output "$j" --summary-output "$summary" --markdown-output "$m" --check-total 931
+          done
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          old=json.loads(Path('/tmp/laravel-953-before-reconcile.json').read_text())
+          new=json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json').read_text())
+          a={row['operation_id']:row['migration_state'] for row in old['operations']}
+          b={row['operation_id']:row['migration_state'] for row in new['operations']}
+          assert a.keys()==b.keys() and len(a)==931
+          delta={k:(a[k],b[k]) for k in a if a[k]!=b[k]}
+          assert delta=={'AIMW-SYNC-CC2B584BC4':('PENDING','ADAPTED')},f'Unexpected parity changes: {delta}'
+          assert new['validation']['passed'],new['validation'].get('errors')
+          print('Exact #954 parity delta and validated 931 operations',delta)
+          PY
+          git add "$j" "$m"
+          git rm .github/workflows/laravel-954-upstream-integrate.yml
+          git commit -m 'build(laravel): official #954 parity on latest composition; remove temporary workflow'
+          git push origin HEAD:"$GITHUB_REF_NAME"
