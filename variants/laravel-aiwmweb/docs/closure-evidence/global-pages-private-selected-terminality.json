@@ -50,5 +50,6 @@
     "aspnet_product_modified": false,
     "generated_reconciliation_hand_edited": false
   },
-  "evidence_source_branch": "worker/939-global-pages-private-selected"
+  "evidence_source_branch": "worker/939-global-pages-private-selected",
+  "implementation_snapshot_sha": "ded58960930d947a89e19077be4993999499034b"
 }
