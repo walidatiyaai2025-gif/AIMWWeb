@@ -153,7 +153,7 @@ export function MediaBatchClearSelectionControl({ context }: { context: Frontend
                     continue;
                 }
                 try {
-                    const path = `${endpoint.replace(/\\/media$/, '')}/transfers/${item.transferId}`;
+                    const path = `${endpoint.slice(0, -'/media'.length)}/transfers/${item.transferId}`;
                     const transfer = await apiRequest<TransferStatus>(path);
                     if (transfer.id !== item.transferId) throw new Error('Mismatched transfer response.');
                     const state: UploadState = transfer.state === 'completed' ? 'succeeded'
@@ -192,7 +192,7 @@ export function MediaBatchClearSelectionControl({ context }: { context: Frontend
                     setFiles(next.length <= MEDIA_BATCH_MAX_FILES ? next : []);
                     setResults([]);
                     setProgress(null);
-                    setTitle(next.length === 1 ? next[0].name.replace(/\\.[^.]+$/, '') : '');
+                    setTitle(next.length === 1 ? next[0].name.slice(0, next[0].name.lastIndexOf('.') > 0 ? next[0].name.lastIndexOf('.') : undefined) : '');
                     setAltText('');
                     setCaption('');
                     setMessage(next.length > MEDIA_BATCH_MAX_FILES
