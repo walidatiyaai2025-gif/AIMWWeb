@@ -50,7 +50,8 @@ jobs:
           from pathlib import Path
           old=json.loads(Path('/tmp/954-parity-before.json').read_text())
           new=json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json').read_text())
-          prior_manifest=json.loads(subprocess.check_output(['git','show','HEAD^2:variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'],text=True))
+          merge_commit=subprocess.check_output(['git','rev-list','--min-parents=2','--max-count=1','HEAD'],text=True).strip()
+          prior_manifest=json.loads(subprocess.check_output(['git','show',f'{merge_commit}^2:variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'],text=True))
           inherited={op for source in prior_manifest.get('focused_closure_operation_sources',[]) for op in source.get('operation_ids',[])}
           a={row['operation_id']:row['migration_state'] for row in old['operations']}
           b={row['operation_id']:row['migration_state'] for row in new['operations']}
