@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257 / leaf #970",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-AE16CF49C6",
+  "domain": "sync",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/SiteOnboarding.razor",
+    "route_screen": "/sites/connect | /sites/onboarding",
+    "handler": "RetrySyncAsync",
+    "tenant_owned": true,
+    "mutation": false,
+    "risk": "low"
+  },
+  "laravel_adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/site-onboarding-save-test-sync-control.tsx",
+    "operation_marker": "AIMW-SYNC-AE16CF49C6",
+    "behavior": "After the asynchronous initial run fails, offer an actual retry for the server-persisted site. POST an idempotent tenant-bound sync request, never resend WordPress credentials, and poll the authoritative run status instead of reporting queued as complete.",
+    "authorization": "Tenant-context scoped React bootstrap and tenant-side Laravel route authorization; no cross-tenant identifiers are accepted.",
+    "fake_success_path": "none"
+  },
+  "acceptance_tests": [
+    "variants/laravel-aiwmweb/backend/tests/Feature/SiteOnboardingRetrySynchronizationTerminalityTest.php",
+    "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-onboarding-save-test-sync-ui-terminality.test.tsx"
+  ],
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-AE16CF49C6"
+    ],
+    "other_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_manually_edited": false
+  },
+  "provenance": {
+    "branch": "worker/970-AIMW-SYNC-AE16CF49C6",
+    "implementation_sha": "d6864c7bb90e7891c1483337a0d9efd01ae0a87e",
+    "final_head_ci": "pending verification",
+    "official_materialization": "pending after evidence enrollment into closure composition"
+  }
+}
