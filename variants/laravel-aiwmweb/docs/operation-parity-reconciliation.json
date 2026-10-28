@@ -31460,31 +31460,21 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/global-pages-request-trash-control.ts",
+      "laravel_destination": "",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "ADAPTED",
-      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-pages-request-trash-control.test.ts",
-      "evidence": "Issue #940 Global Pages RequestTrashAsync operation-scoped closure@b9b6d4854dd6ffa315ef5ab4a3ea7fec9a971132: variants/laravel-aiwmweb/backend/resources/js/global-pages-request-trash-control.ts; focused-closure:AIMW-SYNC-E3EB27C678; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/global-pages-request-trash-control.test.ts; evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-pages-request-trash-terminality.json",
+      "migration_state": "PENDING",
+      "acceptance_test": "",
+      "evidence": "",
       "reconciliation": {
-        "decision": "ADAPTED",
-        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "Issue #940 Global Pages RequestTrashAsync operation-scoped closure",
-        "source_sha": "b9b6d4854dd6ffa315ef5ab4a3ea7fec9a971132",
-        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/global-pages-request-trash-control.ts",
-        "evidence_mode": "focused_closure_contract",
-        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/global-pages-request-trash-terminality.json",
-        "signals": [
-          "operation:AIMW-SYNC-E3EB27C678",
-          "production-marker:variants/laravel-aiwmweb/backend/resources/js/global-pages-request-trash-control.ts",
-          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/global-pages-request-trash-control.test.ts",
-          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-pages-request-trash-terminality.json",
-          "scope:operation-specific",
-          "test:tenant-isolation"
-        ]
+        "decision": "PENDING",
+        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
+        "source_label": null,
+        "source_sha": null,
+        "destination_path": null
       }
     },
     {
@@ -32679,21 +32669,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentApiController.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/MediaBatchUploadTerminalityTest.php",
+      "evidence": "Issue #964 MediaBatchUploadPanel UploadClickedAsync guarded media batch@bc22c90f307d286cc70a9ffc1fd8509d955feb09: variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentApiController.php; focused-closure:AIMW-SYNC-6766C503DA; test:variants/laravel-aiwmweb/backend/tests/Feature/MediaBatchUploadTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/media-batch-upload-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "Issue #964 MediaBatchUploadPanel UploadClickedAsync guarded media batch",
+        "source_sha": "bc22c90f307d286cc70a9ffc1fd8509d955feb09",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentApiController.php",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/media-batch-upload-terminality.json",
+        "signals": [
+          "operation:AIMW-SYNC-6766C503DA",
+          "production-marker:variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentApiController.php",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/MediaBatchUploadTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/media-batch-upload-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -38298,13 +38298,13 @@
       "AIMW-SYNC-425B82511E",
       "AIMW-SYNC-4B986B2651",
       "AIMW-SYNC-4FDCFDA33F",
-      "AIMW-SYNC-6766C503DA",
       "AIMW-SYNC-7A726BAF5F",
       "AIMW-SYNC-7C77CF7F7A",
       "AIMW-SYNC-8C35E9A7A0",
       "AIMW-SYNC-AE16CF49C6",
       "AIMW-SYNC-B78216241F",
       "AIMW-SYNC-D5CE5A213B",
+      "AIMW-SYNC-E3EB27C678",
       "AIMW-SYNC-ECAB44A389",
       "AIMW-SYNC-ED1442005E",
       "AIMW-SYNC-FD27B795ED"
@@ -39926,6 +39926,7 @@
       "AIMW-SYNC-5CF2AC6243",
       "AIMW-SYNC-5EE3F98A28",
       "AIMW-SYNC-627C90DC5C",
+      "AIMW-SYNC-6766C503DA",
       "AIMW-SYNC-68B372C9FE",
       "AIMW-SYNC-6FCFE15D24",
       "AIMW-SYNC-7071DA172F",
@@ -39963,7 +39964,6 @@
       "AIMW-SYNC-DDC8657C2F",
       "AIMW-SYNC-E0791EA9E9",
       "AIMW-SYNC-E36C56A631",
-      "AIMW-SYNC-E3EB27C678",
       "AIMW-SYNC-E51F091C0B",
       "AIMW-SYNC-E6888B0B4D",
       "AIMW-SYNC-EB9202408A",
@@ -41296,10 +41296,10 @@
         ]
       },
       {
-        "label": "Issue #940 Global Pages RequestTrashAsync operation-scoped closure",
-        "sha": "b9b6d4854dd6ffa315ef5ab4a3ea7fec9a971132",
+        "label": "Issue #964 MediaBatchUploadPanel UploadClickedAsync guarded media batch",
+        "sha": "bc22c90f307d286cc70a9ffc1fd8509d955feb09",
         "operation_ids": [
-          "AIMW-SYNC-E3EB27C678"
+          "AIMW-SYNC-6766C503DA"
         ]
       }
     ],
