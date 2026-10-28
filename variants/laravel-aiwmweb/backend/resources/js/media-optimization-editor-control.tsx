@@ -37,6 +37,7 @@ export function MediaOptimizationEditorControl({
     const [open, setOpen] = useState(false);
     const [draft, setDraft] = useState<Metadata>(() => originalMediaMetadata(row));
     const [working, setWorking] = useState(false);
+    const [opening, setOpening] = useState(false);
     const [error, setError] = useState('');
     const [notice, setNotice] = useState('');
     const mediaId = Number(row.id);
@@ -46,6 +47,32 @@ export function MediaOptimizationEditorControl({
     if (!authorized || siteId === null || !Number.isSafeInteger(mediaId) || mediaId < 1) return null;
 
     const edit = (key: keyof Metadata, value: string) => setDraft((old) => ({ ...old, [key]: value }));
+
+    const openEditor = async () => {
+        if (opening || working) return;
+        setOpening(true);
+        setError('');
+        setNotice('');
+        try {
+            const details = await apiRequest<Metadata & { remote_id: number }>(`${endpoint}/${mediaId}`);
+            if (details.remote_id !== Number(row.remote_id)
+                || ['title', 'slug', 'alt_text', 'caption', 'description'].some((field) => typeof details[field as keyof Metadata] !== 'string')) {
+                throw new Error('WordPress returned unexpected or incomplete editable metadata.');
+            }
+            setDraft({
+                title: details.title,
+                slug: details.slug,
+                alt_text: details.alt_text,
+                caption: details.caption,
+                description: details.description,
+            });
+            setOpen(true);
+        } catch (reason) {
+            setError(reason instanceof Error ? reason.message : 'Unable to read current WordPress media.');
+        } finally {
+            setOpening(false);
+        }
+    };
 
     const save = async () => {
         if (working || !draft.title.trim()) return;
@@ -76,12 +103,10 @@ export function MediaOptimizationEditorControl({
 
     return (
         <section className="media-optimization-editor">
-            <button type="button" className="btn" disabled={working} onClick={() => {
-                setDraft(originalMediaMetadata(row));
-                setNotice('');
-                setError('');
-                setOpen(true);
-            }}>{isArabic ? 'تحسين بيانات الوسيط' : 'Optimize metadata'}</button>
+            <button type="button" className="btn" disabled={working || opening} onClick={() => void openEditor()}>
+                {opening ? (isArabic ? 'جارٍ تحميل البيانات…' : 'Loading metadata…') : (isArabic ? 'تحسين بيانات الوسيط' : 'Optimize metadata')}
+            </button>
+            {!open && error ? <p role="alert">{error}</p> : null}
             {notice ? <p role="status">{notice}</p> : null}
             {open ? <div className="panel workspace-stack" aria-label={isArabic ? 'تحسين الوسائط' : 'Media optimization'}>
                 <h3>{isArabic ? 'تحسين بيانات الوسيط' : 'Optimize media metadata'} #{row.remote_id ?? mediaId}</h3>
