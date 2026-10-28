@@ -1,11 +1,12 @@
-name: Laravel AIWMWeb Task Parity Materialize 746
+name: Laravel AIWMWeb Task Parity Materialize 971
 
 on:
   push:
     branches:
-      - worker/laravel-aiwmweb-AIMW-CONT-6B051BD8C0-reconciliation-recovery
+      - worker/971-AIMW-SYNC-BDBA0B4F01
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
+      - '.github/workflows/laravel-aiwmweb-task-parity-materialize-971.yml'
 
 permissions:
   contents: write
@@ -45,5 +46,6 @@ jobs:
           if git diff --cached --quiet; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore(laravel): materialize parity for AIMW-CONT-6B051BD8C0"
+          git commit -m "chore(laravel): materialize parity for AIMW-SYNC-BDBA0B4F01"
           git push origin "HEAD:${{ github.ref_name }}"
+
