@@ -3058,6 +3058,14 @@
       ]
     },
     {
+      "label": "AIMW-SYNC-E0791EA9E9 GlobalUsersWorkspace PreviousAsync focused closure #960",
+      "sha": "ee65778c11019a99b638f09e789f63090b6d827e",
+      "observed_pr_head": "ee65778c11019a99b638f09e789f63090b6d827e",
+      "operation_ids": [
+        "AIMW-SYNC-E0791EA9E9"
+      ]
+    },
+    {
       "label": "AIMW-SYNC-2A256826D2 GlobalMediaExplorer Open synchronization focused closure #932",
       "sha": "840c30bdea70ab7853e204e03fb4f2c2abcda44b",
       "observed_pr_head": "840c30bdea70ab7853e204e03fb4f2c2abcda44b",
