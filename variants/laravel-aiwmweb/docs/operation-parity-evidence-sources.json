@@ -2890,6 +2890,14 @@
       "operation_ids": [
         "AIMW-SYNC-5A397204EF"
       ]
+    },
+    {
+      "label": "Issue #950 Global Posts Open synchronization navigation scoped closure",
+      "sha": "cd171497cba463039bdac1e25e83bee2473f495b",
+      "observed_pr_head": "cd171497cba463039bdac1e25e83bee2473f495b",
+      "operation_ids": [
+        "AIMW-SYNC-EEFDDFFF87"
+      ]
     }
   ],
   "sources": [
