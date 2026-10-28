@@ -68,6 +68,7 @@ Route::prefix('v1/tenants/{tenant}/sites/{site}')->middleware(['web', 'tenant.co
 
     Route::get('media', [ContentApiController::class, 'media']);
     Route::post('media', [ContentApiController::class, 'uploadMedia'])
+        ->middleware('auth')
         ->defaults('canonical_operation_id', ContentApiController::MEDIA_BATCH_UPLOAD_OPERATION_ID)
         ->name('api.v1.media.batch-upload');
     Route::patch('media/{media}', [ContentApiController::class, 'updateMedia']);
