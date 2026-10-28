@@ -32,6 +32,7 @@ import { ContentExplorerDynamicLinksControl } from './content-explorer-dynamic-l
 import { GlobalPagesConfirmTrashControl } from './global-pages-confirm-trash-widget';
 import { GlobalPostsConfirmTrashControl } from './global-posts-confirm-trash-widget';
 import { GlobalPostsOpenSynchronizationLinkControl } from './global-posts-open-synchronization-link-control';
+import { GlobalPagesOpenSynchronizationLinkControl } from './global-pages-open-synchronization-link-control';
 import { GlobalTaxonomyPostsLinkControl } from './global-taxonomy-posts-link-control';
 import { GlobalTaxonomySyncLinkControl } from './global-taxonomy-sync-link-control';
 import { GlobalSynchronizationAcceptRemoteControl } from './global-synchronization-accept-remote-control';
@@ -238,7 +239,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     if (route.key === 'content-hub') return <><ContentHubAllSitesControl context={context} /><ContentHubSiteLinksControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'content-planner') return <><ContentPlannerAiCenterLinkControl context={context} /><ContentPlannerExecutionLinkControl context={context} /><ContentPlannerNewItemControl context={context} /><ContentPlannerReloadControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'media') return <><MediaPagesLinkControl context={context} /><MediaBatchClearSelectionControl context={context} /><WorkspacePage context={context} route={route} /></>;
-    if (route.key === 'pages') return <><GlobalPagesConfirmTrashControl context={context} /><PagesPostsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'pages') return <><GlobalPagesConfirmTrashControl context={context} /><GlobalPagesOpenSynchronizationLinkControl context={context} /><PagesPostsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'posts') return <><GlobalPostsOpenSynchronizationLinkControl context={context} /><GlobalPostsConfirmTrashControl context={context} /><PostsExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'sync') return <><GlobalSynchronizationLocalContentLinkControl context={context} /><GlobalSynchronizationReviewConflictsControl context={context} /><GlobalSynchronizationAcceptRemoteControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'seo-audit' || route.key === 'seo-suggestions') return <ModuleWorkspaceLoadSitesControl context={context} route={route} />;

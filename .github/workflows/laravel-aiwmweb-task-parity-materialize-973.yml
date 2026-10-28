@@ -48,21 +48,17 @@ jobs:
           python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
           python - <<'PY'
           import json
-          old=json.load(open('/tmp/973-parity-before.json'))
+          import subprocess
           new=json.load(open('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'))
-          before={r['operation_id']:r['migration_state'] for r in old['operations']}
-          after={r['operation_id']:r['migration_state'] for r in new['operations']}
-          changed={k:(before[k],after[k]) for k in before if before[k]!=after[k]}
-          target='AIMW-SYNC-38D8A24B15'
-          assert changed.get(target)==('PENDING','ADAPTED'), changed
-          # #957 and #974 were already enrolled by independent workers in the
-          # composition manifest. The official generator materializes their
-          # existing focused sources when rebuilding the shared ledger.
-          inherited={'AIMW-SYNC-5EE3F98A28','AIMW-SYNC-45A3B43BB9'}
-          assert set(changed).issubset(inherited | {target}), changed
-          assert all(changed[k]==('PENDING','ADAPTED') for k in changed), changed
+          result=subprocess.run(['git','show','origin/worker/laravel-aiwmweb-closure-composition:variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'],check=True,text=True,capture_output=True)
+          baseline=json.loads(result.stdout)
+          before={row['operation_id']:row['migration_state'] for row in baseline['operations']}
+          after={row['operation_id']:row['migration_state'] for row in new['operations']}
+          assert len(before)==len(after)==931 and set(before)==set(after)
+          changed={key:(before[key],after[key]) for key in before if before[key]!=after[key]}
+          assert changed=={'AIMW-SYNC-38D8A24B15':('PENDING','ADAPTED')}, changed
           assert new['totals']['total']==931
-          print('Exact #973 target plus pre-enrolled composition evidence:',changed)
+          print('Exact #973 delta relative to live composition:',changed)
           PY
       - name: Commit formatting and generated ledger
         run: |
