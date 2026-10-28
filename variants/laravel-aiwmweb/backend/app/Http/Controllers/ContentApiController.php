@@ -510,6 +510,13 @@ final class ContentApiController extends Controller
         if ($taxonomy = $request->query('taxonomy')) {
             $q->where('taxonomy', $taxonomy);
         }
+        $search = trim((string) $request->query('search', ''));
+        if ($search !== '') {
+            $q->where(function ($terms) use ($search): void {
+                $terms->where('name', 'like', '%'.$search.'%')
+                    ->orWhere('slug', 'like', '%'.$search.'%');
+            });
+        }
 
         return response()->json($q->orderBy('taxonomy')->orderBy('name')->paginate(min(max((int) $request->query('per_page', 100), 1), 200)));
     }
