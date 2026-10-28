@@ -2805,8 +2805,8 @@
     },
     {
       "label": "AIMW-SYNC-DDC8657C2F ContentExplorer BulkPendingAsync focused closure",
-      "sha": "48b42cf53e590e0d776969e651860915a41689cc",
-      "observed_pr_head": "48b42cf53e590e0d776969e651860915a41689cc",
+      "sha": "6a248980b208b8e8f3d4021f50bb70e4e48cb6c1",
+      "observed_pr_head": "6a248980b208b8e8f3d4021f50bb70e4e48cb6c1",
       "operation_ids": [
         "AIMW-SYNC-DDC8657C2F"
       ]
@@ -2823,4 +2823,3 @@
     }
   ]
 }
-
