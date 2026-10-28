@@ -24,6 +24,7 @@ use App\Http\Controllers\SeoController;
 use App\Http\Controllers\SiteDataSnapshotController;
 use App\Http\Controllers\SiteDiagnosticsController;
 use App\Http\Controllers\SiteManagementController;
+use App\Http\Controllers\SitesBulkOperationalStateController;
 use App\Http\Controllers\SiteOnboardingController;
 use App\Models\Connector;
 use App\Models\Site;
@@ -42,6 +43,9 @@ Route::post('/api/logout', [DemoController::class, 'logout'])->middleware('auth'
 
 Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->group(function () {
     Route::get('/sites', [SiteManagementController::class, 'index']);
+    Route::post('/sites/bulk-enable', [SitesBulkOperationalStateController::class, 'enable'])
+        ->defaults('canonical_operation_id', SitesBulkOperationalStateController::ENABLE_OPERATION_ID)
+        ->name('canonical.api.sites.enable-selected');
     Route::post('/sites/onboarding', [SiteOnboardingController::class, 'store'])
         ->defaults('canonical_operation_id', SiteOnboardingController::OPERATION_ID)
         ->name('canonical.api.site-onboarding.save-test-sync');

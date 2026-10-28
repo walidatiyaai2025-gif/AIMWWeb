@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #973",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-38D8A24B15",
+  "domain": "sync",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/Sites.razor",
+    "route_screen": "/sites",
+    "visible_control": "EnableSelectedAsync",
+    "behavior": "Enable selected tenant sites, resetting connection status to unknown for future retest, then reread authoritative sites.",
+    "tenant_owned": true
+  },
+  "laravel_adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/sites-bulk-operational-state-control.tsx",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SitesBulkOperationalStateController.php",
+    "route": "POST /api/tenants/{tenant}/sites/bulk-enable",
+    "permissions": [
+      "tenant.view",
+      "sites.view",
+      "sites.manage"
+    ],
+    "transaction": "all ids locked, tenant checked, atomic status update, idempotent retry",
+    "verification": "Persisted tenant-filtered state and frontend authoritative reread",
+    "operation_marker": "AIMW-SYNC-38D8A24B15"
+  },
+  "security_boundary": {
+    "auth": "auth + tenant.context",
+    "unauthorized": "403",
+    "foreign_tenant": "404",
+    "foreign_site": "404 atomically",
+    "protected_fields": "422",
+    "secret_handling": "No WordPress credentials or remote mutations"
+  },
+  "acceptance_tests": [
+    "variants/laravel-aiwmweb/backend/tests/Feature/SitesEnableSelectedTerminalityTest.php"
+  ],
+  "scope_exclusions": [
+    "No other canonical operation is claimed",
+    "No generated reconciliation manually edited",
+    "No ASP.NET runtime changes"
+  ]
+}
