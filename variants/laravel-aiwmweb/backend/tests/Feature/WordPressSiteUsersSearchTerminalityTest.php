@@ -108,7 +108,7 @@ final class WordPressSiteUsersSearchTerminalityTest extends TestCase
 
     private function membership(User $user, string $slug, array $permissions): TenantMembership
     {
-        $tenant = Tenant::query()->create(['name' => ucfirst($slug), 'slug' => $slug]);
+        $tenant = Tenant::query()->firstOrCreate(['slug' => $slug], ['name' => ucfirst($slug)]);
         app(TenantContext::class)->activate($tenant);
 
         $membership = TenantMembership::query()->create([
