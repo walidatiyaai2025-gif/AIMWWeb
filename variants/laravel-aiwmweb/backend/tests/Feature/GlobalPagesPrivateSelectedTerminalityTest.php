@@ -36,7 +36,7 @@ final class GlobalPagesPrivateSelectedTerminalityTest extends TestCase
         $this->assertStringContainsString(self::OPERATION_ID, $control);
         $platform = (string) file_get_contents(app_path('Content/ContentPlatformService.php'));
         $this->assertStringContainsString("'private'", $platform);
-        $this->assertStringContainsString("\$payload['status'] = $action === 'publish' ? 'publish' : $action;", $platform);
+        $this->assertStringContainsString("\$payload['status'] = \$action === 'publish' ? 'publish' : \$action;", $platform);
         $this->assertStringContainsString('GLOBAL_PAGES_PRIVATE_SELECTED_OPERATION_ID', $widget);
         $this->assertStringContainsString('privateMutation.mutate(selectedTargets)', $widget);
 
