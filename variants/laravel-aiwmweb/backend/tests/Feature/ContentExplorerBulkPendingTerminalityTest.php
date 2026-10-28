@@ -109,6 +109,7 @@ final class ContentExplorerBulkPendingTerminalityTest extends TestCase
     private function membership(User $user, string $slug, array $permissions): TenantMembership
     {
         $tenant = Tenant::query()->create(['name' => ucfirst($slug), 'slug' => $slug]);
+
         return $this->membershipInTenant($user, $tenant, $permissions, "{$slug}-editor");
     }
 
@@ -124,6 +125,7 @@ final class ContentExplorerBulkPendingTerminalityTest extends TestCase
         }
         $membership->roles()->attach($role, ['tenant_id' => $tenant->id]);
         $context->forget();
+
         return $membership->fresh('tenant');
     }
 
@@ -150,6 +152,7 @@ final class ContentExplorerBulkPendingTerminalityTest extends TestCase
                 'slug' => 'pending-page', 'status' => 'draft',
                 'synced_at' => now(),
             ]);
+
             return [$site, $post, $page];
         } finally {
             $context->forget();
