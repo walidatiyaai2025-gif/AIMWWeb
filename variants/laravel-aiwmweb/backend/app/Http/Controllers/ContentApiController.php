@@ -31,6 +31,8 @@ use Illuminate\Validation\Rule;
 
 final class ContentApiController extends Controller
 {
+    public const MEDIA_BATCH_UPLOAD_OPERATION_ID = 'AIMW-SYNC-6766C503DA';
+
     public const MEDIA_DELETE_OPERATION_ID = 'AIMW-BILL-4DCB58743D';
 
     public const CONTENT_EDITOR_SAVE_OPERATION_ID = 'AIMW-BILL-42F7590F00';
