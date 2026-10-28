@@ -57,6 +57,7 @@ import { WordPressUsersRefreshControl } from './wordpress-users-refresh-control'
 import { MediaDeleteControl } from './media-delete-control';
 import { MediaAltSuggestionControl } from './media-alt-suggestion-control';
 import { authoritativeGlobalMediaApplyEndpoint, defaultGlobalMediaFilters, globalMediaApplyQuery, GlobalMediaApplyControl } from './global-media-apply-control';
+import { globalMediaResetState, GlobalMediaResetControl } from './global-media-reset-control';
 import { GlobalMediaInterpolatedLinksControl } from './media-interpolated-links-control';
 import { MediaBackToSitesControl } from './media-back-to-sites-control';
 import { MediaManagerEditingSourceUrlControl } from './media-manager-editing-source-url-control';
@@ -96,6 +97,7 @@ const SITES_SHOW_REVIEW_OPERATION_ID = 'AIMW-CONT-CA17F05024';
 export const COMMENTS_SEARCH_OPERATION_ID = 'AIMW-SYNC-4E3C0156FC';
 export const COMMENTS_REFRESH_CLICK_OPERATION_ID = 'AIMW-SYNC-D5CE5A213B';
 export const WORDPRESS_USERS_SEARCH_OPERATION_ID = 'AIMW-SYNC-E6888B0B4D';
+export const WORDPRESS_USERS_PREVIOUS_OPERATION_ID = 'AIMW-SYNC-E0791EA9E9';
 export const AI_CENTER_METADATA_REFRESH_OPERATION_ID = 'AIMW-AI-953A6C0D98';
 export const NOTIFICATION_INBOX_RELOAD_OPERATION_ID = 'AIMW-EMAI-12A6FEB2FF';
 
@@ -512,6 +514,26 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         }
     };
 
+    // Canonical GlobalMediaExplorer ResetAsync: reset draft/applied filters and
+    // reread the authoritative media collection scoped to the active tenant/site.
+    const resetGlobalMediaFilters = async (): Promise<void> => {
+        if (route.key !== 'media' || state.state !== 'enabled' || !endpoint || query.isFetching) return;
+        const reset = globalMediaResetState();
+        const defaults = defaultGlobalMediaFilters();
+        setSearchInput(reset.search);
+        setSearch(reset.search);
+        setPage(reset.page);
+        setMediaDraft(defaults);
+        setMediaAppliedFilters(defaults);
+        await queryClient.fetchQuery({
+            queryKey: ['workspace', context.tenant.slug, route.key, endpoint, reset.page, reset.search, defaults.mediaType, defaults.pageSize],
+            queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint, reset.page, reset.search, {
+                per_page: String(reset.pageSize),
+            })),
+            staleTime: 0,
+        });
+    };
+
     const applicationUsersSearchAuthorized = context.permissions.includes('*') || context.permissions.includes('members.manage');
     const searchApplicationUsers = async (): Promise<void> => {
         if (
@@ -771,6 +793,16 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         busy={query.isFetching}
                         onChange={setSiteReliabilityDraft}
                         onApply={(next) => { void applySiteReliabilityFilters(next); }}
+                    />
+                ) : null}
+                {route.key === 'media' ? (
+                    <GlobalMediaResetControl
+                        locale={locale}
+                        busy={query.isFetching}
+                        available={Boolean(endpoint)}
+                        onReset={() => { void resetGlobalMediaFilters().catch((error) => {
+                            notify(error instanceof Error ? error.message : 'Media filters could not be reset.', 'error');
+                        }); }}
                     />
                 ) : null}
                 <form className="search-form" onSubmit={(event) => {
@@ -1191,7 +1223,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                 ) : <div className="empty-state"><strong>{text(commonText.empty)}</strong><p>{locale === 'ar' ? 'لا يتم إنشاء صفوف تجريبية عندما يعيد الخادم نتيجة فارغة.' : 'No sample rows are synthesized when the server returns an empty result.'}</p></div>}
                 {route.key === 'explorer'
                     ? <ContentExplorerPagination page={collection.page} lastPage={collection.lastPage} onPage={setPage} />
-                    : <Pagination page={collection.page} lastPage={collection.lastPage} onPage={setPage} previousOperationId={readOperations?.previous ?? (route.key === 'email-history' ? APP_DATA_GRID_PREVIOUS_PAGE_OPERATION_ID : undefined)} />}
+                    : <Pagination page={collection.page} lastPage={collection.lastPage} onPage={setPage} previousOperationAliasId={route.key === 'wp-users' ? WORDPRESS_USERS_PREVIOUS_OPERATION_ID : undefined} previousOperationId={readOperations?.previous ?? (route.key === 'email-history' ? APP_DATA_GRID_PREVIOUS_PAGE_OPERATION_ID : undefined)} />}
             </section>
             {route.key === 'explorer' && explorerPreview ? (
                 <ContentExplorerPreviewPanel
