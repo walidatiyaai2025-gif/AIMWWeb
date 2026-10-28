@@ -4,6 +4,7 @@ import { useLocale } from './i18n';
 import { MediaAltSuggestionControl, mediaSuggestionSiteId } from './media-alt-suggestion-control';
 
 export const MEDIA_SAVE_OPTIMIZATION_OPERATION_ID = 'AIMW-SYNC-425B82511E';
+export const MEDIA_CANCEL_OPTIMIZATION_OPERATION_ID = 'AIMW-SYNC-4B986B2651';
 
 type Metadata = { title: string; slug: string; alt_text: string; caption: string; description: string };
 type VerifiedMutation = { verified?: boolean; remote_id?: number };
@@ -74,6 +75,16 @@ export function MediaOptimizationEditorControl({
         }
     };
 
+    // CancelOptimizationClickedAsync is local-only. Do not mutate WordPress or
+    // invalidate the server cache when a user discards an uncommitted draft.
+    const cancelOptimization = () => {
+        if (working || opening) return;
+        setDraft(originalMediaMetadata(row));
+        setError('');
+        setNotice('');
+        setOpen(false);
+    };
+
     const save = async () => {
         if (working || !draft.title.trim()) return;
         setWorking(true);
@@ -130,6 +141,10 @@ export function MediaOptimizationEditorControl({
                 <button type="button" className="btn primary" data-canonical-operation={MEDIA_SAVE_OPTIMIZATION_OPERATION_ID}
                     disabled={working || !draft.title.trim()} aria-busy={working} onClick={() => void save()}>
                     {working ? (isArabic ? 'جارٍ الحفظ…' : 'Saving…') : (isArabic ? 'حفظ التحسينات' : 'Save optimization')}
+                </button>
+                <button type="button" className="btn" data-canonical-operation={MEDIA_CANCEL_OPTIMIZATION_OPERATION_ID}
+                    disabled={working || opening} onClick={cancelOptimization}>
+                    {isArabic ? 'إلغاء' : 'Cancel optimization'}
                 </button>
             </div> : null}
         </section>
