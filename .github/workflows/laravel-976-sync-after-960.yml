@@ -1,0 +1,44 @@
+name: Laravel 976 integrate after canonical 960 merge
+
+on:
+  push:
+    branches:
+      - worker/976-wordpress-site-users-search
+    paths:
+      - '.github/workflows/laravel-976-sync-after-960.yml'
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  sync-sequential:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Wait for Issue 960 to merge, then safely merge composition into own Issue 976 leaf
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          repo="$GITHUB_REPOSITORY"
+          base_ref="worker/laravel-aiwmweb-closure-composition"
+          leaf_ref="worker/976-wordpress-site-users-search"
+          for i in $(seq 1 120); do
+            merged=$(gh api "repos/$repo/pulls/1350" --jq '.merged')
+            if [ "$merged" = "true" ]; then
+              git config user.name "github-actions[bot]"
+              git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+              git fetch origin "+refs/heads/$base_ref:refs/remotes/origin/$base_ref"
+              git merge --no-ff --no-edit "refs/remotes/origin/$base_ref"
+              git push origin HEAD:refs/heads/worker/976-wordpress-site-users-search
+              echo "VERIFIED_BASE_MERGED_INTO_976=$(git rev-parse HEAD)"
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "Prerequisite PR #1350 not yet merged; kept 976 branch unchanged" >&2
+          exit 1
