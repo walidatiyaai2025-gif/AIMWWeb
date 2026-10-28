@@ -5,7 +5,10 @@ use App\Http\Controllers\ContentApiController;
 use App\Http\Controllers\ContentExplorerReadController;
 use App\Http\Controllers\EmailNotificationController;
 use App\Http\Controllers\GlobalPagesDraftController;
+use App\Http\Controllers\GlobalPagesPendingController;
+use App\Http\Controllers\GlobalPagesPrivateController;
 use App\Http\Controllers\GlobalPagesTrashController;
+use App\Http\Controllers\GlobalPostsPendingController;
 use App\Http\Controllers\GlobalPostsPrivateController;
 use App\Http\Controllers\GlobalPostsPublishController;
 use App\Http\Controllers\GlobalPostsTrashController;
@@ -139,6 +142,12 @@ Route::prefix('v1/tenants/{tenant}')
         Route::post('/global-pages/draft', [GlobalPagesDraftController::class, 'draft'])
             ->defaults('canonical_operation_id', GlobalPagesDraftController::OPERATION_ID)
             ->name('api.v1.global-pages.draft');
+        Route::post('/global-pages/private', [GlobalPagesPrivateController::class, 'setPrivate'])
+            ->defaults('canonical_operation_id', GlobalPagesPrivateController::OPERATION_ID)
+            ->name('api.v1.global-pages.private');
+        Route::post('/global-pages/pending', [GlobalPagesPendingController::class, 'pending'])
+            ->defaults('canonical_operation_id', GlobalPagesPendingController::OPERATION_ID)
+            ->name('api.v1.global-pages.pending');
         Route::post('/global-pages/trash', [GlobalPagesTrashController::class, 'trash'])
             ->defaults('canonical_operation_id', GlobalPagesTrashController::OPERATION_ID)
             ->name('api.v1.global-pages.trash');
@@ -147,6 +156,9 @@ Route::prefix('v1/tenants/{tenant}')
         Route::post('/global-posts/private', [GlobalPostsPrivateController::class, 'makePrivate'])
             ->defaults('canonical_operation_id', GlobalPostsPrivateController::OPERATION_ID)
             ->name('api.v1.global-posts.private');
+        Route::post('/global-posts/pending', [GlobalPostsPendingController::class, 'markPending'])
+            ->defaults('canonical_operation_id', GlobalPostsPendingController::OPERATION_ID)
+            ->name('api.v1.global-posts.pending');
         Route::post('/global-posts/publish', [GlobalPostsPublishController::class, 'publish'])
             ->defaults('canonical_operation_id', GlobalPostsPublishController::OPERATION_ID)
             ->name('api.v1.global-posts.publish');
