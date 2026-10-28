@@ -22,9 +22,11 @@ describe('AIMW-SYNC-EE7D7534DF ContentExplorer BulkPublishAsync', () => {
         expect(() => buildContentExplorerBulkPublishPayload([0])).toThrow();
         expect(() => buildContentExplorerBulkPublishPayload([])).toThrow();
         expect(() => buildContentExplorerBulkPublishPayload([1.5])).toThrow();
+        expect(() => buildContentExplorerBulkPublishPayload([Number.MAX_SAFE_INTEGER + 1])).toThrow();
     });
 
     it('enforces a bounded queue before the server 403 permission check and foreign-tenant 404 boundary', () => {
+        expect(buildContentExplorerBulkPublishPayload(Array.from({ length: 500 }, (_, i) => i + 1)).ids).toHaveLength(500);
         expect(() => buildContentExplorerBulkPublishPayload(Array.from({ length: 501 }, (_, i) => i + 1))).toThrow();
         expect(contentExplorerBulkPublishEndpoint('foreign/path', 7)).toBeNull();
     });
