@@ -54,5 +54,12 @@
     "generated_reconciliation_required": true,
     "generated_head": "b8e548df983288c755c655fe4457d14cfffdf07e",
     "terminal_state": "ADAPTED"
+  },
+  "evidence_deduplication": {
+    "canonical_operation_id": "AIMW-TAXO-602DE140EB",
+    "authoritative_document": "global-taxonomy-site-links-terminality.json",
+    "superseded_document_removed": "global-taxonomy-result-explorer-terminality.json",
+    "manifest_snapshot_retargeted_to": "43551b15d2a7721814c4f2bfd33707a24d2c82f2",
+    "invariant": "exactly one terminal evidence document per canonical operation"
   }
 }
