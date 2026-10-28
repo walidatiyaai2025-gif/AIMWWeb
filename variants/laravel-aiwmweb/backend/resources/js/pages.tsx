@@ -55,6 +55,7 @@ import { EMAIL_HISTORY_CLEAR_FILTERS_OPERATION_ID, EmailHistoryFiltersControl, t
 import { GlobalUsersFullManagementControl } from './global-users-full-management-control';
 import { WordPressUsersRefreshControl } from './wordpress-users-refresh-control';
 import { MediaDeleteControl } from './media-delete-control';
+import { MediaAltSuggestionControl } from './media-alt-suggestion-control';
 import { authoritativeGlobalMediaApplyEndpoint, defaultGlobalMediaFilters, globalMediaApplyQuery, GlobalMediaApplyControl } from './global-media-apply-control';
 import { GlobalMediaInterpolatedLinksControl } from './media-interpolated-links-control';
 import { MediaBackToSitesControl } from './media-back-to-sites-control';
@@ -1096,6 +1097,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                                         <ContentExplorerMediaSourceUrlControl value={row.source_url} />
                                     </MediaManagerEditingSourceUrlControl>
                                 </MediaManagerRowSourceUrlControl>
+                                <MediaAltSuggestionControl context={context} endpoint={endpoint} row={row} />
                                 <MediaDeleteControl
                                     context={context}
                                     endpoint={endpoint}
