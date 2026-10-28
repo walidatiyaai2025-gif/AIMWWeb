@@ -6,6 +6,7 @@ use App\Authorization\TenantAuthorizer;
 use App\Content\ContentConflictException;
 use App\Content\ContentPlatformService;
 use App\Content\MediaDeleteService;
+use App\Content\MediaMetadataVerificationService;
 use App\Content\Remote\ContentRemoteDriver;
 use App\Jobs\BulkCommentModerationJob;
 use App\Jobs\BulkContentMutationJob;
@@ -44,6 +45,7 @@ final class ContentApiController extends Controller
         private readonly ContentRemoteDriver $remote,
         private readonly TenantContext $tenant,
         private readonly MediaDeleteService $mediaDelete,
+        private readonly MediaMetadataVerificationService $mediaMetadata,
     ) {}
 
     public function index(Request $request, TenantAuthorizer $auth, string $tenant, int $site, string $type): JsonResponse
@@ -443,12 +445,22 @@ final class ContentApiController extends Controller
     public function updateMedia(Request $request, TenantAuthorizer $auth, string $tenant, int $site, int $media): JsonResponse
     {
         $auth->authorize('content.edit');
+        $callerIdentity = ['tenant', 'tenant_id', 'site', 'site_id', 'media_id', 'remote_id', 'actor_user_id'];
+        abort_if(array_intersect(array_keys($request->all()), $callerIdentity) !== [], 422, 'Media update does not accept caller-owned identities.');
+
         $item = MediaItem::query()->where('site_id', $site)->findOrFail($media);
-        $data = $request->validate(['alt_text' => 'nullable|string|max:500', 'caption' => 'nullable|string|max:5000', 'description' => 'nullable|string', 'title' => 'nullable|string|max:500']);
-        $result = $this->remote->mutate($site, 'media', $item->remote_id, 'update', $data);
+        $data = $request->validate([
+            'title' => 'sometimes|required|string|max:500',
+            'slug' => 'sometimes|nullable|string|max:200',
+            'alt_text' => 'sometimes|nullable|string|max:500',
+            'caption' => 'sometimes|nullable|string|max:5000',
+            'description' => 'sometimes|nullable|string',
+        ]);
+        abort_if($data === [], 422, 'At least one metadata field is required.');
+        $verified = $this->mediaMetadata->save($site, (int) $item->remote_id, $data);
         SyncContentJob::dispatch($this->tenant->id(), $site, false);
 
-        return response()->json($result);
+        return response()->json($verified);
     }
 
     public function deleteMedia(Request $request, TenantAuthorizer $auth, string $tenant, int $site, int $media): JsonResponse
