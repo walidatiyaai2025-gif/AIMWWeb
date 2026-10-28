@@ -5,6 +5,7 @@ use App\Http\Controllers\ContentApiController;
 use App\Http\Controllers\ContentExplorerReadController;
 use App\Http\Controllers\EmailNotificationController;
 use App\Http\Controllers\GlobalPagesDraftController;
+use App\Http\Controllers\GlobalPagesPendingController;
 use App\Http\Controllers\GlobalPagesTrashController;
 use App\Http\Controllers\GlobalPostsPrivateController;
 use App\Http\Controllers\GlobalPostsPublishController;
@@ -139,6 +140,9 @@ Route::prefix('v1/tenants/{tenant}')
         Route::post('/global-pages/draft', [GlobalPagesDraftController::class, 'draft'])
             ->defaults('canonical_operation_id', GlobalPagesDraftController::OPERATION_ID)
             ->name('api.v1.global-pages.draft');
+        Route::post('/global-pages/pending', [GlobalPagesPendingController::class, 'pending'])
+            ->defaults('canonical_operation_id', GlobalPagesPendingController::OPERATION_ID)
+            ->name('api.v1.global-pages.pending');
         Route::post('/global-pages/trash', [GlobalPagesTrashController::class, 'trash'])
             ->defaults('canonical_operation_id', GlobalPagesTrashController::OPERATION_ID)
             ->name('api.v1.global-pages.trash');
