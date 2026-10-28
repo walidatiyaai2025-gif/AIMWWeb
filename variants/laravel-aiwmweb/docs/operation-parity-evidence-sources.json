@@ -2932,6 +2932,14 @@
       ]
     },
     {
+      "label": "Issue #955 Global Synchronization Open local content navigation operation-scoped closure",
+      "sha": "37ab6e608e11b617a9c37f6121e45fab38ac26fe",
+      "observed_pr_head": "37ab6e608e11b617a9c37f6121e45fab38ac26fe",
+      "operation_ids": [
+        "AIMW-SYNC-E51F091C0B"
+      ]
+    },
+    {
       "label": "AIMW-SYNC-38D8A24B15 Sites EnableSelectedAsync focused closure #973",
       "sha": "5098b426828505946f1b905c4400e264b52625e0",
       "observed_pr_head": "5098b426828505946f1b905c4400e264b52625e0",
