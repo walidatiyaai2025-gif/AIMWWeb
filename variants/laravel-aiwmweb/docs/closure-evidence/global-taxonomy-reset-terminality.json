@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #957 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-5EE3F98A28",
+  "domain": "sync",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "previous_state": "PENDING",
+  "source": {
+    "path": "src/AIWordPressManager.Web/Components/Pages/GlobalTaxonomyExplorer.razor",
+    "route_screen": "/module/taxonomy",
+    "control": "ResetAsync",
+    "behavior": "Clear query, site and taxonomy type filters and page; authoritative LoadAsync read; no external mutation."
+  },
+  "laravel_runtime": {
+    "control": "variants/laravel-aiwmweb/backend/resources/js/global-taxonomy-reset-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx::ResourceContent",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentApiController.php::taxonomy",
+    "read_endpoint": "GET /api/v1/tenants/{tenant}/sites/{site}/taxonomy?page=1",
+    "behavior": "Remove search/type constraint, page one and force an uncached authoritative tenant/site-scoped GET. Search queries in the Laravel taxonomy read are applied to real name/slug columns.",
+    "mutation": false,
+    "loading_error_behavior": "In-flight reset is disabled and backend failure is rendered without a fabricated success."
+  },
+  "security": {
+    "tenant_owned": true,
+    "permissions": [
+      "tenant.view",
+      "sites.view",
+      "content.view"
+    ],
+    "frontend_endpoint_binding": "Match bootstrap-issued active_site, tenant slug, and exact context.api.taxonomy",
+    "server_authorization": "TenantAuthorizer content.view with tenant-scoped Site::findOrFail",
+    "foreign_tenant_site": "404",
+    "permission_denied": "403",
+    "unauthenticated": "401",
+    "external_mutation": false
+  },
+  "acceptance": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-taxonomy-reset-control.test.tsx",
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalTaxonomyResetTerminalityTest.php",
+    "coverage": [
+      "source ResetAsync binding",
+      "canonical operation button",
+      "scope and API binding",
+      "busy/duplicate prevention and error handling",
+      "authoritative persisted filtered then unfiltered reads",
+      "foreign tenant/site 404 and missing permission 403",
+      "Arabic/English UI"
+    ]
+  },
+  "provenance": {
+    "branch": "worker/957-global-taxonomy-reset",
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_sha": "1bd330c2a7b7d9cc4971a742edf6a26595501f5a",
+    "implementation_test_sha": "9344b6ccfd281654cf560ef72401e9d2f17b07cc",
+    "issue": 957
+  },
+  "scope": {
+    "only_operation_claimed": "AIMW-SYNC-5EE3F98A28",
+    "apply_filters_sibling_claimed": false,
+    "aspnet_modified": false,
+    "manual_reconciliation_edit": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "runtime_wired": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true,
+    "ci_status": "PENDING_VERIFICATION",
+    "generator_status": "PENDING_VERIFICATION"
+  }
+}
