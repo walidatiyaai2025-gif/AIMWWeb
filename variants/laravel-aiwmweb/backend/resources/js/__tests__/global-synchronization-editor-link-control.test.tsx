@@ -54,7 +54,7 @@ describe('AIMW-SYNC-0239B0E6A3 conflict editor parity', () => {
         expect(screen.queryByRole('link', { name: 'Open editor to merge' })).not.toBeInTheDocument();
     });
 
-    it('fails closed for invalid or foreign site targets', () => {
+    it('fails closed for invalid or foreign site targets before tenant 404 routing', () => {
         expect(globalSyncEditorDestination('alpha', 0, remoteUpdate)).toBeNull();
         expect(globalSyncEditorDestination('alpha', '7/../../other', remoteUpdate)).toBeNull();
         expect(globalSyncEditorDestination('alpha', 7, { ...remoteUpdate, wordpress_id: -1 })).toBeNull();
