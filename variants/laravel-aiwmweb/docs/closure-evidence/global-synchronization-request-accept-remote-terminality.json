@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "issue": 952,
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-1B63FBC758",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "/module/sync",
+    "source": "src/AIWordPressManager.Web/Components/Pages/GlobalSynchronizationWorkspace.razor",
+    "source_intent": "RequestAcceptRemoteAsync opens explicit confirmation before executing the existing authoritative accept-remote full sync.",
+    "mutation": false,
+    "tenant_owned": true
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/global-synchronization-accept-remote-control.tsx",
+    "route": "POST /api/v1/tenants/{tenant}/sites/{site}/sync/accept-remote",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SyncApiController.php",
+    "service": "variants/laravel-aiwmweb/backend/app/Sync/GlobalSynchronizationAcceptRemoteService.php",
+    "no_duplicate_mutation": true,
+    "server_enforced_full_sync": true,
+    "authoritative_status_polling": true,
+    "existing_confirmation_dialog": true
+  },
+  "security": {
+    "tenant_context_required": true,
+    "permission": "content.edit",
+    "tenant_site_isolation": "Existing accept-remote endpoint enforces server-side tenant and site ownership; referenced by focused Feature test and GlobalSynchronizationAcceptRemoteTerminalityTest.",
+    "idempotency": "Existing tenant-scoped Idempotency-Key enforces one dispatch and replay equivalence.",
+    "fabricated_success": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalSynchronizationRequestAcceptRemoteTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-synchronization-request-accept-remote-control.test.ts",
+    "existing_backend_suite": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalSynchronizationAcceptRemoteTerminalityTest.php",
+    "coverage": [
+      "Exact source RequestAcceptRemoteAsync confirmation handler",
+      "Operation marker on confirmation trigger, not mutation completion",
+      "Real full sync via existing server authenticated tenant-scoped service",
+      "Failed/partial/cancelled remote results never count as success",
+      "Required idempotency and tenant isolation covered by existing backend feature tests"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-1B63FBC758"
+    ],
+    "no_sibling_claims": true,
+    "aspnet_source_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "implementation_sha": "ad17dc10b717c00a9f5ff0031127158e5f268e3e",
+    "branch": "worker/952-global-sync-request-accept-remote"
+  }
+}

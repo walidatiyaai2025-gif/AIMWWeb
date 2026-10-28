@@ -5,6 +5,7 @@ import { useToast } from './components';
 import { useLocale } from './i18n';
 
 export const GLOBAL_SYNCHRONIZATION_ACCEPT_REMOTE_OPERATION_ID = 'AIMW-BILL-6928C148FF';
+export const GLOBAL_SYNCHRONIZATION_REQUEST_ACCEPT_REMOTE_OPERATION_ID = 'AIMW-SYNC-1B63FBC758';
 
 type ActiveSite = {
     id: number;
@@ -149,6 +150,7 @@ export function GlobalSynchronizationAcceptRemoteControl({ context }: { context:
                 <button
                     type="button"
                     className="btn primary"
+                    data-canonical-operation={GLOBAL_SYNCHRONIZATION_REQUEST_ACCEPT_REMOTE_OPERATION_ID}
                     onClick={() => setConfirmOpen(true)}
                     disabled={mutation.isPending}
                 >
