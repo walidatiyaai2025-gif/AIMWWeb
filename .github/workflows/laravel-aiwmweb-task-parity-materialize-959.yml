@@ -1,0 +1,91 @@
+name: Laravel AIWMWeb Task 959 Parity Recovery (temporary)
+on:
+  push:
+    branches:
+      - worker/959-global-users-refresh
+    paths:
+      - '.github/workflows/laravel-aiwmweb-task-parity-materialize-959.yml'
+permissions:
+  contents: write
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: worker/959-global-users-refresh
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Reconcile current composition without losing #973 or #959
+        run: |
+          set -euo pipefail
+          git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+          PR_HEAD=$(git rev-parse HEAD)
+          BASE=$(git rev-parse refs/remotes/origin/worker/laravel-aiwmweb-closure-composition)
+          echo "Task tip: $PR_HEAD; composition: $BASE"
+          git merge --no-commit --no-ff "$BASE" || true
+          python - <<'PY'
+          import subprocess, json, pathlib
+          def git(*args):
+              return subprocess.check_output(['git',*args],text=True)
+          unresolved=set(git('diff','--name-only','--diff-filter=U').splitlines())
+          docs='variants/laravel-aiwmweb/docs/'
+          manifest=docs+'operation-parity-evidence-sources.json'
+          reconc=docs+'operation-parity-reconciliation.json'
+          markdown=docs+'operation-parity-reconciliation.md'
+          permitted={manifest,reconc,markdown}
+          assert unresolved <= permitted, f"Unexpected code merge conflicts: {sorted(unresolved-permitted)}"
+          own=json.loads(git('show','HEAD:'+manifest))
+          composition=json.loads(git('show','refs/remotes/origin/worker/laravel-aiwmweb-closure-composition:'+manifest))
+          key='focused_closure_operation_sources'
+          marker='AIMW-SYNC-7C77CF7F7A'
+          preserved='AIMW-SYNC-38D8A24B15'
+          task=[e for e in own[key] if marker in e.get('operation_ids',[])]
+          assert len(task)==1, 'Missing canonical #959 evidence'
+          assert any(preserved in e.get('operation_ids',[]) for e in composition[key]), 'Missing #973 evidence in composition'
+          assert not any(marker in e.get('operation_ids',[]) for e in composition[key]), '#959 already materialized in composition; stop to avoid duplicate'
+          composition[key].append(task[0])
+          assert len({i for e in composition[key] for i in e.get('operation_ids',[])})==len(composition[key]), 'Duplicate focused evidence operation ID'
+          pathlib.Path(manifest).write_text(json.dumps(composition,indent=2,ensure_ascii=False)+'\n')
+          base='refs/remotes/origin/worker/laravel-aiwmweb-closure-composition:'
+          pathlib.Path(reconc).write_text(git('show',base+reconc))
+          pathlib.Path(markdown).write_text(git('show',base+markdown))
+          PY
+          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          test -z "$(git diff --name-only --diff-filter=U)"
+          OUT=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          MD=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          SUM=/tmp/959-parity-summary.json
+          cp "$OUT" /tmp/959-parity-before.json
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_platform_admin_route_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python - <<'PY'
+          import json
+          old=json.load(open('/tmp/959-parity-before.json'))
+          new=json.load(open('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'))
+          before={r['operation_id']:r['migration_state'] for r in old['operations']}
+          after={r['operation_id']:r['migration_state'] for r in new['operations']}
+          changed={k:(before[k],after[k]) for k in before if before[k]!=after[k]}
+          assert changed=={'AIMW-SYNC-7C77CF7F7A':('PENDING','ADAPTED')},changed
+          assert after['AIMW-SYNC-38D8A24B15']=='ADAPTED', 'Regression of #973'
+          assert new['totals']['total']==931
+          print('Verified exact #959-only delta, preserving #973:',changed)
+          PY
+          git add "$OUT" "$MD"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(laravel): reconcile #959 with merged #973 using official parity generator"
+          git fetch origin '+refs/heads/worker/laravel-aiwmweb-closure-composition:refs/remotes/origin/worker/laravel-aiwmweb-closure-composition'
+          test "$(git rev-parse refs/remotes/origin/worker/laravel-aiwmweb-closure-composition)" = "$BASE" || { echo "Composition advanced during job"; exit 1; }
+          REMOTE_HEAD=$(git ls-remote origin refs/heads/worker/959-global-users-refresh | awk '{print $1}')
+          test "$REMOTE_HEAD" = "$PR_HEAD" || { echo "Task branch advanced during job"; exit 1; }
+          git push origin HEAD:refs/heads/worker/959-global-users-refresh
