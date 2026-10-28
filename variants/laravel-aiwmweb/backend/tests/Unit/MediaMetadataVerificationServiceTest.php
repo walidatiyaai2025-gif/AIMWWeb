@@ -48,8 +48,11 @@ final class MediaMetadataVerificationServiceTest extends TestCase
         return new class($read) implements ContentRemoteDriver {
             public array $calls = [];
 
-            public function __construct(private array $read)
+            private array $read;
+
+            public function __construct(array $read)
             {
+                $this->read = $read;
             }
 
             public function list(int $siteId, string $resource, array $query = []): array
