@@ -1,0 +1,57 @@
+name: Laravel #976 Official Parity Materialization (temporary)
+on:
+  push:
+    branches:
+      - worker/976-wordpress-site-users-search
+    paths:
+      - '.github/workflows/laravel-976-official-materialize.yml'
+permissions:
+  contents: write
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Fetch provenance refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+      - name: Run official seven-stage parity and verify #976 only
+        run: |
+          set -euo pipefail
+          P=variants/laravel-aiwmweb
+          J="$P/docs/operation-parity-reconciliation.json"
+          M="$P/docs/operation-parity-reconciliation.md"
+          S=/tmp/laravel-976-summary.json
+          cp "$J" /tmp/laravel-976-before.json
+          python "$P/tools/finalize_operation_parity.py" --output "$J" --summary-output "$S" --markdown-output "$M" --check-total 931
+          for script in apply_tenant_neutral_route_evidence apply_platform_admin_route_evidence apply_explicit_route_api_provenance apply_focused_closure_evidence apply_focused_service_evidence apply_focused_background_job_evidence; do
+            python "$P/tools/$script.py" --input "$J" --output "$J" --summary-output "$S" --markdown-output "$M" --check-total 931
+          done
+          python - <<'PY'
+          import json
+          old=json.load(open('/tmp/laravel-976-before.json'))
+          new=json.load(open('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'))
+          a={r['operation_id']:r['migration_state'] for r in old['operations']}
+          b={r['operation_id']:r['migration_state'] for r in new['operations']}
+          assert len(a)==len(b)==931 and a.keys()==b.keys(), 'denominator drift'
+          delta={k:(a[k],b[k]) for k in a if a[k]!=b[k]}
+          assert delta=={'AIMW-SYNC-4FDCFDA33F':('PENDING','ADAPTED')},delta
+          assert new['validation']['passed'],new['validation'].get('errors')
+          print('Official #976 parity:',delta)
+          PY
+      - name: Commit generated parity and remove one-shot workflow
+        run: |
+          set -euo pipefail
+          git add variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git rm .github/workflows/laravel-976-official-materialize.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'build(laravel #976): official parity on current composition and remove temporary workflow'
+          git push origin "HEAD:${{ github.ref_name }}"

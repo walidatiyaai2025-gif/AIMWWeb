@@ -2996,6 +2996,14 @@
       ]
     },
     {
+      "label": "Issue #953 Global Synchronization RefreshStatusAsync authoritative status",
+      "sha": "29061a04e90c5b89d4fe4cae40dadb5eede04b87",
+      "observed_pr_head": "29061a04e90c5b89d4fe4cae40dadb5eede04b87",
+      "operation_ids": [
+        "AIMW-SYNC-9504A57CAE"
+      ]
+    },
+    {
       "label": "AIMW-SYNC-4FDCFDA33F WordPress UsersManager SearchClickedAsync scoped closure #976",
       "sha": "9f3bccc427efaf7538647143bc87a26319a9e5e2",
       "observed_pr_head": "9f3bccc427efaf7538647143bc87a26319a9e5e2",
