@@ -3056,6 +3056,14 @@
       "operation_ids": [
         "AIMW-SYNC-9B87CACA17"
       ]
+    },
+    {
+      "label": "AIMW-SYNC-2A256826D2 GlobalMediaExplorer Open synchronization focused closure #932",
+      "sha": "840c30bdea70ab7853e204e03fb4f2c2abcda44b",
+      "observed_pr_head": "840c30bdea70ab7853e204e03fb4f2c2abcda44b",
+      "operation_ids": [
+        "AIMW-SYNC-2A256826D2"
+      ]
     }
   ],
   "sources": [
