@@ -36,7 +36,7 @@ final class WordPressUsersSearchTerminalityTest extends TestCase
         $this->assertStringContainsString('WORDPRESS_USERS_SEARCH_OPERATION_ID', $frontend);
         $this->assertStringContainsString("route.key === 'wp-users'", $frontend);
         $this->assertStringContainsString('setPage(1); setSearch(searchInput);', $frontend);
-        $this->assertStringContainsString('endpointWithQuery(endpoint!, page, search, taxonomyFilter)', $frontend);
+        $this->assertStringContainsString('endpointWithQuery(endpoint!, page, search, taxonomyAppliedQuery)', $frontend);
 
         $this->assertStringContainsString("\$search = trim((string) \$request->query('search', ''));", $controller);
         $this->assertStringContainsString("\$query['search'] = \$search;", $controller);
