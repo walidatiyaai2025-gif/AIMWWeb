@@ -5,16 +5,21 @@ import { useToast } from './components';
 import { useLocale } from './i18n';
 import { CONTENT_EXPLORER_CONTENT_TAB_RESET_EVENT } from './content-explorer-content-tab-control';
 import {
-    CONTENT_EXPLORER_BULK_TRASH_OPERATION_ID,
-    buildBulkTrashPayload,
-    contentExplorerBulkTrashEndpoint,
-    type BulkTrashTarget,
-} from './content-explorer-bulk-trash-control';
+    CONTENT_EXPLORER_BULK_PUBLISH_OPERATION_ID,
+    contentExplorerBulkPublishEndpoint,
+    buildContentExplorerBulkPublishPayload,
+} from './content-explorer-bulk-publish-control';
 import {
     CONTENT_EXPLORER_BULK_DRAFT_OPERATION_ID,
     contentExplorerBulkDraftEndpoint,
     buildContentExplorerBulkDraftPayload,
 } from './content-explorer-bulk-draft-control';
+import {
+    CONTENT_EXPLORER_BULK_TRASH_OPERATION_ID,
+    buildBulkTrashPayload,
+    contentExplorerBulkTrashEndpoint,
+    type BulkTrashTarget,
+} from './content-explorer-bulk-trash-control';
 
 type ActiveSite = {
     id: number;
@@ -75,6 +80,7 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
     const canView = hasPermission(context, 'content.view');
     const canEdit = hasPermission(context, 'content.edit');
     const endpoint = contentExplorerBulkTrashEndpoint(context.tenant.slug, siteId);
+    const publishEndpoint = contentExplorerBulkPublishEndpoint(context.tenant.slug, siteId);
     const draftEndpoint = contentExplorerBulkDraftEndpoint(context.tenant.slug, siteId);
     const postsEndpoint = context.api.posts;
     const pagesEndpoint = context.api.pages;
@@ -137,6 +143,33 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
         ),
     });
 
+    const publishMutation = useMutation({
+        mutationFn: async (ids: number[]) => {
+            if (!publishEndpoint) throw new Error('The selected site publish endpoint is unavailable.');
+            const result = await apiRequest<{ state: string; count: number }>(publishEndpoint, {
+                method: 'POST',
+                body: JSON.stringify(buildContentExplorerBulkPublishPayload(ids)),
+            });
+            if (result.state !== 'queued' || result.count !== ids.length) {
+                throw new Error('The server did not confirm the publish job was queued.');
+            }
+            return result;
+        },
+        onSuccess: (result) => {
+            setSelected(new Set());
+            notify(
+                locale === 'ar'
+                    ? `تم وضع ${result.count} عنصر في انتظار النشر. لا يعتبر النشر مكتملاً حتى تتأكد من الحالة الفعلية بعد تنفيذ المهمة.`
+                    : `Queued ${result.count} item(s) for publication; verify actual WordPress status after the job completes.`,
+                'success',
+            );
+        },
+        onError: (error) => notify(
+            error instanceof Error ? error.message : 'Could not queue selected content for publication.',
+            'error',
+        ),
+    });
+
     const mutation = useMutation({
         mutationFn: async (targets: BulkTrashTarget[]) => {
             if (!endpoint) throw new Error('Bulk trash endpoint is unavailable.');
@@ -168,7 +201,7 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
         ),
     });
 
-    const busy = mutation.isPending || draftMutation.isPending;
+    const busy = mutation.isPending || publishMutation.isPending || draftMutation.isPending;
 
     if (!enabled || !activeSite) return null;
 
@@ -188,7 +221,7 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
             <header className="panel-header">
                 <div>
                     <span className="workspace-kicker">CONTENT OPERATIONS</span>
-                    <h2>{locale === 'ar' ? 'نقل المحدد إلى سلة المهملات' : 'Move selected content to trash'}</h2>
+                    <h2>{locale === 'ar' ? 'إجراءات جماعية على المحتوى' : 'Bulk content actions'}</h2>
                     <p>{locale === 'ar'
                         ? `الموقع: ${activeSite.name}. يتم التحقق من كل عنصر على الخادم قبل التغيير.`
                         : `Site: ${activeSite.name}. Each item is verified by the server before mutation.`}</p>
@@ -206,6 +239,17 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
             {rows.length ? (
                 <>
                     <div className="toolbar-actions">
+                        <button
+                            type="button"
+                            className="btn primary"
+                            data-canonical-operation={CONTENT_EXPLORER_BULK_PUBLISH_OPERATION_ID}
+                            onClick={() => publishMutation.mutate(selectedLocalIds)}
+                            disabled={!publishEndpoint || busy || selectedLocalIds.length === 0 || selectedLocalIds.length !== selectedTargets.length}
+                        >
+                            {publishMutation.isPending
+                                ? (locale === 'ar' ? 'جارٍ إضافة مهمة النشر…' : 'Queueing publication…')
+                                : (locale === 'ar' ? 'نشر المحدد' : 'Publish selected')}
+                        </button>
                         <button
                             type="button"
                             className="btn"
