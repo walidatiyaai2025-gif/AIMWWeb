@@ -48,4 +48,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "chore(laravel): materialize parity for AIMW-SYNC-6766C503DA"
+          if git push origin "HEAD:${{ github.ref_name }}"; then
+            exit 0
+          fi
+          # An acceptance fix may advance this same task branch during long-running materialization.
+          # Rebase the generated commit normally; never force-push or rewrite another worker's history.
+          git pull --rebase origin "${{ github.ref_name }}"
           git push origin "HEAD:${{ github.ref_name }}"
