@@ -432,7 +432,7 @@ final class ContentApiController extends Controller
 
     public function mediaDetails(TenantAuthorizer $auth, string $tenant, int $site, int $media): JsonResponse
     {
-        $auth->authorize('content.view');
+        $auth->authorize('content.edit');
         $item = MediaItem::query()->where('site_id', $site)->findOrFail($media);
         $remote = $this->remote->get($site, 'media', (int) $item->remote_id);
         abort_unless((int) ($remote['id'] ?? 0) === (int) $item->remote_id, 409, 'WordPress returned an unexpected media identity.');
