@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 877,
-    "pending": 54,
+    "adapted": 878,
+    "pending": 53,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 877,
-    "overall_parity_percent": 94.2
+    "terminal": 878,
+    "overall_parity_percent": 94.31
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 393,
-    "pending": 53,
+    "terminal": 394,
+    "pending": 52,
     "blocked": 0,
-    "percent": 88.12
+    "percent": 88.34
   },
   "domains": {
     "ai": {
@@ -37965,12 +37965,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 393,
-      "pending": 53,
+      "adapted": 394,
+      "pending": 52,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 393,
-      "percent": 88.12
+      "terminal": 394,
+      "percent": 88.34
     }
   },
   "pending_operation_ids_by_domain": {
@@ -40812,8 +40812,8 @@
         ]
       }
     ],
-    "focused_closure_operation_scoped_count": 163,
-    "focused_closure_contract_count": 393,
+    "focused_closure_operation_scoped_count": 164,
+    "focused_closure_contract_count": 394,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
