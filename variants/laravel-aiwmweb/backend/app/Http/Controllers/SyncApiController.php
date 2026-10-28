@@ -103,6 +103,8 @@ final class SyncApiController extends Controller
     public function index(Request $request, TenantAuthorizer $auth, string $tenant, int $site): JsonResponse
     {
         $auth->authorize('content.view');
+        // A foreign site must not be distinguishable from an owned empty history.
+        Site::query()->findOrFail($site);
         $query = SyncRun::query()->where('site_id', $site)->latest('id');
         if ($state = $request->query('state')) {
             $query->where('state', $state);
