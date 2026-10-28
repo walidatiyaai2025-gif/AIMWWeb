@@ -63,6 +63,16 @@ describe('AIMW-CONT-BCAD1E3A49 Operations Hub site-operation history navigation'
         expect(screen.queryByRole('link', { name: /Site Operations/i })).not.toBeInTheDocument();
     });
 
+    it('hides tenant-scoped navigation if the authenticated identity is invalid or missing membership', () => {
+        const withoutIdentity = context();
+        renderControl({ ...withoutIdentity, user: { ...withoutIdentity.user, id: 0 } });
+        expect(screen.queryByRole('link', { name: /Site Operations/i })).not.toBeInTheDocument();
+
+        cleanup();
+        renderControl(context('alpha', ['operations.manage', 'execution.view'], []));
+        expect(screen.queryByRole('link', { name: /Site Operations/i })).not.toBeInTheDocument();
+    });
+
     it('rejects missing, foreign, or caller-diverted API contracts', () => {
         renderControl(context('alpha', undefined, ['alpha'], ''));
         expect(screen.queryByRole('link', { name: /Site Operations/i })).not.toBeInTheDocument();
