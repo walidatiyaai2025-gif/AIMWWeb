@@ -71,9 +71,9 @@ final class GlobalPostsOpenSynchronizationLinkTerminalityTest extends TestCase
         // A site-bound workspace must fail closed until a real tenant-owned site exists.
         $this->actingAs($owner)->get('/tenants/authorized/module/sync')->assertStatus(409);
         app(TenantContext::class)->activate($authorizedMembership->tenant);
-        Site::query()->create(['name' => 'Authorized WordPress', 'url' => 'https://authorized.example.test']);
+        $site = Site::query()->create(['name' => 'Authorized WordPress', 'url' => 'https://authorized.example.test']);
         app(TenantContext::class)->forget();
-        $this->actingAs($owner)->get('/tenants/authorized/module/sync')
+        $this->actingAs($owner)->get('/tenants/authorized/module/sync?site='.$site->getKey())
             ->assertOk()->assertSee('id="app"', false);
 
         $withoutSync = User::factory()->create();
