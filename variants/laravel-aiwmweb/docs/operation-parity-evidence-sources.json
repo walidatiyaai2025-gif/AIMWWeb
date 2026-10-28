@@ -3082,6 +3082,14 @@
       ]
     },
     {
+      "label": "AIMW-SYNC-38D8A24B15 Sites EnableSelectedAsync focused closure #973",
+      "sha": "5098b426828505946f1b905c4400e264b52625e0",
+      "observed_pr_head": "5098b426828505946f1b905c4400e264b52625e0",
+      "operation_ids": [
+        "AIMW-SYNC-38D8A24B15"
+      ]
+    },
+    {
       "label": "Issue #940 Global Pages RequestTrashAsync operation-scoped closure",
       "sha": "b9b6d4854dd6ffa315ef5ab4a3ea7fec9a971132",
       "observed_pr_head": "b9b6d4854dd6ffa315ef5ab4a3ea7fec9a971132",
