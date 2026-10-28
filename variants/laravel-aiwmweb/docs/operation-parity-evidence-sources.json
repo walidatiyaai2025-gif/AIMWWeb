@@ -2892,19 +2892,19 @@
       ]
     },
     {
-      "label": "Issue #950 Global Posts Open synchronization navigation scoped closure",
-      "sha": "cd171497cba463039bdac1e25e83bee2473f495b",
-      "observed_pr_head": "cd171497cba463039bdac1e25e83bee2473f495b",
-      "operation_ids": [
-        "AIMW-SYNC-EEFDDFFF87"
-      ]
-    },
-    {
       "label": "AIMW-SYNC-BDBA0B4F01 Site Onboarding OpenSiteAsync focused closure #971",
       "sha": "0a311c8358b8eed1d5c1a54c4c7a1b630fe85729",
       "observed_pr_head": "0a311c8358b8eed1d5c1a54c4c7a1b630fe85729",
       "operation_ids": [
         "AIMW-SYNC-BDBA0B4F01"
+      ]
+    },
+    {
+      "label": "Issue #950 Global Posts Open synchronization navigation scoped closure",
+      "sha": "cd171497cba463039bdac1e25e83bee2473f495b",
+      "observed_pr_head": "cd171497cba463039bdac1e25e83bee2473f495b",
+      "operation_ids": [
+        "AIMW-SYNC-EEFDDFFF87"
       ]
     }
   ],

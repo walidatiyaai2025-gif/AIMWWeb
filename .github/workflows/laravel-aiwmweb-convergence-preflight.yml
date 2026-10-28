@@ -14,6 +14,10 @@ on:
       - worker/laravel-aiwmweb-closure-composition
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions:
   contents: read
 
@@ -45,11 +49,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: npm
+          cache-dependency-path: variants/laravel-aiwmweb/backend/package-lock.json
 
       - name: Reconstruct pinned worker heads without replacing exact candidate
         shell: bash
         run: bash variants/laravel-aiwmweb/tools/convergence/convergence-compose.sh
 
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/composer/files
+          key: composer-${{ runner.os }}-php84-${{ hashFiles('variants/laravel-aiwmweb/backend/composer.lock') }}
+          restore-keys: |
+            composer-${{ runner.os }}-php84-
       - name: Composer install
         working-directory: variants/laravel-aiwmweb/backend
         run: composer install --no-interaction --prefer-dist
