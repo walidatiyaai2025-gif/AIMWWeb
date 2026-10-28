@@ -163,7 +163,9 @@ final class MediaBatchUploadTerminalityTest extends TestCase
         $membership = TenantMembership::query()->create(['user_id' => $user->id, 'status' => 'active']);
         $role = Role::query()->create(['name' => 'batch-upload-'.$slug.'-'.$user->id]);
         $permissions = ['tenant.view', 'sites.view', 'content.view'];
-        if ($canEdit) $permissions[] = 'content.edit';
+        if ($canEdit) {
+            $permissions[] = 'content.edit';
+        }
         foreach ($permissions as $name) {
             $permission = Permission::query()->firstOrCreate(['name' => $name]);
             $role->permissions()->attach($permission, ['tenant_id' => $tenant->id]);
