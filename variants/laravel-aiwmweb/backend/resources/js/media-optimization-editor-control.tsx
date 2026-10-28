@@ -111,7 +111,7 @@ export function MediaOptimizationEditorControl({
             {!open && error ? <p role="alert">{error}</p> : null}
             {notice ? <p role="status">{notice}</p> : null}
             {open ? <div className="panel workspace-stack" aria-label={isArabic ? 'تحسين الوسائط' : 'Media optimization'}>
-                <h3>{isArabic ? 'تحسين بيانات الوسيط' : 'Optimize media metadata'} #{row.remote_id ?? mediaId}</h3>
+                <h3>{isArabic ? 'تحسين بيانات الوسيط' : 'Optimize media metadata'} #{String(row.remote_id ?? mediaId)}</h3>
                 <label><span>{isArabic ? 'العنوان' : 'Title'}</span>
                     <input aria-label="Media title" value={draft.title} maxLength={500} disabled={working} onChange={(event) => edit('title', event.target.value)} />
                 </label>
