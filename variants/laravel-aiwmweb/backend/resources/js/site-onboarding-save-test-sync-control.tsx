@@ -332,6 +332,7 @@ export function SiteOnboardingSaveTestSyncControl({ context }: { context: Fronte
                         saveText={locale === 'ar' ? 'حفظ واختبار ومزامنة' : 'Save, test and synchronize'}
                         savingText={locale === 'ar' ? 'جارٍ الحفظ والاختبار وبدء المزامنة…' : 'Saving, testing & starting sync…'}
                         saveOperationId={SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID}
+                        showCancel={!result}
                         cancelOperationId={SITE_ONBOARDING_PREVIOUS_OPERATION_ID}
                         onCancel={previousStep}
                         onSave={() => mutation.mutateAsync().catch(() => undefined)}
