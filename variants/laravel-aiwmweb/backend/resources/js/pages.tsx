@@ -56,7 +56,9 @@ import { GlobalUsersFullManagementControl } from './global-users-full-management
 import { WordPressUsersRefreshControl } from './wordpress-users-refresh-control';
 import { MediaDeleteControl } from './media-delete-control';
 import { MediaOptimizationEditorControl } from './media-optimization-editor-control';
+import { MediaAltSuggestionControl } from './media-alt-suggestion-control';
 import { authoritativeGlobalMediaApplyEndpoint, defaultGlobalMediaFilters, globalMediaApplyQuery, GlobalMediaApplyControl } from './global-media-apply-control';
+import { globalMediaResetState, GlobalMediaResetControl } from './global-media-reset-control';
 import { GlobalMediaInterpolatedLinksControl } from './media-interpolated-links-control';
 import { MediaBackToSitesControl } from './media-back-to-sites-control';
 import { MediaManagerEditingSourceUrlControl } from './media-manager-editing-source-url-control';
@@ -79,6 +81,8 @@ import {
 } from './site-operations-filters-control';
 import { SiteReliabilityConnectionLinkControl } from './site-reliability-connection-link-control';
 import { GlobalTaxonomySiteLinksControl } from './global-taxonomy-site-links-control';
+import { GlobalTaxonomyResetControl, authorizedGlobalTaxonomyResetEndpoint } from './global-taxonomy-reset-control';
+import { defaultGlobalTaxonomyApplyFilters, globalTaxonomyApplyQuery, GlobalTaxonomyApplyControl } from './global-taxonomy-apply-control';
 import { SiteReliabilityFiltersControl, siteReliabilityDefaultFilters, type SiteReliabilityFilterState } from './site-reliability-filters-control';
 import { SitesSiteUrlLinkControl } from './sites-site-url-link-control';
 import { SitesInterpolatedLinksControl } from './sites-interpolated-links-control';
@@ -94,6 +98,7 @@ const SITES_SHOW_REVIEW_OPERATION_ID = 'AIMW-CONT-CA17F05024';
 export const COMMENTS_SEARCH_OPERATION_ID = 'AIMW-SYNC-4E3C0156FC';
 export const COMMENTS_REFRESH_CLICK_OPERATION_ID = 'AIMW-SYNC-D5CE5A213B';
 export const WORDPRESS_USERS_SEARCH_OPERATION_ID = 'AIMW-SYNC-E6888B0B4D';
+export const WORDPRESS_USERS_PREVIOUS_OPERATION_ID = 'AIMW-SYNC-E0791EA9E9';
 export const AI_CENTER_METADATA_REFRESH_OPERATION_ID = 'AIMW-AI-953A6C0D98';
 export const NOTIFICATION_INBOX_RELOAD_OPERATION_ID = 'AIMW-EMAI-12A6FEB2FF';
 
@@ -356,7 +361,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const [siteOperationsExportResetToken, setSiteOperationsExportResetToken] = useState(0);
     const [siteReliabilityDraft, setSiteReliabilityDraft] = useState<SiteReliabilityFilterState>(() => siteReliabilityDefaultFilters());
     const [siteReliabilityFilters, setSiteReliabilityFilters] = useState<SiteReliabilityFilterState>(() => siteReliabilityDefaultFilters());
-    const [taxonomyType, setTaxonomyType] = useState<'category' | 'post_tag'>('category');
+    const [taxonomyType, setTaxonomyType] = useState<'all' | 'category' | 'post_tag'>('category');
+    const [taxonomyDraft, setTaxonomyDraft] = useState(defaultGlobalTaxonomyApplyFilters);
+    const [taxonomyApplied, setTaxonomyApplied] = useState(defaultGlobalTaxonomyApplyFilters);
 
     useEffect(() => {
         if (route.key !== 'taxonomy') return;
@@ -383,7 +390,8 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         setExplorerSelectedKeys(keys);
     };
 
-    const taxonomyFilter: Record<string, string> = route.key === 'taxonomy' ? { taxonomy: taxonomyType } : {};
+    const taxonomyFilter: Record<string, string> = route.key === 'taxonomy' && taxonomyType !== 'all' ? { taxonomy: taxonomyType } : {};
+    const taxonomyAppliedQuery = route.key === 'taxonomy' ? { ...taxonomyFilter, ...globalTaxonomyApplyQuery(taxonomyApplied) } : taxonomyFilter;
     const emailHistoryQueryFilters: Record<string, string> = route.key === 'email-history' ? {
         ...(emailHistoryFilters.siteId ? { site_id: emailHistoryFilters.siteId } : {}),
         ...(emailHistoryFilters.status ? { status: emailHistoryFilters.status } : {}),
@@ -412,10 +420,56 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, mediaQueryFilters)),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     } : {
-        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType],
-        queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, taxonomyFilter)),
+        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType, taxonomyApplied.minimumUsage, taxonomyApplied.pageSize],
+        queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, taxonomyAppliedQuery)),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     });
+
+    const resetGlobalTaxonomyFilters = async (trustedEndpoint: string): Promise<void> => {
+        if (
+            route.key !== 'taxonomy'
+            || state.state !== 'enabled'
+            || !endpoint
+            || endpoint !== trustedEndpoint
+            || query.isFetching
+        ) {
+            throw new Error('The active tenant/site taxonomy read is not authorized.');
+        }
+
+        // Source ResetAsync: remove query/type filters, return to the first page,
+        // then perform a fresh tenant/site-scoped authoritative GET.
+        setSearchInput('');
+        setSearch('');
+        setTaxonomyType('all');
+        setTaxonomyDraft(defaultGlobalTaxonomyApplyFilters());
+        setTaxonomyApplied(defaultGlobalTaxonomyApplyFilters());
+        setPage(1);
+        await queryClient.fetchQuery({
+            queryKey: ['workspace', context.tenant.slug, route.key, trustedEndpoint, 1, '', 'all'],
+            queryFn: () => apiRequest<unknown>(endpointWithQuery(trustedEndpoint, 1, '')),
+            staleTime: 0,
+        });
+    };
+
+    const applyGlobalTaxonomyFilters = async (trustedEndpoint: string): Promise<void> => {
+        if (route.key !== 'taxonomy' || state.state !== 'enabled' || !endpoint
+            || endpoint !== trustedEndpoint || query.isFetching) {
+            throw new Error('The active tenant/site taxonomy read is not authorized.');
+        }
+        // Source ApplyAsync: the selected filters are applied to page one and
+        // the authoritative API is reread even if the selected values are unchanged.
+        const nextSearch = searchInput.trim();
+        const nextFilters = { ...taxonomyDraft };
+        setPage(1);
+        setSearch(nextSearch);
+        setTaxonomyApplied(nextFilters);
+        await queryClient.fetchQuery({
+            queryKey: ['workspace', context.tenant.slug, route.key, trustedEndpoint, 1, nextSearch, taxonomyType, nextFilters.minimumUsage, nextFilters.pageSize],
+            queryFn: () => apiRequest<unknown>(endpointWithQuery(trustedEndpoint, 1, nextSearch,
+                { ...taxonomyFilter, ...globalTaxonomyApplyQuery(nextFilters) })),
+            staleTime: 0,
+        });
+    };
 
     const resetContentExplorerFilters = async (trustedEndpoint: string): Promise<void> => {
         if (
@@ -459,6 +513,26 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
             const refreshed = await query.refetch();
             if (refreshed.error) throw refreshed.error;
         }
+    };
+
+    // Canonical GlobalMediaExplorer ResetAsync: reset draft/applied filters and
+    // reread the authoritative media collection scoped to the active tenant/site.
+    const resetGlobalMediaFilters = async (): Promise<void> => {
+        if (route.key !== 'media' || state.state !== 'enabled' || !endpoint || query.isFetching) return;
+        const reset = globalMediaResetState();
+        const defaults = defaultGlobalMediaFilters();
+        setSearchInput(reset.search);
+        setSearch(reset.search);
+        setPage(reset.page);
+        setMediaDraft(defaults);
+        setMediaAppliedFilters(defaults);
+        await queryClient.fetchQuery({
+            queryKey: ['workspace', context.tenant.slug, route.key, endpoint, reset.page, reset.search, defaults.mediaType, defaults.pageSize],
+            queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint, reset.page, reset.search, {
+                per_page: String(reset.pageSize),
+            })),
+            staleTime: 0,
+        });
     };
 
     const applicationUsersSearchAuthorized = context.permissions.includes('*') || context.permissions.includes('members.manage');
@@ -722,10 +796,27 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         onApply={(next) => { void applySiteReliabilityFilters(next); }}
                     />
                 ) : null}
+                {route.key === 'media' ? (
+                    <GlobalMediaResetControl
+                        locale={locale}
+                        busy={query.isFetching}
+                        available={Boolean(endpoint)}
+                        onReset={() => { void resetGlobalMediaFilters().catch((error) => {
+                            notify(error instanceof Error ? error.message : 'Media filters could not be reset.', 'error');
+                        }); }}
+                    />
+                ) : null}
                 <form className="search-form" onSubmit={(event) => {
                     event.preventDefault();
                     if (route.key === 'application-users') {
                         void searchApplicationUsers().catch(() => undefined);
+                        return;
+                    }
+                    if (route.key === 'taxonomy') {
+                        const trusted = authorizedGlobalTaxonomyResetEndpoint(context, endpoint);
+                        if (trusted) void applyGlobalTaxonomyFilters(trusted).catch((error) => {
+                            notify(error instanceof Error ? error.message : 'Taxonomy filters could not be applied.', 'error');
+                        });
                         return;
                     }
                     if (route.key === 'media') {
@@ -772,7 +863,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             locale={locale}
                             authorized={applicationUsersSearchAuthorized}
                         />
-                    ) : (
+                    ) : route.key === 'taxonomy' ? null : (
                         <button
                             type="submit"
                             className="btn"
@@ -792,6 +883,24 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             locale={locale}
                             authorized={applicationUsersClearAuthorized}
                             onClearRequested={clearApplicationUsersSearch}
+                        />
+                    ) : null}
+                    {route.key === 'taxonomy' ? (
+                        <GlobalTaxonomyApplyControl
+                            context={context}
+                            endpoint={endpoint}
+                            value={taxonomyDraft}
+                            busy={query.isFetching}
+                            onChange={setTaxonomyDraft}
+                            onApplyRequested={applyGlobalTaxonomyFilters}
+                        />
+                    ) : null}
+                    {route.key === 'taxonomy' ? (
+                        <GlobalTaxonomyResetControl
+                            context={context}
+                            endpoint={endpoint}
+                            busy={query.isFetching}
+                            onResetRequested={resetGlobalTaxonomyFilters}
                         />
                     ) : null}
                     {route.key === 'explorer' ? (
@@ -1097,6 +1206,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                                         <ContentExplorerMediaSourceUrlControl value={row.source_url} />
                                     </MediaManagerEditingSourceUrlControl>
                                 </MediaManagerRowSourceUrlControl>
+                                <MediaAltSuggestionControl context={context} endpoint={endpoint} row={row} />
                                 <MediaOptimizationEditorControl
                                     context={context}
                                     endpoint={endpoint}
@@ -1123,7 +1233,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                 ) : <div className="empty-state"><strong>{text(commonText.empty)}</strong><p>{locale === 'ar' ? 'لا يتم إنشاء صفوف تجريبية عندما يعيد الخادم نتيجة فارغة.' : 'No sample rows are synthesized when the server returns an empty result.'}</p></div>}
                 {route.key === 'explorer'
                     ? <ContentExplorerPagination page={collection.page} lastPage={collection.lastPage} onPage={setPage} />
-                    : <Pagination page={collection.page} lastPage={collection.lastPage} onPage={setPage} previousOperationId={readOperations?.previous ?? (route.key === 'email-history' ? APP_DATA_GRID_PREVIOUS_PAGE_OPERATION_ID : undefined)} />}
+                    : <Pagination page={collection.page} lastPage={collection.lastPage} onPage={setPage} previousOperationAliasId={route.key === 'wp-users' ? WORDPRESS_USERS_PREVIOUS_OPERATION_ID : undefined} previousOperationId={readOperations?.previous ?? (route.key === 'email-history' ? APP_DATA_GRID_PREVIOUS_PAGE_OPERATION_ID : undefined)} />}
             </section>
             {route.key === 'explorer' && explorerPreview ? (
                 <ContentExplorerPreviewPanel
