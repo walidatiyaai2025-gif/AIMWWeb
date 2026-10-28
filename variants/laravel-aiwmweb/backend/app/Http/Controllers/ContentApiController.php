@@ -281,6 +281,9 @@ final class ContentApiController extends Controller
     public function bulk(Request $request, TenantAuthorizer $auth, string $tenant, int $site): JsonResponse
     {
         $auth->authorize('content.edit');
+        Site::query()->findOrFail($site);
+        $callerOwned = ['tenant', 'tenant_id', 'site', 'site_id', 'user_id', 'actor_user_id'];
+        abort_if(array_intersect(array_keys($request->all()), $callerOwned) !== [], 422, 'Bulk content queue does not accept caller-owned identity fields.');
         $data = $request->validate(['ids' => 'required|array|min:1|max:500', 'ids.*' => 'integer', 'action' => ['required', Rule::in(['draft', 'pending', 'publish', 'trash', 'restore'])], 'payload' => 'array']);
         $count = ContentItem::query()->where('site_id', $site)->whereIn('id', $data['ids'])->count();
         abort_unless($count === count(array_unique($data['ids'])), 422, 'Bulk selection includes unavailable content.');
