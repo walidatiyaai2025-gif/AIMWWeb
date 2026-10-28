@@ -6,6 +6,7 @@ on:
       - worker/934-global-media-apply
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
+      - '.github/workflows/laravel-aiwmweb-task-parity-materialize-934.yml'
 
 permissions:
   contents: write
@@ -46,4 +47,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "chore(laravel): materialize parity for AIMW-SYNC-D805D5D9A8"
+          # Materialization takes minutes; a newer test/repair commit may land while we run.
+          # Preserve those commits instead of failing with a non-fast-forward push.
+          git fetch origin "${{ github.ref_name }}"
+          git rebase "origin/${{ github.ref_name }}"
           git push origin "HEAD:${{ github.ref_name }}"
