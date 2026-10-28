@@ -66,6 +66,7 @@ import { PostsWordPressLinkControl } from './posts-wordpress-link-control';
 import { RolesApplicationUsersLinkControl } from './roles-application-users-link-control';
 import { RolesStartCreateControl } from './roles-start-create-control';
 import { SiteOperationsExportControl } from './site-operations-export-control';
+import { OperationsHubSiteOperationsControl } from './operations-hub-site-operations-control';
 import { SiteOperationsDetailsLinkControl } from './site-operations-details-link-control';
 import { SiteOperationsSitesLinkControl } from './site-operations-sites-link-control';
 import {
@@ -1149,6 +1150,10 @@ function WorkspaceHub({ context, route }: { context: FrontendContext; route: Wor
             ) : null}
             <section className="workspace-card-grid">
                 {workspaceRoutes.filter((candidate) => !candidate.hidden && related.includes(candidate.group) && candidate.key !== route.key).map((candidate) => {
+                    if (route.key === 'operations' && candidate.key === 'site-operations') {
+                        return <OperationsHubSiteOperationsControl key={candidate.key} context={context} />;
+                    }
+
                     const state = resolveCapability(context, candidate);
                     const sourceWorkspacePath = route.key === 'content-hub' && isContentHubWorkspacePath(candidate.path);
                     const destination = sourceWorkspacePath
