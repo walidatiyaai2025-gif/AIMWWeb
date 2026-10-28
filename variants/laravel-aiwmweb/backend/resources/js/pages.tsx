@@ -503,7 +503,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         setMediaResetState(reset);
 
         await queryClient.fetchQuery({
-            queryKey: ['workspace', context.tenant.slug, route.key, endpoint, reset.page, reset.search, taxonomyType, reset.mediaType, reset.pageSize],
+            queryKey: ['workspace', context.tenant.slug, route.key, endpoint, reset.page, reset.search, reset.mediaType, reset.pageSize],
             queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint, reset.page, reset.search, {
                 per_page: String(reset.pageSize),
             })),
