@@ -7,7 +7,7 @@ import { MediaOptimizationEditorControl, MEDIA_SAVE_OPTIMIZATION_OPERATION_ID } 
 
 const endpoint = '/api/v1/tenants/alpha/sites/7/media';
 const row = { id: 5, remote_id: 105, site_id: 7, title: 'Stale title', mime_type: 'image/jpeg' };
-const authoritative = { remote_id: 105, title: 'Current WordPress title', slug: 'hero-image', alt_text: 'Old alt', caption: 'Existing caption', description: 'Existing description' };
+const authoritative = { remote_id: 105, modified_gmt: '2026-10-28T01:00:00', title: 'Current WordPress title', slug: 'hero-image', alt_text: 'Old alt', caption: 'Existing caption', description: 'Existing description' };
 const context = (permissions = ['content.edit']): FrontendContext => ({
     user: { id: 1, name: 'Editor', email: 'editor@example.test' },
     tenant: { slug: 'alpha', name: 'Alpha' },
@@ -41,7 +41,7 @@ describe('AIMW-SYNC-425B82511E MediaManager SaveOptimizationClickedAsync', () =>
         expect(readUrl).toBe('/api/v1/tenants/alpha/sites/7/media/5');
         expect(writeUrl).toBe(readUrl);
         expect(init.method).toBe('PATCH');
-        expect(JSON.parse(String(init.body))).toMatchObject({ title: 'Updated', alt_text: 'Old alt', caption: 'Existing caption', slug: 'hero-image' });
+        expect(JSON.parse(String(init.body))).toMatchObject({ title: 'Updated', alt_text: 'Old alt', caption: 'Existing caption', slug: 'hero-image', expected_modified_gmt: '2026-10-28T01:00:00' });
         expect(reconcile).toHaveBeenCalledOnce();
     });
 
