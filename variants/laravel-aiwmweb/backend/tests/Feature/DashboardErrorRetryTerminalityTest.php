@@ -49,7 +49,7 @@ final class DashboardErrorRetryTerminalityTest extends TestCase
         $this->assertStringContainsString(self::OPERATION_ID, $control);
         $this->assertStringContainsString('inFlight.current', $control);
         $this->assertStringContainsString('await onRetry()', $control);
-        $this->assertStringContainsString('if (query.error) return (', $pages);
+        $this->assertStringContainsString('if (query.error) return <QueryError', $pages);
         $this->assertStringContainsString('<DashboardErrorRetryControl', $pages);
         $this->assertStringContainsString('onRetry={() => query.refetch()}', $pages);
         $this->assertStringContainsString("queryKey: ['dashboard', context.tenant.slug, endpoint]", $pages);
