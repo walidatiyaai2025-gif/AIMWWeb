@@ -3074,6 +3074,14 @@
       ]
     },
     {
+      "label": "Issue #964 MediaBatchUploadPanel UploadClickedAsync guarded media batch",
+      "sha": "bc22c90f307d286cc70a9ffc1fd8509d955feb09",
+      "observed_pr_head": "bc22c90f307d286cc70a9ffc1fd8509d955feb09",
+      "operation_ids": [
+        "AIMW-SYNC-6766C503DA"
+      ]
+    },
+    {
       "label": "Issue #962 Dashboard RefreshClickedAsync tenant-scoped focused closure",
       "sha": "a5bbcea64b94469f28544162b2d34223f354c75b",
       "observed_pr_head": "a5bbcea64b94469f28544162b2d34223f354c75b",

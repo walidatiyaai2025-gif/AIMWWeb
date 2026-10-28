@@ -67,7 +67,10 @@ Route::prefix('v1/tenants/{tenant}/sites/{site}')->middleware(['web', 'tenant.co
     Route::post('content/items/{content}/revisions/{revision}/restore', [ContentApiController::class, 'restoreRevision']);
 
     Route::get('media', [ContentApiController::class, 'media']);
-    Route::post('media', [ContentApiController::class, 'uploadMedia']);
+    Route::post('media', [ContentApiController::class, 'uploadMedia'])
+        ->middleware('auth')
+        ->defaults('canonical_operation_id', ContentApiController::MEDIA_BATCH_UPLOAD_OPERATION_ID)
+        ->name('api.v1.media.batch-upload');
     Route::patch('media/{media}', [ContentApiController::class, 'updateMedia']);
     Route::delete('media/{media}', [ContentApiController::class, 'deleteMedia'])
         ->middleware('auth')
