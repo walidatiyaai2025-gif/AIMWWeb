@@ -17,6 +17,7 @@ use Tests\TestCase;
 final class DashboardRefreshClickedTerminalityTest extends TestCase
 {
     use RefreshDatabase;
+
     private const OPERATION_ID = 'AIMW-SYNC-8C35E9A7A0';
 
     public function test_original_home_toolbar_refresh_is_wired_to_server_query_with_exact_id(): void
