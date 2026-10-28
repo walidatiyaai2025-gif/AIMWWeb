@@ -2901,8 +2901,8 @@
     },
     {
       "label": "Issue #967 MediaManager authoritative metadata save focused closure",
-      "sha": "7ce1f559ff8763736d9692218b4d96f493512fb3",
-      "observed_pr_head": "7ce1f559ff8763736d9692218b4d96f493512fb3",
+      "sha": "f0e210e0b16f7f2a02966568eaf32a7a394607ae",
+      "observed_pr_head": "f0e210e0b16f7f2a02966568eaf32a7a394607ae",
       "operation_ids": [
         "AIMW-SYNC-425B82511E"
       ]
