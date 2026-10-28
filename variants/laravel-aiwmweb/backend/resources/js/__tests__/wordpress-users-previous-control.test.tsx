@@ -55,7 +55,7 @@ describe('AIMW-SYNC-E0791EA9E9 GlobalUsersWorkspace PreviousAsync', () => {
         renderUsers();
         expect(await screen.findByRole('cell', { name: '11' })).toBeInTheDocument();
         const previous = screen.getByRole('button', { name: 'Previous' });
-        expect(previous).toHaveAttribute('data-canonical-operation', WORDPRESS_USERS_PREVIOUS_OPERATION_ID);
+        expect(previous).toHaveAttribute('data-canonical-operation-alias', WORDPRESS_USERS_PREVIOUS_OPERATION_ID);
         expect(previous).toBeDisabled();
         fireEvent.click(screen.getByRole('button', { name: 'Next' }));
         expect(await screen.findByRole('cell', { name: '22' })).toBeInTheDocument();
