@@ -2885,8 +2885,8 @@
     },
     {
       "label": "Issue #955 Global Synchronization Open local content navigation operation-scoped closure",
-      "sha": "b21622bad8be8268300f213a03c4924fc1093a88",
-      "observed_pr_head": "b21622bad8be8268300f213a03c4924fc1093a88",
+      "sha": "57412b7b0704bce6765c0b44f4c3829ceb835b04",
+      "observed_pr_head": "57412b7b0704bce6765c0b44f4c3829ceb835b04",
       "operation_ids": [
         "AIMW-SYNC-E51F091C0B"
       ]
