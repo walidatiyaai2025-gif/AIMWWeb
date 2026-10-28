@@ -1566,8 +1566,8 @@
   "focused_closure_operation_sources": [
     {
       "label": "AIMW-SYNC-EE7D7534DF ContentExplorer BulkPublishAsync focused closure #930",
-      "sha": "fa05bfc3673efb524024a68493612d9575a9c238",
-      "observed_pr_head": "fa05bfc3673efb524024a68493612d9575a9c238",
+      "sha": "030d93df2e9afe35cd95c0c77764e9c009af5ad3",
+      "observed_pr_head": "030d93df2e9afe35cd95c0c77764e9c009af5ad3",
       "operation_ids": [
         "AIMW-SYNC-EE7D7534DF"
       ]
