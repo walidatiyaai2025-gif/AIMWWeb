@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 906,
-    "pending": 25,
+    "adapted": 905,
+    "pending": 26,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 906,
-    "overall_parity_percent": 97.31
+    "terminal": 905,
+    "overall_parity_percent": 97.21
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 421,
-    "pending": 25,
+    "terminal": 420,
+    "pending": 26,
     "blocked": 0,
-    "percent": 94.39
+    "percent": 94.17
   },
   "domains": {
     "ai": {
@@ -203,12 +203,12 @@
     "sync": {
       "total": 213,
       "ported": 0,
-      "adapted": 196,
-      "pending": 17,
+      "adapted": 195,
+      "pending": 18,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 196,
-      "percent": 92.02
+      "terminal": 195,
+      "percent": 91.55
     },
     "taxonomy": {
       "total": 13,
@@ -30757,21 +30757,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-bulk-pending-control.ts",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-bulk-pending-control.test.ts",
+      "evidence": "AIMW-SYNC-DDC8657C2F ContentExplorer BulkPendingAsync focused closure #929@878446af66152a5d731d57827f400c74a20dc85d: variants/laravel-aiwmweb/backend/resources/js/content-explorer-bulk-pending-control.ts; focused-closure:AIMW-SYNC-DDC8657C2F; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-bulk-pending-control.test.ts; evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-bulk-pending-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-SYNC-DDC8657C2F ContentExplorer BulkPendingAsync focused closure #929",
+        "source_sha": "878446af66152a5d731d57827f400c74a20dc85d",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-bulk-pending-control.ts",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-bulk-pending-terminality.json",
+        "signals": [
+          "operation:AIMW-SYNC-DDC8657C2F",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/content-explorer-bulk-pending-control.ts",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-bulk-pending-control.test.ts",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-bulk-pending-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -32731,31 +32741,21 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/media-optimization-editor-control.tsx",
+      "laravel_destination": "",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "ADAPTED",
-      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/media-optimization-save-control.test.tsx",
-      "evidence": "Issue #967 MediaManager authoritative metadata save focused closure@6cf0a9398909b7f2e3a51c6aec75e752b9651092: variants/laravel-aiwmweb/backend/resources/js/media-optimization-editor-control.tsx; focused-closure:AIMW-SYNC-425B82511E; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/media-optimization-save-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/media-save-optimization-terminality.json",
+      "migration_state": "PENDING",
+      "acceptance_test": "",
+      "evidence": "",
       "reconciliation": {
-        "decision": "ADAPTED",
-        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "Issue #967 MediaManager authoritative metadata save focused closure",
-        "source_sha": "6cf0a9398909b7f2e3a51c6aec75e752b9651092",
-        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/media-optimization-editor-control.tsx",
-        "evidence_mode": "focused_closure_contract",
-        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/media-save-optimization-terminality.json",
-        "signals": [
-          "operation:AIMW-SYNC-425B82511E",
-          "production-marker:variants/laravel-aiwmweb/backend/resources/js/media-optimization-editor-control.tsx",
-          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/media-optimization-save-control.test.tsx",
-          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/media-save-optimization-terminality.json",
-          "scope:operation-specific",
-          "test:tenant-isolation"
-        ]
+        "decision": "PENDING",
+        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
+        "source_label": null,
+        "source_sha": null,
+        "destination_path": null
       }
     },
     {
@@ -32772,31 +32772,21 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/media-alt-suggestion-control.tsx",
+      "laravel_destination": "",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "ADAPTED",
-      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/media-alt-suggestion-control.test.tsx",
-      "evidence": "MediaManager SuggestAltClickedAsync focused #966@5fa48533f6fd19fca4f2b9cc85f870f97b3d0d2f: variants/laravel-aiwmweb/backend/resources/js/media-alt-suggestion-control.tsx; focused-closure:AIMW-SYNC-21483C88FA; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/media-alt-suggestion-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/media-alt-suggestion-terminality.json",
+      "migration_state": "PENDING",
+      "acceptance_test": "",
+      "evidence": "",
       "reconciliation": {
-        "decision": "ADAPTED",
-        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "MediaManager SuggestAltClickedAsync focused #966",
-        "source_sha": "5fa48533f6fd19fca4f2b9cc85f870f97b3d0d2f",
-        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/media-alt-suggestion-control.tsx",
-        "evidence_mode": "focused_closure_contract",
-        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/media-alt-suggestion-terminality.json",
-        "signals": [
-          "operation:AIMW-SYNC-21483C88FA",
-          "production-marker:variants/laravel-aiwmweb/backend/resources/js/media-alt-suggestion-control.tsx",
-          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/media-alt-suggestion-control.test.tsx",
-          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/media-alt-suggestion-terminality.json",
-          "scope:operation-specific",
-          "test:tenant-isolation"
-        ]
+        "decision": "PENDING",
+        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
+        "source_label": null,
+        "source_sha": null,
+        "destination_path": null
       }
     },
     {
@@ -38254,12 +38244,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 421,
-      "pending": 25,
+      "adapted": 420,
+      "pending": 26,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 421,
-      "percent": 94.39
+      "terminal": 420,
+      "percent": 94.17
     }
   },
   "pending_operation_ids_by_domain": {
@@ -38291,9 +38281,11 @@
     "settings": [],
     "sites": [],
     "sync": [
+      "AIMW-SYNC-21483C88FA",
       "AIMW-SYNC-2A256826D2",
       "AIMW-SYNC-3389FB622C",
       "AIMW-SYNC-38D8A24B15",
+      "AIMW-SYNC-425B82511E",
       "AIMW-SYNC-4B986B2651",
       "AIMW-SYNC-4FDCFDA33F",
       "AIMW-SYNC-6766C503DA",
@@ -38303,7 +38295,6 @@
       "AIMW-SYNC-AE16CF49C6",
       "AIMW-SYNC-B78216241F",
       "AIMW-SYNC-D5CE5A213B",
-      "AIMW-SYNC-DDC8657C2F",
       "AIMW-SYNC-E3EB27C678",
       "AIMW-SYNC-ECAB44A389",
       "AIMW-SYNC-ED1442005E",
@@ -39907,7 +39898,6 @@
       "AIMW-SYNC-1778E3F6B5",
       "AIMW-SYNC-1A20057999",
       "AIMW-SYNC-1B63FBC758",
-      "AIMW-SYNC-21483C88FA",
       "AIMW-SYNC-246AD1A2AE",
       "AIMW-SYNC-26F2BF8EE8",
       "AIMW-SYNC-2A8778C6EA",
@@ -39917,7 +39907,6 @@
       "AIMW-SYNC-3BFC8AF183",
       "AIMW-SYNC-3E7DCF4C71",
       "AIMW-SYNC-419C403EFB",
-      "AIMW-SYNC-425B82511E",
       "AIMW-SYNC-45A3B43BB9",
       "AIMW-SYNC-461B1075DE",
       "AIMW-SYNC-476CDB769B",
@@ -39962,6 +39951,7 @@
       "AIMW-SYNC-D805D5D9A8",
       "AIMW-SYNC-D8581471A2",
       "AIMW-SYNC-DBD736FACC",
+      "AIMW-SYNC-DDC8657C2F",
       "AIMW-SYNC-E0791EA9E9",
       "AIMW-SYNC-E36C56A631",
       "AIMW-SYNC-E51F091C0B",
@@ -41289,22 +41279,15 @@
         ]
       },
       {
-        "label": "MediaManager SuggestAltClickedAsync focused #966",
-        "sha": "5fa48533f6fd19fca4f2b9cc85f870f97b3d0d2f",
+        "label": "AIMW-SYNC-DDC8657C2F ContentExplorer BulkPendingAsync focused closure #929",
+        "sha": "878446af66152a5d731d57827f400c74a20dc85d",
         "operation_ids": [
-          "AIMW-SYNC-21483C88FA"
-        ]
-      },
-      {
-        "label": "Issue #967 MediaManager authoritative metadata save focused closure",
-        "sha": "6cf0a9398909b7f2e3a51c6aec75e752b9651092",
-        "operation_ids": [
-          "AIMW-SYNC-425B82511E"
+          "AIMW-SYNC-DDC8657C2F"
         ]
       }
     ],
-    "focused_closure_operation_scoped_count": 191,
-    "focused_closure_contract_count": 421,
+    "focused_closure_operation_scoped_count": 190,
+    "focused_closure_contract_count": 420,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
