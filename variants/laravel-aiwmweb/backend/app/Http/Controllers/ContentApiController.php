@@ -448,6 +448,7 @@ final class ContentApiController extends Controller
 
         return response()->json([
             'remote_id' => (int) $item->remote_id,
+            'modified_gmt' => $raw($remote['modified_gmt'] ?? null),
             'title' => $raw($remote['title'] ?? null),
             'slug' => $raw($remote['slug'] ?? null),
             'alt_text' => $raw($remote['alt_text'] ?? null),
@@ -481,8 +482,21 @@ final class ContentApiController extends Controller
             'alt_text' => 'sometimes|nullable|string|max:500',
             'caption' => 'sometimes|nullable|string|max:5000',
             'description' => 'sometimes|nullable|string',
+            'expected_modified_gmt' => 'required|string|max:64',
         ]);
+        $expectedModified = $data['expected_modified_gmt'];
+        unset($data['expected_modified_gmt']);
         abort_if($data === [], 422, 'At least one metadata field is required.');
+
+        // Reject edits based on stale WordPress state instead of overwriting another editor.
+        $before = $this->remote->get($site, 'media', (int) $item->remote_id);
+        abort_unless((int) ($before['id'] ?? 0) === (int) $item->remote_id, 409, 'WordPress media identity changed.');
+        abort_unless(
+            is_string($before['modified_gmt'] ?? null) && $before['modified_gmt'] === $expectedModified,
+            409,
+            'WordPress media changed since the metadata editor opened.',
+        );
+
         $verified = $this->mediaMetadata->save($site, (int) $item->remote_id, $data);
         SyncContentJob::dispatch($this->tenant->id(), $site, false);
 
