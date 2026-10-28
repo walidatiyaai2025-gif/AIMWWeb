@@ -26,7 +26,7 @@ final class GlobalSynchronizationConnectSiteLinkTerminalityTest extends TestCase
         $this->assertStringContainsString('_selectedSiteId == Guid.Empty', $source);
         $this->assertStringContainsString('Href="/sites/connect"', $source);
         $this->assertStringContainsString('AIMW-SYNC-CC2B584BC4', $frontend);
-        $this->assertStringContainsString("tenantUrl(slug, onboardingRoute.path)", $frontend);
+        $this->assertStringContainsString('tenantUrl(slug, onboardingRoute.path)', $frontend);
         $this->assertStringContainsString('<GlobalSynchronizationConnectSiteLinkControl context={context} />', $app);
 
         $route = Route::getRoutes()->match(Request::create('/tenants/alpha/sites/connect', 'GET'));
