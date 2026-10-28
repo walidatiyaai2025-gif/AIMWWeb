@@ -38,7 +38,7 @@ describe('AIMW-SYNC-21483C88FA MediaManager SuggestAltClickedAsync', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Generate suggestion' }));
         await waitFor(() => expect(screen.getByLabelText('Review suggested alt text')).toHaveValue('Office desk with a laptop'));
         expect(fetchMock).toHaveBeenCalledTimes(1);
-        const [url, request] = fetchMock.mock.calls[0] as [string, RequestInit];
+        const [url, request] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
         expect(url).toBe('/api/tenants/alpha/ai-center/generate');
         expect(JSON.parse(String(request.body))).toMatchObject({ site_id: 7 });
         fireEvent.click(screen.getByRole('button', { name: 'Use in draft' }));
