@@ -31,10 +31,13 @@ import { ContentExplorerApplyFiltersControl } from './content-explorer-apply-fil
 import { ContentExplorerDynamicLinksControl } from './content-explorer-dynamic-links-control';
 import { GlobalPagesConfirmTrashControl } from './global-pages-confirm-trash-widget';
 import { GlobalPostsConfirmTrashControl } from './global-posts-confirm-trash-widget';
+import { GlobalPostsOpenSynchronizationLinkControl } from './global-posts-open-synchronization-link-control';
+import { GlobalPagesOpenSynchronizationLinkControl } from './global-pages-open-synchronization-link-control';
 import { GlobalTaxonomyPostsLinkControl } from './global-taxonomy-posts-link-control';
 import { GlobalTaxonomySyncLinkControl } from './global-taxonomy-sync-link-control';
 import { GlobalSynchronizationAcceptRemoteControl } from './global-synchronization-accept-remote-control';
 import { GlobalSynchronizationReviewConflictsControl } from './global-synchronization-review-conflicts-control';
+import { GlobalSynchronizationLocalContentLinkControl } from './global-synchronization-local-content-link-control';
 import { ContentExplorerSynchronizeControl } from './content-explorer-synchronize-control';
 import { ContentExplorerExecutionLinkControl } from './content-explorer-execution-link-control';
 import { ContentExplorerContentTabControl } from './content-explorer-content-tab-control';
@@ -99,6 +102,7 @@ import { SiteOnboardingSaveTestSyncControl } from './site-onboarding-save-test-s
 import { SiteDataSnapshotSyncControl } from './site-data-snapshot-sync-control';
 import { SiteConnectionCenterSyncControl } from './site-connection-center-sync-control';
 import { SitesBulkDeleteControl } from './sites-bulk-delete-control';
+import { SitesDisableSelectedControl } from './sites-disable-selected-control';
 import { SitesDeleteControl } from './sites-delete-control';
 import { SitesSaveControl } from './sites-save-control';
 import { SitesRetestSelectedControl } from './sites-retest-selected-control';
@@ -229,14 +233,14 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
         </>
     );
     if (route.key === 'dashboard') return <><DashboardExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
-    if (route.key === 'sites') return <><SitesSaveControl context={context} /><SitesRetestSelectedControl context={context} /><SitesDeleteControl context={context} /><SitesBulkDeleteControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'sites') return <><SitesSaveControl context={context} /><SitesRetestSelectedControl context={context} /><SitesDeleteControl context={context} /><SitesBulkDeleteControl context={context} /><SitesDisableSelectedControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'explorer') return <><ContentExplorerContentTabControl context={context} /><ContentExplorerTagsTabControl context={context} /><ContentExplorerCategoriesTabControl context={context} /><ContentExplorerDynamicLinksControl context={context} /><ContentExplorerMediaTabControl context={context} /><ContentExplorerExecutionLinkControl context={context} /><ContentExplorerSynchronizeControl context={context} /><ContentExplorerApplyFiltersControl context={context} /><ContentExplorerBulkTrashControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'content-hub') return <><ContentHubAllSitesControl context={context} /><ContentHubSiteLinksControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'content-planner') return <><ContentPlannerAiCenterLinkControl context={context} /><ContentPlannerExecutionLinkControl context={context} /><ContentPlannerNewItemControl context={context} /><ContentPlannerReloadControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'media') return <><MediaPagesLinkControl context={context} /><MediaBatchClearSelectionControl context={context} /><WorkspacePage context={context} route={route} /></>;
-    if (route.key === 'pages') return <><GlobalPagesConfirmTrashControl context={context} /><PagesPostsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
-    if (route.key === 'posts') return <><GlobalPostsConfirmTrashControl context={context} /><PostsExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
-    if (route.key === 'sync') return <><GlobalSynchronizationReviewConflictsControl context={context} /><GlobalSynchronizationAcceptRemoteControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'pages') return <><GlobalPagesConfirmTrashControl context={context} /><GlobalPagesOpenSynchronizationLinkControl context={context} /><PagesPostsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'posts') return <><GlobalPostsOpenSynchronizationLinkControl context={context} /><GlobalPostsConfirmTrashControl context={context} /><PostsExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'sync') return <><GlobalSynchronizationLocalContentLinkControl context={context} /><GlobalSynchronizationReviewConflictsControl context={context} /><GlobalSynchronizationAcceptRemoteControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'seo-audit' || route.key === 'seo-suggestions') return <ModuleWorkspaceLoadSitesControl context={context} route={route} />;
     if (route.key === 'comments') return <><CommentsBackToSitesControl context={context} /><CommentsCommentLinksControl context={context} /><CommentsContentHubLink context={context} /><CommentsManageSiteControl context={context} /><WorkspacePage context={context} route={route} /><CommentsBackToExplorerControl context={context} /></>;
     if (route.key === 'wp-users') return <><WordPressUsersBackToSitesControl context={context} /><WordPressUsersBackToExplorerControl context={context} /><WorkspacePage context={context} route={route} /></>;

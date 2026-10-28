@@ -6,6 +6,7 @@ import type { FrontendContext } from '../core';
 import { LocaleProvider } from '../i18n';
 import {
     SITE_ONBOARDING_NEXT_OPERATION_ID,
+    SITE_ONBOARDING_PREVIOUS_OPERATION_ID,
     SITE_ONBOARDING_OPEN_SITE_OPERATION_ID,
     siteOnboardingOpenSiteHref,
     SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID,
@@ -154,8 +155,10 @@ describe('AIMW-BILL-2EF6B8A27A onboarding browser proof', () => {
         expect(await screen.findByText('verified / healthy')).toBeInTheDocument();
         expect(screen.getByText('Sync: queued')).toBeInTheDocument();
 
-        fireEvent.click(screen.getByRole('button', { name: 'Previous' }));
-        expect(screen.getByLabelText('Application Password')).toHaveValue('');
+        // A successful onboarding is terminal: do not reopen a credential form or expose the secret.
+        expect(screen.queryByRole('button', { name: 'Previous' })).toBeNull();
+        expect(screen.queryByLabelText('Application Password')).toBeNull();
+        expect(screen.queryByText('application-secret-123')).not.toBeInTheDocument();
     });
 
     it('retries the failed saved profile only with the server-issued opaque retry token', async () => {
@@ -273,5 +276,54 @@ describe('AIMW-SYNC-BDBA0B4F01 open site dashboard', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Save, test and synchronize' }));
         expect(await screen.findByText('verified / healthy')).toBeInTheDocument();
         expect(screen.queryByRole('link', { name: 'Open site dashboard' })).toBeNull();
+    });
+});
+
+describe('AIMW-SYNC-C1B6FA6677 PreviousAsync browser parity', () => {
+    it('navigates backward from review to credentials and profile without API calls or losing entered values', () => {
+        const fetchMock = vi.fn();
+        vi.stubGlobal('fetch', fetchMock);
+        renderControl();
+        expect(screen.queryByRole('button', { name: 'Previous' })).toBeNull();
+        completeProfileStep('Previous Site', 'https://previous.example.test');
+        const previousFromCredentials = screen.getByRole('button', { name: 'Previous' });
+        expect(previousFromCredentials).toHaveAttribute('data-canonical-operation', SITE_ONBOARDING_PREVIOUS_OPERATION_ID);
+        completeCredentialStep('wp-admin', 'password-do-not-log');
+        const previousFromReview = screen.getByRole('button', { name: 'Previous' });
+        expect(previousFromReview).toHaveAttribute('data-canonical-operation', SITE_ONBOARDING_PREVIOUS_OPERATION_ID);
+        fireEvent.click(previousFromReview);
+        expect(screen.getByText('Step 2 of 3')).toBeInTheDocument();
+        expect(screen.getByLabelText('WordPress username')).toHaveValue('wp-admin');
+        expect(screen.getByLabelText('Application Password')).toHaveValue('password-do-not-log');
+        fireEvent.click(screen.getByRole('button', { name: 'Previous' }));
+        expect(screen.getByText('Step 1 of 3')).toBeInTheDocument();
+        expect(screen.getByLabelText('Site name')).toHaveValue('Previous Site');
+        expect(screen.getByLabelText('Site URL')).toHaveValue('https://previous.example.test');
+        expect(screen.queryByRole('button', { name: 'Previous' })).toBeNull();
+        expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it('hides previous after server-confirmed onboarding completion', async () => {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({
+            operation_id: SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID,
+            site: { id: 27, name: 'Saved', url: 'https://saved.example.test',
+                connection_status: 'verified', health_state: 'healthy' },
+            credential_configured: true,
+            sync: null,
+            idempotent_replay: false,
+        }), { status: 202, headers: { 'content-type': 'application/json' } })));
+        renderControl();
+        completeProfileStep('Saved', 'https://saved.example.test');
+        completeCredentialStep('wp-admin', 'application-secret-123');
+        expect(screen.getByRole('button', { name: 'Previous' })).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Save, test and synchronize' }));
+        expect(await screen.findByText('verified / healthy')).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Previous' })).toBeNull();
+    });
+
+    it('does not show previous navigation to operators denied sites.manage', () => {
+        renderControl(['tenant.view']);
+        expect(screen.queryByRole('button', { name: 'Previous' })).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull();
     });
 });

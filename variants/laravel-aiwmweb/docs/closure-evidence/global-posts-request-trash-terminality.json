@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #947 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-476CDB769B",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-SYNC-476CDB769B",
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "/module/posts",
+    "source": "src/AIWordPressManager.Web/Components/Pages/GlobalPostsExplorer.razor",
+    "source_intent": "RequestTrashAsync opens confirmation for selected post rows only and makes no WordPress request until explicit confirmation.",
+    "mutation": false,
+    "tenant_owned": true
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/global-posts-request-trash-control.ts",
+    "frontend_widget": "variants/laravel-aiwmweb/backend/resources/js/global-posts-confirm-trash-widget.tsx",
+    "backend": "Existing GlobalPostsTrashController::trash via authenticated tenant.context + content.edit",
+    "external": "Native WordPress REST remote trash only after ConfirmTrashAsync via GlobalPostsTrashService/ContentPlatformService",
+    "authoritative_refresh": "query.refetch() after confirmed mutation, existing test + real WordPress REST E2E."
+  },
+  "security": {
+    "guard": "Selection count 1..100, content.edit, no in-flight mutation.",
+    "guest_401": true,
+    "unprivileged_403": true,
+    "foreign_tenant_404": true,
+    "existing_remote_mutation_validation": true
+  },
+  "acceptance": {
+    "phpunit": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalPostsRequestTrashTerminalityTest.php",
+    "vitest": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-posts-request-trash-control.test.ts",
+    "existing_remote_tests": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalPostsConfirmTrashTerminalityTest.php"
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-476CDB769B"
+    ],
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  }
+}
