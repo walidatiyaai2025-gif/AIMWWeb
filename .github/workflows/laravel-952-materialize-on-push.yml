@@ -1,5 +1,5 @@
 name: Laravel #952 Official Parity Materialization
-# Re-run after Pint correction; exact operation #952 only.
+# Reconcile already-merged #936/#937/#939 provenance after #952 official materialization.
 
 on:
   push:
@@ -55,7 +55,13 @@ jobs:
           new={v['operation_id']:v['migration_state'] for v in generated['operations']}
           assert old.keys()==new.keys(), 'denominator or ids changed'
           changes={i:(old[i],new[i]) for i in old if old[i]!=new[i]}
-          assert changes == {'AIMW-SYNC-1B63FBC758':('PENDING','ADAPTED')},f'unexpected reconciliation delta {changes}'
+          expected = {
+            'AIMW-SYNC-3E7DCF4C71': ('PENDING', 'ADAPTED'),  # Already merged issue #936
+            'AIMW-SYNC-80B81C07B8': ('PENDING', 'ADAPTED'),  # Already merged issue #937
+            'AIMW-SYNC-C43EFD36B1': ('PENDING', 'ADAPTED'),  # Already merged issue #939
+          }
+          assert new['AIMW-SYNC-1B63FBC758'] == 'ADAPTED', 'Issue #952 terminal state regressed'
+          assert changes == expected, f'unexpected reconciliation delta {changes}'
           print('Official delta:',changes)
           PY
           git config user.name 'github-actions[bot]'
