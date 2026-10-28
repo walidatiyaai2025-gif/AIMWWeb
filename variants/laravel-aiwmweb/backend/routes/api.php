@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AiUsageReadController;
 use App\Http\Controllers\ContentApiController;
+use App\Http\Controllers\GlobalPagesDraftController;
 use App\Http\Controllers\ContentExplorerReadController;
 use App\Http\Controllers\EmailNotificationController;
 use App\Http\Controllers\GlobalPagesTrashController;
@@ -134,6 +135,9 @@ Route::prefix('v1/tenants/{tenant}')
         Route::get('/ai/usage', [AiUsageReadController::class, 'index'])->name('canonical.api.ai-usage');
         Route::get('/global-pages', [GlobalPagesTrashController::class, 'index'])
             ->name('api.v1.global-pages.index');
+        Route::post('/global-pages/draft', [GlobalPagesDraftController::class, 'draft'])
+            ->defaults('canonical_operation_id', GlobalPagesDraftController::OPERATION_ID)
+            ->name('api.v1.global-pages.draft');
         Route::post('/global-pages/trash', [GlobalPagesTrashController::class, 'trash'])
             ->defaults('canonical_operation_id', GlobalPagesTrashController::OPERATION_ID)
             ->name('api.v1.global-pages.trash');
