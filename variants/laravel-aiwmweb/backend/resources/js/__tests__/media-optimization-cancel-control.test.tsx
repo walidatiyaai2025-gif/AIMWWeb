@@ -15,7 +15,7 @@ const context: FrontendContext = {
     connectors: [], capabilities: {},
     api: { media: endpoint }, actions: {},
 };
-const remote = { remote_id: 105, title: 'Current', slug: 'current', alt_text: 'Actual alt', caption: '', description: '' };
+const remote = { remote_id: 105, modified_gmt: '2026-10-28T01:00:00', title: 'Current', slug: 'current', alt_text: 'Actual alt', caption: '', description: '' };
 function renderControl(ctx = context) {
     return render(<LocaleProvider><MediaOptimizationEditorControl context={ctx} endpoint={endpoint} row={row} onReconcile={vi.fn(async () => {})} /></LocaleProvider>);
 }
