@@ -38,8 +38,15 @@ jobs:
           if [ "$merge_status" -ne 0 ]; then
             conflicts="$(git diff --name-only --diff-filter=U)"
             echo "MERGE_CONFLICT_FILES=$conflicts"
-            test "$conflicts" = "$manifest" || { echo "Non-manifest conflict; preserving branch for manual review" >&2; exit 1; }
-            git checkout --theirs -- "$manifest"
+            recon_json="variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json"
+            recon_md="variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md"
+            while IFS= read -r conflicted; do
+              case "$conflicted" in
+                "$manifest"|"$recon_json"|"$recon_md") ;;
+                *) echo "Unexpected conflict: $conflicted; aborting rather than overwriting worker code" >&2; exit 1 ;;
+              esac
+            done <<< "$conflicts"
+            git checkout --theirs -- "$manifest" "$recon_json" "$recon_md"
             python - <<'PY'
           import json
           from pathlib import Path
@@ -55,7 +62,7 @@ jobs:
           p.write_text(json.dumps(data,indent=2)+'\n')
           print('MANIFEST_MERGED_NO_DUPLICATE',op,len(sources))
           PY
-            git add "$manifest"
+            git add "$manifest" "$recon_json" "$recon_md"
           fi
           test -f "$manifest"
           git diff --name-only --diff-filter=U | grep . && { echo "Unresolved conflict" >&2; exit 1; } || true
@@ -88,6 +95,7 @@ jobs:
         run: |
           set -euo pipefail
           git add variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git rm .github/workflows/laravel-960-safe-rebase-composition.yml
           git commit -m "merge(laravel #960): incorporate current composition and regenerate canonical parity"
           git push origin HEAD:refs/heads/worker/960-global-users-previous
           echo "EXACT_MERGED_PARITY_SHA=$(git rev-parse HEAD)"
