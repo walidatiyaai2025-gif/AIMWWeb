@@ -103,6 +103,7 @@ final class SitesEnableSelectedTerminalityTest extends TestCase
         }
         $membership->roles()->attach($role, ['tenant_id' => $tenant->id]);
         app(TenantContext::class)->forget();
+
         return $tenant;
     }
 
@@ -116,6 +117,7 @@ final class SitesEnableSelectedTerminalityTest extends TestCase
             'connection_status' => $connectionStatus,
         ]);
         app(TenantContext::class)->forget();
+
         return $site;
     }
 }
