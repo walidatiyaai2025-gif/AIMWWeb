@@ -1,16 +1,9 @@
 name: Laravel AIWMWeb Task Parity Materialize 938
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-    branches:
-      - worker/laravel-aiwmweb-closure-composition
-    paths:
-      - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
-      - '.github/workflows/laravel-aiwmweb-task-parity-materialize-938.yml'
   push:
     branches:
-      - worker/938-content-explorer-reset-filters
+      - worker/938-global-pages-apply-filters
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
       - '.github/workflows/laravel-aiwmweb-task-parity-materialize-938.yml'
@@ -20,18 +13,13 @@ permissions:
 
 jobs:
   materialize:
-    if: >-
-      github.event_name == 'push' ||
-      (github.event.pull_request.number == 1326 &&
-       github.event.pull_request.head.repo.full_name == 'walidatiyaai2025-gif/AIMWWeb' &&
-       github.head_ref == 'worker/938-global-pages-apply-filters')
     runs-on: ubuntu-latest
     env:
       PYTHONHASHSEED: '0'
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref || github.ref_name }}
+          ref: ${{ github.ref_name }}
           fetch-depth: 0
       - name: Fetch exact evidence refs
         run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
@@ -59,5 +47,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "chore(laravel): materialize parity for AIMW-SYNC-8409FB077A"
-          git push origin "HEAD:${{ github.head_ref || github.ref_name }}"
+          git push origin "HEAD:${{ github.ref_name }}"
 
