@@ -430,6 +430,32 @@ final class ContentApiController extends Controller
         return response()->json($q->latest('remote_modified_at')->paginate(min(max((int) $request->query('per_page', 30), 1), 100)));
     }
 
+    public function mediaDetails(TenantAuthorizer $auth, string $tenant, int $site, int $media): JsonResponse
+    {
+        $auth->authorize('content.view');
+        $item = MediaItem::query()->where('site_id', $site)->findOrFail($media);
+        $remote = $this->remote->get($site, 'media', (int) $item->remote_id);
+        abort_unless((int) ($remote['id'] ?? 0) === (int) $item->remote_id, 409, 'WordPress returned an unexpected media identity.');
+
+        $raw = static function (mixed $value): string {
+            if (is_array($value)) {
+                $value = $value['raw'] ?? null;
+            }
+            abort_unless(is_string($value), 409, 'WordPress did not supply editable media metadata.');
+
+            return $value;
+        };
+
+        return response()->json([
+            'remote_id' => (int) $item->remote_id,
+            'title' => $raw($remote['title'] ?? null),
+            'slug' => $raw($remote['slug'] ?? null),
+            'alt_text' => $raw($remote['alt_text'] ?? null),
+            'caption' => $raw($remote['caption'] ?? null),
+            'description' => $raw($remote['description'] ?? null),
+        ]);
+    }
+
     public function uploadMedia(Request $request, TenantAuthorizer $auth, string $tenant, int $site): JsonResponse
     {
         $auth->authorize('content.edit');
