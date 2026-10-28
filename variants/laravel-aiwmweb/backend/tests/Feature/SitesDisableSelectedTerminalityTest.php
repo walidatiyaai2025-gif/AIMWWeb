@@ -1,4 +1,5 @@
 <?php
+
 namespace Tests\Feature;
 
 use App\Http\Controllers\SitesBulkDisableSelectedController;
@@ -17,6 +18,7 @@ use Tests\TestCase;
 final class SitesDisableSelectedTerminalityTest extends TestCase
 {
     use RefreshDatabase;
+
     private const OPERATION_ID = 'AIMW-SYNC-45A3B43BB9';
 
     public function test_source_control_wires_real_tenant_scoped_disable_and_reread(): void
@@ -98,6 +100,7 @@ final class SitesDisableSelectedTerminalityTest extends TestCase
         }
         $membership->roles()->attach($role, ['tenant_id' => $tenant->id]);
         app(TenantContext::class)->forget();
+
         return $tenant;
     }
 
@@ -109,6 +112,7 @@ final class SitesDisableSelectedTerminalityTest extends TestCase
             'status' => 'active', 'connection_status' => $status,
         ]);
         app(TenantContext::class)->forget();
+
         return $site;
     }
 }

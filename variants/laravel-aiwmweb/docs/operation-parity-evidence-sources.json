@@ -2890,6 +2890,14 @@
       "operation_ids": [
         "AIMW-SYNC-5A397204EF"
       ]
+    },
+    {
+      "label": "AIMW-SYNC-45A3B43BB9 Sites DisableSelectedAsync focused closure #974",
+      "sha": "ba3d9b04f8e7738023e3750bf5c496475eaa308e",
+      "observed_pr_head": "ba3d9b04f8e7738023e3750bf5c496475eaa308e",
+      "operation_ids": [
+        "AIMW-SYNC-45A3B43BB9"
+      ]
     }
   ],
   "sources": [

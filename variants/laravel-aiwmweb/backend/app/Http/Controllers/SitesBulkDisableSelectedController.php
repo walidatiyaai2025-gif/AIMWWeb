@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Authorization\TenantAuthorizer;
@@ -42,6 +43,7 @@ final class SitesBulkDisableSelectedController extends Controller
                     $count++;
                 }
             }
+
             return $count;
         }, 3);
 
@@ -54,6 +56,7 @@ final class SitesBulkDisableSelectedController extends Controller
             409,
             'Selected site disable could not be verified.',
         );
+
         return response()->json([
             'operation_id' => self::OPERATION_ID,
             'requested' => count($ids),
