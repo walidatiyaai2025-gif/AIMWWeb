@@ -94,6 +94,7 @@ const SITES_SHOW_REVIEW_OPERATION_ID = 'AIMW-CONT-CA17F05024';
 export const COMMENTS_SEARCH_OPERATION_ID = 'AIMW-SYNC-4E3C0156FC';
 export const COMMENTS_REFRESH_CLICK_OPERATION_ID = 'AIMW-SYNC-D5CE5A213B';
 export const WORDPRESS_USERS_SEARCH_OPERATION_ID = 'AIMW-SYNC-E6888B0B4D';
+export const WORDPRESS_USERS_PREVIOUS_OPERATION_ID = 'AIMW-SYNC-E0791EA9E9';
 export const AI_CENTER_METADATA_REFRESH_OPERATION_ID = 'AIMW-AI-953A6C0D98';
 export const NOTIFICATION_INBOX_RELOAD_OPERATION_ID = 'AIMW-EMAI-12A6FEB2FF';
 
@@ -103,7 +104,7 @@ const COLLECTION_READ_OPERATIONS: Partial<Record<string, { load?: string; previo
     pages: { load: 'AIMW-SYNC-112E6B9631', previous: 'AIMW-SYNC-EF652932D6' },
     posts: { load: 'AIMW-SYNC-12C023E4CC', previous: 'AIMW-SYNC-0EDB4AB9FC' },
     taxonomy: { load: 'AIMW-SYNC-5CF2AC6243', previous: 'AIMW-SYNC-C8C380E7F8' },
-    'wp-users': { previous: 'AIMW-SYNC-B78216241F' },
+    'wp-users': { previous: WORDPRESS_USERS_PREVIOUS_OPERATION_ID },
 };
 
 const CONTENT_WORKSPACE_LOAD_OPERATION_ID = 'AIMW-SYNC-CD6F1FB97B';
@@ -1146,7 +1147,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                 ) : <div className="empty-state"><strong>{text(commonText.empty)}</strong><p>{locale === 'ar' ? 'لا يتم إنشاء صفوف تجريبية عندما يعيد الخادم نتيجة فارغة.' : 'No sample rows are synthesized when the server returns an empty result.'}</p></div>}
                 {route.key === 'explorer'
                     ? <ContentExplorerPagination page={collection.page} lastPage={collection.lastPage} onPage={setPage} />
-                    : <Pagination page={collection.page} lastPage={collection.lastPage} onPage={setPage} previousOperationId={readOperations?.previous ?? (route.key === 'email-history' ? APP_DATA_GRID_PREVIOUS_PAGE_OPERATION_ID : undefined)} />}
+                    : <Pagination page={collection.page} lastPage={collection.lastPage} onPage={setPage} busy={route.key === 'wp-users' && query.isFetching} previousOperationId={readOperations?.previous ?? (route.key === 'email-history' ? APP_DATA_GRID_PREVIOUS_PAGE_OPERATION_ID : undefined)} />}
             </section>
             {route.key === 'explorer' && explorerPreview ? (
                 <ContentExplorerPreviewPanel
