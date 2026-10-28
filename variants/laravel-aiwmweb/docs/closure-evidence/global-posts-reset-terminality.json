@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #944 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-1A20057999",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-SYNC-1A20057999",
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "/module/posts",
+    "source": "src/AIWordPressManager.Web/Components/Pages/GlobalPostsExplorer.razor",
+    "source_intent": "ResetAsync clears active search/status/page size and selection then performs fresh tenant-authorized persisted posts query.",
+    "mutation": false,
+    "tenant_owned": true
+  },
+  "laravel_runtime": {
+    "frontend_widget": "variants/laravel-aiwmweb/backend/resources/js/global-posts-confirm-trash-widget.tsx",
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/global-posts-reset-control.ts",
+    "backend": "GlobalPostsTrashController::index via auth, tenant.context and content.view",
+    "method": "GET /api/v1/tenants/{tenant}/global-posts",
+    "external_boundary": "Read synchronized authoritative tenant-scoped WordPress cache; reset does not mutate WordPress."
+  },
+  "security": {
+    "permission": "content.view",
+    "foreign_tenant_404": true,
+    "unauthorized_403": true,
+    "guest_401": true,
+    "identity_injection": "No caller-owned identifiers in reset URL."
+  },
+  "acceptance": {
+    "phpunit": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalPostsResetTerminalityTest.php",
+    "vitest": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-posts-reset-control.test.ts"
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-1A20057999"
+    ],
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  }
+}

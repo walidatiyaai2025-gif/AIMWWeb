@@ -510,6 +510,18 @@ final class ContentApiController extends Controller
         if ($taxonomy = $request->query('taxonomy')) {
             $q->where('taxonomy', $taxonomy);
         }
+        // #958 ApplyAsync: minimum usage is checked against persisted, site-scoped rows.
+        $minimumUsage = max(0, (int) $request->query('minimum_usage', 0));
+        if ($minimumUsage > 0) {
+            $q->where('usage_count', '>=', $minimumUsage);
+        }
+        $search = trim((string) $request->query('search', ''));
+        if ($search !== '') {
+            $q->where(function ($terms) use ($search): void {
+                $terms->where('name', 'like', '%'.$search.'%')
+                    ->orWhere('slug', 'like', '%'.$search.'%');
+            });
+        }
 
         return response()->json($q->orderBy('taxonomy')->orderBy('name')->paginate(min(max((int) $request->query('per_page', 100), 1), 200)));
     }
