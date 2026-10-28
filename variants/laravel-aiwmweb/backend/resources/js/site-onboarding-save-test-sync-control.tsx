@@ -5,6 +5,8 @@ import { useLocale } from './i18n';
 import { SyncFormActionsControl } from './sync-form-actions-control';
 
 export const SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID = 'AIMW-BILL-2EF6B8A27A';
+export const SITE_ONBOARDING_OPEN_SITE_OPERATION_ID = 'AIMW-SYNC-BDBA0B4F01';
+export const SITE_ONBOARDING_PREVIOUS_OPERATION_ID = 'AIMW-SYNC-C1B6FA6677';
 export const SITE_ONBOARDING_RETRY_SYNC_OPERATION_ID = 'AIMW-SYNC-AE16CF49C6';
 export const SITE_ONBOARDING_NEXT_OPERATION_ID = 'AIMW-BILL-5DE86937F7';
 export const SITE_ONBOARDING_BACK_TO_SITES_OPERATION_ID = 'AIMW-CONT-6EC0601E18';
@@ -91,6 +93,12 @@ export function siteOnboardingBackToSitesHref(tenantSlug: string): string | null
     return tenantUrl(tenantSlug, '/sites');
 }
 
+export function siteOnboardingOpenSiteHref(tenantSlug: string, siteId: number): string | null {
+    if (!tenantSlug.trim() || /[\\/]/.test(tenantSlug)) return null;
+    if (!Number.isSafeInteger(siteId) || siteId < 1) return null;
+    return tenantUrl(tenantSlug, `/sites/${siteId}`);
+}
+
 function nextIdempotencyKey(): string {
     if (typeof globalThis.crypto?.randomUUID === 'function') return globalThis.crypto.randomUUID();
     return `site-onboarding-${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -100,6 +108,7 @@ export function SiteOnboardingSaveTestSyncControl({ context }: { context: Fronte
     const { locale } = useLocale();
     const endpoint = canonicalSiteOnboardingEndpoint(context.api.sites);
     const canManage = context.permissions.includes('*') || context.permissions.includes('sites.manage');
+    const canViewSite = context.permissions.includes('*') || context.permissions.includes('sites.view');
     const [step, setStep] = useState<1 | 2 | 3>(1);
     const [stepError, setStepError] = useState('');
     const [name, setName] = useState('');
@@ -360,7 +369,9 @@ export function SiteOnboardingSaveTestSyncControl({ context }: { context: Fronte
                 {step < 3 ? (
                     <div className="toolbar-actions">
                         {step > 1 ? (
-                            <button type="button" className="btn" disabled={mutation.isPending} onClick={previousStep}>
+                            <button type="button" className="btn" disabled={mutation.isPending}
+                                data-canonical-operation={SITE_ONBOARDING_PREVIOUS_OPERATION_ID}
+                                onClick={previousStep}>
                                 {locale === 'ar' ? 'السابق' : 'Previous'}
                             </button>
                         ) : null}
@@ -385,6 +396,8 @@ export function SiteOnboardingSaveTestSyncControl({ context }: { context: Fronte
                         saveText={locale === 'ar' ? 'حفظ واختبار ومزامنة' : 'Save, test and synchronize'}
                         savingText={locale === 'ar' ? 'جارٍ الحفظ والاختبار وبدء المزامنة…' : 'Saving, testing & starting sync…'}
                         saveOperationId={SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID}
+                        showCancel={!result}
+                        cancelOperationId={SITE_ONBOARDING_PREVIOUS_OPERATION_ID}
                         onCancel={previousStep}
                         onSave={() => mutation.mutateAsync().catch(() => undefined)}
                     />
@@ -407,6 +420,13 @@ export function SiteOnboardingSaveTestSyncControl({ context }: { context: Fronte
                         </button>
                     ) : null}
                     {result.message ? <p>{result.message}</p> : null}
+                    {canViewSite && siteOnboardingOpenSiteHref(context.tenant.slug, result.site.id) ? (
+                        <a className="btn primary"
+                            href={siteOnboardingOpenSiteHref(context.tenant.slug, result.site.id)!}
+                            data-canonical-operation={SITE_ONBOARDING_OPEN_SITE_OPERATION_ID}>
+                            {locale === 'ar' ? 'فتح لوحة الموقع' : 'Open site dashboard'}
+                        </a>
+                    ) : null}
                     <a
                         className="btn"
                         href={backToSitesHref}

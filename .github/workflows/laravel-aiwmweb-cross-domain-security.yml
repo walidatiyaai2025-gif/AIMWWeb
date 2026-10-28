@@ -10,6 +10,10 @@ on:
       - worker/laravel-aiwmweb-closure-composition
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions:
   contents: read
 
@@ -36,6 +40,12 @@ jobs:
           php-version: '8.4'
           extensions: mbstring, pdo_sqlite, sqlite3, redis
           coverage: none
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/composer/files
+          key: composer-${{ runner.os }}-php84-${{ hashFiles('variants/laravel-aiwmweb/backend/composer.lock') }}
+          restore-keys: |
+            composer-${{ runner.os }}-php84-
       - run: composer install --no-interaction --prefer-dist
       - name: Install composed adversarial acceptance
         shell: bash
