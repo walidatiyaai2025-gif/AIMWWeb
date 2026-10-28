@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #938 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-8409FB077A",
+  "domain": "sync",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "source": {
+    "path": "src/AIWordPressManager.Web/Components/Pages/GlobalPagesExplorer.razor",
+    "screen": "/module/pages",
+    "handler": "ApplyAsync",
+    "behavior": "Reset the page to 1 and re-read the persisted WordPress page projection with search, selected site, status and page size; no external WordPress mutation."
+  },
+  "implementation": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/global-pages-apply-filters-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/global-pages-confirm-trash-widget.tsx",
+    "service": "variants/laravel-aiwmweb/backend/app/Content/GlobalPagesTrashService.php",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/GlobalPagesTrashController.php",
+    "endpoint": "GET /api/v1/tenants/{tenant}/global-pages",
+    "details": "A canonical Apply filters form is wired into the existing Global Pages management grid; its query key carries applied filter parameters and a revision to force a new authoritative read on repeated Apply. Selection is cleared upon apply, while existing draft/trash actions preserve their real execution path. The server search includes title, slug, synchronized excerpt and synchronized body as in the original Pages Explorer."
+  },
+  "security": {
+    "tenant_isolation": "Site and ContentItem Eloquent models carry tenant global scopes and the active tenant is resolved by tenant.context.",
+    "direct_site_id": "Validated tenant-scoped Site::findOrFail rejects foreign tenant or unavailable site with 404.",
+    "permission": "content.view on the read endpoint; tenant.view for site options; content.edit remains mandatory for existing mutation controls.",
+    "failure": "HTTP errors are displayed, no optimistic success or fabricated local rows; read-only filtering never mutates WordPress.",
+    "explicit_no_leaks": "No caller-provided tenant ownership, provider credential, site secrets, or new external mutation."
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalPagesApplyFiltersTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-pages-apply-filters-control.test.tsx",
+    "focus": [
+      "source-to-React binding and exact operation ID",
+      "server-backed search/status/site/per-page read",
+      "site and tenant isolation",
+      "403 RBAC",
+      "401 guest",
+      "404 foreign tenant/site",
+      "422 invalid filters",
+      "pending duplicate-submit guard",
+      "no fake success",
+      "source-parity body/excerpt search matching against persisted synchronized page fields"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-8409FB077A"
+    ],
+    "sibling_rows_claimed": false,
+    "aspnet_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "additional_branch_created": false
+  },
+  "provenance": {
+    "issue": 938,
+    "task_branch": "worker/938-global-pages-apply-filters",
+    "target_branch": "worker/laravel-aiwmweb-closure-composition",
+    "branch_base_sha": "e3f3a6859b44bc6e6f48667c6633e1804a57fba5",
+    "implementation_snapshot_sha": "f863c59092d570693403b0824b534dee8df2ce1e",
+    "pcc_source_sha": "076eeb0ed3fe75200d907b111803a210e5c054c5",
+    "readiness": "Official parity materialized at e84155b206fbf3f6339cc8c91ad8a2972b30844d with 883/931 terminal (94.84%); exact-head PR CI remains mandatory before merge.",
+    "composition_reconciliation": {
+      "integrated_closure_sha": "38c825c454ed031ba363ece20f125579c3672c4e",
+      "merge_resolution_commit": "4fc5725755010852dd0c09377f26b1de1c650b99",
+      "official_materializer_workflow_run_id": 40638450947,
+      "official_generated_commit_sha": "e84155b206fbf3f6339cc8c91ad8a2972b30844d",
+      "terminal_operations": 883,
+      "total_operations": 931,
+      "pending_operations": 48,
+      "focused_closure_validation": "PASS",
+      "focused_service_validation": "PASS",
+      "focused_background_job_validation": "PASS"
+    }
+  }
+}
