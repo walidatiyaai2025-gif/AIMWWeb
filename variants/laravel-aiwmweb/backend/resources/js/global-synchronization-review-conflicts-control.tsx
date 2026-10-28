@@ -58,7 +58,7 @@ export function globalSynchronizationConflictEditorHref(
     kind: unknown,
 ): string | null {
     if (kind !== 'RemoteUpdated') return null;
-    if (!context.tenant.slug.trim() || /[\\\\/]/.test(context.tenant.slug)) return null;
+    if (!context.tenant.slug.trim() || context.tenant.slug.includes('/') || context.tenant.slug.includes('\\')) return null;
     if (!context.permissions.includes('*') && (
         !context.permissions.includes('tenant.view')
         || !context.permissions.includes('sites.view')
