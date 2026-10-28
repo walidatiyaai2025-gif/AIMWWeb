@@ -56,6 +56,7 @@ import { GlobalUsersFullManagementControl } from './global-users-full-management
 import { WordPressUsersRefreshControl } from './wordpress-users-refresh-control';
 import { MediaDeleteControl } from './media-delete-control';
 import { authoritativeGlobalMediaApplyEndpoint, defaultGlobalMediaFilters, globalMediaApplyQuery, GlobalMediaApplyControl } from './global-media-apply-control';
+import { globalMediaResetState, GlobalMediaResetControl } from './global-media-reset-control';
 import { GlobalMediaInterpolatedLinksControl } from './media-interpolated-links-control';
 import { MediaBackToSitesControl } from './media-back-to-sites-control';
 import { MediaManagerEditingSourceUrlControl } from './media-manager-editing-source-url-control';
@@ -511,6 +512,26 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         }
     };
 
+    // Canonical GlobalMediaExplorer ResetAsync: reset draft/applied filters and
+    // reread the authoritative media collection scoped to the active tenant/site.
+    const resetGlobalMediaFilters = async (): Promise<void> => {
+        if (route.key !== 'media' || state.state !== 'enabled' || !endpoint || query.isFetching) return;
+        const reset = globalMediaResetState();
+        const defaults = defaultGlobalMediaFilters();
+        setSearchInput(reset.search);
+        setSearch(reset.search);
+        setPage(reset.page);
+        setMediaDraft(defaults);
+        setMediaAppliedFilters(defaults);
+        await queryClient.fetchQuery({
+            queryKey: ['workspace', context.tenant.slug, route.key, endpoint, reset.page, reset.search, defaults.mediaType, defaults.pageSize],
+            queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint, reset.page, reset.search, {
+                per_page: String(reset.pageSize),
+            })),
+            staleTime: 0,
+        });
+    };
+
     const applicationUsersSearchAuthorized = context.permissions.includes('*') || context.permissions.includes('members.manage');
     const searchApplicationUsers = async (): Promise<void> => {
         if (
@@ -770,6 +791,16 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         busy={query.isFetching}
                         onChange={setSiteReliabilityDraft}
                         onApply={(next) => { void applySiteReliabilityFilters(next); }}
+                    />
+                ) : null}
+                {route.key === 'media' ? (
+                    <GlobalMediaResetControl
+                        locale={locale}
+                        busy={query.isFetching}
+                        available={Boolean(endpoint)}
+                        onReset={() => { void resetGlobalMediaFilters().catch((error) => {
+                            notify(error instanceof Error ? error.message : 'Media filters could not be reset.', 'error');
+                        }); }}
                     />
                 ) : null}
                 <form className="search-form" onSubmit={(event) => {
