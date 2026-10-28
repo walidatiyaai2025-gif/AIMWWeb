@@ -22,7 +22,9 @@ final class GlobalPagesTrashService
             $query->where(function ($builder) use ($search): void {
                 $builder
                     ->where('title', 'like', "%{$search}%")
-                    ->orWhere('slug', 'like', "%{$search}%");
+                    ->orWhere('slug', 'like', "%{$search}%")
+                    ->orWhere('excerpt', 'like', "%{$search}%")
+                    ->orWhere('body', 'like', "%{$search}%");
             });
         }
 
