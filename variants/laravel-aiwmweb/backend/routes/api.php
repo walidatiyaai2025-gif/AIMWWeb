@@ -141,7 +141,7 @@ Route::prefix('v1/tenants/{tenant}')
         Route::post('/global-pages/draft', [GlobalPagesDraftController::class, 'draft'])
             ->defaults('canonical_operation_id', GlobalPagesDraftController::OPERATION_ID)
             ->name('api.v1.global-pages.draft');
-        Route::post('/global-pages/private', [GlobalPagesPrivateController::class, 'private'])
+        Route::post('/global-pages/private', [GlobalPagesPrivateController::class, 'setPrivate'])
             ->defaults('canonical_operation_id', GlobalPagesPrivateController::OPERATION_ID)
             ->name('api.v1.global-pages.private');
         Route::post('/global-pages/pending', [GlobalPagesPendingController::class, 'pending'])
