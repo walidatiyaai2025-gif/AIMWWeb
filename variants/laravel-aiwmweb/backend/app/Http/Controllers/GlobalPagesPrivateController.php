@@ -16,7 +16,7 @@ final class GlobalPagesPrivateController extends Controller
 
     public function __construct(private readonly TenantContext $tenant) {}
 
-    public function private(Request $request, TenantAuthorizer $auth, string $tenant): JsonResponse
+    public function setPrivate(Request $request, TenantAuthorizer $auth, string $tenant): JsonResponse
     {
         $auth->authorize('content.edit');
 
