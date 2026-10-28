@@ -37,7 +37,7 @@ final class GlobalMediaApplyTerminalityTest extends TestCase
         $this->assertStringContainsString('setPage(1)', $page);
         $this->assertStringContainsString('setMediaAppliedFilters({ ...mediaDraft })', $page);
         $this->assertStringContainsString('queryClient', $page);
-        $this->assertStringContainsString("Site::query()->findOrFail(\$site);", $controller);
+        $this->assertStringContainsString('Site::query()->findOrFail($site);', $controller);
     }
 
     public function test_apply_filters_uses_real_site_scoped_media_and_page_one_with_selected_size(): void
