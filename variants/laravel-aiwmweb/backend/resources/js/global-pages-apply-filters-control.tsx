@@ -30,6 +30,7 @@ export function globalPagesFilterUrl(tenantSlug: string, filters: GlobalPagesFil
     if (filters.search.trim()) params.set('search', filters.search.trim());
     if (filters.status !== 'all') params.set('status', filters.status);
     if (filters.siteId !== '') {
+        if (!/^[0-9]+$/.test(filters.siteId)) return null;
         const siteId = Number(filters.siteId);
         if (!Number.isSafeInteger(siteId) || siteId <= 0) return null;
         params.set('site_id', String(siteId));

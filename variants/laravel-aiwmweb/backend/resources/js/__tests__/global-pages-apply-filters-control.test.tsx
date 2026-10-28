@@ -55,6 +55,9 @@ describe('AIMW-SYNC-8409FB077A GlobalPagesExplorer ApplyAsync', () => {
         expect(globalPagesFilterUrl('alpha/beta', DEFAULT_GLOBAL_PAGES_FILTERS)).toBeNull();
         expect(globalPagesFilterUrl('alpha', { ...DEFAULT_GLOBAL_PAGES_FILTERS, siteId: '-1' })).toBeNull();
         expect(globalPagesFilterUrl('alpha', { ...DEFAULT_GLOBAL_PAGES_FILTERS, siteId: '1/2' })).toBeNull();
+        expect(globalPagesFilterUrl('alpha', { ...DEFAULT_GLOBAL_PAGES_FILTERS, siteId: '1e2' })).toBeNull();
+        expect(globalPagesFilterUrl('alpha', { ...DEFAULT_GLOBAL_PAGES_FILTERS, siteId: '+7' })).toBeNull();
+        expect(globalPagesFilterUrl('alpha', { ...DEFAULT_GLOBAL_PAGES_FILTERS, siteId: ' 7' })).toBeNull();
         expect(globalPagesFilterUrl('alpha', { ...DEFAULT_GLOBAL_PAGES_FILTERS, perPage: 1000 })).toBeNull();
     });
 
