@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest, type FrontendContext } from './core';
 import { useToast } from './components';
 import { useLocale } from './i18n';
+import { GLOBAL_POSTS_RESET_OPERATION_ID, defaultGlobalPostsFilters, globalPostsFilterQuery } from './global-posts-reset-control';
 import { GLOBAL_POSTS_PRIVATE_SELECTED_OPERATION_ID, globalPostsPrivateEndpoint, globalPostsPrivatePayload } from './global-posts-private-selected-control';
 import { PostsInterpolatedLinksControl } from './posts-interpolated-links-control';
 import { SyncAppConfirmDialogCancelControl } from './sync-app-confirm-dialog-cancel-control';
@@ -58,6 +59,8 @@ function hasPermission(context: FrontendContext, permission: string): boolean {
 export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendContext }) {
     const { locale } = useLocale();
     const { notify } = useToast();
+    const queryClient = useQueryClient();
+    const [filters, setFilters] = useState(defaultGlobalPostsFilters);
     const [selected, setSelected] = useState<Set<string>>(new Set());
     const [confirmOpen, setConfirmOpen] = useState(false);
     const endpoint = globalPostsEndpoint(context.tenant.slug);
@@ -68,8 +71,8 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
     const enabled = Boolean(endpoint && canView);
 
     const query = useQuery({
-        queryKey: ['global-posts-confirm-trash', context.tenant.slug],
-        queryFn: () => apiRequest<GlobalPostsEnvelope>(`${endpoint}?per_page=100`),
+        queryKey: ['global-posts-confirm-trash', context.tenant.slug, filters.search, filters.status, filters.perPage],
+        queryFn: () => apiRequest<GlobalPostsEnvelope>(`${endpoint}?${globalPostsFilterQuery(filters)}`),
         enabled,
     });
 
@@ -178,6 +181,13 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
 
     const busy = mutation.isPending || publishMutation.isPending || privateMutation.isPending;
 
+    const resetFilters = () => {
+        // ResetAsync: clear filters/selection and force a fresh authorized read, including at defaults.
+        setSelected(new Set());
+        setFilters(defaultGlobalPostsFilters());
+        void queryClient.invalidateQueries({ queryKey: ['global-posts-confirm-trash', context.tenant.slug] });
+    };
+
     const toggle = (row: GlobalPageRow) => {
         if (busy || row.status === 'trash') return;
         const key = `${row.site_id}:${row.wordpress_id}`;
@@ -205,6 +215,37 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
             {!canEdit ? (
                 <p role="alert">{locale === 'ar' ? 'تحتاج صلاحية تعديل المحتوى لتنفيذ هذا الإجراء.' : 'Content edit permission is required for this action.'}</p>
             ) : null}
+            <div className="toolbar-actions" aria-label={locale === 'ar' ? 'فلاتر المقالات' : 'Post filters'}>
+                <label>
+                    {locale === 'ar' ? 'البحث' : 'Search'}
+                    <input type="search" value={filters.search}
+                        onChange={(event) => setFilters((old) => ({ ...old, search: event.target.value }))}
+                        placeholder={locale === 'ar' ? 'العنوان أو الرابط المختصر' : 'Title or slug'} />
+                </label>
+                <label>
+                    {locale === 'ar' ? 'الحالة' : 'Status'}
+                    <select value={filters.status}
+                        onChange={(event) => setFilters((old) => ({ ...old, status: event.target.value }))}>
+                        <option value="all">{locale === 'ar' ? 'كل الحالات' : 'All statuses'}</option>
+                        <option value="publish">{locale === 'ar' ? 'منشور' : 'Published'}</option>
+                        <option value="draft">{locale === 'ar' ? 'مسودة' : 'Draft'}</option>
+                        <option value="pending">{locale === 'ar' ? 'قيد المراجعة' : 'Pending'}</option>
+                        <option value="future">{locale === 'ar' ? 'مجدول' : 'Scheduled'}</option>
+                        <option value="private">{locale === 'ar' ? 'خاص' : 'Private'}</option>
+                    </select>
+                </label>
+                <label>
+                    {locale === 'ar' ? 'حجم الصفحة' : 'Page size'}
+                    <select value={filters.perPage}
+                        onChange={(event) => setFilters((old) => ({ ...old, perPage: Number(event.target.value) }))}>
+                        {[10, 25, 50, 100].map((size) => <option key={size} value={size}>{size}</option>)}
+                    </select>
+                </label>
+                <button type="button" className="btn" data-canonical-operation={GLOBAL_POSTS_RESET_OPERATION_ID}
+                    disabled={busy} onClick={resetFilters}>
+                    {locale === 'ar' ? 'إعادة ضبط' : 'Reset'}
+                </button>
+            </div>
             {query.isLoading ? <p>{locale === 'ar' ? 'جارٍ تحميل الصفحات…' : 'Loading pages…'}</p> : null}
             {query.error ? <p role="alert">{String(query.error)}</p> : null}
 
