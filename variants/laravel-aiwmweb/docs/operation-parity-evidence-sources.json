@@ -1565,6 +1565,14 @@
   "known_composition_blockers": [],
   "focused_closure_operation_sources": [
     {
+      "label": "AIMW-CONT-BCAD1E3A49 Operations Hub Site Operations navigation focused closure",
+      "sha": "557c6edf4339a381e7c4a99b51e605be0031be99",
+      "observed_pr_head": "557c6edf4339a381e7c4a99b51e605be0031be99",
+      "operation_ids": [
+        "AIMW-CONT-BCAD1E3A49"
+      ]
+    },
+    {
       "label": "AIMW-SYNC-EE7D7534DF ContentExplorer BulkPublishAsync focused closure #930",
       "sha": "030d93df2e9afe35cd95c0c77764e9c009af5ad3",
       "observed_pr_head": "030d93df2e9afe35cd95c0c77764e9c009af5ad3",
@@ -2884,19 +2892,19 @@
       ]
     },
     {
+      "label": "AIMW-SYNC-BDBA0B4F01 Site Onboarding OpenSiteAsync focused closure #971",
+      "sha": "0a311c8358b8eed1d5c1a54c4c7a1b630fe85729",
+      "observed_pr_head": "0a311c8358b8eed1d5c1a54c4c7a1b630fe85729",
+      "operation_ids": [
+        "AIMW-SYNC-BDBA0B4F01"
+      ]
+    },
+    {
       "label": "Issue #955 Global Synchronization Open local content navigation operation-scoped closure",
       "sha": "37ab6e608e11b617a9c37f6121e45fab38ac26fe",
       "observed_pr_head": "37ab6e608e11b617a9c37f6121e45fab38ac26fe",
       "operation_ids": [
         "AIMW-SYNC-E51F091C0B"
-      ]
-    },
-    {
-      "label": "AIMW-CONT-BCAD1E3A49 Operations Hub Site Operations navigation focused closure",
-      "sha": "557c6edf4339a381e7c4a99b51e605be0031be99",
-      "observed_pr_head": "557c6edf4339a381e7c4a99b51e605be0031be99",
-      "operation_ids": [
-        "AIMW-CONT-BCAD1E3A49"
       ]
     }
   ],
