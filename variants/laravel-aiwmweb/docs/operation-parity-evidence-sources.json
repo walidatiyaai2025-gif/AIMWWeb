@@ -2901,16 +2901,16 @@
     },
     {
       "label": "Issue #967 MediaManager authoritative metadata save focused closure",
-      "sha": "500eff00408dffa13c56a93329089e92f19fa248",
-      "observed_pr_head": "500eff00408dffa13c56a93329089e92f19fa248",
+      "sha": "7ce1f559ff8763736d9692218b4d96f493512fb3",
+      "observed_pr_head": "7ce1f559ff8763736d9692218b4d96f493512fb3",
       "operation_ids": [
         "AIMW-SYNC-425B82511E"
       ]
     },
     {
       "label": "Issue #968 MediaManager local-only optimization cancel focused closure",
-      "sha": "1d2395bf788b94d67b430e05e7a32cfc11d2fa63",
-      "observed_pr_head": "1d2395bf788b94d67b430e05e7a32cfc11d2fa63",
+      "sha": "874e7255379e18cf3c83e2fdd17a97586d6832b3",
+      "observed_pr_head": "874e7255379e18cf3c83e2fdd17a97586d6832b3",
       "operation_ids": [
         "AIMW-SYNC-4B986B2651"
       ]
