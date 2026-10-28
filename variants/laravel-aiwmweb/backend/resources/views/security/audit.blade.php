@@ -45,7 +45,11 @@
                 <input type="search" name="q" value="{{ $search }}" maxlength="200" aria-label="Search security audit trail">
             </label>
             <button type="submit" data-canonical-operation="AIMW-BILL-A152D6A7DE">Apply</button>
-            <a href="/admin/security-audit">Clear</a>
+            <a
+                href="/admin/security-audit"
+                data-canonical-operation="AIMW-SYNC-AA26ED0909"
+                aria-label="Clear audit filters and reload security events"
+            >Clear</a>
         </form>
     </section>
 
