@@ -11,6 +11,7 @@ import {
 import { GLOBAL_PAGES_DRAFT_SELECTED_OPERATION_ID, globalPagesDraftEndpoint, globalPagesDraftPayload } from './global-pages-draft-selected-control';
 import { GLOBAL_PAGES_PENDING_SELECTED_OPERATION_ID, globalPagesPendingEndpoint, globalPagesPendingPayload } from './global-pages-pending-selected-control';
 import { GLOBAL_PAGES_PRIVATE_SELECTED_OPERATION_ID, globalPagesPrivateEndpoint, globalPagesPrivatePayload } from './global-pages-private-selected-control';
+import { GLOBAL_PAGES_REQUEST_TRASH_OPERATION_ID, canRequestGlobalPagesTrash } from './global-pages-request-trash-control';
 import { SyncAppConfirmDialogConfirmControl } from './sync-app-confirm-dialog-confirm-control';
 import {
     GLOBAL_PAGES_CONFIRM_TRASH_OPERATION_ID,
@@ -295,8 +296,11 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
                             type="button"
                             className="btn danger"
                             data-canonical-operation={GLOBAL_PAGES_CONFIRM_TRASH_OPERATION_ID}
-                            disabled={!canEdit || busy || selectedTargets.length === 0}
-                            onClick={() => setConfirmOpen(true)}
+                            data-request-operation={GLOBAL_PAGES_REQUEST_TRASH_OPERATION_ID}
+                            disabled={!canRequestGlobalPagesTrash(selectedTargets.length, canEdit, busy)}
+                            onClick={() => {
+                                if (canRequestGlobalPagesTrash(selectedTargets.length, canEdit, busy)) setConfirmOpen(true);
+                            }}
                         >
                             {locale === 'ar' ? 'نقل المحدد لسلة المهملات' : 'Move selected to trash'}
                         </button>
