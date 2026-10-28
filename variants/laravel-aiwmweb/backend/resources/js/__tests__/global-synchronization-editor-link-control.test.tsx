@@ -62,7 +62,7 @@ describe('AIMW-SYNC-0239B0E6A3 conflict editor parity', () => {
         expect(globalSyncEditorDestination('alpha/../other', 7, remoteUpdate)).toBeNull();
     });
 
-    it('does not expose editor access without both view permissions', () => {
+    it('blocks the editor link before the protected 403 permission boundary without both view permissions', () => {
         renderEditor(context('alpha', ['tenant.view']));
         expect(screen.queryByRole('link', { name: 'Open editor to merge' })).not.toBeInTheDocument();
     });
