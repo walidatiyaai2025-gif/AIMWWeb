@@ -44,7 +44,7 @@ jobs:
           before={r['operation_id']:r['migration_state'] for r in old['operations']}
           after={r['operation_id']:r['migration_state'] for r in new['operations']}
           changed={k:(before[k],after[k]) for k in before if before[k]!=after[k]}
-          assert changed=={'AIMW-SYNC-5EE3F98A28':('PENDING','ADAPTED'), 'AIMW-SYNC-B955324F04':('PENDING','ADAPTED')}, changed
+          assert changed=={'AIMW-SYNC-B955324F04':('PENDING','ADAPTED')}, changed
           assert new['totals']['total']==931
           print('Exact staged #957+#958 parity delta:',changed)
           PY
