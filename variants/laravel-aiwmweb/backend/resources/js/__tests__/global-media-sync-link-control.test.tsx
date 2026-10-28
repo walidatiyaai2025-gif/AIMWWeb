@@ -43,7 +43,7 @@ describe('AIMW-SYNC-2A256826D2 GlobalMediaExplorer Open synchronization link', (
         expect(GLOBAL_MEDIA_OPEN_SYNC_OPERATION_ID).toBe('AIMW-SYNC-2A256826D2');
     });
 
-    it('encodes the active tenant rather than accepting a forged global destination', () => {
+    it('encodes foreign tenant paths so the protected destination remains 404 rather than crossing tenant boundaries', () => {
         renderControl(context({ tenant: { slug: 'alpha/../beta', name: 'Alpha' } }));
         expect(screen.getByRole('link', { name: 'Open synchronization' }))
             .toHaveAttribute('href', '/tenants/alpha%2F..%2Fbeta/module/sync');
@@ -53,7 +53,7 @@ describe('AIMW-SYNC-2A256826D2 GlobalMediaExplorer Open synchronization link', (
         ['tenant permission', ['content.view', 'sync.view']],
         ['media view', ['tenant.view', 'sync.view']],
         ['sync view', ['tenant.view', 'content.view']],
-    ])('does not offer protected navigation without %s', (_reason, permissions) => {
+    ])('prevents protected navigation before the destination would return 403 when missing %s', (_reason, permissions) => {
         renderControl(context({ permissions }));
         expect(screen.queryByRole('link', { name: 'Open synchronization' })).not.toBeInTheDocument();
     });
