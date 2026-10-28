@@ -57,6 +57,7 @@ import { WordPressUsersRefreshControl } from './wordpress-users-refresh-control'
 import { MediaDeleteControl } from './media-delete-control';
 import { authoritativeGlobalMediaApplyEndpoint, defaultGlobalMediaFilters, globalMediaApplyQuery, GlobalMediaApplyControl } from './global-media-apply-control';
 import { globalMediaResetState, GlobalMediaResetControl } from './global-media-reset-control';
+import { GlobalMediaSyncLinkControl } from './global-media-sync-link-control';
 import { GlobalMediaInterpolatedLinksControl } from './media-interpolated-links-control';
 import { MediaBackToSitesControl } from './media-back-to-sites-control';
 import { MediaManagerEditingSourceUrlControl } from './media-manager-editing-source-url-control';
@@ -792,6 +793,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         onChange={setSiteReliabilityDraft}
                         onApply={(next) => { void applySiteReliabilityFilters(next); }}
                     />
+                ) : null}
+                {route.key === 'media' ? (
+                    <GlobalMediaSyncLinkControl context={context} mediaAvailable={Boolean(endpoint)} />
                 ) : null}
                 {route.key === 'media' ? (
                     <GlobalMediaResetControl
