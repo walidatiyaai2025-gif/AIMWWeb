@@ -3,7 +3,7 @@
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
   "previous_reconciliation_sha": "df8b57225130e583fc9642bfed5851db5d7ded8a",
-  "focused_closure_evidence_source_sha": "b21622bad8be8268300f213a03c4924fc1093a88",
+  "focused_closure_evidence_source_sha": "ae01461eb85c64046734688ae0bf3f418591c653",
   "countable_sources": [
     {
       "label": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure",
@@ -2881,6 +2881,14 @@
       "observed_pr_head": "64103fefde7db288ecd633dbdcb5eed55eef8e2d",
       "operation_ids": [
         "AIMW-SYNC-B11D963A9E"
+      ]
+    },
+    {
+      "label": "Issue #955 Global Synchronization Open local content navigation operation-scoped closure",
+      "sha": "b21622bad8be8268300f213a03c4924fc1093a88",
+      "observed_pr_head": "b21622bad8be8268300f213a03c4924fc1093a88",
+      "operation_ids": [
+        "AIMW-SYNC-E51F091C0B"
       ]
     }
   ],
