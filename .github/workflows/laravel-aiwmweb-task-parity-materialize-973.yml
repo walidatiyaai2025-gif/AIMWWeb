@@ -1,0 +1,68 @@
+name: Laravel AIWMWeb Task Parity Materialize 973 (temporary)
+on:
+  push:
+    branches:
+      - worker/973-sites-enable-selected
+    paths:
+      - '.github/workflows/laravel-aiwmweb-task-parity-materialize-973.yml'
+      - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
+permissions:
+  contents: write
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install PHP format tool
+        working-directory: variants/laravel-aiwmweb/backend
+        run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Fix Pint formatting for task files only
+        working-directory: variants/laravel-aiwmweb/backend
+        run: vendor/bin/pint routes/web.php tests/Feature/SitesEnableSelectedTerminalityTest.php
+      - name: Fetch evidence commit refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+      - name: Generate official seven-stage reconciliation
+        run: |
+          set -euo pipefail
+          OUT=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          MD=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          SUM=/tmp/operation-parity-summary.json
+          cp "$OUT" /tmp/973-parity-before.json
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_platform_admin_route_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python - <<'PY'
+          import json
+          old=json.load(open('/tmp/973-parity-before.json'))
+          new=json.load(open('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'))
+          before={r['operation_id']:r['migration_state'] for r in old['operations']}
+          after={r['operation_id']:r['migration_state'] for r in new['operations']}
+          changed={k:(before[k],after[k]) for k in before if before[k]!=after[k]}
+          assert changed=={'AIMW-SYNC-38D8A24B15':('PENDING','ADAPTED')}, changed
+          assert new['totals']['total']==931
+          print('Exact #973 focused delta:',changed)
+          PY
+      - name: Commit formatting and generated ledger
+        run: |
+          set -euo pipefail
+          git add variants/laravel-aiwmweb/backend/routes/web.php variants/laravel-aiwmweb/backend/tests/Feature/SitesEnableSelectedTerminalityTest.php variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "fix(laravel): format #973 and materialize exact-parity evidence"
+          git push origin "HEAD:${{ github.ref_name }}"
