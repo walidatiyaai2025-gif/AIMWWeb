@@ -2892,6 +2892,14 @@
       ]
     },
     {
+      "label": "Issue #972 SiteOnboarding PreviousAsync focused navigation closure",
+      "sha": "d7996d30c8afe2b9ea16e984c0531df0c72eb5b3",
+      "observed_pr_head": "d7996d30c8afe2b9ea16e984c0531df0c72eb5b3",
+      "operation_ids": [
+        "AIMW-SYNC-C1B6FA6677"
+      ]
+    },
+    {
       "label": "AIMW-SYNC-BDBA0B4F01 Site Onboarding OpenSiteAsync focused closure #971",
       "sha": "0a311c8358b8eed1d5c1a54c4c7a1b630fe85729",
       "observed_pr_head": "0a311c8358b8eed1d5c1a54c4c7a1b630fe85729",
