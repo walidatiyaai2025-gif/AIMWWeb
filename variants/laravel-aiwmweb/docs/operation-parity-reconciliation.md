@@ -8,22 +8,22 @@ Authority: AIMWWeb Issue #257. Evidence-only reconciliation; no feature completi
 |---|---:|
 | TOTAL | 931 |
 | PORTED | 0 |
-| ADAPTED | 883 |
-| PENDING | 48 |
+| ADAPTED | 884 |
+| PENDING | 47 |
 | BLOCKED | 0 |
 | VERIFIED_UNAVAILABLE_EXTERNAL | 0 |
-| TERMINAL | 883 |
-| OVERALL_PARITY_PERCENT | 94.84% |
+| TERMINAL | 884 |
+| OVERALL_PARITY_PERCENT | 94.95% |
 
 Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`; `BLOCKED` is not progress.
 
 ## Visible controls
 
 - Total: **446**
-- Terminal: **399**
-- Pending: **47**
+- Terminal: **400**
+- Pending: **46**
 - Blocked: **0**
-- Parity: **89.46%**
+- Parity: **89.69%**
 
 ## By domain
 
@@ -56,7 +56,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | background_job | 21 | 0 | 21 | 0 | 0 | 0 | 21 | 100.00% |
 | route | 84 | 0 | 83 | 1 | 0 | 0 | 83 | 98.81% |
 | service | 349 | 0 | 349 | 0 | 0 | 0 | 349 | 100.00% |
-| visible_control | 446 | 0 | 399 | 47 | 0 | 0 | 399 | 89.46% |
+| visible_control | 446 | 0 | 400 | 46 | 0 | 0 | 400 | 89.69% |
 
 ## Reproducibility / guard results
 
@@ -66,7 +66,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - Totals reconcile: **PASS**
 - Evidence references exist for terminal code rows: **PASS**
 - Explicit route contracts: **44**
-- Focused visible-control contracts: **399**
+- Focused visible-control contracts: **400**
 - Focused service contracts: **32**
 - Focused background-job contracts: **7**
 - Unpushed countable sources: **0**
@@ -160,12 +160,12 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-SYNC-476CDB769B`
 - `AIMW-SYNC-4B986B2651`
 - `AIMW-SYNC-4FDCFDA33F`
-- `AIMW-SYNC-5A397204EF`
 - `AIMW-SYNC-5EE3F98A28`
 - `AIMW-SYNC-6766C503DA`
 - `AIMW-SYNC-7A726BAF5F`
 - `AIMW-SYNC-7C77CF7F7A`
 - `AIMW-SYNC-80B81C07B8`
+- `AIMW-SYNC-8409FB077A`
 - `AIMW-SYNC-8C35E9A7A0`
 - `AIMW-SYNC-9504A57CAE`
 - `AIMW-SYNC-9B87CACA17`
