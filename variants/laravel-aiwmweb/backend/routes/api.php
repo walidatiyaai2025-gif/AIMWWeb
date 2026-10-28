@@ -2,9 +2,9 @@
 
 use App\Http\Controllers\AiUsageReadController;
 use App\Http\Controllers\ContentApiController;
-use App\Http\Controllers\GlobalPagesDraftController;
 use App\Http\Controllers\ContentExplorerReadController;
 use App\Http\Controllers\EmailNotificationController;
+use App\Http\Controllers\GlobalPagesDraftController;
 use App\Http\Controllers\GlobalPagesTrashController;
 use App\Http\Controllers\GlobalPostsPublishController;
 use App\Http\Controllers\GlobalPostsTrashController;
