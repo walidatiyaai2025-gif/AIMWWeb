@@ -91,6 +91,7 @@ final class DashboardRefreshClickedTerminalityTest extends TestCase
         }
         $membership->roles()->attach($role, ['tenant_id' => $tenant->id]);
         app(TenantContext::class)->forget();
+
         return $membership->fresh('tenant');
     }
 }
