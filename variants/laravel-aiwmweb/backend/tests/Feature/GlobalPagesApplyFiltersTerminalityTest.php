@@ -91,6 +91,21 @@ final class GlobalPagesApplyFiltersTerminalityTest extends TestCase
             ->assertJsonCount(0, 'data')
             ->assertJsonPath('total', 0);
 
+        // The source Pages Explorer searches locally synchronized content and excerpts as well as title/slug.
+        $this->page($alpha, $first, 16, 'Neutral body search page', 'publish', 'unique-body-needle');
+        $this->page($alpha, $first, 17, 'Neutral excerpt search page', 'publish', '', 'unique-excerpt-needle');
+
+        $this->actingAs($user)
+            ->getJson('/api/v1/tenants/alpha-pages-filter/global-pages?search=unique-body-needle')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.wordpress_id', 16);
+        $this->actingAs($user)
+            ->getJson('/api/v1/tenants/alpha-pages-filter/global-pages?search=unique-excerpt-needle')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.wordpress_id', 17);
+
         $this->assertSame('publish', $this->pageStatus($alpha, 11));
     }
 
@@ -164,7 +179,7 @@ final class GlobalPagesApplyFiltersTerminalityTest extends TestCase
         return $site;
     }
 
-    private function page(TenantMembership $membership, Site $site, int $remoteId, string $title, string $status): void
+    private function page(TenantMembership $membership, Site $site, int $remoteId, string $title, string $status, string $body = '', string $excerpt = ''): void
     {
         app(TenantContext::class)->activate($membership->tenant, $membership);
         ContentItem::query()->create([
@@ -173,6 +188,8 @@ final class GlobalPagesApplyFiltersTerminalityTest extends TestCase
             'type' => 'page',
             'title' => $title,
             'slug' => strtolower(str_replace(' ', '-', $title)),
+            'body' => $body,
+            'excerpt' => $excerpt,
             'status' => $status,
             'remote_modified_at' => now(),
         ]);
