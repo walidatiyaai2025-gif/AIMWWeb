@@ -3,7 +3,7 @@ import { cleanup, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it } from 'vitest';
 import { LocaleProvider } from '../i18n';
-import type { FrontendContext } from '../core';
+import { resolveCapability, workspaceRoutes, type FrontendContext } from '../core';
 import {
     GLOBAL_POSTS_OPEN_SYNCHRONIZATION_OPERATION_ID,
     GlobalPostsOpenSynchronizationLinkControl,
@@ -42,7 +42,15 @@ afterEach(() => { cleanup(); window.localStorage.clear(); });
 
 describe('AIMW-SYNC-EEFDDFFF87 Global Posts open synchronization navigation', () => {
     it('renders only the existing guarded synchronization destination', () => {
-        renderControl(context());
+        const advertised = context();
+        const posts = workspaceRoutes.find((route) => route.key === 'posts');
+        const sync = workspaceRoutes.find((route) => route.key === 'sync');
+        expect(posts).toBeDefined();
+        expect(sync).toBeDefined();
+        expect(resolveCapability(advertised, posts!)).toEqual({ state: 'enabled' });
+        expect(resolveCapability(advertised, sync!)).toEqual({ state: 'enabled' });
+        expect(globalPostsSynchronizationDestination(advertised)).toBe('/tenants/alpha/module/sync');
+        renderControl(advertised);
         const link = screen.getByRole('link', { name: 'Open synchronization' });
         expect(link).toHaveAttribute('href', '/tenants/alpha/module/sync');
         expect(link.closest('nav')).toHaveAttribute(
