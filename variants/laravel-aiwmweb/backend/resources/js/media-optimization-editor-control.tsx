@@ -35,6 +35,7 @@ export function MediaOptimizationEditorControl({
 }) {
     const { locale } = useLocale();
     const [open, setOpen] = useState(false);
+    const [expectedModifiedGmt, setExpectedModifiedGmt] = useState('');
     const [draft, setDraft] = useState<Metadata>(() => originalMediaMetadata(row));
     const [working, setWorking] = useState(false);
     const [opening, setOpening] = useState(false);
@@ -54,11 +55,12 @@ export function MediaOptimizationEditorControl({
         setError('');
         setNotice('');
         try {
-            const details = await apiRequest<Metadata & { remote_id: number }>(`${endpoint}/${mediaId}`);
-            if (details.remote_id !== Number(row.remote_id)
+            const details = await apiRequest<Metadata & { remote_id: number; modified_gmt: string }>(`${endpoint}/${mediaId}`);
+            if (details.remote_id !== Number(row.remote_id) || !details.modified_gmt?.trim()
                 || ['title', 'slug', 'alt_text', 'caption', 'description'].some((field) => typeof details[field as keyof Metadata] !== 'string')) {
                 throw new Error('WordPress returned unexpected or incomplete editable metadata.');
             }
+            setExpectedModifiedGmt(details.modified_gmt);
             setDraft({
                 title: details.title,
                 slug: details.slug,
@@ -75,14 +77,14 @@ export function MediaOptimizationEditorControl({
     };
 
     const save = async () => {
-        if (working || !draft.title.trim()) return;
+        if (working || !draft.title.trim() || !expectedModifiedGmt) return;
         setWorking(true);
         setError('');
         setNotice('');
         try {
             const result = await apiRequest<VerifiedMutation>(`${endpoint}/${mediaId}`, {
                 method: 'PATCH',
-                body: JSON.stringify(draft),
+                body: JSON.stringify({ ...draft, expected_modified_gmt: expectedModifiedGmt }),
             });
             if (result.verified !== true || result.remote_id !== Number(row.remote_id)) {
                 throw new Error('WordPress has not verified this metadata update.');
@@ -128,7 +130,7 @@ export function MediaOptimizationEditorControl({
                 <MediaAltSuggestionControl context={context} endpoint={endpoint} row={row} onSuggestion={(value) => edit('alt_text', value)} />
                 {error ? <p role="alert">{error}</p> : null}
                 <button type="button" className="btn primary" data-canonical-operation={MEDIA_SAVE_OPTIMIZATION_OPERATION_ID}
-                    disabled={working || !draft.title.trim()} aria-busy={working} onClick={() => void save()}>
+                    disabled={working || !draft.title.trim() || !expectedModifiedGmt} aria-busy={working} onClick={() => void save()}>
                     {working ? (isArabic ? 'جارٍ الحفظ…' : 'Saving…') : (isArabic ? 'حفظ التحسينات' : 'Save optimization')}
                 </button>
             </div> : null}
