@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #960 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-E0791EA9E9",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "/module/users",
+    "source": "src/AIWordPressManager.Web/Components/Pages/GlobalUsersWorkspace.razor",
+    "visible_control": "@(L.IsArabic ? [PreviousAsync]",
+    "source_intent": "Go from current WordPress users page to previous page only when page > 1, re-reading authoritative site users.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "read_source": "variants/laravel-aiwmweb/backend/app/Http/Controllers/WordPressUsersController.php::index",
+    "wordpress_source": "variants/laravel-aiwmweb/backend/app/Content/Remote/NativeWordPressRestPath.php::list",
+    "semantics": "Previous button bound to distinct global users operation and previous-page state transition, with busy and boundary protection; query state changes trigger tenant/site-scoped native WordPress REST GET. Laravel returns remote authoritative result or permission failure; no fake success.",
+    "visibility_permission": "sites.view",
+    "loading_error_empty_behavior": "Disable previous on page one and while fetching. Permission failures surface query error; missing rows remain empty."
+  },
+  "security": {
+    "backend_mutation_added": false,
+    "provider_mutation_added": false,
+    "caller_owned_identity_override_added": false,
+    "tenant_selector_added": false,
+    "foreign_tenant_access_added": false,
+    "fake_success": false,
+    "secret_disclosure_added": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/WordPressUsersPreviousTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/wordpress-users-previous-control.test.tsx",
+    "coverage": [
+      "exact operation ID and Razor PreviousAsync contract",
+      "real page two to page one WordPress GET",
+      "previous disabled on first page and during loading",
+      "WordPress denied read 403 renders error",
+      "foreign tenant direct ID 404 before remote read"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-E0791EA9E9"
+    ],
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "branch": "worker/960-global-users-previous",
+    "note": "Acceptance and exact-head CI must pass before official generator enrollment and terminality are asserted."
+  }
+}

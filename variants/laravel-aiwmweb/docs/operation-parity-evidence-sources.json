@@ -1559,6 +1559,28 @@
           "security_mode": "tenant_selected"
         }
       }
+    },
+    {
+      "label": "AIMW-CONT-6B051BD8C0 Application Sessions route reconciliation recovery",
+      "sha": "3a8da828e35aa3f607a1f598af827d77ef6234d3",
+      "observed_pr_head": "f1fc37b2284bfbbdfac43903720b9f7c70f62b2f",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "operation_ids": [
+        "AIMW-CONT-6B051BD8C0"
+      ],
+      "route_api_provenance": {
+        "AIMW-CONT-6B051BD8C0": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ApplicationSessionsRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/ApplicationSessionsRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/application-sessions-route-terminality.json",
+          "security_mode": "tenant_scoped"
+        }
+      }
     }
   ],
   "excluded_sources": [],
@@ -3001,6 +3023,46 @@
       "observed_pr_head": "29061a04e90c5b89d4fe4cae40dadb5eede04b87",
       "operation_ids": [
         "AIMW-SYNC-9504A57CAE"
+      ]
+    },
+    {
+      "label": "Issue #952 Global Synchronization RequestAcceptRemoteAsync confirmation",
+      "sha": "d751dbb789b19fb335671a57148638ff921f940a",
+      "observed_pr_head": "d751dbb789b19fb335671a57148638ff921f940a",
+      "operation_ids": [
+        "AIMW-SYNC-1B63FBC758"
+      ]
+    },
+    {
+      "label": "Issue #954 Global Synchronization Connect a site guarded onboarding link",
+      "sha": "d6843eaa979c97eb7a1f98d5ae53aea98dec3b86",
+      "observed_pr_head": "d6843eaa979c97eb7a1f98d5ae53aea98dec3b86",
+      "operation_ids": [
+        "AIMW-SYNC-CC2B584BC4"
+      ]
+    },
+    {
+      "label": "AIMW-SYNC-B955324F04 GlobalTaxonomyExplorer ApplyAsync focused closure #958",
+      "sha": "c6ed88f02e3fc1c6cbd33137b16eada445e094bf",
+      "observed_pr_head": "c6ed88f02e3fc1c6cbd33137b16eada445e094bf",
+      "operation_ids": [
+        "AIMW-SYNC-B955324F04"
+      ]
+    },
+    {
+      "label": "AIMW-SYNC-9B87CACA17 GlobalMediaExplorer ResetAsync focused closure",
+      "sha": "3f5a1aa3394805d50d4abbbbf11abb062de874fd",
+      "observed_pr_head": "3f5a1aa3394805d50d4abbbbf11abb062de874fd",
+      "operation_ids": [
+        "AIMW-SYNC-9B87CACA17"
+      ]
+    },
+    {
+      "label": "AIMW-SYNC-E0791EA9E9 GlobalUsersWorkspace PreviousAsync focused closure #960",
+      "sha": "ee65778c11019a99b638f09e789f63090b6d827e",
+      "observed_pr_head": "ee65778c11019a99b638f09e789f63090b6d827e",
+      "operation_ids": [
+        "AIMW-SYNC-E0791EA9E9"
       ]
     },
     {
