@@ -5,6 +5,11 @@ import { useToast } from './components';
 import { useLocale } from './i18n';
 import { CONTENT_EXPLORER_CONTENT_TAB_RESET_EVENT } from './content-explorer-content-tab-control';
 import {
+    CONTENT_EXPLORER_BULK_PENDING_OPERATION_ID,
+    contentExplorerBulkPendingEndpoint,
+    buildContentExplorerBulkPendingPayload,
+} from './content-explorer-bulk-pending-control';
+import {
     CONTENT_EXPLORER_BULK_TRASH_OPERATION_ID,
     buildBulkTrashPayload,
     contentExplorerBulkTrashEndpoint,
@@ -70,6 +75,7 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
     const canView = hasPermission(context, 'content.view');
     const canEdit = hasPermission(context, 'content.edit');
     const endpoint = contentExplorerBulkTrashEndpoint(context.tenant.slug, siteId);
+    const pendingEndpoint = contentExplorerBulkPendingEndpoint(context.tenant.slug, siteId);
     const postsEndpoint = context.api.posts;
     const pagesEndpoint = context.api.pages;
     const enabled = Boolean(endpoint && postsEndpoint && pagesEndpoint && canView && canEdit);
@@ -95,6 +101,36 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
             .map((row) => ({ content_type: row.type, wordpress_id: row.remote_id } satisfies BulkTrashTarget)),
         [rows, selected],
     );
+    const selectedLocalIds = useMemo(
+        () => rows
+            .filter((row) => selected.has(`${row.type}:${row.remote_id}`))
+            .map((row) => row.id)
+            .filter((id) => Number.isSafeInteger(id) && id > 0),
+        [rows, selected],
+    );
+
+    const pendingMutation = useMutation({
+        mutationFn: async (ids: number[]) => {
+            if (!pendingEndpoint) throw new Error('The selected site pending endpoint is unavailable.');
+            return apiRequest<{ state: 'queued'; count: number }>(pendingEndpoint, {
+                method: 'POST',
+                body: JSON.stringify(buildContentExplorerBulkPendingPayload(ids)),
+            });
+        },
+        onSuccess: (result) => {
+            setSelected(new Set());
+            notify(
+                locale === 'ar'
+                    ? `تم وضع ${result.count} عنصر في قائمة انتظار المراجعة. راجع حالة المزامنة لاحقًا للتأكد من تنفيذها.`
+                    : `Queued ${result.count} item(s) for pending review; refresh authoritative state after the queued job completes.`,
+                'success',
+            );
+        },
+        onError: (error) => notify(
+            error instanceof Error ? error.message : 'Could not queue selected content for review.',
+            'error',
+        ),
+    });
 
     const mutation = useMutation({
         mutationFn: async (targets: BulkTrashTarget[]) => {
@@ -127,10 +163,12 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
         ),
     });
 
+    const busy = mutation.isPending || pendingMutation.isPending;
+
     if (!enabled || !activeSite) return null;
 
     const toggle = (row: ContentRow) => {
-        if (mutation.isPending) return;
+        if (busy) return;
         const key = `${row.type}:${row.remote_id}`;
         setSelected((current) => {
             const next = new Set(current);
@@ -165,12 +203,23 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
                     <div className="toolbar-actions">
                         <button
                             type="button"
+                            className="btn"
+                            data-canonical-operation={CONTENT_EXPLORER_BULK_PENDING_OPERATION_ID}
+                            onClick={() => pendingMutation.mutate(selectedLocalIds)}
+                            disabled={!pendingEndpoint || busy || selectedLocalIds.length === 0 || selectedLocalIds.length !== selectedTargets.length}
+                        >
+                            {pendingMutation.isPending
+                                ? (locale === 'ar' ? 'جارٍ إضافة مهمة المراجعة…' : 'Queueing pending review…')
+                                : (locale === 'ar' ? 'إرسال المحدد للمراجعة' : 'Send selected for review')}
+                        </button>
+                        <button
+                            type="button"
                             className="btn danger"
                             data-canonical-operation={CONTENT_EXPLORER_BULK_TRASH_OPERATION_ID}
                             onClick={() => mutation.mutate(selectedTargets)}
-                            disabled={mutation.isPending || selectedTargets.length === 0}
+                            disabled={busy || selectedTargets.length === 0}
                         >
-                            {mutation.isPending
+                            {busy
                                 ? (locale === 'ar' ? 'جارٍ النقل…' : 'Moving…')
                                 : (locale === 'ar' ? 'نقل المحدد لسلة المهملات' : 'Move selected to trash')}
                         </button>
@@ -178,7 +227,7 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
                             type="button"
                             className="btn"
                             onClick={() => setSelected(new Set())}
-                            disabled={mutation.isPending || selectedTargets.length === 0}
+                            disabled={busy || selectedTargets.length === 0}
                         >
                             {locale === 'ar' ? 'مسح التحديد' : 'Clear selection'}
                         </button>
@@ -203,7 +252,7 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
                                                     type="checkbox"
                                                     checked={selected.has(key)}
                                                     onChange={() => toggle(row)}
-                                                    disabled={mutation.isPending}
+                                                    disabled={busy}
                                                     aria-label={`${locale === 'ar' ? 'تحديد' : 'Select'} ${row.title ?? key}`}
                                                 />
                                             </td>
