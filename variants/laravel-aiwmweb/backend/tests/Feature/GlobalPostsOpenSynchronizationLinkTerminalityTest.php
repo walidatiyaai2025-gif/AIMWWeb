@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Permission;
 use App\Models\Role;
+use App\Models\Site;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
@@ -65,8 +66,13 @@ final class GlobalPostsOpenSynchronizationLinkTerminalityTest extends TestCase
         $this->get('/tenants/alpha/module/sync')->assertRedirect('/login');
 
         $owner = User::factory()->create();
-        $this->membership($owner, 'authorized', ['tenant.view', 'content.view', 'sync.view']);
+        $authorizedMembership = $this->membership($owner, 'authorized', ['tenant.view', 'content.view', 'sync.view']);
         $this->withoutVite();
+        // A site-bound workspace must fail closed until a real tenant-owned site exists.
+        $this->actingAs($owner)->get('/tenants/authorized/module/sync')->assertStatus(409);
+        app(TenantContext::class)->activate($authorizedMembership->tenant);
+        Site::query()->create(['name' => 'Authorized WordPress', 'url' => 'https://authorized.example.test']);
+        app(TenantContext::class)->forget();
         $this->actingAs($owner)->get('/tenants/authorized/module/sync')
             ->assertOk()->assertSee('id="app"', false);
 
