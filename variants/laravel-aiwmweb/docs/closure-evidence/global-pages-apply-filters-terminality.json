@@ -18,7 +18,7 @@
     "service": "variants/laravel-aiwmweb/backend/app/Content/GlobalPagesTrashService.php",
     "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/GlobalPagesTrashController.php",
     "endpoint": "GET /api/v1/tenants/{tenant}/global-pages",
-    "details": "A canonical Apply filters form is wired into the existing Global Pages management grid; its query key carries applied filter parameters and a revision to force a new authoritative read on repeated Apply. Selection is cleared upon apply, while existing draft/trash actions preserve their real execution path."
+    "details": "A canonical Apply filters form is wired into the existing Global Pages management grid; its query key carries applied filter parameters and a revision to force a new authoritative read on repeated Apply. Selection is cleared upon apply, while existing draft/trash actions preserve their real execution path. The server search includes title, slug, synchronized excerpt and synchronized body as in the original Pages Explorer."
   },
   "security": {
     "tenant_isolation": "Site and ContentItem Eloquent models carry tenant global scopes and the active tenant is resolved by tenant.context.",
@@ -39,7 +39,8 @@
       "404 foreign tenant/site",
       "422 invalid filters",
       "pending duplicate-submit guard",
-      "no fake success"
+      "no fake success",
+      "source-parity body/excerpt search matching against persisted synchronized page fields"
     ]
   },
   "scope_guards": {
@@ -56,7 +57,7 @@
     "task_branch": "worker/938-global-pages-apply-filters",
     "target_branch": "worker/laravel-aiwmweb-closure-composition",
     "branch_base_sha": "e3f3a6859b44bc6e6f48667c6633e1804a57fba5",
-    "implementation_snapshot_sha": "d199cd729f0c15b2c8c762f27735e9cb16393b61",
+    "implementation_snapshot_sha": "f863c59092d570693403b0824b534dee8df2ce1e",
     "pcc_source_sha": "076eeb0ed3fe75200d907b111803a210e5c054c5",
     "readiness": "Official parity materialized at e84155b206fbf3f6339cc8c91ad8a2972b30844d with 883/931 terminal (94.84%); exact-head PR CI remains mandatory before merge.",
     "composition_reconciliation": {
