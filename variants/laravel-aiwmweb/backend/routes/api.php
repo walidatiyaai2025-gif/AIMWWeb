@@ -65,6 +65,7 @@ Route::prefix('v1/tenants/{tenant}/sites/{site}')->middleware(['web', 'tenant.co
 
     Route::get('media', [ContentApiController::class, 'media']);
     Route::post('media', [ContentApiController::class, 'uploadMedia']);
+    Route::get('media/{media}', [ContentApiController::class, 'mediaDetails'])->middleware('auth');
     Route::patch('media/{media}', [ContentApiController::class, 'updateMedia']);
     Route::delete('media/{media}', [ContentApiController::class, 'deleteMedia'])
         ->middleware('auth')
