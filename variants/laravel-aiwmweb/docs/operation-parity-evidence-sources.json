@@ -3074,6 +3074,14 @@
       ]
     },
     {
+      "label": "Issue #964 MediaBatchUploadPanel UploadClickedAsync guarded media batch",
+      "sha": "bc22c90f307d286cc70a9ffc1fd8509d955feb09",
+      "observed_pr_head": "bc22c90f307d286cc70a9ffc1fd8509d955feb09",
+      "operation_ids": [
+        "AIMW-SYNC-6766C503DA"
+      ]
+    },
+    {
       "label": "AIMW-SYNC-2A256826D2 GlobalMediaExplorer Open synchronization focused closure #932",
       "sha": "840c30bdea70ab7853e204e03fb4f2c2abcda44b",
       "observed_pr_head": "840c30bdea70ab7853e204e03fb4f2c2abcda44b",
