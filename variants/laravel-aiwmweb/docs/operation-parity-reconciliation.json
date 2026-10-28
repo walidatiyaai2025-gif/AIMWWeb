@@ -32113,21 +32113,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/global-synchronization-refresh-status-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-synchronization-refresh-status-control.test.ts",
+      "evidence": "Issue #953 Global Synchronization RefreshStatusAsync authoritative status@29061a04e90c5b89d4fe4cae40dadb5eede04b87: variants/laravel-aiwmweb/backend/resources/js/global-synchronization-refresh-status-control.tsx; focused-closure:AIMW-SYNC-9504A57CAE; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/global-synchronization-refresh-status-control.test.ts; evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-synchronization-refresh-status-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "Issue #953 Global Synchronization RefreshStatusAsync authoritative status",
+        "source_sha": "29061a04e90c5b89d4fe4cae40dadb5eede04b87",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/global-synchronization-refresh-status-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/global-synchronization-refresh-status-terminality.json",
+        "signals": [
+          "operation:AIMW-SYNC-9504A57CAE",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/global-synchronization-refresh-status-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/global-synchronization-refresh-status-control.test.ts",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-synchronization-refresh-status-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -32144,31 +32154,21 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/global-synchronization-accept-remote-control.tsx",
+      "laravel_destination": "",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "ADAPTED",
-      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-synchronization-request-accept-remote-control.test.ts",
-      "evidence": "Issue #952 Global Synchronization RequestAcceptRemoteAsync confirmation@d751dbb789b19fb335671a57148638ff921f940a: variants/laravel-aiwmweb/backend/resources/js/global-synchronization-accept-remote-control.tsx; focused-closure:AIMW-SYNC-1B63FBC758; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/global-synchronization-request-accept-remote-control.test.ts; evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-synchronization-request-accept-remote-terminality.json",
+      "migration_state": "PENDING",
+      "acceptance_test": "",
+      "evidence": "",
       "reconciliation": {
-        "decision": "ADAPTED",
-        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "Issue #952 Global Synchronization RequestAcceptRemoteAsync confirmation",
-        "source_sha": "d751dbb789b19fb335671a57148638ff921f940a",
-        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/global-synchronization-accept-remote-control.tsx",
-        "evidence_mode": "focused_closure_contract",
-        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/global-synchronization-request-accept-remote-terminality.json",
-        "signals": [
-          "operation:AIMW-SYNC-1B63FBC758",
-          "production-marker:variants/laravel-aiwmweb/backend/resources/js/global-synchronization-accept-remote-control.tsx",
-          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/global-synchronization-request-accept-remote-control.test.ts",
-          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-synchronization-request-accept-remote-terminality.json",
-          "scope:operation-specific",
-          "test:tenant-isolation"
-        ]
+        "decision": "PENDING",
+        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
+        "source_label": null,
+        "source_sha": null,
+        "destination_path": null
       }
     },
     {
@@ -38208,6 +38208,7 @@
     "settings": [],
     "sites": [],
     "sync": [
+      "AIMW-SYNC-1B63FBC758",
       "AIMW-SYNC-21483C88FA",
       "AIMW-SYNC-2A256826D2",
       "AIMW-SYNC-3389FB622C",
@@ -38219,7 +38220,6 @@
       "AIMW-SYNC-7A726BAF5F",
       "AIMW-SYNC-7C77CF7F7A",
       "AIMW-SYNC-8C35E9A7A0",
-      "AIMW-SYNC-9504A57CAE",
       "AIMW-SYNC-9B87CACA17",
       "AIMW-SYNC-AE16CF49C6",
       "AIMW-SYNC-B78216241F",
@@ -39816,7 +39816,6 @@
       "AIMW-SYNC-14DAFE7D73",
       "AIMW-SYNC-1778E3F6B5",
       "AIMW-SYNC-1A20057999",
-      "AIMW-SYNC-1B63FBC758",
       "AIMW-SYNC-246AD1A2AE",
       "AIMW-SYNC-26F2BF8EE8",
       "AIMW-SYNC-2A8778C6EA",
@@ -39847,6 +39846,7 @@
       "AIMW-SYNC-8719C812DC",
       "AIMW-SYNC-89777052CB",
       "AIMW-SYNC-8D6F1C5EAA",
+      "AIMW-SYNC-9504A57CAE",
       "AIMW-SYNC-9ABD7DEDBB",
       "AIMW-SYNC-9DFB5B4FF9",
       "AIMW-SYNC-A9E956A4DA",
@@ -41150,10 +41150,10 @@
         ]
       },
       {
-        "label": "Issue #952 Global Synchronization RequestAcceptRemoteAsync confirmation",
-        "sha": "d751dbb789b19fb335671a57148638ff921f940a",
+        "label": "Issue #953 Global Synchronization RefreshStatusAsync authoritative status",
+        "sha": "29061a04e90c5b89d4fe4cae40dadb5eede04b87",
         "operation_ids": [
-          "AIMW-SYNC-1B63FBC758"
+          "AIMW-SYNC-9504A57CAE"
         ]
       }
     ],
