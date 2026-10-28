@@ -2890,6 +2890,14 @@
       "operation_ids": [
         "AIMW-SYNC-5A397204EF"
       ]
+    },
+    {
+      "label": "Issue #972 SiteOnboarding PreviousAsync focused navigation closure",
+      "sha": "d7996d30c8afe2b9ea16e984c0531df0c72eb5b3",
+      "observed_pr_head": "d7996d30c8afe2b9ea16e984c0531df0c72eb5b3",
+      "operation_ids": [
+        "AIMW-SYNC-C1B6FA6677"
+      ]
     }
   ],
   "sources": [
