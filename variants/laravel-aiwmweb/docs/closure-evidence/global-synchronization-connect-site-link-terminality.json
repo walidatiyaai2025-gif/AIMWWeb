@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "issue": 954,
+  "operation_id": "AIMW-SYNC-CC2B584BC4",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "/module/sync",
+    "source": "src/AIWordPressManager.Web/Components/Pages/GlobalSynchronizationWorkspace.razor",
+    "source_intent": "Open the real site onboarding flow from the empty selected-site state; navigation only.",
+    "mutation": false,
+    "tenant_owned": true
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/global-synchronization-connect-site-link-control.tsx",
+    "route": "GET /tenants/{tenant}/sites/connect",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+    "destination": "/tenants/{tenant}/sites/connect",
+    "permission": "tenant.view,sites.manage",
+    "navigation_only": true,
+    "actual_site_pairing": "Existing Laravel onboarding owns credentials, WordPress REST and pairing. This operation does not claim completion.",
+    "no_fake_success": true
+  },
+  "security": {
+    "tenant_context_required": true,
+    "server_side_route_authorization": true,
+    "foreign_tenant_denied_404": true,
+    "viewer_without_sites_manage_denied_403": true,
+    "no_caller_owned_tenant_override": true,
+    "ui_checks_server_provided_tenant_and_site_collection_endpoint": true
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalSynchronizationConnectSiteLinkTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-synchronization-connect-site-link-control.test.tsx",
+    "coverage": [
+      "exact source empty-selection link",
+      "real Laravel onboarding route with permission defaults",
+      "first-time site-less owner allowed, no paired connector prerequisite",
+      "guest login redirect, viewer 403, foreign tenant 404",
+      "server-reported selected site hides empty-state action",
+      "no unsafe cross-tenant URL, Arabic UI"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-CC2B584BC4"
+    ],
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "no_sibling_claims": true
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "implementation_sha": "b1051fd29d9405cdab81598756824fd0570dcd99",
+    "branch": "worker/954-global-sync-connect-site-link"
+  }
+}
