@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "authority": "Issue #964 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-6766C503DA",
+  "domain": "sync",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "source": {
+    "path": "src/AIWordPressManager.Web/Components/Pages/MediaBatchUploadPanel.razor",
+    "route_screen": "component:MediaBatchUploadPanel",
+    "control": "UploadClickedAsync",
+    "max_batch_files": 20,
+    "max_file_bytes": 26214400,
+    "behavior": "Validate each file; upload eligible files to the selected WordPress site; single-file metadata only; report progress and per-file results, with failure and rejected outcomes."
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/media-batch-clear-selection-control.tsx",
+    "site_controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentApiController.php",
+    "job": "variants/laravel-aiwmweb/backend/app/Jobs/MediaUploadJob.php",
+    "route": "POST /api/v1/tenants/{tenant}/sites/{site}/media",
+    "result_route": "GET /api/v1/tenants/{tenant}/sites/{site}/transfers/{transfer}",
+    "upload_strategy": "Bounded 20 files; per-file POST validated and stored in tenant+site-scoped path; WordPress REST upload queued; local ContentTransfer result read provides authoritative completed/failed/unknown, never 202-as-success",
+    "metadata_scope": "Title/alt text/caption only when exactly one file selected"
+  },
+  "security": {
+    "tenant_owned": true,
+    "permission": "content.edit",
+    "site_scope": "server-derived TenantContext and tenant-scoped Site query",
+    "cross_tenant": "foreign tenant/site routes fail closed with 404",
+    "validation": "25 MiB limit, allowed file extensions and matching server-detected media types",
+    "provider_boundary": "WordPress upload job is single-attempt to prevent ambiguous POST replay; WordPress success requires job and sync confirmation",
+    "caller_owned_state": "caller-controlled tenant/site/remote/transfer state rejected"
+  },
+  "acceptance": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/media-batch-upload-control.test.tsx",
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/MediaBatchUploadTerminalityTest.php",
+    "proofs": [
+      "canonical operation and source UI binding",
+      "per-file file/MIME/empty validation",
+      "duplicate-submit prevention and truthful queued status",
+      "single-file metadata and transfer status reread",
+      "failed selection retained and invalid rejected",
+      "tenant, RBAC, foreign-site, foreign-tenant 403/404 fail-closed",
+      "no WordPress success claimed for HTTP 202"
+    ]
+  },
+  "provenance": {
+    "branch": "worker/964-media-batch-upload",
+    "composition_base_sha": "8712399f99182b1c9c891fef894d7cccefe363b7",
+    "implementation_test_sha": "8a346b6fbc1b12292c24ce74c89b28c0008e1cd4",
+    "test_execution": "CI required; no local test execution evidence claimed"
+  },
+  "scope": {
+    "only_operation_claimed": "AIMW-SYNC-6766C503DA",
+    "neighbor_cancel_operation_not_claimed": true,
+    "media_manager_966_967_968_untouched": true,
+    "aspnet_touched": false,
+    "reconciliation_generated_only": true
+  }
+}
