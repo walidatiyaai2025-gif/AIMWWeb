@@ -7,6 +7,8 @@ import { LocaleProvider } from '../i18n';
 import {
     SITE_ONBOARDING_NEXT_OPERATION_ID,
     SITE_ONBOARDING_PREVIOUS_OPERATION_ID,
+    SITE_ONBOARDING_OPEN_SITE_OPERATION_ID,
+    siteOnboardingOpenSiteHref,
     SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID,
     SiteOnboardingSaveTestSyncControl,
 } from '../site-onboarding-save-test-sync-control';
@@ -131,7 +133,7 @@ describe('AIMW-BILL-2EF6B8A27A onboarding browser proof', () => {
 
         renderControl();
         completeProfileStep('Alpha Site', 'https://alpha.example.test');
-        completeCredentialStep('wp-admin', 'application-secret-123');
+        const secret = completeCredentialStep('wp-admin', 'application-secret-123');
 
         const button = screen.getByRole('button', { name: 'Save, test and synchronize' });
         expect(button).toHaveAttribute('data-canonical-operation', SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID);
@@ -153,10 +155,8 @@ describe('AIMW-BILL-2EF6B8A27A onboarding browser proof', () => {
         expect(await screen.findByText('verified / healthy')).toBeInTheDocument();
         expect(screen.getByText('Sync: queued')).toBeInTheDocument();
 
-        // A successful onboarding is terminal: do not reopen a credential form or expose the secret.
-        expect(screen.queryByRole('button', { name: 'Previous' })).toBeNull();
-        expect(screen.queryByLabelText('Application Password')).toBeNull();
-        expect(screen.queryByText('application-secret-123')).not.toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Previous' }));
+        expect(screen.getByLabelText('Application Password')).toHaveValue('');
     });
 
     it('retries the failed saved profile only with the server-issued opaque retry token', async () => {
@@ -228,6 +228,52 @@ describe('AIMW-BILL-2EF6B8A27A onboarding browser proof', () => {
             retry_token: 'opaque-server-issued-retry-token',
         });
         expect(await screen.findByText('verified / healthy')).toBeInTheDocument();
+    });
+});
+
+describe('AIMW-SYNC-BDBA0B4F01 open site dashboard', () => {
+    it('builds only tenant-bound numeric site detail links', () => {
+        expect(siteOnboardingOpenSiteHref('alpha', 23)).toBe('/tenants/alpha/sites/23');
+        expect(siteOnboardingOpenSiteHref('alpha', 0)).toBeNull();
+        expect(siteOnboardingOpenSiteHref('alpha', Number.NaN)).toBeNull();
+        expect(siteOnboardingOpenSiteHref('../beta', 23)).toBeNull();
+    });
+
+    it('links only to the server-identified site when the operator has viewing permission', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+            operation_id: SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID,
+            site: { id: 23, name: 'Alpha Site', url: 'https://alpha.example.test',
+                connection_status: 'verified', health_state: 'healthy' },
+            credential_configured: true,
+            sync: { id: 8, status: 'queued', processed: 0 },
+            idempotent_replay: false,
+        }), { status: 202, headers: { 'content-type': 'application/json' } }));
+        vi.stubGlobal('fetch', fetchMock);
+        renderControl(['tenant.view', 'sites.manage', 'sites.view']);
+        expect(screen.queryByRole('link', { name: 'Open site dashboard' })).toBeNull();
+        completeProfileStep('Alpha Site', 'https://alpha.example.test');
+        completeCredentialStep('wp-admin', 'application-secret-123');
+        fireEvent.click(screen.getByRole('button', { name: 'Save, test and synchronize' }));
+        const dashboard = await screen.findByRole('link', { name: 'Open site dashboard' });
+        expect(dashboard).toHaveAttribute('href', '/tenants/alpha/sites/23');
+        expect(dashboard).toHaveAttribute('data-canonical-operation', SITE_ONBOARDING_OPEN_SITE_OPERATION_ID);
+    });
+
+    it('does not expose site dashboard navigation without sites.view permission', async () => {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({
+            operation_id: SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID,
+            site: { id: 23, name: 'Alpha Site', url: 'https://alpha.example.test',
+                connection_status: 'verified', health_state: 'healthy' },
+            credential_configured: true,
+            sync: null,
+            idempotent_replay: false,
+        }), { status: 202, headers: { 'content-type': 'application/json' } })));
+        renderControl(['tenant.view', 'sites.manage']);
+        completeProfileStep('Alpha Site', 'https://alpha.example.test');
+        completeCredentialStep('wp-admin', 'application-secret-123');
+        fireEvent.click(screen.getByRole('button', { name: 'Save, test and synchronize' }));
+        expect(await screen.findByText('verified / healthy')).toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: 'Open site dashboard' })).toBeNull();
     });
 });
 
