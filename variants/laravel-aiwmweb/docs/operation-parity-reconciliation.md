@@ -8,22 +8,22 @@ Authority: AIMWWeb Issue #257. Evidence-only reconciliation; no feature completi
 |---|---:|
 | TOTAL | 931 |
 | PORTED | 0 |
-| ADAPTED | 892 |
-| PENDING | 39 |
+| ADAPTED | 897 |
+| PENDING | 34 |
 | BLOCKED | 0 |
 | VERIFIED_UNAVAILABLE_EXTERNAL | 0 |
-| TERMINAL | 892 |
-| OVERALL_PARITY_PERCENT | 95.81% |
+| TERMINAL | 897 |
+| OVERALL_PARITY_PERCENT | 96.35% |
 
 Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`; `BLOCKED` is not progress.
 
 ## Visible controls
 
 - Total: **446**
-- Terminal: **408**
-- Pending: **38**
+- Terminal: **413**
+- Pending: **33**
 - Blocked: **0**
-- Parity: **91.48%**
+- Parity: **92.60%**
 
 ## By domain
 
@@ -45,7 +45,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | seo | 24 | 0 | 24 | 0 | 0 | 0 | 24 | 100.00% |
 | settings | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 100.00% |
 | sites | 12 | 0 | 12 | 0 | 0 | 0 | 12 | 100.00% |
-| sync | 213 | 0 | 183 | 30 | 0 | 0 | 183 | 85.92% |
+| sync | 213 | 0 | 188 | 25 | 0 | 0 | 188 | 88.26% |
 | taxonomy | 13 | 0 | 13 | 0 | 0 | 0 | 13 | 100.00% |
 
 ## By kind
@@ -56,7 +56,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | background_job | 21 | 0 | 21 | 0 | 0 | 0 | 21 | 100.00% |
 | route | 84 | 0 | 83 | 1 | 0 | 0 | 83 | 98.81% |
 | service | 349 | 0 | 349 | 0 | 0 | 0 | 349 | 100.00% |
-| visible_control | 446 | 0 | 408 | 38 | 0 | 0 | 408 | 91.48% |
+| visible_control | 446 | 0 | 413 | 33 | 0 | 0 | 413 | 92.60% |
 
 ## Reproducibility / guard results
 
@@ -66,7 +66,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - Totals reconcile: **PASS**
 - Evidence references exist for terminal code rows: **PASS**
 - Explicit route contracts: **44**
-- Focused visible-control contracts: **408**
+- Focused visible-control contracts: **413**
 - Focused service contracts: **32**
 - Focused background-job contracts: **7**
 - Unpushed countable sources: **0**
@@ -145,30 +145,25 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 
 - None
 
-### sync (30)
+### sync (25)
 
-- `AIMW-SYNC-1A20057999`
 - `AIMW-SYNC-1B63FBC758`
 - `AIMW-SYNC-21483C88FA`
-- `AIMW-SYNC-246AD1A2AE`
 - `AIMW-SYNC-2A256826D2`
 - `AIMW-SYNC-3389FB622C`
 - `AIMW-SYNC-38D8A24B15`
-- `AIMW-SYNC-3E7DCF4C71`
 - `AIMW-SYNC-425B82511E`
-- `AIMW-SYNC-476CDB769B`
 - `AIMW-SYNC-4B986B2651`
 - `AIMW-SYNC-4FDCFDA33F`
 - `AIMW-SYNC-6766C503DA`
 - `AIMW-SYNC-7A726BAF5F`
 - `AIMW-SYNC-7C77CF7F7A`
-- `AIMW-SYNC-80B81C07B8`
 - `AIMW-SYNC-8C35E9A7A0`
 - `AIMW-SYNC-9504A57CAE`
 - `AIMW-SYNC-9B87CACA17`
 - `AIMW-SYNC-AE16CF49C6`
 - `AIMW-SYNC-B78216241F`
-- `AIMW-SYNC-C43EFD36B1`
+- `AIMW-SYNC-B955324F04`
 - `AIMW-SYNC-CC2B584BC4`
 - `AIMW-SYNC-D5CE5A213B`
 - `AIMW-SYNC-DDC8657C2F`
