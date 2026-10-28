@@ -1,4 +1,5 @@
 name: Laravel AIWMWeb Task Parity Materialize 959 (temporary)
+# Temporary generator: commit official parity artifacts for #959, then remove this workflow.
 on:
   push:
     branches:
