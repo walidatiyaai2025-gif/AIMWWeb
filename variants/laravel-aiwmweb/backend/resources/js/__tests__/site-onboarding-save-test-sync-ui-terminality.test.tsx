@@ -253,6 +253,24 @@ describe('AIMW-SYNC-C1B6FA6677 PreviousAsync browser parity', () => {
         expect(fetchMock).not.toHaveBeenCalled();
     });
 
+    it('hides previous after server-confirmed onboarding completion', async () => {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({
+            operation_id: SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID,
+            site: { id: 27, name: 'Saved', url: 'https://saved.example.test',
+                connection_status: 'verified', health_state: 'healthy' },
+            credential_configured: true,
+            sync: null,
+            idempotent_replay: false,
+        }), { status: 202, headers: { 'content-type': 'application/json' } })));
+        renderControl();
+        completeProfileStep('Saved', 'https://saved.example.test');
+        completeCredentialStep('wp-admin', 'application-secret-123');
+        expect(screen.getByRole('button', { name: 'Previous' })).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Save, test and synchronize' }));
+        expect(await screen.findByText('verified / healthy')).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Previous' })).toBeNull();
+    });
+
     it('does not show previous navigation to operators denied sites.manage', () => {
         renderControl(['tenant.view']);
         expect(screen.queryByRole('button', { name: 'Previous' })).toBeNull();
