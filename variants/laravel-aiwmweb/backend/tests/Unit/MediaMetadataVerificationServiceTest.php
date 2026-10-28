@@ -51,26 +51,31 @@ final class MediaMetadataVerificationServiceTest extends TestCase
             public function __construct(private array $read)
             {
             }
+
             public function list(int $siteId, string $resource, array $query = []): array
             {
                 return [];
             }
+
             public function get(int $siteId, string $resource, int $remoteId, array $query = []): array
             {
                 $this->calls[] = "get:{$siteId}:{$resource}:{$remoteId}";
 
                 return $this->read;
             }
+
             public function mutate(int $siteId, string $resource, ?int $remoteId, string $action, array $payload = []): array
             {
                 $this->calls[] = "mutate:{$siteId}:{$resource}:{$remoteId}";
 
                 return ['id' => $remoteId];
             }
+
             public function upload(int $siteId, string $path, string $name, string $mimeType, array $metadata = []): array
             {
                 return [];
             }
+
             public function semantic(int $siteId, string $operation, array $payload = []): array
             {
                 return [];
