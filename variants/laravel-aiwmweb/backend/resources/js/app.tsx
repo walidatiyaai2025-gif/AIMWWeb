@@ -35,6 +35,7 @@ import { GlobalTaxonomyPostsLinkControl } from './global-taxonomy-posts-link-con
 import { GlobalTaxonomySyncLinkControl } from './global-taxonomy-sync-link-control';
 import { GlobalSynchronizationAcceptRemoteControl } from './global-synchronization-accept-remote-control';
 import { GlobalSynchronizationReviewConflictsControl } from './global-synchronization-review-conflicts-control';
+import { GlobalSynchronizationLocalContentLinkControl } from './global-synchronization-local-content-link-control';
 import { ContentExplorerSynchronizeControl } from './content-explorer-synchronize-control';
 import { ContentExplorerExecutionLinkControl } from './content-explorer-execution-link-control';
 import { ContentExplorerContentTabControl } from './content-explorer-content-tab-control';
@@ -236,7 +237,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     if (route.key === 'media') return <><MediaPagesLinkControl context={context} /><MediaBatchClearSelectionControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'pages') return <><GlobalPagesConfirmTrashControl context={context} /><PagesPostsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'posts') return <><GlobalPostsConfirmTrashControl context={context} /><PostsExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
-    if (route.key === 'sync') return <><GlobalSynchronizationReviewConflictsControl context={context} /><GlobalSynchronizationAcceptRemoteControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'sync') return <><GlobalSynchronizationLocalContentLinkControl context={context} /><GlobalSynchronizationReviewConflictsControl context={context} /><GlobalSynchronizationAcceptRemoteControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'seo-audit' || route.key === 'seo-suggestions') return <ModuleWorkspaceLoadSitesControl context={context} route={route} />;
     if (route.key === 'comments') return <><CommentsBackToSitesControl context={context} /><CommentsCommentLinksControl context={context} /><CommentsContentHubLink context={context} /><CommentsManageSiteControl context={context} /><WorkspacePage context={context} route={route} /><CommentsBackToExplorerControl context={context} /></>;
     if (route.key === 'wp-users') return <><WordPressUsersBackToSitesControl context={context} /><WordPressUsersBackToExplorerControl context={context} /><WorkspacePage context={context} route={route} /></>;
