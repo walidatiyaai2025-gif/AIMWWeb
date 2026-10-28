@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #934 / umbrella #257",
+  "operation_id": "AIMW-SYNC-D805D5D9A8",
+  "terminal_state": "ADAPTED",
+  "domain": "sync",
+  "kind": "visible_control",
+  "canonical_operation": {
+    "operation_id": "AIMW-SYNC-D805D5D9A8",
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "/module/media",
+    "source_control": "ApplyAsync [ApplyAsync]",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/GlobalMediaExplorer.razor",
+    "terminal_state": "ADAPTED"
+  },
+  "source_intent": {
+    "behavior": "Apply the user-entered search, site, media type and page-size filters; reset to page one; read the real media library before displaying reconciled results.",
+    "adaptation": "Laravel renders a tenant-scoped active-site media workspace: applies search/media type/page size to the authenticated site only; never synthesizes a cross-site query or trusts user-supplied site/tenant; a filter re-read uses the site-scoped GET endpoint. No WordPress write occurs."
+  },
+  "laravel_runtime": {
+    "control": "variants/laravel-aiwmweb/backend/resources/js/global-media-apply-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentApiController.php",
+    "endpoint": "GET /api/v1/tenants/{tenant}/sites/{site}/media?search=...&mime_type=...&per_page=...&page=1",
+    "operation_marker": "AIMW-SYNC-D805D5D9A8",
+    "mutation": false,
+    "remote_write": false,
+    "fabricated_success": false
+  },
+  "security": {
+    "tenant_owned": true,
+    "permission": "content.view",
+    "tenant_site_endpoint_exact": true,
+    "foreign_tenant_404": true,
+    "foreign_site_404": true,
+    "missing_permission_403": true,
+    "caller_owned_external_endpoint_rejected": true,
+    "secrets_exposed": false
+  },
+  "acceptance_tests": [
+    "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-media-apply-control.test.tsx",
+    "variants/laravel-aiwmweb/backend/tests/Feature/GlobalMediaApplyTerminalityTest.php"
+  ],
+  "scope_guards": {
+    "closes_only": [
+      "AIMW-SYNC-D805D5D9A8"
+    ],
+    "sibling_reset_operation_not_claimed": true,
+    "aspnet_source_modified": false,
+    "no_secondary_branch": true
+  },
+  "provenance": {
+    "canonical_branch": "worker/934-global-media-apply",
+    "base_composition_sha": "e3f3a6859b44bc6e6f48667c6633e1804a57fba5",
+    "implementation_sha": "f6f34c42168dcd26103917430ce540b5b2d59730"
+  }
+}

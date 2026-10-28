@@ -10,6 +10,16 @@ import {
     buildContentExplorerBulkPendingPayload,
 } from './content-explorer-bulk-pending-control';
 import {
+    CONTENT_EXPLORER_BULK_PUBLISH_OPERATION_ID,
+    contentExplorerBulkPublishEndpoint,
+    buildContentExplorerBulkPublishPayload,
+} from './content-explorer-bulk-publish-control';
+import {
+    CONTENT_EXPLORER_BULK_DRAFT_OPERATION_ID,
+    contentExplorerBulkDraftEndpoint,
+    buildContentExplorerBulkDraftPayload,
+} from './content-explorer-bulk-draft-control';
+import {
     CONTENT_EXPLORER_BULK_TRASH_OPERATION_ID,
     buildBulkTrashPayload,
     contentExplorerBulkTrashEndpoint,
@@ -75,6 +85,8 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
     const canView = hasPermission(context, 'content.view');
     const canEdit = hasPermission(context, 'content.edit');
     const endpoint = contentExplorerBulkTrashEndpoint(context.tenant.slug, siteId);
+    const publishEndpoint = contentExplorerBulkPublishEndpoint(context.tenant.slug, siteId);
+    const draftEndpoint = contentExplorerBulkDraftEndpoint(context.tenant.slug, siteId);
     const pendingEndpoint = contentExplorerBulkPendingEndpoint(context.tenant.slug, siteId);
     const postsEndpoint = context.api.posts;
     const pagesEndpoint = context.api.pages;
@@ -101,6 +113,7 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
             .map((row) => ({ content_type: row.type, wordpress_id: row.remote_id } satisfies BulkTrashTarget)),
         [rows, selected],
     );
+
     const selectedLocalIds = useMemo(
         () => rows
             .filter((row) => selected.has(`${row.type}:${row.remote_id}`))
@@ -112,22 +125,80 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
     const pendingMutation = useMutation({
         mutationFn: async (ids: number[]) => {
             if (!pendingEndpoint) throw new Error('The selected site pending endpoint is unavailable.');
-            return apiRequest<{ state: 'queued'; count: number }>(pendingEndpoint, {
+            const result = await apiRequest<{ state: string; count: number }>(pendingEndpoint, {
                 method: 'POST',
                 body: JSON.stringify(buildContentExplorerBulkPendingPayload(ids)),
             });
+            if (result.state !== 'queued' || result.count !== ids.length) {
+                throw new Error('The server did not confirm the pending-review job was queued.');
+            }
+            return result;
         },
         onSuccess: (result) => {
             setSelected(new Set());
             notify(
                 locale === 'ar'
-                    ? `تم وضع ${result.count} عنصر في قائمة انتظار المراجعة. راجع حالة المزامنة لاحقًا للتأكد من تنفيذها.`
-                    : `Queued ${result.count} item(s) for pending review; refresh authoritative state after the queued job completes.`,
+                    ? `تم وضع ${result.count} عنصر في قائمة انتظار المراجعة. تحقق من حالة المزامنة بعد التنفيذ.`
+                    : `Queued ${result.count} item(s) for pending review; verify the authoritative state after the job completes.`,
                 'success',
             );
         },
         onError: (error) => notify(
-            error instanceof Error ? error.message : 'Could not queue selected content for review.',
+            error instanceof Error ? error.message : 'Could not queue selected content for pending review.',
+            'error',
+        ),
+    });
+
+    const draftMutation = useMutation({
+        mutationFn: async (ids: number[]) => {
+            if (!draftEndpoint) throw new Error('The selected site draft endpoint is unavailable.');
+            const result = await apiRequest<{ state: string; count: number }>(draftEndpoint, {
+                method: 'POST',
+                body: JSON.stringify(buildContentExplorerBulkDraftPayload(ids)),
+            });
+            if (result.state !== 'queued' || result.count !== ids.length) {
+                throw new Error('The server did not confirm the draft job was queued.');
+            }
+            return result;
+        },
+        onSuccess: (result) => {
+            setSelected(new Set());
+            notify(
+                locale === 'ar'
+                    ? `تم وضع ${result.count} عنصر في قائمة الانتظار لتحويله لمسودة؛ تحقق من حالة ووردبريس بعد تنفيذ المهمة.`
+                    : `Queued ${result.count} item(s) to move to draft; verify actual WordPress status after job completion.`,
+                'success',
+            );
+        },
+        onError: (error) => notify(
+            error instanceof Error ? error.message : 'Could not queue selected content for draft.',
+            'error',
+        ),
+    });
+
+    const publishMutation = useMutation({
+        mutationFn: async (ids: number[]) => {
+            if (!publishEndpoint) throw new Error('The selected site publish endpoint is unavailable.');
+            const result = await apiRequest<{ state: string; count: number }>(publishEndpoint, {
+                method: 'POST',
+                body: JSON.stringify(buildContentExplorerBulkPublishPayload(ids)),
+            });
+            if (result.state !== 'queued' || result.count !== ids.length) {
+                throw new Error('The server did not confirm the publish job was queued.');
+            }
+            return result;
+        },
+        onSuccess: (result) => {
+            setSelected(new Set());
+            notify(
+                locale === 'ar'
+                    ? `تم وضع ${result.count} عنصر في انتظار النشر. لا يعتبر النشر مكتملاً حتى تتأكد من الحالة الفعلية بعد تنفيذ المهمة.`
+                    : `Queued ${result.count} item(s) for publication; verify actual WordPress status after the job completes.`,
+                'success',
+            );
+        },
+        onError: (error) => notify(
+            error instanceof Error ? error.message : 'Could not queue selected content for publication.',
             'error',
         ),
     });
@@ -163,7 +234,7 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
         ),
     });
 
-    const busy = mutation.isPending || pendingMutation.isPending;
+    const busy = mutation.isPending || publishMutation.isPending || draftMutation.isPending || pendingMutation.isPending;
 
     if (!enabled || !activeSite) return null;
 
@@ -183,7 +254,7 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
             <header className="panel-header">
                 <div>
                     <span className="workspace-kicker">CONTENT OPERATIONS</span>
-                    <h2>{locale === 'ar' ? 'نقل المحدد إلى سلة المهملات' : 'Move selected content to trash'}</h2>
+                    <h2>{locale === 'ar' ? 'إجراءات جماعية على المحتوى' : 'Bulk content actions'}</h2>
                     <p>{locale === 'ar'
                         ? `الموقع: ${activeSite.name}. يتم التحقق من كل عنصر على الخادم قبل التغيير.`
                         : `Site: ${activeSite.name}. Each item is verified by the server before mutation.`}</p>
@@ -203,6 +274,28 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
                     <div className="toolbar-actions">
                         <button
                             type="button"
+                            className="btn primary"
+                            data-canonical-operation={CONTENT_EXPLORER_BULK_PUBLISH_OPERATION_ID}
+                            onClick={() => publishMutation.mutate(selectedLocalIds)}
+                            disabled={!publishEndpoint || busy || selectedLocalIds.length === 0 || selectedLocalIds.length !== selectedTargets.length}
+                        >
+                            {publishMutation.isPending
+                                ? (locale === 'ar' ? 'جارٍ إضافة مهمة النشر…' : 'Queueing publication…')
+                                : (locale === 'ar' ? 'نشر المحدد' : 'Publish selected')}
+                        </button>
+                        <button
+                            type="button"
+                            className="btn"
+                            data-canonical-operation={CONTENT_EXPLORER_BULK_DRAFT_OPERATION_ID}
+                            onClick={() => draftMutation.mutate(selectedLocalIds)}
+                            disabled={!draftEndpoint || busy || selectedLocalIds.length === 0 || selectedLocalIds.length !== selectedTargets.length}
+                        >
+                            {draftMutation.isPending
+                                ? (locale === 'ar' ? 'جارٍ إضافة مهمة المسودة…' : 'Queueing draft…')
+                                : (locale === 'ar' ? 'تحويل المحدد لمسودة' : 'Move selected to draft')}
+                        </button>
+                        <button
+                            type="button"
                             className="btn"
                             data-canonical-operation={CONTENT_EXPLORER_BULK_PENDING_OPERATION_ID}
                             onClick={() => pendingMutation.mutate(selectedLocalIds)}
@@ -219,7 +312,7 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
                             onClick={() => mutation.mutate(selectedTargets)}
                             disabled={busy || selectedTargets.length === 0}
                         >
-                            {busy
+                            {mutation.isPending
                                 ? (locale === 'ar' ? 'جارٍ النقل…' : 'Moving…')
                                 : (locale === 'ar' ? 'نقل المحدد لسلة المهملات' : 'Move selected to trash')}
                         </button>

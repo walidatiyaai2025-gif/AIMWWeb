@@ -35,8 +35,7 @@ Route::prefix('v1/tenants/{tenant}/sites/{site}')->middleware(['web', 'tenant.co
         ->defaults('canonical_operation_id', ContentExplorerReadController::OPERATION_ID)
         ->name('canonical.api.content-explorer.read');
     Route::get('content/{type}', [ContentApiController::class, 'index']);
-    Route::post('content/bulk', [ContentApiController::class, 'bulk']);
-    Route::post('content/{type}', [ContentApiController::class, 'store']);
+    Route::post('content/{type}', [ContentApiController::class, 'store'])->where('type', 'post|page');
     Route::get('content/{type}/{wordpressId}/editor', [ContentApiController::class, 'editor'])
         ->middleware('auth')
         ->whereNumber('wordpressId')
@@ -55,6 +54,7 @@ Route::prefix('v1/tenants/{tenant}/sites/{site}')->middleware(['web', 'tenant.co
     Route::patch('content/items/{content}', [ContentApiController::class, 'update']);
     Route::post('content/items/{content}/state', [ContentApiController::class, 'state']);
     Route::delete('content/items/{content}', [ContentApiController::class, 'destroy']);
+    Route::post('content/bulk', [ContentApiController::class, 'bulk']);
     Route::post('content/bulk/trash', [ContentApiController::class, 'bulkTrash'])
         ->middleware('auth')
         ->defaults('canonical_operation_id', ContentApiController::CONTENT_EXPLORER_BULK_TRASH_OPERATION_ID)

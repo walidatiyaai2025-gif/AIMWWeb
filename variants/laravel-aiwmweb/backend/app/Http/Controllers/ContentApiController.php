@@ -282,6 +282,8 @@ final class ContentApiController extends Controller
     {
         $auth->authorize('content.edit');
         Site::query()->findOrFail($site);
+        $callerOwned = ['tenant', 'tenant_id', 'site', 'site_id', 'user_id', 'actor_user_id'];
+        abort_if(array_intersect(array_keys($request->all()), $callerOwned) !== [], 422, 'Bulk content queue does not accept caller-owned identity fields.');
         $data = $request->validate(['ids' => 'required|array|min:1|max:500', 'ids.*' => 'integer', 'action' => ['required', Rule::in(['draft', 'pending', 'publish', 'trash', 'restore'])], 'payload' => 'array']);
         $count = ContentItem::query()->where('site_id', $site)->whereIn('id', $data['ids'])->count();
         abort_unless($count === count(array_unique($data['ids'])), 422, 'Bulk selection includes unavailable content.');
@@ -410,9 +412,14 @@ final class ContentApiController extends Controller
     public function media(Request $request, TenantAuthorizer $auth, string $tenant, int $site): JsonResponse
     {
         $auth->authorize('content.view');
+        // A foreign/missing site must not look like an authorized empty media library.
+        Site::query()->findOrFail($site);
         $q = MediaItem::query()->where('site_id', $site);
         if ($search = trim((string) $request->query('search'))) {
-            $q->where(fn ($x) => $x->where('title', 'like', "%{$search}%")->orWhere('alt_text', 'like', "%{$search}%"));
+            $q->where(fn ($x) => $x->where('title', 'like', "%{$search}%")
+                ->orWhere('alt_text', 'like', "%{$search}%")
+                ->orWhere('slug', 'like', "%{$search}%")
+                ->orWhere('mime_type', 'like', "%{$search}%"));
         }
         if ($mime = $request->query('mime_type')) {
             $q->where('mime_type', 'like', $mime.'%');
