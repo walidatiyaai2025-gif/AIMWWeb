@@ -23,7 +23,8 @@ export function isAuthorizedWordPressSiteUsersSearch(
     if (!Number.isSafeInteger(siteId) || siteId < 1) return false;
 
     const tenant = context.tenant.slug;
-    if (!tenant || !context.permissions.some((permission) => permission === '*' || permission === 'sites.view')) {
+    const can = (permission: string) => context.permissions.includes('*') || context.permissions.includes(permission);
+    if (!tenant || !can('tenant.view') || !can('sites.view')) {
         return false;
     }
 
