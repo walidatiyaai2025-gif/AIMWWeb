@@ -2842,6 +2842,14 @@
       "operation_ids": [
         "AIMW-SYNC-F7BCCD650C"
       ]
+    },
+    {
+      "label": "AIMW-SYNC-D805D5D9A8 GlobalMediaExplorer ApplyAsync focused closure #934",
+      "sha": "9cd362341d71d3b940350bcf3802edcf9f2b9fea",
+      "observed_pr_head": "9cd362341d71d3b940350bcf3802edcf9f2b9fea",
+      "operation_ids": [
+        "AIMW-SYNC-D805D5D9A8"
+      ]
     }
   ],
   "sources": [

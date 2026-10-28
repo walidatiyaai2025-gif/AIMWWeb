@@ -53,6 +53,7 @@ import { LiveSystemStatusRefreshControl } from './live-system-status-refresh-con
 import { EMAIL_HISTORY_CLEAR_FILTERS_OPERATION_ID, EmailHistoryFiltersControl, type EmailHistoryFilterState } from './email-history-filters-control';
 import { GlobalUsersFullManagementControl } from './global-users-full-management-control';
 import { MediaDeleteControl } from './media-delete-control';
+import { authoritativeGlobalMediaApplyEndpoint, defaultGlobalMediaFilters, globalMediaApplyQuery, GlobalMediaApplyControl } from './global-media-apply-control';
 import { GlobalMediaInterpolatedLinksControl } from './media-interpolated-links-control';
 import { MediaBackToSitesControl } from './media-back-to-sites-control';
 import { MediaManagerEditingSourceUrlControl } from './media-manager-editing-source-url-control';
@@ -307,6 +308,8 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const [searchInput, setSearchInput] = useState('');
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
+    const [mediaDraft, setMediaDraft] = useState(defaultGlobalMediaFilters);
+    const [mediaAppliedFilters, setMediaAppliedFilters] = useState(defaultGlobalMediaFilters);
     const [appDataGridSortDescending, setAppDataGridSortDescending] = useState(false);
     const applicationUsersSearchInFlight = useRef(false);
     const [sitesFilter, setSitesFilter] = useState<'all' | 'connected' | 'review'>('all');
@@ -340,7 +343,10 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const [emailHistoryFilters, setEmailHistoryFilters] = useState<EmailHistoryFilterState>({ siteId: '', status: '', correlation: '' });
     const [dialog, setDialog] = useState<{ key: string; contract: ActionContract } | null>(null);
     const state = resolveCapability(context, route);
-    const endpoint = route.apiKey ? context.api[route.apiKey] : undefined;
+    const routeEndpoint = route.apiKey ? context.api[route.apiKey] : undefined;
+    const endpoint = route.key === 'media'
+        ? (authoritativeGlobalMediaApplyEndpoint(context) ?? undefined)
+        : routeEndpoint;
     const readOperations = COLLECTION_READ_OPERATIONS[route.key];
     const canEditExplorerContent = context.permissions.includes('*') || context.permissions.includes('content.edit');
 
@@ -364,7 +370,8 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         period_days: siteReliabilityFilters.periodDays,
         minimum_operations: siteReliabilityFilters.minimumOperations,
     } : {};
-    const resourceFilters = { ...taxonomyFilter, ...emailHistoryQueryFilters, ...siteReliabilityQueryFilters };
+    const mediaQueryFilters = route.key === 'media' ? globalMediaApplyQuery(mediaAppliedFilters) : {};
+    const resourceFilters = { ...taxonomyFilter, ...emailHistoryQueryFilters, ...siteReliabilityQueryFilters, ...mediaQueryFilters };
     const query = useQuery(route.key === 'email-history' ? {
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType, emailHistoryFilters.siteId, emailHistoryFilters.status, emailHistoryFilters.correlation, appDataGridSortDescending],
         queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, resourceFilters)),
@@ -372,6 +379,10 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     } : route.key === 'site-reliability' ? {
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, siteReliabilityFilters.periodDays, siteReliabilityFilters.minimumOperations],
         queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, siteReliabilityQueryFilters)),
+        enabled: state.state === 'enabled' && Boolean(endpoint),
+    } : route.key === 'media' ? {
+        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, mediaAppliedFilters.mediaType, mediaAppliedFilters.pageSize],
+        queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, mediaQueryFilters)),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     } : {
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType],
@@ -404,6 +415,23 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
             queryFn: () => apiRequest<unknown>(endpointWithQuery(trustedEndpoint, 1, '')),
             staleTime: 0,
         });
+    };
+
+    const applyGlobalMediaFilters = async (): Promise<void> => {
+        if (route.key !== 'media' || state.state !== 'enabled' || !endpoint || query.isFetching) return;
+        const nextSearch = searchInput.trim();
+        const unchanged = page === 1 && search === nextSearch
+            && mediaAppliedFilters.mediaType === mediaDraft.mediaType
+            && mediaAppliedFilters.pageSize === mediaDraft.pageSize;
+        // The source ApplyAsync always resets pagination before its authoritative read.
+        // Keep the selected site constrained to the server-authorized active tenant/site.
+        setPage(1);
+        setSearch(nextSearch);
+        setMediaAppliedFilters({ ...mediaDraft });
+        if (unchanged) {
+            const refreshed = await query.refetch();
+            if (refreshed.error) throw refreshed.error;
+        }
     };
 
     const applicationUsersSearchAuthorized = context.permissions.includes('*') || context.permissions.includes('members.manage');
@@ -673,6 +701,12 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         void searchApplicationUsers().catch(() => undefined);
                         return;
                     }
+                    if (route.key === 'media') {
+                        void applyGlobalMediaFilters().catch((error) => {
+                            notify(error instanceof Error ? error.message : 'Media filters could not be applied.', 'error');
+                        });
+                        return;
+                    }
                     setPage(1); setSearch(searchInput); if (route.key === 'explorer') setExplorerSelectedKeys(new Set());
                 }} role="search">
                     <label className="sr-only" htmlFor={`search-${route.key}`}>{text(commonText.search)}</label>
@@ -696,7 +730,16 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                     ) : (
                         <input id={`search-${route.key}`} value={searchInput} onChange={(event) => setSearchInput(event.target.value)} placeholder={locale === 'ar' ? 'بحث في البيانات الحية…' : 'Search live data…'} />
                     )}
-                    {route.key === 'application-users' ? (
+                    {route.key === 'media' ? (
+                        <GlobalMediaApplyControl
+                            locale={locale}
+                            value={mediaDraft}
+                            busy={query.isFetching}
+                            available={Boolean(endpoint)}
+                            onTypeChange={(mediaType) => setMediaDraft((current) => ({ ...current, mediaType }))}
+                            onPageSizeChange={(pageSize) => setMediaDraft((current) => ({ ...current, pageSize }))}
+                        />
+                    ) : route.key === 'application-users' ? (
                         <ApplicationUsersSearchControl
                             busy={query.isFetching || applicationUsersSearchInFlight.current}
                             locale={locale}
