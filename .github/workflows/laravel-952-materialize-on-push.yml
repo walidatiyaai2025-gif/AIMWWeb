@@ -1,4 +1,5 @@
 name: Laravel #952 Official Parity Materialization
+# Re-run after Pint correction; exact operation #952 only.
 
 on:
   push:
