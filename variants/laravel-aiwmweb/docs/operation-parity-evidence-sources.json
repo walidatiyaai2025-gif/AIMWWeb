@@ -2940,6 +2940,14 @@
       ]
     },
     {
+      "label": "Issue #950 Global Posts Open synchronization navigation scoped closure",
+      "sha": "cd171497cba463039bdac1e25e83bee2473f495b",
+      "observed_pr_head": "cd171497cba463039bdac1e25e83bee2473f495b",
+      "operation_ids": [
+        "AIMW-SYNC-EEFDDFFF87"
+      ]
+    },
+    {
       "label": "AIMW-SYNC-38D8A24B15 Sites EnableSelectedAsync focused closure #973",
       "sha": "5098b426828505946f1b905c4400e264b52625e0",
       "observed_pr_head": "5098b426828505946f1b905c4400e264b52625e0",
