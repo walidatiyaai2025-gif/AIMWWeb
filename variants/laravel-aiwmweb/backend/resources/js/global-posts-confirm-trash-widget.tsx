@@ -6,6 +6,7 @@ import { useLocale } from './i18n';
 import { GLOBAL_POSTS_RESET_OPERATION_ID, defaultGlobalPostsFilters, globalPostsFilterQuery } from './global-posts-reset-control';
 import { GLOBAL_POSTS_PRIVATE_SELECTED_OPERATION_ID, globalPostsPrivateEndpoint, globalPostsPrivatePayload } from './global-posts-private-selected-control';
 import { GLOBAL_POSTS_PENDING_SELECTED_OPERATION_ID, globalPostsPendingEndpoint, globalPostsPendingPayload } from './global-posts-pending-selected-control';
+import { GLOBAL_POSTS_REQUEST_TRASH_OPERATION_ID, canRequestGlobalPostsTrash } from './global-posts-request-trash-control';
 import { PostsInterpolatedLinksControl } from './posts-interpolated-links-control';
 import { SyncAppConfirmDialogCancelControl } from './sync-app-confirm-dialog-cancel-control';
 import {
@@ -315,8 +316,11 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
                             type="button"
                             className="btn danger"
                             data-canonical-operation={GLOBAL_POSTS_CONFIRM_TRASH_OPERATION_ID}
-                            disabled={!canEdit || busy || selectedTargets.length === 0}
-                            onClick={() => setConfirmOpen(true)}
+                            data-request-operation={GLOBAL_POSTS_REQUEST_TRASH_OPERATION_ID}
+                            disabled={!canRequestGlobalPostsTrash(selectedTargets.length, canEdit, busy)}
+                            onClick={() => {
+                                if (canRequestGlobalPostsTrash(selectedTargets.length, canEdit, busy)) setConfirmOpen(true);
+                            }}
                         >
                             {locale === 'ar' ? 'نقل المحدد لسلة المهملات' : 'Move selected to trash'}
                         </button>

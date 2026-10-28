@@ -1,5 +1,5 @@
 name: Laravel #952 Official Parity Materialization
-# Reconcile already-merged #936/#937/#939 provenance after #952 official materialization.
+# Reconcile already-merged #944/#945/#947 provenance after #952 official materialization.
 
 on:
   push:
@@ -56,9 +56,9 @@ jobs:
           assert old.keys()==new.keys(), 'denominator or ids changed'
           changes={i:(old[i],new[i]) for i in old if old[i]!=new[i]}
           expected = {
-            'AIMW-SYNC-3E7DCF4C71': ('PENDING', 'ADAPTED'),  # Already merged issue #936
-            'AIMW-SYNC-80B81C07B8': ('PENDING', 'ADAPTED'),  # Already merged issue #937
-            'AIMW-SYNC-C43EFD36B1': ('PENDING', 'ADAPTED'),  # Already merged issue #939
+            'AIMW-SYNC-1A20057999': ('PENDING', 'ADAPTED'),  # Already merged issue #944
+            'AIMW-SYNC-246AD1A2AE': ('PENDING', 'ADAPTED'),  # Already merged issue #945
+            'AIMW-SYNC-476CDB769B': ('PENDING', 'ADAPTED'),  # Already merged issue #947
           }
           assert new['AIMW-SYNC-1B63FBC758'] == 'ADAPTED', 'Issue #952 terminal state regressed'
           assert changes == expected, f'unexpected reconciliation delta {changes}'
