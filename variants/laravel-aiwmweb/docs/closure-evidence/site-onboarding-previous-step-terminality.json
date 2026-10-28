@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257 / leaf #972",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-C1B6FA6677",
+  "domain": "sync",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/SiteOnboarding.razor",
+    "route_screen": "/sites/connect | /sites/onboarding",
+    "handler": "PreviousAsync",
+    "tenant_owned": true,
+    "mutation": false,
+    "risk": "low"
+  },
+  "laravel_adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/site-onboarding-save-test-sync-control.tsx",
+    "operation_marker": "AIMW-SYNC-C1B6FA6677",
+    "behavior": "Navigate one onboarding wizard step backward, including the review cancel button, without network calls or mutation; preserve entered data, disallow rollback during mutation and after completion.",
+    "authorization": "Tenant-context scoped React bootstrap and tenant-side Laravel route authorization; no cross-tenant identifiers are accepted.",
+    "fake_success_path": "none"
+  },
+  "acceptance_tests": [
+    "variants/laravel-aiwmweb/backend/tests/Feature/SiteOnboardingPreviousStepTerminalityTest.php",
+    "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-onboarding-save-test-sync-ui-terminality.test.tsx"
+  ],
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-C1B6FA6677"
+    ],
+    "other_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_manually_edited": false
+  },
+  "provenance": {
+    "branch": "worker/972-AIMW-SYNC-C1B6FA6677",
+    "implementation_sha": "fac9a49fafb2b13a0ef2378f860a917762c7264e",
+    "final_head_ci": "pending verification",
+    "official_materialization": "pending after evidence enrollment into closure composition"
+  }
+}
