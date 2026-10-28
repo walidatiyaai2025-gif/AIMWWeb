@@ -461,8 +461,8 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         }
     };
 
-    // Canonical GlobalMediaExplorer ResetAsync: restore every draft/applied
-    // filter, then read real data from the same active-tenant/site query key.
+    // Canonical GlobalMediaExplorer ResetAsync: reset draft/applied filters and
+    // reread the authoritative media collection scoped to the active tenant/site.
     const resetGlobalMediaFilters = async (): Promise<void> => {
         if (route.key !== 'media' || state.state !== 'enabled' || !endpoint || query.isFetching) return;
         const reset = globalMediaResetState();
