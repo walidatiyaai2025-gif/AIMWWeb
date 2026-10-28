@@ -2890,6 +2890,22 @@
       "operation_ids": [
         "AIMW-SYNC-AE16CF49C6"
       ]
+    },
+    {
+      "label": "AIMW-CONT-BCAD1E3A49 Operations Hub Site Operations navigation focused closure",
+      "sha": "557c6edf4339a381e7c4a99b51e605be0031be99",
+      "observed_pr_head": "557c6edf4339a381e7c4a99b51e605be0031be99",
+      "operation_ids": [
+        "AIMW-CONT-BCAD1E3A49"
+      ]
+    },
+    {
+      "label": "AIMW-SYNC-BDBA0B4F01 Site Onboarding OpenSiteAsync focused closure #971",
+      "sha": "0a311c8358b8eed1d5c1a54c4c7a1b630fe85729",
+      "observed_pr_head": "0a311c8358b8eed1d5c1a54c4c7a1b630fe85729",
+      "operation_ids": [
+        "AIMW-SYNC-BDBA0B4F01"
+      ]
     }
   ],
   "sources": [
