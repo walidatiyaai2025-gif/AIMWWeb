@@ -40,7 +40,7 @@ final class GlobalTaxonomyResetTerminalityTest extends TestCase
         $this->assertStringContainsString("setTaxonomyType('all')", $pages);
         $this->assertStringContainsString('queryClient.fetchQuery({', $pages);
         $this->assertStringContainsString("endpointWithQuery(trustedEndpoint, 1, '')", $pages);
-        $this->assertStringContainsString("Site::query()->findOrFail($site)", $controller);
+        $this->assertStringContainsString('Site::query()->findOrFail($site)', $controller);
     }
 
     public function test_filtered_read_then_reset_returns_unfiltered_actual_tenant_terms(): void
