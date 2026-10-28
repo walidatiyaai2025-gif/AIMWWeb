@@ -3058,6 +3058,14 @@
       ]
     },
     {
+      "label": "AIMW-SYNC-E0791EA9E9 GlobalUsersWorkspace PreviousAsync focused closure #960",
+      "sha": "ee65778c11019a99b638f09e789f63090b6d827e",
+      "observed_pr_head": "ee65778c11019a99b638f09e789f63090b6d827e",
+      "operation_ids": [
+        "AIMW-SYNC-E0791EA9E9"
+      ]
+    },
+    {
       "label": "Issue #940 Global Pages RequestTrashAsync operation-scoped closure",
       "sha": "b9b6d4854dd6ffa315ef5ab4a3ea7fec9a971132",
       "observed_pr_head": "b9b6d4854dd6ffa315ef5ab4a3ea7fec9a971132",
