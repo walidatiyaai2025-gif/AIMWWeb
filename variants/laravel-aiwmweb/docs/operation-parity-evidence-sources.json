@@ -2892,17 +2892,25 @@
       ]
     },
     {
-      "label": "Issue #966 MediaManager provider-backed AI alt-text suggestion focused closure",
-      "sha": "683dea0ef13920ba287adae3288efbb68d17fb1c",
-      "observed_pr_head": "683dea0ef13920ba287adae3288efbb68d17fb1c",
+      "label": "AIMW-SYNC-BDBA0B4F01 Site Onboarding OpenSiteAsync focused closure #971",
+      "sha": "0a311c8358b8eed1d5c1a54c4c7a1b630fe85729",
+      "observed_pr_head": "0a311c8358b8eed1d5c1a54c4c7a1b630fe85729",
+      "operation_ids": [
+        "AIMW-SYNC-BDBA0B4F01"
+      ]
+    },
+    {
+      "label": "MediaManager SuggestAltClickedAsync focused #966",
+      "sha": "5fa48533f6fd19fca4f2b9cc85f870f97b3d0d2f",
+      "observed_pr_head": "5fa48533f6fd19fca4f2b9cc85f870f97b3d0d2f",
       "operation_ids": [
         "AIMW-SYNC-21483C88FA"
       ]
     },
     {
       "label": "Issue #967 MediaManager authoritative metadata save focused closure",
-      "sha": "f0e210e0b16f7f2a02966568eaf32a7a394607ae",
-      "observed_pr_head": "f0e210e0b16f7f2a02966568eaf32a7a394607ae",
+      "sha": "dbd421a78ea4fad483d0b3d970780247a128cdad",
+      "observed_pr_head": "dbd421a78ea4fad483d0b3d970780247a128cdad",
       "operation_ids": [
         "AIMW-SYNC-425B82511E"
       ]
