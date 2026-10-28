@@ -5,6 +5,7 @@ import { useToast } from './components';
 import { useLocale } from './i18n';
 import { GLOBAL_POSTS_RESET_OPERATION_ID, defaultGlobalPostsFilters, globalPostsFilterQuery } from './global-posts-reset-control';
 import { GLOBAL_POSTS_PRIVATE_SELECTED_OPERATION_ID, globalPostsPrivateEndpoint, globalPostsPrivatePayload } from './global-posts-private-selected-control';
+import { GLOBAL_POSTS_PENDING_SELECTED_OPERATION_ID, globalPostsPendingEndpoint, globalPostsPendingPayload } from './global-posts-pending-selected-control';
 import { PostsInterpolatedLinksControl } from './posts-interpolated-links-control';
 import { SyncAppConfirmDialogCancelControl } from './sync-app-confirm-dialog-cancel-control';
 import {
@@ -65,6 +66,7 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
     const [confirmOpen, setConfirmOpen] = useState(false);
     const endpoint = globalPostsEndpoint(context.tenant.slug);
     const privateEndpoint = globalPostsPrivateEndpoint(context.tenant.slug);
+    const pendingEndpoint = globalPostsPendingEndpoint(context.tenant.slug);
     const publishEndpoint = globalPostsPublishEndpoint(context.tenant.slug);
     const canView = hasPermission(context, 'content.view');
     const canEdit = hasPermission(context, 'content.edit');
@@ -134,6 +136,30 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
         onError: (error) => notify(error instanceof Error ? error.message : 'Could not queue selected items.', 'error'),
     });
 
+    const pendingMutation = useMutation({
+        mutationFn: async (targets: Array<{ site_id: number; wordpress_id: number }>) => {
+            if (!pendingEndpoint) throw new Error('The requested pending operation is unavailable.');
+            return apiRequest<{ operation_id: string; state: 'queued'; count: number; site_jobs: number }>(
+                pendingEndpoint,
+                { method: 'POST', body: JSON.stringify(globalPostsPendingPayload(targets)) },
+            );
+        },
+        onSuccess: (result) => {
+            if (result.operation_id !== GLOBAL_POSTS_PENDING_SELECTED_OPERATION_ID || result.state !== 'queued') {
+                notify('Unexpected operation response; refresh authoritative state before retrying.', 'error');
+                return;
+            }
+            setSelected(new Set());
+            notify(
+                locale === 'ar'
+                    ? `تمت جدولة ${result.count} من العناصر في ${result.site_jobs} مهمة. تحقق من النتائج بعد تنفيذها.`
+                    : `Queued ${result.count} posts across ${result.site_jobs} site job(s). Verify authoritative state after execution.`,
+                'success',
+            );
+        },
+        onError: (error) => notify(error instanceof Error ? error.message : 'Could not queue selected items.', 'error'),
+    });
+
     const mutation = useMutation({
         mutationFn: async (targets: GlobalPostTrashTarget[]) => {
             if (!endpoint) throw new Error('Global posts endpoint is unavailable.');
@@ -179,7 +205,7 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
 
     if (!enabled) return null;
 
-    const busy = mutation.isPending || publishMutation.isPending || privateMutation.isPending;
+    const busy = mutation.isPending || publishMutation.isPending || privateMutation.isPending || pendingMutation.isPending;
 
     const resetFilters = () => {
         // ResetAsync: clear filters/selection and force a fresh authorized read, including at defaults.
@@ -262,6 +288,17 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
                             {privateMutation.isPending
                                 ? (locale === 'ar' ? 'جارٍ جدولة الحالة الخاصة…' : 'Queueing private status…')
                                 : (locale === 'ar' ? 'جعل المحدد خاصًا' : 'Make selected private')}
+                        </button>
+                        <button
+                            type="button"
+                            className="btn"
+                            data-canonical-operation={GLOBAL_POSTS_PENDING_SELECTED_OPERATION_ID}
+                            disabled={!canEdit || !pendingEndpoint || busy || selectedTargets.length === 0}
+                            onClick={() => pendingMutation.mutate(selectedTargets)}
+                        >
+                            {pendingMutation.isPending
+                                ? (locale === 'ar' ? 'جارٍ جدولة المراجعة…' : 'Queueing review status…')
+                                : (locale === 'ar' ? 'إرسال المحدد للمراجعة' : 'Send selected to review')}
                         </button>
                         <button
                             type="button"
