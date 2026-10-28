@@ -69,6 +69,11 @@ describe('AIMW-CONT-BCAD1E3A49 Operations Hub site-operation history navigation'
         expect(screen.queryByRole('link', { name: /Site Operations/i })).not.toBeInTheDocument();
 
         cleanup();
+        const fractionalIdentity = context();
+        renderControl({ ...fractionalIdentity, user: { ...fractionalIdentity.user, id: 1.5 } });
+        expect(screen.queryByRole('link', { name: /Site Operations/i })).not.toBeInTheDocument();
+
+        cleanup();
         renderControl(context('alpha', ['operations.manage', 'execution.view'], []));
         expect(screen.queryByRole('link', { name: /Site Operations/i })).not.toBeInTheDocument();
     });
