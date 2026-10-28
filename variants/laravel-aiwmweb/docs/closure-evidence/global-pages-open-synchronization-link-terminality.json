@@ -50,5 +50,7 @@
     "sibling_operations_claimed": false,
     "aspnet_product_modified": false,
     "generated_reconciliation_hand_edited": false
-  }
+  },
+  "implementation_snapshot_sha": "2d335f325d0bcc117ec3abbb2e42083fc9683772",
+  "evidence_source_branch": "worker/937-global-pages-open-synchronization"
 }
