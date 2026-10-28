@@ -390,7 +390,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
 
     const taxonomyFilter: Record<string, string> = route.key === 'taxonomy' && taxonomyType !== 'all' ? { taxonomy: taxonomyType } : {};
     const taxonomyAppliedQuery = route.key === 'taxonomy' ? { ...taxonomyFilter, ...globalTaxonomyApplyQuery(taxonomyApplied) } : taxonomyFilter;
-    const wordpressUsersFilters = route.key === 'wp-users' && wordpressUsersRole !== 'all' ? { role: wordpressUsersRole } : {};
+    const wordpressUsersFilters: Record<string, string> = route.key === 'wp-users' && wordpressUsersRole !== 'all' ? { role: wordpressUsersRole } : {};
     const emailHistoryQueryFilters: Record<string, string> = route.key === 'email-history' ? {
         ...(emailHistoryFilters.siteId ? { site_id: emailHistoryFilters.siteId } : {}),
         ...(emailHistoryFilters.status ? { status: emailHistoryFilters.status } : {}),
@@ -987,7 +987,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             endpoint={endpoint}
                             role={wordpressUsersRole}
                             busy={query.isFetching}
-                            onRoleChange={(nextRole) => { setPage(1); setWordPressUsersRole(nextRole); }}
+                            onRoleChange={(nextRole) => { setPage(1); setWordpressUsersRole(nextRole); }}
                             onRefreshRequested={async (trustedEndpoint) => {
                                 if (state.state !== 'enabled' || trustedEndpoint !== endpoint) {
                                     throw new Error('The active tenant/site WordPress users endpoint is not authorized.');
