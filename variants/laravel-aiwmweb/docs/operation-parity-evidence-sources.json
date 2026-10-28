@@ -3082,6 +3082,14 @@
       ]
     },
     {
+      "label": "AIMW-SYNC-38D8A24B15 Sites EnableSelectedAsync focused closure #973",
+      "sha": "5098b426828505946f1b905c4400e264b52625e0",
+      "observed_pr_head": "5098b426828505946f1b905c4400e264b52625e0",
+      "operation_ids": [
+        "AIMW-SYNC-38D8A24B15"
+      ]
+    },
+    {
       "label": "AIMW-SYNC-7C77CF7F7A GlobalUsersWorkspace RefreshAsync focused closure #959",
       "sha": "370a894852e38f9ab62b4937d5154c4509c1b62e",
       "observed_pr_head": "370a894852e38f9ab62b4937d5154c4509c1b62e",
