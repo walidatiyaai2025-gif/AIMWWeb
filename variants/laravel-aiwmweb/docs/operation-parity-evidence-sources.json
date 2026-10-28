@@ -2892,6 +2892,14 @@
       ]
     },
     {
+      "label": "AIMW-SYNC-BDBA0B4F01 Site Onboarding OpenSiteAsync focused closure #971",
+      "sha": "0a311c8358b8eed1d5c1a54c4c7a1b630fe85729",
+      "observed_pr_head": "0a311c8358b8eed1d5c1a54c4c7a1b630fe85729",
+      "operation_ids": [
+        "AIMW-SYNC-BDBA0B4F01"
+      ]
+    },
+    {
       "label": "AIMW-SYNC-8409FB077A GlobalPages ApplyAsync verified focused closure #938",
       "sha": "a3eb57c8db2c05a07102bf8c8a85edebd146b33f",
       "observed_pr_head": "a3eb57c8db2c05a07102bf8c8a85edebd146b33f",
