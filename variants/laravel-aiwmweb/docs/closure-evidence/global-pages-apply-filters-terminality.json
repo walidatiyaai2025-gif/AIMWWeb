@@ -62,7 +62,7 @@
     "composition_reconciliation": {
       "integrated_closure_sha": "38c825c454ed031ba363ece20f125579c3672c4e",
       "merge_resolution_commit": "4fc5725755010852dd0c09377f26b1de1c650b99",
-      "official_materializer_workflow_run_id": 40638689328,
+      "official_materializer_workflow_run_id": 40638450947,
       "official_generated_commit_sha": "e84155b206fbf3f6339cc8c91ad8a2972b30844d",
       "terminal_operations": 883,
       "total_operations": 931,
