@@ -409,6 +409,8 @@ final class ContentApiController extends Controller
     public function media(Request $request, TenantAuthorizer $auth, string $tenant, int $site): JsonResponse
     {
         $auth->authorize('content.view');
+        // A foreign/missing site must not look like an authorized empty media library.
+        Site::query()->findOrFail($site);
         $q = MediaItem::query()->where('site_id', $site);
         if ($search = trim((string) $request->query('search'))) {
             $q->where(fn ($x) => $x->where('title', 'like', "%{$search}%")->orWhere('alt_text', 'like', "%{$search}%"));
