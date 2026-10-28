@@ -24,7 +24,7 @@ final class SiteOnboardingOpenSiteDashboardTerminalityTest extends TestCase
         $this->assertStringContainsString(self::OPERATION_ID, $source);
         $this->assertStringContainsString('siteOnboardingOpenSiteHref(context.tenant.slug, result.site.id)', $source);
         $this->assertStringContainsString("context.permissions.includes('sites.view')", $source);
-        $this->assertStringContainsString("if (!Number.isSafeInteger(siteId) || siteId < 1) return null;", $source);
+        $this->assertStringContainsString('if (!Number.isSafeInteger(siteId) || siteId < 1) return null;', $source);
     }
 
     public function test_site_details_route_is_not_found_for_a_foreign_tenant_site(): void
