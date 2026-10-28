@@ -1565,6 +1565,14 @@
   "known_composition_blockers": [],
   "focused_closure_operation_sources": [
     {
+      "label": "AIMW-SYNC-EE7D7534DF ContentExplorer BulkPublishAsync focused closure #930",
+      "sha": "99a9f552f76881f8676b40d34bb7109b93048d90",
+      "observed_pr_head": "99a9f552f76881f8676b40d34bb7109b93048d90",
+      "operation_ids": [
+        "AIMW-SYNC-EE7D7534DF"
+      ]
+    },
+    {
       "label": "AIMW-MEDI-34B5C789D2 MediaManager BackToSites focused closure",
       "sha": "0bed34e0893ec1f0515314a55572db578bdbb69c",
       "observed_pr_head": "0bed34e0893ec1f0515314a55572db578bdbb69c",
