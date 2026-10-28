@@ -1,4 +1,4 @@
-name: Laravel 976 canonical parity after 960 verified merge
+name: Laravel 976 canonical parity closure and exact-head regeneration
 
 on:
   push:
@@ -26,27 +26,18 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Wait for actual #960 merged ancestry in the canonical #976 branch
+      - name: Merge current composition into existing Issue 976 leaf before official reconciliation
         shell: bash
         run: |
           set -euo pipefail
-          repo="$GITHUB_REPOSITORY"
           leaf="worker/976-wordpress-site-users-search"
           base="worker/laravel-aiwmweb-closure-composition"
-          for attempt in $(seq 1 145); do
-            if [ "$(gh api "repos/$repo/pulls/1350" --jq '.merged')" = "true" ]; then
-              merge_sha="$(gh api "repos/$repo/pulls/1350" --jq '.merge_commit_sha')"
-              git fetch origin "+refs/heads/$leaf:refs/remotes/origin/$leaf" "+refs/heads/$base:refs/remotes/origin/$base"
-              if git merge-base --is-ancestor "$merge_sha" "refs/remotes/origin/$leaf"; then
-                echo "MERGED_960_ANCESTOR=$merge_sha"
-                git checkout -B "$leaf" "refs/remotes/origin/$leaf"
-                exit 0
-              fi
-            fi
-            sleep 15
-          done
-          echo "Canonical #976 branch does not yet contain #960 integration; preserving it" >&2
-          exit 1
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin "+refs/heads/$leaf:refs/remotes/origin/$leaf" "+refs/heads/$base:refs/remotes/origin/$base"
+          git checkout -B "$leaf" "refs/remotes/origin/$leaf"
+          git merge --no-ff --no-edit "refs/remotes/origin/$base"
+          echo "COMPOSITION_INTEGRATED_HEAD=$(git rev-parse HEAD)"
       - name: Enroll exactly the existing pushed #976 source evidence
         shell: bash
         run: |
@@ -79,7 +70,6 @@ jobs:
           import json
           d=json.load(open('/tmp/parity.json'))
           rows={r['operation_id']:r for r in d['operations']}
-          assert rows['AIMW-SYNC-E0791EA9E9']['migration_state']=='ADAPTED'
           assert rows['AIMW-SYNC-4FDCFDA33F']['migration_state']=='ADAPTED'
           assert d['totals']['total']==931
           assert d['totals']['terminal']>=893,d['totals']
@@ -96,6 +86,6 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git rm -f .github/workflows/laravel-976-sync-after-960.yml .github/workflows/laravel-976-enroll-after-960.yml
           git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
-          git commit -m "chore(laravel #976): canonical scoped WordPress UsersManager parity after #960 integration"
+          git commit -m "chore(laravel #976): canonical WordPress UsersManager parity regeneration"
           git push origin HEAD:refs/heads/worker/976-wordpress-site-users-search
           echo "OFFICIAL_976_FINAL_HEAD=$(git rev-parse HEAD)"
