@@ -54,7 +54,7 @@ jobs:
           after={r['operation_id']:r['migration_state'] for r in new['operations']}
           changed={k:(before[k],after[k]) for k in before if before[k]!=after[k]}
           assert changed=={'AIMW-SYNC-8C35E9A7A0':('PENDING','ADAPTED')}, changed
-          assert new['totals']['total']==931 and new['totals']['terminal']==902, new['totals']
+          assert new['totals']['total']==931 and new['totals']['terminal']==old['totals']['terminal']+1, new['totals']
           print('Exact #962 focused delta:',changed)
           PY
       - name: Commit formatting and generated ledger
