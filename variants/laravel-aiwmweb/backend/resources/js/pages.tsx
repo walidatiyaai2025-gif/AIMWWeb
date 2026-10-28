@@ -78,7 +78,8 @@ import {
 } from './site-operations-filters-control';
 import { SiteReliabilityConnectionLinkControl } from './site-reliability-connection-link-control';
 import { GlobalTaxonomySiteLinksControl } from './global-taxonomy-site-links-control';
-import { GlobalTaxonomyResetControl } from './global-taxonomy-reset-control';
+import { GlobalTaxonomyResetControl, authorizedGlobalTaxonomyResetEndpoint } from './global-taxonomy-reset-control';
+import { defaultGlobalTaxonomyApplyFilters, globalTaxonomyApplyQuery, GlobalTaxonomyApplyControl } from './global-taxonomy-apply-control';
 import { SiteReliabilityFiltersControl, siteReliabilityDefaultFilters, type SiteReliabilityFilterState } from './site-reliability-filters-control';
 import { SitesSiteUrlLinkControl } from './sites-site-url-link-control';
 import { SitesInterpolatedLinksControl } from './sites-interpolated-links-control';
@@ -357,6 +358,8 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const [siteReliabilityDraft, setSiteReliabilityDraft] = useState<SiteReliabilityFilterState>(() => siteReliabilityDefaultFilters());
     const [siteReliabilityFilters, setSiteReliabilityFilters] = useState<SiteReliabilityFilterState>(() => siteReliabilityDefaultFilters());
     const [taxonomyType, setTaxonomyType] = useState<'all' | 'category' | 'post_tag'>('category');
+    const [taxonomyDraft, setTaxonomyDraft] = useState(defaultGlobalTaxonomyApplyFilters);
+    const [taxonomyApplied, setTaxonomyApplied] = useState(defaultGlobalTaxonomyApplyFilters);
 
     useEffect(() => {
         if (route.key !== 'taxonomy') return;
@@ -384,6 +387,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     };
 
     const taxonomyFilter: Record<string, string> = route.key === 'taxonomy' && taxonomyType !== 'all' ? { taxonomy: taxonomyType } : {};
+    const taxonomyAppliedQuery = route.key === 'taxonomy' ? { ...taxonomyFilter, ...globalTaxonomyApplyQuery(taxonomyApplied) } : taxonomyFilter;
     const emailHistoryQueryFilters: Record<string, string> = route.key === 'email-history' ? {
         ...(emailHistoryFilters.siteId ? { site_id: emailHistoryFilters.siteId } : {}),
         ...(emailHistoryFilters.status ? { status: emailHistoryFilters.status } : {}),
@@ -412,8 +416,8 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, mediaQueryFilters)),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     } : {
-        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType],
-        queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, taxonomyFilter)),
+        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType, taxonomyApplied.minimumUsage, taxonomyApplied.pageSize],
+        queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, taxonomyAppliedQuery)),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     });
 
@@ -433,10 +437,32 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         setSearchInput('');
         setSearch('');
         setTaxonomyType('all');
+        setTaxonomyDraft(defaultGlobalTaxonomyApplyFilters());
+        setTaxonomyApplied(defaultGlobalTaxonomyApplyFilters());
         setPage(1);
         await queryClient.fetchQuery({
             queryKey: ['workspace', context.tenant.slug, route.key, trustedEndpoint, 1, '', 'all'],
             queryFn: () => apiRequest<unknown>(endpointWithQuery(trustedEndpoint, 1, '')),
+            staleTime: 0,
+        });
+    };
+
+    const applyGlobalTaxonomyFilters = async (trustedEndpoint: string): Promise<void> => {
+        if (route.key !== 'taxonomy' || state.state !== 'enabled' || !endpoint
+            || endpoint !== trustedEndpoint || query.isFetching) {
+            throw new Error('The active tenant/site taxonomy read is not authorized.');
+        }
+        // Source ApplyAsync: the selected filters are applied to page one and
+        // the authoritative API is reread even if the selected values are unchanged.
+        const nextSearch = searchInput.trim();
+        const nextFilters = { ...taxonomyDraft };
+        setPage(1);
+        setSearch(nextSearch);
+        setTaxonomyApplied(nextFilters);
+        await queryClient.fetchQuery({
+            queryKey: ['workspace', context.tenant.slug, route.key, trustedEndpoint, 1, nextSearch, taxonomyType, nextFilters.minimumUsage, nextFilters.pageSize],
+            queryFn: () => apiRequest<unknown>(endpointWithQuery(trustedEndpoint, 1, nextSearch,
+                { ...taxonomyFilter, ...globalTaxonomyApplyQuery(nextFilters) })),
             staleTime: 0,
         });
     };
@@ -752,6 +778,13 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         void searchApplicationUsers().catch(() => undefined);
                         return;
                     }
+                    if (route.key === 'taxonomy') {
+                        const trusted = authorizedGlobalTaxonomyResetEndpoint(context, endpoint);
+                        if (trusted) void applyGlobalTaxonomyFilters(trusted).catch((error) => {
+                            notify(error instanceof Error ? error.message : 'Taxonomy filters could not be applied.', 'error');
+                        });
+                        return;
+                    }
                     if (route.key === 'media') {
                         void applyGlobalMediaFilters().catch((error) => {
                             notify(error instanceof Error ? error.message : 'Media filters could not be applied.', 'error');
@@ -796,7 +829,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             locale={locale}
                             authorized={applicationUsersSearchAuthorized}
                         />
-                    ) : (
+                    ) : route.key === 'taxonomy' ? null : (
                         <button
                             type="submit"
                             className="btn"
@@ -816,6 +849,16 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             locale={locale}
                             authorized={applicationUsersClearAuthorized}
                             onClearRequested={clearApplicationUsersSearch}
+                        />
+                    ) : null}
+                    {route.key === 'taxonomy' ? (
+                        <GlobalTaxonomyApplyControl
+                            context={context}
+                            endpoint={endpoint}
+                            value={taxonomyDraft}
+                            busy={query.isFetching}
+                            onChange={setTaxonomyDraft}
+                            onApplyRequested={applyGlobalTaxonomyFilters}
                         />
                     ) : null}
                     {route.key === 'taxonomy' ? (

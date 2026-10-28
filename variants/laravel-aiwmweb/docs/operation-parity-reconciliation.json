@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 900,
-    "pending": 31,
+    "adapted": 901,
+    "pending": 30,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 900,
-    "overall_parity_percent": 96.67
+    "terminal": 901,
+    "overall_parity_percent": 96.78
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 416,
-    "pending": 30,
+    "terminal": 417,
+    "pending": 29,
     "blocked": 0,
-    "percent": 93.27
+    "percent": 93.5
   },
   "domains": {
     "ai": {
@@ -203,12 +203,12 @@
     "sync": {
       "total": 213,
       "ported": 0,
-      "adapted": 191,
-      "pending": 22,
+      "adapted": 192,
+      "pending": 21,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 191,
-      "percent": 89.67
+      "terminal": 192,
+      "percent": 90.14
     },
     "taxonomy": {
       "total": 13,
@@ -32288,21 +32288,32 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "authoritative re-read / reconciled visible state",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/global-taxonomy-apply-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "high",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-taxonomy-apply-control.test.tsx",
+      "evidence": "AIMW-SYNC-B955324F04 GlobalTaxonomyExplorer ApplyAsync focused closure #958@c6ed88f02e3fc1c6cbd33137b16eada445e094bf: variants/laravel-aiwmweb/backend/resources/js/global-taxonomy-apply-control.tsx; focused-closure:AIMW-SYNC-B955324F04; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/global-taxonomy-apply-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-taxonomy-apply-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-SYNC-B955324F04 GlobalTaxonomyExplorer ApplyAsync focused closure #958",
+        "source_sha": "c6ed88f02e3fc1c6cbd33137b16eada445e094bf",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/global-taxonomy-apply-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/global-taxonomy-apply-terminality.json",
+        "signals": [
+          "operation:AIMW-SYNC-B955324F04",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/global-taxonomy-apply-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/global-taxonomy-apply-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-taxonomy-apply-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation",
+          "test:authorization"
+        ]
       }
     },
     {
@@ -38190,12 +38201,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 416,
-      "pending": 30,
+      "adapted": 417,
+      "pending": 29,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 416,
-      "percent": 93.27
+      "terminal": 417,
+      "percent": 93.5
     }
   },
   "pending_operation_ids_by_domain": {
@@ -38242,7 +38253,6 @@
       "AIMW-SYNC-9B87CACA17",
       "AIMW-SYNC-AE16CF49C6",
       "AIMW-SYNC-B78216241F",
-      "AIMW-SYNC-B955324F04",
       "AIMW-SYNC-D5CE5A213B",
       "AIMW-SYNC-DDC8657C2F",
       "AIMW-SYNC-E0791EA9E9",
@@ -39874,6 +39884,7 @@
       "AIMW-SYNC-AE544B4684",
       "AIMW-SYNC-B11D963A9E",
       "AIMW-SYNC-B83AB5A666",
+      "AIMW-SYNC-B955324F04",
       "AIMW-SYNC-BDBA0B4F01",
       "AIMW-SYNC-C18ED1F753",
       "AIMW-SYNC-C1B6FA6677",
@@ -41189,10 +41200,17 @@
         "operation_ids": [
           "AIMW-SYNC-CC2B584BC4"
         ]
+      },
+      {
+        "label": "AIMW-SYNC-B955324F04 GlobalTaxonomyExplorer ApplyAsync focused closure #958",
+        "sha": "c6ed88f02e3fc1c6cbd33137b16eada445e094bf",
+        "operation_ids": [
+          "AIMW-SYNC-B955324F04"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 186,
-    "focused_closure_contract_count": 416,
+    "focused_closure_operation_scoped_count": 187,
+    "focused_closure_contract_count": 417,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
