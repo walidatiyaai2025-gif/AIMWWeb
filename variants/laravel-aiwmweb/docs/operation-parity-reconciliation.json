@@ -31080,32 +31080,21 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "authoritative re-read / reconciled visible state",
-      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/global-media-sync-link-control.tsx",
+      "laravel_destination": "",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "high",
-      "migration_state": "ADAPTED",
-      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-media-sync-link-control.test.tsx",
-      "evidence": "AIMW-SYNC-2A256826D2 GlobalMediaExplorer Open synchronization focused closure #932@840c30bdea70ab7853e204e03fb4f2c2abcda44b: variants/laravel-aiwmweb/backend/resources/js/global-media-sync-link-control.tsx; focused-closure:AIMW-SYNC-2A256826D2; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/global-media-sync-link-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-media-open-sync-terminality.json",
+      "migration_state": "PENDING",
+      "acceptance_test": "",
+      "evidence": "",
       "reconciliation": {
-        "decision": "ADAPTED",
-        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "AIMW-SYNC-2A256826D2 GlobalMediaExplorer Open synchronization focused closure #932",
-        "source_sha": "840c30bdea70ab7853e204e03fb4f2c2abcda44b",
-        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/global-media-sync-link-control.tsx",
-        "evidence_mode": "focused_closure_contract",
-        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/global-media-open-sync-terminality.json",
-        "signals": [
-          "operation:AIMW-SYNC-2A256826D2",
-          "production-marker:variants/laravel-aiwmweb/backend/resources/js/global-media-sync-link-control.tsx",
-          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/global-media-sync-link-control.test.tsx",
-          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-media-open-sync-terminality.json",
-          "scope:operation-specific",
-          "test:tenant-isolation",
-          "test:authorization"
-        ]
+        "decision": "PENDING",
+        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
+        "source_label": null,
+        "source_sha": null,
+        "destination_path": null
       }
     },
     {
@@ -32536,21 +32525,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/global-users-refresh-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-users-refresh-control.test.tsx",
+      "evidence": "AIMW-SYNC-7C77CF7F7A GlobalUsersWorkspace RefreshAsync focused closure #959@370a894852e38f9ab62b4937d5154c4509c1b62e: variants/laravel-aiwmweb/backend/resources/js/global-users-refresh-control.tsx; focused-closure:AIMW-SYNC-7C77CF7F7A; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/global-users-refresh-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-users-refresh-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-SYNC-7C77CF7F7A GlobalUsersWorkspace RefreshAsync focused closure #959",
+        "source_sha": "370a894852e38f9ab62b4937d5154c4509c1b62e",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/global-users-refresh-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/global-users-refresh-terminality.json",
+        "signals": [
+          "operation:AIMW-SYNC-7C77CF7F7A",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/global-users-refresh-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/global-users-refresh-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-users-refresh-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -38313,12 +38312,12 @@
     "sites": [],
     "sync": [
       "AIMW-SYNC-21483C88FA",
+      "AIMW-SYNC-2A256826D2",
       "AIMW-SYNC-3389FB622C",
       "AIMW-SYNC-425B82511E",
       "AIMW-SYNC-4B986B2651",
       "AIMW-SYNC-4FDCFDA33F",
       "AIMW-SYNC-7A726BAF5F",
-      "AIMW-SYNC-7C77CF7F7A",
       "AIMW-SYNC-8C35E9A7A0",
       "AIMW-SYNC-AE16CF49C6",
       "AIMW-SYNC-B78216241F",
@@ -39928,7 +39927,6 @@
       "AIMW-SYNC-1B63FBC758",
       "AIMW-SYNC-246AD1A2AE",
       "AIMW-SYNC-26F2BF8EE8",
-      "AIMW-SYNC-2A256826D2",
       "AIMW-SYNC-2A8778C6EA",
       "AIMW-SYNC-2C6ADCE34C",
       "AIMW-SYNC-2E94028E4E",
@@ -39954,6 +39952,7 @@
       "AIMW-SYNC-724345B409",
       "AIMW-SYNC-7877CAF7E8",
       "AIMW-SYNC-7C3B0E834E",
+      "AIMW-SYNC-7C77CF7F7A",
       "AIMW-SYNC-80B81C07B8",
       "AIMW-SYNC-8409FB077A",
       "AIMW-SYNC-8719C812DC",
@@ -41331,10 +41330,10 @@
         ]
       },
       {
-        "label": "AIMW-SYNC-2A256826D2 GlobalMediaExplorer Open synchronization focused closure #932",
-        "sha": "840c30bdea70ab7853e204e03fb4f2c2abcda44b",
+        "label": "AIMW-SYNC-7C77CF7F7A GlobalUsersWorkspace RefreshAsync focused closure #959",
+        "sha": "370a894852e38f9ab62b4937d5154c4509c1b62e",
         "operation_ids": [
-          "AIMW-SYNC-2A256826D2"
+          "AIMW-SYNC-7C77CF7F7A"
         ]
       }
     ],

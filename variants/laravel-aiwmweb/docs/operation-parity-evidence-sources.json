@@ -3090,6 +3090,14 @@
       ]
     },
     {
+      "label": "AIMW-SYNC-7C77CF7F7A GlobalUsersWorkspace RefreshAsync focused closure #959",
+      "sha": "370a894852e38f9ab62b4937d5154c4509c1b62e",
+      "observed_pr_head": "370a894852e38f9ab62b4937d5154c4509c1b62e",
+      "operation_ids": [
+        "AIMW-SYNC-7C77CF7F7A"
+      ]
+    },
+    {
       "label": "AIMW-SYNC-2A256826D2 GlobalMediaExplorer Open synchronization focused closure #932",
       "sha": "840c30bdea70ab7853e204e03fb4f2c2abcda44b",
       "observed_pr_head": "840c30bdea70ab7853e204e03fb4f2c2abcda44b",

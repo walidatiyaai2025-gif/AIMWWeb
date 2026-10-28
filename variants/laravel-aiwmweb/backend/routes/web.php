@@ -26,6 +26,7 @@ use App\Http\Controllers\SiteDiagnosticsController;
 use App\Http\Controllers\SiteManagementController;
 use App\Http\Controllers\SiteOnboardingController;
 use App\Http\Controllers\SitesBulkDisableSelectedController;
+use App\Http\Controllers\SitesBulkOperationalStateController;
 use App\Models\Connector;
 use App\Models\Site;
 use App\Models\TenantMembership;
@@ -43,6 +44,9 @@ Route::post('/api/logout', [DemoController::class, 'logout'])->middleware('auth'
 
 Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->group(function () {
     Route::get('/sites', [SiteManagementController::class, 'index']);
+    Route::post('/sites/bulk-enable', [SitesBulkOperationalStateController::class, 'enable'])
+        ->defaults('canonical_operation_id', SitesBulkOperationalStateController::ENABLE_OPERATION_ID)
+        ->name('canonical.api.sites.enable-selected');
     Route::post('/sites/bulk-disable', SitesBulkDisableSelectedController::class)
         ->defaults('canonical_operation_id', SitesBulkDisableSelectedController::OPERATION_ID)
         ->name('canonical.api.sites.disable-selected');
