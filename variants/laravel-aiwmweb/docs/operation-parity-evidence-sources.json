@@ -1565,6 +1565,14 @@
   "known_composition_blockers": [],
   "focused_closure_operation_sources": [
     {
+      "label": "AIMW-CONT-BCAD1E3A49 Operations Hub Site Operations navigation focused closure",
+      "sha": "557c6edf4339a381e7c4a99b51e605be0031be99",
+      "observed_pr_head": "557c6edf4339a381e7c4a99b51e605be0031be99",
+      "operation_ids": [
+        "AIMW-CONT-BCAD1E3A49"
+      ]
+    },
+    {
       "label": "AIMW-SYNC-EE7D7534DF ContentExplorer BulkPublishAsync focused closure #930",
       "sha": "030d93df2e9afe35cd95c0c77764e9c009af5ad3",
       "observed_pr_head": "030d93df2e9afe35cd95c0c77764e9c009af5ad3",
@@ -2836,11 +2844,11 @@
       ]
     },
     {
-      "label": "AIMW-CONT-BCAD1E3A49 Operations Hub Site Operations navigation focused closure",
-      "sha": "557c6edf4339a381e7c4a99b51e605be0031be99",
-      "observed_pr_head": "557c6edf4339a381e7c4a99b51e605be0031be99",
+      "label": "AIMW-SYNC-F7BCCD650C ContentExplorer BulkDraftAsync focused closure #931",
+      "sha": "3a442c1ed766caf303c38d16b0ca089e7222716e",
+      "observed_pr_head": "3a442c1ed766caf303c38d16b0ca089e7222716e",
       "operation_ids": [
-        "AIMW-CONT-BCAD1E3A49"
+        "AIMW-SYNC-F7BCCD650C"
       ]
     }
   ],
