@@ -2804,11 +2804,27 @@
       ]
     },
     {
-      "label": "AIMW-SYNC-2C6ADCE34C GlobalTaxonomy Synchronization navigation focused closure #956",
-      "sha": "52d88a0ff412e13213263506db769bff497dad31",
+      "label": "AIMW-SYNC-2C6ADCE34C GlobalTaxonomy Synchronization navigation merged composition evidence focused closure #956",
+      "sha": "6a2cfd140d68948e4897e3b90e70d1b78e45ce49",
       "observed_pr_head": "52d88a0ff412e13213263506db769bff497dad31",
       "operation_ids": [
         "AIMW-SYNC-2C6ADCE34C"
+      ]
+    },
+    {
+      "label": "AIMW-SYNC-0239B0E6A3 GlobalSynchronizationEditorLink merged composition evidence focused closure #951",
+      "sha": "6a2cfd140d68948e4897e3b90e70d1b78e45ce49",
+      "observed_pr_head": "182bae8a4593f14ee5e4ed763df5528eb94f9081",
+      "operation_ids": [
+        "AIMW-SYNC-0239B0E6A3"
+      ]
+    },
+    {
+      "label": "AIMW-SYNC-078D172C71 GlobalPosts PrivateSelectedAsync focused closure #943",
+      "sha": "03e94aa5284ad09667a0ef601807430f1e01c26a",
+      "observed_pr_head": "03e94aa5284ad09667a0ef601807430f1e01c26a",
+      "operation_ids": [
+        "AIMW-SYNC-078D172C71"
       ]
     },
     {

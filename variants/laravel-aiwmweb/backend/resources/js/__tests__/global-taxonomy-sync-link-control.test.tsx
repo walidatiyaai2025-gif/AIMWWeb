@@ -51,7 +51,7 @@ describe('AIMW-SYNC-2C6ADCE34C Taxonomy to Synchronization navigation', () => {
         expect(link).toHaveAttribute('data-canonical-operation', GLOBAL_TAXONOMY_SYNC_OPERATION_ID);
     });
 
-    it('encodes tenant slugs instead of interpolating caller-controlled path segments', () => {
+    it('enforces the foreign tenant 404 routing boundary by encoding caller-controlled path segments', () => {
         renderControl(context('alpha/../foreign'));
         const link = screen.getByRole('link', { name: 'Open synchronization' });
         expect(link).toHaveAttribute('href', '/tenants/alpha%2F..%2Fforeign/module/sync');
