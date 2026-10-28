@@ -10,6 +10,11 @@ import {
     contentExplorerBulkTrashEndpoint,
     type BulkTrashTarget,
 } from './content-explorer-bulk-trash-control';
+import {
+    CONTENT_EXPLORER_BULK_DRAFT_OPERATION_ID,
+    contentExplorerBulkDraftEndpoint,
+    buildContentExplorerBulkDraftPayload,
+} from './content-explorer-bulk-draft-control';
 
 type ActiveSite = {
     id: number;
@@ -70,6 +75,7 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
     const canView = hasPermission(context, 'content.view');
     const canEdit = hasPermission(context, 'content.edit');
     const endpoint = contentExplorerBulkTrashEndpoint(context.tenant.slug, siteId);
+    const draftEndpoint = contentExplorerBulkDraftEndpoint(context.tenant.slug, siteId);
     const postsEndpoint = context.api.posts;
     const pagesEndpoint = context.api.pages;
     const enabled = Boolean(endpoint && postsEndpoint && pagesEndpoint && canView && canEdit);
@@ -95,6 +101,41 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
             .map((row) => ({ content_type: row.type, wordpress_id: row.remote_id } satisfies BulkTrashTarget)),
         [rows, selected],
     );
+
+    const selectedLocalIds = useMemo(
+        () => rows
+            .filter((row) => selected.has(`${row.type}:${row.remote_id}`))
+            .map((row) => row.id)
+            .filter((id) => Number.isSafeInteger(id) && id > 0),
+        [rows, selected],
+    );
+
+    const draftMutation = useMutation({
+        mutationFn: async (ids: number[]) => {
+            if (!draftEndpoint) throw new Error('The selected site draft endpoint is unavailable.');
+            const result = await apiRequest<{ state: string; count: number }>(draftEndpoint, {
+                method: 'POST',
+                body: JSON.stringify(buildContentExplorerBulkDraftPayload(ids)),
+            });
+            if (result.state !== 'queued' || result.count !== ids.length) {
+                throw new Error('The server did not confirm the draft job was queued.');
+            }
+            return result;
+        },
+        onSuccess: (result) => {
+            setSelected(new Set());
+            notify(
+                locale === 'ar'
+                    ? `تم وضع ${result.count} عنصر في قائمة الانتظار لتحويله لمسودة؛ تحقق من حالة ووردبريس بعد تنفيذ المهمة.`
+                    : `Queued ${result.count} item(s) to move to draft; verify actual WordPress status after job completion.`,
+                'success',
+            );
+        },
+        onError: (error) => notify(
+            error instanceof Error ? error.message : 'Could not queue selected content for draft.',
+            'error',
+        ),
+    });
 
     const mutation = useMutation({
         mutationFn: async (targets: BulkTrashTarget[]) => {
@@ -127,10 +168,12 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
         ),
     });
 
+    const busy = mutation.isPending || draftMutation.isPending;
+
     if (!enabled || !activeSite) return null;
 
     const toggle = (row: ContentRow) => {
-        if (mutation.isPending) return;
+        if (busy) return;
         const key = `${row.type}:${row.remote_id}`;
         setSelected((current) => {
             const next = new Set(current);
@@ -165,10 +208,21 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
                     <div className="toolbar-actions">
                         <button
                             type="button"
+                            className="btn"
+                            data-canonical-operation={CONTENT_EXPLORER_BULK_DRAFT_OPERATION_ID}
+                            onClick={() => draftMutation.mutate(selectedLocalIds)}
+                            disabled={!draftEndpoint || busy || selectedLocalIds.length === 0 || selectedLocalIds.length !== selectedTargets.length}
+                        >
+                            {draftMutation.isPending
+                                ? (locale === 'ar' ? 'جارٍ إضافة مهمة المسودة…' : 'Queueing draft…')
+                                : (locale === 'ar' ? 'تحويل المحدد لمسودة' : 'Move selected to draft')}
+                        </button>
+                        <button
+                            type="button"
                             className="btn danger"
                             data-canonical-operation={CONTENT_EXPLORER_BULK_TRASH_OPERATION_ID}
                             onClick={() => mutation.mutate(selectedTargets)}
-                            disabled={mutation.isPending || selectedTargets.length === 0}
+                            disabled={busy || selectedTargets.length === 0}
                         >
                             {mutation.isPending
                                 ? (locale === 'ar' ? 'جارٍ النقل…' : 'Moving…')
@@ -178,7 +232,7 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
                             type="button"
                             className="btn"
                             onClick={() => setSelected(new Set())}
-                            disabled={mutation.isPending || selectedTargets.length === 0}
+                            disabled={busy || selectedTargets.length === 0}
                         >
                             {locale === 'ar' ? 'مسح التحديد' : 'Clear selection'}
                         </button>
@@ -203,7 +257,7 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
                                                     type="checkbox"
                                                     checked={selected.has(key)}
                                                     onChange={() => toggle(row)}
-                                                    disabled={mutation.isPending}
+                                                    disabled={busy}
                                                     aria-label={`${locale === 'ar' ? 'تحديد' : 'Select'} ${row.title ?? key}`}
                                                 />
                                             </td>
