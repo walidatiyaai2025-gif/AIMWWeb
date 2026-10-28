@@ -1,0 +1,71 @@
+name: Laravel AIWMWeb Task Parity Materialize 970 (temporary)
+on:
+  push:
+    branches:
+      - worker/970-AIMW-SYNC-AE16CF49C6
+    paths:
+      - '.github/workflows/laravel-aiwmweb-task-parity-materialize-970.yml'
+      - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
+permissions:
+  contents: write
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - name: Fetch evidence commits
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Laravel Pint
+        working-directory: variants/laravel-aiwmweb/backend
+        run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Format only task 970 test
+        working-directory: variants/laravel-aiwmweb/backend
+        run: vendor/bin/pint tests/Feature/SiteOnboardingRetrySynchronizationTerminalityTest.php
+      - name: Run official seven-stage parity materializer
+        run: |
+          set -euo pipefail
+          OUT=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          MD=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          SUM=/tmp/operation-parity-summary.json
+          cp "$OUT" /tmp/970-before.json
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_platform_admin_route_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python - <<'PY'
+          import json
+          old=json.load(open('/tmp/970-before.json'))
+          new=json.load(open('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'))
+          before={r['operation_id']:r['migration_state'] for r in old['operations']}
+          after={r['operation_id']:r['migration_state'] for r in new['operations']}
+          target='AIMW-SYNC-AE16CF49C6'
+          assert before[target]=='PENDING', (target,before[target])
+          assert after[target]=='ADAPTED', (target,after[target])
+          assert new['totals']['total']==931
+          changed={k:(before[k],after[k]) for k in before if before[k]!=after[k]}
+          print('Task #970 target:',target,changed[target])
+          print('Other pending source reconciliation deltas:',{k:v for k,v in changed.items() if k!=target})
+          PY
+      - name: Commit only task format and generated reconciliation
+        run: |
+          set -euo pipefail
+          git add variants/laravel-aiwmweb/backend/tests/Feature/SiteOnboardingRetrySynchronizationTerminalityTest.php variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "fix(laravel): format and materialize focused #970 parity"
+          git push origin "HEAD:${{ github.ref_name }}"
