@@ -105,10 +105,10 @@ import { SiteDataSnapshotSyncControl } from './site-data-snapshot-sync-control';
 import { SiteConnectionCenterSyncControl } from './site-connection-center-sync-control';
 import { SitesBulkDeleteControl } from './sites-bulk-delete-control';
 import { SitesDisableSelectedControl } from './sites-disable-selected-control';
+import { SitesBulkOperationalStateControl } from './sites-bulk-operational-state-control';
 import { SitesDeleteControl } from './sites-delete-control';
 import { SitesSaveControl } from './sites-save-control';
 import { SitesRetestSelectedControl } from './sites-retest-selected-control';
-import { SitesBulkOperationalStateControl } from './sites-bulk-operational-state-control';
 import { SystemHealthWorkspace } from './system-health-workspace';
 
 const queryClient = new QueryClient({
