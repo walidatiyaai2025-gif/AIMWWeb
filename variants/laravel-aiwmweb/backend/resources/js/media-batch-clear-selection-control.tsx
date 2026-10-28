@@ -206,7 +206,9 @@ export function MediaBatchClearSelectionControl({ context }: { context: Frontend
                     <p>{locale === 'ar' ? `صالح: ${validCount} · مرفوض: ${rejectedCount}` : `Valid: ${validCount} · rejected: ${rejectedCount}`}</p>
                     <ul>{inspected.map(({ file, validation }, index) => (
                         <li key={`${index}:${file.name}:${file.size}`}>
-                            {file.name} — {validation.valid ? (locale === 'ar' ? 'صالح' : 'Valid') : `Rejected: ${validation.message}`}
+                            {validation.valid
+                                ? <><span>{file.name}</span> — {locale === 'ar' ? 'صالح' : 'Valid'}</>
+                                : `${file.name}: rejected — ${validation.message}`}
                         </li>
                     ))}</ul>
                     {files.length === 1 ? (
