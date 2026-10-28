@@ -40,14 +40,22 @@ jobs:
           python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
           python - <<'PY'
           import json
-          old=json.load(open('/tmp/parity-before.json'))
+          import subprocess
           new=json.load(open('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'))
-          before={r['operation_id']:r['migration_state'] for r in old['operations']}
+          # The task branch can lag merged parity snapshots. Prove the only NEW
+          # terminal operation relative to current integration, not stale branch state.
+          result=subprocess.run([
+              'git','show',
+              'origin/worker/laravel-aiwmweb-closure-composition:variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'
+          ],check=True,capture_output=True,text=True)
+          integration=json.loads(result.stdout)
+          base={r['operation_id']:r['migration_state'] for r in integration['operations']}
           after={r['operation_id']:r['migration_state'] for r in new['operations']}
-          changed={key:(before[key],after[key]) for key in before if before[key]!=after[key]}
-          assert changed=={'AIMW-SYNC-EEFDDFFF87':('PENDING','ADAPTED')}, changed
+          assert set(base)==set(after) and len(after)==931, 'Parity denominator or identity drift'
+          delta={key:(base[key],after[key]) for key in base if base[key]!=after[key]}
+          assert delta=={'AIMW-SYNC-EEFDDFFF87':('PENDING','ADAPTED')}, delta
           assert new['totals']['total']==931
-          print('Canonical #950 exact delta:',changed)
+          print('Canonical #950 new integration delta:',delta)
           PY
       - name: Commit generated reconciliation
         run: |
