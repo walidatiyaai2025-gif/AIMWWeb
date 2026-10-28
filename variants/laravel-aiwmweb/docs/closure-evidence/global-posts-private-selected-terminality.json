@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #943 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-078D172C71",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-SYNC-078D172C71",
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "/module/posts",
+    "source": "src/AIWordPressManager.Web/Components/Pages/GlobalPostsExplorer.razor",
+    "source_intent": "Queue selected post status updates to private while preserving the original site/content boundaries and asynchronous execution semantics.",
+    "mutation": true,
+    "tenant_owned": true
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/global-posts-private-selected-control.ts",
+    "frontend_widget": "variants/laravel-aiwmweb/backend/resources/js/global-posts-confirm-trash-widget.tsx",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/GlobalPostsPrivateController.php",
+    "queued_job": "App\\Jobs\\BulkContentMutationJob",
+    "route": "POST /api/v1/tenants/{tenant}/global-posts/private",
+    "canonical_id": "AIMW-SYNC-078D172C71",
+    "execution_state": "202 queued, not a completed WordPress mutation"
+  },
+  "security": {
+    "permission": "content.edit",
+    "cross_site_selection": "preverified tenant-scoped Site and ContentItem records",
+    "caller_owned_tenant_rejected": true,
+    "duplicate_target_rejected": true,
+    "max_targets": 100,
+    "foreign_tenant": "tenant.context middleware and model tenant scope"
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-posts-private-selected-control.test.ts",
+    "required_ci": [
+      "Laravel AIWMWeb Acceptance",
+      "Laravel AIWMWeb Cross-Domain Security",
+      "Laravel AIWMWeb Convergence Preflight",
+      "Laravel AIWMWeb Parity Reconciliation",
+      "Laravel AIWMWeb Repo Hygiene"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-078D172C71"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  }
+}
