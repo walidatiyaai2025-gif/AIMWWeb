@@ -3058,6 +3058,14 @@
       ]
     },
     {
+      "label": "AIMW-SYNC-E0791EA9E9 GlobalUsersWorkspace PreviousAsync focused closure #960",
+      "sha": "ee65778c11019a99b638f09e789f63090b6d827e",
+      "observed_pr_head": "ee65778c11019a99b638f09e789f63090b6d827e",
+      "operation_ids": [
+        "AIMW-SYNC-E0791EA9E9"
+      ]
+    },
+    {
       "label": "AIMW-SYNC-DDC8657C2F ContentExplorer BulkPendingAsync focused closure #929",
       "sha": "878446af66152a5d731d57827f400c74a20dc85d",
       "observed_pr_head": "878446af66152a5d731d57827f400c74a20dc85d",

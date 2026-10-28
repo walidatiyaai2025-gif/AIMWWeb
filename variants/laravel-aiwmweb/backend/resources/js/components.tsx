@@ -296,17 +296,19 @@ export function Pagination({
     lastPage,
     onPage,
     previousOperationId,
+    previousOperationAliasId,
 }: {
     page: number;
     lastPage: number;
     onPage: (page: number) => void;
     previousOperationId?: string;
+    previousOperationAliasId?: string;
 }) {
     const { text, locale } = useLocale();
     if (lastPage <= 1) return null;
     return (
         <nav className="pagination" aria-label={locale === 'ar' ? 'ترقيم الصفحات' : 'Pagination'}>
-            <button type="button" className="btn" data-canonical-operation={previousOperationId} onClick={() => onPage(previousAppDataGridPage(page))} disabled={page <= 1}>{text(commonText.previous)}</button>
+            <button type="button" className="btn" data-canonical-operation={previousOperationId} data-canonical-operation-alias={previousOperationAliasId} onClick={() => onPage(previousAppDataGridPage(page))} disabled={page <= 1}>{text(commonText.previous)}</button>
             <span aria-live="polite">{locale === 'ar' ? `صفحة ${page} من ${lastPage}` : `Page ${page} of ${lastPage}`}</span>
             <button type="button" className="btn" onClick={() => onPage(page + 1)} disabled={page >= lastPage}>{text(commonText.next)}</button>
         </nav>
