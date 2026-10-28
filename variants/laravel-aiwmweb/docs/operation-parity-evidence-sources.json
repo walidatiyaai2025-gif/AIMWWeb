@@ -3067,8 +3067,8 @@
     },
     {
       "label": "Issue #964 MediaBatchUploadPanel UploadClickedAsync guarded media batch",
-      "sha": "c6184bdf4134625976116bf8b38376a180fc8fe3",
-      "observed_pr_head": "c6184bdf4134625976116bf8b38376a180fc8fe3",
+      "sha": "bc22c90f307d286cc70a9ffc1fd8509d955feb09",
+      "observed_pr_head": "bc22c90f307d286cc70a9ffc1fd8509d955feb09",
       "operation_ids": [
         "AIMW-SYNC-6766C503DA"
       ]
