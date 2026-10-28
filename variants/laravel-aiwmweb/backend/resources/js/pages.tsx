@@ -45,6 +45,7 @@ import {
 import { ContentExplorerBackToSitesControl } from './content-explorer-back-to-sites-control';
 import { ContentExplorerClearSelectionControl } from './content-explorer-clear-selection-control';
 import { CurrentUserLogsControl } from './current-user-logs-control';
+import { DashboardErrorRetryControl } from './dashboard-error-retry-control';
 import { DashboardSitesNavigationControl } from './dashboard-sites-navigation-control';
 import { DashboardSystemHealthNavigationControl } from './dashboard-system-health-navigation-control';
 import { DashboardSitesQuickAccessControl } from './dashboard-sites-quick-access-control';
@@ -166,7 +167,19 @@ function DashboardContent({ context, route }: { context: FrontendContext; route:
 
     if (state.state !== 'enabled') return <Unavailable route={route} context={context} state={state} />;
     if (query.isLoading) return <LoadingState />;
-    if (query.error) return <QueryError error={query.error} retry={() => query.refetch()} />;
+    if (query.error) return (
+        <QueryError
+            error={query.error}
+            retry={() => { void query.refetch(); }}
+            retryAction={
+                <DashboardErrorRetryControl
+                    context={context}
+                    endpoint={endpoint}
+                    onRetry={() => query.refetch()}
+                />
+            }
+        />
+    );
 
     const payload = query.data ?? {};
     const metricsCandidate = payload.metrics;
@@ -261,15 +274,16 @@ function DashboardContent({ context, route }: { context: FrontendContext; route:
     );
 }
 
-function QueryError({ error, retry }: { error: unknown; retry: () => void }) {
+function QueryError({ error, retry, retryAction }: { error: unknown; retry: () => void; retryAction?: React.ReactNode }) {
     const { locale, text } = useLocale();
     const apiError = error instanceof ApiError ? error : null;
     return (
         <StatePanel
             tone="danger"
             title={locale === 'ar' ? 'فشل تحميل البيانات' : 'Data could not be loaded'}
-            onRetry={retry}
+            onRetry={retryAction ? undefined : retry}
             retryText={text(commonText.retry)}
+            action={retryAction}
         >
             <p>{apiError?.message ?? text(commonText.apiError)}</p>
             {apiError ? <code>HTTP {apiError.status} · {apiError.code}</code> : null}
