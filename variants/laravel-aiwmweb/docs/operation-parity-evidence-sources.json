@@ -2826,14 +2826,6 @@
       "operation_ids": [
         "AIMW-SYNC-078D172C71"
       ]
-    },
-    {
-      "label": "AIMW-SYNC-DDC8657C2F ContentExplorer BulkPendingAsync focused closure",
-      "sha": "6a248980b208b8e8f3d4021f50bb70e4e48cb6c1",
-      "observed_pr_head": "6a248980b208b8e8f3d4021f50bb70e4e48cb6c1",
-      "operation_ids": [
-        "AIMW-SYNC-DDC8657C2F"
-      ]
     }
   ],
   "sources": [
