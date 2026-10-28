@@ -108,6 +108,9 @@ describe('AIMW-SYNC-4FDCFDA33F UsersManager SearchClickedAsync', () => {
         expect(isAuthorizedWordPressSiteUsersSearch(
             { ...context, permissions: ['tenant.view'] }, '?site=7',
         )).toBe(false);
+        expect(isAuthorizedWordPressSiteUsersSearch(
+            { ...context, permissions: ['sites.view'] }, '?site=7',
+        )).toBe(false);
         expect(normalizeWordPressSiteUserRole('administrator')).toBe('administrator');
         expect(normalizeWordPressSiteUserRole('arbitrary-privileged-role')).toBe('all');
     });
