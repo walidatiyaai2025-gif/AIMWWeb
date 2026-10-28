@@ -1,0 +1,62 @@
+name: Laravel AIWMWeb Task Parity Materialize 746 (integration)
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-AIMW-CONT-6B051BD8C0-reconciliation-recovery
+    paths:
+      - '.github/workflows/laravel-aiwmweb-task-parity-integration-746.yml'
+      - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
+permissions:
+  contents: write
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Rebuild exact route parity using official chain
+        run: |
+          set -euo pipefail
+          OUT=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          MD=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          SUM=/tmp/operation-parity-summary.json
+          cp "$OUT" /tmp/746-before.json
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_platform_admin_route_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python - <<'PY'
+          import json
+          x=json.load(open('/tmp/746-before.json'))
+          y=json.load(open('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'))
+          a={z['operation_id']:z['migration_state'] for z in x['operations']}
+          b={z['operation_id']:z['migration_state'] for z in y['operations']}
+          target='AIMW-CONT-6B051BD8C0'
+          changes={k:(a[k],b[k]) for k in a if a[k]!=b[k]}
+          assert changes.get(target)==('PENDING','ADAPTED'),changes
+          allowed={target,'AIMW-SYNC-5EE3F98A28','AIMW-SYNC-45A3B43BB9'}
+          assert set(changes).issubset(allowed),changes
+          assert all(v==('PENDING','ADAPTED') for v in changes.values()),changes
+          assert len(b)==931
+          print('Only recovered route evidence:',changes)
+          PY
+      - name: Commit generated parity only
+        run: |
+          set -euo pipefail
+          git add variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(laravel): materialize #746 application sessions route parity"
+          git push origin "HEAD:${{ github.ref_name }}"
