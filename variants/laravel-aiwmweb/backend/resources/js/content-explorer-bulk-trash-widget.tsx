@@ -10,6 +10,11 @@ import {
     buildContentExplorerBulkPublishPayload,
 } from './content-explorer-bulk-publish-control';
 import {
+    CONTENT_EXPLORER_BULK_DRAFT_OPERATION_ID,
+    contentExplorerBulkDraftEndpoint,
+    buildContentExplorerBulkDraftPayload,
+} from './content-explorer-bulk-draft-control';
+import {
     CONTENT_EXPLORER_BULK_TRASH_OPERATION_ID,
     buildBulkTrashPayload,
     contentExplorerBulkTrashEndpoint,
@@ -76,6 +81,7 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
     const canEdit = hasPermission(context, 'content.edit');
     const endpoint = contentExplorerBulkTrashEndpoint(context.tenant.slug, siteId);
     const publishEndpoint = contentExplorerBulkPublishEndpoint(context.tenant.slug, siteId);
+    const draftEndpoint = contentExplorerBulkDraftEndpoint(context.tenant.slug, siteId);
     const postsEndpoint = context.api.posts;
     const pagesEndpoint = context.api.pages;
     const enabled = Boolean(endpoint && postsEndpoint && pagesEndpoint && canView && canEdit);
@@ -109,6 +115,33 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
             .filter((id) => Number.isSafeInteger(id) && id > 0),
         [rows, selected],
     );
+
+    const draftMutation = useMutation({
+        mutationFn: async (ids: number[]) => {
+            if (!draftEndpoint) throw new Error('The selected site draft endpoint is unavailable.');
+            const result = await apiRequest<{ state: string; count: number }>(draftEndpoint, {
+                method: 'POST',
+                body: JSON.stringify(buildContentExplorerBulkDraftPayload(ids)),
+            });
+            if (result.state !== 'queued' || result.count !== ids.length) {
+                throw new Error('The server did not confirm the draft job was queued.');
+            }
+            return result;
+        },
+        onSuccess: (result) => {
+            setSelected(new Set());
+            notify(
+                locale === 'ar'
+                    ? `تم وضع ${result.count} عنصر في قائمة الانتظار لتحويله لمسودة؛ تحقق من حالة ووردبريس بعد تنفيذ المهمة.`
+                    : `Queued ${result.count} item(s) to move to draft; verify actual WordPress status after job completion.`,
+                'success',
+            );
+        },
+        onError: (error) => notify(
+            error instanceof Error ? error.message : 'Could not queue selected content for draft.',
+            'error',
+        ),
+    });
 
     const publishMutation = useMutation({
         mutationFn: async (ids: number[]) => {
@@ -168,7 +201,7 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
         ),
     });
 
-    const busy = mutation.isPending || publishMutation.isPending;
+    const busy = mutation.isPending || publishMutation.isPending || draftMutation.isPending;
 
     if (!enabled || !activeSite) return null;
 
@@ -216,6 +249,17 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
                             {publishMutation.isPending
                                 ? (locale === 'ar' ? 'جارٍ إضافة مهمة النشر…' : 'Queueing publication…')
                                 : (locale === 'ar' ? 'نشر المحدد' : 'Publish selected')}
+                        </button>
+                        <button
+                            type="button"
+                            className="btn"
+                            data-canonical-operation={CONTENT_EXPLORER_BULK_DRAFT_OPERATION_ID}
+                            onClick={() => draftMutation.mutate(selectedLocalIds)}
+                            disabled={!draftEndpoint || busy || selectedLocalIds.length === 0 || selectedLocalIds.length !== selectedTargets.length}
+                        >
+                            {draftMutation.isPending
+                                ? (locale === 'ar' ? 'جارٍ إضافة مهمة المسودة…' : 'Queueing draft…')
+                                : (locale === 'ar' ? 'تحويل المحدد لمسودة' : 'Move selected to draft')}
                         </button>
                         <button
                             type="button"
