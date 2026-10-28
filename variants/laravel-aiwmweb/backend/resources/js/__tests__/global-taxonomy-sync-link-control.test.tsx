@@ -63,7 +63,7 @@ describe('AIMW-SYNC-2C6ADCE34C Taxonomy to Synchronization navigation', () => {
         ['taxonomy permission', ['tenant.view', 'sync.view'], {}, connector],
         ['sync permission', ['tenant.view', 'content.view'], {}, connector],
         ['taxonomy connector', ['tenant.view', 'content.view', 'sync.view'], {}, []],
-    ])('does not expose the navigation without %s', (_name, permissions, _unused, connectors) => {
+    ])('fails closed before protected route 403 when %s is absent', (_name, permissions, _unused, connectors) => {
         renderControl(context('alpha', permissions, undefined, {}, connectors));
         expect(screen.queryByRole('link', { name: 'Open synchronization' })).not.toBeInTheDocument();
     });
