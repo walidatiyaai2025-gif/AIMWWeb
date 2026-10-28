@@ -26,7 +26,7 @@ final class SiteOnboardingRetrySynchronizationTerminalityTest extends TestCase
         $this->assertStringContainsString('canonicalOnboardingRetrySyncEndpoint', $source);
         $this->assertStringContainsString("'Idempotency-Key': nextIdempotencyKey()", $source);
         $this->assertStringContainsString("result.sync?.status === 'failed'", $source);
-        $this->assertStringContainsString("body: JSON.stringify({})", $source);
+        $this->assertStringContainsString('body: JSON.stringify({})', $source);
     }
 
     public function test_foreign_tenant_site_sync_is_not_found_and_cannot_enqueue_work(): void
