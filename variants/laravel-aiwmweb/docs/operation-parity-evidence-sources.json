@@ -2858,6 +2858,14 @@
       "operation_ids": [
         "AIMW-SYNC-AA26ED0909"
       ]
+    },
+    {
+      "label": "AIMW-SYNC-B83AB5A666 MediaBatchUploadPanel ClearClickedAsync focused closure #965",
+      "sha": "b03faac256245ea0a89c2b93481934c348e3fa17",
+      "observed_pr_head": "b03faac256245ea0a89c2b93481934c348e3fa17",
+      "operation_ids": [
+        "AIMW-SYNC-B83AB5A666"
+      ]
     }
   ],
   "sources": [
