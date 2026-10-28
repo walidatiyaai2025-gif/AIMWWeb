@@ -51,5 +51,18 @@
     "sibling_operations_claimed": false,
     "aspnet_product_modified": false,
     "generated_reconciliation_hand_edited": false
+  },
+  "official_reconciliation": {
+    "materializer": "Laravel AIWMWeb Task Parity Materialize 931",
+    "evidence_source_sha": "3a442c1ed766caf303c38d16b0ca089e7222716e",
+    "materialized_commit_sha": "f838c9b9b88c1c2064a6d8af4575953a5065fc53",
+    "before_terminal": 877,
+    "after_terminal": 878,
+    "after_pending": 53,
+    "total_operations": 931,
+    "exact_operation_state": "ADAPTED",
+    "sibling_publish_operation_state": "ADAPTED",
+    "no_hand_edit_to_generated_reconciliation": true,
+    "validation": "Official materializer run 40633195006 passed; operation-specific source signals and security/tenant isolation present."
   }
 }
