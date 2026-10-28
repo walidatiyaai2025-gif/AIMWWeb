@@ -53,6 +53,7 @@ import { DashboardMediaNavigationControl } from './dashboard-media-navigation-co
 import { LiveSystemStatusRefreshControl } from './live-system-status-refresh-control';
 import { EMAIL_HISTORY_CLEAR_FILTERS_OPERATION_ID, EmailHistoryFiltersControl, type EmailHistoryFilterState } from './email-history-filters-control';
 import { GlobalUsersFullManagementControl } from './global-users-full-management-control';
+import { WordPressUsersRefreshControl } from './wordpress-users-refresh-control';
 import { MediaDeleteControl } from './media-delete-control';
 import { authoritativeGlobalMediaApplyEndpoint, defaultGlobalMediaFilters, globalMediaApplyQuery, GlobalMediaApplyControl } from './global-media-apply-control';
 import { GlobalMediaInterpolatedLinksControl } from './media-interpolated-links-control';
@@ -66,6 +67,7 @@ import { PostsWordPressLinkControl } from './posts-wordpress-link-control';
 import { RolesApplicationUsersLinkControl } from './roles-application-users-link-control';
 import { RolesStartCreateControl } from './roles-start-create-control';
 import { SiteOperationsExportControl } from './site-operations-export-control';
+import { OperationsHubSiteOperationsControl } from './operations-hub-site-operations-control';
 import { SiteOperationsDetailsLinkControl } from './site-operations-details-link-control';
 import { SiteOperationsSitesLinkControl } from './site-operations-sites-link-control';
 import {
@@ -899,6 +901,17 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             }}
                         >{locale === 'ar' ? 'الوسوم' : 'Tags'}</button>
                     ) : null}
+                    {route.key === 'wp-users' ? (
+                        <WordPressUsersRefreshControl
+                            context={context}
+                            endpoint={endpoint}
+                            busy={query.isFetching}
+                            onReload={async () => {
+                                const refreshed = await query.refetch();
+                                if (refreshed.error) throw refreshed.error;
+                            }}
+                        />
+                    ) : (
                     <button
                         type="button"
                         className="btn"
@@ -927,6 +940,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                                             : text(commonText.refresh))
                                         : text(commonText.refresh)}
                     </button>
+                    )}
                     {route.key === 'site-reliability' ? (
                         <SiteReliabilityOperationHistoryLinkControl context={context} />
                     ) : null}
@@ -1149,6 +1163,10 @@ function WorkspaceHub({ context, route }: { context: FrontendContext; route: Wor
             ) : null}
             <section className="workspace-card-grid">
                 {workspaceRoutes.filter((candidate) => !candidate.hidden && related.includes(candidate.group) && candidate.key !== route.key).map((candidate) => {
+                    if (route.key === 'operations' && candidate.key === 'site-operations') {
+                        return <OperationsHubSiteOperationsControl key={candidate.key} context={context} />;
+                    }
+
                     const state = resolveCapability(context, candidate);
                     const sourceWorkspacePath = route.key === 'content-hub' && isContentHubWorkspacePath(candidate.path);
                     const destination = sourceWorkspacePath
