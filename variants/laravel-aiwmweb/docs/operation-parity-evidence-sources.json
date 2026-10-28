@@ -2890,6 +2890,14 @@
       "operation_ids": [
         "AIMW-SYNC-5A397204EF"
       ]
+    },
+    {
+      "label": "Issue #962 Dashboard RefreshClickedAsync tenant-scoped focused closure",
+      "sha": "a5bbcea64b94469f28544162b2d34223f354c75b",
+      "observed_pr_head": "a5bbcea64b94469f28544162b2d34223f354c75b",
+      "operation_ids": [
+        "AIMW-SYNC-8C35E9A7A0"
+      ]
     }
   ],
   "sources": [
