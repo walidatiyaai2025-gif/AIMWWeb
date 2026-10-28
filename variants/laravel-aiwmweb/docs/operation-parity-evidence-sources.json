@@ -3002,6 +3002,14 @@
       "operation_ids": [
         "AIMW-SYNC-9504A57CAE"
       ]
+    },
+    {
+      "label": "Issue #952 Global Synchronization RequestAcceptRemoteAsync confirmation",
+      "sha": "d751dbb789b19fb335671a57148638ff921f940a",
+      "observed_pr_head": "d751dbb789b19fb335671a57148638ff921f940a",
+      "operation_ids": [
+        "AIMW-SYNC-1B63FBC758"
+      ]
     }
   ],
   "sources": [
