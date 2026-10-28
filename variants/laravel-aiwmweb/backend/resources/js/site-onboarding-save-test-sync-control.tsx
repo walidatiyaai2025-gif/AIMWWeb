@@ -5,6 +5,7 @@ import { useLocale } from './i18n';
 import { SyncFormActionsControl } from './sync-form-actions-control';
 
 export const SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID = 'AIMW-BILL-2EF6B8A27A';
+export const SITE_ONBOARDING_RETRY_SYNC_OPERATION_ID = 'AIMW-SYNC-AE16CF49C6';
 export const SITE_ONBOARDING_NEXT_OPERATION_ID = 'AIMW-BILL-5DE86937F7';
 export const SITE_ONBOARDING_BACK_TO_SITES_OPERATION_ID = 'AIMW-CONT-6EC0601E18';
 
@@ -34,6 +35,12 @@ type OnboardingResponse = {
 export function canonicalSiteOnboardingEndpoint(sitesEndpoint: string | undefined): string | null {
     if (!sitesEndpoint || !/^\/api\/tenants\/[^/]+\/sites$/.test(sitesEndpoint)) return null;
     return `${sitesEndpoint}/onboarding`;
+}
+
+export function canonicalOnboardingRetrySyncEndpoint(sitesEndpoint: string | undefined, siteId: number): string | null {
+    if (!sitesEndpoint || !/^\/api\/tenants\/[^/?#]+\/sites$/.test(sitesEndpoint)) return null;
+    if (!Number.isSafeInteger(siteId) || siteId < 1) return null;
+    return `${sitesEndpoint}/${siteId}/sync`;
 }
 
 export function onboardingRetryTokenFromError(error: unknown): string | null {
@@ -101,6 +108,8 @@ export function SiteOnboardingSaveTestSyncControl({ context }: { context: Fronte
     const [applicationPassword, setApplicationPassword] = useState('');
     const [result, setResult] = useState<OnboardingResponse | null>(null);
     const [retryToken, setRetryToken] = useState<string | null>(null);
+    const [retryBusy, setRetryBusy] = useState(false);
+    const [retryError, setRetryError] = useState('');
     const idempotencyKey = useRef<string | null>(null);
 
     const resetRequestIdentity = () => {
@@ -143,6 +152,27 @@ export function SiteOnboardingSaveTestSyncControl({ context }: { context: Fronte
             }
         },
     });
+
+    const retrySynchronization = async () => {
+        if (retryBusy || !result || result.sync?.status !== 'failed') return;
+        const syncEndpoint = canonicalOnboardingRetrySyncEndpoint(context.api.sites, result.site.id);
+        if (!syncEndpoint) return;
+        setRetryBusy(true);
+        setRetryError('');
+        try {
+            const run = await apiRequest<NonNullable<OnboardingResponse['sync']>>(syncEndpoint, {
+                method: 'POST',
+                headers: { 'Idempotency-Key': nextIdempotencyKey() },
+                body: JSON.stringify({}),
+            });
+            if (run.status === 'failed') throw new Error(run.failure || 'Synchronization failed.');
+            setResult((current) => current ? { ...current, sync: run } : current);
+        } catch (error) {
+            setRetryError(error instanceof Error ? error.message : 'Synchronization failed.');
+        } finally {
+            setRetryBusy(false);
+        }
+    };
 
     if (!canManage || !endpoint) return null;
 
@@ -340,6 +370,16 @@ export function SiteOnboardingSaveTestSyncControl({ context }: { context: Fronte
                     <strong>{result.site.name}</strong>
                     <span>{result.site.connection_status} / {result.site.health_state}</span>
                     {result.sync ? <span>{locale === 'ar' ? 'المزامنة' : 'Sync'}: {result.sync.status}</span> : null}
+                    {retryError ? <p role="alert">{retryError}</p> : null}
+                    {result.sync?.status === 'failed' ? (
+                        <button type="button" className="btn"
+                            data-canonical-operation={SITE_ONBOARDING_RETRY_SYNC_OPERATION_ID}
+                            disabled={retryBusy} onClick={() => void retrySynchronization()}>
+                            {retryBusy
+                                ? (locale === 'ar' ? 'جارٍ إعادة المزامنة…' : 'Retrying synchronization…')
+                                : (locale === 'ar' ? 'إعادة المزامنة' : 'Retry synchronization')}
+                        </button>
+                    ) : null}
                     {result.message ? <p>{result.message}</p> : null}
                     <a
                         className="btn"
