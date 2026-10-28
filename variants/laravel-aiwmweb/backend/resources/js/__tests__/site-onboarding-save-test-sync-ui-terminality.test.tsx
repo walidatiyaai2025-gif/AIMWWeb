@@ -6,6 +6,8 @@ import type { FrontendContext } from '../core';
 import { LocaleProvider } from '../i18n';
 import {
     SITE_ONBOARDING_NEXT_OPERATION_ID,
+    SITE_ONBOARDING_RETRY_SYNC_OPERATION_ID,
+    canonicalOnboardingRetrySyncEndpoint,
     SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID,
     SiteOnboardingSaveTestSyncControl,
 } from '../site-onboarding-save-test-sync-control';
@@ -225,5 +227,50 @@ describe('AIMW-BILL-2EF6B8A27A onboarding browser proof', () => {
             retry_token: 'opaque-server-issued-retry-token',
         });
         expect(await screen.findByText('verified / healthy')).toBeInTheDocument();
+    });
+});
+
+describe('AIMW-SYNC-AE16CF49C6 retry synchronization', () => {
+    it('rejects malformed and cross-route sync targets', () => {
+        expect(canonicalOnboardingRetrySyncEndpoint('/api/tenants/alpha/sites', 23))
+            .toBe('/api/tenants/alpha/sites/23/sync');
+        expect(canonicalOnboardingRetrySyncEndpoint('/api/tenants/alpha/sites', -2)).toBeNull();
+        expect(canonicalOnboardingRetrySyncEndpoint('/api/tenants/alpha/sites/23', 23)).toBeNull();
+        expect(canonicalOnboardingRetrySyncEndpoint('/api/tenants/alpha/sites', Number.NaN)).toBeNull();
+    });
+
+    it('retries a failed persisted run without sending WordPress credentials or claiming completion', async () => {
+        const initial = {
+            operation_id: SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID,
+            site: { id: 23, name: 'Retry Site', url: 'https://retry.example.test',
+                connection_status: 'verified', health_state: 'healthy' },
+            credential_configured: true,
+            sync: { id: 18, status: 'failed', processed: 0, failure: 'initial sync failed' },
+            idempotent_replay: false,
+        };
+        const fetchMock = vi.fn()
+            .mockResolvedValueOnce(new Response(JSON.stringify(initial), {
+                status: 202, headers: { 'content-type': 'application/json' },
+            }))
+            .mockResolvedValueOnce(new Response(JSON.stringify({
+                id: 19, status: 'queued', processed: 0, failure: null,
+            }), { status: 202, headers: { 'content-type': 'application/json' } }));
+        vi.stubGlobal('fetch', fetchMock);
+        vi.stubGlobal('crypto', { randomUUID: () => '44444444-4444-4444-8444-444444444444' });
+        renderControl();
+        completeProfileStep('Retry Site', 'https://retry.example.test');
+        completeCredentialStep('wp-admin', 'application-secret-123');
+        fireEvent.click(screen.getByRole('button', { name: 'Save, test and synchronize' }));
+        const retry = await screen.findByRole('button', { name: 'Retry synchronization' });
+        expect(retry).toHaveAttribute('data-canonical-operation', SITE_ONBOARDING_RETRY_SYNC_OPERATION_ID);
+        fireEvent.click(retry);
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+        expect(fetchMock.mock.calls[1][0]).toBe('/api/tenants/alpha/sites/23/sync');
+        const init = fetchMock.mock.calls[1][1] as RequestInit;
+        expect(init.method).toBe('POST');
+        expect(JSON.parse(String(init.body))).toEqual({});
+        expect(String(init.body)).not.toContain('application-secret');
+        expect(await screen.findByText('Sync: queued')).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Retry synchronization' })).toBeNull();
     });
 });
