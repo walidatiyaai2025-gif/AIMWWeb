@@ -54,6 +54,13 @@ import { LiveSystemStatusRefreshControl } from './live-system-status-refresh-con
 import { EMAIL_HISTORY_CLEAR_FILTERS_OPERATION_ID, EmailHistoryFiltersControl, type EmailHistoryFilterState } from './email-history-filters-control';
 import { GlobalUsersFullManagementControl } from './global-users-full-management-control';
 import { WordPressUsersRefreshControl } from './wordpress-users-refresh-control';
+import {
+    WORDPRESS_SITE_USERS_SEARCH_OPERATION_ID,
+    WORDPRESS_SITE_USER_ROLES,
+    isAuthorizedWordPressSiteUsersSearch,
+    normalizeWordPressSiteUserRole,
+    type WordPressSiteUserRole,
+} from './wordpress-site-users-search-control';
 import { MediaDeleteControl } from './media-delete-control';
 import { authoritativeGlobalMediaApplyEndpoint, defaultGlobalMediaFilters, globalMediaApplyQuery, GlobalMediaApplyControl } from './global-media-apply-control';
 import { GlobalMediaInterpolatedLinksControl } from './media-interpolated-links-control';
@@ -335,6 +342,8 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const [searchInput, setSearchInput] = useState('');
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
+    const [wordpressSiteRoleDraft, setWordpressSiteRoleDraft] = useState<WordPressSiteUserRole>('all');
+    const [wordpressSiteRoleApplied, setWordpressSiteRoleApplied] = useState<WordPressSiteUserRole>('all');
     const [mediaDraft, setMediaDraft] = useState(defaultGlobalMediaFilters);
     const [mediaAppliedFilters, setMediaAppliedFilters] = useState(defaultGlobalMediaFilters);
     const [appDataGridSortDescending, setAppDataGridSortDescending] = useState(false);
@@ -375,6 +384,8 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         ? (authoritativeGlobalMediaApplyEndpoint(context) ?? undefined)
         : routeEndpoint;
     const readOperations = COLLECTION_READ_OPERATIONS[route.key];
+    const siteUsersManagerSearch = route.key === 'wp-users'
+        && isAuthorizedWordPressSiteUsersSearch(context, window.location.search);
     const canEditExplorerContent = context.permissions.includes('*') || context.permissions.includes('content.edit');
 
     const selectAllExplorerFiltered = async (): Promise<void> => {
@@ -410,6 +421,11 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     } : route.key === 'media' ? {
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, mediaAppliedFilters.mediaType, mediaAppliedFilters.pageSize],
         queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, mediaQueryFilters)),
+        enabled: state.state === 'enabled' && Boolean(endpoint),
+    } : siteUsersManagerSearch ? {
+        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, wordpressSiteRoleApplied],
+        queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search,
+            wordpressSiteRoleApplied === 'all' ? {} : { role: wordpressSiteRoleApplied })),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     } : {
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType],
@@ -758,6 +774,17 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         });
                         return;
                     }
+                    if (siteUsersManagerSearch) {
+                        if (query.isFetching) return;
+                        const nextSearch = searchInput.trim();
+                        const unchanged = page === 1 && search === nextSearch && wordpressSiteRoleApplied === wordpressSiteRoleDraft;
+                        setPage(1);
+                        setSearch(nextSearch);
+                        setWordpressSiteRoleApplied(wordpressSiteRoleDraft);
+                        // UsersManager SearchClickedAsync always re-reads, even when the filters are unchanged.
+                        if (unchanged) void query.refetch();
+                        return;
+                    }
                     setPage(1); setSearch(searchInput); if (route.key === 'explorer') setExplorerSelectedKeys(new Set());
                 }} role="search">
                     <label className="sr-only" htmlFor={`search-${route.key}`}>{text(commonText.search)}</label>
@@ -781,6 +808,23 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                     ) : (
                         <input id={`search-${route.key}`} value={searchInput} onChange={(event) => setSearchInput(event.target.value)} placeholder={locale === 'ar' ? 'بحث في البيانات الحية…' : 'Search live data…'} />
                     )}
+                    {siteUsersManagerSearch ? (
+                        <label>
+                            {locale === 'ar' ? 'الدور' : 'Role'}
+                            <select
+                                aria-label={locale === 'ar' ? 'دور مستخدم WordPress' : 'WordPress user role'}
+                                value={wordpressSiteRoleDraft}
+                                onChange={(event) => setWordpressSiteRoleDraft(normalizeWordPressSiteUserRole(event.target.value))}
+                                disabled={query.isFetching}
+                            >
+                                {WORDPRESS_SITE_USER_ROLES.map((role) => (
+                                    <option value={role} key={role}>
+                                        {role === 'all' ? (locale === 'ar' ? 'كل الأدوار' : 'All roles') : role}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+                    ) : null}
                     {route.key === 'media' ? (
                         <GlobalMediaApplyControl
                             locale={locale}
@@ -801,7 +845,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             type="submit"
                             className="btn"
                             data-canonical-operation={route.key === 'wp-users'
-                                ? WORDPRESS_USERS_SEARCH_OPERATION_ID
+                                ? (siteUsersManagerSearch ? WORDPRESS_SITE_USERS_SEARCH_OPERATION_ID : WORDPRESS_USERS_SEARCH_OPERATION_ID)
                                 : (route.key === 'comments' ? COMMENTS_SEARCH_OPERATION_ID : undefined)}
                             disabled={(route.key === 'comments' || route.key === 'wp-users') && query.isFetching}
                             aria-busy={(route.key === 'comments' || route.key === 'wp-users') && query.isFetching ? 'true' : 'false'}
