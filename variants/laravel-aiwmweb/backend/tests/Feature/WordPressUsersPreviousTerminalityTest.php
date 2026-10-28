@@ -35,7 +35,7 @@ final class WordPressUsersPreviousTerminalityTest extends TestCase
         $this->assertStringContainsString(self::OPERATION_ID, $frontend);
         $this->assertStringContainsString('WORDPRESS_USERS_PREVIOUS_OPERATION_ID', $frontend);
         $this->assertStringContainsString("route.key === 'wp-users'", $frontend);
-        $this->assertStringContainsString("'wp-users': { previous: WORDPRESS_USERS_PREVIOUS_OPERATION_ID }", $frontend);
+        $this->assertStringContainsString("previousOperationAliasId={route.key === 'wp-users' ? WORDPRESS_USERS_PREVIOUS_OPERATION_ID : undefined}", $frontend);
         $this->assertStringContainsString('endpointWithQuery(endpoint!, page, search, taxonomyFilter)', $frontend);
 
         $this->assertStringContainsString("\$search = trim((string) \$request->query('search', ''));", $controller);
