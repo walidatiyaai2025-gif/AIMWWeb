@@ -24,7 +24,10 @@ function context(
         permissions,
         connectors: [],
         capabilities: {},
-        api: {},
+        api: {
+            sync: `/api/v1/tenants/${encodeURIComponent(slug)}/sites/${activeSite?.id ?? 7}/sync`,
+            explorer: `/api/v1/tenants/${encodeURIComponent(slug)}/sites/${activeSite?.id ?? 7}/explorer`,
+        },
         actions: {},
         active_site: activeSite,
     };
@@ -76,13 +79,25 @@ describe('AIMW-SYNC-E51F091C0B synchronization local content navigation', () => 
         expect(screen.queryByRole('link')).not.toBeInTheDocument();
     });
 
-    it('encodes tenant identity; a foreign tenant cannot be selected through a path escape (server 404)', () => {
+    it('fails closed for path-escape tenant identity without exposing a foreign tenant URL', () => {
         const value = context({ id: 7, name: 'Alpha Site' }, undefined, 'alpha/../foreign');
-        expect(globalSynchronizationLocalContentDestination(value))
-            .toBe('/tenants/alpha%2F..%2Fforeign/explorer?site=7');
+        expect(globalSynchronizationLocalContentDestination(value)).toBeNull();
         renderControl(value);
-        expect(screen.getByRole('link', { name: 'Open local content' }))
-            .not.toHaveAttribute('href', '/tenants/foreign/explorer?site=7');
+        expect(screen.queryByRole('link')).not.toBeInTheDocument();
+    });
+
+    it('fails closed for missing or foreign active-site API bindings', () => {
+        const missing = context();
+        missing.api = {};
+        expect(globalSynchronizationLocalContentDestination(missing)).toBeNull();
+
+        const foreign = context();
+        foreign.api.explorer = '/api/v1/tenants/beta/sites/7/explorer';
+        expect(globalSynchronizationLocalContentDestination(foreign)).toBeNull();
+
+        const otherSite = context();
+        otherSite.api.sync = '/api/v1/tenants/alpha/sites/9/sync';
+        expect(globalSynchronizationLocalContentDestination(otherSite)).toBeNull();
     });
 
     it('renders the Arabic source label on the same trusted destination', () => {

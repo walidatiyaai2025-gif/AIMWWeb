@@ -21,9 +21,14 @@ export function globalSynchronizationLocalContentDestination(context: FrontendCo
     if (resolveCapability(context, syncRoute).state !== 'enabled') return null;
     if (resolveCapability(context, explorerRoute).state !== 'enabled') return null;
     if (!site || !Number.isSafeInteger(site.id) || site.id <= 0) return null;
-    if (!context.tenant.slug.trim()) return null;
+    const slug = context.tenant.slug.trim();
+    // Never construct a cross-tenant URL from an embedded separator; route
+    // identity and the active-site endpoints must come from one server context.
+    if (!slug || /[\\/]/.test(slug)) return null;
+    const prefix = `/api/v1/tenants/${encodeURIComponent(slug)}/sites/${site.id}/`;
+    if (context.api.sync !== prefix + 'sync' || context.api.explorer !== prefix + 'explorer') return null;
 
-    return tenantUrl(context.tenant.slug, explorerRoute.path)
+    return tenantUrl(slug, explorerRoute.path)
         + '?site=' + encodeURIComponent(String(site.id));
 }
 
