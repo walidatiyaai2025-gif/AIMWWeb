@@ -27,6 +27,9 @@ final class MediaOptimizationTenantIsolationTest extends TestCase
         $this->actingAs($viewer)
             ->patchJson("/api/v1/tenants/viewer/sites/{$viewerSite->id}/media/{$viewerMedia->id}", ['title' => 'No'])
             ->assertForbidden(); // 403: viewer cannot save metadata
+        $this->actingAs($viewer)
+            ->getJson("/api/v1/tenants/viewer/sites/{$viewerSite->id}/media/{$viewerMedia->id}")
+            ->assertForbidden(); // 403: raw editing metadata requires content.edit
 
         $alphaUser = User::factory()->create();
         $alpha = $this->membership($alphaUser, 'alpha', ['content.view', 'content.edit']);
