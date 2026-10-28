@@ -78,6 +78,7 @@ import {
 } from './site-operations-filters-control';
 import { SiteReliabilityConnectionLinkControl } from './site-reliability-connection-link-control';
 import { GlobalTaxonomySiteLinksControl } from './global-taxonomy-site-links-control';
+import { GlobalTaxonomyResetControl } from './global-taxonomy-reset-control';
 import { SiteReliabilityFiltersControl, siteReliabilityDefaultFilters, type SiteReliabilityFilterState } from './site-reliability-filters-control';
 import { SitesSiteUrlLinkControl } from './sites-site-url-link-control';
 import { SitesInterpolatedLinksControl } from './sites-interpolated-links-control';
@@ -355,7 +356,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const [siteOperationsExportResetToken, setSiteOperationsExportResetToken] = useState(0);
     const [siteReliabilityDraft, setSiteReliabilityDraft] = useState<SiteReliabilityFilterState>(() => siteReliabilityDefaultFilters());
     const [siteReliabilityFilters, setSiteReliabilityFilters] = useState<SiteReliabilityFilterState>(() => siteReliabilityDefaultFilters());
-    const [taxonomyType, setTaxonomyType] = useState<'category' | 'post_tag'>('category');
+    const [taxonomyType, setTaxonomyType] = useState<'all' | 'category' | 'post_tag'>('category');
 
     useEffect(() => {
         if (route.key !== 'taxonomy') return;
@@ -382,7 +383,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         setExplorerSelectedKeys(keys);
     };
 
-    const taxonomyFilter: Record<string, string> = route.key === 'taxonomy' ? { taxonomy: taxonomyType } : {};
+    const taxonomyFilter: Record<string, string> = route.key === 'taxonomy' && taxonomyType !== 'all' ? { taxonomy: taxonomyType } : {};
     const emailHistoryQueryFilters: Record<string, string> = route.key === 'email-history' ? {
         ...(emailHistoryFilters.siteId ? { site_id: emailHistoryFilters.siteId } : {}),
         ...(emailHistoryFilters.status ? { status: emailHistoryFilters.status } : {}),
@@ -415,6 +416,30 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, taxonomyFilter)),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     });
+
+    const resetGlobalTaxonomyFilters = async (trustedEndpoint: string): Promise<void> => {
+        if (
+            route.key !== 'taxonomy'
+            || state.state !== 'enabled'
+            || !endpoint
+            || endpoint !== trustedEndpoint
+            || query.isFetching
+        ) {
+            throw new Error('The active tenant/site taxonomy read is not authorized.');
+        }
+
+        // Source ResetAsync: remove query/type filters, return to the first page,
+        // then perform a fresh tenant/site-scoped authoritative GET.
+        setSearchInput('');
+        setSearch('');
+        setTaxonomyType('all');
+        setPage(1);
+        await queryClient.fetchQuery({
+            queryKey: ['workspace', context.tenant.slug, route.key, trustedEndpoint, 1, '', 'all'],
+            queryFn: () => apiRequest<unknown>(endpointWithQuery(trustedEndpoint, 1, '')),
+            staleTime: 0,
+        });
+    };
 
     const resetContentExplorerFilters = async (trustedEndpoint: string): Promise<void> => {
         if (
@@ -791,6 +816,14 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             locale={locale}
                             authorized={applicationUsersClearAuthorized}
                             onClearRequested={clearApplicationUsersSearch}
+                        />
+                    ) : null}
+                    {route.key === 'taxonomy' ? (
+                        <GlobalTaxonomyResetControl
+                            context={context}
+                            endpoint={endpoint}
+                            busy={query.isFetching}
+                            onResetRequested={resetGlobalTaxonomyFilters}
                         />
                     ) : null}
                     {route.key === 'explorer' ? (
