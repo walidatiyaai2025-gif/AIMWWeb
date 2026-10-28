@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "issue": 953,
+  "operation_id": "AIMW-SYNC-9504A57CAE",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "/module/sync",
+    "source": "src/AIWordPressManager.Web/Components/Pages/GlobalSynchronizationWorkspace.razor",
+    "source_intent": "RefreshStatusAsync re-reads selected tenant site explorer snapshot and persisted synchronization history; never starts or fakes a WordPress sync.",
+    "tenant_owned": true,
+    "mutation": false
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/global-synchronization-refresh-status-control.tsx",
+    "routes": [
+      "GET /api/v1/tenants/{tenant}/sites/{site}/explorer",
+      "GET /api/v1/tenants/{tenant}/sites/{site}/sync"
+    ],
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SyncApiController.php",
+    "read_only": true,
+    "authoritative_site_context": true,
+    "external_contract": "Real WordPress states are reflected in persisted sync history and local mirror. A read-only Refresh status cannot imply a new WordPress mutation.",
+    "no_fake_success": true
+  },
+  "security": {
+    "tenant_context_required": true,
+    "permissions": [
+      "tenant.view",
+      "sites.view",
+      "content.view",
+      "sync.view"
+    ],
+    "site_lookup_tenant_scoped": true,
+    "foreign_site_fails_404": true,
+    "reader_denied_403": true,
+    "caller_owned_tenant_site_override_ignored": true,
+    "backend_no_secret_exposure": true
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalSynchronizationRefreshStatusTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-synchronization-refresh-status-control.test.ts",
+    "coverage": [
+      "source RefreshStatusAsync contract",
+      "read-only genuine Laravel history+explorer",
+      "authoritative site-ID consistency fail closed",
+      "foreign tenant and wrong site ID denied",
+      "guest and missing permission denied",
+      "failed runs displayed as failed, no fake success",
+      "Arabic refresh control"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-9504A57CAE"
+    ],
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "no_sibling_claims": true
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "implementation_sha": "e84d5b0c5c09e043b492e6216c6f195a700d0115",
+    "branch": "worker/953-global-sync-refresh-status"
+  }
+}
