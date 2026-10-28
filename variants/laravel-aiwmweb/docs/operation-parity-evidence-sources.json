@@ -2906,6 +2906,14 @@
       "operation_ids": [
         "AIMW-SYNC-B955324F04"
       ]
+    },
+    {
+      "label": "AIMW-SYNC-7C77CF7F7A GlobalUsersWorkspace RefreshAsync focused closure #959",
+      "sha": "370a894852e38f9ab62b4937d5154c4509c1b62e",
+      "observed_pr_head": "370a894852e38f9ab62b4937d5154c4509c1b62e",
+      "operation_ids": [
+        "AIMW-SYNC-7C77CF7F7A"
+      ]
     }
   ],
   "sources": [
