@@ -54,6 +54,7 @@ import { LiveSystemStatusRefreshControl } from './live-system-status-refresh-con
 import { EMAIL_HISTORY_CLEAR_FILTERS_OPERATION_ID, EmailHistoryFiltersControl, type EmailHistoryFilterState } from './email-history-filters-control';
 import { GlobalUsersFullManagementControl } from './global-users-full-management-control';
 import { WordPressUsersRefreshControl } from './wordpress-users-refresh-control';
+import { GlobalUsersRefreshControl, type GlobalUsersRole } from './global-users-refresh-control';
 import { MediaDeleteControl } from './media-delete-control';
 import { authoritativeGlobalMediaApplyEndpoint, defaultGlobalMediaFilters, globalMediaApplyQuery, GlobalMediaApplyControl } from './global-media-apply-control';
 import { GlobalMediaInterpolatedLinksControl } from './media-interpolated-links-control';
@@ -360,6 +361,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const [taxonomyType, setTaxonomyType] = useState<'all' | 'category' | 'post_tag'>('category');
     const [taxonomyDraft, setTaxonomyDraft] = useState(defaultGlobalTaxonomyApplyFilters);
     const [taxonomyApplied, setTaxonomyApplied] = useState(defaultGlobalTaxonomyApplyFilters);
+    const [wordpressUsersRole, setWordpressUsersRole] = useState<GlobalUsersRole>('all');
 
     useEffect(() => {
         if (route.key !== 'taxonomy') return;
@@ -388,6 +390,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
 
     const taxonomyFilter: Record<string, string> = route.key === 'taxonomy' && taxonomyType !== 'all' ? { taxonomy: taxonomyType } : {};
     const taxonomyAppliedQuery = route.key === 'taxonomy' ? { ...taxonomyFilter, ...globalTaxonomyApplyQuery(taxonomyApplied) } : taxonomyFilter;
+    const wordpressUsersFilters = route.key === 'wp-users' && wordpressUsersRole !== 'all' ? { role: wordpressUsersRole } : {};
     const emailHistoryQueryFilters: Record<string, string> = route.key === 'email-history' ? {
         ...(emailHistoryFilters.siteId ? { site_id: emailHistoryFilters.siteId } : {}),
         ...(emailHistoryFilters.status ? { status: emailHistoryFilters.status } : {}),
@@ -416,8 +419,8 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, mediaQueryFilters)),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     } : {
-        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType, taxonomyApplied.minimumUsage, taxonomyApplied.pageSize],
-        queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, taxonomyAppliedQuery)),
+        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType, taxonomyApplied.minimumUsage, taxonomyApplied.pageSize, wordpressUsersRole],
+        queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, { ...taxonomyAppliedQuery, ...wordpressUsersFilters })),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     });
 
@@ -978,6 +981,21 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         >{locale === 'ar' ? 'الوسوم' : 'Tags'}</button>
                     ) : null}
                     {route.key === 'wp-users' ? (
+                        <>
+                        <GlobalUsersRefreshControl
+                            context={context}
+                            endpoint={endpoint}
+                            role={wordpressUsersRole}
+                            busy={query.isFetching}
+                            onRoleChange={(nextRole) => { setPage(1); setWordPressUsersRole(nextRole); }}
+                            onRefreshRequested={async (trustedEndpoint) => {
+                                if (state.state !== 'enabled' || trustedEndpoint !== endpoint) {
+                                    throw new Error('The active tenant/site WordPress users endpoint is not authorized.');
+                                }
+                                const refreshed = await query.refetch();
+                                if (refreshed.error) throw refreshed.error;
+                            }}
+                        />
                         <WordPressUsersRefreshControl
                             context={context}
                             endpoint={endpoint}
@@ -987,6 +1005,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                                 if (refreshed.error) throw refreshed.error;
                             }}
                         />
+                        </>
                     ) : (
                     <button
                         type="button"
