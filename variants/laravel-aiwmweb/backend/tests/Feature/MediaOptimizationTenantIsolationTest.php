@@ -73,6 +73,7 @@ final class MediaOptimizationTenantIsolationTest extends TestCase
         Http::fake([
             '*' => Http::response([
                 'id' => 801,
+                'modified_gmt' => '2026-10-28T01:00:00',
                 'title' => ['raw' => 'Current WordPress title'],
                 'slug' => 'new-slug',
                 'alt_text' => 'Authoritative alt',
@@ -98,17 +99,39 @@ final class MediaOptimizationTenantIsolationTest extends TestCase
         $this->credential($member, $site);
 
         Http::fakeSequence()
+            ->push(['id' => 901, 'modified_gmt' => '2026-10-28T01:00:00'], 200)
             ->push(['id' => 901], 200)
             ->push(['id' => 901, 'title' => ['raw' => 'Old remote title']], 200);
 
         $this->actingAs($user)
-            ->patchJson("/api/v1/tenants/alpha/sites/{$site->id}/media/{$media->id}", ['title' => 'New title'])
+            ->patchJson("/api/v1/tenants/alpha/sites/{$site->id}/media/{$media->id}", [
+                'title' => 'New title',
+                'expected_modified_gmt' => '2026-10-28T01:00:00',
+            ])
             ->assertStatus(500); // A stale remote reread must not be reported as a verified save.
 
         Http::assertSent(fn ($request) => $request->method() === 'POST'
             && str_contains($request->url(), '/wp-json/wp/v2/media/901'));
         Http::assertSent(fn ($request) => $request->method() === 'GET'
             && str_contains($request->url(), '/wp-json/wp/v2/media/901'));
+    }
+
+    public function test_stale_wordpress_edit_is_a_409_with_no_remote_mutation(): void
+    {
+        $user = User::factory()->create();
+        $member = $this->membership($user, 'alpha', ['content.view', 'content.edit']);
+        [$site, $media] = $this->media($member, 1001);
+        $this->credential($member, $site);
+        Http::fake(['*' => Http::response(['id' => 1001, 'modified_gmt' => '2026-10-28T03:00:00'])]);
+
+        $this->actingAs($user)
+            ->patchJson("/api/v1/tenants/alpha/sites/{$site->id}/media/{$media->id}", [
+                'title' => 'Overwrites newer content',
+                'expected_modified_gmt' => '2026-10-28T01:00:00',
+            ])->assertConflict(); // 409
+
+        Http::assertSentCount(1);
+        Http::assertNotSent(fn ($request) => $request->method() === 'POST');
     }
 
     private function membership(User $user, string $slug, array $permissions): TenantMembership
