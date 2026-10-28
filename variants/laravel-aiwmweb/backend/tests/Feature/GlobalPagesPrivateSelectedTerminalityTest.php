@@ -44,7 +44,7 @@ final class GlobalPagesPrivateSelectedTerminalityTest extends TestCase
             Request::create('/api/v1/tenants/alpha/global-pages/private', 'POST'),
         );
 
-        $this->assertSame(GlobalPagesPrivateController::class.'@private', ltrim($route->getActionName(), '\\'));
+        $this->assertSame(GlobalPagesPrivateController::class.'@setPrivate', ltrim($route->getActionName(), '\\'));
         $this->assertSame('api.v1.global-pages.private', $route->getName());
         $this->assertSame(self::OPERATION_ID, $route->defaults['canonical_operation_id'] ?? null);
         $this->assertContains('auth', $route->gatherMiddleware());
