@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #950 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-EEFDDFFF87",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-SYNC-EEFDDFFF87",
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "/module/posts",
+    "source": "src/AIWordPressManager.Web/Components/Pages/GlobalPostsExplorer.razor",
+    "source_intent": "Open the existing guarded synchronization workspace from global Posts Explorer.",
+    "mutation": false,
+    "tenant_owned": true,
+    "ledger_mutation_flag": true,
+    "adaptation_note": "Canonical inventory marks mutation=true, while the inspected source <a href='/module/sync'> action only navigates; no WordPress write is made by this link."
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/global-posts-open-synchronization-link-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "destination": "/tenants/{tenant}/module/sync",
+    "operation_marker": "AIMW-SYNC-EEFDDFFF87"
+  },
+  "security": {
+    "tenant_context_required": true,
+    "required_permissions": [
+      "tenant.view",
+      "content.view",
+      "sync.view"
+    ],
+    "capability_gates": [
+      "posts",
+      "sync"
+    ],
+    "foreign_tenant_status": 404,
+    "unauthorized_status": 403,
+    "server_authorization": "existing auth+tenant.context guarded synchronization route",
+    "no_remote_mutation_added": true
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-posts-open-synchronization-link-control.test.tsx",
+    "php_test": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalPostsOpenSynchronizationLinkTerminalityTest.php"
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-EEFDDFFF87"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  }
+}
