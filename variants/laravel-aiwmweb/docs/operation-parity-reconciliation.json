@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 890,
-    "pending": 41,
+    "adapted": 891,
+    "pending": 40,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 890,
-    "overall_parity_percent": 95.6
+    "terminal": 891,
+    "overall_parity_percent": 95.7
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 406,
-    "pending": 40,
+    "terminal": 407,
+    "pending": 39,
     "blocked": 0,
-    "percent": 91.03
+    "percent": 91.26
   },
   "domains": {
     "ai": {
@@ -203,12 +203,12 @@
     "sync": {
       "total": 213,
       "ported": 0,
-      "adapted": 181,
-      "pending": 32,
+      "adapted": 182,
+      "pending": 31,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 181,
-      "percent": 84.98
+      "terminal": 182,
+      "percent": 85.45
     },
     "taxonomy": {
       "total": 13,
@@ -31580,21 +31580,32 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "authoritative re-read / reconciled visible state",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/global-posts-open-synchronization-link-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "high",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-posts-open-synchronization-link-control.test.tsx",
+      "evidence": "Issue #950 Global Posts Open synchronization navigation scoped closure@cd171497cba463039bdac1e25e83bee2473f495b: variants/laravel-aiwmweb/backend/resources/js/global-posts-open-synchronization-link-control.tsx; focused-closure:AIMW-SYNC-EEFDDFFF87; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/global-posts-open-synchronization-link-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-posts-open-synchronization-link-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "Issue #950 Global Posts Open synchronization navigation scoped closure",
+        "source_sha": "cd171497cba463039bdac1e25e83bee2473f495b",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/global-posts-open-synchronization-link-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/global-posts-open-synchronization-link-terminality.json",
+        "signals": [
+          "operation:AIMW-SYNC-EEFDDFFF87",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/global-posts-open-synchronization-link-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/global-posts-open-synchronization-link-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-posts-open-synchronization-link-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation",
+          "test:authorization"
+        ]
       }
     },
     {
@@ -38088,12 +38099,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 406,
-      "pending": 40,
+      "adapted": 407,
+      "pending": 39,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 406,
-      "percent": 91.03
+      "terminal": 407,
+      "percent": 91.26
     }
   },
   "pending_operation_ids_by_domain": {
@@ -38156,7 +38167,6 @@
       "AIMW-SYNC-E3EB27C678",
       "AIMW-SYNC-ECAB44A389",
       "AIMW-SYNC-ED1442005E",
-      "AIMW-SYNC-EEFDDFFF87",
       "AIMW-SYNC-FD27B795ED"
     ],
     "taxonomy": []
@@ -39790,6 +39800,7 @@
       "AIMW-SYNC-E6888B0B4D",
       "AIMW-SYNC-EB9202408A",
       "AIMW-SYNC-EE7D7534DF",
+      "AIMW-SYNC-EEFDDFFF87",
       "AIMW-SYNC-EF652932D6",
       "AIMW-SYNC-F0C46A9BD1",
       "AIMW-SYNC-F135B261B2",
@@ -41017,10 +41028,17 @@
         "operation_ids": [
           "AIMW-SYNC-E51F091C0B"
         ]
+      },
+      {
+        "label": "Issue #950 Global Posts Open synchronization navigation scoped closure",
+        "sha": "cd171497cba463039bdac1e25e83bee2473f495b",
+        "operation_ids": [
+          "AIMW-SYNC-EEFDDFFF87"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 176,
-    "focused_closure_contract_count": 406,
+    "focused_closure_operation_scoped_count": 177,
+    "focused_closure_contract_count": 407,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
