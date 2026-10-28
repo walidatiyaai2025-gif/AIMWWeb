@@ -25,12 +25,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 902,
-    "pending": 29,
+    "adapted": 903,
+    "pending": 28,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 902,
-    "overall_parity_percent": 96.89
+    "terminal": 903,
+    "overall_parity_percent": 96.99
   },
   "visible_controls": {
     "total": 446,
