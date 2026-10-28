@@ -2820,11 +2820,11 @@
       ]
     },
     {
-      "label": "AIMW-SYNC-3389FB622C GlobalPages DraftSelectedAsync focused closure",
-      "sha": "fe370ec736e86dcb6097034c4f38ba52dcdf3e22",
-      "observed_pr_head": "fe370ec736e86dcb6097034c4f38ba52dcdf3e22",
+      "label": "AIMW-SYNC-078D172C71 GlobalPosts PrivateSelectedAsync focused closure #943",
+      "sha": "03e94aa5284ad09667a0ef601807430f1e01c26a",
+      "observed_pr_head": "03e94aa5284ad09667a0ef601807430f1e01c26a",
       "operation_ids": [
-        "AIMW-SYNC-3389FB622C"
+        "AIMW-SYNC-078D172C71"
       ]
     }
   ],
