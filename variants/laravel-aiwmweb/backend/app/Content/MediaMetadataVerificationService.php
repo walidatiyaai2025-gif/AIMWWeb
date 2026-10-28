@@ -33,7 +33,7 @@ final class MediaMetadataVerificationService
             if (in_array($field, ['title', 'caption', 'description'], true) && is_array($found)) {
                 $found = $found['raw'] ?? null;
             }
-            if (! is_string($found) || $this->normalize($found) !== $this->normalize((string) ($expected ?? ''))) {
+            if (is_string($found) === false || $this->normalize($found) !== $this->normalize((string) ($expected ?? ''))) {
                 throw new RuntimeException('WordPress media metadata verification failed for '.$field.'.');
             }
         }
