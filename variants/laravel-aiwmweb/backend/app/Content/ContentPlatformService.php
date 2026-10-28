@@ -74,7 +74,7 @@ final class ContentPlatformService
         if ($item && ! in_array($action, ['create'], true)) {
             $this->guardConflict($siteId, $resource, $item, $expected);
         }
-        if ($item && in_array($action, ['update', 'publish', 'draft', 'pending', 'schedule', 'trash', 'delete', 'restore'], true)) {
+        if ($item && in_array($action, ['update', 'publish', 'draft', 'pending', 'private', 'schedule', 'trash', 'delete', 'restore'], true)) {
             $this->snapshot($item, 'local-before-mutation');
         }
         $payload = $this->contentPayload($action, $payload);
@@ -248,7 +248,7 @@ final class ContentPlatformService
 
     private function contentPayload(string $action, array $payload): array
     {
-        if (in_array($action, ['publish', 'draft', 'pending'], true)) {
+        if (in_array($action, ['publish', 'draft', 'pending', 'private'], true)) {
             $payload['status'] = $action === 'publish' ? 'publish' : $action;
         }
         if ($action === 'schedule') {
