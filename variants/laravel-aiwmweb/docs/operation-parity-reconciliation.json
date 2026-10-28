@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 885,
-    "pending": 46,
+    "adapted": 884,
+    "pending": 47,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 885,
-    "overall_parity_percent": 95.06
+    "terminal": 884,
+    "overall_parity_percent": 94.95
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 401,
-    "pending": 45,
+    "terminal": 400,
+    "pending": 46,
     "blocked": 0,
-    "percent": 89.91
+    "percent": 89.69
   },
   "domains": {
     "ai": {
@@ -203,12 +203,12 @@
     "sync": {
       "total": 213,
       "ported": 0,
-      "adapted": 176,
-      "pending": 37,
+      "adapted": 175,
+      "pending": 38,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 176,
-      "percent": 82.63
+      "terminal": 175,
+      "percent": 82.16
     },
     "taxonomy": {
       "total": 13,
@@ -32839,31 +32839,21 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/site-onboarding-save-test-sync-control.tsx",
+      "laravel_destination": "",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "ADAPTED",
-      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-onboarding-save-test-sync-ui-terminality.test.tsx",
-      "evidence": "Issue #972 SiteOnboarding PreviousAsync focused navigation closure@d7996d30c8afe2b9ea16e984c0531df0c72eb5b3: variants/laravel-aiwmweb/backend/resources/js/site-onboarding-save-test-sync-control.tsx; focused-closure:AIMW-SYNC-C1B6FA6677; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/site-onboarding-save-test-sync-ui-terminality.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/site-onboarding-previous-step-terminality.json",
+      "migration_state": "PENDING",
+      "acceptance_test": "",
+      "evidence": "",
       "reconciliation": {
-        "decision": "ADAPTED",
-        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "Issue #972 SiteOnboarding PreviousAsync focused navigation closure",
-        "source_sha": "d7996d30c8afe2b9ea16e984c0531df0c72eb5b3",
-        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/site-onboarding-save-test-sync-control.tsx",
-        "evidence_mode": "focused_closure_contract",
-        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-onboarding-previous-step-terminality.json",
-        "signals": [
-          "operation:AIMW-SYNC-C1B6FA6677",
-          "production-marker:variants/laravel-aiwmweb/backend/resources/js/site-onboarding-save-test-sync-control.tsx",
-          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/site-onboarding-save-test-sync-ui-terminality.test.tsx",
-          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/site-onboarding-previous-step-terminality.json",
-          "scope:operation-specific",
-          "test:tenant-isolation"
-        ]
+        "decision": "PENDING",
+        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
+        "source_label": null,
+        "source_sha": null,
+        "destination_path": null
       }
     },
     {
@@ -38036,12 +38026,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 401,
-      "pending": 45,
+      "adapted": 400,
+      "pending": 46,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 401,
-      "percent": 89.91
+      "terminal": 400,
+      "percent": 89.69
     }
   },
   "pending_operation_ids_by_domain": {
@@ -38100,6 +38090,7 @@
       "AIMW-SYNC-B78216241F",
       "AIMW-SYNC-B955324F04",
       "AIMW-SYNC-BDBA0B4F01",
+      "AIMW-SYNC-C1B6FA6677",
       "AIMW-SYNC-C43EFD36B1",
       "AIMW-SYNC-CC2B584BC4",
       "AIMW-SYNC-D5CE5A213B",
@@ -39726,7 +39717,6 @@
       "AIMW-SYNC-B11D963A9E",
       "AIMW-SYNC-B83AB5A666",
       "AIMW-SYNC-C18ED1F753",
-      "AIMW-SYNC-C1B6FA6677",
       "AIMW-SYNC-C8C380E7F8",
       "AIMW-SYNC-CB01197D47",
       "AIMW-SYNC-CD6F1FB97B",
@@ -40923,17 +40913,10 @@
         "operation_ids": [
           "AIMW-SYNC-5A397204EF"
         ]
-      },
-      {
-        "label": "Issue #972 SiteOnboarding PreviousAsync focused navigation closure",
-        "sha": "d7996d30c8afe2b9ea16e984c0531df0c72eb5b3",
-        "operation_ids": [
-          "AIMW-SYNC-C1B6FA6677"
-        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 171,
-    "focused_closure_contract_count": 401,
+    "focused_closure_operation_scoped_count": 170,
+    "focused_closure_contract_count": 400,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
