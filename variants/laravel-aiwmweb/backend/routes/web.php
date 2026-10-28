@@ -337,10 +337,6 @@ Route::prefix('/tenants/{tenant}')
     ->controller(CanonicalWorkspaceRouteController::class)
     ->group(function (): void {
         Route::get('/sites', 'show')->defaults('workspace_permissions', 'tenant.view,sites.view')->name('canonical.workspace.sites');
-        Route::get('/sites/connect', 'show')
-            ->defaults('workspace_permissions', 'tenant.view,sites.manage')
-            ->defaults('canonical_operation_id', 'AIMW-SYNC-CC2B584BC4')
-            ->name('canonical.workspace.site-connect');
         Route::get('/sites/{site}', 'showSite')->defaults('workspace_permissions', 'tenant.view,sites.view')->whereNumber('site')->name('canonical.site.details');
         Route::get('/sites/{site}/content/{contentType}/{wordpressId}/edit', 'showContentEditor')
             ->defaults('workspace_permissions', 'content.view')

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { resolveCapability, tenantUrl, workspaceRoutes, type FrontendContext } from './core';
+import { tenantUrl, workspaceRoutes, type FrontendContext } from './core';
 import { useLocale } from './i18n';
 
 export const GLOBAL_SYNCHRONIZATION_CONNECT_SITE_OPERATION_ID = 'AIMW-SYNC-CC2B584BC4';
@@ -23,7 +23,10 @@ export function globalSynchronizationConnectSiteDestination(context: FrontendCon
     if (!slug || /[\\/]/.test(slug) || !context.tenants.some((tenant) => tenant.slug === slug)) return null;
     if (!syncRoute || !onboardingRoute || onboardingRoute.path !== '/sites/connect') return null;
     if (!['tenant.view', 'content.view', 'sync.view', 'sites.manage'].every(has)) return null;
-    if (resolveCapability(context, syncRoute).state !== 'enabled') return null;
+    // Empty-site navigation remains available before a site-scoped sync API exists.
+    // Honor an explicitly disabled capability while enforcing permissions above.
+    const advertisedSync = context.capabilities['sync.view'] ?? context.capabilities.sync;
+    if (advertisedSync && advertisedSync.state !== 'enabled') return null;
     if (context.capabilities['site-connect']?.state &&
         context.capabilities['site-connect']?.state !== 'enabled') return null;
     const expectedSites = `/api/tenants/${encodeURIComponent(slug)}/sites`;

@@ -31,7 +31,10 @@ final class GlobalSynchronizationConnectSiteLinkTerminalityTest extends TestCase
 
         $route = Route::getRoutes()->match(Request::create('/tenants/alpha/sites/connect', 'GET'));
         $this->assertSame(CanonicalWorkspaceRouteController::class.'@show', ltrim($route->getActionName(), '\\'));
-        $this->assertSame('AIMW-SYNC-CC2B584BC4', $route->defaults['canonical_operation_id'] ?? null);
+        $this->assertSame('canonical.site.connect', $route->getName());
+        $this->assertSame('AIMW-SITE-E3EA44AD3F', $route->defaults['canonical_operation_id'] ?? null);
+        $this->assertSame('AIMW-CONT-BF5F72F4F9', $route->defaults['canonical_route_operation_id'] ?? null);
+        $this->assertNotSame('AIMW-SYNC-CC2B584BC4', $route->defaults['canonical_operation_id'] ?? null);
         $this->assertSame('tenant.view,sites.manage', $route->defaults['workspace_permissions'] ?? null);
         $this->assertContains('auth', $route->gatherMiddleware());
         $this->assertContains('tenant.context', $route->gatherMiddleware());
