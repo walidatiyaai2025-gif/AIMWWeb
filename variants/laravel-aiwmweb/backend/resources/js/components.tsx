@@ -296,21 +296,21 @@ export function Pagination({
     lastPage,
     onPage,
     previousOperationId,
-    busy = false,
+    previousOperationAliasId,
 }: {
     page: number;
     lastPage: number;
     onPage: (page: number) => void;
     previousOperationId?: string;
-    busy?: boolean;
+    previousOperationAliasId?: string;
 }) {
     const { text, locale } = useLocale();
     if (lastPage <= 1) return null;
     return (
         <nav className="pagination" aria-label={locale === 'ar' ? 'ترقيم الصفحات' : 'Pagination'}>
-            <button type="button" className="btn" data-canonical-operation={previousOperationId} onClick={() => { if (!busy && page > 1) onPage(previousAppDataGridPage(page)); }} disabled={page <= 1 || busy}>{text(commonText.previous)}</button>
+            <button type="button" className="btn" data-canonical-operation={previousOperationId} data-canonical-operation-alias={previousOperationAliasId} onClick={() => onPage(previousAppDataGridPage(page))} disabled={page <= 1}>{text(commonText.previous)}</button>
             <span aria-live="polite">{locale === 'ar' ? `صفحة ${page} من ${lastPage}` : `Page ${page} of ${lastPage}`}</span>
-            <button type="button" className="btn" onClick={() => { if (!busy && page < lastPage) onPage(page + 1); }} disabled={page >= lastPage || busy}>{text(commonText.next)}</button>
+            <button type="button" className="btn" onClick={() => onPage(page + 1)} disabled={page >= lastPage}>{text(commonText.next)}</button>
         </nav>
     );
 }
