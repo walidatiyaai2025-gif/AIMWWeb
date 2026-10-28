@@ -45,7 +45,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | seo | 24 | 0 | 24 | 0 | 0 | 0 | 24 | 100.00% |
 | settings | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 100.00% |
 | sites | 12 | 0 | 12 | 0 | 0 | 0 | 12 | 100.00% |
-| sync | 213 | 0 | 168 | 45 | 0 | 0 | 168 | 78.87% |
+| sync | 213 | 0 | 169 | 44 | 0 | 0 | 169 | 79.34% |
 | taxonomy | 13 | 0 | 13 | 0 | 0 | 0 | 13 | 100.00% |
 
 ## By kind
@@ -145,7 +145,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 
 - None
 
-### sync (45)
+### sync (44)
 
 - `AIMW-SYNC-1A20057999`
 - `AIMW-SYNC-1B63FBC758`
@@ -188,7 +188,6 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-SYNC-E51F091C0B`
 - `AIMW-SYNC-ECAB44A389`
 - `AIMW-SYNC-ED1442005E`
-- `AIMW-SYNC-EE7D7534DF`
 - `AIMW-SYNC-EEFDDFFF87`
 - `AIMW-SYNC-F7BCCD650C`
 - `AIMW-SYNC-FD27B795ED`

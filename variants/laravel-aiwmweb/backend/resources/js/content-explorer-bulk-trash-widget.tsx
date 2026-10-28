@@ -5,6 +5,11 @@ import { useToast } from './components';
 import { useLocale } from './i18n';
 import { CONTENT_EXPLORER_CONTENT_TAB_RESET_EVENT } from './content-explorer-content-tab-control';
 import {
+    CONTENT_EXPLORER_BULK_PUBLISH_OPERATION_ID,
+    contentExplorerBulkPublishEndpoint,
+    buildContentExplorerBulkPublishPayload,
+} from './content-explorer-bulk-publish-control';
+import {
     CONTENT_EXPLORER_BULK_TRASH_OPERATION_ID,
     buildBulkTrashPayload,
     contentExplorerBulkTrashEndpoint,
@@ -70,6 +75,7 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
     const canView = hasPermission(context, 'content.view');
     const canEdit = hasPermission(context, 'content.edit');
     const endpoint = contentExplorerBulkTrashEndpoint(context.tenant.slug, siteId);
+    const publishEndpoint = contentExplorerBulkPublishEndpoint(context.tenant.slug, siteId);
     const postsEndpoint = context.api.posts;
     const pagesEndpoint = context.api.pages;
     const enabled = Boolean(endpoint && postsEndpoint && pagesEndpoint && canView && canEdit);
@@ -95,6 +101,41 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
             .map((row) => ({ content_type: row.type, wordpress_id: row.remote_id } satisfies BulkTrashTarget)),
         [rows, selected],
     );
+
+    const selectedLocalIds = useMemo(
+        () => rows
+            .filter((row) => selected.has(`${row.type}:${row.remote_id}`))
+            .map((row) => row.id)
+            .filter((id) => Number.isSafeInteger(id) && id > 0),
+        [rows, selected],
+    );
+
+    const publishMutation = useMutation({
+        mutationFn: async (ids: number[]) => {
+            if (!publishEndpoint) throw new Error('The selected site publish endpoint is unavailable.');
+            const result = await apiRequest<{ state: string; count: number }>(publishEndpoint, {
+                method: 'POST',
+                body: JSON.stringify(buildContentExplorerBulkPublishPayload(ids)),
+            });
+            if (result.state !== 'queued' || result.count !== ids.length) {
+                throw new Error('The server did not confirm the publish job was queued.');
+            }
+            return result;
+        },
+        onSuccess: (result) => {
+            setSelected(new Set());
+            notify(
+                locale === 'ar'
+                    ? `تم وضع ${result.count} عنصر في انتظار النشر. لا يعتبر النشر مكتملاً حتى تتأكد من الحالة الفعلية بعد تنفيذ المهمة.`
+                    : `Queued ${result.count} item(s) for publication; verify actual WordPress status after the job completes.`,
+                'success',
+            );
+        },
+        onError: (error) => notify(
+            error instanceof Error ? error.message : 'Could not queue selected content for publication.',
+            'error',
+        ),
+    });
 
     const mutation = useMutation({
         mutationFn: async (targets: BulkTrashTarget[]) => {
@@ -127,10 +168,12 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
         ),
     });
 
+    const busy = mutation.isPending || publishMutation.isPending;
+
     if (!enabled || !activeSite) return null;
 
     const toggle = (row: ContentRow) => {
-        if (mutation.isPending) return;
+        if (busy) return;
         const key = `${row.type}:${row.remote_id}`;
         setSelected((current) => {
             const next = new Set(current);
@@ -145,7 +188,7 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
             <header className="panel-header">
                 <div>
                     <span className="workspace-kicker">CONTENT OPERATIONS</span>
-                    <h2>{locale === 'ar' ? 'نقل المحدد إلى سلة المهملات' : 'Move selected content to trash'}</h2>
+                    <h2>{locale === 'ar' ? 'إجراءات جماعية على المحتوى' : 'Bulk content actions'}</h2>
                     <p>{locale === 'ar'
                         ? `الموقع: ${activeSite.name}. يتم التحقق من كل عنصر على الخادم قبل التغيير.`
                         : `Site: ${activeSite.name}. Each item is verified by the server before mutation.`}</p>
@@ -165,10 +208,21 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
                     <div className="toolbar-actions">
                         <button
                             type="button"
+                            className="btn primary"
+                            data-canonical-operation={CONTENT_EXPLORER_BULK_PUBLISH_OPERATION_ID}
+                            onClick={() => publishMutation.mutate(selectedLocalIds)}
+                            disabled={!publishEndpoint || busy || selectedLocalIds.length === 0 || selectedLocalIds.length !== selectedTargets.length}
+                        >
+                            {publishMutation.isPending
+                                ? (locale === 'ar' ? 'جارٍ إضافة مهمة النشر…' : 'Queueing publication…')
+                                : (locale === 'ar' ? 'نشر المحدد' : 'Publish selected')}
+                        </button>
+                        <button
+                            type="button"
                             className="btn danger"
                             data-canonical-operation={CONTENT_EXPLORER_BULK_TRASH_OPERATION_ID}
                             onClick={() => mutation.mutate(selectedTargets)}
-                            disabled={mutation.isPending || selectedTargets.length === 0}
+                            disabled={busy || selectedTargets.length === 0}
                         >
                             {mutation.isPending
                                 ? (locale === 'ar' ? 'جارٍ النقل…' : 'Moving…')
@@ -178,7 +232,7 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
                             type="button"
                             className="btn"
                             onClick={() => setSelected(new Set())}
-                            disabled={mutation.isPending || selectedTargets.length === 0}
+                            disabled={busy || selectedTargets.length === 0}
                         >
                             {locale === 'ar' ? 'مسح التحديد' : 'Clear selection'}
                         </button>
@@ -203,7 +257,7 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
                                                     type="checkbox"
                                                     checked={selected.has(key)}
                                                     onChange={() => toggle(row)}
-                                                    disabled={mutation.isPending}
+                                                    disabled={busy}
                                                     aria-label={`${locale === 'ar' ? 'تحديد' : 'Select'} ${row.title ?? key}`}
                                                 />
                                             </td>
