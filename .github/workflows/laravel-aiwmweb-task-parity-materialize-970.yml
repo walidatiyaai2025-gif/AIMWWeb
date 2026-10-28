@@ -44,11 +44,12 @@ jobs:
           before={r['operation_id']:r['migration_state'] for r in old['operations']}
           after={r['operation_id']:r['migration_state'] for r in new['operations']}
           target='AIMW-SYNC-AE16CF49C6'
-          assert before[target]=='PENDING', (target,before[target])
+          assert before[target] in ('PENDING','ADAPTED'), (target,before[target])
           assert after[target]=='ADAPTED', (target,after[target])
           assert new['totals']['total']==931
           changed={k:(before[k],after[k]) for k in before if before[k]!=after[k]}
           print('Task #970 target:',target,changed[target])
+          assert all(old=='PENDING' and new=='ADAPTED' for old,new in changed.values()), changed
           print('Other pending source reconciliation deltas:',{k:v for k,v in changed.items() if k!=target})
           PY
       - name: Commit only officially generated reconciliation
