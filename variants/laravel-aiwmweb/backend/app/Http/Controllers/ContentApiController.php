@@ -32,6 +32,8 @@ use Illuminate\Validation\Rule;
 
 final class ContentApiController extends Controller
 {
+    public const MEDIA_BATCH_UPLOAD_OPERATION_ID = 'AIMW-SYNC-6766C503DA';
+
     public const MEDIA_DELETE_OPERATION_ID = 'AIMW-BILL-4DCB58743D';
 
     public const CONTENT_EDITOR_SAVE_OPERATION_ID = 'AIMW-BILL-42F7590F00';
@@ -459,13 +461,53 @@ final class ContentApiController extends Controller
 
     public function uploadMedia(Request $request, TenantAuthorizer $auth, string $tenant, int $site): JsonResponse
     {
+        // AIMW-SYNC-6766C503DA: MediaBatchUploadPanel.UploadClickedAsync.
+        // Authorization AND authoritative site ownership must precede storing bytes or queueing.
         $auth->authorize('content.edit');
-        $data = $request->validate(['file' => 'required|file|max:204800', 'alt_text' => 'nullable|string|max:500', 'caption' => 'nullable|string|max:5000', 'title' => 'nullable|string|max:500']);
+        Site::query()->findOrFail($site);
+        foreach (['tenant_id', 'site_id', 'actor_id', 'remote_id', 'state', 'result', 'credentials'] as $protected) {
+            abort_if($request->exists($protected), 422, 'Caller-owned media upload state is forbidden.');
+        }
+        $data = $request->validate([
+            'file' => 'required|file|max:25600',
+            'alt_text' => 'nullable|string|max:500',
+            'caption' => 'nullable|string|max:5000',
+            'title' => 'nullable|string|max:500',
+        ]);
         $file = $data['file'];
+        $name = basename(str_replace('\\', '/', $file->getClientOriginalName()));
+        $name = trim((string) preg_replace('/[\\x00-\\x1F\\x7F]/', '', $name));
+        $extension = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+        $allowedTypes = [
+            'jpg' => ['image/jpeg'], 'jpeg' => ['image/jpeg'], 'png' => ['image/png'],
+            'gif' => ['image/gif'], 'webp' => ['image/webp'], 'avif' => ['image/avif'],
+            'pdf' => ['application/pdf'], 'doc' => ['application/msword'],
+            'docx' => ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/zip'],
+            'xls' => ['application/vnd.ms-excel'],
+            'xlsx' => ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/zip'],
+            'zip' => ['application/zip', 'application/x-zip-compressed'],
+        ];
+        $mime = strtolower((string) $file->getMimeType());
+        abort_unless($name !== '' && strlen($name) <= 180
+            && isset($allowedTypes[$extension])
+            && (in_array($mime, $allowedTypes[$extension], true) || $mime === 'application/octet-stream'),
+            422, 'The media file name, extension, or detected content type is not allowed.');
+
         $path = $file->store("content-uploads/{$this->tenant->id()}/{$site}", 'local');
-        $transfer = ContentTransfer::query()->create(['site_id' => $site, 'kind' => 'media-upload', 'state' => 'queued', 'progress' => 0, 'storage_path' => $path, 'options' => ['name' => $file->getClientOriginalName(), 'mime_type' => $file->getMimeType(), 'metadata' => array_filter(['alt_text' => $data['alt_text'] ?? null, 'caption' => $data['caption'] ?? null, 'title' => $data['title'] ?? null])]]);
+        abort_unless($path !== false, 503, 'Media file could not be stored.');
+        $transfer = ContentTransfer::query()->create([
+            'site_id' => $site, 'kind' => 'media-upload', 'state' => 'queued',
+            'progress' => 0, 'storage_path' => $path,
+            'options' => ['name' => $name, 'mime_type' => $mime,
+                'metadata' => array_filter([
+                    'alt_text' => $data['alt_text'] ?? null,
+                    'caption' => $data['caption'] ?? null,
+                    'title' => $data['title'] ?? null,
+                ], static fn ($value) => $value !== null && $value !== '')],
+        ]);
         MediaUploadJob::dispatch($this->tenant->id(), $transfer->id);
 
+        // A durable queued transfer is not proof that WordPress accepted the file.
         return response()->json($transfer, 202);
     }
 
