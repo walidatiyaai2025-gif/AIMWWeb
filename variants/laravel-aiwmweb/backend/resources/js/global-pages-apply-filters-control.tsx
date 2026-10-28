@@ -15,7 +15,7 @@ export const DEFAULT_GLOBAL_PAGES_FILTERS: GlobalPagesFilterState = {
     search: '',
     siteId: '',
     status: 'all',
-    perPage: 100,
+    perPage: 25,
 };
 
 export function globalPagesFilterUrl(tenantSlug: string, filters: GlobalPagesFilterState): string | null {
