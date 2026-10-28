@@ -18,9 +18,6 @@ final class MediaMetadataVerificationService
         $this->remote = $remote;
     }
 
-    /** @param array<string, string|null> $metadata
-     *  @return array<string, mixed>
-     */
     public function save(int $siteId, int $remoteId, array $metadata): array
     {
         $this->remote->mutate($siteId, 'media', $remoteId, 'update', $metadata);
