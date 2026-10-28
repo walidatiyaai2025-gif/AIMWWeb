@@ -23,7 +23,8 @@ const context = (
     permissions,
     connectors,
     capabilities: {},
-    api: {},
+    // A rendered workspace is backed by the server-advertised Posts and Sync API contracts.
+    api: { posts: '/api/tenants/alpha/posts', sync: '/api/tenants/alpha/sync' },
     actions: {},
 });
 
