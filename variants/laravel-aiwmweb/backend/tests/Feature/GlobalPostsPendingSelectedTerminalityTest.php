@@ -42,7 +42,7 @@ final class GlobalPostsPendingSelectedTerminalityTest extends TestCase
         );
 
         $this->assertSame(GlobalPostsPendingController::class.'@markPending', ltrim($route->getActionName(), '\\'));
-        $this->assertSame('api.v1.global-posts.private', $route->getName());
+        $this->assertSame('api.v1.global-posts.pending', $route->getName());
         $this->assertSame(self::OPERATION_ID, $route->defaults['canonical_operation_id'] ?? null);
         $this->assertContains('auth', $route->gatherMiddleware());
         $this->assertContains('tenant.context', $route->gatherMiddleware());
