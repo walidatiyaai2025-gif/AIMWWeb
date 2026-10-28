@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #974",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-45A3B43BB9",
+  "domain": "sync",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/Sites.razor",
+    "route_screen": "/sites",
+    "visible_control": "DisableSelectedAsync",
+    "behavior": "Disable selected site connection profiles without deleting data and reread authoritative state",
+    "tenant_owned": true,
+    "risk": "critical"
+  },
+  "laravel_adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/sites-disable-selected-control.tsx",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SitesBulkDisableSelectedController.php",
+    "mount": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "route": "POST /api/tenants/{tenant}/sites/bulk-disable",
+    "permission": "sites.manage",
+    "transaction": "atomic tenant-scoped row lock and post-commit verification",
+    "operation_marker": "AIMW-SYNC-45A3B43BB9"
+  },
+  "security_boundary": {
+    "authentication": "auth + tenant.context",
+    "foreign_tenant": "404",
+    "foreign_site": "404; atomic no partial write",
+    "denied_permission": "403",
+    "input_override": "422",
+    "idempotent": "repeat returns updated=0"
+  },
+  "acceptance_tests": [
+    "variants/laravel-aiwmweb/backend/tests/Feature/SitesDisableSelectedTerminalityTest.php"
+  ],
+  "scope_exclusions": [
+    "No changes to unrelated operations",
+    "No ASP.NET source modification",
+    "Generator-only reconciliation"
+  ]
+}

@@ -1,12 +1,12 @@
-name: Laravel AIWMWeb Task Parity Materialize 929
+name: Laravel AIWMWeb Task Parity Materialize 971
 
 on:
   push:
     branches:
-      - worker/929-content-explorer-bulk-pending
+      - worker/971-AIMW-SYNC-BDBA0B4F01
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
-      - '.github/workflows/laravel-aiwmweb-task-parity-materialize-929.yml'
+      - '.github/workflows/laravel-aiwmweb-task-parity-materialize-971.yml'
 
 permissions:
   contents: write
@@ -46,6 +46,6 @@ jobs:
           if git diff --cached --quiet; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore(laravel): materialize parity for AIMW-SYNC-DDC8657C2F"
+          git commit -m "chore(laravel): materialize parity for AIMW-SYNC-BDBA0B4F01"
           git push origin "HEAD:${{ github.ref_name }}"
 
