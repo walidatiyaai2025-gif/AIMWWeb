@@ -103,6 +103,10 @@ final class ContentExplorerBulkPublishTerminalityTest extends TestCase
             'ids' => [$foreignPost->id], 'action' => 'publish',
         ])->assertUnprocessable();
 
+        $this->actingAs($editor)->postJson($url, [
+            'ids' => [$post->id], 'action' => 'publish', 'tenant_id' => $alpha->tenant_id,
+        ])->assertUnprocessable();
+
         Queue::assertNotPushed(BulkContentMutationJob::class);
     }
 
