@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #945 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-246AD1A2AE",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-SYNC-246AD1A2AE",
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "/module/posts",
+    "source": "src/AIWordPressManager.Web/Components/Pages/GlobalPostsExplorer.razor",
+    "source_intent": "Queue selected posts as pending review on their own WordPress sites with truthful 202 queued receipt.",
+    "mutation": true,
+    "tenant_owned": true
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/global-posts-pending-selected-control.ts",
+    "frontend_widget": "variants/laravel-aiwmweb/backend/resources/js/global-posts-confirm-trash-widget.tsx",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/GlobalPostsPendingController.php",
+    "route": "POST /api/v1/tenants/{tenant}/global-posts/pending",
+    "background_job": "App\\Jobs\\BulkContentMutationJob",
+    "actual_wp_boundary": "ContentPlatformService::mutateContent via existing native WordPress REST driver; status pending; remote state rechecked in existing worker path",
+    "execution_response": "202 queued is not success on WordPress"
+  },
+  "security": {
+    "permission": "content.edit",
+    "tenant_context": "server-derived",
+    "validated_site_and_post": true,
+    "guest_401": true,
+    "viewer_403": true,
+    "foreign_tenant_404": true,
+    "caller_owned_identity_denied": true,
+    "duplicates_denied": true,
+    "max_targets": 100
+  },
+  "tests": {
+    "phpunit": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalPostsPendingSelectedTerminalityTest.php",
+    "vitest": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-posts-pending-selected-control.test.ts"
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-246AD1A2AE"
+    ],
+    "manual_reconciliation": false,
+    "aspnet_modified": false
+  }
+}

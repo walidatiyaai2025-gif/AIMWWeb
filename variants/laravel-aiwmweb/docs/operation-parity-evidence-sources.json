@@ -2932,6 +2932,86 @@
       ]
     },
     {
+      "label": "Issue #955 Global Synchronization Open local content navigation operation-scoped closure",
+      "sha": "37ab6e608e11b617a9c37f6121e45fab38ac26fe",
+      "observed_pr_head": "37ab6e608e11b617a9c37f6121e45fab38ac26fe",
+      "operation_ids": [
+        "AIMW-SYNC-E51F091C0B"
+      ]
+    },
+    {
+      "label": "Issue #950 Global Posts Open synchronization navigation scoped closure",
+      "sha": "cd171497cba463039bdac1e25e83bee2473f495b",
+      "observed_pr_head": "cd171497cba463039bdac1e25e83bee2473f495b",
+      "operation_ids": [
+        "AIMW-SYNC-EEFDDFFF87"
+      ]
+    },
+    {
+      "label": "Issue #936 Global Pages PendingSelectedAsync operation-scoped closure",
+      "sha": "d0a7f72e688bcdebcb2490efa446dbf313df9bc8",
+      "observed_pr_head": "d0a7f72e688bcdebcb2490efa446dbf313df9bc8",
+      "operation_ids": [
+        "AIMW-SYNC-3E7DCF4C71"
+      ]
+    },
+    {
+      "label": "Issue #937 Global Pages Open Synchronization operation-scoped closure",
+      "sha": "9ba2cab2d533b2ca787b10d339eba90553154b86",
+      "observed_pr_head": "9ba2cab2d533b2ca787b10d339eba90553154b86",
+      "operation_ids": [
+        "AIMW-SYNC-80B81C07B8"
+      ]
+    },
+    {
+      "label": "Issue #939 Global Pages PrivateSelectedAsync operation-scoped closure",
+      "sha": "fce15175987e2c4356559fe0674d19c61d22be5a",
+      "observed_pr_head": "fce15175987e2c4356559fe0674d19c61d22be5a",
+      "operation_ids": [
+        "AIMW-SYNC-C43EFD36B1"
+      ]
+    },
+    {
+      "label": "Issue #944 Global Posts ResetAsync operation-scoped closure (merged PR #1349)",
+      "sha": "25933fb0154a7dd7a5716ba345fc53fab7568485",
+      "observed_pr_head": "25933fb0154a7dd7a5716ba345fc53fab7568485",
+      "operation_ids": [
+        "AIMW-SYNC-1A20057999"
+      ]
+    },
+    {
+      "label": "Issue #945 Global Posts PendingSelectedAsync operation-scoped closure (merged PR #1352)",
+      "sha": "164a08a7b0517cb1b2643c149abe64e36cbd6961",
+      "observed_pr_head": "164a08a7b0517cb1b2643c149abe64e36cbd6961",
+      "operation_ids": [
+        "AIMW-SYNC-246AD1A2AE"
+      ]
+    },
+    {
+      "label": "Issue #947 Global Posts RequestTrashAsync operation-scoped closure (merged PR #1353)",
+      "sha": "b016696ac5f81e235c64dd666903037c71ae2430",
+      "observed_pr_head": "b016696ac5f81e235c64dd666903037c71ae2430",
+      "operation_ids": [
+        "AIMW-SYNC-476CDB769B"
+      ]
+    },
+    {
+      "label": "Issue #953 Global Synchronization RefreshStatusAsync authoritative status",
+      "sha": "29061a04e90c5b89d4fe4cae40dadb5eede04b87",
+      "observed_pr_head": "29061a04e90c5b89d4fe4cae40dadb5eede04b87",
+      "operation_ids": [
+        "AIMW-SYNC-9504A57CAE"
+      ]
+    },
+    {
+      "label": "Issue #952 Global Synchronization RequestAcceptRemoteAsync confirmation",
+      "sha": "d751dbb789b19fb335671a57148638ff921f940a",
+      "observed_pr_head": "d751dbb789b19fb335671a57148638ff921f940a",
+      "operation_ids": [
+        "AIMW-SYNC-1B63FBC758"
+      ]
+    },
+    {
       "label": "AIMW-SYNC-DDC8657C2F ContentExplorer BulkPendingAsync focused closure #929",
       "sha": "878446af66152a5d731d57827f400c74a20dc85d",
       "observed_pr_head": "878446af66152a5d731d57827f400c74a20dc85d",
