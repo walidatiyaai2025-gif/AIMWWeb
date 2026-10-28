@@ -45,7 +45,8 @@ final class MediaMetadataVerificationServiceTest extends TestCase
 
     private function driver(array $read): ContentRemoteDriver
     {
-        return new class($read) implements ContentRemoteDriver {
+        return new class($read) implements ContentRemoteDriver
+        {
             public array $calls = [];
 
             private array $read;
