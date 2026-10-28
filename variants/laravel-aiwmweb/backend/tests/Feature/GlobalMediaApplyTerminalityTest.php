@@ -89,6 +89,34 @@ final class GlobalMediaApplyTerminalityTest extends TestCase
             ->assertJsonPath('current_page', 1);
     }
 
+    public function test_source_search_matches_media_slug_and_mime_type(): void
+    {
+        $user = User::factory()->create();
+        $membership = $this->membership($user, 'media-search-934', ['tenant.view', 'content.view']);
+        $site = $this->site($membership, 'Media Search');
+
+        $this->inTenant($membership, function () use ($site): void {
+            MediaItem::query()->create([
+                'site_id' => $site->id,
+                'remote_id' => 93401,
+                'title' => 'Untitled attachment',
+                'slug' => 'specific-slug-934',
+                'mime_type' => 'application/pdf',
+            ]);
+        });
+
+        $endpoint = "/api/v1/tenants/media-search-934/sites/{$site->id}/media";
+        $this->actingAs($user)->getJson($endpoint.'?search=specific-slug-934&page=1')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.remote_id', 93401);
+
+        $this->actingAs($user)->getJson($endpoint.'?search=application%2Fpdf&page=1')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.remote_id', 93401);
+    }
+
     public function test_apply_read_fails_closed_for_foreign_tenant_foreign_site_and_missing_permission(): void
     {
         $alphaUser = User::factory()->create();
