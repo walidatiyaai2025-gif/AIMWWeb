@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #951 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-0239B0E6A3",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "/module/sync",
+    "source": "src/AIWordPressManager.Web/Components/Pages/GlobalSynchronizationWorkspace.razor",
+    "source_control": "EditorUrl(conflict) (RemoteUpdated only)",
+    "source_intent": "Open the existing tenant/site-scoped Laravel content editor for a confirmed remote update so the user can merge content.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/global-synchronization-review-conflicts-control.tsx",
+    "target_source": "variants/laravel-aiwmweb/backend/resources/js/content-editor-save-control.tsx",
+    "read_source": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SyncApiController.php",
+    "target_route": "GET /tenants/{tenant}/sites/{site}/content/{contentType}/{wordpressId}/edit",
+    "semantics": "Render a real editor link only for RemoteUpdated entries of an authoritative conflict-review response. The target editor separately reads tenant-scoped persisted content.",
+    "loading_error_empty_behavior": "No link before a successful verified review; no link for RemoteDeleted, empty review, invalid identity or unauthorized tenant; review errors are rendered, not treated as success."
+  },
+  "security": {
+    "backend_mutation_added": false,
+    "provider_mutation_added": false,
+    "caller_owned_identity_override_added": false,
+    "tenant_selector_added": false,
+    "foreign_tenant_access_added": false,
+    "foreign_tenant_site_returns_404": true,
+    "exact_context_endpoint_required": true,
+    "fake_success": false,
+    "secret_disclosure_added": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalSynchronizationConflictEditorLinkTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-synchronization-conflict-editor-link.test.tsx",
+    "coverage": [
+      "exact operation identity and source semantics",
+      "trusted conflict read and resolved Laravel editor route",
+      "RemoteDeleted never links",
+      "foreign tenant/site and IDOR guard 404",
+      "authorization guard 403",
+      "loading/empty/error and identity mismatch fail closed"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-0239B0E6A3"
+    ],
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "retry_v2_final_lineage_created": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "branch": "worker/951-global-sync-conflict-editor-link",
+    "issue": 951
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true
+  }
+}
