@@ -34,7 +34,7 @@ Route::prefix('v1/tenants/{tenant}/sites/{site}')->middleware(['web', 'tenant.co
         ->defaults('canonical_operation_id', ContentExplorerReadController::OPERATION_ID)
         ->name('canonical.api.content-explorer.read');
     Route::get('content/{type}', [ContentApiController::class, 'index']);
-    Route::post('content/{type}', [ContentApiController::class, 'store']);
+    Route::post('content/{type}', [ContentApiController::class, 'store'])->where('type', 'post|page');
     Route::get('content/{type}/{wordpressId}/editor', [ContentApiController::class, 'editor'])
         ->middleware('auth')
         ->whereNumber('wordpressId')
