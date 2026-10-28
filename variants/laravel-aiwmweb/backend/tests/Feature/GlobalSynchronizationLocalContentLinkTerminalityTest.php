@@ -87,14 +87,18 @@ final class GlobalSynchronizationLocalContentLinkTerminalityTest extends TestCas
         $tenant = Tenant::query()->firstOrCreate(['slug' => $slug], ['name' => ucfirst($slug)]);
         $context = app(TenantContext::class);
         $context->activate($tenant);
+
         $membership = TenantMembership::query()->create(['user_id' => $user->id, 'status' => 'active']);
         $role = Role::query()->create(['name' => "sync-local-link-{$slug}-{$user->id}"]);
+
         foreach ($permissions as $name) {
             $permission = Permission::query()->firstOrCreate(['name' => $name]);
             $role->permissions()->attach($permission, ['tenant_id' => $tenant->id]);
         }
+
         $membership->roles()->attach($role, ['tenant_id' => $tenant->id]);
         $context->forget();
+
         return $membership->fresh('tenant');
     }
 
@@ -108,6 +112,7 @@ final class GlobalSynchronizationLocalContentLinkTerminalityTest extends TestCas
             'status' => 'active',
         ]);
         $context->forget();
+
         return $site;
     }
 }
