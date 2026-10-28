@@ -2,7 +2,7 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "previous_reconciliation_sha": "df8b57225130e583fc9642bfed5851db5d7ded8a",
+  "previous_reconciliation_sha": "8712399f99182b1c9c891fef894d7cccefe363b7",
   "focused_closure_evidence_source_sha": "ae01461eb85c64046734688ae0bf3f418591c653",
   "countable_sources": [
     {
@@ -3063,6 +3063,14 @@
       "observed_pr_head": "ee65778c11019a99b638f09e789f63090b6d827e",
       "operation_ids": [
         "AIMW-SYNC-E0791EA9E9"
+      ]
+    },
+    {
+      "label": "Issue #964 MediaBatchUploadPanel UploadClickedAsync guarded media batch",
+      "sha": "c6184bdf4134625976116bf8b38376a180fc8fe3",
+      "observed_pr_head": "c6184bdf4134625976116bf8b38376a180fc8fe3",
+      "operation_ids": [
+        "AIMW-SYNC-6766C503DA"
       ]
     }
   ],
