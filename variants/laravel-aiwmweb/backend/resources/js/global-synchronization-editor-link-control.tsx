@@ -18,7 +18,7 @@ export function globalSyncEditorDestination(
 ): string | null {
     const site = String(siteId);
     if (!tenantSlug.trim() || /[\\/]/.test(tenantSlug)) return null;
-    if (!/^[1-9]\\d*$/.test(site)) return null;
+    if (!/^[1-9]\d*$/.test(site)) return null;
     if (conflict.kind !== 'RemoteUpdated') return null;
     if (conflict.content_type !== 'post' && conflict.content_type !== 'page') return null;
     if (!Number.isSafeInteger(conflict.wordpress_id) || conflict.wordpress_id < 1) return null;
