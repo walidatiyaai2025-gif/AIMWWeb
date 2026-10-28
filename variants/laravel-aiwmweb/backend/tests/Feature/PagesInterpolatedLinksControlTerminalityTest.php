@@ -50,13 +50,18 @@ final class PagesInterpolatedLinksControlTerminalityTest extends TestCase
         $this->assertContains('tenant.context', $route->gatherMiddleware());
 
         $this->actingAs($user)
-            ->getJson('/api/v1/tenants/alpha/global-pages?site_id=999&wordpress_id=999')
+            ->getJson('/api/v1/tenants/alpha/global-pages?site_id='.$site->id.'&wordpress_id=999')
             ->assertOk()
             ->assertJsonPath('data.0.site_id', $site->id)
             ->assertJsonPath('data.0.site_name', 'Alpha Site')
             ->assertJsonPath('data.0.wordpress_id', 71)
             ->assertJsonMissing(['site_id' => 999])
             ->assertJsonMissing(['wordpress_id' => 999]);
+
+        // Site IDs are now real filters; an unknown direct ID must fail closed rather than be ignored.
+        $this->actingAs($user)
+            ->getJson('/api/v1/tenants/alpha/global-pages?site_id=999&wordpress_id=999')
+            ->assertNotFound();
     }
 
     public function test_workspace_permission_and_cross_tenant_boundaries_fail_closed(): void

@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #955 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-E51F091C0B",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-SYNC-E51F091C0B",
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "/module/sync",
+    "source": "src/AIWordPressManager.Web/Components/Pages/GlobalSynchronizationWorkspace.razor",
+    "source_intent": "Open the selected site's local content explorer from synchronization, with no remote mutation.",
+    "mutation": false,
+    "tenant_owned": true
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/global-synchronization-local-content-link-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "destination": "/tenants/{tenant}/explorer?site={authorized_active_site_id}",
+    "operation_marker": "AIMW-SYNC-E51F091C0B"
+  },
+  "security": {
+    "tenant_context_required": true,
+    "required_permissions": [
+      "tenant.view",
+      "sync.view",
+      "sites.view"
+    ],
+    "source_site_id": "authoritative authenticated active_site",
+    "invalid_site_fails_closed": true,
+    "capability_gates": [
+      "sync",
+      "explorer"
+    ],
+    "no_server_mutation": true,
+    "server_authorization": "existing tenant guard and site-specific explorer resource authorization"
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-synchronization-local-content-link-control.test.tsx",
+    "coverage": [
+      "valid authoritative site navigation",
+      "missing and invalid site fail-closed",
+      "permission and capability denial",
+      "encoded foreign tenant",
+      "Arabic label"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-E51F091C0B"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  }
+}
