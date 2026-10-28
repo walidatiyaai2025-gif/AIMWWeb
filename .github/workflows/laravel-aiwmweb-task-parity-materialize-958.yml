@@ -2,7 +2,7 @@ name: Laravel AIWMWeb Task Parity Materialize 958 (temporary)
 on:
   push:
     branches:
-      - worker/958-global-users-previous
+      - worker/958-global-taxonomy-apply
     paths:
       - '.github/workflows/laravel-aiwmweb-task-parity-materialize-958.yml'
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
