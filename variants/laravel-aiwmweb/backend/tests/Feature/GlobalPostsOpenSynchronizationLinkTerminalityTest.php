@@ -51,9 +51,9 @@ final class GlobalPostsOpenSynchronizationLinkTerminalityTest extends TestCase
         $this->assertStringContainsString("has('tenant.view')", $control);
         $this->assertStringContainsString("has('content.view')", $control);
         $this->assertStringContainsString("has('sync.view')", $control);
-        $this->assertStringContainsString("resolveCapability(context, postsRoute)", $control);
-        $this->assertStringContainsString("resolveCapability(context, syncRoute)", $control);
-        $this->assertStringContainsString("<GlobalPostsOpenSynchronizationLinkControl context={context} />", $host);
+        $this->assertStringContainsString('resolveCapability(context, postsRoute)', $control);
+        $this->assertStringContainsString('resolveCapability(context, syncRoute)', $control);
+        $this->assertStringContainsString('<GlobalPostsOpenSynchronizationLinkControl context={context} />', $host);
         $this->assertStringContainsString("Route::get('/module/sync', 'showSiteBound')->defaults('workspace_permissions', 'content.view,sync.view')", $routes);
         $this->assertStringNotContainsString('fetch(', $control);
         $this->assertStringNotContainsString('useMutation', $control);
