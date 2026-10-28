@@ -3,6 +3,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest, type FrontendContext } from './core';
 import { useToast } from './components';
 import { useLocale } from './i18n';
+import { GLOBAL_PAGES_DRAFT_SELECTED_OPERATION_ID, globalPagesDraftEndpoint, globalPagesDraftPayload } from './global-pages-draft-selected-control';
 import { SyncAppConfirmDialogConfirmControl } from './sync-app-confirm-dialog-confirm-control';
 import {
     GLOBAL_PAGES_CONFIRM_TRASH_OPERATION_ID,
@@ -47,6 +48,7 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
     const [selected, setSelected] = useState<Set<string>>(new Set());
     const [confirmOpen, setConfirmOpen] = useState(false);
     const endpoint = globalPagesEndpoint(context.tenant.slug);
+    const draftEndpoint = globalPagesDraftEndpoint(context.tenant.slug);
     const canView = hasPermission(context, 'content.view');
     const canEdit = hasPermission(context, 'content.edit');
     const enabled = Boolean(endpoint && canView);
@@ -64,6 +66,30 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
             .map((row) => ({ site_id: row.site_id, wordpress_id: row.wordpress_id } satisfies GlobalPageTrashTarget)),
         [rows, selected],
     );
+
+    const draftMutation = useMutation({
+        mutationFn: async (targets: Array<{ site_id: number; wordpress_id: number }>) => {
+            if (!draftEndpoint) throw new Error('The requested draft operation is unavailable.');
+            return apiRequest<{ operation_id: string; state: 'queued'; count: number; site_jobs: number }>(
+                draftEndpoint,
+                { method: 'POST', body: JSON.stringify(globalPagesDraftPayload(targets)) },
+            );
+        },
+        onSuccess: (result) => {
+            if (result.operation_id !== GLOBAL_PAGES_DRAFT_SELECTED_OPERATION_ID || result.state !== 'queued') {
+                notify('Unexpected operation response; refresh authoritative state before retrying.', 'error');
+                return;
+            }
+            setSelected(new Set());
+            notify(
+                locale === 'ar'
+                    ? `تمت جدولة ${result.count} من العناصر في ${result.site_jobs} مهمة. تحقق من النتائج بعد تنفيذها.`
+                    : `Queued ${result.count} pages across ${result.site_jobs} site job(s). Verify authoritative state after execution.`,
+                'success',
+            );
+        },
+        onError: (error) => notify(error instanceof Error ? error.message : 'Could not queue selected items.', 'error'),
+    });
 
     const mutation = useMutation({
         mutationFn: async (targets: GlobalPageTrashTarget[]) => {
@@ -108,10 +134,12 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
         ),
     });
 
+    const busy = mutation.isPending || draftMutation.isPending;
+
     if (!enabled) return null;
 
     const toggle = (row: GlobalPageRow) => {
-        if (mutation.isPending || row.status === 'trash') return;
+        if (busy || row.status === 'trash') return;
         const key = `${row.site_id}:${row.wordpress_id}`;
         setSelected((current) => {
             const next = new Set(current);
@@ -145,9 +173,20 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
                     <div className="toolbar-actions">
                         <button
                             type="button"
+                            className="btn"
+                            data-canonical-operation={GLOBAL_PAGES_DRAFT_SELECTED_OPERATION_ID}
+                            disabled={!canEdit || !draftEndpoint || busy || selectedTargets.length === 0}
+                            onClick={() => draftMutation.mutate(selectedTargets)}
+                        >
+                            {draftMutation.isPending
+                                ? (locale === 'ar' ? 'جارٍ جدولة المسودات…' : 'Queueing drafts…')
+                                : (locale === 'ar' ? 'تحويل المحدد إلى مسودة' : 'Draft selected')}
+                        </button>
+                        <button
+                            type="button"
                             className="btn danger"
                             data-canonical-operation={GLOBAL_PAGES_CONFIRM_TRASH_OPERATION_ID}
-                            disabled={!canEdit || mutation.isPending || selectedTargets.length === 0}
+                            disabled={!canEdit || busy || selectedTargets.length === 0}
                             onClick={() => setConfirmOpen(true)}
                         >
                             {locale === 'ar' ? 'نقل المحدد لسلة المهملات' : 'Move selected to trash'}
@@ -155,7 +194,7 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
                         <button
                             type="button"
                             className="btn"
-                            disabled={mutation.isPending || selectedTargets.length === 0}
+                            disabled={busy || selectedTargets.length === 0}
                             onClick={() => setSelected(new Set())}
                         >
                             {locale === 'ar' ? 'مسح التحديد' : 'Clear selection'}
@@ -181,7 +220,7 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
                                                 <input
                                                     type="checkbox"
                                                     checked={selected.has(key)}
-                                                    disabled={mutation.isPending || row.status === 'trash'}
+                                                    disabled={busy || row.status === 'trash'}
                                                     onChange={() => toggle(row)}
                                                     aria-label={`${locale === 'ar' ? 'تحديد' : 'Select'} ${row.title || key}`}
                                                 />
@@ -207,7 +246,7 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
                             : `This will change ${selectedTargets.length} selected page(s) across live WordPress sites.`}</p>
                         <div className="toolbar-actions">
                             <SyncAppConfirmDialogConfirmControl
-                                busy={mutation.isPending}
+                                busy={busy}
                                 disabled={selectedTargets.length === 0}
                                 confirmText={locale === 'ar' ? 'تأكيد النقل' : 'Confirm trash'}
                                 busyText={locale === 'ar' ? 'جارٍ النقل…' : 'Moving…'}
@@ -217,7 +256,7 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
                             <button
                                 type="button"
                                 className="btn"
-                                disabled={mutation.isPending}
+                                disabled={busy}
                                 onClick={() => setConfirmOpen(false)}
                             >
                                 {locale === 'ar' ? 'إلغاء' : 'Cancel'}
