@@ -2946,6 +2946,14 @@
       "operation_ids": [
         "AIMW-SYNC-EEFDDFFF87"
       ]
+    },
+    {
+      "label": "AIMW-SYNC-E0791EA9E9 GlobalUsersWorkspace PreviousAsync focused closure #960",
+      "sha": "6b8b5485a4fa7074b3dfe9257ae174b59785f6ff",
+      "observed_pr_head": "6b8b5485a4fa7074b3dfe9257ae174b59785f6ff",
+      "operation_ids": [
+        "AIMW-SYNC-E0791EA9E9"
+      ]
     }
   ],
   "sources": [
