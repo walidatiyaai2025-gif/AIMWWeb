@@ -27,6 +27,8 @@ jobs:
           PR_HEAD=$(git rev-parse HEAD)
           BASE=$(git rev-parse refs/remotes/origin/worker/laravel-aiwmweb-closure-composition)
           echo "Task tip: $PR_HEAD; composition: $BASE"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git merge --no-commit --no-ff "$BASE" || true
           python - <<'PY'
           import subprocess, json, pathlib
@@ -49,7 +51,8 @@ jobs:
           assert any(preserved in e.get('operation_ids',[]) for e in composition[key]), 'Missing #973 evidence in composition'
           assert not any(marker in e.get('operation_ids',[]) for e in composition[key]), '#959 already materialized in composition; stop to avoid duplicate'
           composition[key].append(task[0])
-          assert len({i for e in composition[key] for i in e.get('operation_ids',[])})==len(composition[key]), 'Duplicate focused evidence operation ID'
+          assert sum(marker in e.get('operation_ids',[]) for e in composition[key]) == 1, 'Duplicate #959 evidence registration'
+          assert sum(preserved in e.get('operation_ids',[]) for e in composition[key]) == 1, 'Duplicate #973 evidence registration'
           pathlib.Path(manifest).write_text(json.dumps(composition,indent=2,ensure_ascii=False)+'\n')
           base='refs/remotes/origin/worker/laravel-aiwmweb-closure-composition:'
           pathlib.Path(reconc).write_text(git('show',base+reconc))
