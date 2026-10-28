@@ -53,7 +53,13 @@ jobs:
           before={r['operation_id']:r['migration_state'] for r in old['operations']}
           after={r['operation_id']:r['migration_state'] for r in new['operations']}
           changed={k:(before[k],after[k]) for k in before if before[k]!=after[k]}
-          assert changed=={'AIMW-SYNC-8C35E9A7A0':('PENDING','ADAPTED')}, changed
+          expected = {
+              'AIMW-SYNC-CC2B584BC4': ('PENDING', 'ADAPTED'),  # existing #954 source on composition
+              'AIMW-SYNC-9504A57CAE': ('PENDING', 'ADAPTED'),  # existing #953 source on composition
+              'AIMW-SYNC-1B63FBC758': ('PENDING', 'ADAPTED'),  # existing #952 source on composition
+              'AIMW-SYNC-8C35E9A7A0': ('PENDING', 'ADAPTED'),  # requested #962
+          }
+          assert changed == expected, changed
           assert new['totals']['total']==931
           print('Exact #962 focused delta:',changed)
           PY
