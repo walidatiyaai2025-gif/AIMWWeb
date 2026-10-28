@@ -45,6 +45,7 @@ import {
 import { ContentExplorerBackToSitesControl } from './content-explorer-back-to-sites-control';
 import { ContentExplorerClearSelectionControl } from './content-explorer-clear-selection-control';
 import { CurrentUserLogsControl } from './current-user-logs-control';
+import { DashboardErrorRetryControl } from './dashboard-error-retry-control';
 import { DashboardSitesNavigationControl } from './dashboard-sites-navigation-control';
 import { DashboardSystemHealthNavigationControl } from './dashboard-system-health-navigation-control';
 import { DashboardSitesQuickAccessControl } from './dashboard-sites-quick-access-control';
@@ -52,7 +53,9 @@ import { DashboardMediaNavigationControl } from './dashboard-media-navigation-co
 import { LiveSystemStatusRefreshControl } from './live-system-status-refresh-control';
 import { EMAIL_HISTORY_CLEAR_FILTERS_OPERATION_ID, EmailHistoryFiltersControl, type EmailHistoryFilterState } from './email-history-filters-control';
 import { GlobalUsersFullManagementControl } from './global-users-full-management-control';
+import { WordPressUsersRefreshControl } from './wordpress-users-refresh-control';
 import { MediaDeleteControl } from './media-delete-control';
+import { authoritativeGlobalMediaApplyEndpoint, defaultGlobalMediaFilters, globalMediaApplyQuery, GlobalMediaApplyControl } from './global-media-apply-control';
 import { GlobalMediaInterpolatedLinksControl } from './media-interpolated-links-control';
 import { MediaBackToSitesControl } from './media-back-to-sites-control';
 import { MediaManagerEditingSourceUrlControl } from './media-manager-editing-source-url-control';
@@ -64,6 +67,7 @@ import { PostsWordPressLinkControl } from './posts-wordpress-link-control';
 import { RolesApplicationUsersLinkControl } from './roles-application-users-link-control';
 import { RolesStartCreateControl } from './roles-start-create-control';
 import { SiteOperationsExportControl } from './site-operations-export-control';
+import { OperationsHubSiteOperationsControl } from './operations-hub-site-operations-control';
 import { SiteOperationsDetailsLinkControl } from './site-operations-details-link-control';
 import { SiteOperationsSitesLinkControl } from './site-operations-sites-link-control';
 import {
@@ -165,7 +169,17 @@ function DashboardContent({ context, route }: { context: FrontendContext; route:
 
     if (state.state !== 'enabled') return <Unavailable route={route} context={context} state={state} />;
     if (query.isLoading) return <LoadingState />;
-    if (query.error) return <QueryError error={query.error} retry={() => query.refetch()} />;
+    if (query.error) return <QueryError
+        error={query.error}
+        retry={() => { void query.refetch(); }}
+        retryAction={
+            <DashboardErrorRetryControl
+                context={context}
+                endpoint={endpoint}
+                onRetry={() => query.refetch()}
+            />
+        }
+    />;
 
     const payload = query.data ?? {};
     const metricsCandidate = payload.metrics;
@@ -260,18 +274,31 @@ function DashboardContent({ context, route }: { context: FrontendContext; route:
     );
 }
 
-function QueryError({ error, retry }: { error: unknown; retry: () => void }) {
+function QueryError({ error, retry, retryAction }: { error: unknown; retry: () => void; retryAction?: React.ReactNode }) {
     const { locale, text } = useLocale();
     const apiError = error instanceof ApiError ? error : null;
+    const title = locale === 'ar' ? 'فشل تحميل البيانات' : 'Data could not be loaded';
+    const details = (
+        <>
+            <p>{apiError?.message ?? text(commonText.apiError)}</p>
+            {apiError ? <code>HTTP {apiError.status} · {apiError.code}</code> : null}
+        </>
+    );
+
+    // Only the dashboard error state owns its canonical Retry operation. Keep
+    // shared QueryError's original StatePanel retry contract for all siblings.
+    if (retryAction) {
+        return <StatePanel tone="danger" title={title} action={retryAction}>{details}</StatePanel>;
+    }
+
     return (
         <StatePanel
             tone="danger"
-            title={locale === 'ar' ? 'فشل تحميل البيانات' : 'Data could not be loaded'}
+            title={title}
             onRetry={retry}
             retryText={text(commonText.retry)}
         >
-            <p>{apiError?.message ?? text(commonText.apiError)}</p>
-            {apiError ? <code>HTTP {apiError.status} · {apiError.code}</code> : null}
+            {details}
         </StatePanel>
     );
 }
@@ -307,6 +334,8 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const [searchInput, setSearchInput] = useState('');
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
+    const [mediaDraft, setMediaDraft] = useState(defaultGlobalMediaFilters);
+    const [mediaAppliedFilters, setMediaAppliedFilters] = useState(defaultGlobalMediaFilters);
     const [appDataGridSortDescending, setAppDataGridSortDescending] = useState(false);
     const applicationUsersSearchInFlight = useRef(false);
     const [sitesFilter, setSitesFilter] = useState<'all' | 'connected' | 'review'>('all');
@@ -340,7 +369,10 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const [emailHistoryFilters, setEmailHistoryFilters] = useState<EmailHistoryFilterState>({ siteId: '', status: '', correlation: '' });
     const [dialog, setDialog] = useState<{ key: string; contract: ActionContract } | null>(null);
     const state = resolveCapability(context, route);
-    const endpoint = route.apiKey ? context.api[route.apiKey] : undefined;
+    const routeEndpoint = route.apiKey ? context.api[route.apiKey] : undefined;
+    const endpoint = route.key === 'media'
+        ? (authoritativeGlobalMediaApplyEndpoint(context) ?? undefined)
+        : routeEndpoint;
     const readOperations = COLLECTION_READ_OPERATIONS[route.key];
     const canEditExplorerContent = context.permissions.includes('*') || context.permissions.includes('content.edit');
 
@@ -364,7 +396,8 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         period_days: siteReliabilityFilters.periodDays,
         minimum_operations: siteReliabilityFilters.minimumOperations,
     } : {};
-    const resourceFilters = { ...taxonomyFilter, ...emailHistoryQueryFilters, ...siteReliabilityQueryFilters };
+    const mediaQueryFilters = route.key === 'media' ? globalMediaApplyQuery(mediaAppliedFilters) : {};
+    const resourceFilters = { ...taxonomyFilter, ...emailHistoryQueryFilters, ...siteReliabilityQueryFilters, ...mediaQueryFilters };
     const query = useQuery(route.key === 'email-history' ? {
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType, emailHistoryFilters.siteId, emailHistoryFilters.status, emailHistoryFilters.correlation, appDataGridSortDescending],
         queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, resourceFilters)),
@@ -372,6 +405,10 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     } : route.key === 'site-reliability' ? {
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, siteReliabilityFilters.periodDays, siteReliabilityFilters.minimumOperations],
         queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, siteReliabilityQueryFilters)),
+        enabled: state.state === 'enabled' && Boolean(endpoint),
+    } : route.key === 'media' ? {
+        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, mediaAppliedFilters.mediaType, mediaAppliedFilters.pageSize],
+        queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, mediaQueryFilters)),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     } : {
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType],
@@ -404,6 +441,23 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
             queryFn: () => apiRequest<unknown>(endpointWithQuery(trustedEndpoint, 1, '')),
             staleTime: 0,
         });
+    };
+
+    const applyGlobalMediaFilters = async (): Promise<void> => {
+        if (route.key !== 'media' || state.state !== 'enabled' || !endpoint || query.isFetching) return;
+        const nextSearch = searchInput.trim();
+        const unchanged = page === 1 && search === nextSearch
+            && mediaAppliedFilters.mediaType === mediaDraft.mediaType
+            && mediaAppliedFilters.pageSize === mediaDraft.pageSize;
+        // The source ApplyAsync always resets pagination before its authoritative read.
+        // Keep the selected site constrained to the server-authorized active tenant/site.
+        setPage(1);
+        setSearch(nextSearch);
+        setMediaAppliedFilters({ ...mediaDraft });
+        if (unchanged) {
+            const refreshed = await query.refetch();
+            if (refreshed.error) throw refreshed.error;
+        }
     };
 
     const applicationUsersSearchAuthorized = context.permissions.includes('*') || context.permissions.includes('members.manage');
@@ -673,6 +727,12 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         void searchApplicationUsers().catch(() => undefined);
                         return;
                     }
+                    if (route.key === 'media') {
+                        void applyGlobalMediaFilters().catch((error) => {
+                            notify(error instanceof Error ? error.message : 'Media filters could not be applied.', 'error');
+                        });
+                        return;
+                    }
                     setPage(1); setSearch(searchInput); if (route.key === 'explorer') setExplorerSelectedKeys(new Set());
                 }} role="search">
                     <label className="sr-only" htmlFor={`search-${route.key}`}>{text(commonText.search)}</label>
@@ -696,7 +756,16 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                     ) : (
                         <input id={`search-${route.key}`} value={searchInput} onChange={(event) => setSearchInput(event.target.value)} placeholder={locale === 'ar' ? 'بحث في البيانات الحية…' : 'Search live data…'} />
                     )}
-                    {route.key === 'application-users' ? (
+                    {route.key === 'media' ? (
+                        <GlobalMediaApplyControl
+                            locale={locale}
+                            value={mediaDraft}
+                            busy={query.isFetching}
+                            available={Boolean(endpoint)}
+                            onTypeChange={(mediaType) => setMediaDraft((current) => ({ ...current, mediaType }))}
+                            onPageSizeChange={(pageSize) => setMediaDraft((current) => ({ ...current, pageSize }))}
+                        />
+                    ) : route.key === 'application-users' ? (
                         <ApplicationUsersSearchControl
                             busy={query.isFetching || applicationUsersSearchInFlight.current}
                             locale={locale}
@@ -832,6 +901,17 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             }}
                         >{locale === 'ar' ? 'الوسوم' : 'Tags'}</button>
                     ) : null}
+                    {route.key === 'wp-users' ? (
+                        <WordPressUsersRefreshControl
+                            context={context}
+                            endpoint={endpoint}
+                            busy={query.isFetching}
+                            onReload={async () => {
+                                const refreshed = await query.refetch();
+                                if (refreshed.error) throw refreshed.error;
+                            }}
+                        />
+                    ) : (
                     <button
                         type="button"
                         className="btn"
@@ -860,6 +940,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                                             : text(commonText.refresh))
                                         : text(commonText.refresh)}
                     </button>
+                    )}
                     {route.key === 'site-reliability' ? (
                         <SiteReliabilityOperationHistoryLinkControl context={context} />
                     ) : null}
@@ -1082,6 +1163,10 @@ function WorkspaceHub({ context, route }: { context: FrontendContext; route: Wor
             ) : null}
             <section className="workspace-card-grid">
                 {workspaceRoutes.filter((candidate) => !candidate.hidden && related.includes(candidate.group) && candidate.key !== route.key).map((candidate) => {
+                    if (route.key === 'operations' && candidate.key === 'site-operations') {
+                        return <OperationsHubSiteOperationsControl key={candidate.key} context={context} />;
+                    }
+
                     const state = resolveCapability(context, candidate);
                     const sourceWorkspacePath = route.key === 'content-hub' && isContentHubWorkspacePath(candidate.path);
                     const destination = sourceWorkspacePath

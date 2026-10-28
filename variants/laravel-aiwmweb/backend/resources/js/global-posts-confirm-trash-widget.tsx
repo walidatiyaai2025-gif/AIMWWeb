@@ -3,6 +3,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest, type FrontendContext } from './core';
 import { useToast } from './components';
 import { useLocale } from './i18n';
+import { GLOBAL_POSTS_PRIVATE_SELECTED_OPERATION_ID, globalPostsPrivateEndpoint, globalPostsPrivatePayload } from './global-posts-private-selected-control';
 import { PostsInterpolatedLinksControl } from './posts-interpolated-links-control';
 import { SyncAppConfirmDialogCancelControl } from './sync-app-confirm-dialog-cancel-control';
 import {
@@ -60,6 +61,7 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
     const [selected, setSelected] = useState<Set<string>>(new Set());
     const [confirmOpen, setConfirmOpen] = useState(false);
     const endpoint = globalPostsEndpoint(context.tenant.slug);
+    const privateEndpoint = globalPostsPrivateEndpoint(context.tenant.slug);
     const publishEndpoint = globalPostsPublishEndpoint(context.tenant.slug);
     const canView = hasPermission(context, 'content.view');
     const canEdit = hasPermission(context, 'content.edit');
@@ -103,6 +105,30 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
                 : (locale === 'ar' ? 'تعذر إضافة المقالات المحددة إلى مهام النشر.' : 'Selected posts could not be queued for publishing.'),
             'error',
         ),
+    });
+
+    const privateMutation = useMutation({
+        mutationFn: async (targets: Array<{ site_id: number; wordpress_id: number }>) => {
+            if (!privateEndpoint) throw new Error('The requested private operation is unavailable.');
+            return apiRequest<{ operation_id: string; state: 'queued'; count: number; site_jobs: number }>(
+                privateEndpoint,
+                { method: 'POST', body: JSON.stringify(globalPostsPrivatePayload(targets)) },
+            );
+        },
+        onSuccess: (result) => {
+            if (result.operation_id !== GLOBAL_POSTS_PRIVATE_SELECTED_OPERATION_ID || result.state !== 'queued') {
+                notify('Unexpected operation response; refresh authoritative state before retrying.', 'error');
+                return;
+            }
+            setSelected(new Set());
+            notify(
+                locale === 'ar'
+                    ? `تمت جدولة ${result.count} من العناصر في ${result.site_jobs} مهمة. تحقق من النتائج بعد تنفيذها.`
+                    : `Queued ${result.count} posts across ${result.site_jobs} site job(s). Verify authoritative state after execution.`,
+                'success',
+            );
+        },
+        onError: (error) => notify(error instanceof Error ? error.message : 'Could not queue selected items.', 'error'),
     });
 
     const mutation = useMutation({
@@ -150,7 +176,7 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
 
     if (!enabled) return null;
 
-    const busy = mutation.isPending || publishMutation.isPending;
+    const busy = mutation.isPending || publishMutation.isPending || privateMutation.isPending;
 
     const toggle = (row: GlobalPageRow) => {
         if (busy || row.status === 'trash') return;
@@ -185,6 +211,17 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
             {rows.length ? (
                 <>
                     <div className="toolbar-actions">
+                        <button
+                            type="button"
+                            className="btn"
+                            data-canonical-operation={GLOBAL_POSTS_PRIVATE_SELECTED_OPERATION_ID}
+                            disabled={!canEdit || !privateEndpoint || busy || selectedTargets.length === 0}
+                            onClick={() => privateMutation.mutate(selectedTargets)}
+                        >
+                            {privateMutation.isPending
+                                ? (locale === 'ar' ? 'جارٍ جدولة الحالة الخاصة…' : 'Queueing private status…')
+                                : (locale === 'ar' ? 'جعل المحدد خاصًا' : 'Make selected private')}
+                        </button>
                         <button
                             type="button"
                             className="btn primary"

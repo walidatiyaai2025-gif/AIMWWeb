@@ -1587,6 +1587,22 @@
   "known_composition_blockers": [],
   "focused_closure_operation_sources": [
     {
+      "label": "AIMW-CONT-BCAD1E3A49 Operations Hub Site Operations navigation focused closure",
+      "sha": "557c6edf4339a381e7c4a99b51e605be0031be99",
+      "observed_pr_head": "557c6edf4339a381e7c4a99b51e605be0031be99",
+      "operation_ids": [
+        "AIMW-CONT-BCAD1E3A49"
+      ]
+    },
+    {
+      "label": "AIMW-SYNC-EE7D7534DF ContentExplorer BulkPublishAsync focused closure #930",
+      "sha": "030d93df2e9afe35cd95c0c77764e9c009af5ad3",
+      "observed_pr_head": "030d93df2e9afe35cd95c0c77764e9c009af5ad3",
+      "operation_ids": [
+        "AIMW-SYNC-EE7D7534DF"
+      ]
+    },
+    {
       "label": "AIMW-MEDI-34B5C789D2 MediaManager BackToSites focused closure",
       "sha": "0bed34e0893ec1f0515314a55572db578bdbb69c",
       "observed_pr_head": "0bed34e0893ec1f0515314a55572db578bdbb69c",
@@ -2824,6 +2840,78 @@
       "operation_ids": [
         "AIMW-SYNC-627C90DC5C"
       ]
+    },
+    {
+      "label": "AIMW-SYNC-2C6ADCE34C GlobalTaxonomy Synchronization navigation merged composition evidence focused closure #956",
+      "sha": "6a2cfd140d68948e4897e3b90e70d1b78e45ce49",
+      "observed_pr_head": "52d88a0ff412e13213263506db769bff497dad31",
+      "operation_ids": [
+        "AIMW-SYNC-2C6ADCE34C"
+      ]
+    },
+    {
+      "label": "AIMW-SYNC-0239B0E6A3 GlobalSynchronizationEditorLink merged composition evidence focused closure #951",
+      "sha": "6a2cfd140d68948e4897e3b90e70d1b78e45ce49",
+      "observed_pr_head": "182bae8a4593f14ee5e4ed763df5528eb94f9081",
+      "operation_ids": [
+        "AIMW-SYNC-0239B0E6A3"
+      ]
+    },
+    {
+      "label": "AIMW-SYNC-078D172C71 GlobalPosts PrivateSelectedAsync focused closure #943",
+      "sha": "03e94aa5284ad09667a0ef601807430f1e01c26a",
+      "observed_pr_head": "03e94aa5284ad09667a0ef601807430f1e01c26a",
+      "operation_ids": [
+        "AIMW-SYNC-078D172C71"
+      ]
+    },
+    {
+      "label": "AIMW-SYNC-F7BCCD650C ContentExplorer BulkDraftAsync focused closure #931",
+      "sha": "3a442c1ed766caf303c38d16b0ca089e7222716e",
+      "observed_pr_head": "3a442c1ed766caf303c38d16b0ca089e7222716e",
+      "operation_ids": [
+        "AIMW-SYNC-F7BCCD650C"
+      ]
+    },
+    {
+      "label": "AIMW-SYNC-D805D5D9A8 GlobalMediaExplorer ApplyAsync focused closure #934",
+      "sha": "9cd362341d71d3b940350bcf3802edcf9f2b9fea",
+      "observed_pr_head": "9cd362341d71d3b940350bcf3802edcf9f2b9fea",
+      "operation_ids": [
+        "AIMW-SYNC-D805D5D9A8"
+      ]
+    },
+    {
+      "label": "AIMW-SYNC-AA26ED0909 SecurityAudit ClearAsync focused closure #969",
+      "sha": "fd13b35db8b29d47fc76bd559a8b84b176b3273b",
+      "observed_pr_head": "fd13b35db8b29d47fc76bd559a8b84b176b3273b",
+      "operation_ids": [
+        "AIMW-SYNC-AA26ED0909"
+      ]
+    },
+    {
+      "label": "AIMW-SYNC-B83AB5A666 MediaBatchUploadPanel ClearClickedAsync focused closure #965",
+      "sha": "b03faac256245ea0a89c2b93481934c348e3fa17",
+      "observed_pr_head": "b03faac256245ea0a89c2b93481934c348e3fa17",
+      "operation_ids": [
+        "AIMW-SYNC-B83AB5A666"
+      ]
+    },
+    {
+      "label": "AIMW-SYNC-B11D963A9E Dashboard error Try again focused closure #963",
+      "sha": "64103fefde7db288ecd633dbdcb5eed55eef8e2d",
+      "observed_pr_head": "64103fefde7db288ecd633dbdcb5eed55eef8e2d",
+      "operation_ids": [
+        "AIMW-SYNC-B11D963A9E"
+      ]
+    },
+    {
+      "label": "AIMW-SYNC-5A397204EF WordPress Users RefreshClickedAsync focused closure #977",
+      "sha": "69c462a8e4bf02f6284c3928e05331eb11d81d6c",
+      "observed_pr_head": "69c462a8e4bf02f6284c3928e05331eb11d81d6c",
+      "operation_ids": [
+        "AIMW-SYNC-5A397204EF"
+      ]
     }
   ],
   "sources": [
@@ -2837,4 +2925,3 @@
     }
   ]
 }
-
