@@ -10,9 +10,7 @@ use RuntimeException;
 
 final class MediaUploadJob extends TenantAwareJob
 {
-    public int $tries = 3;
-
-    public array $backoff = [30, 120];
+    // WordPress media POST has no replay-safe idempotency guarantee. Never automatically\n    // repeat it after a lost response; the durable transfer needs reconciliation.\n    public int $tries = 1;
 
     public function __construct(int $tenantId, public readonly int $transferId)
     {
