@@ -510,6 +510,12 @@ final class ContentApiController extends Controller
         if ($taxonomy = $request->query('taxonomy')) {
             $q->where('taxonomy', $taxonomy);
         }
+        // GlobalTaxonomyExplorer ApplyAsync: minimum usage is a server-side
+        // predicate on persisted tenant/site-owned taxonomy rows, not a UI-only filter.
+        $minimumUsage = max(0, (int) $request->query('minimum_usage', 0));
+        if ($minimumUsage > 0) {
+            $q->where('usage_count', '>=', $minimumUsage);
+        }
         $search = trim((string) $request->query('search', ''));
         if ($search !== '') {
             $q->where(function ($terms) use ($search): void {
