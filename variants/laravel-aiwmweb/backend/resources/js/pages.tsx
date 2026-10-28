@@ -389,7 +389,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     };
 
     const taxonomyFilter: Record<string, string> = route.key === 'taxonomy' && taxonomyType !== 'all' ? { taxonomy: taxonomyType } : {};
-    const taxonomyAppliedQuery = route.key === 'taxonomy' ? { ...taxonomyFilter, ...globalTaxonomyApplyQuery(taxonomyApplied) } : taxonomyFilter;
+    const taxonomyAppliedQuery: Record<string, string> = route.key === 'taxonomy' ? { ...taxonomyFilter, ...globalTaxonomyApplyQuery(taxonomyApplied) } : taxonomyFilter;
     const wordpressUsersFilters: Record<string, string> = route.key === 'wp-users' && wordpressUsersRole !== 'all' ? { role: wordpressUsersRole } : {};
     const emailHistoryQueryFilters: Record<string, string> = route.key === 'email-history' ? {
         ...(emailHistoryFilters.siteId ? { site_id: emailHistoryFilters.siteId } : {}),
