@@ -2890,6 +2890,14 @@
       "operation_ids": [
         "AIMW-SYNC-5A397204EF"
       ]
+    },
+    {
+      "label": "Issue #966 MediaManager provider-backed AI alt-text suggestion focused closure",
+      "sha": "683dea0ef13920ba287adae3288efbb68d17fb1c",
+      "observed_pr_head": "683dea0ef13920ba287adae3288efbb68d17fb1c",
+      "operation_ids": [
+        "AIMW-SYNC-21483C88FA"
+      ]
     }
   ],
   "sources": [
