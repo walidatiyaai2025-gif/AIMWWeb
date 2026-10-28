@@ -1,9 +1,12 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { apiRequest, type FrontendContext } from './core';
+import { apiRequest, tenantUrl, type FrontendContext } from './core';
 import { useLocale } from './i18n';
 
 export const GLOBAL_SYNCHRONIZATION_REVIEW_CONFLICTS_OPERATION_ID = 'AIMW-BILL-5887A977D7';
+
+export const GLOBAL_SYNCHRONIZATION_CONFLICT_EDITOR_LINK_OPERATION_ID = 'AIMW-SYNC-0239B0E6A3';
 
 type ActiveSite = { id: number; name: string };
 type ContextWithActiveSite = FrontendContext & { active_site?: ActiveSite | null };
@@ -44,6 +47,29 @@ export function globalSynchronizationConflictReviewEndpoint(tenantSlug: string, 
     if (!/^[1-9]\d*$/.test(site)) return null;
 
     return `/api/v1/tenants/${encodeURIComponent(tenant)}/sites/${encodeURIComponent(site)}/sync/review-conflicts`;
+}
+
+/** Only form a link to the real, tenant-owned editor for a live remote update. */
+export function globalSynchronizationConflictEditorHref(
+    context: FrontendContext,
+    siteId: unknown,
+    contentType: unknown,
+    wordpressId: unknown,
+    kind: unknown,
+): string | null {
+    if (kind !== 'RemoteUpdated') return null;
+    if (!context.tenant.slug.trim() || /[\\\\/]/.test(context.tenant.slug)) return null;
+    if (!context.permissions.includes('*') && (
+        !context.permissions.includes('tenant.view')
+        || !context.permissions.includes('sites.view')
+        || !context.permissions.includes('content.view')
+        || !context.permissions.includes('content.edit')
+    )) return null;
+    const activeSite = (context as ContextWithActiveSite).active_site;
+    if (!activeSite || !Number.isSafeInteger(activeSite.id) || activeSite.id <= 0) return null;
+    if (siteId !== activeSite.id || !Number.isSafeInteger(wordpressId) || Number(wordpressId) <= 0) return null;
+    if (contentType !== 'post' && contentType !== 'page') return null;
+    return tenantUrl(context.tenant.slug, `/sites/${activeSite.id}/content/${contentType}/${wordpressId}/edit`);
 }
 
 export function GlobalSynchronizationReviewConflictsControl({ context }: { context: FrontendContext }) {
@@ -131,6 +157,15 @@ export function GlobalSynchronizationReviewConflictsControl({ context }: { conte
                                                 ? (locale === 'ar' ? 'محذوف على WordPress' : 'Deleted in WordPress')
                                                 : (locale === 'ar' ? 'معدّل على WordPress' : 'Updated in WordPress')}
                                         </span>
+                                        {globalSynchronizationConflictEditorHref(context, activeSite.id, conflict.content_type, conflict.wordpress_id, conflict.kind) ? (
+                                            <Link
+                                                className="btn primary"
+                                                data-canonical-operation={GLOBAL_SYNCHRONIZATION_CONFLICT_EDITOR_LINK_OPERATION_ID}
+                                                to={globalSynchronizationConflictEditorHref(context, activeSite.id, conflict.content_type, conflict.wordpress_id, conflict.kind)!}
+                                            >
+                                                {locale === 'ar' ? 'فتح المحرر للدمج' : 'Open editor to merge'}
+                                            </Link>
+                                        ) : null}
                                     </header>
                                     <p>
                                         {conflict.kind === 'RemoteDeleted'
