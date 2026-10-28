@@ -11,8 +11,11 @@ use RuntimeException;
  */
 final class MediaMetadataVerificationService
 {
-    public function __construct(private readonly ContentRemoteDriver $remote)
+    private readonly ContentRemoteDriver $remote;
+
+    public function __construct(ContentRemoteDriver $remote)
     {
+        $this->remote = $remote;
     }
 
     /** @param array<string, string|null> $metadata
