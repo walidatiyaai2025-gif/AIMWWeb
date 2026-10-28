@@ -1,0 +1,76 @@
+name: Laravel #954 Official Tenant-safe Parity Materialization (temporary)
+on:
+  push:
+    branches:
+      - worker/954-global-sync-connect-site-link
+    paths:
+      - '.github/workflows/laravel-954-upstream-integrate.yml'
+      - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
+permissions:
+  contents: write
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Laravel Pint
+        working-directory: variants/laravel-aiwmweb/backend
+        run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Format scoped PHP acceptance test
+        working-directory: variants/laravel-aiwmweb/backend
+        run: vendor/bin/pint tests/Feature/GlobalSynchronizationConnectSiteLinkTerminalityTest.php
+      - name: Fetch pushed exact evidence snapshot
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+      - name: Run official seven-stage reconciliation and validate scoped contribution
+        run: |
+          set -euo pipefail
+          p=variants/laravel-aiwmweb
+          j="$p/docs/operation-parity-reconciliation.json"
+          m="$p/docs/operation-parity-reconciliation.md"
+          summary=/tmp/operation-parity-summary.json
+          cp "$j" /tmp/954-parity-before.json
+          python "$p/tools/finalize_operation_parity.py" --output "$j" --summary-output "$summary" --markdown-output "$m" --check-total 931
+          for script in apply_tenant_neutral_route_evidence apply_platform_admin_route_evidence apply_explicit_route_api_provenance apply_focused_closure_evidence apply_focused_service_evidence apply_focused_background_job_evidence; do
+            python "$p/tools/$script.py" --input "$j" --output "$j" --summary-output "$summary" --markdown-output "$m" --check-total 931
+          done
+          python - <<'PY'
+          import json
+          import subprocess
+          from pathlib import Path
+          old=json.loads(Path('/tmp/954-parity-before.json').read_text())
+          new=json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json').read_text())
+          prior_manifest=json.loads(subprocess.check_output(['git','show','HEAD^2:variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'],text=True))
+          inherited={op for source in prior_manifest.get('focused_closure_operation_sources',[]) for op in source.get('operation_ids',[])}
+          a={row['operation_id']:row['migration_state'] for row in old['operations']}
+          b={row['operation_id']:row['migration_state'] for row in new['operations']}
+          assert a.keys()==b.keys() and len(a)==931
+          delta={k:(a[k],b[k]) for k in a if a[k]!=b[k]}
+          target='AIMW-SYNC-CC2B584BC4'
+          assert delta.get(target)==('PENDING','ADAPTED'),delta
+          unexpected=set(delta)-inherited-{target}
+          assert not unexpected,('Unexpected unowned operation transitions',sorted(unexpected))
+          assert all(pair==('PENDING','ADAPTED') for pair in delta.values()),delta
+          assert new['validation']['passed'],new['validation'].get('errors')
+          print('Validated exact #954 and pre-registered upstream sources:',delta)
+          PY
+      - name: Commit only official output and formatted test
+        run: |
+          set -euo pipefail
+          git add variants/laravel-aiwmweb/backend/tests/Feature/GlobalSynchronizationConnectSiteLinkTerminalityTest.php
+          git add variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'build(laravel): officially materialize #954 and inherited upstream parity'
+          git push origin "HEAD:${{ github.ref_name }}"
