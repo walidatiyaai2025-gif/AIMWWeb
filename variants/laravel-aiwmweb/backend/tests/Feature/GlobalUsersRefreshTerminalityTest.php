@@ -35,8 +35,8 @@ final class GlobalUsersRefreshTerminalityTest extends TestCase
         $this->assertStringContainsString('onRefreshRequested={async (trustedEndpoint)', $pages);
         $this->assertStringContainsString('const refreshed = await query.refetch()', $pages);
         $this->assertStringContainsString('wordpressUsersFilters', $pages);
-        $this->assertStringContainsString("Site::query()->findOrFail(\$site)", $controller);
-        $this->assertStringContainsString("\$query['roles'] = \$role;", $controller);
+        $this->assertStringContainsString('Site::query()->findOrFail($site)', $controller);
+        $this->assertStringContainsString('$query[\'roles\'] = $role;', $controller);
     }
 
     public function test_refresh_rereads_actual_filtered_remote_users_for_owned_site_without_mutating(): void
@@ -63,6 +63,7 @@ final class GlobalUsersRefreshTerminalityTest extends TestCase
         Http::assertSent(function ($request) {
             $query = [];
             parse_str((string) parse_url($request->url(), PHP_URL_QUERY), $query);
+
             return $request->method() === 'GET'
                 && ($query['search'] ?? null) === 'editor'
                 && ($query['roles'] ?? null) === 'editor'
