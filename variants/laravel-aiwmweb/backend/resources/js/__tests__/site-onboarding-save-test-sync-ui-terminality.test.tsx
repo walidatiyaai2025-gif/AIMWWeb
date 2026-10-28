@@ -6,6 +6,7 @@ import type { FrontendContext } from '../core';
 import { LocaleProvider } from '../i18n';
 import {
     SITE_ONBOARDING_NEXT_OPERATION_ID,
+    SITE_ONBOARDING_PREVIOUS_OPERATION_ID,
     SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID,
     SiteOnboardingSaveTestSyncControl,
 } from '../site-onboarding-save-test-sync-control';
@@ -225,5 +226,36 @@ describe('AIMW-BILL-2EF6B8A27A onboarding browser proof', () => {
             retry_token: 'opaque-server-issued-retry-token',
         });
         expect(await screen.findByText('verified / healthy')).toBeInTheDocument();
+    });
+});
+
+describe('AIMW-SYNC-C1B6FA6677 PreviousAsync browser parity', () => {
+    it('navigates backward from review to credentials and profile without API calls or losing entered values', () => {
+        const fetchMock = vi.fn();
+        vi.stubGlobal('fetch', fetchMock);
+        renderControl();
+        expect(screen.queryByRole('button', { name: 'Previous' })).toBeNull();
+        completeProfileStep('Previous Site', 'https://previous.example.test');
+        const previousFromCredentials = screen.getByRole('button', { name: 'Previous' });
+        expect(previousFromCredentials).toHaveAttribute('data-canonical-operation', SITE_ONBOARDING_PREVIOUS_OPERATION_ID);
+        completeCredentialStep('wp-admin', 'password-do-not-log');
+        const previousFromReview = screen.getByRole('button', { name: 'Previous' });
+        expect(previousFromReview).toHaveAttribute('data-canonical-operation', SITE_ONBOARDING_PREVIOUS_OPERATION_ID);
+        fireEvent.click(previousFromReview);
+        expect(screen.getByText('Step 2 of 3')).toBeInTheDocument();
+        expect(screen.getByLabelText('WordPress username')).toHaveValue('wp-admin');
+        expect(screen.getByLabelText('Application Password')).toHaveValue('password-do-not-log');
+        fireEvent.click(screen.getByRole('button', { name: 'Previous' }));
+        expect(screen.getByText('Step 1 of 3')).toBeInTheDocument();
+        expect(screen.getByLabelText('Site name')).toHaveValue('Previous Site');
+        expect(screen.getByLabelText('Site URL')).toHaveValue('https://previous.example.test');
+        expect(screen.queryByRole('button', { name: 'Previous' })).toBeNull();
+        expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it('does not show previous navigation to operators denied sites.manage', () => {
+        renderControl(['tenant.view']);
+        expect(screen.queryByRole('button', { name: 'Previous' })).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull();
     });
 });
