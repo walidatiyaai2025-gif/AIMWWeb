@@ -5,6 +5,11 @@ import { useToast } from './components';
 import { useLocale } from './i18n';
 import { CONTENT_EXPLORER_CONTENT_TAB_RESET_EVENT } from './content-explorer-content-tab-control';
 import {
+    CONTENT_EXPLORER_BULK_PENDING_OPERATION_ID,
+    contentExplorerBulkPendingEndpoint,
+    buildContentExplorerBulkPendingPayload,
+} from './content-explorer-bulk-pending-control';
+import {
     CONTENT_EXPLORER_BULK_PUBLISH_OPERATION_ID,
     contentExplorerBulkPublishEndpoint,
     buildContentExplorerBulkPublishPayload,
@@ -82,6 +87,7 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
     const endpoint = contentExplorerBulkTrashEndpoint(context.tenant.slug, siteId);
     const publishEndpoint = contentExplorerBulkPublishEndpoint(context.tenant.slug, siteId);
     const draftEndpoint = contentExplorerBulkDraftEndpoint(context.tenant.slug, siteId);
+    const pendingEndpoint = contentExplorerBulkPendingEndpoint(context.tenant.slug, siteId);
     const postsEndpoint = context.api.posts;
     const pagesEndpoint = context.api.pages;
     const enabled = Boolean(endpoint && postsEndpoint && pagesEndpoint && canView && canEdit);
@@ -115,6 +121,33 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
             .filter((id) => Number.isSafeInteger(id) && id > 0),
         [rows, selected],
     );
+
+    const pendingMutation = useMutation({
+        mutationFn: async (ids: number[]) => {
+            if (!pendingEndpoint) throw new Error('The selected site pending endpoint is unavailable.');
+            const result = await apiRequest<{ state: string; count: number }>(pendingEndpoint, {
+                method: 'POST',
+                body: JSON.stringify(buildContentExplorerBulkPendingPayload(ids)),
+            });
+            if (result.state !== 'queued' || result.count !== ids.length) {
+                throw new Error('The server did not confirm the pending-review job was queued.');
+            }
+            return result;
+        },
+        onSuccess: (result) => {
+            setSelected(new Set());
+            notify(
+                locale === 'ar'
+                    ? `تم وضع ${result.count} عنصر في قائمة انتظار المراجعة. تحقق من حالة المزامنة بعد التنفيذ.`
+                    : `Queued ${result.count} item(s) for pending review; verify the authoritative state after the job completes.`,
+                'success',
+            );
+        },
+        onError: (error) => notify(
+            error instanceof Error ? error.message : 'Could not queue selected content for pending review.',
+            'error',
+        ),
+    });
 
     const draftMutation = useMutation({
         mutationFn: async (ids: number[]) => {
@@ -201,7 +234,7 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
         ),
     });
 
-    const busy = mutation.isPending || publishMutation.isPending || draftMutation.isPending;
+    const busy = mutation.isPending || publishMutation.isPending || draftMutation.isPending || pendingMutation.isPending;
 
     if (!enabled || !activeSite) return null;
 
@@ -260,6 +293,17 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
                             {draftMutation.isPending
                                 ? (locale === 'ar' ? 'جارٍ إضافة مهمة المسودة…' : 'Queueing draft…')
                                 : (locale === 'ar' ? 'تحويل المحدد لمسودة' : 'Move selected to draft')}
+                        </button>
+                        <button
+                            type="button"
+                            className="btn"
+                            data-canonical-operation={CONTENT_EXPLORER_BULK_PENDING_OPERATION_ID}
+                            onClick={() => pendingMutation.mutate(selectedLocalIds)}
+                            disabled={!pendingEndpoint || busy || selectedLocalIds.length === 0 || selectedLocalIds.length !== selectedTargets.length}
+                        >
+                            {pendingMutation.isPending
+                                ? (locale === 'ar' ? 'جارٍ إضافة مهمة المراجعة…' : 'Queueing pending review…')
+                                : (locale === 'ar' ? 'إرسال المحدد للمراجعة' : 'Send selected for review')}
                         </button>
                         <button
                             type="button"
