@@ -2922,6 +2922,14 @@
       "operation_ids": [
         "AIMW-SYNC-45A3B43BB9"
       ]
+    },
+    {
+      "label": "AIMW-SYNC-5EE3F98A28 GlobalTaxonomyExplorer ResetAsync focused closure #957",
+      "sha": "cb305b1d8e6ca7bb954abfd9698042980dfe2c79",
+      "observed_pr_head": "cb305b1d8e6ca7bb954abfd9698042980dfe2c79",
+      "operation_ids": [
+        "AIMW-SYNC-5EE3F98A28"
+      ]
     }
   ],
   "sources": [
