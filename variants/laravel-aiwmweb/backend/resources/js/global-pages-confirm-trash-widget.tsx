@@ -13,6 +13,7 @@ import { GLOBAL_PAGES_PENDING_SELECTED_OPERATION_ID, globalPagesPendingEndpoint,
 import { GLOBAL_PAGES_PRIVATE_SELECTED_OPERATION_ID, globalPagesPrivateEndpoint, globalPagesPrivatePayload } from './global-pages-private-selected-control';
 import { GLOBAL_PAGES_REQUEST_TRASH_OPERATION_ID, canRequestGlobalPagesTrash } from './global-pages-request-trash-control';
 import { GLOBAL_PAGES_PUBLISH_SELECTED_OPERATION_ID, globalPagesPublishEndpoint, buildGlobalPagesPublishPayload, type GlobalPagePublishTarget } from './global-pages-publish-selected-control';
+import { GlobalPagesResetControl } from './global-pages-reset-control';
 import { SyncAppConfirmDialogConfirmControl } from './sync-app-confirm-dialog-confirm-control';
 import {
     GLOBAL_PAGES_CONFIRM_TRASH_OPERATION_ID,
@@ -267,6 +268,18 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
                     if (busy || query.isFetching) return;
                     setSelected(new Set());
                     setAppliedFilters({ ...filterDraft });
+                    setFilterRevision((value) => value + 1);
+                }}
+            />
+            <GlobalPagesResetControl
+                available={enabled}
+                busy={busy || query.isFetching}
+                onReset={() => {
+                    if (busy || query.isFetching) return;
+                    setFilterDraft({ ...DEFAULT_GLOBAL_PAGES_FILTERS });
+                    setAppliedFilters({ ...DEFAULT_GLOBAL_PAGES_FILTERS });
+                    setSelected(new Set());
+                    setConfirmOpen(false);
                     setFilterRevision((value) => value + 1);
                 }}
             />
