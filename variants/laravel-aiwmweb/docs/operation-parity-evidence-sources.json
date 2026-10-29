@@ -3168,6 +3168,14 @@
       "operation_ids": [
         "AIMW-SYNC-7A726BAF5F"
       ]
+    },
+    {
+      "label": "AIMW-SYNC-ED1442005E GlobalPostsExplorer DraftSelectedAsync focused closure #949",
+      "sha": "9c90bdd8a49199e6c0aab582c547c7053e9b84ae",
+      "observed_pr_head": "9c90bdd8a49199e6c0aab582c547c7053e9b84ae",
+      "operation_ids": [
+        "AIMW-SYNC-ED1442005E"
+      ]
     }
   ],
   "sources": [
