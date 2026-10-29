@@ -31347,31 +31347,21 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Http/Controllers/GlobalPagesDraftController.php",
+      "laravel_destination": "",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "ADAPTED",
-      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-pages-draft-selected-control.test.ts",
-      "evidence": "Issue #935 Global Pages DraftSelectedAsync — merged PR #1322 runtime and focused tests@e3f3a6859b44bc6e6f48667c6633e1804a57fba5: variants/laravel-aiwmweb/backend/app/Http/Controllers/GlobalPagesDraftController.php; focused-closure:AIMW-SYNC-3389FB622C; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/global-pages-draft-selected-control.test.ts; evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-pages-draft-selected-terminality.json",
+      "migration_state": "PENDING",
+      "acceptance_test": "",
+      "evidence": "",
       "reconciliation": {
-        "decision": "ADAPTED",
-        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "Issue #935 Global Pages DraftSelectedAsync — merged PR #1322 runtime and focused tests",
-        "source_sha": "e3f3a6859b44bc6e6f48667c6633e1804a57fba5",
-        "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/GlobalPagesDraftController.php",
-        "evidence_mode": "focused_closure_contract",
-        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/global-pages-draft-selected-terminality.json",
-        "signals": [
-          "operation:AIMW-SYNC-3389FB622C",
-          "production-marker:variants/laravel-aiwmweb/backend/app/Http/Controllers/GlobalPagesDraftController.php",
-          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/global-pages-draft-selected-control.test.ts",
-          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-pages-draft-selected-terminality.json",
-          "scope:operation-specific",
-          "test:tenant-isolation"
-        ]
+        "decision": "PENDING",
+        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
+        "source_label": null,
+        "source_sha": null,
+        "destination_path": null
       }
     },
     {
@@ -32945,21 +32935,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/media-optimization-editor-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/media-optimization-cancel-control.test.tsx",
+      "evidence": "Issue #968 MediaManager local-only optimization cancel focused closure@9018fee6f06028e6ff047a154bde9dc6931cc738: variants/laravel-aiwmweb/backend/resources/js/media-optimization-editor-control.tsx; focused-closure:AIMW-SYNC-4B986B2651; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/media-optimization-cancel-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/media-cancel-optimization-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "Issue #968 MediaManager local-only optimization cancel focused closure",
+        "source_sha": "9018fee6f06028e6ff047a154bde9dc6931cc738",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/media-optimization-editor-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/media-cancel-optimization-terminality.json",
+        "signals": [
+          "operation:AIMW-SYNC-4B986B2651",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/media-optimization-editor-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/media-optimization-cancel-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/media-cancel-optimization-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -38450,7 +38450,7 @@
     "settings": [],
     "sites": [],
     "sync": [
-      "AIMW-SYNC-4B986B2651",
+      "AIMW-SYNC-3389FB622C",
       "AIMW-SYNC-B78216241F",
       "AIMW-SYNC-D5CE5A213B"
     ],
@@ -40061,7 +40061,6 @@
       "AIMW-SYNC-2A8778C6EA",
       "AIMW-SYNC-2C6ADCE34C",
       "AIMW-SYNC-2E94028E4E",
-      "AIMW-SYNC-3389FB622C",
       "AIMW-SYNC-33EE696FF7",
       "AIMW-SYNC-38D8A24B15",
       "AIMW-SYNC-3BFC8AF183",
@@ -40071,6 +40070,7 @@
       "AIMW-SYNC-45A3B43BB9",
       "AIMW-SYNC-461B1075DE",
       "AIMW-SYNC-476CDB769B",
+      "AIMW-SYNC-4B986B2651",
       "AIMW-SYNC-4E3C0156FC",
       "AIMW-SYNC-4E969573BB",
       "AIMW-SYNC-4FDCFDA33F",
@@ -41569,10 +41569,10 @@
         ]
       },
       {
-        "label": "Issue #935 Global Pages DraftSelectedAsync — merged PR #1322 runtime and focused tests",
-        "sha": "e3f3a6859b44bc6e6f48667c6633e1804a57fba5",
+        "label": "Issue #968 MediaManager local-only optimization cancel focused closure",
+        "sha": "9018fee6f06028e6ff047a154bde9dc6931cc738",
         "operation_ids": [
-          "AIMW-SYNC-3389FB622C"
+          "AIMW-SYNC-4B986B2651"
         ]
       }
     ],

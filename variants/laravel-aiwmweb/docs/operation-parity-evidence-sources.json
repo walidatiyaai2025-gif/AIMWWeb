@@ -3202,6 +3202,14 @@
       ]
     },
     {
+      "label": "Issue #968 MediaManager local-only optimization cancel focused closure",
+      "sha": "9018fee6f06028e6ff047a154bde9dc6931cc738",
+      "observed_pr_head": "9018fee6f06028e6ff047a154bde9dc6931cc738",
+      "operation_ids": [
+        "AIMW-SYNC-4B986B2651"
+      ]
+    },
+    {
       "label": "Issue #935 Global Pages DraftSelectedAsync — merged PR #1322 runtime and focused tests",
       "sha": "e3f3a6859b44bc6e6f48667c6633e1804a57fba5",
       "observed_pr_head": "2b0650491e9a8685e57a33844329f47a5fe71503",
