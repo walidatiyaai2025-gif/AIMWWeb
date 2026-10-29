@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 913,
-    "pending": 18,
+    "adapted": 914,
+    "pending": 17,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 913,
-    "overall_parity_percent": 98.07
+    "terminal": 914,
+    "overall_parity_percent": 98.17
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 428,
-    "pending": 18,
+    "terminal": 429,
+    "pending": 17,
     "blocked": 0,
-    "percent": 95.96
+    "percent": 96.19
   },
   "domains": {
     "ai": {
@@ -113,12 +113,12 @@
     "email": {
       "total": 82,
       "ported": 0,
-      "adapted": 81,
-      "pending": 1,
+      "adapted": 82,
+      "pending": 0,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 81,
-      "percent": 98.78
+      "terminal": 82,
+      "percent": 100.0
     },
     "identity": {
       "total": 7,
@@ -22901,21 +22901,31 @@
       "external_dependency": "email_provider",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/account-email-settings-history-link-control.tsx",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/account-email-settings-history-link-control.test.tsx",
+      "evidence": "Issue #896 Account Email Settings Delivery History evidence reconciliation (merged PR #1075)@92f51a7fa05d498a305fa2878cf5d3f13d6a3187: variants/laravel-aiwmweb/backend/resources/js/account-email-settings-history-link-control.tsx; focused-closure:AIMW-EMAI-0AA71A5EF6; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/account-email-settings-history-link-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/account-email-settings-history-link-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "Issue #896 Account Email Settings Delivery History evidence reconciliation (merged PR #1075)",
+        "source_sha": "92f51a7fa05d498a305fa2878cf5d3f13d6a3187",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/account-email-settings-history-link-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/account-email-settings-history-link-terminality.json",
+        "signals": [
+          "operation:AIMW-EMAI-0AA71A5EF6",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/account-email-settings-history-link-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/account-email-settings-history-link-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/account-email-settings-history-link-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -38325,12 +38335,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 428,
-      "pending": 18,
+      "adapted": 429,
+      "pending": 17,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 428,
-      "percent": 95.96
+      "terminal": 429,
+      "percent": 96.19
     }
   },
   "pending_operation_ids_by_domain": {
@@ -38347,9 +38357,7 @@
       "AIMW-CONT-B6BB292F85",
       "AIMW-CONT-C49C37E2C9"
     ],
-    "email": [
-      "AIMW-EMAI-0AA71A5EF6"
-    ],
+    "email": [],
     "identity": [],
     "media": [
       "AIMW-MEDI-799B36D113",
@@ -39906,6 +39914,7 @@
       "AIMW-CONT-FE6EE5740C",
       "AIMW-EMAI-00CC1272F6",
       "AIMW-EMAI-01F5713C4F",
+      "AIMW-EMAI-0AA71A5EF6",
       "AIMW-EMAI-10F3C44369",
       "AIMW-EMAI-12A6FEB2FF",
       "AIMW-EMAI-2E59E39808",
@@ -41421,10 +41430,17 @@
         "operation_ids": [
           "AIMW-SYNC-FD27B795ED"
         ]
+      },
+      {
+        "label": "Issue #896 Account Email Settings Delivery History evidence reconciliation (merged PR #1075)",
+        "sha": "92f51a7fa05d498a305fa2878cf5d3f13d6a3187",
+        "operation_ids": [
+          "AIMW-EMAI-0AA71A5EF6"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 198,
-    "focused_closure_contract_count": 428,
+    "focused_closure_operation_scoped_count": 199,
+    "focused_closure_contract_count": 429,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
