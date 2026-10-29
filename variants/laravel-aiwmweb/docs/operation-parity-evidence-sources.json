@@ -3146,6 +3146,14 @@
       ]
     },
     {
+      "label": "Issue #967 MediaManager authoritative metadata save focused closure",
+      "sha": "6cf0a9398909b7f2e3a51c6aec75e752b9651092",
+      "observed_pr_head": "6cf0a9398909b7f2e3a51c6aec75e752b9651092",
+      "operation_ids": [
+        "AIMW-SYNC-425B82511E"
+      ]
+    },
+    {
       "label": "AIMW-SYNC-7A726BAF5F GlobalPostsExplorer ApplyAsync focused closure #948",
       "sha": "612fcc6909ccbacfbc17e3f4f27d75af6ea423c3",
       "observed_pr_head": "612fcc6909ccbacfbc17e3f4f27d75af6ea423c3",

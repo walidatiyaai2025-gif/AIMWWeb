@@ -58,6 +58,7 @@ import { WordPressUsersRefreshControl } from './wordpress-users-refresh-control'
 import { GlobalUsersRefreshControl, type GlobalUsersRole } from './global-users-refresh-control';
 import { MediaDeleteControl } from './media-delete-control';
 import { MediaAltSuggestionControl } from './media-alt-suggestion-control';
+import { MediaOptimizationEditorControl } from './media-optimization-editor-control';
 import { authoritativeGlobalMediaApplyEndpoint, defaultGlobalMediaFilters, globalMediaApplyQuery, GlobalMediaApplyControl } from './global-media-apply-control';
 import { globalMediaResetState, GlobalMediaResetControl } from './global-media-reset-control';
 import { GlobalMediaSyncLinkControl } from './global-media-sync-link-control';
@@ -1231,6 +1232,15 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                                     </MediaManagerEditingSourceUrlControl>
                                 </MediaManagerRowSourceUrlControl>
                                 <MediaAltSuggestionControl context={context} endpoint={endpoint} row={row} />
+                                <MediaOptimizationEditorControl
+                                    context={context}
+                                    endpoint={endpoint}
+                                    row={row}
+                                    onReconcile={async () => {
+                                        const refreshed = await query.refetch();
+                                        if (refreshed.error) throw refreshed.error;
+                                    }}
+                                />
                                 <MediaDeleteControl
                                     context={context}
                                     endpoint={endpoint}
