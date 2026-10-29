@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 922,
-    "pending": 9,
+    "adapted": 923,
+    "pending": 8,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 922,
-    "overall_parity_percent": 99.03
+    "terminal": 923,
+    "overall_parity_percent": 99.14
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 437,
-    "pending": 9,
+    "terminal": 438,
+    "pending": 8,
     "blocked": 0,
-    "percent": 97.98
+    "percent": 98.21
   },
   "domains": {
     "ai": {
@@ -203,12 +203,12 @@
     "sync": {
       "total": 213,
       "ported": 0,
-      "adapted": 210,
-      "pending": 3,
+      "adapted": 211,
+      "pending": 2,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 210,
-      "percent": 98.59
+      "terminal": 211,
+      "percent": 99.06
     },
     "taxonomy": {
       "total": 13,
@@ -30584,21 +30584,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/collection-pagination-visible-controls.test.tsx",
+      "evidence": "Issue #926 CommentsManager PreviousPageClickedAsync corrected source semantics and focused tests@6212926b976e8a0f380f37ec575d03dbebe6bfed: variants/laravel-aiwmweb/backend/resources/js/pages.tsx; focused-closure:AIMW-SYNC-D5CE5A213B; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/collection-pagination-visible-controls.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/comments-previous-page-clicked-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "Issue #926 CommentsManager PreviousPageClickedAsync corrected source semantics and focused tests",
+        "source_sha": "6212926b976e8a0f380f37ec575d03dbebe6bfed",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/comments-previous-page-clicked-terminality.json",
+        "signals": [
+          "operation:AIMW-SYNC-D5CE5A213B",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/collection-pagination-visible-controls.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/comments-previous-page-clicked-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -38416,12 +38426,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 437,
-      "pending": 9,
+      "adapted": 438,
+      "pending": 8,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 437,
-      "percent": 97.98
+      "terminal": 438,
+      "percent": 98.21
     }
   },
   "pending_operation_ids_by_domain": {
@@ -38451,8 +38461,7 @@
     "sites": [],
     "sync": [
       "AIMW-SYNC-3389FB622C",
-      "AIMW-SYNC-B78216241F",
-      "AIMW-SYNC-D5CE5A213B"
+      "AIMW-SYNC-B78216241F"
     ],
     "taxonomy": []
   },
@@ -40115,6 +40124,7 @@
       "AIMW-SYNC-CC2B584BC4",
       "AIMW-SYNC-CD6F1FB97B",
       "AIMW-SYNC-CDE0C219B5",
+      "AIMW-SYNC-D5CE5A213B",
       "AIMW-SYNC-D805D5D9A8",
       "AIMW-SYNC-D8581471A2",
       "AIMW-SYNC-DBD736FACC",
@@ -41574,10 +41584,17 @@
         "operation_ids": [
           "AIMW-SYNC-4B986B2651"
         ]
+      },
+      {
+        "label": "Issue #926 CommentsManager PreviousPageClickedAsync corrected source semantics and focused tests",
+        "sha": "6212926b976e8a0f380f37ec575d03dbebe6bfed",
+        "operation_ids": [
+          "AIMW-SYNC-D5CE5A213B"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 207,
-    "focused_closure_contract_count": 437,
+    "focused_closure_operation_scoped_count": 208,
+    "focused_closure_contract_count": 438,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
