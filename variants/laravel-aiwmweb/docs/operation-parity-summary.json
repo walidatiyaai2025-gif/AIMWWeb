@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 918,
-    "pending": 13,
+    "adapted": 919,
+    "pending": 12,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 918,
-    "overall_parity_percent": 98.6
+    "terminal": 919,
+    "overall_parity_percent": 98.71
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 433,
-    "pending": 13,
+    "terminal": 434,
+    "pending": 12,
     "blocked": 0,
-    "percent": 97.09
+    "percent": 97.31
   },
   "domains": {
     "ai": {
@@ -113,12 +113,12 @@
     "email": {
       "total": 82,
       "ported": 0,
-      "adapted": 81,
-      "pending": 1,
+      "adapted": 82,
+      "pending": 0,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 81,
-      "percent": 98.78
+      "terminal": 82,
+      "percent": 100.0
     },
     "identity": {
       "total": 7,
@@ -266,12 +266,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 433,
-      "pending": 13,
+      "adapted": 434,
+      "pending": 12,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 433,
-      "percent": 97.09
+      "terminal": 434,
+      "percent": 97.31
     }
   },
   "pending_operation_ids_by_domain": {
@@ -288,9 +288,7 @@
       "AIMW-CONT-B6BB292F85",
       "AIMW-CONT-C49C37E2C9"
     ],
-    "email": [
-      "AIMW-EMAI-0AA71A5EF6"
-    ],
+    "email": [],
     "identity": [],
     "media": [
       "AIMW-MEDI-799B36D113",
@@ -1842,6 +1840,7 @@
       "AIMW-CONT-FE6EE5740C",
       "AIMW-EMAI-00CC1272F6",
       "AIMW-EMAI-01F5713C4F",
+      "AIMW-EMAI-0AA71A5EF6",
       "AIMW-EMAI-10F3C44369",
       "AIMW-EMAI-12A6FEB2FF",
       "AIMW-EMAI-2E59E39808",
@@ -3392,6 +3391,13 @@
         ]
       },
       {
+        "label": "Issue #896 Account Email Settings Delivery History evidence reconciliation (merged PR #1075)",
+        "sha": "92f51a7fa05d498a305fa2878cf5d3f13d6a3187",
+        "operation_ids": [
+          "AIMW-EMAI-0AA71A5EF6"
+        ]
+      },
+      {
         "label": "Issue #968 MediaManager local-only optimization cancel focused closure",
         "sha": "9018fee6f06028e6ff047a154bde9dc6931cc738",
         "operation_ids": [
@@ -3399,8 +3405,8 @@
         ]
       }
     ],
-    "focused_closure_operation_scoped_count": 203,
-    "focused_closure_contract_count": 433,
+    "focused_closure_operation_scoped_count": 204,
+    "focused_closure_contract_count": 434,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
