@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 910,
-    "pending": 21,
+    "adapted": 911,
+    "pending": 20,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 910,
-    "overall_parity_percent": 97.74
+    "terminal": 911,
+    "overall_parity_percent": 97.85
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 425,
-    "pending": 21,
+    "terminal": 426,
+    "pending": 20,
     "blocked": 0,
-    "percent": 95.29
+    "percent": 95.52
   },
   "domains": {
     "ai": {
@@ -203,12 +203,12 @@
     "sync": {
       "total": 213,
       "ported": 0,
-      "adapted": 200,
-      "pending": 13,
+      "adapted": 201,
+      "pending": 12,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 200,
-      "percent": 93.9
+      "terminal": 201,
+      "percent": 94.37
     },
     "taxonomy": {
       "total": 13,
@@ -31440,21 +31440,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Http/Controllers/GlobalPagesPublishController.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-pages-publish-selected-terminality.test.ts",
+      "evidence": "Issue #941 Global Pages PublishSelectedAsync operation-scoped closure@f997f36c7763b8b54023c58386f447653012cb88: variants/laravel-aiwmweb/backend/app/Http/Controllers/GlobalPagesPublishController.php; focused-closure:AIMW-SYNC-ECAB44A389; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/global-pages-publish-selected-terminality.test.ts; evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-pages-publish-selected-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "Issue #941 Global Pages PublishSelectedAsync operation-scoped closure",
+        "source_sha": "f997f36c7763b8b54023c58386f447653012cb88",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/GlobalPagesPublishController.php",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/global-pages-publish-selected-terminality.json",
+        "signals": [
+          "operation:AIMW-SYNC-ECAB44A389",
+          "production-marker:variants/laravel-aiwmweb/backend/app/Http/Controllers/GlobalPagesPublishController.php",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/global-pages-publish-selected-terminality.test.ts",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-pages-publish-selected-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -38295,12 +38305,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 425,
-      "pending": 21,
+      "adapted": 426,
+      "pending": 20,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 425,
-      "percent": 95.29
+      "terminal": 426,
+      "percent": 95.52
     }
   },
   "pending_operation_ids_by_domain": {
@@ -38342,7 +38352,6 @@
       "AIMW-SYNC-AE16CF49C6",
       "AIMW-SYNC-B78216241F",
       "AIMW-SYNC-D5CE5A213B",
-      "AIMW-SYNC-ECAB44A389",
       "AIMW-SYNC-ED1442005E",
       "AIMW-SYNC-FD27B795ED"
     ],
@@ -40008,6 +40017,7 @@
       "AIMW-SYNC-E51F091C0B",
       "AIMW-SYNC-E6888B0B4D",
       "AIMW-SYNC-EB9202408A",
+      "AIMW-SYNC-ECAB44A389",
       "AIMW-SYNC-EE7D7534DF",
       "AIMW-SYNC-EEFDDFFF87",
       "AIMW-SYNC-EF652932D6",
@@ -41370,10 +41380,17 @@
         "operation_ids": [
           "AIMW-SYNC-E3EB27C678"
         ]
+      },
+      {
+        "label": "Issue #941 Global Pages PublishSelectedAsync operation-scoped closure",
+        "sha": "f997f36c7763b8b54023c58386f447653012cb88",
+        "operation_ids": [
+          "AIMW-SYNC-ECAB44A389"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 195,
-    "focused_closure_contract_count": 425,
+    "focused_closure_operation_scoped_count": 196,
+    "focused_closure_contract_count": 426,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [

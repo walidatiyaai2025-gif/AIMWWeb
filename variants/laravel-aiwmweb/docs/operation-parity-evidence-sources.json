@@ -3112,6 +3112,14 @@
       "operation_ids": [
         "AIMW-SYNC-E3EB27C678"
       ]
+    },
+    {
+      "label": "Issue #941 Global Pages PublishSelectedAsync operation-scoped closure",
+      "sha": "f997f36c7763b8b54023c58386f447653012cb88",
+      "observed_pr_head": "f997f36c7763b8b54023c58386f447653012cb88",
+      "operation_ids": [
+        "AIMW-SYNC-ECAB44A389"
+      ]
     }
   ],
   "sources": [

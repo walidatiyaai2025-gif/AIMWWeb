@@ -12,6 +12,7 @@ import { GLOBAL_PAGES_DRAFT_SELECTED_OPERATION_ID, globalPagesDraftEndpoint, glo
 import { GLOBAL_PAGES_PENDING_SELECTED_OPERATION_ID, globalPagesPendingEndpoint, globalPagesPendingPayload } from './global-pages-pending-selected-control';
 import { GLOBAL_PAGES_PRIVATE_SELECTED_OPERATION_ID, globalPagesPrivateEndpoint, globalPagesPrivatePayload } from './global-pages-private-selected-control';
 import { GLOBAL_PAGES_REQUEST_TRASH_OPERATION_ID, canRequestGlobalPagesTrash } from './global-pages-request-trash-control';
+import { GLOBAL_PAGES_PUBLISH_SELECTED_OPERATION_ID, globalPagesPublishEndpoint, buildGlobalPagesPublishPayload, type GlobalPagePublishTarget } from './global-pages-publish-selected-control';
 import { SyncAppConfirmDialogConfirmControl } from './sync-app-confirm-dialog-confirm-control';
 import {
     GLOBAL_PAGES_CONFIRM_TRASH_OPERATION_ID,
@@ -60,6 +61,7 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
     const [filterRevision, setFilterRevision] = useState(0);
     const endpoint = globalPagesEndpoint(context.tenant.slug);
     const draftEndpoint = globalPagesDraftEndpoint(context.tenant.slug);
+    const publishEndpoint = globalPagesPublishEndpoint(context.tenant.slug);
     const pendingEndpoint = globalPagesPendingEndpoint(context.tenant.slug);
     const privateEndpoint = globalPagesPrivateEndpoint(context.tenant.slug);
     const canView = hasPermission(context, 'content.view');
@@ -87,6 +89,30 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
             .map((row) => ({ site_id: row.site_id, wordpress_id: row.wordpress_id } satisfies GlobalPageTrashTarget)),
         [rows, selected],
     );
+
+    const publishMutation = useMutation({
+        mutationFn: async (targets: GlobalPagePublishTarget[]) => {
+            if (!publishEndpoint) throw new Error('The publish operation is unavailable.');
+            return apiRequest<{ operation_id: string; state: 'queued'; count: number; site_jobs: number }>(
+                publishEndpoint,
+                { method: 'POST', body: JSON.stringify(buildGlobalPagesPublishPayload(targets)) },
+            );
+        },
+        onSuccess: (result) => {
+            if (result.operation_id !== GLOBAL_PAGES_PUBLISH_SELECTED_OPERATION_ID || result.state !== 'queued') {
+                notify('Unexpected publish response; refresh authoritative state before retrying.', 'error');
+                return;
+            }
+            setSelected(new Set());
+            notify(
+                locale === 'ar'
+                    ? `تمت جدولة نشر ${result.count} صفحة عبر ${result.site_jobs} مهمة. تحقق من الحالة بعد التنفيذ.`
+                    : `Queued ${result.count} page(s) for publishing across ${result.site_jobs} site job(s). Verify state after execution.`,
+                'success',
+            );
+        },
+        onError: (error) => notify(error instanceof Error ? error.message : 'Could not queue selected pages for publishing.', 'error'),
+    });
 
     const draftMutation = useMutation({
         mutationFn: async (targets: Array<{ site_id: number; wordpress_id: number }>) => {
@@ -203,7 +229,7 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
         ),
     });
 
-    const busy = mutation.isPending || draftMutation.isPending || pendingMutation.isPending || privateMutation.isPending;
+    const busy = mutation.isPending || draftMutation.isPending || pendingMutation.isPending || privateMutation.isPending || publishMutation.isPending;
 
     if (!enabled) return null;
 
@@ -259,6 +285,17 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
             {rows.length ? (
                 <>
                     <div className="toolbar-actions">
+                        <button
+                            type="button"
+                            className="btn primary"
+                            data-canonical-operation={GLOBAL_PAGES_PUBLISH_SELECTED_OPERATION_ID}
+                            disabled={!canEdit || !publishEndpoint || busy || selectedTargets.length === 0}
+                            onClick={() => publishMutation.mutate(selectedTargets)}
+                        >
+                            {publishMutation.isPending
+                                ? (locale === 'ar' ? 'جارٍ جدولة النشر…' : 'Queueing publish…')
+                                : (locale === 'ar' ? 'نشر المحدد' : 'Publish selected')}
+                        </button>
                         <button
                             type="button"
                             className="btn"
