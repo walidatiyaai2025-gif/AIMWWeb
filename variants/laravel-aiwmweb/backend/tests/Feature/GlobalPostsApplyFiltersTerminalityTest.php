@@ -56,15 +56,15 @@ final class GlobalPostsApplyFiltersTerminalityTest extends TestCase
         $first = $this->site($alpha, 'First pages site');
         $second = $this->site($alpha, 'Second pages site');
 
-        $this->post($alpha, $first, 11, 'Needle one', 'publish');
-        $this->post($alpha, $first, 12, 'Needle two', 'draft');
-        $this->post($alpha, $first, 13, 'Other page', 'publish');
-        $this->post($alpha, $second, 14, 'Needle other site', 'publish');
+        $this->seedGlobalPost($alpha, $first, 11, 'Needle one', 'publish');
+        $this->seedGlobalPost($alpha, $first, 12, 'Needle two', 'draft');
+        $this->seedGlobalPost($alpha, $first, 13, 'Other page', 'publish');
+        $this->seedGlobalPost($alpha, $second, 14, 'Needle other site', 'publish');
 
         $betaUser = User::factory()->create();
         $beta = $this->membership($betaUser, 'beta-pages-filter', ['tenant.view', 'content.view']);
         $betaSite = $this->site($beta, 'Foreign pages site');
-        $this->post($beta, $betaSite, 15, 'Needle foreign page', 'publish');
+        $this->seedGlobalPost($beta, $betaSite, 15, 'Needle foreign page', 'publish');
 
         $response = $this->actingAs($user)
             ->getJson('/api/v1/tenants/alpha-pages-filter/global-posts?search=Needle&site_id='.$first->id.'&status=publish&per_page=10&page=1')
@@ -92,8 +92,8 @@ final class GlobalPostsApplyFiltersTerminalityTest extends TestCase
             ->assertJsonPath('total', 0);
 
         // The source Pages Explorer searches locally synchronized content and excerpts as well as title/slug.
-        $this->post($alpha, $first, 16, 'Neutral body search page', 'publish', 'unique-body-needle');
-        $this->post($alpha, $first, 17, 'Neutral excerpt search page', 'publish', '', 'unique-excerpt-needle');
+        $this->seedGlobalPost($alpha, $first, 16, 'Neutral body search page', 'publish', 'unique-body-needle');
+        $this->seedGlobalPost($alpha, $first, 17, 'Neutral excerpt search page', 'publish', '', 'unique-excerpt-needle');
 
         $this->actingAs($user)
             ->getJson('/api/v1/tenants/alpha-pages-filter/global-posts?search=unique-body-needle')
@@ -114,12 +114,12 @@ final class GlobalPostsApplyFiltersTerminalityTest extends TestCase
         $alphaUser = User::factory()->create();
         $alpha = $this->membership($alphaUser, 'alpha-pages-guard', ['content.view', 'tenant.view']);
         $alphaSite = $this->site($alpha, 'Alpha guard site');
-        $this->post($alpha, $alphaSite, 21, 'Visible page', 'draft');
+        $this->seedGlobalPost($alpha, $alphaSite, 21, 'Visible page', 'draft');
 
         $betaOwner = User::factory()->create();
         $beta = $this->membership($betaOwner, 'beta-pages-guard', ['content.view', 'tenant.view']);
         $foreignSite = $this->site($beta, 'Beta guard site');
-        $this->post($beta, $foreignSite, 22, 'Secret page', 'publish');
+        $this->seedGlobalPost($beta, $foreignSite, 22, 'Secret page', 'publish');
 
         $viewer = User::factory()->create();
         $this->membershipExisting($viewer, $alpha->tenant, ['tenant.view'], 'viewer');
@@ -179,7 +179,7 @@ final class GlobalPostsApplyFiltersTerminalityTest extends TestCase
         return $site;
     }
 
-    private function post(TenantMembership $membership, Site $site, int $remoteId, string $title, string $status, string $body = '', string $excerpt = ''): void
+    private function seedGlobalPost(TenantMembership $membership, Site $site, int $remoteId, string $title, string $status, string $body = '', string $excerpt = ''): void
     {
         app(TenantContext::class)->activate($membership->tenant, $membership);
         ContentItem::query()->create([
