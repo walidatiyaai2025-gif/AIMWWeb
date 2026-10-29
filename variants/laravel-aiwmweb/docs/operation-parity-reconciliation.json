@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 924,
-    "pending": 7,
+    "adapted": 925,
+    "pending": 6,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 924,
-    "overall_parity_percent": 99.25
+    "terminal": 925,
+    "overall_parity_percent": 99.36
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 439,
-    "pending": 7,
+    "terminal": 440,
+    "pending": 6,
     "blocked": 0,
-    "percent": 98.43
+    "percent": 98.65
   },
   "domains": {
     "ai": {
@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 161,
-      "pending": 3,
+      "adapted": 162,
+      "pending": 2,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 161,
-      "percent": 98.17
+      "terminal": 162,
+      "percent": 98.78
     },
     "email": {
       "total": 82,
@@ -19039,21 +19039,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/settings-open-accessibility-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SettingsOpenAccessibilityTerminalityTest.php",
+      "evidence": "Issue #1380 Settings OpenAccessibility parity — merged PR #1292 validated runtime, UI and tenant-isolation evidence@534a639dc5e22554ab89f9cfb2ccf27f8876501a: variants/laravel-aiwmweb/backend/resources/js/settings-open-accessibility-control.tsx; focused-closure:AIMW-CONT-C49C37E2C9; test:variants/laravel-aiwmweb/backend/tests/Feature/SettingsOpenAccessibilityTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/settings-open-accessibility-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "Issue #1380 Settings OpenAccessibility parity — merged PR #1292 validated runtime, UI and tenant-isolation evidence",
+        "source_sha": "534a639dc5e22554ab89f9cfb2ccf27f8876501a",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/settings-open-accessibility-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/settings-open-accessibility-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-C49C37E2C9",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/settings-open-accessibility-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/SettingsOpenAccessibilityTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/settings-open-accessibility-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -38436,12 +38446,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 439,
-      "pending": 7,
+      "adapted": 440,
+      "pending": 6,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 439,
-      "percent": 98.43
+      "terminal": 440,
+      "percent": 98.65
     }
   },
   "pending_operation_ids_by_domain": {
@@ -38453,8 +38463,7 @@
     "comments": [],
     "content": [
       "AIMW-CONT-2752ED9351",
-      "AIMW-CONT-6458D3030B",
-      "AIMW-CONT-C49C37E2C9"
+      "AIMW-CONT-6458D3030B"
     ],
     "email": [],
     "identity": [],
@@ -39978,6 +39987,7 @@
       "AIMW-CONT-BCAD1E3A49",
       "AIMW-CONT-BCE1211CE3",
       "AIMW-CONT-C178278FCB",
+      "AIMW-CONT-C49C37E2C9",
       "AIMW-CONT-C7CB5EE184",
       "AIMW-CONT-CA17F05024",
       "AIMW-CONT-CA4920CBC8",
@@ -41608,10 +41618,17 @@
         "operation_ids": [
           "AIMW-CONT-A6867078EA"
         ]
+      },
+      {
+        "label": "Issue #1380 Settings OpenAccessibility parity — merged PR #1292 validated runtime, UI and tenant-isolation evidence",
+        "sha": "534a639dc5e22554ab89f9cfb2ccf27f8876501a",
+        "operation_ids": [
+          "AIMW-CONT-C49C37E2C9"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 209,
-    "focused_closure_contract_count": 439,
+    "focused_closure_operation_scoped_count": 210,
+    "focused_closure_contract_count": 440,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
