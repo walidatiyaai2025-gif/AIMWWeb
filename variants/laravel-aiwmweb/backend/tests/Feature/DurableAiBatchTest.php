@@ -8,6 +8,7 @@ use App\AI\Durable\ExecutionPermit;
 use App\AI\Platform\Contracts\AiGenerator;
 use App\AI\Platform\Enums\AiFailureKind;
 use App\AI\Platform\Exceptions\AiPlatformException;
+use App\AI\Platform\Services\AiGenerationService;
 use App\Jobs\GenerateSuggestionJob;
 use App\Jobs\SyncSiteJob;
 use App\Models\AiModelProfile;
@@ -318,6 +319,26 @@ class DurableAiBatchTest extends TestCase
         $this->assertSame('mock-receipt', json_decode(DB::table('durable_ai_items')->value('usage'), true)['provider_request_id']);
         app()->call([$job, 'handle']);
         Http::assertSentCount(1);
+        $this->assertSame(1, DB::table('durable_ai_batches')->count());
+    }
+
+    public function test_domain_result_replay_cannot_enqueue_again_when_context_changes(): void
+    {
+        $request = ['workflow' => 'test', 'site_id' => $this->site->id, 'user_prompt' => 'Original'];
+        $batches = app(BatchService::class);
+        $batch = $batches->submit([['key' => 'generation', 'request' => [...$request, '_replay_hash' => $batches->fingerprint($request)]]], $this->site->id);
+        $fake = $this->provider();
+        $this->assertSame('completed', $batches->runOne());
+        app('request')->headers->set('X-AIMW-AI-BATCH', $batch['id']);
+        $generator = app(AiGenerationService::class);
+        $this->assertSame('Original', $generator->generate($request)['content']);
+        try {
+            $generator->generate([...$request, 'user_prompt' => 'Changed while waiting']);
+            $this->fail('Changed context must not create a second chargeable task.');
+        } catch (HttpException $error) {
+            $this->assertSame(409, $error->getStatusCode());
+        }
+        $this->assertCount(1, $fake->calls);
         $this->assertSame(1, DB::table('durable_ai_batches')->count());
     }
 }

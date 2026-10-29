@@ -29,3 +29,7 @@ Planned implementation roots under this directory:
 - `tests/` — tenant-isolation, contract, integration and end-to-end acceptance.
 
 The initial Laravel 13 Tenant Core backend is under `backend/`. It establishes tenant context, scoped persistence, RBAC, queues, cache/locks/idempotency, encrypted secrets, immutable audit events, and isolation tests. It is not evidence that broad product parity is complete.
+
+## cPanel release continuation
+
+Issue #1384 owns the cPanel installer and durable AI release gate. Resume through [CPANEL_RELEASE_CONTINUATION.md](docs/CPANEL_RELEASE_CONTINUATION.md), then reconcile live GitHub/CI before acting. AI and cron remain disabled until the documented hosting preflight; remote Ollama recovery is outside this release task.
