@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 911,
-    "pending": 20,
+    "adapted": 912,
+    "pending": 19,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 911,
-    "overall_parity_percent": 97.85
+    "terminal": 912,
+    "overall_parity_percent": 97.96
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 426,
-    "pending": 20,
+    "terminal": 427,
+    "pending": 19,
     "blocked": 0,
-    "percent": 95.52
+    "percent": 95.74
   },
   "domains": {
     "ai": {
@@ -203,12 +203,12 @@
     "sync": {
       "total": 213,
       "ported": 0,
-      "adapted": 201,
-      "pending": 12,
+      "adapted": 202,
+      "pending": 11,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 201,
-      "percent": 94.37
+      "terminal": 202,
+      "percent": 94.84
     },
     "taxonomy": {
       "total": 13,
@@ -31644,21 +31644,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/global-pages-reset-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-pages-reset-control.test.tsx",
+      "evidence": "Issue #942 Global Pages ResetAsync operation-scoped closure@500ef769966595f02848c8d40f586418bedafd84: variants/laravel-aiwmweb/backend/resources/js/global-pages-reset-control.tsx; focused-closure:AIMW-SYNC-FD27B795ED; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/global-pages-reset-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-pages-reset-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "Issue #942 Global Pages ResetAsync operation-scoped closure",
+        "source_sha": "500ef769966595f02848c8d40f586418bedafd84",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/global-pages-reset-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/global-pages-reset-terminality.json",
+        "signals": [
+          "operation:AIMW-SYNC-FD27B795ED",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/global-pages-reset-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/global-pages-reset-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-pages-reset-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -38305,12 +38315,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 426,
-      "pending": 20,
+      "adapted": 427,
+      "pending": 19,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 426,
-      "percent": 95.52
+      "terminal": 427,
+      "percent": 95.74
     }
   },
   "pending_operation_ids_by_domain": {
@@ -38352,8 +38362,7 @@
       "AIMW-SYNC-AE16CF49C6",
       "AIMW-SYNC-B78216241F",
       "AIMW-SYNC-D5CE5A213B",
-      "AIMW-SYNC-ED1442005E",
-      "AIMW-SYNC-FD27B795ED"
+      "AIMW-SYNC-ED1442005E"
     ],
     "taxonomy": []
   },
@@ -40026,6 +40035,7 @@
       "AIMW-SYNC-F340B5445A",
       "AIMW-SYNC-F7BCCD650C",
       "AIMW-SYNC-F7CE702C7D",
+      "AIMW-SYNC-FD27B795ED",
       "AIMW-SYNC-FF579F0EBF",
       "AIMW-TAXO-005925568C",
       "AIMW-TAXO-39CDD7EF81",
@@ -41387,10 +41397,17 @@
         "operation_ids": [
           "AIMW-SYNC-ECAB44A389"
         ]
+      },
+      {
+        "label": "Issue #942 Global Pages ResetAsync operation-scoped closure",
+        "sha": "500ef769966595f02848c8d40f586418bedafd84",
+        "operation_ids": [
+          "AIMW-SYNC-FD27B795ED"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 196,
-    "focused_closure_contract_count": 426,
+    "focused_closure_operation_scoped_count": 197,
+    "focused_closure_contract_count": 427,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
