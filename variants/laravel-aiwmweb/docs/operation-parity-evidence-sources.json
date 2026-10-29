@@ -3146,6 +3146,14 @@
       ]
     },
     {
+      "label": "Issue #967 MediaManager authoritative metadata save focused closure",
+      "sha": "6cf0a9398909b7f2e3a51c6aec75e752b9651092",
+      "observed_pr_head": "6cf0a9398909b7f2e3a51c6aec75e752b9651092",
+      "operation_ids": [
+        "AIMW-SYNC-425B82511E"
+      ]
+    },
+    {
       "label": "AIMW-SYNC-AE16CF49C6 SiteOnboarding RetrySyncAsync focused closure #970",
       "sha": "4fcaf183d6dfd8f95045dc2b9f303465dc27d979",
       "observed_pr_head": "4fcaf183d6dfd8f95045dc2b9f303465dc27d979",
