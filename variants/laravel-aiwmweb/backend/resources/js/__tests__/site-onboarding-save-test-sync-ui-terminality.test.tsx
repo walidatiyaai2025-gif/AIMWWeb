@@ -339,6 +339,37 @@ describe('AIMW-SYNC-AE16CF49C6 retry synchronization', () => {
         expect(canonicalOnboardingRetrySyncEndpoint('/api/tenants/alpha/sites', Number.NaN)).toBeNull();
     });
 
+    it('preserves the failed run when the retry request is rejected', async () => {
+        const initial = {
+            operation_id: SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID,
+            site: { id: 23, name: 'Retry Site', url: 'https://retry.example.test',
+                connection_status: 'verified', health_state: 'healthy' },
+            credential_configured: true,
+            sync: { id: 18, status: 'failed', processed: 0, failure: 'initial sync failed' },
+            idempotent_replay: false,
+        };
+        const fetchMock = vi.fn()
+            .mockResolvedValueOnce(new Response(JSON.stringify(initial), {
+                status: 202, headers: { 'content-type': 'application/json' },
+            }))
+            .mockResolvedValueOnce(new Response(JSON.stringify({ message: 'Retry unavailable' }), {
+                status: 503, headers: { 'content-type': 'application/json' },
+            }));
+        vi.stubGlobal('fetch', fetchMock);
+        renderControl();
+        completeProfileStep('Retry Site', 'https://retry.example.test');
+        completeCredentialStep('wp-admin', 'application-secret-123');
+        fireEvent.click(screen.getByRole('button', { name: 'Save, test and synchronize' }));
+        const retry = await screen.findByRole('button', { name: 'Retry synchronization' });
+        fireEvent.click(retry);
+
+        expect(await screen.findByRole('alert')).toHaveTextContent('Retry unavailable');
+        expect(screen.getByText('Sync: failed')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Retry synchronization' })).toBeEnabled();
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+        expect(JSON.parse(String((fetchMock.mock.calls[1]?.[1] as RequestInit).body))).toEqual({});
+    });
+
     it('retries a failed persisted run without sending WordPress credentials or claiming completion', async () => {
         const initial = {
             operation_id: SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID,
