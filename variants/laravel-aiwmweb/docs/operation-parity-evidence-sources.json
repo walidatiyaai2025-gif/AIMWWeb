@@ -3146,6 +3146,14 @@
       ]
     },
     {
+      "label": "Issue #967 MediaManager authoritative metadata save focused closure",
+      "sha": "6cf0a9398909b7f2e3a51c6aec75e752b9651092",
+      "observed_pr_head": "6cf0a9398909b7f2e3a51c6aec75e752b9651092",
+      "operation_ids": [
+        "AIMW-SYNC-425B82511E"
+      ]
+    },
+    {
       "label": "Issue #935 Global Pages DraftSelectedAsync — merged PR #1322 runtime and focused tests",
       "sha": "e3f3a6859b44bc6e6f48667c6633e1804a57fba5",
       "observed_pr_head": "2b0650491e9a8685e57a33844329f47a5fe71503",
