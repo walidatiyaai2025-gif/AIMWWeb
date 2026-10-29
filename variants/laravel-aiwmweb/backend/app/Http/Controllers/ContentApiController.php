@@ -6,6 +6,7 @@ use App\Authorization\TenantAuthorizer;
 use App\Content\ContentConflictException;
 use App\Content\ContentPlatformService;
 use App\Content\MediaDeleteService;
+use App\Content\MediaMetadataVerificationService;
 use App\Content\Remote\ContentRemoteDriver;
 use App\Jobs\BulkCommentModerationJob;
 use App\Jobs\BulkContentMutationJob;
@@ -46,6 +47,7 @@ final class ContentApiController extends Controller
         private readonly ContentRemoteDriver $remote,
         private readonly TenantContext $tenant,
         private readonly MediaDeleteService $mediaDelete,
+        private readonly MediaMetadataVerificationService $mediaMetadata,
     ) {}
 
     public function index(Request $request, TenantAuthorizer $auth, string $tenant, int $site, string $type): JsonResponse
@@ -430,6 +432,33 @@ final class ContentApiController extends Controller
         return response()->json($q->latest('remote_modified_at')->paginate(min(max((int) $request->query('per_page', 30), 1), 100)));
     }
 
+    public function mediaDetails(TenantAuthorizer $auth, string $tenant, int $site, int $media): JsonResponse
+    {
+        $auth->authorize('content.edit');
+        $item = MediaItem::query()->where('site_id', $site)->findOrFail($media);
+        $remote = $this->remote->get($site, 'media', (int) $item->remote_id);
+        abort_unless((int) ($remote['id'] ?? 0) === (int) $item->remote_id, 409, 'WordPress returned an unexpected media identity.');
+
+        $raw = static function (mixed $value): string {
+            if (is_array($value)) {
+                $value = $value['raw'] ?? null;
+            }
+            abort_unless(is_string($value), 409, 'WordPress did not supply editable media metadata.');
+
+            return $value;
+        };
+
+        return response()->json([
+            'remote_id' => (int) $item->remote_id,
+            'modified_gmt' => $raw($remote['modified_gmt'] ?? null),
+            'title' => $raw($remote['title'] ?? null),
+            'slug' => $raw($remote['slug'] ?? null),
+            'alt_text' => $raw($remote['alt_text'] ?? null),
+            'caption' => $raw($remote['caption'] ?? null),
+            'description' => $raw($remote['description'] ?? null),
+        ]);
+    }
+
     public function uploadMedia(Request $request, TenantAuthorizer $auth, string $tenant, int $site): JsonResponse
     {
         // AIMW-SYNC-6766C503DA: MediaBatchUploadPanel.UploadClickedAsync.
@@ -485,12 +514,35 @@ final class ContentApiController extends Controller
     public function updateMedia(Request $request, TenantAuthorizer $auth, string $tenant, int $site, int $media): JsonResponse
     {
         $auth->authorize('content.edit');
+        $callerIdentity = ['tenant', 'tenant_id', 'site', 'site_id', 'media_id', 'remote_id', 'actor_user_id'];
+        abort_if(array_intersect(array_keys($request->all()), $callerIdentity) !== [], 422, 'Media update does not accept caller-owned identities.');
+
         $item = MediaItem::query()->where('site_id', $site)->findOrFail($media);
-        $data = $request->validate(['alt_text' => 'nullable|string|max:500', 'caption' => 'nullable|string|max:5000', 'description' => 'nullable|string', 'title' => 'nullable|string|max:500']);
-        $result = $this->remote->mutate($site, 'media', $item->remote_id, 'update', $data);
+        $data = $request->validate([
+            'title' => 'sometimes|required|string|max:500',
+            'slug' => 'sometimes|nullable|string|max:200',
+            'alt_text' => 'sometimes|nullable|string|max:500',
+            'caption' => 'sometimes|nullable|string|max:5000',
+            'description' => 'sometimes|nullable|string',
+            'expected_modified_gmt' => 'required|string|max:64',
+        ]);
+        $expectedModified = $data['expected_modified_gmt'];
+        unset($data['expected_modified_gmt']);
+        abort_if($data === [], 422, 'At least one metadata field is required.');
+
+        // Reject edits based on stale WordPress state instead of overwriting another editor.
+        $before = $this->remote->get($site, 'media', (int) $item->remote_id);
+        abort_unless((int) ($before['id'] ?? 0) === (int) $item->remote_id, 409, 'WordPress media identity changed.');
+        abort_unless(
+            is_string($before['modified_gmt'] ?? null) && $before['modified_gmt'] === $expectedModified,
+            409,
+            'WordPress media changed since the metadata editor opened.',
+        );
+
+        $verified = $this->mediaMetadata->save($site, (int) $item->remote_id, $data);
         SyncContentJob::dispatch($this->tenant->id(), $site, false);
 
-        return response()->json($result);
+        return response()->json($verified);
     }
 
     public function deleteMedia(Request $request, TenantAuthorizer $auth, string $tenant, int $site, int $media): JsonResponse
