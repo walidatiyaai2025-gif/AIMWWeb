@@ -3216,6 +3216,14 @@
       "operation_ids": [
         "AIMW-SYNC-3389FB622C"
       ]
+    },
+    {
+      "label": "Issue #1376 Content Editor ClearFeatured operational parity with tenant-isolation proof (PRs #1012/#1014)",
+      "sha": "056d8144e69558b881ef7d3634cf4207262c3d97",
+      "observed_pr_head": "056d8144e69558b881ef7d3634cf4207262c3d97",
+      "operation_ids": [
+        "AIMW-CONT-A6867078EA"
+      ]
     }
   ],
   "sources": [

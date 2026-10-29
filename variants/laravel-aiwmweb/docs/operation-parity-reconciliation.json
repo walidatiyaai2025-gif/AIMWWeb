@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 923,
-    "pending": 8,
+    "adapted": 924,
+    "pending": 7,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 923,
-    "overall_parity_percent": 99.14
+    "terminal": 924,
+    "overall_parity_percent": 99.25
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 438,
-    "pending": 8,
+    "terminal": 439,
+    "pending": 7,
     "blocked": 0,
-    "percent": 98.21
+    "percent": 98.43
   },
   "domains": {
     "ai": {
@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 160,
-      "pending": 4,
+      "adapted": 161,
+      "pending": 3,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 160,
-      "percent": 97.56
+      "terminal": 161,
+      "percent": 98.17
     },
     "email": {
       "total": 82,
@@ -16296,21 +16296,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/content-editor-save-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-editor-clear-featured-control.test.tsx",
+      "evidence": "Issue #1376 Content Editor ClearFeatured operational parity with tenant-isolation proof (PRs #1012/#1014)@056d8144e69558b881ef7d3634cf4207262c3d97: variants/laravel-aiwmweb/backend/resources/js/content-editor-save-control.tsx; focused-closure:AIMW-CONT-A6867078EA; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-editor-clear-featured-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-editor-clear-featured-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "Issue #1376 Content Editor ClearFeatured operational parity with tenant-isolation proof (PRs #1012/#1014)",
+        "source_sha": "056d8144e69558b881ef7d3634cf4207262c3d97",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/content-editor-save-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/content-editor-clear-featured-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-A6867078EA",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/content-editor-save-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-editor-clear-featured-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-editor-clear-featured-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -38426,12 +38436,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 438,
-      "pending": 8,
+      "adapted": 439,
+      "pending": 7,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 438,
-      "percent": 98.21
+      "terminal": 439,
+      "percent": 98.43
     }
   },
   "pending_operation_ids_by_domain": {
@@ -38444,7 +38454,6 @@
     "content": [
       "AIMW-CONT-2752ED9351",
       "AIMW-CONT-6458D3030B",
-      "AIMW-CONT-A6867078EA",
       "AIMW-CONT-C49C37E2C9"
     ],
     "email": [],
@@ -39955,6 +39964,7 @@
       "AIMW-CONT-A31317B378",
       "AIMW-CONT-A3A2CD23B6",
       "AIMW-CONT-A5D88995F3",
+      "AIMW-CONT-A6867078EA",
       "AIMW-CONT-A6EA54E66D",
       "AIMW-CONT-A93DE991C0",
       "AIMW-CONT-AC737C80BF",
@@ -41591,10 +41601,17 @@
         "operation_ids": [
           "AIMW-SYNC-3389FB622C"
         ]
+      },
+      {
+        "label": "Issue #1376 Content Editor ClearFeatured operational parity with tenant-isolation proof (PRs #1012/#1014)",
+        "sha": "056d8144e69558b881ef7d3634cf4207262c3d97",
+        "operation_ids": [
+          "AIMW-CONT-A6867078EA"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 208,
-    "focused_closure_contract_count": 438,
+    "focused_closure_operation_scoped_count": 209,
+    "focused_closure_contract_count": 439,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
