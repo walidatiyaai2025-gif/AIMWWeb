@@ -57,6 +57,7 @@ import { GlobalUsersFullManagementControl } from './global-users-full-management
 import { WordPressUsersRefreshControl } from './wordpress-users-refresh-control';
 import { GlobalUsersRefreshControl, type GlobalUsersRole } from './global-users-refresh-control';
 import { MediaDeleteControl } from './media-delete-control';
+import { MediaAltSuggestionControl } from './media-alt-suggestion-control';
 import { authoritativeGlobalMediaApplyEndpoint, defaultGlobalMediaFilters, globalMediaApplyQuery, GlobalMediaApplyControl } from './global-media-apply-control';
 import { globalMediaResetState, GlobalMediaResetControl } from './global-media-reset-control';
 import { GlobalMediaSyncLinkControl } from './global-media-sync-link-control';
@@ -1229,6 +1230,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                                         <ContentExplorerMediaSourceUrlControl value={row.source_url} />
                                     </MediaManagerEditingSourceUrlControl>
                                 </MediaManagerRowSourceUrlControl>
+                                <MediaAltSuggestionControl context={context} endpoint={endpoint} row={row} />
                                 <MediaDeleteControl
                                     context={context}
                                     endpoint={endpoint}
