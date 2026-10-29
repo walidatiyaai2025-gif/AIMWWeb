@@ -60,7 +60,7 @@ jobs:
           path=Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
           data=json.loads(path.read_text())
           operation='AIMW-SYNC-AE16CF49C6'
-          sources=data['focused_closure_evidence_sources'] if 'focused_closure_evidence_sources' in data else data['focused_closures'] if 'focused_closures' in data else data['focused_closure_sources'] if 'focused_closure_sources' in data else None
+          sources=data.get('focused_closure_operation_sources')
           if sources is None:
               raise SystemExit('Unknown source manifest schema; refusing to change')
           matches=[s for s in sources if operation in s.get('operation_ids', [])]
