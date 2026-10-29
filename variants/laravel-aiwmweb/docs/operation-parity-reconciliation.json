@@ -16304,12 +16304,12 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-editor-clear-featured-control.test.tsx",
-      "evidence": "Issue #257 final focused closure reconciliation for seven pre-existing runtime/acceptance operations@da9cde323e84b45c929adad0b7fdb4fae036a1e8: variants/laravel-aiwmweb/backend/resources/js/content-editor-save-control.tsx; focused-closure:AIMW-CONT-A6867078EA; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-editor-clear-featured-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-editor-clear-featured-terminality.json",
+      "evidence": "Issue #1376 Content Editor ClearFeatured operational parity with tenant-isolation proof (PRs #1012/#1014)@056d8144e69558b881ef7d3634cf4207262c3d97: variants/laravel-aiwmweb/backend/resources/js/content-editor-save-control.tsx; focused-closure:AIMW-CONT-A6867078EA; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-editor-clear-featured-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-editor-clear-featured-terminality.json",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "Issue #257 final focused closure reconciliation for seven pre-existing runtime/acceptance operations",
-        "source_sha": "da9cde323e84b45c929adad0b7fdb4fae036a1e8",
+        "source_label": "Issue #1376 Content Editor ClearFeatured operational parity with tenant-isolation proof (PRs #1012/#1014)",
+        "source_sha": "056d8144e69558b881ef7d3634cf4207262c3d97",
         "destination_path": "variants/laravel-aiwmweb/backend/resources/js/content-editor-save-control.tsx",
         "evidence_mode": "focused_closure_contract",
         "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/content-editor-clear-featured-terminality.json",
@@ -19047,12 +19047,12 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SettingsOpenAccessibilityTerminalityTest.php",
-      "evidence": "Issue #257 final focused closure reconciliation for seven pre-existing runtime/acceptance operations@da9cde323e84b45c929adad0b7fdb4fae036a1e8: variants/laravel-aiwmweb/backend/resources/js/settings-open-accessibility-control.tsx; focused-closure:AIMW-CONT-C49C37E2C9; test:variants/laravel-aiwmweb/backend/tests/Feature/SettingsOpenAccessibilityTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/settings-open-accessibility-terminality.json",
+      "evidence": "Issue #1380 Settings OpenAccessibility parity — merged PR #1292 validated runtime, UI and tenant-isolation evidence@534a639dc5e22554ab89f9cfb2ccf27f8876501a: variants/laravel-aiwmweb/backend/resources/js/settings-open-accessibility-control.tsx; focused-closure:AIMW-CONT-C49C37E2C9; test:variants/laravel-aiwmweb/backend/tests/Feature/SettingsOpenAccessibilityTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/settings-open-accessibility-terminality.json",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "Issue #257 final focused closure reconciliation for seven pre-existing runtime/acceptance operations",
-        "source_sha": "da9cde323e84b45c929adad0b7fdb4fae036a1e8",
+        "source_label": "Issue #1380 Settings OpenAccessibility parity — merged PR #1292 validated runtime, UI and tenant-isolation evidence",
+        "source_sha": "534a639dc5e22554ab89f9cfb2ccf27f8876501a",
         "destination_path": "variants/laravel-aiwmweb/backend/resources/js/settings-open-accessibility-control.tsx",
         "evidence_mode": "focused_closure_contract",
         "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/settings-open-accessibility-terminality.json",
@@ -41661,13 +41661,25 @@
         ]
       },
       {
+        "label": "Issue #1376 Content Editor ClearFeatured operational parity with tenant-isolation proof (PRs #1012/#1014)",
+        "sha": "056d8144e69558b881ef7d3634cf4207262c3d97",
+        "operation_ids": [
+          "AIMW-CONT-A6867078EA"
+        ]
+      },
+      {
+        "label": "Issue #1380 Settings OpenAccessibility parity — merged PR #1292 validated runtime, UI and tenant-isolation evidence",
+        "sha": "534a639dc5e22554ab89f9cfb2ccf27f8876501a",
+        "operation_ids": [
+          "AIMW-CONT-C49C37E2C9"
+        ]
+      },
+      {
         "label": "Issue #257 final focused closure reconciliation for seven pre-existing runtime/acceptance operations",
         "sha": "da9cde323e84b45c929adad0b7fdb4fae036a1e8",
         "operation_ids": [
           "AIMW-CONT-2752ED9351",
           "AIMW-CONT-6458D3030B",
-          "AIMW-CONT-A6867078EA",
-          "AIMW-CONT-C49C37E2C9",
           "AIMW-MEDI-799B36D113",
           "AIMW-MEDI-F55A549341",
           "AIMW-SYNC-B78216241F"
