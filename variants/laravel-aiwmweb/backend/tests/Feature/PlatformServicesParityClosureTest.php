@@ -256,7 +256,18 @@ class PlatformServicesParityClosureTest extends TestCase
             $frontendKinds->every(fn (string $kind): bool => in_array($kind, ['route', 'visible_control'], true)),
             'Owned frontend PENDING inventory may contain only route and visible-control operations.',
         );
-        $this->assertContains('visible_control', $frontendKinds->all(), 'Owned visible-control PENDING inventory should remain explicit while it exists.');
+        $this->assertSame(
+            $nonTerminalVisibleControls->count(),
+            $frontend->filter(fn (array $operation): bool => $operation['kind'] === 'visible_control')->count(),
+            'Every nonterminal owned visible control must remain explicitly recorded as PENDING.',
+        );
+        if ($nonTerminalVisibleControls->isEmpty()) {
+            $this->assertCount(
+                $visibleControls->count(),
+                $terminalVisibleControls,
+                'When owned visible-control PENDING reaches zero, every owned visible control must be terminal.',
+            );
+        }
 
         foreach ($terminalVisibleControls as $operation) {
             $operationId = $operation['operation_id'];
