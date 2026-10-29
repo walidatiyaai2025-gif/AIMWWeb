@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #966 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-21483C88FA",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-SYNC-21483C88FA",
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "/sites/{SiteId:guid}/media",
+    "source": "src/AIWordPressManager.Web/Components/Pages/MediaManager.razor",
+    "source_control": "SuggestAltClickedAsync",
+    "source_intent": "Generate AI alt text from a user-provided image context for review, without silently persisting a suggestion",
+    "mutation": false,
+    "tenant_owned": true,
+    "external_dependency": "WordPress",
+    "risk": "low"
+  },
+  "laravel_adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/media-alt-suggestion-control.tsx",
+    "resource_integration": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx::ResourceContent",
+    "remote_provider": "tenant-scoped AI Platform AiCenterGenerateController",
+    "request": "POST /api/tenants/{tenant}/ai-center/generate",
+    "suggestion_is_draft": true
+  },
+  "security": {
+    "tenant_scoped_api_endpoint": true,
+    "site_bound_to_authenticated_tenant": true,
+    "required_permissions": [
+      "content.edit",
+      "ai.use"
+    ],
+    "image_only": true,
+    "no_fabricated_success": true,
+    "no_credential_exposure": true,
+    "foreign_tenant_read_returns": "404"
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/media-alt-suggestion-control.test.tsx",
+    "coverage": [
+      "real provider-backed suggestion",
+      "tenant-qualified site identity",
+      "cross-tenant/IDOR 404",
+      "authorization fail closed",
+      "no automatic WordPress mutation",
+      "provider error remains visible"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-21483C88FA"
+    ],
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "duplicate_branch_created": false,
+    "variant_boundary": "variants/laravel-aiwmweb/**"
+  }
+}
