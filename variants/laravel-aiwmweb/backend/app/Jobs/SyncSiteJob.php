@@ -19,12 +19,17 @@ final class SyncSiteJob extends TenantAwareJob
 
     public function uniqueId(): string
     {
-        return "tenant:{$this->tenantId}:site:{$this->siteId}:sync";
+        return "tenant:{$this->tenantId}:site:{$this->siteId}:sync:run:{$this->syncRunId}";
     }
 
     public function handle(WordPressGateway $wordpress, SeoManagerService $seo, SiteOperationHistoryService $history): void
     {
         $run = SyncRun::query()->findOrFail($this->syncRunId);
+        // A failed run is terminal: an old queued retry must not revive it or race a new run.
+        if (! in_array((string) $run->status, ['queued', 'running'], true)) {
+            return;
+        }
+
         $site = Site::query()->findOrFail($this->siteId);
         $startedAt = now();
         $run->update(['status' => 'running', 'started_at' => $startedAt, 'failure' => null]);
