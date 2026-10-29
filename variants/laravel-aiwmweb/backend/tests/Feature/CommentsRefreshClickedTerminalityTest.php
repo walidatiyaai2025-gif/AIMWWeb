@@ -6,7 +6,7 @@ use Tests\TestCase;
 
 final class CommentsRefreshClickedTerminalityTest extends TestCase
 {
-    private const OPERATION_ID = 'AIMW-SYNC-D5CE5A213B';
+    private const OPERATION_ID = 'AIMW-SYNC-DBD736FACC';
 
     public function test_source_and_laravel_bind_exact_refresh_clicked_semantics(): void
     {
