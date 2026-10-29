@@ -3138,6 +3138,14 @@
       ]
     },
     {
+      "label": "AIMW-SYNC-4FDCFDA33F WordPress UsersManager SearchClickedAsync scoped closure #976",
+      "sha": "9f3bccc427efaf7538647143bc87a26319a9e5e2",
+      "observed_pr_head": "9f3bccc427efaf7538647143bc87a26319a9e5e2",
+      "operation_ids": [
+        "AIMW-SYNC-4FDCFDA33F"
+      ]
+    },
+    {
       "label": "MediaManager SuggestAltClickedAsync focused #966",
       "sha": "5fa48533f6fd19fca4f2b9cc85f870f97b3d0d2f",
       "observed_pr_head": "5fa48533f6fd19fca4f2b9cc85f870f97b3d0d2f",
@@ -3151,6 +3159,14 @@
       "observed_pr_head": "6cf0a9398909b7f2e3a51c6aec75e752b9651092",
       "operation_ids": [
         "AIMW-SYNC-425B82511E"
+      ]
+    },
+    {
+      "label": "AIMW-SYNC-7A726BAF5F GlobalPostsExplorer ApplyAsync focused closure #948",
+      "sha": "612fcc6909ccbacfbc17e3f4f27d75af6ea423c3",
+      "observed_pr_head": "612fcc6909ccbacfbc17e3f4f27d75af6ea423c3",
+      "operation_ids": [
+        "AIMW-SYNC-7A726BAF5F"
       ]
     },
     {
