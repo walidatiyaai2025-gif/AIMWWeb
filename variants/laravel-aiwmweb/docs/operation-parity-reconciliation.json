@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 925,
-    "pending": 6,
+    "adapted": 930,
+    "pending": 1,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 925,
-    "overall_parity_percent": 99.36
+    "terminal": 930,
+    "overall_parity_percent": 99.89
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 440,
-    "pending": 6,
+    "terminal": 445,
+    "pending": 1,
     "blocked": 0,
-    "percent": 98.65
+    "percent": 99.78
   },
   "domains": {
     "ai": {
@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 162,
-      "pending": 2,
+      "adapted": 164,
+      "pending": 0,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 162,
-      "percent": 98.78
+      "terminal": 164,
+      "percent": 100.0
     },
     "email": {
       "total": 82,
@@ -133,12 +133,12 @@
     "media": {
       "total": 15,
       "ported": 0,
-      "adapted": 13,
-      "pending": 2,
+      "adapted": 15,
+      "pending": 0,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 13,
-      "percent": 86.67
+      "terminal": 15,
+      "percent": 100.0
     },
     "operations": {
       "total": 5,
@@ -203,12 +203,12 @@
     "sync": {
       "total": 213,
       "ported": 0,
-      "adapted": 211,
-      "pending": 2,
+      "adapted": 212,
+      "pending": 1,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 211,
-      "percent": 99.06
+      "terminal": 212,
+      "percent": 99.53
     },
     "taxonomy": {
       "total": 13,
@@ -20829,21 +20829,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/sites-save-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/sites-saving-label-control.test.tsx",
+      "evidence": "Issue #257 final focused closure reconciliation for seven pre-existing runtime/acceptance operations@da9cde323e84b45c929adad0b7fdb4fae036a1e8: variants/laravel-aiwmweb/backend/resources/js/sites-save-control.tsx; focused-closure:AIMW-CONT-2752ED9351; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/sites-saving-label-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/sites-saving-label-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "Issue #257 final focused closure reconciliation for seven pre-existing runtime/acceptance operations",
+        "source_sha": "da9cde323e84b45c929adad0b7fdb4fae036a1e8",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/sites-save-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/sites-saving-label-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-2752ED9351",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/sites-save-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/sites-saving-label-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/sites-saving-label-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -21643,21 +21653,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "medium",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/WelcomeSecurityAnchorTerminalityTest.php",
+      "evidence": "Issue #257 final focused closure reconciliation for seven pre-existing runtime/acceptance operations@da9cde323e84b45c929adad0b7fdb4fae036a1e8: variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php; focused-closure:AIMW-CONT-6458D3030B; test:variants/laravel-aiwmweb/backend/tests/Feature/WelcomeSecurityAnchorTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/welcome-security-anchor-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "Issue #257 final focused closure reconciliation for seven pre-existing runtime/acceptance operations",
+        "source_sha": "da9cde323e84b45c929adad0b7fdb4fae036a1e8",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/welcome-security-anchor-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-6458D3030B",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/WelcomeSecurityAnchorTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/welcome-security-anchor-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-neutral-boundary"
+        ]
       }
     },
     {
@@ -26133,21 +26153,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/media-pages-link-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/media-posts-link-control.test.tsx",
+      "evidence": "Issue #257 final focused closure reconciliation for seven pre-existing runtime/acceptance operations@da9cde323e84b45c929adad0b7fdb4fae036a1e8: variants/laravel-aiwmweb/backend/resources/js/media-pages-link-control.tsx; focused-closure:AIMW-MEDI-F55A549341; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/media-posts-link-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-media-posts-link-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "Issue #257 final focused closure reconciliation for seven pre-existing runtime/acceptance operations",
+        "source_sha": "da9cde323e84b45c929adad0b7fdb4fae036a1e8",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/media-pages-link-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/global-media-posts-link-terminality.json",
+        "signals": [
+          "operation:AIMW-MEDI-F55A549341",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/media-pages-link-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/media-posts-link-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-media-posts-link-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -26287,21 +26317,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/dashboard-media-navigation-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/dashboard-media-navigation-control.test.tsx",
+      "evidence": "Issue #257 final focused closure reconciliation for seven pre-existing runtime/acceptance operations@da9cde323e84b45c929adad0b7fdb4fae036a1e8: variants/laravel-aiwmweb/backend/resources/js/dashboard-media-navigation-control.tsx; focused-closure:AIMW-MEDI-799B36D113; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/dashboard-media-navigation-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/dashboard-media-navigation-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "Issue #257 final focused closure reconciliation for seven pre-existing runtime/acceptance operations",
+        "source_sha": "da9cde323e84b45c929adad0b7fdb4fae036a1e8",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/dashboard-media-navigation-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/dashboard-media-navigation-terminality.json",
+        "signals": [
+          "operation:AIMW-MEDI-799B36D113",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/dashboard-media-navigation-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/dashboard-media-navigation-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/dashboard-media-navigation-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -33617,21 +33657,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/wordpress-users-previous-page-visible-control.test.tsx",
+      "evidence": "Issue #257 final focused closure reconciliation for seven pre-existing runtime/acceptance operations@da9cde323e84b45c929adad0b7fdb4fae036a1e8: variants/laravel-aiwmweb/backend/resources/js/pages.tsx; focused-closure:AIMW-SYNC-B78216241F; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/wordpress-users-previous-page-visible-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/wordpress-users-previous-page-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "Issue #257 final focused closure reconciliation for seven pre-existing runtime/acceptance operations",
+        "source_sha": "da9cde323e84b45c929adad0b7fdb4fae036a1e8",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/wordpress-users-previous-page-terminality.json",
+        "signals": [
+          "operation:AIMW-SYNC-B78216241F",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/wordpress-users-previous-page-visible-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/wordpress-users-previous-page-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -38446,12 +38496,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 440,
-      "pending": 6,
+      "adapted": 445,
+      "pending": 1,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 440,
-      "percent": 98.65
+      "terminal": 445,
+      "percent": 99.78
     }
   },
   "pending_operation_ids_by_domain": {
@@ -38461,16 +38511,10 @@
     "backup": [],
     "billing": [],
     "comments": [],
-    "content": [
-      "AIMW-CONT-2752ED9351",
-      "AIMW-CONT-6458D3030B"
-    ],
+    "content": [],
     "email": [],
     "identity": [],
-    "media": [
-      "AIMW-MEDI-799B36D113",
-      "AIMW-MEDI-F55A549341"
-    ],
+    "media": [],
     "operations": [],
     "platform": [],
     "reports": [],
@@ -38478,7 +38522,6 @@
     "settings": [],
     "sites": [],
     "sync": [
-      "AIMW-SYNC-B78216241F",
       "AIMW-SYNC-D5CE5A213B"
     ],
     "taxonomy": []
@@ -39914,6 +39957,7 @@
       "AIMW-CONT-16D4AD8DC8",
       "AIMW-CONT-1A08B49164",
       "AIMW-CONT-247E791DA7",
+      "AIMW-CONT-2752ED9351",
       "AIMW-CONT-276925F148",
       "AIMW-CONT-289CEEF3BA",
       "AIMW-CONT-2C51372C70",
@@ -39942,6 +39986,7 @@
       "AIMW-CONT-607ACDF4D8",
       "AIMW-CONT-6187F8DF8A",
       "AIMW-CONT-63EDB4BA6F",
+      "AIMW-CONT-6458D3030B",
       "AIMW-CONT-659BEF8765",
       "AIMW-CONT-6700342002",
       "AIMW-CONT-69B5134C7E",
@@ -40050,7 +40095,9 @@
       "AIMW-MEDI-56F4EF0AFB",
       "AIMW-MEDI-727FAEEB01",
       "AIMW-MEDI-73C0DA6B3D",
+      "AIMW-MEDI-799B36D113",
       "AIMW-MEDI-8F93BEDD59",
+      "AIMW-MEDI-F55A549341",
       "AIMW-OPER-21EC1BDE45",
       "AIMW-PLAT-17BC7DA9E5",
       "AIMW-PLAT-4BAE8344AF",
@@ -40134,6 +40181,7 @@
       "AIMW-SYNC-AE16CF49C6",
       "AIMW-SYNC-AE544B4684",
       "AIMW-SYNC-B11D963A9E",
+      "AIMW-SYNC-B78216241F",
       "AIMW-SYNC-B83AB5A666",
       "AIMW-SYNC-B955324F04",
       "AIMW-SYNC-BDBA0B4F01",
@@ -41625,10 +41673,21 @@
         "operation_ids": [
           "AIMW-CONT-C49C37E2C9"
         ]
+      },
+      {
+        "label": "Issue #257 final focused closure reconciliation for seven pre-existing runtime/acceptance operations",
+        "sha": "da9cde323e84b45c929adad0b7fdb4fae036a1e8",
+        "operation_ids": [
+          "AIMW-CONT-2752ED9351",
+          "AIMW-CONT-6458D3030B",
+          "AIMW-MEDI-799B36D113",
+          "AIMW-MEDI-F55A549341",
+          "AIMW-SYNC-B78216241F"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 210,
-    "focused_closure_contract_count": 440,
+    "focused_closure_operation_scoped_count": 215,
+    "focused_closure_contract_count": 445,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
