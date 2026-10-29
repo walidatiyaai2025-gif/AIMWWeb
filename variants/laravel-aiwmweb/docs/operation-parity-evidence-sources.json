@@ -3122,6 +3122,22 @@
       ]
     },
     {
+      "label": "Issue #962 Dashboard RefreshClickedAsync tenant-scoped focused closure",
+      "sha": "a5bbcea64b94469f28544162b2d34223f354c75b",
+      "observed_pr_head": "a5bbcea64b94469f28544162b2d34223f354c75b",
+      "operation_ids": [
+        "AIMW-SYNC-8C35E9A7A0"
+      ]
+    },
+    {
+      "label": "Issue #942 Global Pages ResetAsync operation-scoped closure",
+      "sha": "500ef769966595f02848c8d40f586418bedafd84",
+      "observed_pr_head": "500ef769966595f02848c8d40f586418bedafd84",
+      "operation_ids": [
+        "AIMW-SYNC-FD27B795ED"
+      ]
+    },
+    {
       "label": "MediaManager SuggestAltClickedAsync focused #966",
       "sha": "5fa48533f6fd19fca4f2b9cc85f870f97b3d0d2f",
       "observed_pr_head": "5fa48533f6fd19fca4f2b9cc85f870f97b3d0d2f",
