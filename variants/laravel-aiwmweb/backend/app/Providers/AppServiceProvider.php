@@ -76,6 +76,7 @@ class AppServiceProvider extends ServiceProvider
                 'cache.default' => 'database', 'cache.stores.database.connection' => $database,
                 'cache.stores.database.lock_connection' => $database,
                 'session.driver' => 'database', 'session.connection' => $database,
+                'session.secure' => true, 'session.http_only' => true, 'session.same_site' => 'lax',
             ]);
             $this->app->make('queue')->addConnector('database', fn () => new BoundedDatabaseConnector($this->app['db']));
         }
