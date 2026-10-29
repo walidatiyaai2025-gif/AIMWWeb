@@ -91,5 +91,4 @@ final class ContentEditorSitesLinkTerminalityTest extends TestCase
             $operation['reconciliation']['evidence_path'] ?? null,
         );
     }
-
 }
