@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #976 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-4FDCFDA33F",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "/sites/{SiteId:guid}/users",
+    "source": "src/AIWordPressManager.Web/Components/Pages/UsersManager.razor",
+    "visible_control": "@L[ [SearchClickedAsync]",
+    "source_intent": "Search the selected site's WordPress users with a role filter, reset to first page, re-read WordPress REST on each search.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "binding_source": "variants/laravel-aiwmweb/backend/resources/js/wordpress-site-users-search-control.ts",
+    "read_source": "variants/laravel-aiwmweb/backend/app/Http/Controllers/WordPressUsersController.php::index",
+    "wordpress_source": "variants/laravel-aiwmweb/backend/app/Content/Remote/NativeWordPressRestPath.php::list",
+    "semantics": "The authorized /sites/{site}/users server route redirects after ownership check to /module/users?site={site}. The frontend verifies selected site query against server-issued tenant/site users API, binds the specific UsersManager search operation, supports an allowlisted role filter, trims the keyword, resets page one and re-fetches even when filters are unchanged. The server checks sites.view, tenant-scoped site ownership and performs native WordPress users REST GET with role and search. Remote API denial remains a visible failure.",
+    "visibility_permission": "tenant.view,sites.view",
+    "loading_error_empty_behavior": "Search disabled while WordPress users are fetching. Empty, denied and transient remote results are surfaced as they are; no fake success."
+  },
+  "security": {
+    "backend_mutation_added": false,
+    "provider_mutation_added": false,
+    "caller_owned_identity_override_added": false,
+    "tenant_selector_added": false,
+    "foreign_tenant_access_added": false,
+    "fake_success": false,
+    "secret_disclosure_added": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/WordPressSiteUsersSearchTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/wordpress-site-users-search-control.test.tsx",
+    "coverage": [
+      "exact source SearchClickedAsync semantics and operation identity",
+      "site-specific normalized and authorized search role filter",
+      "real server-driven WordPress REST read and repeat search",
+      "remote permission 403 error without fake success",
+      "foreign-tenant site IDOR 404 and same-tenant missing sites.view 403",
+      "invalid site or spoofed tenant rejected by frontend gating"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-4FDCFDA33F"
+    ],
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "branch": "worker/976-wordpress-site-users-search",
+    "note": "Exact-head CI and official generator required before terminality is verified."
+  }
+}
