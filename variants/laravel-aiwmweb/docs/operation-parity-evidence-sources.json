@@ -3130,6 +3130,14 @@
       ]
     },
     {
+      "label": "Issue #942 Global Pages ResetAsync operation-scoped closure",
+      "sha": "500ef769966595f02848c8d40f586418bedafd84",
+      "observed_pr_head": "500ef769966595f02848c8d40f586418bedafd84",
+      "operation_ids": [
+        "AIMW-SYNC-FD27B795ED"
+      ]
+    },
+    {
       "label": "AIMW-SYNC-4FDCFDA33F WordPress UsersManager SearchClickedAsync scoped closure #976",
       "sha": "9f3bccc427efaf7538647143bc87a26319a9e5e2",
       "observed_pr_head": "9f3bccc427efaf7538647143bc87a26319a9e5e2",
