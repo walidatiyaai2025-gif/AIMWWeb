@@ -68,6 +68,16 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         if (config('cpanel.enabled')) {
+            // A packaged cPanel profile must never inherit a Redis/sync driver
+            // or the Redis connection alias "default" from an older .env.
+            $database = config('database.default');
+            config([
+                'queue.default' => 'database', 'queue.connections.database.connection' => $database,
+                'cache.default' => 'database', 'cache.stores.database.connection' => $database,
+                'cache.stores.database.lock_connection' => $database,
+                'session.driver' => 'database', 'session.connection' => $database,
+                'session.secure' => true, 'session.http_only' => true, 'session.same_site' => 'lax',
+            ]);
             $this->app->make('queue')->addConnector('database', fn () => new BoundedDatabaseConnector($this->app['db']));
         }
         Gate::policy(TenantSecret::class, TenantSecretPolicy::class);

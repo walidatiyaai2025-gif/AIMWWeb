@@ -54,7 +54,7 @@ $_POST = $input['post'];
 require $directory.'/public/install.php';
 CODE);
             $env = [];
-            foreach (['APP_ENV', 'APP_KEY', 'APP_URL', 'APP_DEBUG', 'DB_CONNECTION', 'DB_HOST', 'DB_PORT', 'DB_DATABASE', 'DB_USERNAME', 'DB_PASSWORD', 'CACHE_STORE', 'SESSION_DRIVER', 'QUEUE_CONNECTION'] as $name) {
+            foreach (['APP_ENV', 'APP_KEY', 'APP_URL', 'APP_DEBUG', 'DB_CONNECTION', 'DB_HOST', 'DB_PORT', 'DB_DATABASE', 'DB_USERNAME', 'DB_PASSWORD', 'CACHE_STORE', 'SESSION_DRIVER', 'SESSION_CONNECTION', 'QUEUE_CONNECTION'] as $name) {
                 $env[$name] = false;
             }
             $run = function (string $method, array $post = []) use ($directory, $script, $sessionId, $env): string {
@@ -71,6 +71,14 @@ CODE);
             $post = ['csrf' => $match[1], 'app_url' => 'https://installer.example', 'db_host' => $connection['host'], 'db_name' => $database, 'db_user' => $connection['username'], 'db_password' => $connection['password'], 'tenant_name' => 'Rehearsal', 'admin_name' => 'Owner', 'admin_email' => 'owner@example.test', 'admin_password' => 'Rehearsal-only-Long-Password!33', 'admin_password_confirmation' => 'Rehearsal-only-Long-Password!33'];
             $result = $run('POST', $post);
             $this->assertFileExists($directory.'/app/storage/installed.lock', strip_tags($result));
+            $healthScript = $directory.'/health.php';
+            file_put_contents($healthScript, '<?php require __DIR__."/app/vendor/autoload.php"; $app=require __DIR__."/app/bootstrap/app.php"; $app->make(Illuminate\\Contracts\\Console\\Kernel::class)->bootstrap(); echo json_encode(app(App\\Services\\RuntimeHealthService::class)->ready());');
+            $health = new Process([PHP_BINARY, $healthScript], $directory, $env);
+            $health->mustRun();
+            $healthReport = json_decode($health->getOutput(), true);
+            $this->assertSame('ready', $healthReport['status']);
+            $this->assertSame('not_required', $healthReport['checks']['redis']['status']);
+            $this->assertSame('disabled', $healthReport['checks']['scheduler']['status']);
             $environment = file_get_contents($directory.'/app/.env');
             $this->assertStringContainsString('CPANEL_AI_ENABLED="false"', $environment);
             $this->assertSame(0, fileperms($directory.'/app/.env') & 0077);

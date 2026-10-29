@@ -97,6 +97,24 @@ final class BatchService
         return $this->status($id);
     }
 
+    public function fingerprint(array $request): string
+    {
+        return $this->hash($request);
+    }
+
+    public function replayCompleted(string $id, array $request): array
+    {
+        app(TenantAuthorizer::class)->authorize('ai.use');
+        $batch = $this->ownedBatch($id);
+        abort_unless((int) $batch->user_id === (int) $this->context->membership()->user_id, 403);
+        $item = DB::table('durable_ai_items')->where('batch_id', $id)->where('tenant_id', $this->context->id())->orderBy('position')->first();
+        abort_unless($item && $item->state === 'completed', 409, 'Saved AI result is not ready.');
+        $saved = json_decode(Crypt::decryptString($item->request), true, 512, JSON_THROW_ON_ERROR);
+        abort_unless(isset($saved['_replay_hash']) && hash_equals($saved['_replay_hash'], $this->hash($request)), 409, 'Context changed; review the saved AI result before requesting another generation.');
+
+        return json_decode(Crypt::decryptString($item->result), true, 512, JSON_THROW_ON_ERROR);
+    }
+
     public function resultOrDefer(array $request): array
     {
         if (! config('cpanel.ai_enabled')) {
