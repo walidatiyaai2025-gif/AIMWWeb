@@ -3162,6 +3162,14 @@
       ]
     },
     {
+      "label": "AIMW-SYNC-7A726BAF5F GlobalPostsExplorer ApplyAsync focused closure #948",
+      "sha": "612fcc6909ccbacfbc17e3f4f27d75af6ea423c3",
+      "observed_pr_head": "612fcc6909ccbacfbc17e3f4f27d75af6ea423c3",
+      "operation_ids": [
+        "AIMW-SYNC-7A726BAF5F"
+      ]
+    },
+    {
       "label": "Issue #896 Account Email Settings Delivery History evidence reconciliation (merged PR #1075)",
       "sha": "92f51a7fa05d498a305fa2878cf5d3f13d6a3187",
       "observed_pr_head": "ea231be55a5ed7830d833a0f25450c901d6ab6ef",
