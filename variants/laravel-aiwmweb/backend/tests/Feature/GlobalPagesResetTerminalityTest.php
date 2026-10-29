@@ -52,8 +52,10 @@ final class GlobalPagesResetTerminalityTest extends TestCase
             'name' => 'Alpha pages', 'url' => 'https://alpha-pages.example.test',
             'status' => 'active', 'connection_status' => 'connected',
         ]);
-        foreach ([['id' => 11, 'title' => 'Needle page', 'status' => 'draft'],
-                  ['id' => 12, 'title' => 'Other page', 'status' => 'publish']] as $row) {
+        foreach ([
+            ['id' => 11, 'title' => 'Needle page', 'status' => 'draft'],
+            ['id' => 12, 'title' => 'Other page', 'status' => 'publish'],
+        ] as $row) {
             ContentItem::query()->create([
                 'site_id' => $site->id, 'remote_id' => $row['id'], 'type' => 'page',
                 'title' => $row['title'], 'slug' => 'page-'.$row['id'],
