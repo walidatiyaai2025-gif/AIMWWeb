@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 914,
-    "pending": 17,
+    "adapted": 915,
+    "pending": 16,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 914,
-    "overall_parity_percent": 98.17
+    "terminal": 915,
+    "overall_parity_percent": 98.28
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 429,
-    "pending": 17,
+    "terminal": 430,
+    "pending": 16,
     "blocked": 0,
-    "percent": 96.19
+    "percent": 96.41
   },
   "domains": {
     "ai": {
@@ -203,12 +203,12 @@
     "sync": {
       "total": 213,
       "ported": 0,
-      "adapted": 204,
-      "pending": 9,
+      "adapted": 205,
+      "pending": 8,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 204,
-      "percent": 95.77
+      "terminal": 205,
+      "percent": 96.24
     },
     "taxonomy": {
       "total": 13,
@@ -32812,21 +32812,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/media-optimization-editor-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/media-optimization-save-control.test.tsx",
+      "evidence": "Issue #967 MediaManager authoritative metadata save focused closure@6cf0a9398909b7f2e3a51c6aec75e752b9651092: variants/laravel-aiwmweb/backend/resources/js/media-optimization-editor-control.tsx; focused-closure:AIMW-SYNC-425B82511E; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/media-optimization-save-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/media-save-optimization-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "Issue #967 MediaManager authoritative metadata save focused closure",
+        "source_sha": "6cf0a9398909b7f2e3a51c6aec75e752b9651092",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/media-optimization-editor-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/media-save-optimization-terminality.json",
+        "signals": [
+          "operation:AIMW-SYNC-425B82511E",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/media-optimization-editor-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/media-optimization-save-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/media-save-optimization-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -38335,12 +38345,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 429,
-      "pending": 17,
+      "adapted": 430,
+      "pending": 16,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 429,
-      "percent": 96.19
+      "terminal": 430,
+      "percent": 96.41
     }
   },
   "pending_operation_ids_by_domain": {
@@ -38373,7 +38383,6 @@
     "sites": [],
     "sync": [
       "AIMW-SYNC-3389FB622C",
-      "AIMW-SYNC-425B82511E",
       "AIMW-SYNC-4B986B2651",
       "AIMW-SYNC-4FDCFDA33F",
       "AIMW-SYNC-7A726BAF5F",
@@ -39992,6 +40001,7 @@
       "AIMW-SYNC-3BFC8AF183",
       "AIMW-SYNC-3E7DCF4C71",
       "AIMW-SYNC-419C403EFB",
+      "AIMW-SYNC-425B82511E",
       "AIMW-SYNC-45A3B43BB9",
       "AIMW-SYNC-461B1075DE",
       "AIMW-SYNC-476CDB769B",
@@ -41438,10 +41448,17 @@
         "operation_ids": [
           "AIMW-SYNC-21483C88FA"
         ]
+      },
+      {
+        "label": "Issue #967 MediaManager authoritative metadata save focused closure",
+        "sha": "6cf0a9398909b7f2e3a51c6aec75e752b9651092",
+        "operation_ids": [
+          "AIMW-SYNC-425B82511E"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 199,
-    "focused_closure_contract_count": 429,
+    "focused_closure_operation_scoped_count": 200,
+    "focused_closure_contract_count": 430,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [

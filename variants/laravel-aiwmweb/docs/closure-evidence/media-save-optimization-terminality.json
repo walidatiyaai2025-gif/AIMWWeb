@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #967 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-425B82511E",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-SYNC-425B82511E",
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "/sites/{SiteId:guid}/media",
+    "source": "src/AIWordPressManager.Web/Components/Pages/MediaManager.razor",
+    "source_control": "SaveOptimizationClickedAsync",
+    "source_intent": "Save WordPress media title, slug, alt, caption and description, then verify authoritative remote state",
+    "mutation": false,
+    "tenant_owned": true,
+    "external_dependency": "WordPress",
+    "risk": "low"
+  },
+  "laravel_adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/media-optimization-editor-control.tsx",
+    "backend_controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentApiController.php",
+    "verification_service": "variants/laravel-aiwmweb/backend/app/Content/MediaMetadataVerificationService.php",
+    "read_endpoint": "GET /api/v1/tenants/{tenant}/sites/{site}/media/{media}",
+    "save_endpoint": "PATCH /api/v1/tenants/{tenant}/sites/{site}/media/{media}",
+    "backend_verified_read": true
+  },
+  "security": {
+    "required_permissions": [
+      "content.view",
+      "content.edit"
+    ],
+    "site_bound_media_lookup": true,
+    "foreign_tenant_site_or_media_returns": "404",
+    "caller_owned_identity_rejected": true,
+    "only_authenticated_tenant_context": true,
+    "remote_verification_required": true,
+    "no_fake_success": true
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/media-optimization-save-control.test.tsx",
+    "backend_test": "variants/laravel-aiwmweb/backend/tests/Unit/MediaMetadataVerificationServiceTest.php",
+    "coverage": [
+      "authoritative metadata before edit",
+      "site-qualified PATCH",
+      "WordPress GET verification",
+      "403 read/edit forbidden",
+      "404 foreign tenant",
+      "409 conflict",
+      "unverified write failure"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-425B82511E"
+    ],
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "duplicate_branch_created": false,
+    "variant_boundary": "variants/laravel-aiwmweb/**"
+  }
+}
