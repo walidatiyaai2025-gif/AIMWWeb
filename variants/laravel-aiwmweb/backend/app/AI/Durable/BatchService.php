@@ -5,6 +5,7 @@ namespace App\AI\Durable;
 use App\AI\Platform\Contracts\AiGenerator;
 use App\AI\Platform\Enums\AiFailureKind;
 use App\AI\Platform\Exceptions\AiPlatformException;
+use App\AI\Platform\Services\PromptRegistryService;
 use App\Authorization\TenantAuthorizer;
 use App\Jobs\GenerateSuggestionJob;
 use App\Models\AiGenerationRecord;
@@ -39,6 +40,19 @@ final class BatchService
         if (count(array_unique($keys)) !== count($actions)) {
             throw ValidationException::withMessages(['actions' => 'Every action requires a unique key.']);
         }
+        foreach ($actions as &$action) {
+            $request = $action['request'] ?? [];
+            if (filled($request['prompt_key'] ?? null)) {
+                $rendered = app(PromptRegistryService::class)->render($request['prompt_key'], (array) ($request['variables'] ?? []));
+                $request['system_prompt'] = $rendered['system'];
+                $request['user_prompt'] = $rendered['user'];
+                $request['output_schema'] = $rendered['output_schema'] ?? ($request['output_schema'] ?? null);
+                $request['_prompt_version'] = $rendered['template']?->current_version;
+                unset($request['prompt_key']);
+                $action['request'] = $request;
+            }
+        }
+        unset($action);
         $hash = $this->hash(['site_id' => $siteId, 'actions' => $actions]);
         $tenantId = $this->context->id();
         $userId = $this->context->membership()->user_id;
@@ -192,13 +206,13 @@ final class BatchService
             }
             $this->permit->enter($claim);
             if (isset($request['_legacy_suggestion_id'])) {
-                $job = new GenerateSuggestionJob($batch->tenant_id, (int) $request['_legacy_suggestion_id']);
+                $job = new GenerateSuggestionJob($batch->tenant_id, (int) $request['_legacy_suggestion_id'], $request['_legacy_snapshot']);
                 app()->call([$job, 'handle']);
                 $suggestion = Suggestion::query()->findOrFail($request['_legacy_suggestion_id']);
                 if ($suggestion->status !== 'ready') {
                     throw new \RuntimeException('Suggestion generation did not complete.');
                 }
-                $result = ['correlation_id' => $claim['owner'], 'provider' => 'legacy', 'model' => 'configured', 'structured' => $suggestion->proposed_state];
+                $result = ['correlation_id' => $claim['owner'], 'provider' => 'legacy:'.$request['_legacy_snapshot']['config_id'], 'model' => $request['_legacy_snapshot']['model'], 'structured' => $suggestion->proposed_state];
             } else {
                 $result = app(AiGenerator::class)->generate($request);
             }
@@ -210,7 +224,7 @@ final class BatchService
                     ->where('state', 'running')->update([
                         'state' => 'completed', 'result' => Crypt::encryptString(json_encode($result, JSON_THROW_ON_ERROR)),
                         'provider' => $result['provider'], 'model' => $result['model'],
-                        'usage' => json_encode(['generation_record_id' => $record?->id, 'correlation_id' => $result['correlation_id'], 'input_units' => $usage?->input_units, 'output_units' => $usage?->output_units, 'estimated_cost' => $usage?->estimated_cost, 'provider_request_id' => $usage?->provider_request_id], JSON_THROW_ON_ERROR),
+                        'usage' => json_encode(array_merge(json_decode(DB::table('durable_ai_items')->where('id', $claim['item_id'])->value('usage') ?? '{}', true), array_filter(['generation_record_id' => $record?->id, 'correlation_id' => $result['correlation_id'], 'input_units' => $usage?->input_units, 'output_units' => $usage?->output_units, 'estimated_cost' => $usage?->estimated_cost, 'provider_request_id' => $usage?->provider_request_id], fn ($value) => $value !== null)), JSON_THROW_ON_ERROR),
                         'completed_at' => now(), 'updated_at' => now(),
                     ]);
                 if ($changed !== 1) {

@@ -8,16 +8,26 @@ use App\AI\Durable\ExecutionPermit;
 use App\AI\Platform\Contracts\AiGenerator;
 use App\AI\Platform\Enums\AiFailureKind;
 use App\AI\Platform\Exceptions\AiPlatformException;
+use App\Jobs\GenerateSuggestionJob;
 use App\Jobs\SyncSiteJob;
+use App\Models\AiModelProfile;
+use App\Models\AiProviderConfig;
+use App\Models\AiProviderProfile;
+use App\Models\Approval;
 use App\Models\Permission;
 use App\Models\Role;
+use App\Models\SeoAudit;
+use App\Models\SeoFinding;
 use App\Models\Site;
+use App\Models\Suggestion;
+use App\Models\SyncedContent;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
 use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -156,7 +166,7 @@ class DurableAiBatchTest extends TestCase
     public function test_expired_owner_is_not_stolen_and_fences_old_result(): void
     {
         $batch = app(BatchService::class)->submit($this->actions(2), $this->site->id);
-        $item = DB::table('durable_ai_items')->first();
+        $item = DB::table('durable_ai_items')->where('batch_id', $batch['id'])->orderBy('position')->first();
         DB::table('durable_ai_items')->where('id', $item->id)->update(['state' => 'running']);
         DB::table('durable_ai_gate')->where('id', 1)->update(['owner' => (string) Str::uuid(), 'item_id' => $item->id, 'expires_at' => now()->subSecond()]);
         $this->assertSame('busy', app(BatchService::class)->runOne());
@@ -279,5 +289,33 @@ class DurableAiBatchTest extends TestCase
         $migration = require database_path('migrations/2026_10_29_200000_create_durable_ai_batches.php');
         $this->expectException(\RuntimeException::class);
         $migration->down();
+    }
+
+    public function test_legacy_suggestion_uses_saved_site_content_and_receipt_once(): void
+    {
+        $content = SyncedContent::query()->create(['site_id' => $this->site->id, 'resource_type' => 'post', 'remote_id' => 1, 'slug' => 'original', 'content' => 'Original saved content']);
+        $audit = SeoAudit::query()->create(['site_id' => $this->site->id, 'actor_user_id' => $this->membership->user_id]);
+        $finding = SeoFinding::query()->create(['seo_audit_id' => $audit->id, 'synced_content_id' => $content->id, 'code' => 'title_missing', 'severity' => 'high', 'recommendation' => 'Add title']);
+        $suggestion = Suggestion::query()->create(['site_id' => $this->site->id, 'seo_finding_id' => $finding->id, 'synced_content_id' => $content->id, 'actor_user_id' => $this->membership->user_id, 'before_state' => []]);
+        AiProviderConfig::query()->create(['provider' => 'test', 'endpoint' => 'https://mock.example/v1/chat/completions', 'model' => 'mock', 'encrypted_api_key' => 'fixture-only', 'enabled' => true]);
+        $profile = AiProviderProfile::query()->create(['provider_key' => 'mock', 'adapter_key' => 'openai-compatible', 'display_name' => 'Mock', 'endpoint' => 'https://mock.example/v1', 'enabled' => true, 'readiness_state' => 'READY']);
+        AiModelProfile::query()->create(['ai_provider_profile_id' => $profile->id, 'model_key' => 'mock', 'display_name' => 'Mock', 'capabilities' => ['text_generation'], 'enabled' => true, 'input_cost_per_million' => 0, 'output_cost_per_million' => 0, 'currency' => 'USD']);
+        Http::fake(['mock.example/*' => Http::response(['id' => 'mock-receipt', 'choices' => [['message' => ['content' => '{"title":"Review me"}']]], 'usage' => ['prompt_tokens' => 5, 'completion_tokens' => 4]])]);
+        $job = new GenerateSuggestionJob($this->tenant->id, $suggestion->id);
+        app()->call([$job, 'handle']);
+        Http::assertNothingSent();
+        $content->update(['content' => 'Changed after submission']);
+        $this->assertSame('completed', app(BatchService::class)->runOne());
+        $recorded = Http::recorded();
+        $this->assertCount(1, $recorded);
+        $sentPrompt = $recorded[0][0]['messages'][1]['content'];
+        $this->assertStringContainsString('Original saved content', $sentPrompt);
+        $this->assertStringNotContainsString('Changed after submission', $sentPrompt);
+        $this->assertSame('ready', $suggestion->fresh()->status);
+        $this->assertSame(1, Approval::query()->count());
+        $this->assertSame('mock-receipt', json_decode(DB::table('durable_ai_items')->value('usage'), true)['provider_request_id']);
+        app()->call([$job, 'handle']);
+        Http::assertSentCount(1);
+        $this->assertSame(1, DB::table('durable_ai_batches')->count());
     }
 }
