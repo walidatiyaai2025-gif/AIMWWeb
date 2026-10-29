@@ -3218,14 +3218,28 @@
       ]
     },
     {
+      "label": "Issue #1376 Content Editor ClearFeatured operational parity with tenant-isolation proof (PRs #1012/#1014)",
+      "sha": "056d8144e69558b881ef7d3634cf4207262c3d97",
+      "observed_pr_head": "056d8144e69558b881ef7d3634cf4207262c3d97",
+      "operation_ids": [
+        "AIMW-CONT-A6867078EA"
+      ]
+    },
+    {
+      "label": "Issue #1380 Settings OpenAccessibility parity — merged PR #1292 validated runtime, UI and tenant-isolation evidence",
+      "sha": "534a639dc5e22554ab89f9cfb2ccf27f8876501a",
+      "observed_pr_head": "534a639dc5e22554ab89f9cfb2ccf27f8876501a",
+      "operation_ids": [
+        "AIMW-CONT-C49C37E2C9"
+      ]
+    },
+    {
       "label": "Issue #257 final focused closure reconciliation for seven pre-existing runtime/acceptance operations",
       "sha": "da9cde323e84b45c929adad0b7fdb4fae036a1e8",
       "observed_pr_head": "da9cde323e84b45c929adad0b7fdb4fae036a1e8",
       "operation_ids": [
         "AIMW-CONT-2752ED9351",
         "AIMW-CONT-6458D3030B",
-        "AIMW-CONT-A6867078EA",
-        "AIMW-CONT-C49C37E2C9",
         "AIMW-MEDI-799B36D113",
         "AIMW-MEDI-F55A549341",
         "AIMW-SYNC-B78216241F"
