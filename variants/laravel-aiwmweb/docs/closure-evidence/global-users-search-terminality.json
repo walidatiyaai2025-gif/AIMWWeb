@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #961 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-E6888B0B4D",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "/module/users",
+    "source": "src/AIWordPressManager.Web/Components/Pages/GlobalUsersWorkspace.razor",
+    "visible_control": "@(L.IsArabic ? [SearchAsync]",
+    "source_intent": "Search live WordPress users for the selected site, reset pagination to page one, and reload authoritative WordPress REST results.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "read_source": "variants/laravel-aiwmweb/backend/app/Http/Controllers/WordPressUsersController.php::index",
+    "wordpress_source": "variants/laravel-aiwmweb/backend/app/Content/Remote/NativeWordPressRestPath.php::list",
+    "semantics": "The wp-users search form commits the current search term, resets page state to 1, and issues a tenant/site-scoped GET. WordPressUsersController forwards the search term to the native WordPress users REST collection and returns only the authoritative response.",
+    "visibility_permission": "sites.view",
+    "loading_error_empty_behavior": "The canonical search button is disabled and marked busy while the authoritative query is fetching. Empty collections remain empty, and request failures render the shared query error state without fake success."
+  },
+  "security": {
+    "backend_mutation_added": false,
+    "provider_mutation_added": false,
+    "caller_owned_identity_override_added": false,
+    "tenant_selector_added": false,
+    "foreign_tenant_access_added": false,
+    "fake_success": false,
+    "secret_disclosure_added": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/WordPressUsersSearchTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/wordpress-users-search-control.test.tsx",
+    "coverage": [
+      "exact canonical operation identity",
+      "source SearchAsync page-one reset semantics",
+      "tenant/site-scoped WordPress users GET search",
+      "authoritative matching result refresh",
+      "request failure rendering without fake success",
+      "foreign-tenant 404 isolation"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-E6888B0B4D"
+    ],
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "branch": "worker/961-global-users-search"
+  }
+}

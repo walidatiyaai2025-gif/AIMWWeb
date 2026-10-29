@@ -6,6 +6,11 @@ import type { FrontendContext } from '../core';
 import { LocaleProvider } from '../i18n';
 import {
     SITE_ONBOARDING_NEXT_OPERATION_ID,
+    SITE_ONBOARDING_RETRY_SYNC_OPERATION_ID,
+    canonicalOnboardingRetrySyncEndpoint,
+    SITE_ONBOARDING_PREVIOUS_OPERATION_ID,
+    SITE_ONBOARDING_OPEN_SITE_OPERATION_ID,
+    siteOnboardingOpenSiteHref,
     SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID,
     SiteOnboardingSaveTestSyncControl,
 } from '../site-onboarding-save-test-sync-control';
@@ -152,8 +157,10 @@ describe('AIMW-BILL-2EF6B8A27A onboarding browser proof', () => {
         expect(await screen.findByText('verified / healthy')).toBeInTheDocument();
         expect(screen.getByText('Sync: queued')).toBeInTheDocument();
 
-        fireEvent.click(screen.getByRole('button', { name: 'Previous' }));
-        expect(screen.getByLabelText('Application Password')).toHaveValue('');
+        // A successful onboarding is terminal: do not reopen a credential form or expose the secret.
+        expect(screen.queryByRole('button', { name: 'Previous' })).toBeNull();
+        expect(screen.queryByLabelText('Application Password')).toBeNull();
+        expect(screen.queryByText('application-secret-123')).not.toBeInTheDocument();
     });
 
     it('retries the failed saved profile only with the server-issued opaque retry token', async () => {
@@ -225,5 +232,176 @@ describe('AIMW-BILL-2EF6B8A27A onboarding browser proof', () => {
             retry_token: 'opaque-server-issued-retry-token',
         });
         expect(await screen.findByText('verified / healthy')).toBeInTheDocument();
+    });
+});
+
+describe('AIMW-SYNC-BDBA0B4F01 open site dashboard', () => {
+    it('builds only tenant-bound numeric site detail links', () => {
+        expect(siteOnboardingOpenSiteHref('alpha', 23)).toBe('/tenants/alpha/sites/23');
+        expect(siteOnboardingOpenSiteHref('alpha', 0)).toBeNull();
+        expect(siteOnboardingOpenSiteHref('alpha', Number.NaN)).toBeNull();
+        expect(siteOnboardingOpenSiteHref('../beta', 23)).toBeNull();
+    });
+
+    it('links only to the server-identified site when the operator has viewing permission', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+            operation_id: SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID,
+            site: { id: 23, name: 'Alpha Site', url: 'https://alpha.example.test',
+                connection_status: 'verified', health_state: 'healthy' },
+            credential_configured: true,
+            sync: { id: 8, status: 'queued', processed: 0 },
+            idempotent_replay: false,
+        }), { status: 202, headers: { 'content-type': 'application/json' } }));
+        vi.stubGlobal('fetch', fetchMock);
+        renderControl(['tenant.view', 'sites.manage', 'sites.view']);
+        expect(screen.queryByRole('link', { name: 'Open site dashboard' })).toBeNull();
+        completeProfileStep('Alpha Site', 'https://alpha.example.test');
+        completeCredentialStep('wp-admin', 'application-secret-123');
+        fireEvent.click(screen.getByRole('button', { name: 'Save, test and synchronize' }));
+        const dashboard = await screen.findByRole('link', { name: 'Open site dashboard' });
+        expect(dashboard).toHaveAttribute('href', '/tenants/alpha/sites/23');
+        expect(dashboard).toHaveAttribute('data-canonical-operation', SITE_ONBOARDING_OPEN_SITE_OPERATION_ID);
+    });
+
+    it('does not expose site dashboard navigation without sites.view permission', async () => {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({
+            operation_id: SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID,
+            site: { id: 23, name: 'Alpha Site', url: 'https://alpha.example.test',
+                connection_status: 'verified', health_state: 'healthy' },
+            credential_configured: true,
+            sync: null,
+            idempotent_replay: false,
+        }), { status: 202, headers: { 'content-type': 'application/json' } })));
+        renderControl(['tenant.view', 'sites.manage']);
+        completeProfileStep('Alpha Site', 'https://alpha.example.test');
+        completeCredentialStep('wp-admin', 'application-secret-123');
+        fireEvent.click(screen.getByRole('button', { name: 'Save, test and synchronize' }));
+        expect(await screen.findByText('verified / healthy')).toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: 'Open site dashboard' })).toBeNull();
+    });
+});
+
+describe('AIMW-SYNC-C1B6FA6677 PreviousAsync browser parity', () => {
+    it('navigates backward from review to credentials and profile without API calls or losing entered values', () => {
+        const fetchMock = vi.fn();
+        vi.stubGlobal('fetch', fetchMock);
+        renderControl();
+        expect(screen.queryByRole('button', { name: 'Previous' })).toBeNull();
+        completeProfileStep('Previous Site', 'https://previous.example.test');
+        const previousFromCredentials = screen.getByRole('button', { name: 'Previous' });
+        expect(previousFromCredentials).toHaveAttribute('data-canonical-operation', SITE_ONBOARDING_PREVIOUS_OPERATION_ID);
+        completeCredentialStep('wp-admin', 'password-do-not-log');
+        const previousFromReview = screen.getByRole('button', { name: 'Previous' });
+        expect(previousFromReview).toHaveAttribute('data-canonical-operation', SITE_ONBOARDING_PREVIOUS_OPERATION_ID);
+        fireEvent.click(previousFromReview);
+        expect(screen.getByText('Step 2 of 3')).toBeInTheDocument();
+        expect(screen.getByLabelText('WordPress username')).toHaveValue('wp-admin');
+        expect(screen.getByLabelText('Application Password')).toHaveValue('password-do-not-log');
+        fireEvent.click(screen.getByRole('button', { name: 'Previous' }));
+        expect(screen.getByText('Step 1 of 3')).toBeInTheDocument();
+        expect(screen.getByLabelText('Site name')).toHaveValue('Previous Site');
+        expect(screen.getByLabelText('Site URL')).toHaveValue('https://previous.example.test');
+        expect(screen.queryByRole('button', { name: 'Previous' })).toBeNull();
+        expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it('hides previous after server-confirmed onboarding completion', async () => {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({
+            operation_id: SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID,
+            site: { id: 27, name: 'Saved', url: 'https://saved.example.test',
+                connection_status: 'verified', health_state: 'healthy' },
+            credential_configured: true,
+            sync: null,
+            idempotent_replay: false,
+        }), { status: 202, headers: { 'content-type': 'application/json' } })));
+        renderControl();
+        completeProfileStep('Saved', 'https://saved.example.test');
+        completeCredentialStep('wp-admin', 'application-secret-123');
+        expect(screen.getByRole('button', { name: 'Previous' })).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Save, test and synchronize' }));
+        expect(await screen.findByText('verified / healthy')).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Previous' })).toBeNull();
+    });
+
+    it('does not show previous navigation to operators denied sites.manage', () => {
+        renderControl(['tenant.view']);
+        expect(screen.queryByRole('button', { name: 'Previous' })).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull();
+    });
+});
+
+describe('AIMW-SYNC-AE16CF49C6 retry synchronization', () => {
+    it('rejects malformed and cross-route sync targets', () => {
+        expect(canonicalOnboardingRetrySyncEndpoint('/api/tenants/alpha/sites', 23))
+            .toBe('/api/tenants/alpha/sites/23/sync');
+        expect(canonicalOnboardingRetrySyncEndpoint('/api/tenants/alpha/sites', -2)).toBeNull();
+        expect(canonicalOnboardingRetrySyncEndpoint('/api/tenants/alpha/sites/23', 23)).toBeNull();
+        expect(canonicalOnboardingRetrySyncEndpoint('/api/tenants/alpha/sites', Number.NaN)).toBeNull();
+    });
+
+    it('preserves the failed run when the retry request is rejected', async () => {
+        const initial = {
+            operation_id: SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID,
+            site: { id: 23, name: 'Retry Site', url: 'https://retry.example.test',
+                connection_status: 'verified', health_state: 'healthy' },
+            credential_configured: true,
+            sync: { id: 18, status: 'failed', processed: 0, failure: 'initial sync failed' },
+            idempotent_replay: false,
+        };
+        const fetchMock = vi.fn()
+            .mockResolvedValueOnce(new Response(JSON.stringify(initial), {
+                status: 202, headers: { 'content-type': 'application/json' },
+            }))
+            .mockResolvedValueOnce(new Response(JSON.stringify({ message: 'Retry unavailable' }), {
+                status: 503, headers: { 'content-type': 'application/json' },
+            }));
+        vi.stubGlobal('fetch', fetchMock);
+        renderControl();
+        completeProfileStep('Retry Site', 'https://retry.example.test');
+        completeCredentialStep('wp-admin', 'application-secret-123');
+        fireEvent.click(screen.getByRole('button', { name: 'Save, test and synchronize' }));
+        const retry = await screen.findByRole('button', { name: 'Retry synchronization' });
+        fireEvent.click(retry);
+
+        expect(await screen.findByRole('alert')).toHaveTextContent('Retry unavailable');
+        expect(screen.getByText('Sync: failed')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Retry synchronization' })).toBeEnabled();
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+        expect(JSON.parse(String((fetchMock.mock.calls[1]?.[1] as RequestInit).body))).toEqual({});
+    });
+
+    it('retries a failed persisted run without sending WordPress credentials or claiming completion', async () => {
+        const initial = {
+            operation_id: SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID,
+            site: { id: 23, name: 'Retry Site', url: 'https://retry.example.test',
+                connection_status: 'verified', health_state: 'healthy' },
+            credential_configured: true,
+            sync: { id: 18, status: 'failed', processed: 0, failure: 'initial sync failed' },
+            idempotent_replay: false,
+        };
+        const fetchMock = vi.fn()
+            .mockResolvedValueOnce(new Response(JSON.stringify(initial), {
+                status: 202, headers: { 'content-type': 'application/json' },
+            }))
+            .mockResolvedValueOnce(new Response(JSON.stringify({
+                id: 19, status: 'queued', processed: 0, failure: null,
+            }), { status: 202, headers: { 'content-type': 'application/json' } }));
+        vi.stubGlobal('fetch', fetchMock);
+        vi.stubGlobal('crypto', { randomUUID: () => '44444444-4444-4444-8444-444444444444' });
+        renderControl();
+        completeProfileStep('Retry Site', 'https://retry.example.test');
+        completeCredentialStep('wp-admin', 'application-secret-123');
+        fireEvent.click(screen.getByRole('button', { name: 'Save, test and synchronize' }));
+        const retry = await screen.findByRole('button', { name: 'Retry synchronization' });
+        expect(retry).toHaveAttribute('data-canonical-operation', SITE_ONBOARDING_RETRY_SYNC_OPERATION_ID);
+        fireEvent.click(retry);
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+        expect(fetchMock.mock.calls[1][0]).toBe('/api/tenants/alpha/sites/23/sync');
+        const init = fetchMock.mock.calls[1][1] as RequestInit;
+        expect(init.method).toBe('POST');
+        expect(JSON.parse(String(init.body))).toEqual({});
+        expect(String(init.body)).not.toContain('application-secret');
+        expect(await screen.findByText('Sync: queued')).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Retry synchronization' })).toBeNull();
     });
 });

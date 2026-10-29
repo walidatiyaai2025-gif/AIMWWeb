@@ -1,0 +1,65 @@
+name: Laravel AIWMWeb Task Parity Materialize 759
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-AIMW-CONT-E89EDDF780-site-link
+    paths:
+      - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
+      - 'variants/laravel-aiwmweb/docs/closure-evidence/content-editor-site-link-terminality.json'
+      - '.github/workflows/laravel-aiwmweb-task-parity-materialize-759.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Materialize and push against current branch head
+        run: |
+          set -euo pipefail
+          BRANCH="${{ github.ref_name }}"
+          OUT_JSON=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          OUT_MD=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          TMP_SUMMARY=/tmp/operation-parity-summary.json
+
+          materialize() {
+            python variants/laravel-aiwmweb/tools/finalize_operation_parity.py --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+            python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+            python variants/laravel-aiwmweb/tools/apply_platform_admin_route_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+            python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+            python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+            python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+            python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
+          }
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          for attempt in 1 2 3; do
+            git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+            git reset --hard "origin/$BRANCH"
+            materialize
+            git add "$OUT_JSON" "$OUT_MD"
+            if git diff --cached --quiet; then
+              exit 0
+            fi
+            git commit -m "chore(laravel): materialize parity for AIMW-CONT-E89EDDF780"
+            if git push origin "HEAD:$BRANCH"; then
+              exit 0
+            fi
+            echo "Branch moved during materialization; retrying from latest remote head (attempt $attempt)." >&2
+          done
+
+          echo "Branch kept moving during parity materialization." >&2
+          exit 1

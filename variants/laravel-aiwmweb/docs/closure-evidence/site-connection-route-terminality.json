@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #821 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-50DF6B23CC",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "route",
+    "route_screen": "/sites/{Id:guid}/connection",
+    "source": "src/AIWordPressManager.Web/Components/Pages/SiteConnectionCenter.razor",
+    "source_intent": "Open and render the tenant-owned site connection center.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "route": "GET /tenants/{tenant}/sites/{site}/connection",
+    "route_name": "canonical.site.connection",
+    "action": "CanonicalWorkspaceRouteController@showSite",
+    "permission": "sites.view",
+    "operation_marker": "AIMW-CONT-50DF6B23CC",
+    "authoritative_read": "GET /api/tenants/{tenant}/sites/{site}/connection",
+    "authoritative_read_action": "SiteDiagnosticsController@status",
+    "frontend_route": "/sites/:siteId/connection",
+    "frontend_control": "SiteConnectionCenterSyncControl"
+  },
+  "security": {
+    "route_middleware": ["web", "auth", "tenant.context"],
+    "site_binding": "tenant-scoped Site model lookup",
+    "foreign_site": "404/fail closed",
+    "missing_permission": "403/fail closed",
+    "mutation_added": false
+  },
+  "render_states": {
+    "loading": "real connection state is loaded from the diagnostics API",
+    "empty": "missing tenant-owned site fails closed",
+    "error": "API/query errors surface through the existing state panel/control",
+    "history": "real site operation history is read from the existing diagnostics contracts"
+  },
+  "acceptance": {
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteConnectionRouteTerminalityTest.php"
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-CONT-50DF6B23CC"],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "6307d9a5972ba700dd99235f180a53ca7b6e2444",
+    "branch": "worker/821-site-connection-route",
+    "issue": 821
+  }
+}

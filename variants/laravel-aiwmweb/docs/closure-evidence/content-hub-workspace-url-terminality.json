@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #776 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-FE1F15935E",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-CONT-FE1F15935E",
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/content | /module/content",
+    "source": "src/AIWordPressManager.Web/Components/Pages/GlobalContentHub.razor",
+    "source_intent": "Preserve the active site workspace when GlobalContentHub navigates through WorkspaceUrl to synchronization, posts, pages, media, or taxonomy; without an active site, keep the destination unscoped.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "helper": "variants/laravel-aiwmweb/backend/resources/js/content-hub-workspace-url.ts",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "source_destinations": [
+      "/module/sync",
+      "/module/posts",
+      "/module/pages",
+      "/module/media",
+      "/module/taxonomy"
+    ],
+    "operation_marker": "AIMW-CONT-FE1F15935E",
+    "site_context_adaptation": "ASP.NET siteId GUID semantics are adapted to the Laravel canonical ?site={integer} selector. TenantBootstrap resolves that selector through /tenants/{tenant}/context before the workspace renders."
+  },
+  "security": {
+    "permission": "content.view",
+    "tenant_destination": "server-derived active tenant slug",
+    "site_validation": "tenant-owned active_site is resolved by the authoritative tenant context endpoint; foreign site selectors fail closed with 404",
+    "foreign_tenant": "404/fail closed",
+    "mutation_added": false,
+    "unrelated_routes_not_scoped": true
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-hub-workspace-url.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentHubWorkspaceUrlTerminalityTest.php"
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-CONT-FE1F15935E"],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false
+  }
+}

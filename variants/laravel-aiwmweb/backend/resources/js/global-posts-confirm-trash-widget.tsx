@@ -1,8 +1,21 @@
 import React, { useMemo, useState } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest, type FrontendContext } from './core';
 import { useToast } from './components';
 import { useLocale } from './i18n';
+import { GLOBAL_POSTS_RESET_OPERATION_ID, defaultGlobalPostsFilters, globalPostsFilterQuery } from './global-posts-reset-control';
+import { GlobalPostsApplyFiltersControl, globalPostsFilterUrl, type GlobalPostsApplyFilterState } from './global-posts-apply-filters-control';
+import { GLOBAL_POSTS_PRIVATE_SELECTED_OPERATION_ID, globalPostsPrivateEndpoint, globalPostsPrivatePayload } from './global-posts-private-selected-control';
+import { GLOBAL_POSTS_DRAFT_SELECTED_OPERATION_ID, globalPostsDraftEndpoint, globalPostsDraftPayload } from './global-posts-draft-selected-control';
+import { GLOBAL_POSTS_PENDING_SELECTED_OPERATION_ID, globalPostsPendingEndpoint, globalPostsPendingPayload } from './global-posts-pending-selected-control';
+import { GLOBAL_POSTS_REQUEST_TRASH_OPERATION_ID, canRequestGlobalPostsTrash } from './global-posts-request-trash-control';
+import { PostsInterpolatedLinksControl } from './posts-interpolated-links-control';
+import { SyncAppConfirmDialogCancelControl } from './sync-app-confirm-dialog-cancel-control';
+import {
+    GLOBAL_POSTS_PUBLISH_SELECTED_OPERATION_ID,
+    buildGlobalPostsPublishPayload,
+    globalPostsPublishEndpoint,
+} from './global-posts-publish-selected-control';
 import {
     GLOBAL_POSTS_CONFIRM_TRASH_OPERATION_ID,
     buildGlobalPostsTrashPayload,
@@ -26,6 +39,13 @@ type GlobalPostsEnvelope = {
     last_page: number;
 };
 
+type PublishResult = {
+    state: 'queued';
+    count: number;
+    site_jobs: number;
+    jobs: Array<{ site_id: number; count: number; state: 'queued' }>;
+};
+
 type TrashResult = {
     succeeded: number;
     failed: number;
@@ -43,16 +63,33 @@ function hasPermission(context: FrontendContext, permission: string): boolean {
 export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendContext }) {
     const { locale } = useLocale();
     const { notify } = useToast();
+    const queryClient = useQueryClient();
+    const [filters, setFilters] = useState(defaultGlobalPostsFilters);
+    const [filterDraft, setFilterDraft] = useState<GlobalPostsApplyFilterState>({ ...defaultGlobalPostsFilters(), siteId: '' });
+    const [siteFilter, setSiteFilter] = useState('');
+    const [filterRevision, setFilterRevision] = useState(0);
     const [selected, setSelected] = useState<Set<string>>(new Set());
     const [confirmOpen, setConfirmOpen] = useState(false);
     const endpoint = globalPostsEndpoint(context.tenant.slug);
+    const privateEndpoint = globalPostsPrivateEndpoint(context.tenant.slug);
+    const pendingEndpoint = globalPostsPendingEndpoint(context.tenant.slug);
+    const draftEndpoint = globalPostsDraftEndpoint(context.tenant.slug);
+    const publishEndpoint = globalPostsPublishEndpoint(context.tenant.slug);
     const canView = hasPermission(context, 'content.view');
     const canEdit = hasPermission(context, 'content.edit');
     const enabled = Boolean(endpoint && canView);
+    const sitesEndpoint = hasPermission(context, 'tenant.view')
+        ? '/api/tenants/' + encodeURIComponent(context.tenant.slug) + '/sites'
+        : null;
+    const sitesQuery = useQuery({
+        queryKey: ['global-posts-filter-sites', context.tenant.slug, sitesEndpoint],
+        queryFn: () => apiRequest<Array<{ id: number; name: string }>>(sitesEndpoint as string),
+        enabled: enabled && Boolean(sitesEndpoint),
+    });
 
     const query = useQuery({
-        queryKey: ['global-posts-confirm-trash', context.tenant.slug],
-        queryFn: () => apiRequest<GlobalPostsEnvelope>(`${endpoint}?per_page=100`),
+        queryKey: ['global-posts-confirm-trash', context.tenant.slug, filters.search, filters.status, filters.perPage, siteFilter, filterRevision],
+        queryFn: () => apiRequest<GlobalPostsEnvelope>(`${endpoint}?${globalPostsFilterQuery(filters)}${siteFilter ? '&site_id=' + encodeURIComponent(siteFilter) : ''}`),
         enabled,
     });
 
@@ -63,6 +100,104 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
             .map((row) => ({ site_id: row.site_id, wordpress_id: row.wordpress_id } satisfies GlobalPostTrashTarget)),
         [rows, selected],
     );
+
+    const publishMutation = useMutation({
+        mutationFn: async (targets: GlobalPostTrashTarget[]) => {
+            if (!publishEndpoint) throw new Error('Global posts publish endpoint is unavailable.');
+
+            return apiRequest<PublishResult>(publishEndpoint, {
+                method: 'POST',
+                body: JSON.stringify(buildGlobalPostsPublishPayload(targets)),
+            });
+        },
+        onSuccess: (result) => {
+            setSelected(new Set());
+            notify(
+                locale === 'ar'
+                    ? `تمت إضافة ${result.count} مقال إلى ${result.site_jobs} مهمة نشر حسب الموقع.`
+                    : `Queued ${result.count} post(s) as ${result.site_jobs} site publish job(s).`,
+                'success',
+            );
+        },
+        onError: (error) => notify(
+            error instanceof Error
+                ? error.message
+                : (locale === 'ar' ? 'تعذر إضافة المقالات المحددة إلى مهام النشر.' : 'Selected posts could not be queued for publishing.'),
+            'error',
+        ),
+    });
+
+    const privateMutation = useMutation({
+        mutationFn: async (targets: Array<{ site_id: number; wordpress_id: number }>) => {
+            if (!privateEndpoint) throw new Error('The requested private operation is unavailable.');
+            return apiRequest<{ operation_id: string; state: 'queued'; count: number; site_jobs: number }>(
+                privateEndpoint,
+                { method: 'POST', body: JSON.stringify(globalPostsPrivatePayload(targets)) },
+            );
+        },
+        onSuccess: (result) => {
+            if (result.operation_id !== GLOBAL_POSTS_PRIVATE_SELECTED_OPERATION_ID || result.state !== 'queued') {
+                notify('Unexpected operation response; refresh authoritative state before retrying.', 'error');
+                return;
+            }
+            setSelected(new Set());
+            notify(
+                locale === 'ar'
+                    ? `تمت جدولة ${result.count} من العناصر في ${result.site_jobs} مهمة. تحقق من النتائج بعد تنفيذها.`
+                    : `Queued ${result.count} posts across ${result.site_jobs} site job(s). Verify authoritative state after execution.`,
+                'success',
+            );
+        },
+        onError: (error) => notify(error instanceof Error ? error.message : 'Could not queue selected items.', 'error'),
+    });
+
+    const draftMutation = useMutation({
+        mutationFn: async (targets: Array<{ site_id: number; wordpress_id: number }>) => {
+            if (!draftEndpoint) throw new Error('The requested draft operation is unavailable.');
+            return apiRequest<{ operation_id: string; state: 'queued'; count: number; site_jobs: number }>(
+                draftEndpoint,
+                { method: 'POST', body: JSON.stringify(globalPostsDraftPayload(targets)) },
+            );
+        },
+        onSuccess: (result) => {
+            if (result.operation_id !== GLOBAL_POSTS_DRAFT_SELECTED_OPERATION_ID || result.state !== 'queued') {
+                notify('Unexpected operation response; refresh authoritative state before retrying.', 'error');
+                return;
+            }
+            setSelected(new Set());
+            notify(
+                locale === 'ar'
+                    ? `تمت جدولة ${result.count} من العناصر في ${result.site_jobs} مهمة. تحقق من النتائج بعد تنفيذها.`
+                    : `Queued ${result.count} posts across ${result.site_jobs} site job(s). Verify authoritative state after execution.`,
+                'success',
+            );
+        },
+        onError: (error) => notify(error instanceof Error ? error.message : 'Could not queue selected items.', 'error'),
+    });
+
+    const pendingMutation = useMutation({
+        mutationFn: async (targets: Array<{ site_id: number; wordpress_id: number }>) => {
+            if (!pendingEndpoint) throw new Error('The requested pending operation is unavailable.');
+            return apiRequest<{ operation_id: string; state: 'queued'; count: number; site_jobs: number }>(
+                pendingEndpoint,
+                { method: 'POST', body: JSON.stringify(globalPostsPendingPayload(targets)) },
+            );
+        },
+        onSuccess: (result) => {
+            if (result.operation_id !== GLOBAL_POSTS_PENDING_SELECTED_OPERATION_ID || result.state !== 'queued') {
+                notify('Unexpected operation response; refresh authoritative state before retrying.', 'error');
+                return;
+            }
+            setSelected(new Set());
+            notify(
+                locale === 'ar'
+                    ? `تمت جدولة ${result.count} من العناصر في ${result.site_jobs} مهمة. تحقق من النتائج بعد تنفيذها.`
+                    : `Queued ${result.count} posts across ${result.site_jobs} site job(s). Verify authoritative state after execution.`,
+                'success',
+            );
+        },
+        onError: (error) => notify(error instanceof Error ? error.message : 'Could not queue selected items.', 'error'),
+    });
 
     const mutation = useMutation({
         mutationFn: async (targets: GlobalPostTrashTarget[]) => {
@@ -109,8 +244,21 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
 
     if (!enabled) return null;
 
+    const busy = mutation.isPending || publishMutation.isPending || privateMutation.isPending || pendingMutation.isPending || draftMutation.isPending;
+
+    const resetFilters = () => {
+        // ResetAsync: clear filters/selection and force a fresh authorized read, including at defaults.
+        setSelected(new Set());
+        setFilters(defaultGlobalPostsFilters());
+        setFilterDraft({ ...defaultGlobalPostsFilters(), siteId: '' });
+        setSiteFilter('');
+        setFilterRevision((value) => value + 1);
+        setConfirmOpen(false);
+        void queryClient.invalidateQueries({ queryKey: ['global-posts-confirm-trash', context.tenant.slug] });
+    };
+
     const toggle = (row: GlobalPageRow) => {
-        if (mutation.isPending || row.status === 'trash') return;
+        if (busy || row.status === 'trash') return;
         const key = `${row.site_id}:${row.wordpress_id}`;
         setSelected((current) => {
             const next = new Set(current);
@@ -136,6 +284,28 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
             {!canEdit ? (
                 <p role="alert">{locale === 'ar' ? 'تحتاج صلاحية تعديل المحتوى لتنفيذ هذا الإجراء.' : 'Content edit permission is required for this action.'}</p>
             ) : null}
+            <GlobalPostsApplyFiltersControl
+                value={filterDraft}
+                sites={Array.isArray(sitesQuery.data) ? sitesQuery.data : []}
+                busy={busy || query.isFetching}
+                siteSelectorAvailable={Boolean(sitesEndpoint) && !sitesQuery.isLoading && !sitesQuery.error}
+                onChange={setFilterDraft}
+                onApply={() => {
+                    if (busy || query.isFetching || !globalPostsFilterUrl(context.tenant.slug, filterDraft)) return;
+                    setSelected(new Set());
+                    setConfirmOpen(false);
+                    setFilters({ search: filterDraft.search, status: filterDraft.status, perPage: filterDraft.perPage });
+                    setSiteFilter(filterDraft.siteId);
+                    setFilterRevision((value) => value + 1);
+                }}
+            />
+            <div className="toolbar-actions">
+                <button type="button" className="btn" data-canonical-operation={GLOBAL_POSTS_RESET_OPERATION_ID}
+                    disabled={busy || query.isFetching} onClick={resetFilters}>
+                    {locale === 'ar' ? 'إعادة ضبط' : 'Reset'}
+                </button>
+            </div>
+            {sitesQuery.error ? <p role="alert">{locale === 'ar' ? 'تعذر تحميل المواقع؛ استخدم البحث والحالة.' : 'Sites could not be loaded; search and status remain available.'}</p> : null}
             {query.isLoading ? <p>{locale === 'ar' ? 'جارٍ تحميل الصفحات…' : 'Loading pages…'}</p> : null}
             {query.error ? <p role="alert">{String(query.error)}</p> : null}
 
@@ -144,17 +314,64 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
                     <div className="toolbar-actions">
                         <button
                             type="button"
+                            className="btn"
+                            data-canonical-operation={GLOBAL_POSTS_PRIVATE_SELECTED_OPERATION_ID}
+                            disabled={!canEdit || !privateEndpoint || busy || selectedTargets.length === 0}
+                            onClick={() => privateMutation.mutate(selectedTargets)}
+                        >
+                            {privateMutation.isPending
+                                ? (locale === 'ar' ? 'جارٍ جدولة الحالة الخاصة…' : 'Queueing private status…')
+                                : (locale === 'ar' ? 'جعل المحدد خاصًا' : 'Make selected private')}
+                        </button>
+                        <button
+                            type="button"
+                            className="btn"
+                            data-canonical-operation={GLOBAL_POSTS_DRAFT_SELECTED_OPERATION_ID}
+                            disabled={!canEdit || !draftEndpoint || busy || selectedTargets.length === 0}
+                            onClick={() => draftMutation.mutate(selectedTargets)}
+                        >
+                            {draftMutation.isPending
+                                ? (locale === 'ar' ? 'جارٍ جدولة المسودة…' : 'Queueing draft status…')
+                                : (locale === 'ar' ? 'تحويل المحدد إلى مسودة' : 'Move selected to draft')}
+                        </button>
+                        <button
+                            type="button"
+                            className="btn"
+                            data-canonical-operation={GLOBAL_POSTS_PENDING_SELECTED_OPERATION_ID}
+                            disabled={!canEdit || !pendingEndpoint || busy || selectedTargets.length === 0}
+                            onClick={() => pendingMutation.mutate(selectedTargets)}
+                        >
+                            {pendingMutation.isPending
+                                ? (locale === 'ar' ? 'جارٍ جدولة المراجعة…' : 'Queueing review status…')
+                                : (locale === 'ar' ? 'إرسال المحدد للمراجعة' : 'Send selected to review')}
+                        </button>
+                        <button
+                            type="button"
+                            className="btn primary"
+                            data-canonical-operation={GLOBAL_POSTS_PUBLISH_SELECTED_OPERATION_ID}
+                            disabled={!canEdit || busy || selectedTargets.length === 0}
+                            onClick={() => publishMutation.mutate(selectedTargets)}
+                        >
+                            {publishMutation.isPending
+                                ? (locale === 'ar' ? 'جارٍ إضافة مهام النشر…' : 'Queueing publish jobs…')
+                                : (locale === 'ar' ? 'نشر المحدد' : 'Publish selected')}
+                        </button>
+                        <button
+                            type="button"
                             className="btn danger"
                             data-canonical-operation={GLOBAL_POSTS_CONFIRM_TRASH_OPERATION_ID}
-                            disabled={!canEdit || mutation.isPending || selectedTargets.length === 0}
-                            onClick={() => setConfirmOpen(true)}
+                            data-request-operation={GLOBAL_POSTS_REQUEST_TRASH_OPERATION_ID}
+                            disabled={!canRequestGlobalPostsTrash(selectedTargets.length, canEdit, busy)}
+                            onClick={() => {
+                                if (canRequestGlobalPostsTrash(selectedTargets.length, canEdit, busy)) setConfirmOpen(true);
+                            }}
                         >
                             {locale === 'ar' ? 'نقل المحدد لسلة المهملات' : 'Move selected to trash'}
                         </button>
                         <button
                             type="button"
                             className="btn"
-                            disabled={mutation.isPending || selectedTargets.length === 0}
+                            disabled={busy || selectedTargets.length === 0}
                             onClick={() => setSelected(new Set())}
                         >
                             {locale === 'ar' ? 'مسح التحديد' : 'Clear selection'}
@@ -180,13 +397,20 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
                                                 <input
                                                     type="checkbox"
                                                     checked={selected.has(key)}
-                                                    disabled={mutation.isPending || row.status === 'trash'}
+                                                    disabled={busy || row.status === 'trash'}
                                                     onChange={() => toggle(row)}
                                                     aria-label={`${locale === 'ar' ? 'تحديد' : 'Select'} ${row.title || key}`}
                                                 />
                                             </td>
                                             <td>{row.title || `#${row.wordpress_id}`}</td>
-                                            <td>{row.site_name || `#${row.site_id}`}</td>
+                                            <td>
+                                                <PostsInterpolatedLinksControl
+                                                    tenantSlug={context.tenant.slug}
+                                                    siteId={row.site_id}
+                                                    wordpressId={row.wordpress_id}
+                                                    siteName={row.site_name}
+                                                />
+                                            </td>
                                             <td>{row.status || '—'}</td>
                                         </tr>
                                     );
@@ -215,14 +439,12 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
                                     ? (locale === 'ar' ? 'جارٍ النقل…' : 'Moving…')
                                     : (locale === 'ar' ? 'تأكيد النقل' : 'Confirm trash')}
                             </button>
-                            <button
-                                type="button"
-                                className="btn"
-                                disabled={mutation.isPending}
-                                onClick={() => setConfirmOpen(false)}
-                            >
-                                {locale === 'ar' ? 'إلغاء' : 'Cancel'}
-                            </button>
+                            <SyncAppConfirmDialogCancelControl
+                                busy={mutation.isPending}
+                                cancelText={locale === 'ar' ? 'إلغاء' : 'Cancel'}
+                                onOpenChanged={(open) => setConfirmOpen(open)}
+                                onCancel={() => undefined}
+                            />
                         </div>
                     </section>
                 </div>

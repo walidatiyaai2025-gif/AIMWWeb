@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "leaf_issue": 982,
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-0108E40967",
+  "domain": "sync",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Shared/AppDataGrid.razor",
+    "route_screen": "component:AppDataGrid",
+    "visible_control": "@SortText [ToggleSortAsync]",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Shared/AppDataGrid.razor:component:AppDataGrid:@SortText [ToggleSortAsync]",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "verification": "rendered/read response matches authoritative source",
+    "behavior": "ToggleSortAsync flips the descending flag, resets CurrentPage to 1, raises SortChanged with the new direction, and AppDataGrid orders the filtered collection before applying pagination."
+  },
+  "laravel_adaptation": {
+    "shared_control": "variants/laravel-aiwmweb/backend/resources/js/app-data-grid-sort-control.tsx",
+    "consumer_wiring": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/EmailNotificationController.php",
+    "service": "variants/laravel-aiwmweb/backend/app/Email/Services/EmailDeliveryService.php",
+    "real_consumer": "tenant-scoped Email Delivery History",
+    "consumer_api": "GET /api/v1/tenants/{tenant}/email/deliveries",
+    "sort_key_mapping": "The real Laravel consumer maps the generic SortKeySelector contract to EmailDelivery.created_at with id as a deterministic tie-breaker.",
+    "control_binding": "data-canonical-operation=AIMW-SYNC-0108E40967",
+    "semantics": [
+      "toggle the descending flag exactly once per activation",
+      "reset the consumer page to 1 on every sort activation",
+      "include the new direction in the authoritative Email History query key and request",
+      "apply ascending or descending ordering to the tenant-scoped query before forPage pagination",
+      "preserve the existing latest-first service default when callers do not opt into the AppDataGrid sort parameter",
+      "render accessible ascending/descending state and matching directional icon",
+      "perform no persistence, WordPress, queue, cache, provider, or secret mutation"
+    ],
+    "fake_or_demo_data": false
+  },
+  "authorization_and_isolation": {
+    "consumer_authorization": "auth + tenant.context + tenant.manage; route workspace also diagnostics.view",
+    "tenant_context": "server-provided FrontendContext plus backend TenantContext global scope",
+    "foreign_tenant_semantics": "404 fail closed",
+    "direct_tenant_override": false,
+    "tenant_owned": true
+  },
+  "semantics": {
+    "mutation": false,
+    "persistence_mutation": false,
+    "wordpress_mutation": false,
+    "queue_runtime": "not used",
+    "cache_mutation": "not used",
+    "secrets": "not read or written",
+    "authoritative_reread_on_sort_change": true,
+    "sort_before_pagination": true,
+    "fake_success_path": "none"
+  },
+  "acceptance_tests": {
+    "frontend": {
+      "file": "variants/laravel-aiwmweb/backend/resources/js/__tests__/app-data-grid-sort-control.test.tsx",
+      "coverage": [
+        "exact descending-flag toggle",
+        "exact canonical operation marker and aria-pressed state",
+        "ascending request on initial Email History read",
+        "page reset to 1 plus server-side descending sort request after activation",
+        "authoritative server order rendered without a client-only page sort",
+        "no mutation request from sort activation"
+      ]
+    },
+    "php": {
+      "file": "variants/laravel-aiwmweb/backend/tests/Feature/AppDataGridToggleSortTerminalityTest.php",
+      "coverage": [
+        "exact canonical ledger identity/domain/kind/source/control",
+        "source ToggleSortAsync contract and sort-before-pagination ordering",
+        "production shared control, query parameter, controller and service binding",
+        "ascending and descending ordering over the full authoritative tenant set before pagination",
+        "read-only tenant-scoped Email History endpoint",
+        "foreign-tenant 404 fail-closed behavior"
+      ]
+    }
+  },
+  "scope_guards": {
+    "exactly_one_operation": true,
+    "sibling_app_data_grid_operations_claimed": false,
+    "aspnet_runtime_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "retry_or_replacement_lineage_created": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "337c587bfe1af223bcbdf3eb13896fa43d22f984",
+    "branch": "worker/982-app-data-grid-toggle-sort"
+  },
+  "materialization": {
+    "path": "official Laravel AIWMWeb parity materializer",
+    "generated_reconciliation_hand_edited": false
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-TAXO-005925568C",
+    "domain": "taxonomy",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/TaxonomyManager.razor",
+    "source_screen": "/sites/{SiteId:guid}/taxonomy",
+    "source_control": "StartCreateClicked",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_behavior": {
+    "summary": "The Add New taxonomy control enters create mode locally after requiring Content.Edit; it does not persist until the separate SaveAsync operation.",
+    "side_effect": "local create-form state only",
+    "success_semantics": "opens the real taxonomy manage contract form for the selected tenant-owned site"
+  },
+  "laravel_adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/components.tsx#ActionButton",
+    "runtime_wiring": "ResourceContent renders ActionButton for the taxonomy route control taxonomy.manage; click passes the authoritative server-advertised contract into ActionDialog.",
+    "mutation_on_click": false,
+    "save_operation_kept_separate": "AIMW-BILL-B15FB13792",
+    "placeholder_or_catch_all_success": false
+  },
+  "tenant_isolation": {
+    "tenant_context": "authenticated tenant.context",
+    "site_context": "server-resolved tenant-owned active_site",
+    "foreign_tenant": "404",
+    "foreign_site": "404"
+  },
+  "authorization": {
+    "route_permission": "content.view",
+    "connector_scope": "taxonomy.read",
+    "mutation_contract_permission": "content.edit enforced by server ActionContractRegistry availability",
+    "missing_contract": "control disabled",
+    "missing_connector": "control disabled"
+  },
+  "acceptance_tests": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/taxonomy-start-create-control.test.tsx",
+    "php_feature": "variants/laravel-aiwmweb/backend/tests/Feature/TaxonomyStartCreateControlTerminalityTest.php"
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-TAXO-005925568C",
+    "second_operation_started": false,
+    "aspnet_reference_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "security_assertions_weakened": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true
+  }
+}

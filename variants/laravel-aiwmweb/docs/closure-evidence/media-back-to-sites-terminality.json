@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #920 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-MEDI-34B5C789D2",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-MEDI-34B5C789D2",
+    "domain": "media",
+    "kind": "visible_control",
+    "route_screen": "/sites/{SiteId:guid}/media",
+    "source": "src/AIWordPressManager.Web/Components/Pages/MediaManager.razor",
+    "source_control": "@L[ -> /sites",
+    "source_intent": "When the requested MediaManager site cannot be resolved, expose a read-only Back to sites recovery action.",
+    "mutation": false,
+    "tenant_owned": true,
+    "external_dependency": "WordPress",
+    "risk": "low"
+  },
+  "laravel_adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/media-back-to-sites-control.tsx",
+    "bootstrap_integration": "variants/laravel-aiwmweb/backend/resources/js/app.tsx::ContextFailure",
+    "resource_integration": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx::ResourceContent",
+    "source_route": "/tenants/{tenant}/sites/{site}/media",
+    "canonical_workspace": "/tenants/{tenant}/module/media?site={site}",
+    "authoritative_not_found": [
+      "404 from GET /tenants/{tenant}/context?site={site} while entering the Media workspace",
+      "404 from the canonical /tenants/{tenant}/sites/{site}/media route before redirect when the site is missing or foreign"
+    ],
+    "destination_builder": "tenantUrl(tenantSlug, '/sites')",
+    "destination": "/tenants/{tenant}/sites",
+    "availability": "The action renders only for ApiError status 404 in Media context; successful reads and non-404 failures never render it. The collection API is not treated as the authority for site existence."
+  },
+  "security": {
+    "source_route_guard": "auth + tenant.context + content.view with tenant-scoped Site lookup",
+    "destination_guard": "auth + tenant.context + tenant.view + sites.view",
+    "tenant_source": "tenant slug from the already tenant-qualified Media bootstrap or authenticated FrontendContext",
+    "invalid_tenant_slug": "fails closed in the control",
+    "foreign_site_direct_id": "404 before workspace redirect",
+    "foreign_tenant_destination": "404",
+    "mutation_added": false,
+    "external_call_added": false,
+    "fake_success": false
+  },
+  "authoritative_state": {
+    "source": "canonical tenant/site Media bootstrap and site-bound route; the Media collection read remains a tenant-scoped content read",
+    "direct_missing_site": "canonical context and site-bound Media route preserve the existing fail-closed 404/IDOR behavior",
+    "successful_media_state": "does not render the recovery action",
+    "generic_failure": "does not render the recovery action",
+    "synthetic_media": false,
+    "mutation": false,
+    "media_collection_missing_site": "not used as site-existence proof; current collection semantics may return an empty 200"
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/media-back-to-sites-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/MediaBackToSitesControlTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation identity",
+      "authoritative 404-only visibility",
+      "500 does not manufacture the source action",
+      "successful/non-error state hides the action",
+      "tenant-qualified destination encoding",
+      "invalid tenant slug fails closed",
+      "destination permission and tenant isolation",
+      "navigation-only no-mutation behavior",
+      "missing site context and foreign direct site route remain 404"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-MEDI-34B5C789D2"
+    ],
+    "sibling_media_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "duplicate_branch_created": false,
+    "variant_boundary": "variants/laravel-aiwmweb/**"
+  }
+}

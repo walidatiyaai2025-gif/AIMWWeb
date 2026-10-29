@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #979 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-CDE0C219B5",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "component:AppBulkActionBar",
+    "visible_control": "@ClearText [ClearAsync]",
+    "source": "src/AIWordPressManager.Web/Components/Shared/AppBulkActionBar.razor",
+    "risk": "low",
+    "mutation": false,
+    "tenant_owned": true
+  },
+  "source_semantics": {
+    "visibility": "AppBulkActionBar exists only for a positive SelectedCount; the clear control exists only when ClearRequested has a delegate.",
+    "busy_guard": "The source clear button is disabled while Busy and ClearAsync returns without invoking ClearRequested while Busy.",
+    "effect": "ClearAsync publishes only the caller-owned clear callback. It does not persist, call WordPress, submit a form, enqueue work, or claim external success."
+  },
+  "laravel_adaptation": {
+    "production_component": "variants/laravel-aiwmweb/backend/resources/js/app-bulk-action-clear-control.tsx",
+    "production_consumer": "variants/laravel-aiwmweb/backend/resources/js/sites-bulk-delete-control.tsx",
+    "behavior": "The shared React control is absent for an empty selection or missing callback, is disabled while the Sites mutation boundary is busy, and clears only the local selected-ID set.",
+    "authoritative_read": "The production Sites consumer derives selectable rows from the existing tenant-scoped sites API and does not manufacture site state.",
+    "mutation_boundary": "Clearing selection issues no request. Existing delete request/confirmation operations remain separate canonical mutation boundaries.",
+    "authorization_guard": "The Sites production consumer renders only when the frontend context includes sites.manage (or wildcard) and does not start its tenant sites read when that permission is absent."
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/app-bulk-action-clear-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/AppBulkActionClearControlTerminalityTest.php",
+    "proofs": [
+      "exact canonical operation identity and source metadata",
+      "hidden without positive selection or clear callback",
+      "busy state prevents callback",
+      "real Sites selection is cleared locally with no mutation request",
+      "foreign tenant workspace fails closed with 404",
+      "missing sites.manage permission fails closed in the production consumer before any sites read"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-CDE0C219B5"
+    ],
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "external_mutation_added": false,
+    "fake_success_added": false
+  }
+}

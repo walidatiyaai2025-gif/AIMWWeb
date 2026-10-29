@@ -146,7 +146,7 @@ final class EmailDeliveryService
     }
 
     /**
-     * @param  array{site_id?:int|string|null,status?:string|null,correlation?:string|null,search?:string|null,page?:int|string|null,per_page?:int|string|null}  $filters
+     * @param  array{site_id?:int|string|null,status?:string|null,correlation?:string|null,search?:string|null,page?:int|string|null,per_page?:int|string|null,sort_desc?:bool|string|int|null}  $filters
      * @return array{data:array<int, array<string, mixed>>,total:int,current_page:int,last_page:int}
      */
     public function history(array $filters = []): array
@@ -194,8 +194,15 @@ final class EmailDeliveryService
             $page = $lastPage;
         }
 
+        if (array_key_exists('sort_desc', $filters)) {
+            $sortDescending = filter_var($filters['sort_desc'], FILTER_VALIDATE_BOOLEAN);
+            $direction = $sortDescending ? 'desc' : 'asc';
+            $query->orderBy('created_at', $direction)->orderBy('id', $direction);
+        } else {
+            $query->latest();
+        }
+
         $rows = $query
-            ->latest()
             ->forPage($page, $perPage)
             ->get()
             ->map(fn (EmailDelivery $delivery) => [

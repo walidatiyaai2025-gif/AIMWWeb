@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #808 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-659BEF8765",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/settings",
+    "source": "src/AIWordPressManager.Web/Components/Pages/Settings.razor",
+    "source_action": "SetOcean",
+    "source_intent": "Set the local application accent theme to ocean through appTheme.set, immediately apply the rendered theme, and persist the normalized local preference.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_semantics": {
+    "handler": "SetOcean => SetTheme(\"ocean\")",
+    "runtime": "appTheme.set",
+    "storage_key": "aiwm-color-theme",
+    "rendered_state": "html[data-theme=ocean]",
+    "server_request": false,
+    "wordpress_request": false
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/settings-set-ocean-control.tsx",
+    "host_wiring": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "operation_marker": "AIMW-CONT-659BEF8765",
+    "source_handler": "SetOcean",
+    "storage_key": "aiwm-color-theme",
+    "rendered_state": "html[data-theme=ocean]"
+  },
+  "security": {
+    "authorization": "tenant.view or wildcard",
+    "tenant_boundary": "existing authenticated tenant settings route and context remain authoritative",
+    "server_mutation": false,
+    "external_mutation": false,
+    "network_request": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-set-ocean-control.test.tsx",
+    "backend_test": "variants/laravel-aiwmweb/backend/tests/Feature/SettingsSetOceanTerminalityTest.php"
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-659BEF8765"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "8a813a8f38950a641b237b3355de16286f9ba144",
+    "branch": "worker/808-settings-set-ocean"
+  },
+  "materialized": true,
+  "evidence_source_sha": "49596fcfa9088e7246805c8c9d05121856e32f8e",
+  "post_materialization_gate_trigger": "pending user-authored exact-head CI trigger after official materialization"
+}

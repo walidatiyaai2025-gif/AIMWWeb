@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #863 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-97AD37042A",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/sites",
+    "source": "src/AIWordPressManager.Web/Components/Pages/Sites.razor",
+    "source_control": "System health -> /system-health",
+    "source_intent": "Navigate from the Sites workspace toolbar to System health.",
+    "mutation": false,
+    "tenant_owned": true,
+    "external_dependency": "WordPress",
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/sites-system-health-link-control.tsx",
+    "production_page": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "workspace": "ResourceContent for route.key === sites",
+    "operation_marker": "AIMW-CONT-97AD37042A",
+    "destination": "/tenants/{tenant}/system-health",
+    "destination_permission": "tenant.view,diagnostics.view"
+  },
+  "state_and_security": {
+    "navigation_only": true,
+    "server_mutation": false,
+    "wordpress_mutation": false,
+    "tenant_identity_override": false,
+    "active_tenant_membership_required": true,
+    "destination_permission_required": true,
+    "tenant_isolation": "tenantUrl encodes the server-provided active tenant slug; foreign membership fails closed in the client and server route"
+  },
+  "source_semantics": {
+    "source_element": "AppButton Href=/system-health",
+    "source_label_en": "System health",
+    "source_label_ar": "صحة النظام",
+    "read_only": true
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/sites-system-health-link-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/SitesSystemHealthLinkTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation marker",
+      "ASP.NET Sites toolbar source intent",
+      "real production Sites toolbar binding",
+      "tenant-scoped /system-health destination",
+      "tenant.view and diagnostics.view authorization",
+      "foreign tenant fail-closed behavior",
+      "encoded tenant slug",
+      "GET-only no-mutation navigation"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-CONT-97AD37042A"],
+    "sibling_sites_controls_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "backend_mutation_added": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "163f3d42d375d95b32cc985f2aa2b444e1c34fba",
+    "branch": "worker/863-sites-system-health-link",
+    "issue": 863
+  },
+  "materialization": {
+    "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-863.yml",
+    "generated_reconciliation_required": true,
+    "generated_artifacts": [
+      "variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json",
+      "variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md"
+    ]
+  }
+}

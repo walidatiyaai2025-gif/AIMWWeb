@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #910 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-EMAI-10F3C44369",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "email",
+    "kind": "visible_control",
+    "route_screen": "/account/email-settings",
+    "source": "src/AIWordPressManager.Web/Components/Pages/AccountEmailSettings.razor",
+    "source_control": "@(L.IsArabic ? [SaveEditClickedAsync]",
+    "source_intent": "Persist edits to one existing account-level dashboard recipient, then re-read authoritative recipient state.",
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "model": "variants/laravel-aiwmweb/backend/app/Models/AccountEmailRecipient.php",
+    "migration": "variants/laravel-aiwmweb/backend/database/migrations/2026_10_26_043000_create_account_email_recipients_table.php",
+    "service": "variants/laravel-aiwmweb/backend/app/Email/Services/AccountEmailRecipientService.php",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/EmailNotificationController.php",
+    "routes": "variants/laravel-aiwmweb/backend/routes/api.php",
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/account-email-settings-recipients-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/account-email-settings-summary.tsx",
+    "read": "GET /api/v1/tenants/{tenant}/email/recipients",
+    "mutation": "PATCH /api/v1/tenants/{tenant}/email/recipients/{recipient}",
+    "operation_marker": "AIMW-EMAI-10F3C44369"
+  },
+  "semantics": {
+    "update_fields": [
+      "email_address",
+      "display_name",
+      "is_enabled"
+    ],
+    "normalized_email_unique_per_tenant": true,
+    "success_requires_authoritative_refetch": true,
+    "add_recipient_implemented": false,
+    "delete_recipient_implemented": false,
+    "cancel_edit_claimed": false
+  },
+  "security": {
+    "permission": "tenant.manage",
+    "tenant_context_required": true,
+    "model_global_tenant_scope": true,
+    "cross_tenant_recipient_id": "404/fail closed",
+    "foreign_tenant_path": "404/fail closed",
+    "internal_fields_not_serialized": [
+      "tenant_id",
+      "normalized_email_address"
+    ],
+    "smtp_secret_access": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/account-email-settings-recipients-control.test.tsx",
+    "regression_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/account-email-settings-summary.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/AccountEmailSettingsSaveEditTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation and source handler",
+      "persisted recipient update",
+      "case-insensitive duplicate rejection",
+      "tenant-scoped list",
+      "foreign recipient and tenant rejection",
+      "missing permission rejection",
+      "loading/empty/error states",
+      "authoritative reread before success"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-EMAI-10F3C44369"
+    ],
+    "add_operation_claimed": false,
+    "delete_operation_claimed": false,
+    "cancel_edit_operation_claimed": false,
+    "save_profile_operation_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "duplicate_branch_created": false
+  }
+}

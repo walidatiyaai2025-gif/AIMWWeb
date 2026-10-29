@@ -12,6 +12,7 @@ use App\Sites\SiteOperationHistoryService;
 use App\Tenancy\TenantContext;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 final class RouteApiAdapterController extends Controller
 {
@@ -42,17 +43,25 @@ final class RouteApiAdapterController extends Controller
         ]);
     }
 
-    public function siteReliability(string $tenant): JsonResponse
+    public function siteReliability(Request $request, string $tenant): JsonResponse
     {
         $this->authorizer->authorize('sites.view');
 
+        $filters = $request->validate([
+            'period_days' => ['nullable', 'integer', 'in:7,30,90'],
+            'minimum_operations' => ['nullable', 'integer', 'in:1,3,5,10'],
+        ]);
+        $periodDays = (int) ($filters['period_days'] ?? 30);
+        $minimumOperations = (int) ($filters['minimum_operations'] ?? 1);
+        $history = $this->siteOperations->getAll(2000);
+
         $siteNames = Site::query()->pluck('name', 'id');
-        $rows = collect($this->siteOperations->getAll(2000))
+        $rows = collect($history)
             ->filter(fn (array $item): bool => str_contains(strtolower((string) ($item['operation'] ?? '')), 'connection')
                 || str_contains(strtolower((string) ($item['operation'] ?? '')), 'synchron')
                 || str_contains(strtolower((string) ($item['operation'] ?? '')), 'sync'))
             ->filter(fn (array $item): bool => ($item['started_at'] ?? null) !== null
-                && CarbonImmutable::parse($item['started_at'])->greaterThanOrEqualTo(now()->subDays(30)))
+                && CarbonImmutable::parse($item['started_at'])->greaterThanOrEqualTo(now()->subDays($periodDays)))
             ->groupBy('site_id')
             ->map(function ($items, $siteId) use ($siteNames): array {
                 $total = $items->count();
@@ -74,6 +83,7 @@ final class RouteApiAdapterController extends Controller
                     'retained_history_only' => true,
                 ];
             })
+            ->filter(fn (array $row): bool => $row['total_operations'] >= $minimumOperations)
             ->sortBy([
                 ['success_rate', 'asc'],
                 ['total_operations', 'desc'],
@@ -84,9 +94,10 @@ final class RouteApiAdapterController extends Controller
         return response()->json([
             'data' => $rows,
             'meta' => [
-                'period_days' => 30,
+                'period_days' => $periodDays,
+                'minimum_operations' => $minimumOperations,
                 'retained_history_limit' => 2000,
-                'history_may_be_truncated' => count($this->siteOperations->getAll(2000)) >= 2000,
+                'history_may_be_truncated' => count($history) >= 2000,
                 'live_health_monitor' => false,
             ],
         ]);

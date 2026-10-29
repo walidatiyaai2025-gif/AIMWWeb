@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #883 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-9EDE4C1141",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/welcome",
+    "source": "src/AIWordPressManager.Web/Components/Pages/Welcome.razor",
+    "source_operation_key": "visible:Welcome.razor:/welcome:@(_isAuthenticated ? -> @(_isAuthenticated ?",
+    "source_intent": "Render the public header account control as Sign in for anonymous visitors and Dashboard for authenticated users, with the corresponding destination.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "route": "GET /welcome",
+    "route_name": "public.welcome",
+    "route_controller": "App\\Http\\Controllers\\PublicWelcomeReadController",
+    "production_view": "variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
+    "anonymous_destination": "/login",
+    "authenticated_destination": "/",
+    "operation_marker": "AIMW-CONT-9EDE4C1141",
+    "localized_labels": {
+      "anonymous": {
+        "en": "Sign in",
+        "ar": "تسجيل الدخول"
+      },
+      "authenticated": {
+        "en": "Dashboard",
+        "ar": "لوحة التحكم"
+      }
+    }
+  },
+  "security": {
+    "route_scope": "existing web-only anonymous public welcome route",
+    "authentication_state": "server-derived from Request::user() by PublicWelcomeReadController",
+    "tenant_context_required": false,
+    "tenant_selector_consumed": false,
+    "caller_owned_identity_consumed": false,
+    "direct_object_surface": false,
+    "tenant_boundary": "the public control consumes no tenant identifier and does not weaken protected tenant-qualified workspace routes",
+    "mutation_added": false,
+    "secret_exposure_added": false,
+    "authorization_weakened": false
+  },
+  "acceptance": {
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/WelcomeAuthenticatedHeaderLinkTerminalityTest.php",
+    "coverage": [
+      "ASP.NET source conditional href and authenticated/anonymous labels are verified",
+      "anonymous English and Arabic render Sign in to /login",
+      "authenticated English and Arabic render Dashboard to /",
+      "authentication state is server-derived; no caller-controlled auth or tenant field is introduced",
+      "existing PublicWelcomeReadController route remains web-only, anonymous, tenant-neutral and read-only",
+      "POST /welcome remains rejected with 405",
+      "operation marker is exact and sibling Welcome operations remain unclaimed"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-9EDE4C1141"
+    ],
+    "sibling_operations_claimed": false,
+    "existing_welcome_route_replaced": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "mutation_added": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "df8b57225130e583fc9642bfed5851db5d7ded8a",
+    "branch": "worker/laravel-aiwmweb-AIMW-CONT-9EDE4C1141-welcome-auth-link"
+  }
+}

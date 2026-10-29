@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #826 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-6187F8DF8A",
+  "domain": "content",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "source": "src/AIWordPressManager.Web/Components/Pages/SiteDataSnapshot.razor",
+  "source_action": "@(L.IsArabic ? -> @($",
+  "destination": "variants/laravel-aiwmweb/backend/resources/js/site-data-snapshot-sync-control.tsx",
+  "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-data-snapshot-navigation-control.test.tsx",
+  "backend_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteDataSnapshotNavigationTerminalityTest.php",
+  "runtime": "after the authoritative tenant-scoped snapshot loads, render tenant-qualified Site dashboard and Content explorer navigation for the active site; hide both on missing/error state",
+  "server_mutation": false,
+  "external_mutation": false,
+  "tenant_permission": "sites.view",
+  "only_operation_claimed": "AIMW-CONT-6187F8DF8A",
+  "materialized": true,
+  "evidence_source_sha": "4b05986bebb8b8b3366d9e43d62f84315478a6ab"
+}

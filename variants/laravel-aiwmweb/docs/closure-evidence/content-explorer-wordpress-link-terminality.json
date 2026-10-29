@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #761 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-16D4AD8DC8",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-CONT-16D4AD8DC8",
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/sites/{Id:guid}/explorer",
+    "source": "src/AIWordPressManager.Web/Components/Pages/ContentExplorer.razor",
+    "source_intent": "Open the authoritative persisted content item Link in a new tab from the Content Explorer row.",
+    "mutation": false,
+    "tenant_owned": true,
+    "external_dependency": "WordPress",
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-wordpress-link-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "authoritative_read": "GET /api/v1/tenants/{tenant}/sites/{site}/explorer",
+    "read_controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentExplorerReadController.php",
+    "operation_marker": "AIMW-CONT-16D4AD8DC8"
+  },
+  "security": {
+    "permission": "sites.view",
+    "destination_source": "persisted ContentItem.link only",
+    "allowed_schemes": [
+      "http",
+      "https"
+    ],
+    "credential_bearing_urls": "rejected",
+    "relative_or_malformed_urls": "rejected",
+    "foreign_tenant": "404/fail closed",
+    "foreign_site": "404/fail closed",
+    "mutation_added": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-wordpress-link-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentExplorerWordPressLinkControlTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation identity",
+      "authoritative persisted link read",
+      "source-equivalent new-tab navigation",
+      "safe absolute HTTP(S) URL enforcement",
+      "credential-bearing and unsafe URL fail-closed behavior",
+      "tenant and site isolation",
+      "read-only/no-mutation behavior",
+      "existing loading, empty and error states inherited from Content Explorer"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-16D4AD8DC8"
+    ],
+    "preview_link_operation_claimed": false,
+    "copy_link_operation_claimed": false,
+    "edit_link_operation_claimed": false,
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "variant_boundary": "variants/laravel-aiwmweb/** plus task-specific materialization workflow",
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "ae59a08b5351ed3ab205587898feac103bb9eb70",
+    "branch": "worker/761-content-explorer-wordpress-link",
+    "implementation_sha": "c24e9bcc17df88ecd8e63171792cce666f490421",
+    "evidence_registration_sha": "5f9a9a4007d732c4a6486a7bf2ae8644ec904c61",
+    "materialized_reconciliation_sha": "3dd5c17320f0c0e3ef4cc826d53ffc441b67fc33"
+  }
+}

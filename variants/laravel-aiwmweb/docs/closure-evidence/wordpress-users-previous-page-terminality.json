@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #978",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-B78216241F",
+  "domain": "sync",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/UsersManager.razor",
+    "route_screen": "/sites/{SiteId:guid}/users",
+    "visible_control": "PreviousPageClickedAsync [PreviousPageClickedAsync]",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "external_dependency": "WordPress"
+  },
+  "source_semantics": {
+    "first_page_guard": "Previous is disabled while the current page is one.",
+    "navigation": "When page is greater than one, decrement page exactly once and invoke LoadAsync.",
+    "read_contract": "LoadAsync re-reads WordPress users using the current search, role and decremented page.",
+    "mutation": false
+  },
+  "laravel_adaptation": {
+    "frontend": "resources/js/pages.tsx maps wp-users Previous to AIMW-SYNC-B78216241F and resources/js/components.tsx owns the shared Previous button.",
+    "read_route": "GET /api/v1/tenants/{tenant}/sites/{site}/users?page={page}",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/WordPressUsersController.php@index",
+    "permission": "sites.view",
+    "ownership": "tenant-owned site",
+    "wordpress_resource": "/wp-json/wp/v2/users",
+    "previous_behavior": "previousAppDataGridPage(page) computes the guarded page - 1 transition, updates the query key, and performs the authoritative GET for the prior page.",
+    "first_page_guard": "disabled={page <= 1}",
+    "automatic_mutation_retry": false,
+    "mutation": false
+  },
+  "authorization_and_isolation": {
+    "guest": "401",
+    "missing_sites_view": "403",
+    "foreign_tenant": "404",
+    "foreign_site": "404"
+  },
+  "acceptance": {
+    "backend_test": "variants/laravel-aiwmweb/backend/tests/Feature/WordPressUsersPreviousPageTerminalityTest.php",
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/wordpress-users-previous-page-visible-control.test.tsx",
+    "proofs": [
+      "exact canonical operation marker on the wp-users Previous control",
+      "Previous is disabled on page one",
+      "page two Previous requests page one",
+      "request remains GET-only",
+      "sites.view authorization",
+      "foreign tenant and foreign site fail closed"
+    ]
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-SYNC-B78216241F",
+    "adjacent_wordpress_user_operations_not_claimed": true,
+    "aspnet_runtime_modified": false,
+    "backend_mutation_modified": false,
+    "fake_success": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "Laravel AIWMWeb binds the exact canonical WordPress Users PreviousPageClickedAsync operation to the real tenant-scoped pagination control and authoritative WordPress GET path without introducing a mutation."
+  }
+}

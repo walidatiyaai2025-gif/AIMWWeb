@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #911 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-EMAI-01F5713C4F",
+  "domain": "email",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "source": "src/AIWordPressManager.Web/Components/Pages/SiteSettings.razor",
+  "source_action": "Delivery history -> /email/history",
+  "destination": "variants/laravel-aiwmweb/backend/resources/views/sites/settings.blade.php",
+  "backend_controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteSettingsReadController.php",
+  "backend_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteSettingsDeliveryHistoryLinkTerminalityTest.php",
+  "runtime": "The real tenant/site settings Blade view exposes Delivery history only when the active membership can enter the canonical email-history workspace, and derives the destination from the active tenant route rather than caller input.",
+  "destination_permission": [
+    "tenant.manage",
+    "diagnostics.view"
+  ],
+  "server_mutation": false,
+  "external_mutation": false,
+  "tenant_owned": true,
+  "only_operation_claimed": "AIMW-EMAI-01F5713C4F",
+  "materialized": true,
+  "synchronized_composition_sha": "44c64d27b686d50cc1972f576e77bcc761c6b2f0",
+  "reconciliation_materialized_commit": "c0f007c15c5b98aee723f8f935d4ae1d69460362"
+}

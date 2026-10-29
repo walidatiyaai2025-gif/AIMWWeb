@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #927 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-419C403EFB",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "/sites/{Id:guid}/explorer",
+    "source": "src/AIWordPressManager.Web/Components/Pages/ContentExplorer.razor",
+    "source_control": "ApplyFiltersAsync",
+    "source_intent": "Apply the current Content Explorer search, type, status and page-size filters by re-reading authoritative tenant/site-scoped explorer state.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-apply-filters-control.tsx",
+    "read_source": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentExplorerReadController.php",
+    "endpoint": "GET /api/v1/tenants/{tenant}/sites/{site}/explorer",
+    "semantics": "The Search control commits search/type/status/per_page values to the existing real Explorer GET contract and renders only the authoritative response. Repeated apply actions perform a fresh GET.",
+    "visibility_permission": "tenant.view + sites.view",
+    "loading_error_empty_behavior": "The control is disabled and aria-busy while reading; authoritative empty results stay empty; request failure renders an error and never fabricates success."
+  },
+  "security": {
+    "backend_mutation_added": false,
+    "provider_mutation_added": false,
+    "caller_owned_identity_override_added": false,
+    "tenant_selector_added": false,
+    "foreign_tenant_access_added": false,
+    "exact_context_endpoint_required": true,
+    "foreign_tenant_site_returns_404": true,
+    "fake_success": false,
+    "secret_disclosure_added": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/ContentExplorerApplyFiltersTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-apply-filters-control.test.tsx",
+    "coverage": [
+      "exact canonical operation identity",
+      "source ApplyFiltersAsync -> ReloadDataAsync(true) semantics",
+      "search/type/status/per_page authoritative GET",
+      "exact tenant/site context endpoint validation",
+      "foreign tenant/site 404",
+      "busy-state duplicate-click prevention",
+      "authoritative result rendering",
+      "request failure without fake success"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-419C403EFB"
+    ],
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "retry_v2_final_lineage_created": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "branch": "worker/927-content-explorer-apply-filters",
+    "issue": 927
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true
+  }
+}

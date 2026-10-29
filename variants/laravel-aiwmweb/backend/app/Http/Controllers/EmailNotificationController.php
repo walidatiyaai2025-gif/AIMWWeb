@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Authorization\TenantAuthorizer;
+use App\Email\Services\AccountEmailRecipientService;
 use App\Email\Services\EmailDeliveryService;
 use App\Email\Services\EmailTemplateService;
 use App\Email\Services\MailConfigurationService;
@@ -87,6 +88,42 @@ final class EmailNotificationController extends Controller
         return response()->json($this->configuration->get((string) $request->query('key', 'default')));
     }
 
+    public function accountRecipients(
+        string $tenant,
+        AccountEmailRecipientService $recipients,
+    ): JsonResponse {
+        $this->authorizer->authorize('tenant.manage');
+
+        return response()->json([
+            'data' => $recipients->listAsync()
+                ->map(fn ($recipient): array => $recipients->serialize($recipient))
+                ->values(),
+        ]);
+    }
+
+    public function updateAccountRecipient(
+        Request $request,
+        string $tenant,
+        int $recipient,
+        AccountEmailRecipientService $recipients,
+    ): JsonResponse {
+        $this->authorizer->authorize('tenant.manage');
+        $data = $request->validate([
+            'email_address' => ['required', 'email:rfc', 'max:320'],
+            'display_name' => ['nullable', 'string', 'max:120'],
+            'is_enabled' => ['required', 'boolean'],
+        ]);
+
+        $updated = $recipients->updateAsync(
+            $recipient,
+            (string) $data['email_address'],
+            isset($data['display_name']) ? (string) $data['display_name'] : null,
+            (bool) $data['is_enabled'],
+        );
+
+        return response()->json($recipients->serialize($updated));
+    }
+
     public function saveConfiguration(Request $request, string $tenant): JsonResponse
     {
         $this->authorizer->authorize('tenant.manage');
@@ -148,6 +185,7 @@ final class EmailNotificationController extends Controller
             'search' => ['nullable', 'string', 'max:100'],
             'page' => ['nullable', 'integer', 'min:1'],
             'per_page' => ['nullable', 'integer', 'between:1,100'],
+            'sort_desc' => ['nullable', 'boolean'],
         ]);
 
         return response()->json($this->deliveries->history($filters));

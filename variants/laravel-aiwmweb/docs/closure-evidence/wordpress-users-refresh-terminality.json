@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "authority": "Issue #977 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-5A397204EF",
+  "domain": "sync",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "previous_state": "PENDING",
+  "source": {
+    "path": "src/AIWordPressManager.Web/Components/Pages/UsersManager.razor",
+    "route_screen": "/sites/{SiteId:guid}/users",
+    "control": "RefreshClickedAsync",
+    "action": "LoadAsync",
+    "behavior": "Re-read WordPress users using current site, search, role, and page without mutation"
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/wordpress-users-refresh-control.tsx",
+    "production_consumer": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "api": "GET /api/v1/tenants/{tenant}/sites/{site}/users",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/WordPressUsersController.php@index",
+    "backing_service": "NativeWordPressRestPath::list",
+    "query_behavior": "React Query refetch with the currently applied pagination/search, preserving active-site/tenant and issuing fresh WordPress GET",
+    "mutation": false,
+    "wp_mutation": false
+  },
+  "security": {
+    "tenant_owned": true,
+    "required_permissions": [
+      "tenant.view",
+      "sites.view"
+    ],
+    "server_authorization": "TenantAuthorizer sites.view; Site::findOrFail scoped to TenantContext",
+    "client_guard": "exact tenant/active_site endpoint; no foreign URLs",
+    "guest": "401",
+    "missing_permission": "403",
+    "foreign_tenant_or_site": "404",
+    "caller_identity_payload": false
+  },
+  "acceptance": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/wordpress-users-refresh-control.test.tsx",
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/WordPressUsersRefreshTerminalityTest.php",
+    "proofs": [
+      "exact canonical source binding",
+      "two distinct WordPress GETs return updated user values",
+      "current page/search preserved",
+      "no POST/PATCH/DELETE",
+      "tenant/site ownership and permission failure",
+      "busy lock to prevent duplicate clicks",
+      "English and Arabic controls"
+    ]
+  },
+  "provenance": {
+    "branch": "worker/977-wordpress-users-refresh",
+    "composition_base_sha": "38d6cb04cbe437529614ceffd1b475c4b19a09e1",
+    "implementation_test_sha": "1263dd3c5c58d2b333bb24679d7ea02620b94fb7"
+  },
+  "scope": {
+    "only_operation_claimed": "AIMW-SYNC-5A397204EF",
+    "sibling_users_save_not_claimed": true,
+    "aspnet_modified": false,
+    "generator_only_reconciliation": true
+  }
+}

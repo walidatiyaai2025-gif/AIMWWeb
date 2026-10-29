@@ -3,6 +3,7 @@ import { resolveCapability, tenantUrl, workspaceRoutes, type FrontendContext } f
 import { useLocale } from './i18n';
 
 export const TAXONOMY_BACK_TO_EXPLORER_OPERATION_ID = 'AIMW-TAXO-ECDD00F787';
+export const GLOBAL_TAXONOMY_RESULT_EXPLORER_OPERATION_ID = 'AIMW-TAXO-602DE140EB';
 
 type ActiveSite = {
     id: number;
@@ -55,7 +56,11 @@ export function TaxonomyBackToExplorerControl({ context }: { context: FrontendCo
     if (!href) return null;
 
     return (
-        <nav className="toolbar-panel" aria-label={locale === 'ar' ? 'العودة إلى مستكشف الموقع' : 'Back to site explorer'}>
+        <nav
+            className="toolbar-panel"
+            aria-label={locale === 'ar' ? 'العودة إلى مستكشف الموقع' : 'Back to site explorer'}
+            data-canonical-operation={GLOBAL_TAXONOMY_RESULT_EXPLORER_OPERATION_ID}
+        >
             <div className="toolbar-actions">
                 <a
                     className="btn compact"

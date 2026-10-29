@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "operation_id": "AIMW-CONT-10AFCDF334",
+  "domain": "content",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "source_file": "src/AIWordPressManager.Web/Components/Pages/UsersManager.razor",
+  "source_control": "ResetFormClicked",
+  "destination": "variants/laravel-aiwmweb/backend/resources/js/components.tsx",
+  "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/wordpress-users-reset-form-control.test.tsx",
+  "security_test": "variants/laravel-aiwmweb/backend/tests/Feature/WordPressUsersResetFormTerminalityTest.php",
+  "behavior": "Cancel clears local WordPress user editor fields and closes without invoking the save action.",
+  "server_mutation": false,
+  "only_operation_claimed": "AIMW-CONT-10AFCDF334"
+}

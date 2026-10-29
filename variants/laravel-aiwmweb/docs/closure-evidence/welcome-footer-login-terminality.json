@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #880 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-247E791DA7",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/welcome",
+    "source": "src/AIWordPressManager.Web/Components/Pages/Welcome.razor",
+    "source_operation_key": "visible:Welcome.razor:/welcome:/login -> /login",
+    "source_intent": "Expose the Welcome footer Sign in control as a stable navigation link to /login.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "route": "GET /welcome",
+    "route_name": "public.welcome",
+    "route_controller": "App\\\\Http\\\\Controllers\\\\PublicWelcomeReadController",
+    "production_view": "variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
+    "destination": "/login",
+    "operation_marker": "AIMW-CONT-247E791DA7",
+    "visible_text": "Sign in",
+    "auth_behavior": "destination remains /login for anonymous and authenticated visitors"
+  },
+  "security": {
+    "route_scope": "existing web-only anonymous public welcome route",
+    "tenant_context_required": false,
+    "tenant_selector_consumed": false,
+    "direct_object_surface": false,
+    "tenant_boundary": "canonical public route has no tenant parameter, no tenant.context middleware, and no tenant-scoped Welcome alias",
+    "mutation_added": false,
+    "secret_exposure_added": false,
+    "authorization_weakened": false
+  },
+  "acceptance": {
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/WelcomeFooterLoginTerminalityTest.php",
+    "coverage": [
+      "ASP.NET footer /login Sign in control is verified at the canonical source",
+      "Laravel footer renders exactly one operation marker for AIMW-CONT-247E791DA7",
+      "Anonymous English and Arabic Welcome renders the footer control to /login",
+      "Authenticated English and Arabic Welcome keeps the footer control on /login",
+      "existing PublicWelcomeReadController route remains authoritative",
+      "public Welcome remains web-only, anonymous, and tenant-neutral",
+      "POST /welcome remains rejected with 405",
+      "sibling Welcome footer/CTA operations are not claimed"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-247E791DA7"
+    ],
+    "sibling_operations_claimed": false,
+    "existing_welcome_route_replaced": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "mutation_added": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "2352c7eb41a31f0150b7e1fb1ce5d39b081f406d",
+    "branch": "worker/880-welcome-footer-login"
+  }
+}

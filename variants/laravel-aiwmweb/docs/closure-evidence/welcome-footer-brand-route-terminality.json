@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #885 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-C7CB5EE184",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/welcome",
+    "source": "src/AIWordPressManager.Web/Components/Pages/Welcome.razor",
+    "source_operation_key": "visible:Welcome.razor:/welcome:/welcome -> /welcome",
+    "source_intent": "Return from the public Welcome footer brand to the canonical Welcome route.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "route": "GET /welcome",
+    "route_name": "public.welcome",
+    "route_controller": "App\\Http\\Controllers\\PublicWelcomeReadController",
+    "production_view": "variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
+    "destination": "/welcome",
+    "operation_marker": "AIMW-CONT-C7CB5EE184",
+    "visible_text": "AI WordPress Manager · Operations OS",
+    "existing_header_brand_operation": "AIMW-AI-4C07560F0B"
+  },
+  "security": {
+    "route_scope": "existing web-only anonymous public welcome route",
+    "tenant_context_required": false,
+    "tenant_selector_consumed": false,
+    "direct_object_surface": false,
+    "tenant_boundary": "canonical public route has no tenant parameter, no tenant.context middleware, and no tenant-scoped Welcome alias",
+    "mutation_added": false,
+    "secret_exposure_added": false,
+    "authorization_weakened": false
+  },
+  "acceptance": {
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/WelcomeFooterBrandRouteTerminalityTest.php",
+    "coverage": [
+      "ASP.NET source footer brand /welcome self-navigation is verified",
+      "Laravel footer renders exactly one AIMW-CONT-C7CB5EE184 marker",
+      "English and Arabic Welcome render the real /welcome footer self-link",
+      "existing PublicWelcomeReadController route remains authoritative",
+      "public Welcome remains web-only, anonymous, read-only and tenant-neutral",
+      "authenticated identity is not disclosed on the public route",
+      "tenant-scoped Welcome alias remains 404 and POST /welcome remains 405",
+      "existing header brand and footer login sibling operations remain distinct"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-C7CB5EE184"
+    ],
+    "sibling_operations_claimed": false,
+    "existing_welcome_route_replaced": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "mutation_added": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "c1fe282022e96ea435508450a0e151a2023bb879",
+    "branch": "worker/885-welcome-footer-brand-route"
+  }
+}

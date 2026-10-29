@@ -12,12 +12,15 @@ use App\Providers\ApplicationUserPasswordResetRouteServiceProvider;
 use App\Providers\ApprovalQueueRouteServiceProvider;
 use App\Providers\ApprovalsReportExportRouteServiceProvider;
 use App\Providers\AppServiceProvider;
+use App\Providers\CanonicalHomeRouteServiceProvider;
+use App\Providers\CanonicalSettingsRouteServiceProvider;
 use App\Providers\ContentPlannerRouteServiceProvider;
 use App\Providers\ErrorRouteServiceProvider;
 use App\Providers\LoginReadRouteServiceProvider;
 use App\Providers\OperationsMaintenanceRouteServiceProvider;
 use App\Providers\PublicWelcomeRouteServiceProvider;
 use App\Providers\RegisterRouteServiceProvider;
+use App\Providers\RolesPermissionsRouteServiceProvider;
 use App\Providers\SecurityAuditRouteServiceProvider;
 use App\Providers\SeoVisibleControlRouteServiceProvider;
 use App\Providers\SetupRouteServiceProvider;
@@ -32,6 +35,8 @@ use App\Providers\SystemHealthRouteServiceProvider;
 
 return [
     AppServiceProvider::class,
+    CanonicalHomeRouteServiceProvider::class,
+    CanonicalSettingsRouteServiceProvider::class,
     AccountEmailSettingsRouteServiceProvider::class,
     AdminBillingSupportRouteServiceProvider::class,
     ApplicationUserPasswordResetRouteServiceProvider::class,
@@ -39,6 +44,7 @@ return [
     LoginReadRouteServiceProvider::class,
     PublicWelcomeRouteServiceProvider::class,
     RegisterRouteServiceProvider::class,
+    RolesPermissionsRouteServiceProvider::class,
     SecurityAuditRouteServiceProvider::class,
     AboutBuildRouteServiceProvider::class,
     AiCenterRouteServiceProvider::class,

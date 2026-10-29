@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ApiError, apiRequest, tenantUrl, type FrontendContext } from './core';
 import { StatePanel } from './components';
 import { useLocale } from './i18n';
+import { OperationsHubSitesLinkControl } from './operations-hub-sites-link-control';
 
 export const OPERATIONS_HUB_RELOAD_OPERATION_ID = 'AIMW-BILL-2C2CB8CBAC';
 
@@ -166,6 +167,7 @@ export function OperationsHubReloadControl({ context }: { context: FrontendConte
                 )}
             >
                 <p>{error}</p>
+                <OperationsHubSitesLinkControl context={context} />
                 <p>{locale === 'ar'
                     ? 'لا يتم عرض أي لقطة قديمة على أنها الحالة الحالية.'
                     : 'No stale snapshot is presented as current state.'}</p>
@@ -196,6 +198,8 @@ export function OperationsHubReloadControl({ context }: { context: FrontendConte
                     {locale === 'ar' ? 'تحديث' : 'Refresh'}
                 </button>
             </section>
+
+            <OperationsHubSitesLinkControl context={context} />
 
             <section className="metric-grid" aria-label={locale === 'ar' ? 'مؤشرات العمليات' : 'Operations metrics'}>
                 <article className="metric-card"><small>{locale === 'ar' ? 'المواقع' : 'Sites'}</small><strong>{snapshot.sites.length}</strong></article>

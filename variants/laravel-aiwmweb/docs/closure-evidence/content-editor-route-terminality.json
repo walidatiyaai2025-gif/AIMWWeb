@@ -1,0 +1,93 @@
+{
+  "operation_id": "AIMW-CONT-2C02B7A328",
+  "domain": "content",
+  "kind": "route",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/ContentEditor.razor",
+    "route_screen": "/sites/{SiteId:guid}/content/{ContentType}/{WordPressId:int}/edit",
+    "visible_control": "Open/render route",
+    "behavior": "Open the selected site's content editor, render deterministic loading/not-found/error state, and read the requested WordPress content identity before any separate edit mutation is allowed."
+  },
+  "laravel_adaptation": {
+    "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+    "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+    "frontend_path": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "editor_path": "variants/laravel-aiwmweb/backend/resources/js/content-editor-save-control.tsx",
+    "route": "GET /tenants/{tenant}/sites/{site}/content/{contentType}/{wordpressId}/edit",
+    "route_name": "canonical.site.content-editor",
+    "canonical_operation_id": "AIMW-CONT-2C02B7A328",
+    "authoritative_read": "GET /api/v1/tenants/{tenant}/sites/{site}/content/{type}/{wordpressId}/editor",
+    "read_controller": "App\\Http\\Controllers\\ContentApiController::editor",
+    "behavior": "The explicit tenant-owned route requires content.view, validates the adapted numeric site identity, post/page content type, and positive WordPress ID, resolves the site through the active tenant scope, binds that site into canonical_site_id, then renders the existing React ContentEditorRoute. The editor performs the real site-scoped read and renders loading, invalid-route, API failure/not-found, and authoritative synchronized content states."
+  },
+  "runtime_path": [
+    "/tenants/{tenant}/sites/{site}/content/{contentType}/{wordpressId}/edit",
+    "web + auth + tenant.context",
+    "CanonicalWorkspaceRouteController::showContentEditor",
+    "TenantAuthorizer content.view",
+    "tenant-scoped Site::findOrFail(site)",
+    "canonical_site_id session binding",
+    "React ContentEditorRoute",
+    "ContentEditorSaveControl",
+    "/api/v1/tenants/{tenant}/sites/{site}/content/{type}/{wordpressId}/editor",
+    "ContentApiController::editor",
+    "tenant-scoped ContentItem site/type/remote_id lookup"
+  ],
+  "authorization": {
+    "authentication": "auth",
+    "tenant_context": "tenant.context",
+    "permission": "content.view",
+    "guest_semantics": "authentication middleware blocks the tenant-owned editor route before render",
+    "missing_permission_semantics": "403 fail closed",
+    "foreign_tenant_semantics": "404 fail closed",
+    "foreign_site_semantics": "tenant-scoped Site lookup returns 404 before editor render",
+    "invalid_route_semantics": "unsupported content type or non-positive/non-numeric WordPress identity returns 404 from the explicit canonical route handler"
+  },
+  "tenant_isolation": {
+    "tenant_owned": true,
+    "server_derived_ownership": "TenantContext is established from the authenticated membership; both Site and ContentItem queries remain tenant scoped.",
+    "idor_proof": "Focused acceptance proves an Alpha member cannot open Beta's site through either an Alpha route with Beta's site ID or a direct Beta tenant URL, and the read API also rejects the foreign site."
+  },
+  "authoritative_read": {
+    "source": "tenant-scoped synchronized ContentItem state",
+    "identity": "site_id + type + remote_id",
+    "response": "ContentApiController::editor returns the current editor snapshot including remote hash/modified/version provenance used by the existing conflict-safe mutation path",
+    "fake_data": false
+  },
+  "rendering_semantics": {
+    "loading": "ContentEditorSaveControl renders Loading authoritative content… while the editor GET is pending.",
+    "invalid": "Invalid route parameters produce the explicit Invalid content editor route state or server-side 404.",
+    "not_found_or_error": "A missing or failed editor snapshot renders the API error/Content could not be loaded state rather than fabricated content.",
+    "success": "Only the tenant/site/type/WordPress-ID matched editor snapshot is used to populate the editor draft."
+  },
+  "mutation_boundary": {
+    "selected_operation": "GET/open-render route only",
+    "save_operation": "AIMW-BILL-42F7590F00 remains the separate PATCH content editor mutation.",
+    "approval_operation": "AIMW-BILL-F5686193FE remains the separate POST approval mutation.",
+    "mutation_added": false,
+    "sibling_operations_claimed": false
+  },
+  "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentEditorRouteTerminalityTest.php",
+  "scope_guards": {
+    "exactly_one_operation": true,
+    "claimed_operations": [
+      "AIMW-CONT-2C02B7A328"
+    ],
+    "save_operation_claimed": false,
+    "approval_operation_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "variant_boundary": "variants/laravel-aiwmweb/** only"
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "e80880ba8ca63a40e82c6f9fcaf286572107366a",
+    "branch": "worker/753-content-editor-route"
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "The content editor source route is now an explicit Laravel tenant route bound to AIMW-CONT-2C02B7A328, permission guarded, tenant/site scoped, parameter validated, and connected to the existing real React editor and tenant-scoped authoritative editor read with deterministic failure states."
+  }
+}

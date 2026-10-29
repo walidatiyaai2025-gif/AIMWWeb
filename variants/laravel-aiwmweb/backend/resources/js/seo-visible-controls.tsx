@@ -1,4 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+    APP_DATA_GRID_SELECT_ALL_FILTERED_OPERATION_ID,
+    areAllAppDataGridFilteredSelected,
+    canSelectAllAppDataGridFiltered,
+    selectAllAppDataGridFiltered,
+} from './app-data-grid-select-all-filtered-control';
 import { createRoot } from 'react-dom/client';
 
 export const SEO_OPERATIONS = {
@@ -186,6 +192,25 @@ export function SeoVisibleControls({ config }: { config: SeoConfig }) {
     const visible = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
 
     const proposalFor = useCallback((finding: Finding) => proposalOverrides[finding.id] ?? deterministicProposal(finding), [proposalOverrides]);
+
+    const selectableFilteredIds = useMemo(
+        () => filtered.filter((finding) => Boolean(proposalFor(finding))).map((finding) => finding.id),
+        [filtered, proposalFor],
+    );
+    const selectableVisibleIds = useMemo(
+        () => visible.filter((finding) => Boolean(proposalFor(finding))).map((finding) => finding.id),
+        [visible, proposalFor],
+    );
+    const allFilteredSelected = areAllAppDataGridFilteredSelected(selected, selectableFilteredIds);
+    const showSelectAllFiltered = canSelectAllAppDataGridFiltered(
+        selectableFilteredIds.length,
+        selectableVisibleIds.length,
+    );
+
+    const selectAllFiltered = () => {
+        if (busy || !showSelectAllFiltered || allFilteredSelected) return;
+        setSelected((current) => selectAllAppDataGridFiltered(current, selectableFilteredIds));
+    };
 
     const runFullAudit = async () => {
         if (auditRunning) return;
@@ -398,6 +423,21 @@ export function SeoVisibleControls({ config }: { config: SeoConfig }) {
                         })}
                     </tbody></table></div>
                 ) : audits.length ? <div className="empty-state"><strong>No findings match the current filters.</strong></div> : null}
+
+                {showSelectAllFiltered && !allFilteredSelected ? (
+                    <div className="toolbar-panel app-data-grid__selection-scope" role="status" aria-live="polite" aria-atomic="true">
+                        <span>Selection currently applies to visible rows unless all filtered rows are selected.</span>
+                        <button
+                            type="button"
+                            className="btn"
+                            data-canonical-operation={APP_DATA_GRID_SELECT_ALL_FILTERED_OPERATION_ID}
+                            disabled={busy}
+                            onClick={selectAllFiltered}
+                        >
+                            Select all filtered rows
+                        </button>
+                    </div>
+                ) : null}
 
                 <footer className="toolbar-panel">
                     <button type="button" className="btn" data-canonical-operation={SEO_OPERATIONS.previousPage} disabled={safePage <= 1 || busy} onClick={previousPage}>Previous</button>

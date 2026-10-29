@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #980 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-2A8778C6EA",
+  "domain": "sync",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-SYNC-2A8778C6EA",
+    "route_screen": "component:AppConfirmDialog",
+    "source": "src/AIWordPressManager.Web/Components/Shared/AppConfirmDialog.razor",
+    "source_action": "CancelClickedAsync",
+    "source_intent": "When not Busy, close the dialog through OpenChanged(false) and then invoke the caller OnCancel callback; while Busy, do nothing.",
+    "tenant_owned": true,
+    "mutation": false,
+    "risk": "low"
+  },
+  "laravel_adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/sync-app-confirm-dialog-cancel-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/global-posts-confirm-trash-widget.tsx",
+    "operation_marker": "AIMW-SYNC-2A8778C6EA",
+    "source_handler_marker": "CancelClickedAsync",
+    "behavior": "The shared Laravel cancel control fails closed while busy, closes through the supplied open-state callback before invoking OnCancel, suppresses duplicate in-flight dispatch, and adds no request or mutation surface. Global Posts mounts it inside a real authenticated tenant-scoped confirmation dialog.",
+    "fake_success_path": "none",
+    "independent_request_added": false
+  },
+  "security_boundary": {
+    "tenant_context": "The Global Posts consumer remains bound to the authenticated active tenant and existing tenant.context route.",
+    "permission": "content.view for the read surface; content.edit gates the destructive action.",
+    "authorization_test": "GlobalPostsConfirmTrashTerminalityTest proves guests are unauthorized and view-only users cannot mutate.",
+    "tenant_isolation_test": "GlobalPostsConfirmTrashTerminalityTest proves a caller cannot operate on a foreign tenant or foreign site.",
+    "cancel_network_effect": "none"
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/sync-app-confirm-dialog-cancel-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalPostsConfirmTrashTerminalityTest.php",
+    "integration_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-posts-confirm-trash-terminality.test.ts",
+    "coverage": [
+      "exact AIMW-SYNC-2A8778C6EA production and test markers",
+      "exact CancelClickedAsync source-handler marker",
+      "Busy fail-closed behavior",
+      "OpenChanged(false) before OnCancel callback ordering",
+      "duplicate in-flight cancel dispatch suppression",
+      "no HTTP or WordPress mutation in the shared cancel control",
+      "real authenticated tenant-scoped consumer",
+      "foreign-tenant and permission fail-closed proof"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-2A8778C6EA"
+    ],
+    "sibling_operations_claimed": false,
+    "confirm_operation_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "branch": "worker/980-app-confirm-dialog-cancel-control",
+    "issue": 980
+  },
+  "materialization": {
+    "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-980.yml",
+    "generated_reconciliation_required": true
+  },
+  "server_mutation": false,
+  "external_mutation": false,
+  "only_operation_claimed": "AIMW-SYNC-2A8778C6EA",
+  "materialized": true,
+  "evidence_source_sha": "8c6f75421d95e892b56f4a66dccbde0e9734196f",
+  "post_materialization_gate_trigger": "user-authored exact-head CI trigger after official materialization; no runtime semantics changed"
+}

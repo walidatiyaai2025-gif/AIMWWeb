@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #949 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-ED1442005E",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-SYNC-ED1442005E",
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "/module/posts",
+    "source": "src/AIWordPressManager.Web/Components/Pages/GlobalPostsExplorer.razor",
+    "source_intent": "DraftSelectedAsync queues selected posts as WordPress drafts per authorized site, with a truthful queued receipt and remote verification by the existing worker.",
+    "mutation": true,
+    "tenant_owned": true
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/global-posts-draft-selected-control.ts",
+    "frontend_widget": "variants/laravel-aiwmweb/backend/resources/js/global-posts-confirm-trash-widget.tsx",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/GlobalPostsDraftController.php",
+    "route": "POST /api/v1/tenants/{tenant}/global-posts/draft",
+    "background_job": "App\\Jobs\\BulkContentMutationJob",
+    "actual_wp_boundary": "ContentPlatformService::mutateContent via native WordPress REST, update status draft; existing worker verifies authoritative external result",
+    "execution_response": "HTTP 202 queued only, never a claim that WordPress has already changed"
+  },
+  "security": {
+    "permission": "content.edit",
+    "tenant_context": "server-derived",
+    "validated_site_and_post": true,
+    "guest_401": true,
+    "viewer_403": true,
+    "foreign_tenant_404": true,
+    "caller_owned_identity_denied": true,
+    "duplicates_denied": true,
+    "max_targets": 100
+  },
+  "tests": {
+    "phpunit": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalPostsDraftSelectedTerminalityTest.php",
+    "vitest": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-posts-draft-selected-control.test.ts"
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-ED1442005E"
+    ],
+    "manual_reconciliation": false,
+    "aspnet_modified": false,
+    "additional_branch_created": false
+  },
+  "provenance": {
+    "issue": 949,
+    "task_branch": "worker/949-global-posts-draft-selected",
+    "target_branch": "worker/laravel-aiwmweb-closure-composition",
+    "branch_base_sha": "7c670ff4d04ca750ad028b44553600a5fd8ad2cc",
+    "pcc_source_sha": "076eeb0ed3fe75200d907b111803a210e5c054c5",
+    "implementation_snapshot_sha": "775faf96289e68a57582b136c366e7beecf7b87a",
+    "readiness": "Requires official seven-stage materialization and exact-head mandatory CI before merge"
+  }
+}

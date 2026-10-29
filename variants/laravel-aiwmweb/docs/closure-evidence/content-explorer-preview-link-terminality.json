@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #762 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-37B4B4BEC4",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/sites/{Id:guid}/explorer",
+    "source": "src/AIWordPressManager.Web/Components/Pages/ContentExplorer.razor",
+    "source_control": "@_preview.Link -> @_preview.Link",
+    "source_intent": "Open the authoritative selected preview item's persisted WordPress Link in a new tab.",
+    "mutation": false,
+    "tenant_owned": true,
+    "external_dependency": "WordPress",
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "preview_panel": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-preview-panel.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "authoritative_read": "GET /api/v1/tenants/{tenant}/sites/{site}/explorer",
+    "read_controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentExplorerReadController.php",
+    "operation_marker": "AIMW-CONT-37B4B4BEC4",
+    "behavior": "Selecting Preview stores only the server-returned explorer row in local UI state. The preview external action consumes persisted ContentItem.link, rejects unsafe URLs, and opens the accepted HTTP(S) URL in a new tab without mutation."
+  },
+  "security": {
+    "permission": "sites.view",
+    "destination_source": "persisted ContentItem.link only",
+    "allowed_schemes": ["http", "https"],
+    "credential_bearing_urls": "rejected by the shared safe external URL guard",
+    "relative_or_malformed_urls": "rejected",
+    "caller_link_override": "ignored by the authoritative read controller",
+    "foreign_tenant": "404/fail closed",
+    "foreign_site": "404/fail closed",
+    "mutation_added": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-preview-link-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentExplorerPreviewLinkTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation marker",
+      "source preview-link semantics",
+      "authoritative persisted link read",
+      "safe HTTP(S) new-tab navigation",
+      "unsafe and unavailable links fail closed",
+      "tenant and site isolation",
+      "preview close has no network or mutation side effect"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-CONT-37B4B4BEC4"],
+    "row_wordpress_link_operation_claimed": false,
+    "content_tab_operation_claimed": false,
+    "preview_editor_link_operation_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "authorization_weakened": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "4946730e1ae711137b8e4da4a366404115d24d9a",
+    "branch": "worker/762-content-explorer-preview-link",
+    "issue": 762
+  },
+  "materialization": {
+    "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-762.yml",
+    "generated_reconciliation_required": true
+  }
+}

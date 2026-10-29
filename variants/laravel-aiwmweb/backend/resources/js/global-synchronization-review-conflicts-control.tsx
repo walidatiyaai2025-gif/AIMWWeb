@@ -2,6 +2,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest, type FrontendContext } from './core';
 import { useLocale } from './i18n';
+import { GlobalSynchronizationEditorLinkControl } from './global-synchronization-editor-link-control';
 
 export const GLOBAL_SYNCHRONIZATION_REVIEW_CONFLICTS_OPERATION_ID = 'AIMW-BILL-5887A977D7';
 
@@ -131,6 +132,11 @@ export function GlobalSynchronizationReviewConflictsControl({ context }: { conte
                                                 ? (locale === 'ar' ? 'محذوف على WordPress' : 'Deleted in WordPress')
                                                 : (locale === 'ar' ? 'معدّل على WordPress' : 'Updated in WordPress')}
                                         </span>
+                                        <GlobalSynchronizationEditorLinkControl
+                                            context={context}
+                                            siteId={activeSite.id}
+                                            conflict={conflict}
+                                        />
                                     </header>
                                     <p>
                                         {conflict.kind === 'RemoteDeleted'

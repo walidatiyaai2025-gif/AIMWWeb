@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #1002 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-TAXO-39CDD7EF81",
+    "domain": "taxonomy",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/TaxonomyManager.razor",
+    "source_screen": "/sites/{SiteId:guid}/taxonomy",
+    "source_control": "Save submit button",
+    "source_visible_control": "@(_saving ? L[",
+    "tenant_owned": true
+  },
+  "source_behavior": {
+    "summary": "The TaxonomyManager submit control displays Save/Saving, is disabled while saving, and submits the EditForm through SaveAsync.",
+    "authorization": "SaveAsync requires Content.Edit before mutation.",
+    "mutation": "Creates or updates the selected WordPress taxonomy term through WordPressTaxonomyWebService.",
+    "reconciliation": "On success the source resets local edit state and reloads authoritative taxonomy terms."
+  },
+  "laravel_adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/components.tsx#ActionDialog",
+    "runtime_wiring": "Only the taxonomy.manage ActionDialog submit is marked as AIMW-TAXO-39CDD7EF81 and presents localized Save/Saving semantics.",
+    "submit_pipeline": "ActionDialog validates the draft and ResourceContent prepares the server-advertised action contract, POSTs through apiRequest, then mutateThenReconcile requires query.refetch to succeed.",
+    "busy_guard": "The submit is disabled while mutation.isPending and exposes aria-busy.",
+    "placeholder_or_fake_success": false
+  },
+  "tenant_isolation": {
+    "ownership": "site",
+    "endpoint_template": "/api/v1/tenants/{tenant}/sites/{site}/taxonomy",
+    "authority": "tenant and active site are supplied by authenticated server context/action-contract discovery; foreign or missing site context fails closed",
+    "payload_identity": "tenant/site IDs are not accepted from user draft fields"
+  },
+  "authorization": {
+    "permission": "content.edit",
+    "missing_permission": "taxonomy.manage contract is unavailable with permission_denied",
+    "foreign_site": "taxonomy.manage contract is unavailable with context_mismatch",
+    "transport": "canonical ledger classifies this taxonomy control as native WordPress REST; the frontend action contract does not declare a connector scope"
+  },
+  "authoritative_state": {
+    "method": "POST",
+    "reconcile_api_key": "taxonomy",
+    "success_rule": "no success is reported until the POST completes and authoritative taxonomy re-read succeeds",
+    "failure_rule": "mutation or re-read failures remain error paths; no synthetic row is created"
+  },
+  "acceptance_tests": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/taxonomy-save-submit-control.test.tsx",
+    "php_feature": "variants/laravel-aiwmweb/backend/tests/Feature/TaxonomySaveSubmitControlTerminalityTest.php"
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-TAXO-39CDD7EF81",
+    "sibling_taxonomy_manage_save_async_claimed": false,
+    "reset_form_claimed": false,
+    "start_create_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "47465a578085999b8540ee74e7d3fed97ccb3d68",
+    "branch": "worker/1002-taxonomy-save-submit"
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true
+  },
+  "materialization": {
+    "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-1002.yml",
+    "operation_state": "ADAPTED",
+    "generated_reconciliation_required": true
+  }
+}

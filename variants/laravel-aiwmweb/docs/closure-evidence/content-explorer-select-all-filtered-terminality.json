@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #768 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-AC737C80BF",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/sites/{Id:guid}/explorer",
+    "source": "src/AIWordPressManager.Web/Components/Pages/ContentExplorer.razor",
+    "source_control": "SelectAllFiltered [SelectAllFiltered]",
+    "source_intent": "When editable Content Explorer selection exists, add every currently filtered content row to the selection without mutating WordPress.",
+    "mutation": false,
+    "tenant_owned": true,
+    "external_dependency": "WordPress",
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-select-all-filtered-control.tsx",
+    "production_consumer": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "authoritative_read": "GET /api/v1/tenants/{tenant}/sites/{site}/explorer?search={query}&per_page=100&page={n}",
+    "backend_action": "ContentExplorerReadController::__invoke",
+    "behavior": "The Laravel control expands the active server-side filtered Explorer result across all authoritative pages, derives stable content identities, and updates only browser selection state."
+  },
+  "security": {
+    "permissions": [
+      "tenant.view",
+      "sites.view",
+      "content.edit"
+    ],
+    "tenant_context_required": true,
+    "site_ownership_required": true,
+    "foreign_tenant": "404/fail closed",
+    "foreign_site": "404/fail closed",
+    "caller_selectable_tenant": false,
+    "mutation_added": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-select-all-filtered-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentExplorerSelectAllFilteredTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation marker",
+      "source SelectAllFiltered semantics",
+      "all filtered pages selected rather than current page only",
+      "content.edit fail-closed rendering",
+      "authoritative tenant/site read path",
+      "foreign tenant/site isolation",
+      "no backend or WordPress mutation"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-AC737C80BF"
+    ],
+    "clear_selection_operation_claimed": false,
+    "page_selection_operation_claimed": false,
+    "bulk_mutation_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "backend_mutation_added": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "branch": "worker/768-content-explorer-select-all-filtered",
+    "issue": 768
+  },
+  "materialization": {
+    "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-768.yml",
+    "generated_reconciliation_required": true
+  }
+}

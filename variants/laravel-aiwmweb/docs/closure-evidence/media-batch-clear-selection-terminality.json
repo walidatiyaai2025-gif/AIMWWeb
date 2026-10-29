@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "authority": "Issue #965 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-B83AB5A666",
+  "domain": "sync",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "source": {
+    "path": "src/AIWordPressManager.Web/Components/Pages/MediaBatchUploadPanel.razor",
+    "route_screen": "component:MediaBatchUploadPanel",
+    "control": "ClearClickedAsync",
+    "behavior": "When selected files exist and no upload is running, Cancel clears selected files and attached metadata locally without changing WordPress or enqueued uploads",
+    "max_batch_files": 20
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/media-batch-clear-selection-control.tsx",
+    "consumer": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "route": "/tenants/{tenant}/module/media?site={site}",
+    "source_api": "/api/v1/tenants/{tenant}/sites/{site}/media",
+    "local_cancel": "Clears selected File array, native input value and selection status; never invokes the API",
+    "upload_context": "Selected files may be queued to existing real site media upload API; 202 is described as queued, not confirmed remote completion"
+  },
+  "security": {
+    "tenant_owned": true,
+    "permission": "content.edit",
+    "authoritative_site": "active_site.id",
+    "guard": "Endpoint must exactly match active-tenant + active-site media API",
+    "cross_tenant": "Missing/foreign site and foreign context endpoints fail closed",
+    "no_network_on_cancel": true,
+    "no_wordpress_mutation_on_cancel": true
+  },
+  "acceptance": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/media-batch-clear-selection-control.test.tsx",
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/MediaBatchClearSelectionTerminalityTest.php",
+    "proofs": [
+      "canonical ID and source control",
+      "local Cancel removes files without a fetch",
+      "empty/unauthorized/foreign-site hide control",
+      "successful queue is truthfully marked pending",
+      "guest and foreign tenant/site route assertions",
+      "Arabic translation"
+    ]
+  },
+  "provenance": {
+    "branch": "worker/965-media-batch-clear-selection",
+    "composition_base_sha": "38c825c454ed031ba363ece20f125579c3672c4e",
+    "implementation_test_sha": "09ab45e2a1b695f85cfd4bd1498e91daa0bd950c"
+  },
+  "scope": {
+    "only_operation_claimed": "AIMW-SYNC-B83AB5A666",
+    "neighbor_upload_operation_not_claimed": true,
+    "aspnet_touched": false,
+    "reconciliation_generated_only": true
+  }
+}

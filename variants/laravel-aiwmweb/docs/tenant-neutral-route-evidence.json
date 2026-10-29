@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
-  "source_sha": "66095bcecfaf63c43e987891ffc538c304c8f4a9",
+  "source_sha": "37c3b243b49f635665c1a2d3b34087ebe17d8922",
   "routes": {
     "AIMW-CONT-8EE96B77A8": {
       "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
@@ -23,6 +23,13 @@
       "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/PublicWelcomeReadController.php",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/WelcomeRouteTerminalityTest.php",
       "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/welcome-route-terminality.json",
+      "security_mode": "explicit_anonymous"
+    },
+    "AIMW-CONT-8DF93FC75E": {
+      "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/RegisterRouteServiceProvider.php",
+      "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/RegisterController.php",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RegisterRouteTerminalityTest.php",
+      "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/register-route-terminality.json",
       "security_mode": "explicit_anonymous"
     }
   }

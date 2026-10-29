@@ -3,6 +3,8 @@ import { apiRequest, tenantUrl, type FrontendContext, type WorkspaceRoute } from
 import { useLocale } from './i18n';
 
 export const MODULE_WORKSPACE_LOAD_SITES_OPERATION_ID = 'AIMW-BILL-39472863C8';
+export const MODULE_WORKSPACE_MANAGE_SITES_OPERATION_ID = 'AIMW-CONT-56873F3DD6';
+export const MODULE_WORKSPACE_DYNAMIC_SITE_LINKS_OPERATION_ID = 'AIMW-CONT-E4D7C73D4E';
 
 type SiteRow = {
     id: number;
@@ -133,7 +135,12 @@ export function ModuleWorkspaceLoadSitesControl({
                             <p>{locale === 'ar'
                                 ? 'أضف موقع WordPress أو أكمل ربطه قبل تشغيل تدقيق SEO.'
                                 : 'Add or connect a WordPress site before running an SEO audit.'}</p>
-                            <a className="btn primary" href={tenantUrl(context.tenant.slug, '/sites')}>
+                            <a
+                                className="btn primary"
+                                href={tenantUrl(context.tenant.slug, '/sites')}
+                                data-testid="seo-manage-sites-link"
+                                data-canonical-operation={MODULE_WORKSPACE_MANAGE_SITES_OPERATION_ID}
+                            >
                                 {locale === 'ar' ? 'إدارة المواقع' : 'Manage sites'}
                             </a>
                         </div>
@@ -147,11 +154,17 @@ export function ModuleWorkspaceLoadSitesControl({
                                         <a
                                             className="btn primary"
                                             data-testid="seo-site-link"
+                                            data-canonical-operation={MODULE_WORKSPACE_DYNAMIC_SITE_LINKS_OPERATION_ID}
                                             href={tenantUrl(context.tenant.slug, `/sites/${site.id}/seo`)}
                                         >
                                             {locale === 'ar' ? 'فتح تدقيق SEO' : 'Open SEO audit'}
                                         </a>
-                                        <a className="btn" href={tenantUrl(context.tenant.slug, '/explorer')}>
+                                        <a
+                                            className="btn"
+                                            data-testid="seo-site-explorer-link"
+                                            data-canonical-operation={MODULE_WORKSPACE_DYNAMIC_SITE_LINKS_OPERATION_ID}
+                                            href={tenantUrl(context.tenant.slug, `/explorer?site=${site.id}`)}
+                                        >
                                             {locale === 'ar' ? 'مستكشف المحتوى' : 'Content explorer'}
                                         </a>
                                     </div>

@@ -91,6 +91,6 @@ final class WelcomeSecurityAnchorTerminalityTest extends TestCase
         $this->assertSame(1, substr_count($view, 'data-canonical-operation="'.self::OPERATION_ID.'"'));
         $this->assertSame(1, substr_count($view, 'data-security-anchor-target="'.self::OPERATION_ID.'"'));
         $this->assertSame(1, substr_count($view, 'id="security"'));
-        $this->assertStringNotContainsString('data-canonical-operation="AIMW-CONT-3C205B1901"', $view);
+        $this->assertSame(1, substr_count($view, 'data-canonical-operation="AIMW-CONT-3C205B1901"'));
     }
 }

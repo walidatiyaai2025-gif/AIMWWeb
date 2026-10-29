@@ -4,6 +4,7 @@ import { useLocale } from './i18n';
 
 export const AI_WORKSPACE_OPERATION_ID = 'AIMW-AI-8EE4F9F6FC';
 export const AI_WORKSPACE_CARD_OPERATION_ID = 'AIMW-AI-A746A1C3EB';
+export const MODULE_WORKSPACE_CANONICAL_DESTINATION_OPERATION_ID = 'AIMW-CONT-7F2BC55FF4';
 
 type WorkspaceCard = {
     key: 'ai-center' | 'ai-providers' | 'ai-prompts' | 'approvals';
@@ -55,6 +56,9 @@ const tenantPath = (tenant: string, path: string): string =>
 const canOpen = (context: FrontendContext, card: WorkspaceCard): boolean =>
     card.requiredPermissions.every((permission) => context.permissions.includes(permission));
 
+const isModuleWorkspaceCanonicalDestination = (card: WorkspaceCard): boolean =>
+    card.key === 'ai-providers' || card.key === 'ai-prompts' || card.key === 'approvals';
+
 export function AiWorkspaceHub({ context }: { context: FrontendContext }) {
     const { locale } = useLocale();
     const isArabic = locale === 'ar';
@@ -99,6 +103,11 @@ export function AiWorkspaceHub({ context }: { context: FrontendContext }) {
                         data-canonical-operation={AI_WORKSPACE_CARD_OPERATION_ID}
                         data-testid="workspace-link"
                         data-workspace-key={item.key}
+                        data-module-workspace-canonical-destination-operation={
+                            isModuleWorkspaceCanonicalDestination(item)
+                                ? MODULE_WORKSPACE_CANONICAL_DESTINATION_OPERATION_ID
+                                : undefined
+                        }
                     >
                         <div className="workspace-card-icon">{item.icon}</div>
                         <div>

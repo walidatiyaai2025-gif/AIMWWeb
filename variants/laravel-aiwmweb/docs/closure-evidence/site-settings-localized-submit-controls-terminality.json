@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #872 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation": {
+    "operation_id": "AIMW-CONT-E1A7A8CAA7",
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/sites/{Id:guid}/settings",
+    "visible_control": "@(L.IsArabic ?",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/SiteSettings.razor",
+    "mutation": false,
+    "tenant_owned": true,
+    "terminal_state": "ADAPTED"
+  },
+  "source_semantics": {
+    "summary": "The Site Settings source exposes two localized submit controls: Save changes for the site profile form and Save and test for the WordPress credential form.",
+    "canonical_collision_note": "The source census truncates both localized Text expressions to the same canonical signature @(L.IsArabic ?, so one canonical visible-control operation represents both source submit controls.",
+    "profile_submit": "Localized as حفظ التغييرات / Save changes and submits the existing SaveProfileAsync form.",
+    "credential_submit": "Localized as حفظ واختبار / Save and test and submits the existing SaveCredentialAsync form.",
+    "side_effect_boundary": "This closure claims rendered control parity only. The underlying profile and credential mutations remain owned by their existing AIMW-BILL operation IDs."
+  },
+  "laravel_adaptation": {
+    "view": "variants/laravel-aiwmweb/backend/resources/views/sites/settings.blade.php",
+    "operation_marker": "AIMW-CONT-E1A7A8CAA7",
+    "profile_submit": "The real profile POST submit preserves AIMW-BILL-5C15471E4B and adds the localized visible-control marker.",
+    "credential_submit": "The real credential POST submit preserves AIMW-BILL-723BEA8F1D and adds the localized visible-control marker.",
+    "localization": "English and Arabic labels follow the active Laravel locale.",
+    "read_authority": "SiteSettingsReadController resolves authenticated TenantContext, requires tenant.view and sites.view, scopes the Site to the active tenant, and exposes manage forms only to memberships with sites.manage."
+  },
+  "state_and_security": {
+    "loading_error_empty_authority": "The controls render only after the guarded Site Settings read succeeds; missing or foreign sites fail before rendering.",
+    "read_only_membership": "A membership without sites.manage can read Site Settings but does not receive either manage submit control.",
+    "missing_permission": "sites.view denial returns 403.",
+    "foreign_site": "A site ID owned by another tenant returns 404.",
+    "tenant_identity_override": false,
+    "client_supplied_destination": false,
+    "new_server_mutation": false,
+    "wordpress_mutation_added": false,
+    "fake_success": false
+  },
+  "acceptance": {
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteSettingsLocalizedSubmitControlsTerminalityTest.php",
+    "proofs": [
+      "exact canonical operation identity remains PENDING in the immutable census input",
+      "both source localized submit controls are represented by the one canonical collision signature",
+      "production contains exactly two visible-control markers for this operation",
+      "existing profile and credential mutation operation markers remain intact",
+      "English and Arabic labels preserve source intent",
+      "GET rendering does not mutate site state",
+      "read-only memberships do not receive manage submit controls",
+      "missing sites.view returns 403",
+      "foreign tenant site ID returns 404"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-E1A7A8CAA7"
+    ],
+    "profile_mutation_claimed": false,
+    "credential_mutation_claimed": false,
+    "toolbar_navigation_claimed": false,
+    "back_to_sites_control_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "backend_mutation_added": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "f1250b6ee3fd75b7a8b2dc3fa9c43adcb1a46a29",
+    "branch": "worker/872-site-settings-localized-submit-controls"
+  },
+  "materialization": {
+    "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-872.yml",
+    "generated_reconciliation_required": true
+  }
+}

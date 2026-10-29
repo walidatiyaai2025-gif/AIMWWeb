@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #891 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-EMAI-470599356B",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-EMAI-470599356B",
+    "domain": "email",
+    "kind": "visible_control",
+    "route_screen": "component:NotificationCenter",
+    "visible_control": "/notifications -> /notifications [Close]",
+    "source": "src/AIWordPressManager.Web/Components/Layout/NotificationCenter.razor",
+    "source_intent": "Close the notification popover while navigating from its footer to the authoritative notifications inbox.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/notification-center-toggle-control.tsx",
+    "integration": "existing global NotificationCenter control mounted in variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "operation_marker": "AIMW-EMAI-470599356B",
+    "source_destination": "/notifications",
+    "adapted_destination": "/tenants/{tenant}/notifications",
+    "navigation_semantics": "the footer link uses tenantUrl for the active tenant and closes the popover on click",
+    "authoritative_context_endpoint": "/api/v1/tenants/{tenant}/notifications",
+    "render_states_preserved": [
+      "loading",
+      "empty",
+      "error",
+      "authoritative notification rows"
+    ]
+  },
+  "security": {
+    "workspace_permission": "notifications.view",
+    "tenant_route": "/tenants/{tenant}/notifications",
+    "foreign_tenant": "404/fail closed",
+    "unauthorized_tenant_member": "403/fail closed",
+    "mutation_added": false,
+    "secret_exposure_added": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/notification-center-view-all-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/NotificationCenterViewAllTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation identity and ASP.NET source intent",
+      "View all notifications control is operation-linked",
+      "destination is adapted to the active tenant notifications inbox",
+      "navigation closes the popover without an extra network request",
+      "active tenant route renders under notifications.view",
+      "foreign tenant route access fails closed",
+      "missing notifications.view fails closed",
+      "no mutation is introduced"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-EMAI-470599356B"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "core_variant_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "mutation_added": false,
+    "destructive_migration": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "df8b57225130e583fc9642bfed5851db5d7ded8a",
+    "branch": "worker/891-notification-center-view-all"
+  }
+}

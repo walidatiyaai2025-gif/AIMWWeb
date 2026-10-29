@@ -3,6 +3,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ApiError, apiRequest, type FrontendContext } from './core';
 import { useToast } from './components';
 import { useLocale } from './i18n';
+import { AppDataGridClearSelectionControl } from './app-data-grid-clear-selection-control';
+import { AppBulkActionClearControl } from './app-bulk-action-clear-control';
 import { mutateThenReconcile } from './reconciliation';
 
 const OPERATION_ID = 'AIMW-BILL-337E4FF969';
@@ -109,7 +111,19 @@ export function SitesBulkDeleteControl({ context }: { context: FrontendContext }
                             onClick={toggleSelectAllVisible}
                             disabled={mutation.isPending}
                         >{allVisibleSelected ? (locale === 'ar' ? 'إلغاء تحديد الظاهر' : 'Clear visible') : (locale === 'ar' ? 'تحديد الظاهر' : 'Select visible')}</button>
-                        <button type="button" className="btn" onClick={() => setSelected(new Set())} disabled={mutation.isPending || selectedIds.length === 0}>{locale === 'ar' ? 'مسح التحديد' : 'Clear selection'}</button>
+                        <AppBulkActionClearControl
+                            selectedCount={selectedIds.length}
+                            busy={mutation.isPending}
+                            clearText={locale === 'ar' ? 'مسح التحديد' : 'Clear selection'}
+                            clearAriaLabel={locale === 'ar' ? 'مسح تحديد المواقع' : 'Clear site selection'}
+                            onClear={() => setSelected(new Set())}
+                        />
+                        <AppDataGridClearSelectionControl
+                            locale={locale}
+                            selectedCount={selectedIds.length}
+                            busy={mutation.isPending}
+                            onClearSelection={() => setSelected(new Set())}
+                        />
                         <button
                             type="button"
                             className="btn"

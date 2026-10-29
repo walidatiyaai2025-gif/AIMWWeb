@@ -4,6 +4,18 @@ import { apiRequest, type FrontendContext } from './core';
 import { useToast } from './components';
 import { useLocale } from './i18n';
 import {
+    DEFAULT_GLOBAL_PAGES_FILTERS,
+    globalPagesFilterUrl,
+    GlobalPagesApplyFiltersControl,
+} from './global-pages-apply-filters-control';
+import { GLOBAL_PAGES_DRAFT_SELECTED_OPERATION_ID, globalPagesDraftEndpoint, globalPagesDraftPayload } from './global-pages-draft-selected-control';
+import { GLOBAL_PAGES_PENDING_SELECTED_OPERATION_ID, globalPagesPendingEndpoint, globalPagesPendingPayload } from './global-pages-pending-selected-control';
+import { GLOBAL_PAGES_PRIVATE_SELECTED_OPERATION_ID, globalPagesPrivateEndpoint, globalPagesPrivatePayload } from './global-pages-private-selected-control';
+import { GLOBAL_PAGES_REQUEST_TRASH_OPERATION_ID, canRequestGlobalPagesTrash } from './global-pages-request-trash-control';
+import { GLOBAL_PAGES_PUBLISH_SELECTED_OPERATION_ID, globalPagesPublishEndpoint, buildGlobalPagesPublishPayload, type GlobalPagePublishTarget } from './global-pages-publish-selected-control';
+import { GlobalPagesResetControl } from './global-pages-reset-control';
+import { SyncAppConfirmDialogConfirmControl } from './sync-app-confirm-dialog-confirm-control';
+import {
     GLOBAL_PAGES_CONFIRM_TRASH_OPERATION_ID,
     buildGlobalPagesTrashPayload,
     globalPagesEndpoint,
@@ -45,15 +57,30 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
     const { notify } = useToast();
     const [selected, setSelected] = useState<Set<string>>(new Set());
     const [confirmOpen, setConfirmOpen] = useState(false);
+    const [filterDraft, setFilterDraft] = useState(DEFAULT_GLOBAL_PAGES_FILTERS);
+    const [appliedFilters, setAppliedFilters] = useState(DEFAULT_GLOBAL_PAGES_FILTERS);
+    const [filterRevision, setFilterRevision] = useState(0);
     const endpoint = globalPagesEndpoint(context.tenant.slug);
+    const draftEndpoint = globalPagesDraftEndpoint(context.tenant.slug);
+    const publishEndpoint = globalPagesPublishEndpoint(context.tenant.slug);
+    const pendingEndpoint = globalPagesPendingEndpoint(context.tenant.slug);
+    const privateEndpoint = globalPagesPrivateEndpoint(context.tenant.slug);
     const canView = hasPermission(context, 'content.view');
     const canEdit = hasPermission(context, 'content.edit');
     const enabled = Boolean(endpoint && canView);
-
+    const sitesEndpoint = hasPermission(context, 'tenant.view')
+        ? '/api/tenants/' + encodeURIComponent(context.tenant.slug) + '/sites'
+        : null;
+    const sitesQuery = useQuery({
+        queryKey: ['global-pages-filter-sites', context.tenant.slug, sitesEndpoint],
+        queryFn: () => apiRequest<Array<{ id: number; name: string }>>(sitesEndpoint as string),
+        enabled: enabled && Boolean(sitesEndpoint),
+    });
+    const filterUrl = globalPagesFilterUrl(context.tenant.slug, appliedFilters);
     const query = useQuery({
-        queryKey: ['global-pages-confirm-trash', context.tenant.slug],
-        queryFn: () => apiRequest<GlobalPagesEnvelope>(`${endpoint}?per_page=100`),
-        enabled,
+        queryKey: ['global-pages-confirm-trash', context.tenant.slug, filterUrl, filterRevision],
+        queryFn: () => apiRequest<GlobalPagesEnvelope>(filterUrl as string),
+        enabled: enabled && Boolean(filterUrl),
     });
 
     const rows = Array.isArray(query.data?.data) ? query.data.data : [];
@@ -63,6 +90,102 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
             .map((row) => ({ site_id: row.site_id, wordpress_id: row.wordpress_id } satisfies GlobalPageTrashTarget)),
         [rows, selected],
     );
+
+    const publishMutation = useMutation({
+        mutationFn: async (targets: GlobalPagePublishTarget[]) => {
+            if (!publishEndpoint) throw new Error('The publish operation is unavailable.');
+            return apiRequest<{ operation_id: string; state: 'queued'; count: number; site_jobs: number }>(
+                publishEndpoint,
+                { method: 'POST', body: JSON.stringify(buildGlobalPagesPublishPayload(targets)) },
+            );
+        },
+        onSuccess: (result) => {
+            if (result.operation_id !== GLOBAL_PAGES_PUBLISH_SELECTED_OPERATION_ID || result.state !== 'queued') {
+                notify('Unexpected publish response; refresh authoritative state before retrying.', 'error');
+                return;
+            }
+            setSelected(new Set());
+            notify(
+                locale === 'ar'
+                    ? `تمت جدولة نشر ${result.count} صفحة عبر ${result.site_jobs} مهمة. تحقق من الحالة بعد التنفيذ.`
+                    : `Queued ${result.count} page(s) for publishing across ${result.site_jobs} site job(s). Verify state after execution.`,
+                'success',
+            );
+        },
+        onError: (error) => notify(error instanceof Error ? error.message : 'Could not queue selected pages for publishing.', 'error'),
+    });
+
+    const draftMutation = useMutation({
+        mutationFn: async (targets: Array<{ site_id: number; wordpress_id: number }>) => {
+            if (!draftEndpoint) throw new Error('The requested draft operation is unavailable.');
+            return apiRequest<{ operation_id: string; state: 'queued'; count: number; site_jobs: number }>(
+                draftEndpoint,
+                { method: 'POST', body: JSON.stringify(globalPagesDraftPayload(targets)) },
+            );
+        },
+        onSuccess: (result) => {
+            if (result.operation_id !== GLOBAL_PAGES_DRAFT_SELECTED_OPERATION_ID || result.state !== 'queued') {
+                notify('Unexpected operation response; refresh authoritative state before retrying.', 'error');
+                return;
+            }
+            setSelected(new Set());
+            notify(
+                locale === 'ar'
+                    ? `تمت جدولة ${result.count} من العناصر في ${result.site_jobs} مهمة. تحقق من النتائج بعد تنفيذها.`
+                    : `Queued ${result.count} pages across ${result.site_jobs} site job(s). Verify authoritative state after execution.`,
+                'success',
+            );
+        },
+        onError: (error) => notify(error instanceof Error ? error.message : 'Could not queue selected items.', 'error'),
+    });
+
+    const privateMutation = useMutation({
+        mutationFn: async (targets: Array<{ site_id: number; wordpress_id: number }>) => {
+            if (!privateEndpoint) throw new Error('The private status operation is unavailable.');
+            return apiRequest<{ operation_id: string; state: 'queued'; count: number; site_jobs: number }>(
+                privateEndpoint,
+                { method: 'POST', body: JSON.stringify(globalPagesPrivatePayload(targets)) },
+            );
+        },
+        onSuccess: (result) => {
+            if (result.operation_id !== GLOBAL_PAGES_PRIVATE_SELECTED_OPERATION_ID || result.state !== 'queued') {
+                notify('Unexpected operation response; refresh authoritative state before retrying.', 'error');
+                return;
+            }
+            setSelected(new Set());
+            notify(
+                locale === 'ar'
+                    ? `تمت جدولة ${result.count} صفحة لتحويلها إلى خاصة عبر ${result.site_jobs} مهمة. تحقق من الحالة بعد التنفيذ.`
+                    : `Queued ${result.count} pages for private status across ${result.site_jobs} site job(s). Verify status after execution.`,
+                'success',
+            );
+        },
+        onError: (error) => notify(error instanceof Error ? error.message : 'Could not queue selected pages as private.', 'error'),
+    });
+
+    const pendingMutation = useMutation({
+        mutationFn: async (targets: Array<{ site_id: number; wordpress_id: number }>) => {
+            if (!pendingEndpoint) throw new Error('The pending review operation is unavailable.');
+            return apiRequest<{ operation_id: string; state: 'queued'; count: number; site_jobs: number }>(
+                pendingEndpoint,
+                { method: 'POST', body: JSON.stringify(globalPagesPendingPayload(targets)) },
+            );
+        },
+        onSuccess: (result) => {
+            if (result.operation_id !== GLOBAL_PAGES_PENDING_SELECTED_OPERATION_ID || result.state !== 'queued') {
+                notify('Unexpected operation response; refresh authoritative state before retrying.', 'error');
+                return;
+            }
+            setSelected(new Set());
+            notify(
+                locale === 'ar'
+                    ? `تمت جدولة ${result.count} صفحة للمراجعة عبر ${result.site_jobs} مهمة. تحقق من الحالة بعد التنفيذ.`
+                    : `Queued ${result.count} pages for review across ${result.site_jobs} site job(s). Verify status after execution.`,
+                'success',
+            );
+        },
+        onError: (error) => notify(error instanceof Error ? error.message : 'Could not queue selected pages for review.', 'error'),
+    });
 
     const mutation = useMutation({
         mutationFn: async (targets: GlobalPageTrashTarget[]) => {
@@ -107,10 +230,12 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
         ),
     });
 
+    const busy = mutation.isPending || draftMutation.isPending || pendingMutation.isPending || privateMutation.isPending || publishMutation.isPending;
+
     if (!enabled) return null;
 
     const toggle = (row: GlobalPageRow) => {
-        if (mutation.isPending || row.status === 'trash') return;
+        if (busy || row.status === 'trash') return;
         const key = `${row.site_id}:${row.wordpress_id}`;
         setSelected((current) => {
             const next = new Set(current);
@@ -133,6 +258,37 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
                 <span className="count-badge">{selectedTargets.length}</span>
             </header>
 
+            <GlobalPagesApplyFiltersControl
+                value={filterDraft}
+                sites={Array.isArray(sitesQuery.data) ? sitesQuery.data : []}
+                busy={busy || query.isFetching}
+                siteSelectorAvailable={Boolean(sitesEndpoint) && !sitesQuery.isLoading && !sitesQuery.error}
+                onChange={setFilterDraft}
+                onApply={() => {
+                    if (busy || query.isFetching) return;
+                    setSelected(new Set());
+                    setAppliedFilters({ ...filterDraft });
+                    setFilterRevision((value) => value + 1);
+                }}
+            />
+            <GlobalPagesResetControl
+                available={enabled}
+                busy={busy || query.isFetching}
+                onReset={() => {
+                    if (busy || query.isFetching) return;
+                    setFilterDraft({ ...DEFAULT_GLOBAL_PAGES_FILTERS });
+                    setAppliedFilters({ ...DEFAULT_GLOBAL_PAGES_FILTERS });
+                    setSelected(new Set());
+                    setConfirmOpen(false);
+                    setFilterRevision((value) => value + 1);
+                }}
+            />
+            {sitesQuery.error ? (
+                <p role="alert">{locale === 'ar'
+                    ? 'تعذر تحميل المواقع. يمكن تطبيق البحث والحالة فقط.'
+                    : 'Sites could not be loaded. Search and status filters remain available.'}</p>
+            ) : null}
+
             {!canEdit ? (
                 <p role="alert">{locale === 'ar' ? 'تحتاج صلاحية تعديل المحتوى لتنفيذ هذا الإجراء.' : 'Content edit permission is required for this action.'}</p>
             ) : null}
@@ -144,17 +300,64 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
                     <div className="toolbar-actions">
                         <button
                             type="button"
+                            className="btn primary"
+                            data-canonical-operation={GLOBAL_PAGES_PUBLISH_SELECTED_OPERATION_ID}
+                            disabled={!canEdit || !publishEndpoint || busy || selectedTargets.length === 0}
+                            onClick={() => publishMutation.mutate(selectedTargets)}
+                        >
+                            {publishMutation.isPending
+                                ? (locale === 'ar' ? 'جارٍ جدولة النشر…' : 'Queueing publish…')
+                                : (locale === 'ar' ? 'نشر المحدد' : 'Publish selected')}
+                        </button>
+                        <button
+                            type="button"
+                            className="btn"
+                            data-canonical-operation={GLOBAL_PAGES_DRAFT_SELECTED_OPERATION_ID}
+                            disabled={!canEdit || !draftEndpoint || busy || selectedTargets.length === 0}
+                            onClick={() => draftMutation.mutate(selectedTargets)}
+                        >
+                            {draftMutation.isPending
+                                ? (locale === 'ar' ? 'جارٍ جدولة المسودات…' : 'Queueing drafts…')
+                                : (locale === 'ar' ? 'تحويل المحدد إلى مسودة' : 'Draft selected')}
+                        </button>
+                        <button
+                            type="button"
+                            className="btn"
+                            data-canonical-operation={GLOBAL_PAGES_PRIVATE_SELECTED_OPERATION_ID}
+                            disabled={!canEdit || !privateEndpoint || busy || selectedTargets.length === 0}
+                            onClick={() => privateMutation.mutate(selectedTargets)}
+                        >
+                            {privateMutation.isPending
+                                ? (locale === 'ar' ? 'جارٍ جدولة المراجعة…' : 'Queueing review…')
+                                : (locale === 'ar' ? 'تحويل المحدد إلى خاص' : 'Private selected')}
+                        </button>
+                        <button
+                            type="button"
+                            className="btn"
+                            data-canonical-operation={GLOBAL_PAGES_PENDING_SELECTED_OPERATION_ID}
+                            disabled={!canEdit || !pendingEndpoint || busy || selectedTargets.length === 0}
+                            onClick={() => pendingMutation.mutate(selectedTargets)}
+                        >
+                            {pendingMutation.isPending
+                                ? (locale === 'ar' ? 'جارٍ جدولة المراجعة…' : 'Queueing review…')
+                                : (locale === 'ar' ? 'تحويل المحدد للمراجعة' : 'Pending selected')}
+                        </button>
+                        <button
+                            type="button"
                             className="btn danger"
                             data-canonical-operation={GLOBAL_PAGES_CONFIRM_TRASH_OPERATION_ID}
-                            disabled={!canEdit || mutation.isPending || selectedTargets.length === 0}
-                            onClick={() => setConfirmOpen(true)}
+                            data-request-operation={GLOBAL_PAGES_REQUEST_TRASH_OPERATION_ID}
+                            disabled={!canRequestGlobalPagesTrash(selectedTargets.length, canEdit, busy)}
+                            onClick={() => {
+                                if (canRequestGlobalPagesTrash(selectedTargets.length, canEdit, busy)) setConfirmOpen(true);
+                            }}
                         >
                             {locale === 'ar' ? 'نقل المحدد لسلة المهملات' : 'Move selected to trash'}
                         </button>
                         <button
                             type="button"
                             className="btn"
-                            disabled={mutation.isPending || selectedTargets.length === 0}
+                            disabled={busy || selectedTargets.length === 0}
                             onClick={() => setSelected(new Set())}
                         >
                             {locale === 'ar' ? 'مسح التحديد' : 'Clear selection'}
@@ -180,7 +383,7 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
                                                 <input
                                                     type="checkbox"
                                                     checked={selected.has(key)}
-                                                    disabled={mutation.isPending || row.status === 'trash'}
+                                                    disabled={busy || row.status === 'trash'}
                                                     onChange={() => toggle(row)}
                                                     aria-label={`${locale === 'ar' ? 'تحديد' : 'Select'} ${row.title || key}`}
                                                 />
@@ -205,20 +408,18 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
                             ? `سيتم تغيير ${selectedTargets.length} صفحة محددة عبر مواقع WordPress الحية.`
                             : `This will change ${selectedTargets.length} selected page(s) across live WordPress sites.`}</p>
                         <div className="toolbar-actions">
-                            <button
-                                type="button"
-                                className="btn danger"
-                                disabled={mutation.isPending || selectedTargets.length === 0}
-                                onClick={() => mutation.mutate(selectedTargets)}
-                            >
-                                {mutation.isPending
-                                    ? (locale === 'ar' ? 'جارٍ النقل…' : 'Moving…')
-                                    : (locale === 'ar' ? 'تأكيد النقل' : 'Confirm trash')}
-                            </button>
+                            <SyncAppConfirmDialogConfirmControl
+                                busy={busy}
+                                disabled={selectedTargets.length === 0}
+                                confirmText={locale === 'ar' ? 'تأكيد النقل' : 'Confirm trash'}
+                                busyText={locale === 'ar' ? 'جارٍ النقل…' : 'Moving…'}
+                                confirmIcon=""
+                                onConfirm={() => mutation.mutateAsync(selectedTargets).catch(() => undefined)}
+                            />
                             <button
                                 type="button"
                                 className="btn"
-                                disabled={mutation.isPending}
+                                disabled={busy}
                                 onClick={() => setConfirmOpen(false)}
                             >
                                 {locale === 'ar' ? 'إلغاء' : 'Cancel'}

@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #919 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-MEDI-03A0D722AD",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-MEDI-03A0D722AD",
+    "domain": "media",
+    "kind": "visible_control",
+    "route_screen": "/sites/{SiteId:guid}/media",
+    "source": "src/AIWordPressManager.Web/Components/Pages/MediaManager.razor",
+    "source_control": "@L[ -> @_editing.SourceUrl",
+    "source_intent": "Open the authoritative WordPress media file for the item being edited without changing media state.",
+    "mutation": false,
+    "tenant_owned": true,
+    "external_dependency": "WordPress",
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/media-manager-editing-source-url-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "authoritative_link": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-media-source-url-control.tsx",
+    "authoritative_read": "GET /api/v1/tenants/{tenant}/sites/{site}/media",
+    "operation_marker": "AIMW-MEDI-03A0D722AD",
+    "adaptation": "Laravel consolidates the ASP.NET editing-pane Open file intent onto the existing canonical Media row SourceUrl action. An operation-specific wrapper records parity without rendering a duplicate link."
+  },
+  "security": {
+    "permission": "content.view",
+    "destination_source": "persisted MediaItem.source_url only",
+    "allowed_schemes": [
+      "http",
+      "https"
+    ],
+    "credential_bearing_urls": "rejected by the shared source-url control",
+    "foreign_tenant_or_site_rows": "fail closed at the existing tenant/site-scoped Media API",
+    "caller_source_url_override": "not accepted",
+    "mutation_added": false
+  },
+  "authoritative_state": {
+    "source": "existing tenant/site-scoped Media API",
+    "empty_loading_error": "inherits canonical Media workspace behavior",
+    "synthetic_media": false,
+    "mutation": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/media-manager-editing-source-url-control.test.tsx",
+    "coverage": [
+      "exact canonical operation identity",
+      "one visible Open media file action only",
+      "existing AIMW-CONT-B44DA81C28 action preserved",
+      "authoritative persisted SourceUrl",
+      "safe absolute HTTP(S) enforcement",
+      "unsafe and credential-bearing URLs fail closed",
+      "foreign-tenant 404 boundary inherited from canonical Media API",
+      "read-only behavior"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-MEDI-03A0D722AD"
+    ],
+    "existing_content_explorer_source_url_operation_preserved": "AIMW-CONT-B44DA81C28",
+    "sibling_row_open_file_operation_unclaimed": "AIMW-MEDI-34E7DCA832",
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "variant_boundary": "variants/laravel-aiwmweb/**"
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "branch": "worker/919-media-parity",
+    "implementation_sha": "0ca252ca8a3f989c3e64483c0fda84e6015693ae"
+  }
+}

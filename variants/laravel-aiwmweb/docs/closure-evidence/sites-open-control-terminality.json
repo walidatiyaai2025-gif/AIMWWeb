@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #867 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-EE659E3F13",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/sites",
+    "source": "src/AIWordPressManager.Web/Components/Pages/Sites.razor",
+    "source_control": "@L[ -> @($",
+    "source_intent": "Open the selected authoritative Sites row in that exact site's dashboard.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/sites-interpolated-links-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "destination": "/tenants/{tenant}/sites/{site}",
+    "adaptation_reason": "The Laravel Sites live-data table already renders the same authoritative site row through SitesInterpolatedLinksControl; the source primary Open action is attached to that existing dashboard destination rather than duplicating another site action.",
+    "authoritative_site_id": "row.id from GET /api/tenants/{tenant}/sites"
+  },
+  "security": {
+    "tenant_slug_server_context": true,
+    "positive_site_id_required": true,
+    "destination_tenant_scoped": true,
+    "foreign_tenant_or_site": "404/fail closed",
+    "mutation_added": false,
+    "fake_success": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/sites-interpolated-links-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/SitesOpenControlTerminalityTest.php",
+    "coverage": [
+      "exact source Open semantics",
+      "tenant-qualified site dashboard href",
+      "authoritative site row identity",
+      "foreign tenant/site rejection",
+      "read-only navigation"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-EE659E3F13"
+    ],
+    "interpolated_links_sibling_claimed": false,
+    "external_site_url_operation_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "duplicate_branch_created": false
+  }
+}

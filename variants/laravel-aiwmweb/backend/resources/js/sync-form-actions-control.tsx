@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import type { FrontendContext } from './core';
 
 export const SYNC_APP_FORM_ACTIONS_OPERATION_ID = 'AIMW-SYNC-7071DA172F';
+export const SYNC_APP_FORM_ACTIONS_CANCEL_OPERATION_ID = 'AIMW-SYNC-14DAFE7D73';
 
 function allowed(context: FrontendContext, permission: string): boolean {
     return context.permissions.includes('*') || context.permissions.includes(permission);
@@ -19,6 +20,7 @@ export function SyncFormActionsControl({
     savingText = 'Saving',
     cancelText = 'Cancel',
     saveOperationId,
+    cancelOperationId,
     requiredPermission = 'sites.manage',
     onSave,
     onCancel,
@@ -34,6 +36,7 @@ export function SyncFormActionsControl({
     savingText?: string;
     cancelText?: string;
     saveOperationId?: string;
+    cancelOperationId?: string;
     requiredPermission?: string;
     onSave: () => Promise<unknown> | unknown;
     onCancel?: () => Promise<unknown> | unknown;
@@ -53,7 +56,7 @@ export function SyncFormActionsControl({
     };
 
     const cancel = async () => {
-        if (busy || cancelDisabled || dispatching.current) return;
+        if (busy || cancelDisabled) return;
         await onCancel?.();
     };
 
@@ -70,7 +73,14 @@ export function SyncFormActionsControl({
             </div>
             <div className="app-form-actions__buttons">
                 {showCancel ? (
-                    <button type="button" className="btn" disabled={busy || cancelDisabled} onClick={() => void cancel()}>
+                    <button
+                        type="button"
+                        className="btn"
+                        disabled={busy || cancelDisabled}
+                        data-canonical-operation={cancelOperationId ?? SYNC_APP_FORM_ACTIONS_CANCEL_OPERATION_ID}
+                        data-source-handler="CancelClickedAsync"
+                        onClick={() => void cancel()}
+                    >
                         {cancelText}
                     </button>
                 ) : null}

@@ -101,13 +101,21 @@ def security_contract(row: dict[str, Any], tests: list[reconcile.FileEvidence]) 
     signals: list[str] = []
 
     if bool(row.get("tenant_owned")):
-        tenant_proof = (
+        tenant_scoped_proof = (
             ("assertnotfound" in text or "404" in text)
             and any(token in text for token in ("tenant", "foreign", "cross-tenant", "cross_tenant"))
         )
-        if not tenant_proof:
-            return False, ["missing focused tenant-isolation assertion"]
-        signals.append("test:tenant-isolation")
+        tenant_neutral_proof = (
+            "assertnotcontains('tenant.context'" in text
+            and "parameternames" in text
+            and "assertsame([]," in text
+            and "tenant" in text
+        )
+        if not tenant_scoped_proof and not tenant_neutral_proof:
+            return False, ["missing focused tenant-isolation or tenant-neutral boundary assertion"]
+        signals.append(
+            "test:tenant-isolation" if tenant_scoped_proof else "test:tenant-neutral-boundary"
+        )
 
     risk = str(row.get("risk") or "").lower()
     if bool(row.get("mutation")) or risk in {"high", "critical"}:

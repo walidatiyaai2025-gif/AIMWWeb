@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #814 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-918BE3DBF1",
+  "terminal_state": "ADAPTED",
+  "source": "src/AIWordPressManager.Web/Components/Pages/Settings.razor",
+  "source_action": "#appearance -> #appearance",
+  "destination": "variants/laravel-aiwmweb/backend/resources/js/settings-appearance-anchor-control.tsx",
+  "target_component": "variants/laravel-aiwmweb/backend/resources/js/settings-appearance-light-control.tsx",
+  "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-appearance-anchor-control.test.tsx",
+  "backend_test": "variants/laravel-aiwmweb/backend/tests/Feature/SettingsAppearanceAnchorTerminalityTest.php",
+  "runtime": "browser-native same-document fragment navigation to the existing real appearance mode section inside the authenticated tenant settings surface",
+  "authorization": "tenant.view or wildcard; otherwise both the anchor and target fail closed",
+  "server_mutation": false,
+  "external_mutation": false,
+  "network_request": false,
+  "only_operation_claimed": "AIMW-CONT-918BE3DBF1",
+  "materialized": true,
+  "evidence_source_sha": "7734d8585ebefc4b86c70da42dee9cd4ae4cd5b4",
+  "post_materialization_gate_trigger": "pending user-authored exact-head CI trigger after official materialization"
+}

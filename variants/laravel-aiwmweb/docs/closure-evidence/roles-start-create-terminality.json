@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #797",
+  "parent_authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-6CB3D0BE1B",
+  "domain": "content",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/RolesPermissions.razor",
+    "route_screen": "/admin/roles-permissions",
+    "visible_control": "@(L.IsArabic ? [StartCreate]",
+    "source_intent": "Enter a clean new-role creation state without persisting anything on the StartCreate click.",
+    "tenant_owned": true,
+    "mutation": false,
+    "risk": "low"
+  },
+  "laravel_adaptation": {
+    "production_page": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "control": "variants/laravel-aiwmweb/backend/resources/js/roles-start-create-control.tsx",
+    "operation_marker": "AIMW-CONT-6CB3D0BE1B",
+    "workspace": "/tenants/{tenant}/admin/roles-permissions",
+    "start_create_behavior": "Reset local role name/error state and open the real create-role dialog. The StartCreate click issues no request.",
+    "supporting_existing_mutation": "POST /tenants/{tenant}/admin/roles via the existing AdminOperationsController::saveRole path; this supporting save is not claimed as the canonical StartCreate operation.",
+    "authoritative_reconciliation": "GET /tenants/{tenant}/admin/roles after successful supporting save.",
+    "initial_permissions": [],
+    "least_privilege": "A newly created role begins with no permissions, preserving least privilege.",
+    "busy_behavior": "Disabled while authoritative role data is refreshing or the supporting role save is in progress.",
+    "bilingual_label": "New role / دور جديد",
+    "mutation": false,
+    "external_call": false,
+    "fake_success_path": "none"
+  },
+  "security_boundary": {
+    "route": "auth + tenant.context + tenant.view + roles.view",
+    "control_visibility": "roles.manage or wildcard",
+    "supporting_save_guard": "AdminOperationsController::saveRole authorizes roles.manage",
+    "foreign_tenant": "404/fail closed",
+    "tenant_selector": "active authenticated tenant context only"
+  },
+  "acceptance_tests": [
+    "variants/laravel-aiwmweb/backend/resources/js/__tests__/roles-start-create-control.test.tsx",
+    "variants/laravel-aiwmweb/backend/tests/Feature/RolesStartCreateTerminalityTest.php"
+  ],
+  "scope": {
+    "only_operation_claimed": "AIMW-CONT-6CB3D0BE1B",
+    "supporting_role_save_claimed_as_operation": false,
+    "sibling_roles_assign_claimed": false,
+    "aspnet_modified": false,
+    "generated_reconciliation_modified": false,
+    "denominator_modified": false
+  },
+  "scope_exclusions": [
+    "No ASP.NET runtime changes",
+    "No new role persistence endpoint",
+    "No roles.create ActionContract invented for the non-mutating StartCreate identity",
+    "No roles.assign claim",
+    "No manual generated reconciliation edits"
+  ],
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "376121deb668723bb4f84ef2e5f4cffecc666645",
+    "branch": "worker/797-roles-start-create"
+  },
+  "ci_state": "PENDING_EXACT_HEAD"
+}

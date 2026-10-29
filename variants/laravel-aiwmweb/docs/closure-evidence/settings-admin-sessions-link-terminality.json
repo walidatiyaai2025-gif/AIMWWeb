@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #806 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-4A64732FC6",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/settings",
+    "source": "src/AIWordPressManager.Web/Components/Pages/Settings.razor",
+    "source_operation_key": "visible:Settings.razor:/settings:/admin/sessions -> /admin/sessions",
+    "source_intent": "Open the real tenant application-session administration workspace from Settings for authorized application-user administrators.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "source_workspace": "GET /tenants/{tenant}/settings",
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/settings-admin-sessions-link-control.tsx",
+    "destination_route": "GET /tenants/{tenant}/admin/sessions",
+    "destination_controller": "App\\Http\\Controllers\\AdminOperationsController@sessions",
+    "operation_marker": "AIMW-CONT-4A64732FC6"
+  },
+  "security": {
+    "source_guard": "auth + tenant context; control requires Users.Manage equivalent",
+    "control_guard": "members.manage",
+    "destination_guard": "auth + tenant.context + members.manage",
+    "tenant_selector": "active FrontendContext tenant slug encoded through tenantUrl",
+    "foreign_tenant": "404/fail closed",
+    "missing_permission": "control hidden and destination 403",
+    "guest": "redirect to login"
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-admin-sessions-link-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/SettingsAdminSessionsLinkTerminalityTest.php",
+    "implementation_snapshot_sha": "673be76765aa4356fa9bc0dcd75b8a254725c701"
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-4A64732FC6"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "376121deb668723bb4f84ef2e5f4cffecc666645",
+    "branch": "worker/806-settings-admin-sessions-link"
+  }
+}

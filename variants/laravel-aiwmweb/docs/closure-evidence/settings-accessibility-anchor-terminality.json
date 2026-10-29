@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #811 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-6AB0ED6C83",
+  "terminal_state": "ADAPTED",
+  "source": "src/AIWordPressManager.Web/Components/Pages/Settings.razor",
+  "source_action": "#accessibility -> #accessibility",
+  "destination": "variants/laravel-aiwmweb/backend/resources/js/settings-accessibility-anchor-control.tsx",
+  "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-accessibility-anchor-control.test.tsx",
+  "backend_test": "variants/laravel-aiwmweb/backend/tests/Feature/SettingsAccessibilityAnchorTerminalityTest.php",
+  "runtime": "browser-native same-document fragment navigation to an actually rendered accessibility target inside the authenticated tenant settings surface",
+  "authorization": "tenant.view or wildcard; otherwise the control and target fail closed",
+  "server_mutation": false,
+  "external_mutation": false,
+  "network_request": false,
+  "only_operation_claimed": "AIMW-CONT-6AB0ED6C83",
+  "materialized": true,
+  "evidence_source_sha": "e36250110e3f9f2c22cfb8ac04de98b3c55b9195",
+  "post_materialization_gate_trigger": "user-authored exact-head CI trigger after official materialization; no runtime semantics changed"
+}

@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #767 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-A31317B378",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/sites/{Id:guid}/explorer",
+    "source": "src/AIWordPressManager.Web/Components/Pages/ContentExplorer.razor",
+    "source_control": "PreviousPage [PreviousPage]",
+    "source_intent": "When the current Content Explorer page is greater than one, decrement it by exactly one and rebuild only the visible page without mutation.",
+    "mutation": false,
+    "tenant_owned": true,
+    "external_dependency": "WordPress",
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-previous-page-control.tsx",
+    "production_consumer": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "authoritative_read": "GET /api/v1/tenants/{tenant}/sites/{site}/explorer?page={page}",
+    "backend_action": "ContentExplorerReadController::__invoke",
+    "behavior": "The Previous button decrements page state by one only when page > 1. React Query then reads the immediately previous authoritative tenant/site Explorer page. Page 1 disables the control and causes no request."
+  },
+  "security": {
+    "permissions": [
+      "tenant.view",
+      "sites.view"
+    ],
+    "tenant_context_required": true,
+    "site_ownership_required": true,
+    "page_one": "disabled/fail closed",
+    "foreign_tenant": "404/fail closed",
+    "foreign_site": "404/fail closed",
+    "mutation_added": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-previous-page-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentExplorerPreviousPageTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation marker",
+      "source PreviousPage semantics",
+      "single-step decrement",
+      "first-page fail-closed behavior",
+      "authoritative page query",
+      "sites.view authorization",
+      "foreign tenant/site isolation"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-A31317B378"
+    ],
+    "next_page_operation_claimed": false,
+    "page_size_operation_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "backend_mutation_added": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "d3e6c6703de2e08ac8138629e71d78ea3c3f2253",
+    "branch": "worker/767-content-explorer-previous-page",
+    "issue": 767,
+    "synchronization_merge_sha": "e8d41356125912956150530d4c5c71f72082b68b"
+  },
+  "materialization": {
+    "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-767.yml",
+    "generated_reconciliation_required": true,
+    "materialized_commit_sha": "097bb707dee56ee90b66b3a7606f42c4cfe94799",
+    "materialized_terminal_total": 766,
+    "materialized_pending_total": 165,
+    "materialized_overall_parity_percent": 82.28
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #856 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-916E34454C",
+  "domain": "content",
+  "kind": "route",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "source_file": "src/AIWordPressManager.Web/Components/Pages/SiteReliability.razor",
+  "source_route": "/site-reliability",
+  "source_action": "Open/render route",
+  "laravel_route": "GET /tenants/{tenant}/site-reliability",
+  "route_name": "canonical.workspace.site-reliability",
+  "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+  "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+  "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteReliabilityRouteTerminalityTest.php",
+  "security": {
+    "middleware": [
+      "auth",
+      "tenant.context"
+    ],
+    "authorization": [
+      "sites.view"
+    ],
+    "foreign_tenant": "404",
+    "missing_permission": "403"
+  },
+  "semantics": {
+    "read_only": true,
+    "authoritative_read_api": "GET /tenants/{tenant}/route-api/site-reliability",
+    "retained_history_only": true,
+    "live_health_claim": false,
+    "fake_success": false
+  },
+  "render_states": {
+    "loading": "shared Laravel LoadingState while the authoritative query is pending",
+    "error": "shared QueryError renders server failure and bounded retry",
+    "success": "real tenant-scoped retained reliability rows from RouteApiAdapterController::siteReliability"
+  },
+  "scope": {
+    "exactly_one_operation": true,
+    "aspnet_runtime_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "sibling_route_claimed": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "88bcd3d351297a834f0f00b9eb82adf6dbdc1135",
+    "branch": "worker/856-site-reliability-route",
+    "issue": 856
+  }
+}

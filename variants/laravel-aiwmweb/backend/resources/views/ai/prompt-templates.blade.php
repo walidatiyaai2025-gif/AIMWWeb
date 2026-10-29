@@ -153,6 +153,7 @@
 
                         <section aria-label="Revision history for {{ $template->stable_key }}">
                             <h4>Revision history</h4>
+                            <p>Restoring never rewrites history; it creates a new revision from the selected historical content.</p>
                             @if ($template->revisions->isEmpty())
                                 <p>No revision history has been persisted for this template.</p>
                             @else
@@ -161,6 +162,18 @@
                                         <h5>r{{ $revision->version }} · {{ $revision->change_type }}</h5>
                                         <p>{{ $revision->created_at?->toIso8601String() ?? 'Unknown time' }} · actor user #{{ $revision->actor_user_id }}</p>
                                         <pre>{{ data_get($revision->snapshot, 'user_template', '') }}</pre>
+                                        <form
+                                            method="POST"
+                                            action="{{ route('tenant.settings.ai-prompts.restore', ['tenant' => $tenant->slug, 'template' => $template->stable_key, 'version' => $revision->version]) }}"
+                                            onsubmit="return window.confirm('Restore revision r{{ $revision->version }} of {{ $template->stable_key }} as a new revision?');"
+                                        >
+                                            @csrf
+                                            <button
+                                                type="submit"
+                                                data-ai-prompt-restore="true"
+                                                @disabled((int) $revision->version === (int) $template->current_version)
+                                            >Restore</button>
+                                        </form>
                                     </article>
                                 @endforeach
                             @endif

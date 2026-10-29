@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #916 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-MEDI-727FAEEB01",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "media",
+    "kind": "visible_control",
+    "route_screen": "/module/media",
+    "source": "src/AIWordPressManager.Web/Components/Pages/GlobalMediaExplorer.razor",
+    "source_control": "@($ -> @($",
+    "source_intent": "Open the site-scoped media manager or Explorer from an authoritative Global Media row.",
+    "mutation": false,
+    "tenant_owned": true,
+    "external_dependency": "WordPress",
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/media-interpolated-links-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "authoritative_read": "GET /api/v1/tenants/{tenant}/sites/{site}/media",
+    "manage_destination": "/tenants/{tenant}/module/media?site={site}",
+    "explorer_destination": "/tenants/{tenant}/explorer?site={site}",
+    "operation_marker": "AIMW-MEDI-727FAEEB01"
+  },
+  "security": {
+    "permission": "content.view",
+    "site_id_source": "authoritative media row site_id",
+    "accepted_site_ids": "positive safe integers only",
+    "tenant_navigation": "tenantUrl encodes the active tenant slug",
+    "foreign_or_malformed_site_id": "fails closed",
+    "caller_owned_destination": false,
+    "mutation_added": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/media-interpolated-links-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalMediaInterpolatedLinksTerminalityTest.php"
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-MEDI-727FAEEB01"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "variant_boundary": "variants/laravel-aiwmweb/**",
+    "duplicate_media_subsystem": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "branch": "worker/laravel-aiwmweb-AIMW-MEDI-727FAEEB01-interpolated-links",
+    "implementation_sha": "f263974ef7fb6d1b9c6e7abff389a5524c55ef3d"
+  }
+}

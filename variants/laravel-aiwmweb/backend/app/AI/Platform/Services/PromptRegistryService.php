@@ -44,7 +44,7 @@ final class PromptRegistryService
         return $query->firstOrFail();
     }
 
-    public function save(?AiPromptTemplate $template, array $input, string $changeType = 'updated'): AiPromptTemplate
+    public function save(?AiPromptTemplate $template, array $input, string $changeType = 'updated', bool $forceRevision = false): AiPromptTemplate
     {
         $actorUserId = $this->context->membership()->user_id;
         $creating = $template === null;
@@ -89,7 +89,7 @@ final class PromptRegistryService
         $last = $template->exists
             ? AiPromptRevision::query()->where('ai_prompt_template_id', $template->id)->latest('version')->first()
             : null;
-        if ($last && $this->snapshotsEqual($last->snapshot, $snapshot)) {
+        if (! $forceRevision && $last && $this->snapshotsEqual($last->snapshot, $snapshot)) {
             return $template->fresh();
         }
 
@@ -126,7 +126,7 @@ final class PromptRegistryService
             ->where('version', $version)
             ->firstOrFail();
 
-        return $this->save($template, $revision->snapshot, 'restored');
+        return $this->save($template, $revision->snapshot, 'restored', true);
     }
 
     public function history(AiPromptTemplate $template): array

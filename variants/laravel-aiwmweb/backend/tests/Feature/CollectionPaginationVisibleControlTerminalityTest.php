@@ -16,7 +16,7 @@ class CollectionPaginationVisibleControlTerminalityTest extends TestCase
     use RefreshDatabase;
 
     private const OPERATIONS = [
-        'AIMW-SYNC-12F15A0A80', 'AIMW-SYNC-CB01197D47', 'AIMW-SYNC-DBD736FACC',
+        'AIMW-SYNC-12F15A0A80', 'AIMW-SYNC-CB01197D47', 'AIMW-SYNC-D5CE5A213B', 'AIMW-SYNC-DBD736FACC',
         'AIMW-SYNC-4E969573BB', 'AIMW-SYNC-F340B5445A',
         'AIMW-SYNC-112E6B9631', 'AIMW-SYNC-EF652932D6',
         'AIMW-SYNC-12C023E4CC', 'AIMW-SYNC-0EDB4AB9FC',
@@ -41,8 +41,9 @@ class CollectionPaginationVisibleControlTerminalityTest extends TestCase
         $this->assertStringContainsString('data-canonical-load-operation={readOperations?.load}', $frontend);
         $this->assertStringContainsString('data-canonical-refresh-operation={readOperations?.refresh}', $frontend);
         $this->assertStringContainsString('data-canonical-operation={previousOperationId}', $frontend);
+        $this->assertStringContainsString("route.key === 'comments' ? COMMENTS_PREVIOUS_PAGE_OPERATION_ID", $frontend);
         $this->assertStringContainsString('onClick={() => query.refetch()}', $frontend);
-        $this->assertStringContainsString('onClick={() => onPage(page - 1)}', $frontend);
+        $this->assertStringContainsString('onClick={() => onPage(previousAppDataGridPage(page))}', $frontend);
     }
 
     public function test_collection_reads_require_content_view_and_foreign_tenant_fails_closed(): void

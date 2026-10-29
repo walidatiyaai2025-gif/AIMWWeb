@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-TAXO-770DAA668D",
+    "domain": "taxonomy",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/TaxonomyManager.razor",
+    "source_screen": "/sites/{SiteId:guid}/taxonomy",
+    "source_control": "BackToSites",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_behavior": {
+    "summary": "When TaxonomyManager cannot resolve the requested site, the source renders a SiteNotFound empty state with a BackToSites control.",
+    "source_destination": "/sites",
+    "side_effect": "read-only navigation"
+  },
+  "laravel_adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/taxonomy-back-to-sites-control.tsx",
+    "production_wiring": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "destination": "/tenants/{tenant}/sites",
+    "render_condition": "Only when authoritative frontend context has no resolved active_site and tenant.view + sites.view are available.",
+    "mutation_surface": "none"
+  },
+  "authorization": {
+    "session_required": true,
+    "tenant_context_required": true,
+    "destination_permissions": ["tenant.view", "sites.view"],
+    "foreign_tenant_fails_closed": true,
+    "foreign_site_fails_closed": true
+  },
+  "runtime_semantics": {
+    "read_only": true,
+    "caller_tenant_override": false,
+    "caller_site_override": false,
+    "persistence_mutation": false,
+    "provider_write": "none",
+    "fake_success": false
+  },
+  "acceptance_tests": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/taxonomy-back-to-sites-control.test.tsx",
+    "php_feature": "variants/laravel-aiwmweb/backend/tests/Feature/TaxonomyBackToSitesControlTerminalityTest.php",
+    "proof": [
+      "exact canonical operation marker on the real Taxonomy missing-site recovery control",
+      "destination derives only from authenticated tenant context",
+      "resolved-site taxonomy state does not render the recovery control",
+      "missing sites permission, guest, foreign tenant and foreign site fail closed",
+      "navigation performs no persistence mutation"
+    ]
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-TAXO-770DAA668D",
+    "second_operation_started": false,
+    "aspnet_reference_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "security_assertions_weakened": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true
+  }
+}

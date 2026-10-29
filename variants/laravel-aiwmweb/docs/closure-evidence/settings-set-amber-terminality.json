@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #818 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-CF4BE4EC3B",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/settings",
+    "source": "src/AIWordPressManager.Web/Components/Pages/Settings.razor",
+    "source_action": "SetAmber",
+    "source_intent": "Set the local application accent theme to amber through appTheme.set, immediately apply the rendered theme, and persist the normalized local preference.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_semantics": {
+    "handler": "SetAmber => SetTheme(\"amber\")",
+    "runtime": "appTheme.set",
+    "storage_key": "aiwm-color-theme",
+    "rendered_state": "html[data-theme=amber]",
+    "server_request": false,
+    "wordpress_request": false
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/settings-set-amber-control.tsx",
+    "host_wiring": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "operation_marker": "AIMW-CONT-CF4BE4EC3B",
+    "source_handler_marker": "SetAmber",
+    "authorization": "tenant.view (or *)",
+    "persistence": "browser localStorage key aiwm-color-theme",
+    "authoritative_readback": "button aria-pressed reflects persisted/applied amber state",
+    "server_mutation_added": false,
+    "external_mutation_added": false,
+    "fake_success_path": "none"
+  },
+  "security_boundary": {
+    "authenticated_settings_route": "/tenants/{tenant}/settings",
+    "missing_permission": "403",
+    "foreign_tenant": "404",
+    "caller_owned_tenant_selector": "none"
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-set-amber-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/SettingsSetAmberTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation marker",
+      "source SetAmber semantics",
+      "aiwm-color-theme persistence",
+      "immediate data-theme=amber application",
+      "authoritative selected-state readback",
+      "no HTTP or WordPress mutation",
+      "missing permission fails closed",
+      "foreign tenant returns 404"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-CONT-CF4BE4EC3B"],
+    "sibling_theme_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "branch": "worker/818-settings-set-amber",
+    "issue": 818
+  },
+  "materialization": {
+    "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-818.yml",
+    "official_generator_required": true
+  }
+}

@@ -1,9 +1,11 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { ApiError, apiRequest, type FrontendContext } from './core';
+import { ApiError, apiRequest, tenantUrl, type FrontendContext } from './core';
 import { useLocale } from './i18n';
+import { SiteDataSnapshotBackToSitesControl } from './site-data-snapshot-back-to-sites-control';
 
 export const SITE_DATA_SNAPSHOT_SYNC_OPERATION_ID = 'AIMW-BILL-2D6F2BC88E';
+export const SITE_DATA_SNAPSHOT_NAVIGATION_OPERATION_ID = 'AIMW-CONT-6187F8DF8A';
 
 type Snapshot = {
     operation_id: string;
@@ -26,6 +28,16 @@ export function siteSnapshotEndpoints(tenantSlug: string, siteId: string | numbe
     };
 }
 
+export function siteDataSnapshotNavigationHrefs(tenantSlug: string, siteId: string | number) {
+    const raw = String(siteId).trim();
+    if (!/^[1-9]\d*$/.test(raw) || !tenantSlug.trim() || /[\\/]/.test(tenantSlug)) return null;
+
+    return {
+        dashboard: tenantUrl(tenantSlug, '/sites/' + raw),
+        explorer: tenantUrl(tenantSlug, '/sites/' + raw + '/explorer'),
+    };
+}
+
 export function syncRunOutcome(status: string): 'pending' | 'success' | 'failure' {
     const normalized = status.toLowerCase();
     if (normalized === 'succeeded') return 'success';
@@ -39,10 +51,12 @@ export function SiteDataSnapshotSyncControl({ context }: { context: FrontendCont
     const { locale } = useLocale();
     const { siteId } = useParams();
     const endpoints = siteSnapshotEndpoints(context.tenant.slug, siteId ?? '');
+    const navigation = siteDataSnapshotNavigationHrefs(context.tenant.slug, siteId ?? '');
     const canManage = context.permissions.includes('*') || context.permissions.includes('sites.manage');
     const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
+    const [missingSite, setMissingSite] = useState(false);
     const [message, setMessage] = useState('');
 
     const reload = useCallback(async () => {
@@ -52,13 +66,16 @@ export function SiteDataSnapshotSyncControl({ context }: { context: FrontendCont
             throw new ApiError('Authoritative snapshot did not match the requested site.', 409, 'snapshot_mismatch');
         }
         setSnapshot(data);
+        setMissingSite(false);
         return data;
     }, [endpoints?.snapshot, siteId]);
 
     useEffect(() => {
         setError('');
+        setMissingSite(false);
         reload().catch((cause: unknown) => {
             setSnapshot(null);
+            setMissingSite(cause instanceof ApiError && cause.status === 404);
             setError(cause instanceof Error ? cause.message : 'Snapshot unavailable.');
         });
     }, [reload]);
@@ -103,6 +120,17 @@ export function SiteDataSnapshotSyncControl({ context }: { context: FrontendCont
         return <div className="state-panel state-warning">{locale === 'ar' ? 'معرّف الموقع غير صالح.' : 'Invalid site identifier.'}</div>;
     }
 
+    if (missingSite) {
+        return (
+            <div className="workspace-stack">
+                <div role="alert" className="state-panel state-warning">
+                    {locale === 'ar' ? 'الموقع غير موجود داخل مساحة الحساب الحالية.' : 'The site could not be found in the active tenant workspace.'}
+                </div>
+                <SiteDataSnapshotBackToSitesControl context={context} />
+            </div>
+        );
+    }
+
     return (
         <div className="workspace-stack" data-canonical-operation={SITE_DATA_SNAPSHOT_SYNC_OPERATION_ID}>
             <section className="hero-panel">
@@ -111,17 +139,39 @@ export function SiteDataSnapshotSyncControl({ context }: { context: FrontendCont
                     <h2>{snapshot?.site.name ?? (locale === 'ar' ? 'لقطة بيانات الموقع' : 'Site Data Snapshot')}</h2>
                     <p>{locale === 'ar' ? 'بيانات محلية فعلية مع مزامنة WordPress ومصالحة بعد اكتمال المهمة.' : 'Authoritative local data with WordPress synchronization and post-run reconciliation.'}</p>
                 </div>
-                {canManage ? (
-                    <button
-                        type="button"
-                        className="btn primary"
-                        disabled={busy}
-                        onClick={synchronize}
-                        data-canonical-operation={SITE_DATA_SNAPSHOT_SYNC_OPERATION_ID}
-                    >
-                        {busy ? (locale === 'ar' ? 'جارٍ المزامنة…' : 'Synchronizing…') : (locale === 'ar' ? 'مزامنة الآن' : 'Sync now')}
-                    </button>
-                ) : null}
+                <div className="d-flex gap-2 flex-wrap">
+                    {snapshot && navigation ? (
+                        <>
+                            <a
+                                className="btn"
+                                href={navigation.dashboard}
+                                data-canonical-operation={SITE_DATA_SNAPSHOT_NAVIGATION_OPERATION_ID}
+                                data-source-control="Site dashboard"
+                            >
+                                {locale === 'ar' ? 'لوحة الموقع' : 'Site dashboard'}
+                            </a>
+                            <a
+                                className="btn"
+                                href={navigation.explorer}
+                                data-canonical-operation={SITE_DATA_SNAPSHOT_NAVIGATION_OPERATION_ID}
+                                data-source-control="Content explorer"
+                            >
+                                {locale === 'ar' ? 'مستكشف المحتوى' : 'Content explorer'}
+                            </a>
+                        </>
+                    ) : null}
+                    {canManage ? (
+                        <button
+                            type="button"
+                            className="btn primary"
+                            disabled={busy}
+                            onClick={synchronize}
+                            data-canonical-operation={SITE_DATA_SNAPSHOT_SYNC_OPERATION_ID}
+                        >
+                            {busy ? (locale === 'ar' ? 'جارٍ المزامنة…' : 'Synchronizing…') : (locale === 'ar' ? 'مزامنة الآن' : 'Sync now')}
+                        </button>
+                    ) : null}
+                </div>
             </section>
             {error ? <div role="alert" className="state-panel state-danger">{error}</div> : null}
             {message ? <div role="status" className="state-panel state-success">{message}</div> : null}

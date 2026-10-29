@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #963 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-B11D963A9E",
+  "domain": "sync",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "route_screen": "/",
+    "visible_control": "@(L.IsArabic ? [RefreshClickedAsync]",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/Home.razor",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_semantics": "The dashboard error-state Try again control calls RefreshClickedAsync, which refreshes the real dashboard and keeps the error visible on failure.",
+  "laravel_runtime": {
+    "component": "variants/laravel-aiwmweb/backend/resources/js/dashboard-error-retry-control.tsx",
+    "host": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "api_controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/PlatformReadController.php",
+    "api": "GET /api/dashboard?tenant={active-server-selected-tenant}",
+    "error_component": "QueryError",
+    "reread": "React Query refetch against hydrated dashboard API contract",
+    "no_toast_only_success": true
+  },
+  "security": {
+    "authentication": "auth",
+    "authorization": "execution.view",
+    "tenant_scope": "selected active tenant membership checked by backend",
+    "foreign_tenant": "404",
+    "unauthorized": "401",
+    "missing_permission": "403",
+    "no_mutation": true,
+    "client_endpoint": "must equal server hydrated context.api.dashboard",
+    "active_membership_fail_closed": true
+  },
+  "acceptance": {
+    "backend_test": "variants/laravel-aiwmweb/backend/tests/Feature/DashboardErrorRetryTerminalityTest.php",
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/dashboard-error-retry-control.test.tsx",
+    "checks": [
+      "canonical identity and source error retry",
+      "server-authoritative dashboard endpoint",
+      "fresh data after retry",
+      "no model writes on retry",
+      "guest, forbidden and cross-tenant denial",
+      "duplicate click in-flight lock",
+      "failure releases lock and remains retryable",
+      "missing membership or mismatched backend API hides control"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-B11D963A9E"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "shared_components_modified": false
+  },
+  "provenance": {
+    "integration_target": "worker/laravel-aiwmweb-closure-composition",
+    "composition_base_sha": "f2da2c11c34f3613883d4a6b5d48bf932a6b299b",
+    "code_and_test_sha": "7fc86c03981987b84bafb016b16ecacc2822f889"
+  }
+}

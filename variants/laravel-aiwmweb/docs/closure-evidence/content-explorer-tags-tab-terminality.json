@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #998 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-TAXO-D6126926AD",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "taxonomy",
+    "kind": "visible_control",
+    "route_screen": "/sites/{Id:guid}/explorer",
+    "source": "src/AIWordPressManager.Web/Components/Pages/ContentExplorer.razor",
+    "source_control": "SetTagsTab [SetTagsTab]",
+    "source_intent": "Select the Tags tab, clear Explorer-local selection/preview state, and render the authoritative tag collection.",
+    "mutation": false,
+    "tenant_owned": true,
+    "external_dependency": "WordPress",
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-tags-tab-control.tsx",
+    "production_consumer": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "taxonomy_consumer": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "operation_marker": "AIMW-TAXO-D6126926AD",
+    "authority": "FrontendContext.active_site plus exact same-origin context.api.taxonomy tenant/site contract",
+    "behavior": "Selecting Tags leaves the Explorer surface and opens the canonical site-scoped taxonomy workspace with taxonomy=post_tag. Route navigation discards Explorer-local selection and preview state, while the destination performs the authoritative read only."
+  },
+  "security": {
+    "permissions": [
+      "tenant.view",
+      "sites.view",
+      "content.view"
+    ],
+    "connector_scope": "taxonomy.read",
+    "active_site_required": true,
+    "exact_taxonomy_endpoint_required": true,
+    "cross_origin_endpoint": "rejected",
+    "foreign_site": "404/fail closed",
+    "missing_content_view": "403/fail closed",
+    "mutation_added": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-tags-tab-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentExplorerTagsTabTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation marker",
+      "source SetTagsTab semantics",
+      "authoritative tenant/site taxonomy binding",
+      "post_tag filter preserved at destination",
+      "permission and cross-tenant/site fail-closed behavior",
+      "no mutation side effect"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-TAXO-D6126926AD"
+    ],
+    "categories_sibling_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "authorization_weakened": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "fbef37965980ec1cfc8fa4101501578e65e03bec",
+    "branch": "worker/998-content-explorer-tags-tab",
+    "issue": 998
+  },
+  "materialization": {
+    "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-998.yml",
+    "generated_reconciliation_required": true
+  }
+}

@@ -36,7 +36,8 @@ describe('GlobalPagesExplorer ConfirmTrashAsync terminality', () => {
 
         expect(widget).toContain('setConfirmOpen(true)');
         expect(widget).toContain('role="dialog"');
-        expect(widget).toContain('mutation.mutate(selectedTargets)');
+        expect(widget).toContain('mutation.mutateAsync(selectedTargets)');
+        expect(widget).toContain('SyncAppConfirmDialogConfirmControl');
         expect(widget).toContain('await query.refetch()');
         expect(widget).toContain("result.succeeded === 0 ? 'error' : 'success'");
         expect(widget).toContain('row.status === \'trash\'');

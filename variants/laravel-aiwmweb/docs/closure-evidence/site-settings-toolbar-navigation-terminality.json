@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #869 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation": {
+    "operation_id": "AIMW-CONT-0154E7772B",
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/sites/{Id:guid}/settings",
+    "visible_control": "@(L.IsArabic ? -> @($",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/SiteSettings.razor",
+    "mutation": false,
+    "tenant_owned": true,
+    "terminal_state": "ADAPTED"
+  },
+  "source_semantics": {
+    "summary": "The Site Settings toolbar exposes the localized Site dashboard and Connection center navigation actions for the currently loaded site.",
+    "canonical_collision_note": "The source census parses both AppButton controls to the same canonical signature @(L.IsArabic ? -> @($, so this single canonical operation covers both source-equivalent toolbar destinations.",
+    "site_dashboard": "Navigates to /sites/{Id}.",
+    "connection_center": "Navigates to /sites/{Id}/connection.",
+    "side_effect": "Navigation only; no persistence, WordPress mutation, queue, cache or synthetic success state."
+  },
+  "laravel_adaptation": {
+    "view": "variants/laravel-aiwmweb/backend/resources/views/sites/settings.blade.php",
+    "operation_marker": "AIMW-CONT-0154E7772B",
+    "site_dashboard_destination": "canonical.site.details generated from the active tenant slug and authoritative tenant-owned site key",
+    "connection_center_destination": "/tenants/{tenant}/sites/{site}/connection generated from the same active tenant/site context",
+    "localization": "English and Arabic labels follow the active Laravel locale",
+    "read_authority": "SiteSettingsReadController resolves the active TenantContext, requires tenant.view and sites.view, and loads the Site with an explicit active-tenant predicate before the links render."
+  },
+  "state_and_security": {
+    "loading_error_empty_authority": "The toolbar is rendered only after the guarded Site Settings read succeeds; missing or foreign sites fail before rendering.",
+    "missing_permission": "sites.view denial returns 403",
+    "foreign_site": "a site ID owned by another tenant returns 404",
+    "tenant_identity_override": false,
+    "client_supplied_destination": false,
+    "server_mutation": false,
+    "wordpress_mutation": false,
+    "fake_success": false
+  },
+  "acceptance": {
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteSettingsToolbarNavigationTerminalityTest.php",
+    "proofs": [
+      "exact canonical operation identity remains PENDING in the immutable census input",
+      "both source toolbar destinations are represented by the one canonical collision signature",
+      "production markers exist only on the two Site Settings toolbar navigation links",
+      "href values derive from the active tenant and authoritative tenant-owned site key",
+      "English and Arabic labels preserve source intent",
+      "reading and rendering the links does not mutate site state",
+      "missing sites.view returns 403",
+      "foreign tenant site ID returns 404"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-0154E7772B"
+    ],
+    "sibling_localized_submit_control_claimed": false,
+    "sibling_back_to_sites_control_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "backend_mutation_added": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "20906cb3e7ac907b8447589e9bbf9bcfe66a3d3b",
+    "branch": "worker/869-site-settings-toolbar-links"
+  },
+  "materialization": {
+    "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-869.yml",
+    "generated_reconciliation_required": true
+  }
+}

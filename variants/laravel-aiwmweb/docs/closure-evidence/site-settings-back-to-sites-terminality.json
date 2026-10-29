@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #871 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-CONT-3D6485D903",
+    "domain": "content",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/SiteSettings.razor",
+    "source_screen": "/sites/{Id:guid}/settings",
+    "source_control": "@(L.IsArabic ? -> /sites",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "verification": "rendered/read response matches authoritative source"
+  },
+  "source_behavior": {
+    "summary": "SiteSettings exposes a bilingual Back to sites / العودة للمواقع action to /sites from the source site-not-found empty state.",
+    "side_effect": "navigation only",
+    "wordpress_behavior": "none; this control does not call or mutate WordPress",
+    "success_semantics": "browser navigation only; no success toast, mutation receipt, or synthetic state"
+  },
+  "laravel_adaptation": {
+    "source_route": "/tenants/{tenant}/sites/{site}/settings",
+    "source_route_name": "canonical.site.settings",
+    "source_controller": "App\\Http\\Controllers\\SiteSettingsReadController",
+    "production_view": "variants/laravel-aiwmweb/backend/resources/views/sites/settings.blade.php",
+    "visible_control": "Back to sites / العودة للمواقع, selected from the authoritative Laravel locale",
+    "operation_marker": "AIMW-CONT-3D6485D903",
+    "target_builder": "route('canonical.workspace.sites', ['tenant' => $tenant], false)",
+    "target_route": "/tenants/{tenant}/sites",
+    "target_route_name": "canonical.workspace.sites",
+    "target_controller": "App\\Http\\Controllers\\CanonicalWorkspaceRouteController::show",
+    "target_backing_api": "/api/tenants/{tenant}/sites",
+    "placeholder_or_catch_all": false,
+    "demo_or_sample_data": false
+  },
+  "adaptation_note": "The ASP.NET control is rendered when the source service returns no site. Laravel intentionally preserves its stricter fail-closed SiteSettingsReadController behavior: missing or foreign site IDs are rejected with 404 before the Blade view renders. The same recovery intent is therefore exposed on the real tenant-scoped Site Settings page without weakening that IDOR boundary.",
+  "runtime_path": [
+    "authenticated user enters the explicit tenant/site Site Settings route",
+    "auth and tenant.context activate the current tenant membership",
+    "SiteSettingsReadController requires tenant.view and sites.view",
+    "the requested Site is resolved with explicit active-tenant tenant_id plus route site ID and missing/foreign direct IDs fail 404",
+    "the rendered view receives tenant exclusively from active TenantContext through the controller",
+    "Back to sites resolves the named canonical.workspace.sites route using that server-authoritative tenant slug",
+    "the destination requires tenant.view and sites.view and renders the real Sites workspace backed by the tenant-scoped Sites API"
+  ],
+  "authorization": {
+    "source_route": [
+      "web",
+      "auth",
+      "tenant.context",
+      "tenant.view",
+      "sites.view"
+    ],
+    "destination_route": [
+      "auth",
+      "tenant.context",
+      "tenant.view",
+      "sites.view"
+    ],
+    "guest": "redirects to canonical login",
+    "missing_sites_view_source": "403",
+    "missing_sites_view_destination": "403"
+  },
+  "tenant_isolation": {
+    "target_tenant_source": "server-authoritative tenant slug supplied by SiteSettingsReadController after TenantContext validation",
+    "caller_controlled_redirect": false,
+    "foreign_site_direct_id": "404",
+    "foreign_tenant_destination_without_membership": "404",
+    "destination_direct_id_surface": "none"
+  },
+  "runtime_semantics": {
+    "read_only": true,
+    "persistence": "none",
+    "queue_cache_scheduler": "none",
+    "secret_provider_connector_surface": "none",
+    "authoritative_reread": "the destination Sites workspace reads the real tenant-scoped Site collection",
+    "idempotency": "repeated navigation is side-effect free",
+    "retry_and_cancellation": "not applicable to navigation-only control",
+    "audit_or_receipt": "not applicable because no domain mutation occurs"
+  },
+  "acceptance_tests": {
+    "php_feature": "variants/laravel-aiwmweb/backend/tests/Feature/SiteSettingsBackToSitesControlTerminalityTest.php",
+    "proof": [
+      "ASP.NET source /sites recovery action is verified",
+      "English and Arabic labels preserve the source locale semantics",
+      "Laravel view renders exactly one AIMW-CONT-3D6485D903 marker",
+      "source and destination are explicit auth plus tenant.context routes",
+      "authorized real Site Settings and Sites workspace reachability",
+      "navigation leaves persisted Site state unchanged",
+      "guest and missing sites.view paths fail closed",
+      "foreign site direct ID and foreign tenant destination fail 404"
+    ]
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-CONT-3D6485D903",
+    "sibling_site_settings_operations_claimed": false,
+    "existing_fail_closed_site_lookup_weakened": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "mutation_added": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "78f815051aed560db8021d7d39ef5e57638e25ab",
+    "branch": "worker/871-site-settings-back-to-sites",
+    "rebased_after_materialization": true
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true,
+    "reason": "The source recovery navigation is adapted to the real tenant-scoped Site Settings runtime, derives a real Sites destination only from active server tenant context, preserves stricter missing/foreign-site 404 behavior, adds no mutation or fake success, and is covered by focused authorization and tenant-isolation tests."
+  },
+  "materialization": {
+    "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-871.yml",
+    "operation_state": "ADAPTED",
+    "generated_reconciliation_required": true
+  }
+}

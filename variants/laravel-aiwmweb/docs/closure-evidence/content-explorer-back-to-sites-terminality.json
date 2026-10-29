@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #765 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-CONT-966F49CDAE",
+    "domain": "content",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/ContentExplorer.razor",
+    "source_screen": "/sites/{Id:guid}/explorer",
+    "source_control": "/sites -> /sites",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_behavior": {
+    "summary": "Content Explorer exposes a Back to sites navigation action to /sites.",
+    "side_effect": "navigation only",
+    "wordpress_behavior": "none",
+    "success_semantics": "navigation only; no synthetic success state"
+  },
+  "laravel_adaptation": {
+    "source_route": "/tenants/{tenant}/explorer?site={site}",
+    "source_controller": "App\\Http\\Controllers\\CanonicalWorkspaceRouteController::showSiteBound",
+    "visible_control": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-back-to-sites-control.tsx",
+    "runtime_wiring": "ContentExplorerBackToSitesControl renders only for the real explorer WorkspacePage",
+    "target_builder": "tenantUrl(context.tenant.slug, '/sites')",
+    "target_route": "/tenants/{tenant}/sites",
+    "target_route_name": "canonical.workspace.sites",
+    "placeholder_or_catch_all": false,
+    "demo_or_sample_data": false
+  },
+  "authorization": {
+    "source_route": ["auth", "tenant.context", "sites.view"],
+    "destination_route": ["auth", "tenant.context", "tenant.view", "sites.view"],
+    "guest": "redirects to canonical login",
+    "missing_permission": "403",
+    "foreign_site_or_tenant": "404"
+  },
+  "tenant_isolation": {
+    "target_tenant_source": "authoritative FrontendContext.tenant.slug only",
+    "caller_controlled_redirect": false,
+    "foreign_site_direct_id": "404",
+    "foreign_tenant_destination": "404"
+  },
+  "runtime_semantics": {
+    "read_only": true,
+    "persistence": "none",
+    "queue_cache_scheduler": "none",
+    "authoritative_reread": "destination Sites workspace reads the real tenant-scoped Sites collection",
+    "idempotency": "repeated navigation is side-effect free"
+  },
+  "acceptance_tests": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-back-to-sites-control.test.tsx",
+    "php_feature": "variants/laravel-aiwmweb/backend/tests/Feature/ContentExplorerBackToSitesTerminalityTest.php"
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-CONT-966F49CDAE",
+    "second_operation_started": false,
+    "aspnet_runtime_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true
+  }
+}

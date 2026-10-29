@@ -1,8 +1,9 @@
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
     buildSiteOperationsCsv,
+    siteOperationsCsvRow,
     SITE_OPERATIONS_EXPORT_OPERATION_ID,
     SiteOperationsExportControl,
 } from '../site-operations-export-control';
@@ -35,6 +36,25 @@ describe('AIMW-BILL-582319B640 Site Operations ExportCsvAsync', () => {
         expect(csv).toContain('"{""code"":""timeout""}"');
     });
 
+    it('keeps mapped row cells intact before CSV escaping', () => {
+        const row = siteOperationsCsvRow({
+            site_id: 7,
+            site: { id: 7, name: 'Alpha, "Main"' },
+            operation: 'sync.posts',
+            status: 'failed',
+            message: 'Failed, retry',
+            details: { code: 'timeout,network' },
+            affected_records: 12,
+            started_at: '2026-10-12T01:00:00Z',
+            completed_at: '2026-10-12T01:00:01.250Z',
+        });
+
+        expect(row).toHaveLength(10);
+        expect(row[1]).toBe('Alpha, "Main"');
+        expect(row[8]).toBe('Failed, retry');
+        expect(row[9]).toBe('{"code":"timeout,network"}');
+    });
+
     it('fails closed when there are no authoritative rows to export', () => {
         render(<SiteOperationsExportControl rows={[]} locale="en" />);
         const button = screen.getByRole('button', { name: 'Export CSV' });
@@ -44,7 +64,7 @@ describe('AIMW-BILL-582319B640 Site Operations ExportCsvAsync', () => {
         expect(button).toHaveAttribute('title', 'There are no displayed operations to export.');
     });
 
-    it('starts a real browser download only from the supplied authoritative rows', () => {
+    it('starts a real browser download only from the supplied authoritative rows', async () => {
         const createObjectURL = vi.fn(() => 'blob:site-operations');
         const revokeObjectURL = vi.fn();
         Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: createObjectURL });
@@ -65,13 +85,15 @@ describe('AIMW-BILL-582319B640 Site Operations ExportCsvAsync', () => {
         expect(button).toHaveAttribute('data-canonical-operation', SITE_OPERATIONS_EXPORT_OPERATION_ID);
         fireEvent.click(button);
 
-        expect(createObjectURL).toHaveBeenCalledTimes(1);
-        expect(click).toHaveBeenCalledTimes(1);
-        expect(revokeObjectURL).toHaveBeenCalledWith('blob:site-operations');
+        await waitFor(() => {
+            expect(createObjectURL).toHaveBeenCalledTimes(1);
+            expect(click).toHaveBeenCalledTimes(1);
+            expect(revokeObjectURL).toHaveBeenCalledWith('blob:site-operations');
+        });
         expect(screen.queryByRole('alert')).toBeNull();
     });
 
-    it('reports a truthful error instead of success when browser download startup fails', () => {
+    it('reports a truthful error instead of success when browser download startup fails', async () => {
         Object.defineProperty(URL, 'createObjectURL', {
             configurable: true,
             value: vi.fn(() => { throw new Error('downloads blocked'); }),
@@ -87,6 +109,6 @@ describe('AIMW-BILL-582319B640 Site Operations ExportCsvAsync', () => {
         }]} locale="en" />);
 
         fireEvent.click(screen.getByRole('button', { name: 'Export CSV' }));
-        expect(screen.getByRole('alert')).toHaveTextContent('could not be started');
+        expect(await screen.findByRole('alert')).toHaveTextContent('could not be started');
     });
 });

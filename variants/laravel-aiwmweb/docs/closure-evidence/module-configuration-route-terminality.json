@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #751 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-F90125AE87",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "route",
+    "route_screen": "/module/configuration",
+    "source": "src/AIWordPressManager.Web/Components/Pages/ConfigurationValidation.razor",
+    "source_intent": "Open and render the Configuration Validation workspace.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "source_route": "GET /tenants/{tenant}/module/configuration",
+    "source_route_name": "canonical.workspace.configuration-validation",
+    "action": "CanonicalWorkspaceRouteController@show",
+    "authoritative_read": "GET /tenants/{tenant}/configuration-validation/report",
+    "operation_marker": "AIMW-CONT-F90125AE87",
+    "behavior": "Render the real tenant-scoped Configuration Validation application workspace; validation data is served by the authoritative report endpoint."
+  },
+  "security": {
+    "route_middleware": ["web", "auth", "tenant.context"],
+    "permission": "settings.manage",
+    "tenant_selector": "authenticated server-derived tenant context",
+    "foreign_tenant": "404/fail closed",
+    "missing_permission": "403/fail closed",
+    "caller_identity_override": false,
+    "mutation_added": false,
+    "secrets_exposed": false
+  },
+  "acceptance": {
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/ModuleConfigurationRouteTerminalityTest.php",
+    "coverage": [
+      "exact canonical source identity",
+      "GET/HEAD-only route",
+      "canonical operation marker",
+      "settings.manage authorization",
+      "real workspace render",
+      "real authoritative validation report read",
+      "guest redirect",
+      "missing-permission 403",
+      "foreign-tenant 404",
+      "caller query identity cannot override tenant",
+      "read-only/idempotent route behavior"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-CONT-F90125AE87"],
+    "sibling_operations_claimed": false,
+    "explicitly_not_claimed": [
+      "AIMW-CONT-95341D9AB0",
+      "AIMW-BILL-39BB044AF2",
+      "AIMW-BILL-EE0BEAAC55"
+    ],
+    "aspnet_product_modified": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "df8b57225130e583fc9642bfed5851db5d7ded8a",
+    "branch": "worker/laravel-aiwmweb-AIMW-CONT-F90125AE87-module-configuration-route"
+  }
+}

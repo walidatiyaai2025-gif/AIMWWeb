@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #796",
+  "parent_authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-47C0477703",
+  "domain": "content",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/RolesPermissions.razor",
+    "route_screen": "/admin/roles-permissions",
+    "visible_control": "/admin/application-users -> /admin/application-users",
+    "label": "Application users / مستخدمو التطبيق",
+    "tenant_owned": true,
+    "mutation": false,
+    "risk": "low"
+  },
+  "laravel_adaptation": {
+    "production_page": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "control": "variants/laravel-aiwmweb/backend/resources/js/roles-application-users-link-control.tsx",
+    "source_route": "GET /tenants/{tenant}/admin/roles-permissions",
+    "canonical_destination": "GET /tenants/{tenant}/admin/application-users",
+    "resolved_destination": "GET /tenants/{tenant}/admin/users",
+    "operation_marker": "AIMW-CONT-47C0477703",
+    "destination": "tenantUrl(active tenant slug, /admin/application-users)",
+    "destination_permissions": ["tenant.view", "users.view"],
+    "visibility": "The control is hidden unless the authenticated frontend context carries tenant.view and users.view, or wildcard access.",
+    "read_only": true,
+    "external_call": false,
+    "fake_success_path": "none"
+  },
+  "security_boundary": {
+    "authentication": "The Laravel workspace and alias routes are authenticated.",
+    "tenant_context": "The application-users alias is tenant-scoped and foreign tenant slugs fail closed.",
+    "permission": "The destination requires tenant.view and users.view and the frontend hides the navigation without those permissions.",
+    "tenant_derived_url": "The canonical source href is adapted to the active tenant URL rather than a global admin path.",
+    "mutation": "The control performs navigation only; it issues no API request, persistence write, or WordPress mutation."
+  },
+  "acceptance_tests": [
+    "variants/laravel-aiwmweb/backend/tests/Feature/RolesApplicationUsersLinkTerminalityTest.php — binds the exact canonical row, proves source semantics and production wiring, verifies the canonical alias redirects to the real users workspace, and proves permission and foreign-tenant fail-closed behavior."
+  ],
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "The Roles & Permissions toolbar now exposes the canonical Application users navigation as a real tenant-scoped, permission-aware Laravel route transition."
+  },
+  "scope": {
+    "only_operation_claimed": "AIMW-CONT-47C0477703",
+    "aspnet_modified": false,
+    "generated_reconciliation_modified": false,
+    "denominator_modified": false
+  },
+  "scope_exclusions": [
+    "No ASP.NET runtime changes",
+    "No role create/update/assignment mutation is claimed",
+    "No sibling Roles & Permissions visible control is claimed",
+    "No generated parity ledger or reconciliation artifact is manually edited"
+  ]
+}

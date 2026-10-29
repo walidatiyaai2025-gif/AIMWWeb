@@ -3,7 +3,9 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { FrontendContext, WorkspaceRoute } from '../core';
 import {
+    MODULE_WORKSPACE_DYNAMIC_SITE_LINKS_OPERATION_ID,
     MODULE_WORKSPACE_LOAD_SITES_OPERATION_ID,
+    MODULE_WORKSPACE_MANAGE_SITES_OPERATION_ID,
     ModuleWorkspaceLoadSitesControl,
 } from '../module-workspace-load-sites-control';
 import { LocaleProvider } from '../i18n';
@@ -64,7 +66,13 @@ describe(`${MODULE_WORKSPACE_LOAD_SITES_OPERATION_ID} ModuleWorkspace LoadSitesA
 
         expect(screen.getByTestId('seo-site-picker-loading')).toHaveAttribute('aria-busy', 'true');
         expect(await screen.findByText('Alpha WordPress')).toBeInTheDocument();
-        expect(screen.getByTestId('seo-site-link')).toHaveAttribute('href', '/tenants/alpha/sites/7/seo');
+        const seoLink = screen.getByTestId('seo-site-link');
+        const explorerLink = screen.getByTestId('seo-site-explorer-link');
+        expect(MODULE_WORKSPACE_DYNAMIC_SITE_LINKS_OPERATION_ID).toBe('AIMW-CONT-E4D7C73D4E');
+        expect(seoLink).toHaveAttribute('href', '/tenants/alpha/sites/7/seo');
+        expect(seoLink).toHaveAttribute('data-canonical-operation', MODULE_WORKSPACE_DYNAMIC_SITE_LINKS_OPERATION_ID);
+        expect(explorerLink).toHaveAttribute('href', '/tenants/alpha/explorer?site=7');
+        expect(explorerLink).toHaveAttribute('data-canonical-operation', MODULE_WORKSPACE_DYNAMIC_SITE_LINKS_OPERATION_ID);
         expect(fetchMock).toHaveBeenCalledTimes(1);
         expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/tenants/alpha/sites');
     });
@@ -90,7 +98,26 @@ describe(`${MODULE_WORKSPACE_LOAD_SITES_OPERATION_ID} ModuleWorkspace LoadSitesA
         renderControl();
 
         expect(await screen.findByText('No sites available')).toBeInTheDocument();
-        expect(screen.getByRole('link', { name: 'Manage sites' })).toHaveAttribute('href', '/tenants/alpha/sites');
+        const manageSites = screen.getByRole('link', { name: 'Manage sites' });
+        expect(MODULE_WORKSPACE_MANAGE_SITES_OPERATION_ID).toBe('AIMW-CONT-56873F3DD6');
+        expect(manageSites).toHaveAttribute('href', '/tenants/alpha/sites');
+        expect(manageSites).toHaveAttribute('data-canonical-operation', MODULE_WORKSPACE_MANAGE_SITES_OPERATION_ID);
+        expect(manageSites).toHaveAttribute('data-testid', 'seo-manage-sites-link');
+    });
+
+    it('renders the Manage sites operation only for the authoritative ready-empty state', async () => {
+        let resolveFetch: ((value: Response) => void) | undefined;
+        vi.stubGlobal('fetch', vi.fn().mockImplementation(() => new Promise<Response>((resolve) => {
+            resolveFetch = resolve;
+        })));
+
+        renderControl();
+        expect(screen.queryByTestId('seo-manage-sites-link')).not.toBeInTheDocument();
+
+        await waitFor(() => expect(resolveFetch).toBeDefined());
+        resolveFetch!(jsonResponse([{ id: 7, name: 'Alpha WordPress' }]));
+        expect(await screen.findByText('Alpha WordPress')).toBeInTheDocument();
+        expect(screen.queryByTestId('seo-manage-sites-link')).not.toBeInTheDocument();
     });
 
     it('fails closed for a foreign advertised endpoint', async () => {

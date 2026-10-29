@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #986 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-C18ED1F753",
+  "domain": "sync",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Shared/AppDataGrid.razor",
+    "route_screen": "component:AppDataGrid",
+    "visible_control": "@ExportText [ExportAsync]",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Shared/AppDataGrid.razor:component:AppDataGrid:@ExportText [ExportAsync]",
+    "behavior": "When CsvRowSelector is absent and ExportRequested has a delegate, the visible Export control is disabled for an empty filtered collection and forwards a cloned SortedItems collection to the consumer callback without mutating source state.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "verification": "rendered/read response matches authoritative source"
+  },
+  "laravel_adaptation": {
+    "shared_contract": "variants/laravel-aiwmweb/backend/resources/js/app-data-grid-export-requested-control.ts",
+    "real_consumer": "variants/laravel-aiwmweb/backend/resources/js/site-operations-export-control.tsx",
+    "runtime_wiring": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "consumer_api": "GET /tenants/{tenant}/route-api/site-operations",
+    "consumer_permission": "execution.view",
+    "semantics": [
+      "the existing Site Operations export remains the single visible export action",
+      "the generic AppDataGrid ExportRequested contract receives the current authoritative filtered row collection",
+      "the callback receives a cloned row list in current display order",
+      "the callback is not invoked for an empty filtered collection",
+      "the consumer performs the existing real CSV browser download",
+      "no persistence, WordPress, queue, cache, billing, or secret mutation is introduced"
+    ],
+    "fake_or_demo_data": false
+  },
+  "security": {
+    "tenant_context": "auth + tenant.context with tenant-scoped SiteOperationHistory reads",
+    "authorization": "execution.view",
+    "foreign_tenant_access": "404 fail closed",
+    "unauthorized_access": "403 fail closed",
+    "caller_owned_tenant_override_added": false,
+    "secret_disclosure_added": false,
+    "fake_success": false
+  },
+  "acceptance_tests": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/app-data-grid-export-requested-control.test.tsx",
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/AppDataGridExportRequestedTerminalityTest.php"
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-C18ED1F753"
+    ],
+    "sibling_app_data_grid_operations_claimed": false,
+    "site_operations_export_operation_replaced": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "retry_or_replacement_lineage_created": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "The Laravel production export action now executes the canonical AppDataGrid ExportRequested callback contract against real tenant-scoped Site Operations rows before the existing CSV consumer runs; focused tests prove exact identity, callback/empty semantics, and tenant/permission fail-closed behavior."
+  }
+}

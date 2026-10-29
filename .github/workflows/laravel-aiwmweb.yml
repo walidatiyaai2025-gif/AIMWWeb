@@ -15,6 +15,10 @@ on:
       - 'variants/laravel-aiwmweb/**'
       - '.github/workflows/laravel-aiwmweb.yml'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions:
   contents: read
 
@@ -89,6 +93,12 @@ jobs:
           php-version: '8.4'
           extensions: mbstring, pdo_sqlite, sqlite3
           coverage: none
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/composer/files
+          key: composer-${{ runner.os }}-php84-${{ hashFiles('variants/laravel-aiwmweb/backend/composer.lock') }}
+          restore-keys: |
+            composer-${{ runner.os }}-php84-
       - run: composer install --no-interaction --prefer-dist
       - run: cp .env.example .env
       - run: php artisan key:generate
@@ -140,6 +150,12 @@ jobs:
           php-version: '8.4'
           extensions: mbstring, pdo_mysql
           coverage: none
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/composer/files
+          key: composer-${{ runner.os }}-php84-${{ hashFiles('variants/laravel-aiwmweb/backend/composer.lock') }}
+          restore-keys: |
+            composer-${{ runner.os }}-php84-
       - run: composer install --no-interaction --prefer-dist
       - run: cp .env.example .env
       - run: php artisan key:generate
@@ -201,6 +217,12 @@ jobs:
           php-version: '8.4'
           extensions: mbstring, pdo_mysql, redis, pcntl
           coverage: none
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/composer/files
+          key: composer-${{ runner.os }}-php84-${{ hashFiles('variants/laravel-aiwmweb/backend/composer.lock') }}
+          restore-keys: |
+            composer-${{ runner.os }}-php84-
       - run: composer install --no-interaction --prefer-dist
       - run: cp .env.example .env
       - run: php artisan key:generate
@@ -232,6 +254,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: npm
+          cache-dependency-path: variants/laravel-aiwmweb/backend/package-lock.json
       - name: Install frontend dependencies
         shell: bash
         run: |
@@ -419,16 +443,12 @@ jobs:
         run: bash variants/laravel-aiwmweb/tests/wordpress/bootstrap-wordpress.sh
 
   frontend:
+    # Keep the legacy required-check name, without repeating the same test/build suite.
+    needs: frontend-production-build
+    if: always()
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: variants/laravel-aiwmweb/backend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - run: npm install --no-audit --no-fund
-      - run: npm run typecheck
-      - run: npm test
-      - run: npm run build
+      - name: Match canonical frontend typecheck, test and build gate
+        env:
+          FRONTEND_GATE_RESULT: ${{ needs.frontend-production-build.result }}
+        run: test "$FRONTEND_GATE_RESULT" = success

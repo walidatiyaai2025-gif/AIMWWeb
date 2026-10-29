@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #790 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-80EE7CA296",
+  "domain": "content",
+  "kind": "route",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "source_file": "src/AIWordPressManager.Web/Components/Pages/ModuleWorkspace.razor",
+  "source_route": "/module/{Key}",
+  "source_action": "Open/render route",
+  "laravel_route": "GET /tenants/{tenant}/module/{key}",
+  "route_name": "canonical.workspace.module-fallback",
+  "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+  "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+  "frontend_router": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+  "fallback_control": "variants/laravel-aiwmweb/backend/resources/js/module-workspace-route-fallback.tsx",
+  "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ModuleWorkspaceRouteTerminalityTest.php",
+  "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/module-workspace-route-fallback.test.tsx",
+  "security": {
+    "middleware": [
+      "auth",
+      "tenant.context"
+    ],
+    "authorization": [
+      "tenant.view"
+    ],
+    "foreign_tenant": "404",
+    "missing_permission": "403",
+    "static_route_precedence": "Existing concrete /module/* routes are declared before the generic route and retain their stricter workspace permissions."
+  },
+  "semantics": {
+    "read_only": true,
+    "server_mutation": false,
+    "unknown_module_network_request": false,
+    "known_module_behavior": "The React router resolves registered /module/<key> entries to their existing real workspaces and their authoritative loading/empty/error behavior.",
+    "unknown_module_behavior": "Render the source-equivalent explicit unavailable state rather than mock data, inert controls, or fabricated success.",
+    "fake_success": false
+  },
+  "render_states": {
+    "known_routes": "Existing WorkspacePage or operation-specific controls retain their real API loading, empty, error and permission states.",
+    "unknown_route": "Explicit module-unavailable state with tenant-scoped Back to home navigation and no request."
+  },
+  "scope": {
+    "exactly_one_operation": true,
+    "aspnet_runtime_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "sibling_operation_claimed": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "0c1aade65689e110299d656d5ca9e634f23c25e5",
+    "branch": "worker/790-module-workspace-route",
+    "issue": 790
+  }
+}

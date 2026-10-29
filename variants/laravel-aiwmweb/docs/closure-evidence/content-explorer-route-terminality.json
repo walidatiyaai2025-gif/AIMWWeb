@@ -1,0 +1,70 @@
+{
+  "operation_id": "AIMW-CONT-5CF47CBE2A",
+  "domain": "content",
+  "kind": "route",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "source_file": "src/AIWordPressManager.Web/Components/Pages/ContentExplorer.razor",
+  "source_route": "/sites/{Id:guid}/explorer",
+  "source_action": "Open/render route",
+  "laravel_workspace": "GET /tenants/{tenant}/explorer?site={site}",
+  "workspace_route_name": "canonical.workspace.explorer",
+  "laravel_read_api": "GET /api/v1/tenants/{tenant}/sites/{site}/explorer",
+  "read_api_route_name": "canonical.api.content-explorer.read",
+  "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+  "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+  "frontend_path": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+  "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentExplorerRouteTerminalityTest.php",
+  "authorization_and_isolation": {
+    "middleware": [
+      "web",
+      "auth",
+      "tenant.context"
+    ],
+    "workspace_permission": "sites.view",
+    "tenant_membership_required": true,
+    "selected_site_is_server_bound": true,
+    "foreign_site": "404",
+    "foreign_tenant": "404",
+    "missing_permission": "403",
+    "caller_tenant_override": false
+  },
+  "authoritative_read": {
+    "site_model": "App\\Models\\Site",
+    "content_model": "App\\Models\\ContentItem",
+    "taxonomy_model": "App\\Models\\TaxonomyTerm",
+    "media_model": "App\\Models\\MediaItem",
+    "tenant_global_scope_preserved": true,
+    "selected_site_filter_preserved": true,
+    "server_pagination": true,
+    "search_is_read_only": true,
+    "synthetic_rows": false
+  },
+  "render_states": {
+    "loading": "shared ResourceContent LoadingState while the authoritative explorer request is pending",
+    "empty": "shared ResourceContent empty state explicitly states that no sample rows are synthesized",
+    "error": "shared QueryError renders the server failure and bounded retry control",
+    "success": "persisted tenant/site content rows plus authoritative site/totals metadata"
+  },
+  "mutation_boundary": {
+    "workspace_get_mutates_content": false,
+    "read_api_mutates_content": false,
+    "provider_mutation": false,
+    "fake_success": false,
+    "sibling_controls_claimed": false
+  },
+  "scope": {
+    "exactly_one_operation": true,
+    "aspnet_runtime_modified": false,
+    "variant_boundary": "variants/laravel-aiwmweb/** plus directly required task CI evidence",
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "c1fe282022e96ea435508450a0e151a2023bb879",
+    "branch": "worker/763-content-explorer-route",
+    "issue": 763,
+    "authority_issue": 257
+  },
+  "read_controller_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentExplorerReadController.php"
+}

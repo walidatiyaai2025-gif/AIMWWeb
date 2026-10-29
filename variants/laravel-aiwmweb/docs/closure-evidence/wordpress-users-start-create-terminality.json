@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-CONT-BCE1211CE3",
+    "domain": "content",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/UsersManager.razor",
+    "source_screen": "/sites/{SiteId:guid}/users",
+    "source_control": "StartCreateClicked",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_behavior": {
+    "summary": "The Add User control enters create mode locally; it does not persist until the separate SaveAsync operation.",
+    "side_effect": "local dialog/form state only",
+    "success_semantics": "opens a real create/edit contract form backed by the existing WordPress user save action"
+  },
+  "laravel_adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/components.tsx#ActionButton",
+    "runtime_wiring": "ResourceContent renders ActionButton for wp-users route.controls containing wordpress-users.save; click passes the authoritative server-advertised contract into ActionDialog.",
+    "mutation_on_click": false,
+    "save_operation_kept_separate": "AIMW-BILL-D307963B59",
+    "placeholder_or_catch_all_success": false
+  },
+  "tenant_isolation": {
+    "tenant_context": "authenticated tenant.context",
+    "site_context": "server-resolved tenant-owned active_site",
+    "foreign_tenant": "404",
+    "foreign_site": "404"
+  },
+  "authorization": {
+    "route_permission": "sites.view",
+    "connector_scope": "users.read",
+    "mutation_contract_permission": "content.edit enforced by server action registry exposure",
+    "missing_contract": "control disabled",
+    "missing_connector": "control disabled"
+  },
+  "acceptance_tests": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/wordpress-users-start-create-control.test.tsx",
+    "php_feature": "variants/laravel-aiwmweb/backend/tests/Feature/WordPressUsersStartCreateControlTerminalityTest.php"
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-CONT-BCE1211CE3",
+    "second_operation_started": false,
+    "aspnet_reference_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true
+  }
+}

@@ -6,6 +6,7 @@ use App\Authorization\TenantAuthorizer;
 use App\Content\ContentConflictException;
 use App\Content\ContentPlatformService;
 use App\Content\MediaDeleteService;
+use App\Content\MediaMetadataVerificationService;
 use App\Content\Remote\ContentRemoteDriver;
 use App\Jobs\BulkCommentModerationJob;
 use App\Jobs\BulkContentMutationJob;
@@ -31,6 +32,8 @@ use Illuminate\Validation\Rule;
 
 final class ContentApiController extends Controller
 {
+    public const MEDIA_BATCH_UPLOAD_OPERATION_ID = 'AIMW-SYNC-6766C503DA';
+
     public const MEDIA_DELETE_OPERATION_ID = 'AIMW-BILL-4DCB58743D';
 
     public const CONTENT_EDITOR_SAVE_OPERATION_ID = 'AIMW-BILL-42F7590F00';
@@ -44,6 +47,7 @@ final class ContentApiController extends Controller
         private readonly ContentRemoteDriver $remote,
         private readonly TenantContext $tenant,
         private readonly MediaDeleteService $mediaDelete,
+        private readonly MediaMetadataVerificationService $mediaMetadata,
     ) {}
 
     public function index(Request $request, TenantAuthorizer $auth, string $tenant, int $site, string $type): JsonResponse
@@ -281,6 +285,9 @@ final class ContentApiController extends Controller
     public function bulk(Request $request, TenantAuthorizer $auth, string $tenant, int $site): JsonResponse
     {
         $auth->authorize('content.edit');
+        Site::query()->findOrFail($site);
+        $callerOwned = ['tenant', 'tenant_id', 'site', 'site_id', 'user_id', 'actor_user_id'];
+        abort_if(array_intersect(array_keys($request->all()), $callerOwned) !== [], 422, 'Bulk content queue does not accept caller-owned identity fields.');
         $data = $request->validate(['ids' => 'required|array|min:1|max:500', 'ids.*' => 'integer', 'action' => ['required', Rule::in(['draft', 'pending', 'publish', 'trash', 'restore'])], 'payload' => 'array']);
         $count = ContentItem::query()->where('site_id', $site)->whereIn('id', $data['ids'])->count();
         abort_unless($count === count(array_unique($data['ids'])), 422, 'Bulk selection includes unavailable content.');
@@ -409,9 +416,14 @@ final class ContentApiController extends Controller
     public function media(Request $request, TenantAuthorizer $auth, string $tenant, int $site): JsonResponse
     {
         $auth->authorize('content.view');
+        // A foreign/missing site must not look like an authorized empty media library.
+        Site::query()->findOrFail($site);
         $q = MediaItem::query()->where('site_id', $site);
         if ($search = trim((string) $request->query('search'))) {
-            $q->where(fn ($x) => $x->where('title', 'like', "%{$search}%")->orWhere('alt_text', 'like', "%{$search}%"));
+            $q->where(fn ($x) => $x->where('title', 'like', "%{$search}%")
+                ->orWhere('alt_text', 'like', "%{$search}%")
+                ->orWhere('slug', 'like', "%{$search}%")
+                ->orWhere('mime_type', 'like', "%{$search}%"));
         }
         if ($mime = $request->query('mime_type')) {
             $q->where('mime_type', 'like', $mime.'%');
@@ -420,27 +432,117 @@ final class ContentApiController extends Controller
         return response()->json($q->latest('remote_modified_at')->paginate(min(max((int) $request->query('per_page', 30), 1), 100)));
     }
 
-    public function uploadMedia(Request $request, TenantAuthorizer $auth, string $tenant, int $site): JsonResponse
+    public function mediaDetails(TenantAuthorizer $auth, string $tenant, int $site, int $media): JsonResponse
     {
         $auth->authorize('content.edit');
-        $data = $request->validate(['file' => 'required|file|max:204800', 'alt_text' => 'nullable|string|max:500', 'caption' => 'nullable|string|max:5000', 'title' => 'nullable|string|max:500']);
+        $item = MediaItem::query()->where('site_id', $site)->findOrFail($media);
+        $remote = $this->remote->get($site, 'media', (int) $item->remote_id);
+        abort_unless((int) ($remote['id'] ?? 0) === (int) $item->remote_id, 409, 'WordPress returned an unexpected media identity.');
+
+        $raw = static function (mixed $value): string {
+            if (is_array($value)) {
+                $value = $value['raw'] ?? null;
+            }
+            abort_unless(is_string($value), 409, 'WordPress did not supply editable media metadata.');
+
+            return $value;
+        };
+
+        return response()->json([
+            'remote_id' => (int) $item->remote_id,
+            'modified_gmt' => $raw($remote['modified_gmt'] ?? null),
+            'title' => $raw($remote['title'] ?? null),
+            'slug' => $raw($remote['slug'] ?? null),
+            'alt_text' => $raw($remote['alt_text'] ?? null),
+            'caption' => $raw($remote['caption'] ?? null),
+            'description' => $raw($remote['description'] ?? null),
+        ]);
+    }
+
+    public function uploadMedia(Request $request, TenantAuthorizer $auth, string $tenant, int $site): JsonResponse
+    {
+        // AIMW-SYNC-6766C503DA: MediaBatchUploadPanel.UploadClickedAsync.
+        // Authorization AND authoritative site ownership must precede storing bytes or queueing.
+        $auth->authorize('content.edit');
+        Site::query()->findOrFail($site);
+        foreach (['tenant_id', 'site_id', 'actor_id', 'remote_id', 'state', 'result', 'credentials'] as $protected) {
+            abort_if($request->exists($protected), 422, 'Caller-owned media upload state is forbidden.');
+        }
+        $data = $request->validate([
+            'file' => 'required|file|max:25600',
+            'alt_text' => 'nullable|string|max:500',
+            'caption' => 'nullable|string|max:5000',
+            'title' => 'nullable|string|max:500',
+        ]);
         $file = $data['file'];
+        $name = basename(str_replace('\\', '/', $file->getClientOriginalName()));
+        $name = trim((string) preg_replace('/[\\x00-\\x1F\\x7F]/', '', $name));
+        $extension = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+        $allowedTypes = [
+            'jpg' => ['image/jpeg'], 'jpeg' => ['image/jpeg'], 'png' => ['image/png'],
+            'gif' => ['image/gif'], 'webp' => ['image/webp'], 'avif' => ['image/avif'],
+            'pdf' => ['application/pdf'], 'doc' => ['application/msword'],
+            'docx' => ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/zip'],
+            'xls' => ['application/vnd.ms-excel'],
+            'xlsx' => ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/zip'],
+            'zip' => ['application/zip', 'application/x-zip-compressed'],
+        ];
+        $mime = strtolower((string) $file->getMimeType());
+        abort_unless($name !== '' && strlen($name) <= 180
+            && isset($allowedTypes[$extension])
+            && (in_array($mime, $allowedTypes[$extension], true) || $mime === 'application/octet-stream'),
+            422, 'The media file name, extension, or detected content type is not allowed.');
+
         $path = $file->store("content-uploads/{$this->tenant->id()}/{$site}", 'local');
-        $transfer = ContentTransfer::query()->create(['site_id' => $site, 'kind' => 'media-upload', 'state' => 'queued', 'progress' => 0, 'storage_path' => $path, 'options' => ['name' => $file->getClientOriginalName(), 'mime_type' => $file->getMimeType(), 'metadata' => array_filter(['alt_text' => $data['alt_text'] ?? null, 'caption' => $data['caption'] ?? null, 'title' => $data['title'] ?? null])]]);
+        abort_unless($path !== false, 503, 'Media file could not be stored.');
+        $transfer = ContentTransfer::query()->create([
+            'site_id' => $site, 'kind' => 'media-upload', 'state' => 'queued',
+            'progress' => 0, 'storage_path' => $path,
+            'options' => ['name' => $name, 'mime_type' => $mime,
+                'metadata' => array_filter([
+                    'alt_text' => $data['alt_text'] ?? null,
+                    'caption' => $data['caption'] ?? null,
+                    'title' => $data['title'] ?? null,
+                ], static fn ($value) => $value !== null && $value !== '')],
+        ]);
         MediaUploadJob::dispatch($this->tenant->id(), $transfer->id);
 
+        // A durable queued transfer is not proof that WordPress accepted the file.
         return response()->json($transfer, 202);
     }
 
     public function updateMedia(Request $request, TenantAuthorizer $auth, string $tenant, int $site, int $media): JsonResponse
     {
         $auth->authorize('content.edit');
+        $callerIdentity = ['tenant', 'tenant_id', 'site', 'site_id', 'media_id', 'remote_id', 'actor_user_id'];
+        abort_if(array_intersect(array_keys($request->all()), $callerIdentity) !== [], 422, 'Media update does not accept caller-owned identities.');
+
         $item = MediaItem::query()->where('site_id', $site)->findOrFail($media);
-        $data = $request->validate(['alt_text' => 'nullable|string|max:500', 'caption' => 'nullable|string|max:5000', 'description' => 'nullable|string', 'title' => 'nullable|string|max:500']);
-        $result = $this->remote->mutate($site, 'media', $item->remote_id, 'update', $data);
+        $data = $request->validate([
+            'title' => 'sometimes|required|string|max:500',
+            'slug' => 'sometimes|nullable|string|max:200',
+            'alt_text' => 'sometimes|nullable|string|max:500',
+            'caption' => 'sometimes|nullable|string|max:5000',
+            'description' => 'sometimes|nullable|string',
+            'expected_modified_gmt' => 'required|string|max:64',
+        ]);
+        $expectedModified = $data['expected_modified_gmt'];
+        unset($data['expected_modified_gmt']);
+        abort_if($data === [], 422, 'At least one metadata field is required.');
+
+        // Reject edits based on stale WordPress state instead of overwriting another editor.
+        $before = $this->remote->get($site, 'media', (int) $item->remote_id);
+        abort_unless((int) ($before['id'] ?? 0) === (int) $item->remote_id, 409, 'WordPress media identity changed.');
+        abort_unless(
+            is_string($before['modified_gmt'] ?? null) && $before['modified_gmt'] === $expectedModified,
+            409,
+            'WordPress media changed since the metadata editor opened.',
+        );
+
+        $verified = $this->mediaMetadata->save($site, (int) $item->remote_id, $data);
         SyncContentJob::dispatch($this->tenant->id(), $site, false);
 
-        return response()->json($result);
+        return response()->json($verified);
     }
 
     public function deleteMedia(Request $request, TenantAuthorizer $auth, string $tenant, int $site, int $media): JsonResponse
@@ -501,6 +603,18 @@ final class ContentApiController extends Controller
         $q = TaxonomyTerm::query()->where('site_id', $site);
         if ($taxonomy = $request->query('taxonomy')) {
             $q->where('taxonomy', $taxonomy);
+        }
+        // #958 ApplyAsync: minimum usage is checked against persisted, site-scoped rows.
+        $minimumUsage = max(0, (int) $request->query('minimum_usage', 0));
+        if ($minimumUsage > 0) {
+            $q->where('usage_count', '>=', $minimumUsage);
+        }
+        $search = trim((string) $request->query('search', ''));
+        if ($search !== '') {
+            $q->where(function ($terms) use ($search): void {
+                $terms->where('name', 'like', '%'.$search.'%')
+                    ->orWhere('slug', 'like', '%'.$search.'%');
+            });
         }
 
         return response()->json($q->orderBy('taxonomy')->orderBy('name')->paginate(min(max((int) $request->query('per_page', 100), 1), 200)));

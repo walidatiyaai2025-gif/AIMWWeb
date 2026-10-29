@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #930 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-EE7D7534DF",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-SYNC-EE7D7534DF",
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "/sites/{Id:guid}/explorer",
+    "source": "src/AIWordPressManager.Web/Components/Pages/ContentExplorer.razor",
+    "source_intent": "Queue selected content for publish review without treating queued work as a completed external mutation",
+    "tenant_owned": true,
+    "mutation": true
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-bulk-publish-control.ts",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-bulk-trash-widget.tsx",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentApiController.php",
+    "queue": "App\\Jobs\\BulkContentMutationJob",
+    "endpoint": "POST /api/v1/tenants/{tenant}/sites/{site}/content/bulk",
+    "operation_marker": "AIMW-SYNC-EE7D7534DF",
+    "remote_execution_state": "queued, with asynchronous subsequent authoritative state read"
+  },
+  "security": {
+    "content_edit_authorization": true,
+    "tenant_context_server_derived": true,
+    "site_ownership_bounded": true,
+    "selection": "Uses ContentItem local IDs from tenant-scoped site result; never caller-controlled tenant/site identity",
+    "max_ids": 500,
+    "backend_contract": "ContentApiController::bulk validates authorized IDs and queues per tenant/site"
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-bulk-publish-control.test.ts",
+    "required_ci": [
+      "Laravel AIWMWeb Acceptance",
+      "Laravel AIWMWeb Cross-Domain Security",
+      "Laravel AIWMWeb Convergence Preflight",
+      "Laravel AIWMWeb Parity Reconciliation",
+      "Laravel AIWMWeb Repo Hygiene"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-EE7D7534DF"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  }
+}

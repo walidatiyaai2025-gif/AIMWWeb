@@ -53,7 +53,7 @@ final class SiteSettingsSaveCredentialTerminalityTest extends TestCase
 
         $page = $this->actingAs($user)->get("/tenants/alpha/sites/{$site->id}/settings");
         $page->assertOk()
-            ->assertSee('Save &amp; Test', false)
+            ->assertSee('Save and test')
             ->assertSee('data-canonical-operation="'.self::OPERATION_ID.'"', false)
             ->assertSee('name="_token"', false)
             ->assertDontSee($secret);

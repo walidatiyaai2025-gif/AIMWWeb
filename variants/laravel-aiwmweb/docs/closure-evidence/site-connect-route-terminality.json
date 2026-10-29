@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #832 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-BF5F72F4F9",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "route",
+    "route_screen": "/sites/connect",
+    "source": "src/AIWordPressManager.Web/Components/Pages/SiteOnboarding.razor",
+    "source_intent": "Open and render the WordPress site onboarding workspace.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "route": "GET /tenants/{tenant}/sites/connect",
+    "route_name": "canonical.site.connect",
+    "action": "CanonicalWorkspaceRouteController@show",
+    "permission": "tenant.view,sites.manage",
+    "operation_marker": "canonical_route_operation_id=AIMW-CONT-BF5F72F4F9",
+    "workspace": "site-connect",
+    "existing_visible_control_marker": "canonical_operation_id=AIMW-SITE-E3EA44AD3F",
+    "authoritative_read": "GET /api/tenants/{tenant}/sites"
+  },
+  "security": {
+    "route_middleware": [
+      "web",
+      "auth",
+      "tenant.context"
+    ],
+    "tenant_selector": "authenticated server-derived tenant context",
+    "foreign_tenant": "404/fail closed",
+    "missing_permission": "403/fail closed",
+    "query_identity_override": false,
+    "secrets_exposed": false
+  },
+  "render_states": {
+    "route_shell": "server-authorized Laravel SPA shell",
+    "capability_state": "FrontendContext exposes the real tenant-scoped api.sites read contract.",
+    "mutation_state": "The route is GET/HEAD only; no server mutation is added by this route adaptation.",
+    "failure_state": "authorization and tenant resolution fail closed instead of rendering fake success"
+  },
+  "acceptance": {
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteConnectRouteTerminalityTest.php",
+    "coverage": [
+      "exact canonical source identity",
+      "reuse of the existing /sites/connect route without shadowing",
+      "preservation of the existing visible-control operation marker",
+      "independent canonical_route_operation_id marker for AIMW-CONT-BF5F72F4F9",
+      "tenant.view + sites.manage authorization",
+      "real tenant-scoped GET /api/tenants/{tenant}/sites read",
+      "foreign-tenant 404",
+      "missing-permission 403",
+      "no ASP.NET runtime modification"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-BF5F72F4F9"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "6307d9a5972ba700dd99235f180a53ca7b6e2444",
+    "branch": "worker/832-site-connect-route",
+    "issue": 832
+  }
+}

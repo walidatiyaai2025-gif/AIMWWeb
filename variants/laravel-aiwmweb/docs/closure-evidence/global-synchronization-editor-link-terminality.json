@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #951 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-0239B0E6A3",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-SYNC-0239B0E6A3",
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "/module/sync",
+    "source": "src/AIWordPressManager.Web/Components/Pages/GlobalSynchronizationWorkspace.razor",
+    "source_intent": "Open the existing tenant-scoped content editor for RemoteUpdated WordPress conflicts; do not offer an edit destination for remote deletions.",
+    "mutation": false,
+    "tenant_owned": true
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/global-synchronization-editor-link-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/global-synchronization-review-conflicts-control.tsx",
+    "destination": "/tenants/{tenant}/sites/{site}/content/{type}/{wordpressId}/edit",
+    "operation_marker": "AIMW-SYNC-0239B0E6A3"
+  },
+  "security": {
+    "tenant_context_required": true,
+    "source_permissions": [
+      "tenant.view",
+      "content.view"
+    ],
+    "tenant_navigation": "tenant slug from authenticated frontend context, path percent-encoded",
+    "validation": "only remote-updated conflicts with positive site and WordPress identifiers",
+    "no_remote_mutation_added": true,
+    "server_side_tenant_authorization": "existing guarded application/API routing; no new bypass"
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-synchronization-editor-link-control.test.tsx",
+    "required_ci": [
+      "Laravel AIWMWeb Acceptance",
+      "Laravel AIWMWeb Convergence Preflight",
+      "Laravel AIWMWeb Cross-Domain Security",
+      "Laravel AIWMWeb Repo Hygiene",
+      "PR Plan Link"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-0239B0E6A3"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  }
+}

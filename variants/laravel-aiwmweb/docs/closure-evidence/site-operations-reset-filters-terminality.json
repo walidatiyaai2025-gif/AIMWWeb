@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #837 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-915652366F",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/site-operations | /operations/sites",
+    "source": "src/AIWordPressManager.Web/Components/Pages/SiteOperationsOverview.razor",
+    "source_control": "ResetFilters [ResetFilters]",
+    "source_intent": "Reset the retained operation-history search, site, result and date filters to their defaults and clear prior CSV export error state.",
+    "mutation": false,
+    "tenant_owned": true,
+    "external_dependency": "WordPress",
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "filter_control": "variants/laravel-aiwmweb/backend/resources/js/site-operations-filters-control.tsx",
+    "production_page": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "export_control": "variants/laravel-aiwmweb/backend/resources/js/site-operations-export-control.tsx",
+    "authoritative_read": "GET /tenants/{tenant}/route-api/site-operations",
+    "backend_action": "RouteApiAdapterController::siteOperations using SiteOperationHistoryService::getAll(2000)",
+    "operation_marker": "AIMW-CONT-915652366F"
+  },
+  "state_and_security": {
+    "client_side_filtering_of_authoritative_rows": true,
+    "reset_causes_network_request": false,
+    "server_mutation": false,
+    "wordpress_mutation": false,
+    "reset_defaults": {
+      "search": "",
+      "site": "",
+      "status": "all",
+      "from_date": "today - 30 days",
+      "to_date": "today"
+    },
+    "export_error_cleared": true,
+    "invalid_date_range": "renders an explicit validation error and zero visible rows",
+    "authorization": "execution.view is enforced server-side on the authoritative read",
+    "tenant_isolation": "tenant.context scopes SiteOperationHistory; focused acceptance proves missing permission 403 and foreign tenant 404"
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-operations-filters-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteOperationsResetFiltersTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation marker",
+      "source ResetFilters semantics",
+      "30-day/all-site/all-result defaults",
+      "site/status/date/search filtering over authoritative retained rows",
+      "invalid date range fail-closed behavior",
+      "reset clears search/page/filter state and export error",
+      "CSV receives visible filtered rows",
+      "no request or mutation inside the reset control",
+      "execution.view 403 authorization proof",
+      "foreign tenant 404 isolation proof"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-CONT-915652366F"],
+    "sibling_site_operations_controls_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "backend_mutation_added": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "349a7bb7129f29fa895680795d335a3fc79d76a9",
+    "branch": "worker/837-site-operations-reset-filters",
+    "issue": 837
+  },
+  "materialization": {
+    "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-837.yml",
+    "generated_reconciliation_required": true
+  }
+}

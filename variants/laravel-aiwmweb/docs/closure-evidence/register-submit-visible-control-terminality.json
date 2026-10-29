@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #794 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-7D7BCD462F",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/register",
+    "visible_control": "button control 2",
+    "source": "src/AIWordPressManager.Web/Components/Pages/Register.razor",
+    "source_intent": "Render the source Start free trial submit control as a real functional control while leaving the RegisterAsync mutation owned by its existing billing operation.",
+    "mutation": false,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "source_view": "variants/laravel-aiwmweb/backend/resources/views/auth/register.blade.php",
+    "source_controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/RegisterController.php",
+    "operation_marker": "AIMW-CONT-7D7BCD462F",
+    "behavior": "The existing Start free trial submit button is bound to this exact visible-control identity and submits the existing real /register form; no second button, endpoint, or registration mutation is introduced.",
+    "mutation_owner": "AIMW-BILL-34B7686F5E"
+  },
+  "security": {
+    "source_authorization": "public anonymous registration surface",
+    "caller_supplied_tenant": false,
+    "caller_supplied_user": false,
+    "tenant_route_alias_added": false,
+    "mutation_added": false,
+    "secret_exposure": false
+  },
+  "acceptance": {
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/RegisterSubmitVisibleControlTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation identity and source metadata",
+      "source submit-button semantics",
+      "exact production operation marker",
+      "anonymous register rendering",
+      "authenticated register redirect remains unchanged",
+      "foreign tenant route cannot rebind the public control",
+      "single real submit button and single existing registration form",
+      "visible-control identity remains distinct from billing mutation and login navigation operations"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-7D7BCD462F"
+    ],
+    "sibling_operations_claimed": false,
+    "duplicate_registration_behavior_added": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  }
+}

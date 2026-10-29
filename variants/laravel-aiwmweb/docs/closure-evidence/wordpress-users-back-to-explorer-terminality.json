@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-CONT-D5FFC84EC2",
+    "domain": "content",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/UsersManager.razor",
+    "source_screen": "/sites/{SiteId:guid}/users",
+    "source_control": "BackToExplorer",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_behavior": {
+    "summary": "UsersManager exposes a localized BackToExplorer navigation control for the currently loaded WordPress site.",
+    "side_effect": "navigation only",
+    "success_semantics": "navigation only; no WordPress, local persistence, queue, cache, schedule, provider, or secret mutation"
+  },
+  "laravel_adaptation": {
+    "visible_control": "variants/laravel-aiwmweb/backend/resources/js/wordpress-users-back-to-explorer-control.tsx",
+    "runtime_wiring": "WordPressUsersBackToExplorerControl is mounted only for route.key === 'wp-users' on the real tenant WordPress Users workspace.",
+    "destination": "/tenants/{tenant}/explorer?site={active_site}",
+    "destination_derivation": "tenant slug and active_site.id come from authenticated server FrontendContext; active_site must agree with the exact same-origin api.wp-users contract",
+    "caller_selected_destination": false,
+    "placeholder_or_catch_all_success": false,
+    "demo_or_sample_data": false
+  },
+  "authorization": {
+    "session": "Laravel authenticated same-origin session and tenant.context remain authoritative",
+    "source_workspace": ["tenant.view", "sites.view", "users.read connector capability"],
+    "destination_workspace": ["tenant.view", "sites.view"],
+    "guest_context": "401",
+    "foreign_tenant": "404",
+    "foreign_site_direct_id": "404",
+    "missing_capability": "control hidden"
+  },
+  "tenant_isolation": {
+    "active_tenant_resolution": "tenant.context binds route tenant to authenticated membership",
+    "active_site_resolution": "tenant-scoped Site::query()->findOrFail",
+    "api_contract_match": "control requires /api/v1/tenants/{encoded active tenant}/sites/{active_site.id}/users exactly",
+    "same_origin_required": true,
+    "query_or_fragment_override_rejected": true,
+    "foreign_origin_rejected": true,
+    "caller_site_override": false,
+    "caller_tenant_override": false
+  },
+  "runtime_semantics": {
+    "read_only": true,
+    "authoritative_reread": "Explorer destination reloads server tenant/site context",
+    "idempotency": "repeated navigation is side-effect free",
+    "sample_demo_fake_success": false
+  },
+  "acceptance_tests": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/wordpress-users-back-to-explorer-control.test.tsx",
+    "php_feature": "variants/laravel-aiwmweb/backend/tests/Feature/WordPressUsersBackToExplorerControlTerminalityTest.php",
+    "proof": [
+      "exact canonical operation marker",
+      "server-authoritative active_site destination",
+      "same-origin api.wp-users agreement",
+      "foreign tenant/site/origin and query/fragment overrides fail closed",
+      "users.read and Explorer authorization boundaries fail closed",
+      "authorized navigation rereads context without persistence mutation"
+    ]
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-CONT-D5FFC84EC2",
+    "second_operation_started": false,
+    "aspnet_reference_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "security_assertions_weakened": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true
+  }
+}
+

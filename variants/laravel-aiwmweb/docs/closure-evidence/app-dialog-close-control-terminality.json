@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #989 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-ABE31C5C4E",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "sync",
+    "kind": "visible_control",
+    "source": "src/AIWordPressManager.Web/Components/Shared/AppDialog.razor",
+    "source_intent": "CloseAsync publishes OpenChanged(false) through the optional accessible close button without submitting the form.",
+    "mutation": false
+  },
+  "laravel_runtime": {
+    "production_component": "variants/laravel-aiwmweb/backend/resources/js/app-dialog-close-control.tsx",
+    "production_consumer": "variants/laravel-aiwmweb/backend/resources/js/components.tsx::ActionDialog",
+    "behavior": "callback-only local close; ShowCloseButton supported; source close remains available during form busy state"
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/app-dialog-close-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/AppDialogCloseControlTerminalityTest.php",
+    "coverage": [
+      "real controlled dialog closes",
+      "no submit or fetch",
+      "clean reopen",
+      "hidden close and Arabic label",
+      "busy close source parity",
+      "tenant 404 and permission 403"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-ABE31C5C4E"
+    ],
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  }
+}

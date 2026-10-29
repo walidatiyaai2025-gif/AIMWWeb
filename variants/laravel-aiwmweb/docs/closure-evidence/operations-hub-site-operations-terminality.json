@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #834 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-BCAD1E3A49",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/operations | /operations/hub",
+    "source": "src/AIWordPressManager.Web/Components/Pages/SiteOperationsHub.razor",
+    "source_control": "/site-operations -> /site-operations",
+    "source_intent": "Open the retained Site Operations history from the Operations Hub.",
+    "mutation": false,
+    "tenant_owned": true,
+    "external_dependency": "WordPress",
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control": "variants/laravel-aiwmweb/backend/resources/js/operations-hub-site-operations-control.tsx",
+    "host": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "workspace_contract": "variants/laravel-aiwmweb/backend/resources/js/core.ts",
+    "destination": "/tenants/{tenant}/site-operations",
+    "authoritative_read": "/tenants/{tenant}/route-api/site-operations",
+    "behavior": "The Operations Hub replaces only its generic Site Operations card with an operation-scoped control. The control derives the tenant from FrontendContext, requires the real hub and destination permissions, requires the exact server-provided Site Operations API contract, and navigates to the existing authoritative history workspace without issuing a mutation."
+  },
+  "security": {
+    "host_permissions": [
+      "operations.manage",
+      "execution.view"
+    ],
+    "destination_permission": "execution.view",
+    "active_tenant_membership_required": true,
+    "tenant_slug_encoding": true,
+    "exact_site_operations_api_required": true,
+    "foreign_tenant": "404/fail closed",
+    "network_side_effect": "none",
+    "mutation_added": false,
+    "secret_exposure": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/operations-hub-site-operations-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/OperationsHubSiteOperationsControlTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation marker",
+      "exact tenant-qualified /site-operations destination",
+      "Operations Hub and destination permission alignment",
+      "authoritative Site Operations API contract",
+      "active membership and tenant path encoding",
+      "foreign-tenant fail-closed behavior",
+      "GET/read-only route semantics",
+      "no duplicate API or mutation implementation"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-BCAD1E3A49"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "authorization_weakened": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "f1250b6ee3fd75b7a8b2dc3fa9c43adcb1a46a29",
+    "branch": "worker/834-operations-hub-site-operations-link",
+    "issue": 834,
+    "composition_sync_sha": "d3e6c6703de2e08ac8138629e71d78ea3c3f2253",
+    "composition_merge_sha": "4146cb7e72bf23c6cbd37d08072dddbb90a862f2",
+    "materialized_reconciliation_sha": "3bfc5691c941371e881152a0be2cdfcd2cf8ef70"
+  },
+  "materialization": {
+    "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-834.yml",
+    "generated_reconciliation_required": true
+  }
+}
