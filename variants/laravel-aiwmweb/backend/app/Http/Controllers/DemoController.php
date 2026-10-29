@@ -204,6 +204,9 @@ final class DemoController extends Controller
         ], JSON_THROW_ON_ERROR));
 
         $result = DB::transaction(function () use ($siteId, $idempotencyKey, $requestHash): array {
+            // Serialize sync starts for this site before checking active runs. Uniqueness
+            // is per run so a failed run cannot suppress dispatch of its explicit retry.
+            Site::query()->whereKey($siteId)->lockForUpdate()->firstOrFail();
             $receipt = null;
             if ($idempotencyKey !== '') {
                 $receipt = IdempotencyKey::query()

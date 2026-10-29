@@ -25,19 +25,20 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 915,
-    "pending": 16,
+    "adapted": 920,
+    "pending": 11,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 915,
-    "overall_parity_percent": 98.28
+    "terminal": 920,
+    "overall_parity_percent": 98.82
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 430,
-    "pending": 16,
+    "terminal": 435,
+    "pending": 11,
     "blocked": 0,
-    "percent": 96.41
+    "percent": 97.53,
+    "adapted": null
   },
   "domains": {
     "ai": {
@@ -113,12 +114,12 @@
     "email": {
       "total": 82,
       "ported": 0,
-      "adapted": 81,
-      "pending": 1,
+      "adapted": 82,
+      "pending": 0,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 81,
-      "percent": 98.78
+      "terminal": 82,
+      "percent": 100.0
     },
     "identity": {
       "total": 7,
@@ -203,12 +204,12 @@
     "sync": {
       "total": 213,
       "ported": 0,
-      "adapted": 205,
-      "pending": 8,
+      "adapted": 209,
+      "pending": 4,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 205,
-      "percent": 96.24
+      "terminal": 209,
+      "percent": 98.12
     },
     "taxonomy": {
       "total": 13,
@@ -266,12 +267,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 430,
-      "pending": 16,
+      "adapted": 435,
+      "pending": 11,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 430,
-      "percent": 96.41
+      "terminal": 435,
+      "percent": 97.53
     }
   },
   "pending_operation_ids_by_domain": {
@@ -288,9 +289,7 @@
       "AIMW-CONT-B6BB292F85",
       "AIMW-CONT-C49C37E2C9"
     ],
-    "email": [
-      "AIMW-EMAI-0AA71A5EF6"
-    ],
+    "email": [],
     "identity": [],
     "media": [
       "AIMW-MEDI-799B36D113",
@@ -303,11 +302,7 @@
     "settings": [],
     "sites": [],
     "sync": [
-      "AIMW-SYNC-3389FB622C",
       "AIMW-SYNC-4B986B2651",
-      "AIMW-SYNC-4FDCFDA33F",
-      "AIMW-SYNC-7A726BAF5F",
-      "AIMW-SYNC-AE16CF49C6",
       "AIMW-SYNC-B78216241F",
       "AIMW-SYNC-D5CE5A213B",
       "AIMW-SYNC-ED1442005E"
@@ -1845,6 +1840,7 @@
       "AIMW-CONT-FE6EE5740C",
       "AIMW-EMAI-00CC1272F6",
       "AIMW-EMAI-01F5713C4F",
+      "AIMW-EMAI-0AA71A5EF6",
       "AIMW-EMAI-10F3C44369",
       "AIMW-EMAI-12A6FEB2FF",
       "AIMW-EMAI-2E59E39808",
@@ -1917,6 +1913,7 @@
       "AIMW-SYNC-2A8778C6EA",
       "AIMW-SYNC-2C6ADCE34C",
       "AIMW-SYNC-2E94028E4E",
+      "AIMW-SYNC-3389FB622C",
       "AIMW-SYNC-33EE696FF7",
       "AIMW-SYNC-38D8A24B15",
       "AIMW-SYNC-3BFC8AF183",
@@ -1928,6 +1925,7 @@
       "AIMW-SYNC-476CDB769B",
       "AIMW-SYNC-4E3C0156FC",
       "AIMW-SYNC-4E969573BB",
+      "AIMW-SYNC-4FDCFDA33F",
       "AIMW-SYNC-598142307A",
       "AIMW-SYNC-5A397204EF",
       "AIMW-SYNC-5CF2AC6243",
@@ -1939,6 +1937,7 @@
       "AIMW-SYNC-7071DA172F",
       "AIMW-SYNC-724345B409",
       "AIMW-SYNC-7877CAF7E8",
+      "AIMW-SYNC-7A726BAF5F",
       "AIMW-SYNC-7C3B0E834E",
       "AIMW-SYNC-7C77CF7F7A",
       "AIMW-SYNC-80B81C07B8",
@@ -1954,6 +1953,7 @@
       "AIMW-SYNC-A9E956A4DA",
       "AIMW-SYNC-AA26ED0909",
       "AIMW-SYNC-ABE31C5C4E",
+      "AIMW-SYNC-AE16CF49C6",
       "AIMW-SYNC-AE544B4684",
       "AIMW-SYNC-B11D963A9E",
       "AIMW-SYNC-B83AB5A666",
@@ -3364,6 +3364,13 @@
         ]
       },
       {
+        "label": "AIMW-SYNC-4FDCFDA33F WordPress UsersManager SearchClickedAsync scoped closure #976",
+        "sha": "9f3bccc427efaf7538647143bc87a26319a9e5e2",
+        "operation_ids": [
+          "AIMW-SYNC-4FDCFDA33F"
+        ]
+      },
+      {
         "label": "MediaManager SuggestAltClickedAsync focused #966",
         "sha": "5fa48533f6fd19fca4f2b9cc85f870f97b3d0d2f",
         "operation_ids": [
@@ -3376,10 +3383,38 @@
         "operation_ids": [
           "AIMW-SYNC-425B82511E"
         ]
+      },
+      {
+        "label": "AIMW-SYNC-7A726BAF5F GlobalPostsExplorer ApplyAsync focused closure #948",
+        "sha": "612fcc6909ccbacfbc17e3f4f27d75af6ea423c3",
+        "operation_ids": [
+          "AIMW-SYNC-7A726BAF5F"
+        ]
+      },
+      {
+        "label": "Issue #896 Account Email Settings Delivery History evidence reconciliation (merged PR #1075)",
+        "sha": "92f51a7fa05d498a305fa2878cf5d3f13d6a3187",
+        "operation_ids": [
+          "AIMW-EMAI-0AA71A5EF6"
+        ]
+      },
+      {
+        "label": "AIMW-SYNC-AE16CF49C6 SiteOnboarding RetrySyncAsync focused closure #970",
+        "sha": "4fcaf183d6dfd8f95045dc2b9f303465dc27d979",
+        "operation_ids": [
+          "AIMW-SYNC-AE16CF49C6"
+        ]
+      },
+      {
+        "label": "Issue #935 Global Pages DraftSelectedAsync — merged PR #1322 runtime and focused tests",
+        "sha": "e3f3a6859b44bc6e6f48667c6633e1804a57fba5",
+        "operation_ids": [
+          "AIMW-SYNC-3389FB622C"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 200,
-    "focused_closure_contract_count": 430,
+    "focused_closure_operation_scoped_count": 205,
+    "focused_closure_contract_count": 435,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
