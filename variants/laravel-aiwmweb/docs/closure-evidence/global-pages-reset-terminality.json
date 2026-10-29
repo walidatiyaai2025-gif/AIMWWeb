@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #942 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-FD27B795ED",
+  "domain": "sync",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "source": {
+    "path": "src/AIWordPressManager.Web/Components/Pages/GlobalPagesExplorer.razor",
+    "screen": "/module/pages",
+    "handler": "ResetAsync",
+    "behavior": "Clear search and site filter, reset status to all, page size 25 and page to 1; clear current-page selection and reload synchronized WordPress pages without remote mutation."
+  },
+  "implementation": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/global-pages-reset-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/global-pages-confirm-trash-widget.tsx",
+    "endpoint": "GET /api/v1/tenants/{tenant}/global-pages?page=1&per_page=25",
+    "backend": "variants/laravel-aiwmweb/backend/app/Http/Controllers/GlobalPagesTrashController.php",
+    "behavior": "Reset updates both draft and applied filter state, clears selection and confirmation, increments query revision so an authoritative tenant-scoped GET runs even when filters were already at defaults; failures remain visible."
+  },
+  "security": {
+    "tenant_isolation": "Read route uses auth and tenant.context; no caller-owned tenant or site IDs are added to reset URL.",
+    "permission": "content.view required by existing controller",
+    "foreign_tenant": "404",
+    "foreign_site": "404",
+    "missing_permission": "403",
+    "guest": "401",
+    "mutation": false,
+    "wordpress_external_write": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalPagesResetTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-pages-reset-control.test.tsx"
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-FD27B795ED"
+    ],
+    "aspnet_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "excluded_issues_modified": false
+  }
+}
