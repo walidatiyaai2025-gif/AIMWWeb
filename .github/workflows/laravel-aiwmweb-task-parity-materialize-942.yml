@@ -5,47 +5,62 @@ on:
     branches:
       - worker/942-global-pages-reset
     paths:
-      - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
-      - 'variants/laravel-aiwmweb/docs/closure-evidence/global-pages-reset-terminality.json'
       - '.github/workflows/laravel-aiwmweb-task-parity-materialize-942.yml'
 
 permissions:
   contents: write
+  actions: read
 
 jobs:
   materialize:
     runs-on: ubuntu-latest
-    env:
-      PYTHONHASHSEED: '0'
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.ref_name }}
           fetch-depth: 0
-      - name: Fetch exact evidence refs
-        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Run official parity materializer
+      - name: Verify unchanged official evidence inputs
+        shell: bash
         run: |
           set -euo pipefail
-          OUT_JSON=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
-          OUT_MD=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
-          TMP_SUMMARY=/tmp/operation-parity-summary.json
-          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
-          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
-          python variants/laravel-aiwmweb/tools/apply_platform_admin_route_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
-          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
-          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
-          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
-          python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py --input "$OUT_JSON" --output "$OUT_JSON" --summary-output "$TMP_SUMMARY" --markdown-output "$OUT_MD" --check-total 931
-      - name: Commit generated reconciliation
+          git merge-base --is-ancestor eb57e6dd0127d597d9877f22391d75e0858b6268 HEAD
+          test -z "$(git diff --name-only eb57e6dd0127d597d9877f22391d75e0858b6268 HEAD -- variants/laravel-aiwmweb)"
+      - name: Download exact-head official parity output from run 40814050957
+        uses: actions/download-artifact@v4
+        with:
+          name: laravel-aiwmweb-operation-parity-reconciliation
+          run-id: 40814050957
+          github-token: ${{ github.token }}
+          path: /tmp/official-parity-942
+      - name: Validate original official generated artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('/tmp/official-parity-942/operation-parity-reconciliation.json')
+          md = Path('/tmp/official-parity-942/operation-parity-reconciliation.md')
+          assert p.is_file() and md.is_file()
+          ledger = json.loads(p.read_text())
+          totals = ledger['totals']
+          assert (totals['total'], totals['terminal'], totals['pending'], totals['blocked']) == (931, 912, 19, 0), totals
+          assert ledger['validation']['passed'] is True, ledger['validation']['errors']
+          rows = [o for o in ledger['operations'] if o['operation_id'] == 'AIMW-SYNC-FD27B795ED']
+          assert len(rows) == 1 and rows[0]['migration_state'] == 'ADAPTED', rows
+          assert rows[0]['reconciliation']['source_sha'] == '500ef769966595f02848c8d40f586418bedafd84'
+          print('OFFICIAL_PARITY_OUTPUT_VERIFIED=912/931; ISSUE_942=ADAPTED')
+          PY
+          cp /tmp/official-parity-942/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          cp /tmp/official-parity-942/operation-parity-reconciliation.md variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+      - name: Commit official parity files and safe fast-forward push
+        shell: bash
         run: |
           set -euo pipefail
           git add variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
-          if git diff --cached --quiet; then exit 0; fi
+          git diff --cached --quiet && exit 0
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore(laravel): materialize parity for AIMW-SYNC-FD27B795ED"
-          git push origin "HEAD:${{ github.ref_name }}"
+          git fetch origin worker/942-global-pages-reset
+          test "$(git rev-parse HEAD)" = "$(git rev-parse FETCH_HEAD)"
+          git commit -m "chore(laravel): commit verified official parity evidence for issue 942"
+          git push origin HEAD:worker/942-global-pages-reset
