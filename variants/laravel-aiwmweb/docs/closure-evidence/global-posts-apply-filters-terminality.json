@@ -54,7 +54,7 @@
     "target_branch": "worker/laravel-aiwmweb-closure-composition",
     "branch_base_sha": "ad380a6a1069fe0511a09d58e0e644565ee621cb",
     "pcc_source_sha": "076eeb0ed3fe75200d907b111803a210e5c054c5",
-    "implementation_snapshot_sha": null,
+    "implementation_snapshot_sha": "612fcc6909ccbacfbc17e3f4f27d75af6ea423c3",
     "readiness": "Pending exact-source registration, official seven-stage materialization and exact-head CI."
   }
 }
