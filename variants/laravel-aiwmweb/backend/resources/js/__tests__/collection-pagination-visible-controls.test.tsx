@@ -9,6 +9,7 @@ import { WorkspacePage } from '../pages';
 
 const COMMENT_LOAD = 'AIMW-SYNC-12F15A0A80';
 const COMMENT_PREVIOUS = 'AIMW-SYNC-CB01197D47';
+const COMMENT_SOURCE_PREVIOUS = 'AIMW-SYNC-D5CE5A213B';
 const COMMENT_REFRESH = 'AIMW-SYNC-DBD736FACC';
 
 const route: WorkspaceRoute = {
@@ -30,7 +31,7 @@ function renderComments() {
 
 afterEach(() => vi.unstubAllGlobals());
 
-describe(`${COMMENT_LOAD} ${COMMENT_PREVIOUS} ${COMMENT_REFRESH}`, () => {
+describe(`${COMMENT_LOAD} ${COMMENT_PREVIOUS} ${COMMENT_SOURCE_PREVIOUS} ${COMMENT_REFRESH}`, () => {
     it('marks refresh/load and previous on their real tenant collection controls', async () => {
         const fetchMock = vi.fn()
             .mockResolvedValueOnce(new Response(JSON.stringify({ data: [{ id: 1, name: 'Page one' }], current_page: 1, last_page: 3 }), { status: 200, headers: { 'content-type': 'application/json' } }))
@@ -46,11 +47,13 @@ describe(`${COMMENT_LOAD} ${COMMENT_PREVIOUS} ${COMMENT_REFRESH}`, () => {
         expect(refresh).toHaveAttribute('data-canonical-refresh-operation', COMMENT_REFRESH);
         const previous = screen.getByRole('button', { name: 'Previous' });
         expect(previous).toHaveAttribute('data-canonical-operation', COMMENT_PREVIOUS);
+        expect(previous).toHaveAttribute('data-canonical-operation-alias', COMMENT_SOURCE_PREVIOUS);
 
         fireEvent.click(screen.getByRole('button', { name: 'Next' }));
         expect(await screen.findByText('Page two')).toBeInTheDocument();
         const pageTwoPrevious = screen.getByRole('button', { name: 'Previous' });
         expect(pageTwoPrevious).toHaveAttribute('data-canonical-operation', COMMENT_PREVIOUS);
+        expect(pageTwoPrevious).toHaveAttribute('data-canonical-operation-alias', COMMENT_SOURCE_PREVIOUS);
         fireEvent.click(pageTwoPrevious);
         expect(await screen.findByText('Page one')).toBeInTheDocument();
         await waitFor(() => expect(fetchMock.mock.calls[2][0]).toBe('/api/tenants/alpha/comments?page=1'));

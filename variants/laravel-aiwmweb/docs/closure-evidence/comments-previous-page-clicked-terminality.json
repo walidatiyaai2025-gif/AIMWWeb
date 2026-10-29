@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #926 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-D5CE5A213B",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "/sites/{SiteId:guid}/comments",
+    "source": "src/AIWordPressManager.Web/Components/Pages/CommentsManager.razor",
+    "source_control": "PreviousPageClickedAsync",
+    "source_intent": "When page is greater than one, decrement the current comments page and reload the authoritative tenant/site-scoped WordPress comments GET. On the first page the control stays disabled.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "read_source": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentApiController.php::comments",
+    "semantics": "The tenant/site-scoped Comments collection Previous button carries the source operation ID as a canonical alias alongside the existing generic collection Previous ID. It decrements page state only when page > 1 and fetches the authoritative comments endpoint with the current tenant and site context.",
+    "visibility_permission": "content.view",
+    "loading_error_empty_behavior": "Previous is disabled on page one. A change of page triggers the scoped comments GET, and failures surface through the existing query error state without a success toast."
+  },
+  "security": {
+    "backend_mutation_added": false,
+    "provider_mutation_added": false,
+    "caller_owned_identity_override_added": false,
+    "tenant_selector_added": false,
+    "foreign_tenant_access_added": false,
+    "fake_success": false,
+    "secret_disclosure_added": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/CollectionPaginationVisibleControlTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/collection-pagination-visible-controls.test.tsx",
+    "coverage": [
+      "CommentsManager.razor PreviousPageClickedAsync source action and guarded decrement",
+      "Exact source operation ID on the real Previous pagination button",
+      "Authoritative tenant/site-scoped page decrement GET, disabled page one",
+      "Existing content.view forbidden and cross-tenant 404 assertions",
+      "No provider mutation or fake success"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-D5CE5A213B"
+    ],
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "branch": "worker/926-comments-previous-page-parity-reconciliation"
+  }
+}

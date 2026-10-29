@@ -38,9 +38,9 @@ function renderComments() {
 
 afterEach(() => vi.unstubAllGlobals());
 
-describe('AIMW-SYNC-D5CE5A213B Comments RefreshClickedAsync', () => {
+describe('AIMW-SYNC-DBD736FACC Comments RefreshClickedAsync', () => {
     it('binds the canonical refresh control to an authoritative GET reread', async () => {
-        expect(COMMENTS_REFRESH_CLICK_OPERATION_ID).toBe('AIMW-SYNC-D5CE5A213B');
+        expect(COMMENTS_REFRESH_CLICK_OPERATION_ID).toBe('AIMW-SYNC-DBD736FACC');
         const fetchMock = vi.fn()
             .mockResolvedValueOnce(new Response(JSON.stringify({
                 data: [{ id: 1, author_name: 'Before', body: 'stale' }],
