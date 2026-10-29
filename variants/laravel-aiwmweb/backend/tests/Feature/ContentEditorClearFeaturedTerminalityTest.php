@@ -72,5 +72,4 @@ final class ContentEditorClearFeaturedTerminalityTest extends TestCase
             ->get('/tenants/clear-featured-foreign/sites/1/content/posts/10/edit')
             ->assertNotFound();
     }
-
 }
