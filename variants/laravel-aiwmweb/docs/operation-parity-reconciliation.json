@@ -113,12 +113,12 @@
     "email": {
       "total": 82,
       "ported": 0,
-      "adapted": 82,
-      "pending": 0,
+      "adapted": 81,
+      "pending": 1,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 82,
-      "percent": 100.0
+      "terminal": 81,
+      "percent": 98.78
     },
     "identity": {
       "total": 7,
@@ -203,12 +203,12 @@
     "sync": {
       "total": 213,
       "ported": 0,
-      "adapted": 201,
-      "pending": 12,
+      "adapted": 202,
+      "pending": 11,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 201,
-      "percent": 94.37
+      "terminal": 202,
+      "percent": 94.84
     },
     "taxonomy": {
       "total": 13,
@@ -22901,31 +22901,21 @@
       "external_dependency": "email_provider",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/account-email-settings-history-link-control.tsx",
+      "laravel_destination": "",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "ADAPTED",
-      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/account-email-settings-history-link-control.test.tsx",
-      "evidence": "Issue #896 Account Email Settings Delivery History evidence reconciliation (merged PR #1075)@92f51a7fa05d498a305fa2878cf5d3f13d6a3187: variants/laravel-aiwmweb/backend/resources/js/account-email-settings-history-link-control.tsx; focused-closure:AIMW-EMAI-0AA71A5EF6; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/account-email-settings-history-link-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/account-email-settings-history-link-terminality.json",
+      "migration_state": "PENDING",
+      "acceptance_test": "",
+      "evidence": "",
       "reconciliation": {
-        "decision": "ADAPTED",
-        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "Issue #896 Account Email Settings Delivery History evidence reconciliation (merged PR #1075)",
-        "source_sha": "92f51a7fa05d498a305fa2878cf5d3f13d6a3187",
-        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/account-email-settings-history-link-control.tsx",
-        "evidence_mode": "focused_closure_contract",
-        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/account-email-settings-history-link-terminality.json",
-        "signals": [
-          "operation:AIMW-EMAI-0AA71A5EF6",
-          "production-marker:variants/laravel-aiwmweb/backend/resources/js/account-email-settings-history-link-control.tsx",
-          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/account-email-settings-history-link-control.test.tsx",
-          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/account-email-settings-history-link-terminality.json",
-          "scope:operation-specific",
-          "test:tenant-isolation"
-        ]
+        "decision": "PENDING",
+        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
+        "source_label": null,
+        "source_sha": null,
+        "destination_path": null
       }
     },
     {
@@ -32689,21 +32679,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/dashboard-refresh-clicked-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DashboardRefreshClickedTerminalityTest.php",
+      "evidence": "Issue #962 Dashboard RefreshClickedAsync tenant-scoped focused closure@a5bbcea64b94469f28544162b2d34223f354c75b: variants/laravel-aiwmweb/backend/resources/js/dashboard-refresh-clicked-control.tsx; focused-closure:AIMW-SYNC-8C35E9A7A0; test:variants/laravel-aiwmweb/backend/tests/Feature/DashboardRefreshClickedTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/dashboard-refresh-clicked-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "Issue #962 Dashboard RefreshClickedAsync tenant-scoped focused closure",
+        "source_sha": "a5bbcea64b94469f28544162b2d34223f354c75b",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/dashboard-refresh-clicked-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/dashboard-refresh-clicked-terminality.json",
+        "signals": [
+          "operation:AIMW-SYNC-8C35E9A7A0",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/dashboard-refresh-clicked-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/DashboardRefreshClickedTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/dashboard-refresh-clicked-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -38337,7 +38337,9 @@
       "AIMW-CONT-B6BB292F85",
       "AIMW-CONT-C49C37E2C9"
     ],
-    "email": [],
+    "email": [
+      "AIMW-EMAI-0AA71A5EF6"
+    ],
     "identity": [],
     "media": [
       "AIMW-MEDI-799B36D113",
@@ -38356,7 +38358,6 @@
       "AIMW-SYNC-4B986B2651",
       "AIMW-SYNC-4FDCFDA33F",
       "AIMW-SYNC-7A726BAF5F",
-      "AIMW-SYNC-8C35E9A7A0",
       "AIMW-SYNC-AE16CF49C6",
       "AIMW-SYNC-B78216241F",
       "AIMW-SYNC-D5CE5A213B",
@@ -39896,7 +39897,6 @@
       "AIMW-CONT-FE6EE5740C",
       "AIMW-EMAI-00CC1272F6",
       "AIMW-EMAI-01F5713C4F",
-      "AIMW-EMAI-0AA71A5EF6",
       "AIMW-EMAI-10F3C44369",
       "AIMW-EMAI-12A6FEB2FF",
       "AIMW-EMAI-2E59E39808",
@@ -39995,6 +39995,7 @@
       "AIMW-SYNC-8409FB077A",
       "AIMW-SYNC-8719C812DC",
       "AIMW-SYNC-89777052CB",
+      "AIMW-SYNC-8C35E9A7A0",
       "AIMW-SYNC-8D6F1C5EAA",
       "AIMW-SYNC-9504A57CAE",
       "AIMW-SYNC-9ABD7DEDBB",
@@ -41398,10 +41399,10 @@
         ]
       },
       {
-        "label": "Issue #896 Account Email Settings Delivery History evidence reconciliation (merged PR #1075)",
-        "sha": "92f51a7fa05d498a305fa2878cf5d3f13d6a3187",
+        "label": "Issue #962 Dashboard RefreshClickedAsync tenant-scoped focused closure",
+        "sha": "a5bbcea64b94469f28544162b2d34223f354c75b",
         "operation_ids": [
-          "AIMW-EMAI-0AA71A5EF6"
+          "AIMW-SYNC-8C35E9A7A0"
         ]
       }
     ],

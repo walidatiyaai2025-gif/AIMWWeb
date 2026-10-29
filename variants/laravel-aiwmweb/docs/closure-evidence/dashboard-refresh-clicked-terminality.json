@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #962",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-8C35E9A7A0",
+  "domain": "sync",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/Home.razor",
+    "route_screen": "/",
+    "visible_control": "RefreshClickedAsync",
+    "behavior": "Refreshing dashboard loads current aggregated tenant snapshot and reports real success or error.",
+    "tenant_owned": true,
+    "risk": "low",
+    "mutation": false
+  },
+  "laravel_adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/dashboard-refresh-clicked-control.tsx",
+    "mount": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "endpoint": "GET /api/dashboard?tenant={tenant}",
+    "backend": "App\\Http\\Controllers\\PlatformReadController@dashboard",
+    "authorized": "execution.view",
+    "read_only": true,
+    "verification": "DashboardContent React Query refetch returns authoritative dashboard and rerenders cards; error keeps alert.",
+    "operation_marker": "AIMW-SYNC-8C35E9A7A0"
+  },
+  "security_boundary": {
+    "auth": "web + auth",
+    "tenant": "server-validated authenticated membership",
+    "foreign_tenant": "404",
+    "denied_permission": "403",
+    "guest": "401",
+    "caller_controlled_metrics": "none"
+  },
+  "acceptance_tests": [
+    "variants/laravel-aiwmweb/backend/tests/Feature/DashboardRefreshClickedTerminalityTest.php"
+  ],
+  "scope_exclusions": [
+    "No duplicate backend endpoint",
+    "No mock dashboard metrics",
+    "No edits to ASP.NET",
+    "Official generator only parity"
+  ]
+}

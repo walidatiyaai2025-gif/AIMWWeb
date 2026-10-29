@@ -3122,6 +3122,14 @@
       ]
     },
     {
+      "label": "Issue #962 Dashboard RefreshClickedAsync tenant-scoped focused closure",
+      "sha": "a5bbcea64b94469f28544162b2d34223f354c75b",
+      "observed_pr_head": "a5bbcea64b94469f28544162b2d34223f354c75b",
+      "operation_ids": [
+        "AIMW-SYNC-8C35E9A7A0"
+      ]
+    },
+    {
       "label": "Issue #896 Account Email Settings Delivery History evidence reconciliation (merged PR #1075)",
       "sha": "92f51a7fa05d498a305fa2878cf5d3f13d6a3187",
       "observed_pr_head": "ea231be55a5ed7830d833a0f25450c901d6ab6ef",
