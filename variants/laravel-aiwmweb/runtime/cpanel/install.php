@@ -41,7 +41,12 @@ $checks['Private configuration directory'] = is_writable($appRoot);
 $checks['Manifest'] = is_file(dirname(__DIR__).'/MANIFEST.json');
 if ($checks['Manifest']) {
     $manifest = json_decode((string) file_get_contents(dirname(__DIR__).'/MANIFEST.json'), true);
-    $checks['Payload integrity / سلامة الملفات'] = is_array($manifest['files'] ?? null);
+    $checks['Payload integrity / سلامة الملفات'] = is_array($manifest['files'] ?? null) && $manifest['files'] !== [];
+    foreach (['app/vendor/autoload.php', 'app/bootstrap/app.php', 'public/index.php', 'public/build/manifest.json', 'public/install.php'] as $requiredFile) {
+        if (! isset($manifest['files'][$requiredFile])) {
+            $checks['Payload integrity / سلامة الملفات'] = false;
+        }
+    }
     foreach (($manifest['files'] ?? []) as $path => $digest) {
         if (str_contains($path, '..') || ! is_file(dirname(__DIR__).'/'.$path) || ! hash_equals($digest, hash_file('sha256', dirname(__DIR__).'/'.$path))) {
             $checks['Payload integrity / سلامة الملفات'] = false;

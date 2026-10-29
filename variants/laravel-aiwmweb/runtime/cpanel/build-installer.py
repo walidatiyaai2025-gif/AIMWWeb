@@ -58,9 +58,10 @@ $app->handleRequest(Request::capture());
     for path in [app/'.env', app/'public/hot', public/'hot']:
         path.unlink(missing_ok=True)
     (app/'.cpanel-profile').write_text('cpanel\n')
+    (payload/'VERSION.txt').write_text(f'Laravel AIWMWeb cPanel candidate\nSource: {sha}\nPHP: >=8.3\n')
     files = {str(path.relative_to(payload)): hashlib.sha256(path.read_bytes()).hexdigest()
              for path in sorted(payload.rglob('*')) if path.is_file()}
-    manifest = {'product': 'Laravel AIWMWeb', 'source_sha': sha, 'php': '>=8.3',
+    manifest = {'product': 'Laravel AIWMWeb', 'source_sha': sha, 'version': 'cpanel-'+sha[:12], 'php': '>=8.3',
                 'profile': 'cpanel', 'release_decision': 'BLOCKED_PENDING_EXACT_SHA_ACCEPTANCE_AND_HOSTING_REHEARSAL',
                 'ai_enabled': False, 'cron_enabled': False, 'files': files}
     (payload/'MANIFEST.json').write_text(json.dumps(manifest, indent=2)+'\n')

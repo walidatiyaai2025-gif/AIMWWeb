@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\AI\Durable\BatchService;
+use App\AI\Durable\BoundedDatabaseQueue;
 use App\AI\Durable\ExecutionPermit;
 use App\AI\Platform\Contracts\AiGenerator;
 use App\AI\Platform\Enums\AiFailureKind;
@@ -256,5 +257,27 @@ class DurableAiBatchTest extends TestCase
         $this->assertSame($job->tenantId, $restored->tenantId);
         $this->assertSame($job->correlationId, $restored->correlationId);
         $this->assertSame($job->siteId, $restored->siteId);
+    }
+
+    public function test_database_queue_admission_cannot_grow_past_its_cap(): void
+    {
+        config(['cpanel.max_queued_jobs' => 1]);
+        $queue = new BoundedDatabaseQueue(DB::connection(), 'jobs', 'default');
+        $queue->pushRaw('{"job":"mock"}');
+        try {
+            $queue->pushRaw('{"job":"another"}');
+            $this->fail('Second queue insertion should be rejected.');
+        } catch (\RuntimeException $error) {
+            $this->assertStringContainsString('capacity', $error->getMessage());
+        }
+        $this->assertSame(1, DB::table('jobs')->count());
+    }
+
+    public function test_populated_ai_evidence_cannot_be_removed_by_down_migration(): void
+    {
+        app(BatchService::class)->submit($this->actions(1), $this->site->id);
+        $migration = require database_path('migrations/2026_10_29_200000_create_durable_ai_batches.php');
+        $this->expectException(\RuntimeException::class);
+        $migration->down();
     }
 }

@@ -54,6 +54,9 @@ final class BatchService
 
                 return $existing->id;
             }
+            $outstanding = DB::table('durable_ai_items as i')->join('durable_ai_batches as b', 'b.id', '=', 'i.batch_id')
+                ->whereNull('b.cancelled_at')->whereNotIn('i.state', ['completed', 'failed'])->count();
+            abort_if($outstanding + count($actions) > (int) config('cpanel.max_pending_actions'), 429, 'AI task admission capacity reached.');
             $id = (string) Str::uuid();
             DB::table('durable_ai_batches')->insert([
                 'id' => $id, 'tenant_id' => $tenantId, 'user_id' => $userId, 'site_id' => $siteId,

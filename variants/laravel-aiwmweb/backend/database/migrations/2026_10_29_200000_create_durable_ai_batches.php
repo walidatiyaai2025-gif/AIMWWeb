@@ -63,7 +63,13 @@ return new class extends Migration
 
     public function down(): void
     {
-        // Durable charge/result evidence is deliberately retained. Restoring a database
-        // backup is the documented rollback route; no destructive automatic down().
+        // Only an empty development/test schema is reversible. Production AI
+        // charge/result evidence is never removed by automatic down migrations.
+        if (app()->environment('production') || DB::table('durable_ai_batches')->exists() || DB::table('durable_ai_items')->exists()) {
+            throw new RuntimeException('Durable AI evidence cannot be rolled back; use the verified database recovery procedure.');
+        }
+        Schema::drop('durable_ai_items');
+        Schema::drop('durable_ai_batches');
+        Schema::drop('durable_ai_gate');
     }
 };

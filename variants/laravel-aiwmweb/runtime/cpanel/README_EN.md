@@ -15,7 +15,7 @@ No production deployment was performed. Ollama and all AI execution start disabl
 
 ## Runtime defaults and hosting preflight
 
-Database-backed session/cache/queue drivers work without Redis. No Supervisor, Horizon, schedule:work or daemon is installed. AI, cron and preflight admission remain false. Inference availability is not required to install or log in.
+Database-backed session/cache/queue drivers work without Redis. Admission is capped at 20 queued jobs and 500 outstanding AI actions by default; completed results are retained. No Supervisor, Horizon, schedule:work or daemon is installed. AI, cron and preflight admission remain false. Inference availability is not required to install or log in.
 
 Before enabling cron, hosting support must confirm: CLI PHP matches the web version, flock and GNU timeout exist, pcntl/process termination works, private writable lock files work, memory/process limits allow a bounded 110-second invocation, and database transactions/row locks work. Test two simultaneous cron invocations; only one may run. Queue backlog must remain bounded. Review failed_jobs rather than blindly retrying remote mutations.
 
