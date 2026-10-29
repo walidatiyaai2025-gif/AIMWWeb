@@ -3210,6 +3210,28 @@
       ]
     },
     {
+      "label": "Issue #935 Global Pages DraftSelectedAsync — merged PR #1322 runtime and focused tests",
+      "sha": "e3f3a6859b44bc6e6f48667c6633e1804a57fba5",
+      "observed_pr_head": "2b0650491e9a8685e57a33844329f47a5fe71503",
+      "operation_ids": [
+        "AIMW-SYNC-3389FB622C"
+      ]
+    },
+    {
+      "label": "Issue #257 final focused closure reconciliation for seven pre-existing runtime/acceptance operations",
+      "sha": "da9cde323e84b45c929adad0b7fdb4fae036a1e8",
+      "observed_pr_head": "da9cde323e84b45c929adad0b7fdb4fae036a1e8",
+      "operation_ids": [
+        "AIMW-CONT-2752ED9351",
+        "AIMW-CONT-6458D3030B",
+        "AIMW-CONT-A6867078EA",
+        "AIMW-CONT-C49C37E2C9",
+        "AIMW-MEDI-799B36D113",
+        "AIMW-MEDI-F55A549341",
+        "AIMW-SYNC-B78216241F"
+      ]
+    },
+    {
       "label": "Issue #926 CommentsManager PreviousPageClickedAsync corrected source semantics and focused tests",
       "sha": "6212926b976e8a0f380f37ec575d03dbebe6bfed",
       "observed_pr_head": "6212926b976e8a0f380f37ec575d03dbebe6bfed",
