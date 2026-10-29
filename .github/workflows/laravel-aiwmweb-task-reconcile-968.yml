@@ -1,0 +1,126 @@
+name: Laravel #968 exact-head integration (temporary)
+on:
+  push:
+    branches:
+      - worker/968-aimw-sync-4b986b2651
+    paths:
+      - '.github/workflows/laravel-aiwmweb-task-reconcile-968.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: laravel-task-968-integration
+  cancel-in-progress: false
+
+jobs:
+  integrate-and-materialize:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: worker/968-aimw-sync-4b986b2651
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Converge latest composition without overwriting runtime conflicts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+          test "$(git branch --show-current)" = worker/968-aimw-sync-4b986b2651
+          grep -q 'AIMW-SYNC-4B986B2651' variants/laravel-aiwmweb/backend/resources/js/media-optimization-editor-control.tsx
+          base='origin/worker/laravel-aiwmweb-closure-composition'
+          git show "$base:variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json" > /tmp/968-current-composition-parity.json
+          if git merge-base --is-ancestor "$base" HEAD; then
+            echo "Exact composition is already an ancestor; preserve its entire tree."
+          else
+            if ! git merge --no-ff --no-commit "$base"; then
+              mapfile -t conflicts < <(git diff --name-only --diff-filter=U)
+              for file in "${conflicts[@]}"; do
+                case "$file" in
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json|variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md|variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json)
+                    git checkout --theirs -- "$file"
+                    git add "$file"
+                    ;;
+                  *) echo "::error::Unexpected runtime conflict: $file"; exit 1;;
+                esac
+              done
+              test -z "$(git diff --name-only --diff-filter=U)"
+            fi
+            test -f .git/MERGE_HEAD || { echo '::error::Composition merge was not prepared'; exit 1; }
+            test "$(cat .git/MERGE_HEAD)" = "$(git rev-parse "$base")" || { echo '::error::Composition head moved during merge'; exit 1; }
+          fi
+      - name: Preserve #968 source and generate official reconciliation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path=Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          data=json.loads(path.read_text())
+          operation='AIMW-SYNC-4B986B2651'
+          sources=data.get('focused_closure_operation_sources')
+          if sources is None:
+              raise SystemExit('Unknown source manifest schema; refusing to change')
+          matches=[s for s in sources if operation in s.get('operation_ids', [])]
+          if len(matches)>1:
+              raise SystemExit('Duplicate canonical #968 operation provenance')
+          if not matches:
+              sources.append({
+                'label':'Issue #968 MediaManager local-only optimization cancel focused closure',
+                'sha':'9018fee6f06028e6ff047a154bde9dc6931cc738',
+                'observed_pr_head':'9018fee6f06028e6ff047a154bde9dc6931cc738',
+                'operation_ids':[operation],
+              })
+          path.write_text(json.dumps(data, indent=2, ensure_ascii=False)+'\n')
+          PY
+          OUT=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          MD=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          SUM=variants/laravel-aiwmweb/docs/operation-parity-summary.json
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_platform_admin_route_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+      - name: Guard every previously terminal operation and exact target
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          before=json.loads(Path('/tmp/968-current-composition-parity.json').read_text())
+          after=json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json').read_text())
+          old={r['operation_id']:r['migration_state'] for r in before['operations']}
+          new={r['operation_id']:r['migration_state'] for r in after['operations']}
+          assert len(old)==len(new)==931
+          terminal={'PORTED','ADAPTED','VERIFIED_UNAVAILABLE_EXTERNAL'}
+          regressions=[(op,s,new[op]) for op,s in old.items() if s in terminal and new[op] not in terminal]
+          assert not regressions, regressions[:20]
+          target='AIMW-SYNC-4B986B2651'
+          assert old[target]=='PENDING', (target,old[target])
+          assert new[target]=='ADAPTED', (target,new[target])
+          assert after['totals']['terminal'] >= before['totals']['terminal']+1
+          print('Official #968 parity:',before['totals']['terminal'],'->',after['totals']['terminal'],'of 931')
+          PY
+      - name: Retire one-shot workflow and push ancestry-preserving merge
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/laravel-aiwmweb-task-reconcile-968.yml
+          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md variants/laravel-aiwmweb/docs/operation-parity-summary.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'chore(laravel #968): merge live composition and materialize exact parity'
+          git push origin HEAD:worker/968-aimw-sync-4b986b2651
