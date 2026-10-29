@@ -32,6 +32,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
           test "$(git branch --show-current)" = worker/970-AIMW-SYNC-AE16CF49C6
           grep -q 'AIMW-SYNC-AE16CF49C6' variants/laravel-aiwmweb/backend/resources/js/site-onboarding-save-test-sync-control.tsx
@@ -50,6 +52,10 @@ jobs:
             done
             test -z "$(git diff --name-only --diff-filter=U)"
           fi
+          # A failed merge with no conflict paths is NOT a successful convergence.
+          # Git must have prepared the two-parent merge before parity is regenerated.
+          test -f .git/MERGE_HEAD || { echo '::error::Composition merge was not prepared'; exit 1; }
+          test "$(cat .git/MERGE_HEAD)" = "$(git rev-parse "$base")" || { echo '::error::Composition head moved during merge'; exit 1; }
       - name: Preserve #970 source and generate official reconciliation
         shell: bash
         run: |
