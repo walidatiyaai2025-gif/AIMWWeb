@@ -19046,8 +19046,8 @@
       "tenant_owned": true,
       "risk": "low",
       "migration_state": "ADAPTED",
-      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-open-accessibility-control.test.tsx",
-      "evidence": "Issue #1380 Settings OpenAccessibility parity — merged PR #1292 validated runtime, UI and tenant-isolation evidence@534a639dc5e22554ab89f9cfb2ccf27f8876501a: variants/laravel-aiwmweb/backend/resources/js/settings-open-accessibility-control.tsx; focused-closure:AIMW-CONT-C49C37E2C9; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-open-accessibility-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/settings-open-accessibility-terminality.json",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SettingsOpenAccessibilityTerminalityTest.php",
+      "evidence": "Issue #1380 Settings OpenAccessibility parity — merged PR #1292 validated runtime, UI and tenant-isolation evidence@534a639dc5e22554ab89f9cfb2ccf27f8876501a: variants/laravel-aiwmweb/backend/resources/js/settings-open-accessibility-control.tsx; focused-closure:AIMW-CONT-C49C37E2C9; test:variants/laravel-aiwmweb/backend/tests/Feature/SettingsOpenAccessibilityTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/settings-open-accessibility-terminality.json",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
@@ -19059,7 +19059,7 @@
         "signals": [
           "operation:AIMW-CONT-C49C37E2C9",
           "production-marker:variants/laravel-aiwmweb/backend/resources/js/settings-open-accessibility-control.tsx",
-          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-open-accessibility-control.test.tsx",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/SettingsOpenAccessibilityTerminalityTest.php",
           "evidence:variants/laravel-aiwmweb/docs/closure-evidence/settings-open-accessibility-terminality.json",
           "scope:operation-specific",
           "test:tenant-isolation"
