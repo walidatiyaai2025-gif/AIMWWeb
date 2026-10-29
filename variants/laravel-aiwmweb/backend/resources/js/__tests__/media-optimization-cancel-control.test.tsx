@@ -26,7 +26,7 @@ describe('AIMW-SYNC-4B986B2651 MediaManager CancelOptimizationClickedAsync', () 
         let reads = 0;
         const fetchMock = vi.fn(async () => {
             reads++;
-            return new Response(JSON.stringify(reads === 1 ? remote : { ...remote, title: 'Updated on WordPress', alt_text: 'Current remote alt' }), {
+            return new Response(JSON.stringify(reads === 1 ? remote : { ...remote, title: 'Updated on WordPress', alt_text: 'Current remote alt', caption: 'Published caption' }), {
                 status: 200, headers: { 'Content-Type': 'application/json' },
             });
         });
@@ -38,6 +38,8 @@ describe('AIMW-SYNC-4B986B2651 MediaManager CancelOptimizationClickedAsync', () 
         fireEvent.change(screen.getByLabelText('Media title'), { target: { value: 'Uncommitted title' } });
         fireEvent.change(screen.getByLabelText('Media alt text'), { target: { value: 'Uncommitted alt text' } });
         expect(screen.getByLabelText('Media alt text')).toHaveValue('Uncommitted alt text');
+        fireEvent.change(screen.getByLabelText('Media caption'), { target: { value: 'Draft caption' } });
+        expect(screen.getByLabelText('Media caption')).toHaveValue('Draft caption');
         const cancel = screen.getByRole('button', { name: 'Cancel optimization' });
         expect(cancel).toHaveAttribute('data-canonical-operation', MEDIA_CANCEL_OPTIMIZATION_OPERATION_ID);
         fireEvent.click(cancel);
@@ -48,6 +50,7 @@ describe('AIMW-SYNC-4B986B2651 MediaManager CancelOptimizationClickedAsync', () 
         fireEvent.click(screen.getByRole('button', { name: 'Optimize metadata' }));
         await waitFor(() => expect(screen.getByLabelText('Media title')).toHaveValue('Updated on WordPress'));
         expect(screen.getByLabelText('Media alt text')).toHaveValue('Current remote alt');
+        expect(screen.getByLabelText('Media caption')).toHaveValue('Published caption');
         expect(fetchMock).toHaveBeenCalledTimes(2);
         expect(onReconcile).not.toHaveBeenCalled();
     });
