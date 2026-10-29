@@ -61,9 +61,11 @@ import {
     normalizeWordPressSiteUserRole,
     type WordPressSiteUserRole,
 } from './wordpress-site-users-search-control';
+import { GlobalUsersRefreshControl, type GlobalUsersRole } from './global-users-refresh-control';
 import { MediaDeleteControl } from './media-delete-control';
 import { authoritativeGlobalMediaApplyEndpoint, defaultGlobalMediaFilters, globalMediaApplyQuery, GlobalMediaApplyControl } from './global-media-apply-control';
 import { globalMediaResetState, GlobalMediaResetControl } from './global-media-reset-control';
+import { GlobalMediaSyncLinkControl } from './global-media-sync-link-control';
 import { GlobalMediaInterpolatedLinksControl } from './media-interpolated-links-control';
 import { MediaBackToSitesControl } from './media-back-to-sites-control';
 import { MediaManagerEditingSourceUrlControl } from './media-manager-editing-source-url-control';
@@ -371,6 +373,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const [taxonomyType, setTaxonomyType] = useState<'all' | 'category' | 'post_tag'>('category');
     const [taxonomyDraft, setTaxonomyDraft] = useState(defaultGlobalTaxonomyApplyFilters);
     const [taxonomyApplied, setTaxonomyApplied] = useState(defaultGlobalTaxonomyApplyFilters);
+    const [wordpressUsersRole, setWordpressUsersRole] = useState<GlobalUsersRole>('all');
 
     useEffect(() => {
         if (route.key !== 'taxonomy') return;
@@ -400,7 +403,8 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     };
 
     const taxonomyFilter: Record<string, string> = route.key === 'taxonomy' && taxonomyType !== 'all' ? { taxonomy: taxonomyType } : {};
-    const taxonomyAppliedQuery = route.key === 'taxonomy' ? { ...taxonomyFilter, ...globalTaxonomyApplyQuery(taxonomyApplied) } : taxonomyFilter;
+    const taxonomyAppliedQuery: Record<string, string> = route.key === 'taxonomy' ? { ...taxonomyFilter, ...globalTaxonomyApplyQuery(taxonomyApplied) } : taxonomyFilter;
+    const wordpressUsersFilters: Record<string, string> = route.key === 'wp-users' && wordpressUsersRole !== 'all' ? { role: wordpressUsersRole } : {};
     const emailHistoryQueryFilters: Record<string, string> = route.key === 'email-history' ? {
         ...(emailHistoryFilters.siteId ? { site_id: emailHistoryFilters.siteId } : {}),
         ...(emailHistoryFilters.status ? { status: emailHistoryFilters.status } : {}),
@@ -434,8 +438,8 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
             wordpressSiteRoleApplied === 'all' ? {} : { role: wordpressSiteRoleApplied })),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     } : {
-        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType, taxonomyApplied.minimumUsage, taxonomyApplied.pageSize],
-        queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, taxonomyAppliedQuery)),
+        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType, taxonomyApplied.minimumUsage, taxonomyApplied.pageSize, wordpressUsersRole],
+        queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, { ...taxonomyAppliedQuery, ...wordpressUsersFilters })),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     });
 
@@ -811,6 +815,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                     />
                 ) : null}
                 {route.key === 'media' ? (
+                    <GlobalMediaSyncLinkControl context={context} mediaAvailable={Boolean(endpoint)} />
+                ) : null}
+                {route.key === 'media' ? (
                     <GlobalMediaResetControl
                         locale={locale}
                         busy={query.isFetching}
@@ -1054,6 +1061,21 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         >{locale === 'ar' ? 'الوسوم' : 'Tags'}</button>
                     ) : null}
                     {route.key === 'wp-users' ? (
+                        <>
+                        <GlobalUsersRefreshControl
+                            context={context}
+                            endpoint={endpoint}
+                            role={wordpressUsersRole}
+                            busy={query.isFetching}
+                            onRoleChange={(nextRole) => { setPage(1); setWordpressUsersRole(nextRole); }}
+                            onRefreshRequested={async (trustedEndpoint) => {
+                                if (state.state !== 'enabled' || trustedEndpoint !== endpoint) {
+                                    throw new Error('The active tenant/site WordPress users endpoint is not authorized.');
+                                }
+                                const refreshed = await query.refetch();
+                                if (refreshed.error) throw refreshed.error;
+                            }}
+                        />
                         <WordPressUsersRefreshControl
                             context={context}
                             endpoint={endpoint}
@@ -1063,6 +1085,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                                 if (refreshed.error) throw refreshed.error;
                             }}
                         />
+                        </>
                     ) : (
                     <button
                         type="button"
