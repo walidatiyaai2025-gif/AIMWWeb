@@ -6,6 +6,7 @@ import { useLocale } from './i18n';
 import { GLOBAL_POSTS_RESET_OPERATION_ID, defaultGlobalPostsFilters, globalPostsFilterQuery } from './global-posts-reset-control';
 import { GlobalPostsApplyFiltersControl, globalPostsFilterUrl, type GlobalPostsApplyFilterState } from './global-posts-apply-filters-control';
 import { GLOBAL_POSTS_PRIVATE_SELECTED_OPERATION_ID, globalPostsPrivateEndpoint, globalPostsPrivatePayload } from './global-posts-private-selected-control';
+import { GLOBAL_POSTS_DRAFT_SELECTED_OPERATION_ID, globalPostsDraftEndpoint, globalPostsDraftPayload } from './global-posts-draft-selected-control';
 import { GLOBAL_POSTS_PENDING_SELECTED_OPERATION_ID, globalPostsPendingEndpoint, globalPostsPendingPayload } from './global-posts-pending-selected-control';
 import { GLOBAL_POSTS_REQUEST_TRASH_OPERATION_ID, canRequestGlobalPostsTrash } from './global-posts-request-trash-control';
 import { PostsInterpolatedLinksControl } from './posts-interpolated-links-control';
@@ -72,6 +73,7 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
     const endpoint = globalPostsEndpoint(context.tenant.slug);
     const privateEndpoint = globalPostsPrivateEndpoint(context.tenant.slug);
     const pendingEndpoint = globalPostsPendingEndpoint(context.tenant.slug);
+    const draftEndpoint = globalPostsDraftEndpoint(context.tenant.slug);
     const publishEndpoint = globalPostsPublishEndpoint(context.tenant.slug);
     const canView = hasPermission(context, 'content.view');
     const canEdit = hasPermission(context, 'content.edit');
@@ -135,6 +137,30 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
         },
         onSuccess: (result) => {
             if (result.operation_id !== GLOBAL_POSTS_PRIVATE_SELECTED_OPERATION_ID || result.state !== 'queued') {
+                notify('Unexpected operation response; refresh authoritative state before retrying.', 'error');
+                return;
+            }
+            setSelected(new Set());
+            notify(
+                locale === 'ar'
+                    ? `تمت جدولة ${result.count} من العناصر في ${result.site_jobs} مهمة. تحقق من النتائج بعد تنفيذها.`
+                    : `Queued ${result.count} posts across ${result.site_jobs} site job(s). Verify authoritative state after execution.`,
+                'success',
+            );
+        },
+        onError: (error) => notify(error instanceof Error ? error.message : 'Could not queue selected items.', 'error'),
+    });
+
+    const draftMutation = useMutation({
+        mutationFn: async (targets: Array<{ site_id: number; wordpress_id: number }>) => {
+            if (!draftEndpoint) throw new Error('The requested draft operation is unavailable.');
+            return apiRequest<{ operation_id: string; state: 'queued'; count: number; site_jobs: number }>(
+                draftEndpoint,
+                { method: 'POST', body: JSON.stringify(globalPostsDraftPayload(targets)) },
+            );
+        },
+        onSuccess: (result) => {
+            if (result.operation_id !== GLOBAL_POSTS_DRAFT_SELECTED_OPERATION_ID || result.state !== 'queued') {
                 notify('Unexpected operation response; refresh authoritative state before retrying.', 'error');
                 return;
             }
@@ -218,7 +244,7 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
 
     if (!enabled) return null;
 
-    const busy = mutation.isPending || publishMutation.isPending || privateMutation.isPending || pendingMutation.isPending;
+    const busy = mutation.isPending || publishMutation.isPending || privateMutation.isPending || pendingMutation.isPending || draftMutation.isPending;
 
     const resetFilters = () => {
         // ResetAsync: clear filters/selection and force a fresh authorized read, including at defaults.
@@ -296,6 +322,17 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
                             {privateMutation.isPending
                                 ? (locale === 'ar' ? 'جارٍ جدولة الحالة الخاصة…' : 'Queueing private status…')
                                 : (locale === 'ar' ? 'جعل المحدد خاصًا' : 'Make selected private')}
+                        </button>
+                        <button
+                            type="button"
+                            className="btn"
+                            data-canonical-operation={GLOBAL_POSTS_DRAFT_SELECTED_OPERATION_ID}
+                            disabled={!canEdit || !draftEndpoint || busy || selectedTargets.length === 0}
+                            onClick={() => draftMutation.mutate(selectedTargets)}
+                        >
+                            {draftMutation.isPending
+                                ? (locale === 'ar' ? 'جارٍ جدولة المسودة…' : 'Queueing draft status…')
+                                : (locale === 'ar' ? 'تحويل المحدد إلى مسودة' : 'Move selected to draft')}
                         </button>
                         <button
                             type="button"
