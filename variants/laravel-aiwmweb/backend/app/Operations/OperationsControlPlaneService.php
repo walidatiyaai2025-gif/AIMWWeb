@@ -73,7 +73,7 @@ final class OperationsControlPlaneService
     public function dispatchDueSchedules(?Carbon $at = null): int
     {
         $at ??= now();
-        $tasks = DB::table('scheduled_tasks')->where('enabled', true)->whereNotNull('next_run_at')->where('next_run_at', '<=', $at)->orderBy('id')->get();
+        $tasks = DB::table('scheduled_tasks')->where('enabled', true)->whereNotNull('next_run_at')->where('next_run_at', '<=', $at)->orderBy('id')->limit(config('cpanel.enabled') ? 1 : 1000)->get();
         $count = 0;
         foreach ($tasks as $task) {
             DB::transaction(function () use ($task, $at, &$count): void {

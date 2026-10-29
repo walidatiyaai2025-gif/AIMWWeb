@@ -18,6 +18,10 @@ final class SetupMutationController extends Controller
 
     public function __invoke(Request $request): RedirectResponse|Response
     {
+        if (config('cpanel.enabled')) {
+            abort(404);
+        }
+
         if ($this->pageService->status()['complete']) {
             return redirect('/');
         }

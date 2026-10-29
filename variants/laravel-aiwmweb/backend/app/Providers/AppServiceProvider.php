@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\AI\AiProvider;
+use App\AI\Durable\BoundedDatabaseConnector;
+use App\AI\Durable\ExecutionPermit;
 use App\AI\HttpAiProvider;
 use App\AI\Platform\Approval\UnconfiguredPlannerApprovalGateway;
 use App\AI\Platform\Approval\UnconfiguredPlannerSiteGateway;
@@ -44,6 +46,7 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->app->scoped(ExecutionPermit::class, fn () => new ExecutionPermit);
         $this->app->scoped(TenantContext::class, fn () => new TenantContext);
         $this->app->scoped(BackgroundExecutionIdentity::class, fn () => new BackgroundExecutionIdentity);
         $this->app->bind(WordPressGateway::class, HttpWordPressGateway::class);
@@ -64,6 +67,9 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        if (config('cpanel.enabled')) {
+            $this->app->make('queue')->addConnector('database', fn () => new BoundedDatabaseConnector($this->app['db']));
+        }
         Gate::policy(TenantSecret::class, TenantSecretPolicy::class);
         Event::subscribe(SyncNotificationSubscriber::class);
 

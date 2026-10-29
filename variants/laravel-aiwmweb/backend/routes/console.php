@@ -1,5 +1,6 @@
 <?php
 
+use App\AI\Durable\BatchService;
 use App\Billing\BillingMaintenanceService;
 use App\Jobs\RuntimeQueueSmokeJob;
 use App\Models\BillingProviderCredential;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Str;
+use Symfony\Component\Process\Process;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -24,16 +26,16 @@ Artisan::command('sync:reconcile-stale {--limit=200}', function (SyncFallbackRec
     $this->line(json_encode($result, JSON_THROW_ON_ERROR));
 })->purpose('Queue bounded fallback reconciliation for stale WordPress sites');
 
-Schedule::command('sync:reconcile-stale --limit=200')
+Schedule::command(config('cpanel.enabled') ? 'sync:reconcile-stale --limit=1' : 'sync:reconcile-stale --limit=200')
     ->everyFifteenMinutes()
-    ->withoutOverlapping(14);
+    ->withoutOverlapping(14)->when(fn () => ! config('cpanel.enabled') || (config('cpanel.cron_enabled') && config('cpanel.preflight_passed')));
 
 Artisan::command('ops:dispatch-due', function (OperationsControlPlaneService $operations) {
     $count = $operations->dispatchDueSchedules();
     $this->info("Queued {$count} due tenant operation(s).");
 })->purpose('Queue due tenant-scoped scheduled operations');
 
-Schedule::command('ops:dispatch-due')->everyMinute()->withoutOverlapping();
+Schedule::command('ops:dispatch-due')->everyMinute()->withoutOverlapping()->when(fn () => ! config('cpanel.enabled') || (config('cpanel.cron_enabled') && config('cpanel.preflight_passed')));
 
 Artisan::command('billing:store-paypal-credentials', function () {
     $credentials = ['client_id' => config('billing.paypal.client_id'), 'client_secret' => config('billing.paypal.client_secret'), 'webhook_id' => config('billing.paypal.webhook_id')];
@@ -45,7 +47,7 @@ Artisan::command('billing:store-paypal-credentials', function () {
 Artisan::command('billing:maintain', function (BillingMaintenanceService $service) {
     $this->line(json_encode($service->run(), JSON_THROW_ON_ERROR));
 })->purpose('Advance billing lifecycle and reconcile provider state');
-Schedule::command('billing:maintain')->everyTenMinutes()->withoutOverlapping(9)->onOneServer();
+Schedule::command('billing:maintain')->everyTenMinutes()->withoutOverlapping(9)->onOneServer()->when(fn () => ! config('cpanel.enabled') || (config('cpanel.cron_enabled') && config('cpanel.preflight_passed')));
 
 Artisan::command('runtime:scheduler-heartbeat', function () {
     Cache::put(RuntimeHealthService::SCHEDULER_HEARTBEAT_KEY, time(), now()->addMinutes(10));
@@ -58,7 +60,7 @@ Schedule::call(function (): void {
     ->name('runtime.scheduler.heartbeat')
     ->everyMinute()
     ->withoutOverlapping(2)
-    ->onOneServer();
+    ->onOneServer()->when(fn () => ! config('cpanel.enabled') || (config('cpanel.cron_enabled') && config('cpanel.preflight_passed')));
 
 Artisan::command('runtime:health {--ready}', function () {
     $report = $this->option('ready')
@@ -221,3 +223,33 @@ Artisan::command('runtime:queue-smoke {--timeout=30}', function () {
         $tenantB->delete();
     }
 })->purpose('Dispatch two tenant-aware jobs through a real Redis worker and verify namespace isolation');
+
+Artisan::command('ai:run-one', function (BatchService $batches): void {
+    $this->line($batches->runOne());
+})->purpose('Process no more than one durable AI action and exit');
+
+Artisan::command('cpanel:tick', function (): int {
+    if (! config('cpanel.enabled') || ! config('cpanel.cron_enabled') || ! config('cpanel.preflight_passed')) {
+        $this->line('CPANEL_CRON=DISABLED');
+
+        return self::SUCCESS;
+    }
+    // No schedule:work or permanent worker. Scheduled dispatch remains opt-in;
+    // the AI path has its own durable global gate and never relies on queues.
+    foreach ([
+        ['schedule:run', [], 10],
+        ['queue:work', ['--once', '--max-jobs=1', '--tries=1', '--timeout=45', '--memory=128', '--stop-when-empty'], 45],
+        ['ai:run-one', [], 45],
+    ] as [$command, $options, $timeout]) {
+        // External bounds also cap jobs that declare a larger per-job timeout.
+        $process = new Process([PHP_BINARY, '-d', 'memory_limit=128M', base_path('artisan'), $command, ...$options]);
+        $process->setTimeout($timeout);
+        $process->run();
+        $this->line(trim($process->getOutput()));
+        if (! $process->isSuccessful()) {
+            return self::FAILURE;
+        }
+    }
+
+    return self::SUCCESS;
+})->purpose('Run a bounded cPanel scheduler/queue/AI slice without daemons');

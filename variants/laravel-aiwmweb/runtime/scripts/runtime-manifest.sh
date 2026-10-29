@@ -31,3 +31,8 @@ cat > "${OUTPUT}" <<JSON
 JSON
 
 echo "RUNTIME_MANIFEST=${OUTPUT}"
+
+# Build a candidate in the existing CI artifact job; this is not acceptance.
+if [[ "${GITHUB_ACTIONS:-false}" == true && "${GITHUB_JOB:-}" == runtime-artifacts ]]; then
+    python3 "${VARIANT_DIR}/runtime/cpanel/build-installer.py" --output "${VARIANT_DIR}/runtime/artifacts"
+fi
