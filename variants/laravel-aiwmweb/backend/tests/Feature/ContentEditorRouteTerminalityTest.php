@@ -24,6 +24,8 @@ final class ContentEditorRouteTerminalityTest extends TestCase
 
     private const OPERATION_ID = 'AIMW-CONT-2C02B7A328';
 
+    private const CLEAR_FEATURED_OPERATION_ID = 'AIMW-CONT-A6867078EA';
+
     public function test_exact_canonical_operation_matches_the_content_editor_open_route(): void
     {
         $document = json_decode(
@@ -123,6 +125,13 @@ final class ContentEditorRouteTerminalityTest extends TestCase
 
     public function test_missing_permission_invalid_route_and_cross_tenant_site_fail_closed(): void
     {
+        // ClearFeatured is strictly editor-local; the enclosing editor is still
+        // the authenticated, tenant/site-scoped route checked below.
+        $this->assertStringContainsString(
+            self::CLEAR_FEATURED_OPERATION_ID,
+            (string) file_get_contents(resource_path('js/content-editor-save-control.tsx')),
+        );
+
         $owner = User::factory()->create();
         $alpha = $this->membership($owner, 'alpha', ['content.view']);
         [$alphaSite] = $this->siteAndItem($alpha, 101);
