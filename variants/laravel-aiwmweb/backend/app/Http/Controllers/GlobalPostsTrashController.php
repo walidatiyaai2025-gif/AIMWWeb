@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Authorization\TenantAuthorizer;
 use App\Content\GlobalPostsTrashService;
+use App\Models\Site;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -20,10 +21,15 @@ final class GlobalPostsTrashController extends Controller
 
         $data = $request->validate([
             'search' => 'nullable|string|max:200',
+            'site_id' => 'nullable|integer|min:1',
             'status' => ['nullable', Rule::in(['all', 'draft', 'pending', 'publish', 'private', 'future', 'trash'])],
             'per_page' => 'nullable|integer|min:1|max:100',
             'page' => 'nullable|integer|min:1',
         ]);
+
+        if (isset($data['site_id'])) {
+            Site::query()->findOrFail((int) $data['site_id']);
+        }
 
         return response()->json($this->posts->posts($data));
     }

@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #948 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-7A726BAF5F",
+  "domain": "sync",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "source": {
+    "path": "src/AIWordPressManager.Web/Components/Pages/GlobalPostsExplorer.razor",
+    "screen": "/module/posts",
+    "handler": "ApplyAsync",
+    "behavior": "Reset to page 1 and perform tenant-authorized GET of synchronized WordPress posts with search/site/status/page size; clear current selection. Read-only filter; no WordPress mutation."
+  },
+  "implementation": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/global-posts-apply-filters-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/global-posts-confirm-trash-widget.tsx",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/GlobalPostsTrashController.php",
+    "service": "variants/laravel-aiwmweb/backend/app/Content/GlobalPostsTrashService.php",
+    "endpoint": "GET /api/v1/tenants/{tenant}/global-posts",
+    "details": "Draft filters are applied only on submit; filter revision forces a new authoritative read even with unchanged values. Tenant-scoped site filter, status, search of title/slug/body/excerpt, per-page, selection reset and error display."
+  },
+  "security": {
+    "tenant_isolation": "Tenant context from authenticated middleware; ContentItem and Site global tenant scopes.",
+    "direct_site_id": "Tenant-scoped Site::findOrFail rejects foreign tenant site IDs.",
+    "permission": "content.view for GET; tenant.view for site option list; content.edit for existing mutations.",
+    "failure": "HTTP errors displayed; no optimistic success, no WordPress mutation.",
+    "explicit_no_leaks": "No tenant/user/credentials in query."
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalPostsApplyFiltersTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-posts-apply-filters-control.test.tsx",
+    "focus": [
+      "canonical operation control",
+      "authoritative tenant-scoped GET",
+      "site IDOR",
+      "guest and RBAC",
+      "search status page size",
+      "no fake success"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-7A726BAF5F"
+    ],
+    "sibling_rows_claimed": false,
+    "aspnet_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "additional_branch_created": false
+  },
+  "provenance": {
+    "issue": 948,
+    "task_branch": "worker/948-global-posts-apply-filters",
+    "target_branch": "worker/laravel-aiwmweb-closure-composition",
+    "branch_base_sha": "ad380a6a1069fe0511a09d58e0e644565ee621cb",
+    "pcc_source_sha": "076eeb0ed3fe75200d907b111803a210e5c054c5",
+    "implementation_snapshot_sha": null,
+    "readiness": "Pending exact-source registration, official seven-stage materialization and exact-head CI."
+  }
+}
