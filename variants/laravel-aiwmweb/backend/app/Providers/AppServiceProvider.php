@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\AI\AiProvider;
+use App\AI\Durable\ExecutionPermit;
 use App\AI\HttpAiProvider;
 use App\AI\Platform\Approval\UnconfiguredPlannerApprovalGateway;
 use App\AI\Platform\Approval\UnconfiguredPlannerSiteGateway;
@@ -44,6 +45,7 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->app->scoped(ExecutionPermit::class, fn () => new ExecutionPermit);
         $this->app->scoped(TenantContext::class, fn () => new TenantContext);
         $this->app->scoped(BackgroundExecutionIdentity::class, fn () => new BackgroundExecutionIdentity);
         $this->app->bind(WordPressGateway::class, HttpWordPressGateway::class);

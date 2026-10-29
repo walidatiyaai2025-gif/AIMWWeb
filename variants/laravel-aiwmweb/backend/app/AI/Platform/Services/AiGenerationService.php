@@ -2,6 +2,8 @@
 
 namespace App\AI\Platform\Services;
 
+use App\AI\Durable\BatchService;
+use App\AI\Durable\ExecutionPermit;
 use App\AI\Platform\Contracts\AiGenerator;
 use App\AI\Platform\Contracts\AiQuotaGateway;
 use App\AI\Platform\Enums\AiFailureKind;
@@ -33,6 +35,17 @@ final class AiGenerationService implements AiGenerator
 
     public function generate(array $request): array
     {
+        if (config('cpanel.enabled') && ! app(ExecutionPermit::class)->active()) {
+            $resolved = $this->resolvePrompt($request);
+            $request['system_prompt'] = $resolved['system'];
+            $request['user_prompt'] = $resolved['user'];
+            $request['output_schema'] = $resolved['output_schema'];
+            $request['_prompt_version'] = $resolved['template']?->current_version;
+            unset($request['prompt_key']);
+
+            return app(BatchService::class)->resultOrDefer($request);
+        }
+
         $workflow = trim((string) ($request['workflow'] ?? ''));
         if ($workflow === '') {
             throw new AiPlatformException(AiFailureKind::PolicyRejection, 'AI workflow is required.', false, 422);
@@ -101,6 +114,9 @@ final class AiGenerationService implements AiGenerator
         }
 
         $candidates = $this->models->candidates($requiredCapabilities, $request['model'] ?? null);
+        if (config('cpanel.enabled') && isset($request['_provider_key'])) {
+            $candidates = array_values(array_filter($candidates, fn ($candidate) => $candidate['provider']->provider_key === $request['_provider_key']));
+        }
         if ($candidates === []) {
             $this->failGeneration($generation, AiFailureKind::ModelUnavailable, null, null, 0);
             throw new AiPlatformException(
@@ -121,7 +137,7 @@ final class AiGenerationService implements AiGenerator
             $model = $candidate['model'];
             $client = $this->providers->get($provider->adapter_key);
             $apiKey = $this->secrets->get($provider);
-            $attempts = min(max((int) $provider->max_attempts, 1), 3);
+            $attempts = config('cpanel.enabled') ? 1 : min(max((int) $provider->max_attempts, 1), 3);
 
             for ($attempt = 1; $attempt <= $attempts; $attempt++) {
                 $attemptStarted = microtime(true);
@@ -225,7 +241,7 @@ final class AiGenerationService implements AiGenerator
                         continue;
                     }
 
-                    if (! $provider->automatic_failover || $candidateIndex === array_key_last($candidates)) {
+                    if (config('cpanel.enabled') || ! $provider->automatic_failover || $candidateIndex === array_key_last($candidates)) {
                         $this->failGeneration(
                             $generation,
                             $exception->kind,

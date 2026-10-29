@@ -2,6 +2,7 @@
 
 namespace App\AI\Platform\Providers;
 
+use App\AI\Durable\ExecutionPermit;
 use App\AI\Platform\Contracts\AiProviderClient;
 use App\AI\Platform\Enums\AiFailureKind;
 use App\AI\Platform\Enums\ProviderReadiness;
@@ -31,7 +32,7 @@ final class GeminiProviderClient implements AiProviderClient
         try {
             $response = Http::acceptJson()
                 ->withHeaders(['x-goog-api-key' => (string) $apiKey])
-                ->timeout($provider->timeout_seconds)
+                ->connectTimeout(5)->timeout(config('cpanel.enabled') ? min((int) $provider->timeout_seconds, (int) config('cpanel.provider_timeout')) : $provider->timeout_seconds)
                 ->get($this->endpoint($provider).'/models/'.rawurlencode($model->model_key));
         } catch (ConnectionException) {
             return ['state' => ProviderReadiness::Unreachable->value, 'message' => 'Gemini could not be reached.'];
@@ -55,6 +56,7 @@ final class GeminiProviderClient implements AiProviderClient
 
     public function generate(AiProviderProfile $provider, AiModelProfile $model, ?string $apiKey, array $request): array
     {
+        app(ExecutionPermit::class)->beforeProviderCall($provider, $model, $request);
         $contents = [['role' => 'user', 'parts' => [['text' => $request['user']]]]];
         $payload = [
             'contents' => $contents,
@@ -77,7 +79,7 @@ final class GeminiProviderClient implements AiProviderClient
         try {
             $response = Http::acceptJson()
                 ->withHeaders(['x-goog-api-key' => (string) $apiKey])
-                ->timeout($provider->timeout_seconds)
+                ->connectTimeout(5)->timeout(config('cpanel.enabled') ? min((int) $provider->timeout_seconds, (int) config('cpanel.provider_timeout')) : $provider->timeout_seconds)
                 ->post(
                     $this->endpoint($provider).'/models/'.rawurlencode($model->model_key).':generateContent',
                     $payload,

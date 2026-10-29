@@ -121,6 +121,29 @@ export async function apiRequest<T>(url: string, init: RequestInit = {}): Promis
         );
     }
 
+    if (response.status === 202 && typeof payload?.status_url === 'string') {
+        const statusUrl = payload.status_url as string;
+        if (!statusUrl.startsWith('/api/tenants/') || statusUrl.startsWith('//')) {
+            throw new ApiError('Invalid AI task status URL.', 502, 'invalid_status_url');
+        }
+        for (let poll = 0; poll < 120; poll++) {
+            if (init.signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+            await new Promise((resolve) => setTimeout(resolve, 5000));
+            const status = await apiRequest<{ data: { state: string; completed: number; total: number; id: string } }>(statusUrl, { signal: init.signal });
+            window.dispatchEvent(new CustomEvent('aimw:ai-progress', { detail: { ...status.data, status_url: statusUrl } }));
+            if (status.data.state === 'completed') {
+                // Re-read the original domain response using its immutable persisted
+                // generation. This never makes a second provider call.
+                const finalResponse = await fetch(url, { credentials: 'same-origin', ...init, headers });
+                if (!finalResponse.ok || finalResponse.status === 202) throw new ApiError('AI result needs review.', 409, 'ai_result_pending');
+                return await finalResponse.json() as T;
+            }
+            if (status.data.state !== 'pending') {
+                throw new ApiError(`AI batch ${status.data.state}: ${status.data.completed}/${status.data.total}. Results are saved.`, 409, 'ai_batch_paused', {}, { status_url: statusUrl });
+            }
+        }
+        throw new ApiError('AI task remains queued. Saved results are available in task status.', 409, 'ai_batch_pending', {}, { status_url: statusUrl });
+    }
     return payload as T;
 }
 

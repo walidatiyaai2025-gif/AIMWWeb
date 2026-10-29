@@ -12,6 +12,10 @@ final class SetupReadController extends Controller
     {
         $status = $page->status();
 
+        if (config('cpanel.enabled')) {
+            abort(404);
+        }
+
         if ($status['complete']) {
             return redirect('/');
         }

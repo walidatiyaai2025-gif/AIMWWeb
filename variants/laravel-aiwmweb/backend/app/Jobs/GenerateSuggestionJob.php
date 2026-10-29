@@ -3,11 +3,15 @@
 namespace App\Jobs;
 
 use App\AI\AiProvider;
+use App\AI\Durable\BatchService;
+use App\AI\Durable\ExecutionPermit;
 use App\Models\AiProviderConfig;
 use App\Models\Approval;
 use App\Models\SeoFinding;
 use App\Models\Suggestion;
 use App\Models\SyncedContent;
+use App\Models\TenantMembership;
+use App\Tenancy\TenantContext;
 use Throwable;
 
 final class GenerateSuggestionJob extends TenantAwareJob
@@ -25,6 +29,19 @@ final class GenerateSuggestionJob extends TenantAwareJob
     public function handle(AiProvider $provider, JobFailureGate $failureGate): void
     {
         $suggestion = Suggestion::query()->findOrFail($this->suggestionId);
+        if (config('cpanel.enabled') && ! app(ExecutionPermit::class)->active()) {
+            if ($suggestion->status === 'ready') {
+                return;
+            }
+            $context = app(TenantContext::class);
+            $membership = TenantMembership::query()->where('user_id', $suggestion->actor_user_id)->where('status', 'active')->firstOrFail();
+            $context->activate($context->tenant(), $membership);
+            app(BatchService::class)->submit([
+                ['key' => 'suggestion', 'request' => ['_legacy_suggestion_id' => $suggestion->id]],
+            ], (int) $suggestion->site_id, 'legacy-suggestion:'.$suggestion->id);
+
+            return;
+        }
         $gate = $failureGate->canStart((int) $suggestion->site_id, self::class);
         if (! $gate->canRun) {
             $delaySeconds = $gate->resumeAtUtc === null

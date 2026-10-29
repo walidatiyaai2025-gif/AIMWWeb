@@ -12,7 +12,23 @@ use Illuminate\Queue\SerializesModels;
 
 abstract class TenantAwareJob implements ShouldBeUnique, ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable;
+    use SerializesModels {
+        __unserialize as private restoreQueueState;
+    }
+
+    public function __unserialize(array $values): void
+    {
+        // PHP 8.3 requires inherited readonly provenance to be restored in the
+        // declaring scope rather than via a child-scoped ReflectionProperty.
+        foreach (['tenantId', 'correlationId'] as $name) {
+            if (array_key_exists($name, $values)) {
+                $this->{$name} = $values[$name];
+                unset($values[$name]);
+            }
+        }
+        $this->restoreQueueState($values);
+    }
 
     public readonly ?string $correlationId;
 

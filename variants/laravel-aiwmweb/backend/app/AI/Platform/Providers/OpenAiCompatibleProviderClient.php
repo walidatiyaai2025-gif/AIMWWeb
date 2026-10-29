@@ -2,6 +2,7 @@
 
 namespace App\AI\Platform\Providers;
 
+use App\AI\Durable\ExecutionPermit;
 use App\AI\Platform\Contracts\AiProviderClient;
 use App\AI\Platform\Enums\AiFailureKind;
 use App\AI\Platform\Enums\ProviderReadiness;
@@ -29,7 +30,7 @@ final class OpenAiCompatibleProviderClient implements AiProviderClient
     public function check(AiProviderProfile $provider, ?string $apiKey, AiModelProfile $model): array
     {
         try {
-            $request = Http::acceptJson()->timeout($provider->timeout_seconds);
+            $request = Http::acceptJson()->connectTimeout(5)->timeout(config('cpanel.enabled') ? min((int) $provider->timeout_seconds, (int) config('cpanel.provider_timeout')) : $provider->timeout_seconds);
             if (filled($apiKey)) {
                 $request = $request->withToken($apiKey);
             }
@@ -61,6 +62,7 @@ final class OpenAiCompatibleProviderClient implements AiProviderClient
 
     public function generate(AiProviderProfile $provider, AiModelProfile $model, ?string $apiKey, array $request): array
     {
+        app(ExecutionPermit::class)->beforeProviderCall($provider, $model, $request);
         $messages = [];
         if (filled($request['system'] ?? null)) {
             $messages[] = ['role' => 'system', 'content' => $request['system']];
@@ -81,7 +83,7 @@ final class OpenAiCompatibleProviderClient implements AiProviderClient
         }
 
         try {
-            $http = Http::acceptJson()->timeout($provider->timeout_seconds);
+            $http = Http::acceptJson()->connectTimeout(5)->timeout(config('cpanel.enabled') ? min((int) $provider->timeout_seconds, (int) config('cpanel.provider_timeout')) : $provider->timeout_seconds);
             if (filled($apiKey)) {
                 $http = $http->withToken($apiKey);
             }

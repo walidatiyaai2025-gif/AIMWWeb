@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { AiBatchProgress } from './ai-batch-progress';
 import { apiRequest, type FrontendContext } from './core';
 import { useLocale } from './i18n';
 
@@ -79,6 +80,7 @@ export function AiCenterGenerateControl({
 
     return (
         <section className="panel workspace-stack" data-testid="ai-center-generate" data-canonical-operation={AI_CENTER_GENERATE_OPERATION_ID}>
+            <AiBatchProgress />
             <header className="panel-header">
                 <div>
                     <span className="workspace-kicker">AI COMPOSER</span>
