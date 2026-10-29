@@ -46,6 +46,7 @@ final class ContentEditorClearFeaturedTerminalityTest extends TestCase
         $this->assertStringNotContainsString('POST', $slice);
         $this->assertStringNotContainsString('success', strtolower($slice));
     }
+
     public function test_clear_featured_editor_rejects_foreign_tenant_workspace(): void
     {
         $user = User::factory()->create();
