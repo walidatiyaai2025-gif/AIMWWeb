@@ -1,11 +1,12 @@
 name: Laravel AIWMWeb Task Parity Materialize
-# trigger: merged-composition-parity
+# trigger: temporary issue-935 focused materialization
 # exact-composition-head: b477d1e8ee63d2fcf8b0ab48ded2851c28049ee3
 
 on:
   push:
     branches:
       - worker/laravel-aiwmweb-closure-composition
+      - worker/935-global-pages-draft-selected
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
       - 'variants/laravel-aiwmweb/docs/closure-evidence/**'
