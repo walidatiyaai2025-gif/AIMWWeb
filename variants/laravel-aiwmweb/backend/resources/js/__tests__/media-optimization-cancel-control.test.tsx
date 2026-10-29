@@ -23,9 +23,16 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe('AIMW-SYNC-4B986B2651 MediaManager CancelOptimizationClickedAsync', () => {
     it('drops unsaved changes locally and reloads authoritative WordPress fields next time', async () => {
-        const fetchMock = vi.fn(async () => new Response(JSON.stringify(remote), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+        let reads = 0;
+        const fetchMock = vi.fn(async () => {
+            reads++;
+            return new Response(JSON.stringify(reads === 1 ? remote : { ...remote, title: 'Updated on WordPress', alt_text: 'Current remote alt' }), {
+                status: 200, headers: { 'Content-Type': 'application/json' },
+            });
+        });
+        const onReconcile = vi.fn(async () => {});
         vi.stubGlobal('fetch', fetchMock);
-        renderControl();
+        render(<LocaleProvider><MediaOptimizationEditorControl context={context} endpoint={endpoint} row={row} onReconcile={onReconcile} /></LocaleProvider>);
         fireEvent.click(screen.getByRole('button', { name: 'Optimize metadata' }));
         await waitFor(() => expect(screen.getByLabelText('Media title')).toHaveValue('Current'));
         fireEvent.change(screen.getByLabelText('Media title'), { target: { value: 'Uncommitted title' } });
@@ -35,9 +42,12 @@ describe('AIMW-SYNC-4B986B2651 MediaManager CancelOptimizationClickedAsync', () 
         expect(screen.queryByLabelText('Media title')).not.toBeInTheDocument();
         expect(fetchMock).toHaveBeenCalledTimes(1);
         expect(fetchMock.mock.calls.every((call) => (call as unknown as [unknown, RequestInit])[1]?.method !== 'PATCH')).toBe(true);
+        expect(onReconcile).not.toHaveBeenCalled();
         fireEvent.click(screen.getByRole('button', { name: 'Optimize metadata' }));
-        await waitFor(() => expect(screen.getByLabelText('Media title')).toHaveValue('Current'));
+        await waitFor(() => expect(screen.getByLabelText('Media title')).toHaveValue('Updated on WordPress'));
+        expect(screen.getByLabelText('Media alt text')).toHaveValue('Current remote alt');
         expect(fetchMock).toHaveBeenCalledTimes(2);
+        expect(onReconcile).not.toHaveBeenCalled();
     });
 
     it('never exposes a cancel control for unauthorized or foreign tenant media', () => {
