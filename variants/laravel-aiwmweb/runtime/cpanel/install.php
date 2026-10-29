@@ -16,6 +16,9 @@ if (is_file($lockPath)) {
 }
 $https = ($_SERVER['HTTPS'] ?? '') === 'on' || ($_SERVER['SERVER_PORT'] ?? '') === '443';
 // Require hosting-owner Directory Privacy, rather than a reusable secret in ZIP.
+if ($https) {
+    header('Strict-Transport-Security: max-age=31536000');
+}
 $ownerAuthenticated = ! empty($_SERVER['REMOTE_USER']);
 if (! $https || ! $ownerAuthenticated) {
     http_response_code(403);
@@ -96,7 +99,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 'APP_URL' => rtrim($url, '/'), 'APP_KEY' => 'base64:'.base64_encode(random_bytes(32)),
                 'DB_CONNECTION' => 'mysql', 'DB_HOST' => $db['db_host'], 'DB_DATABASE' => $db['db_name'],
                 'DB_USERNAME' => $db['db_user'], 'DB_PASSWORD' => $db['db_password'],
-                'SESSION_DRIVER' => 'database', 'SESSION_SECURE_COOKIE' => 'true', 'CACHE_STORE' => 'database',
+                'SESSION_DRIVER' => 'database', 'SESSION_CONNECTION' => 'mysql', 'SESSION_SECURE_COOKIE' => 'true', 'CACHE_STORE' => 'database',
                 'QUEUE_CONNECTION' => 'database', 'AIMW_RUNTIME_PROFILE' => 'cpanel',
                 'CPANEL_AI_ENABLED' => 'false', 'CPANEL_CRON_ENABLED' => 'false', 'CPANEL_PREFLIGHT_PASSED' => 'false',
                 'LOG_CHANNEL' => 'single', 'LOG_LEVEL' => 'warning',
@@ -118,6 +121,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $app = require $appRoot.'/bootstrap/app.php';
         $app->usePublicPath(__DIR__);
         $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+        $app->make('encrypter'); // Reject missing or invalid keys without overwriting them.
         $email = (string) ($_POST['admin_email'] ?? '');
         $password = (string) ($_POST['admin_password'] ?? '');
         if (! filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($password) < 12 || strlen($password) > 255 || $password !== ($_POST['admin_password_confirmation'] ?? null)) {

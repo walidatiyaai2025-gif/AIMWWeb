@@ -46,6 +46,8 @@ class DurableAiBatchTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        config(['app.url' => 'https://localhost']);
+        $this->withServerVariables(['HTTPS' => 'on']);
         config(['app.key' => 'base64:'.base64_encode(str_repeat('x', 32)), 'cpanel.enabled' => true, 'cpanel.ai_enabled' => true, 'cpanel.cron_enabled' => true, 'cpanel.preflight_passed' => true, 'cpanel.min_interval' => 0, 'cpanel.daily_calls' => 1000, 'cpanel.daily_tokens' => 10000000, 'cpanel.batch_budget_usd' => 100, 'cpanel.daily_budget_usd' => 100]);
         $this->tenant = Tenant::query()->create(['name' => 'Alpha', 'slug' => 'alpha']);
         $user = User::factory()->create();
@@ -219,9 +221,9 @@ class DurableAiBatchTest extends TestCase
     public function test_http_submission_is_202_and_polling_never_generates(): void
     {
         $fake = $this->provider();
-        $response = $this->postJson('/api/tenants/alpha/ai-batches', ['submission_key' => 'http', 'site_id' => $this->site->id, 'actions' => $this->actions(3)]);
+        $response = $this->postJson('https://localhost/api/tenants/alpha/ai-batches', ['submission_key' => 'http', 'site_id' => $this->site->id, 'actions' => $this->actions(3)]);
         $response->assertStatus(202)->assertJsonPath('data.total', 3);
-        $this->getJson($response->json('status_url'))->assertOk()->assertJsonPath('data.completed', 0);
+        $this->getJson('https://localhost'.$response->json('status_url'))->assertOk()->assertJsonPath('data.completed', 0);
         $this->assertCount(0, $fake->calls);
     }
 
@@ -256,8 +258,8 @@ class DurableAiBatchTest extends TestCase
 
     public function test_cpanel_setup_routes_are_inaccessible(): void
     {
-        $this->get('/setup')->assertNotFound();
-        $this->post('/setup')->assertNotFound();
+        $this->get('https://localhost/setup')->assertNotFound();
+        $this->post('https://localhost/setup')->assertNotFound();
     }
 
     public function test_php83_job_round_trip_preserves_readonly_tenant_provenance(): void

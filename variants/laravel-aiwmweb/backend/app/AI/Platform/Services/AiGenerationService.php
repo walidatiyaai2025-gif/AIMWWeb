@@ -86,6 +86,8 @@ final class AiGenerationService implements AiGenerator
             'created_at' => $startedAt,
         ]);
 
+        app(ExecutionPermit::class)->recordReceipt(['generation_record_id' => $generation->id, 'correlation_id' => $correlationId]);
+
         $quota = $this->quota->check($tenantId, $userId, $workflow, 1);
         if (! ($quota['allowed'] ?? false)) {
             $kind = ($quota['code'] ?? '') === 'quota_backend_unavailable'
