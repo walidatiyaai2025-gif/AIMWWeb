@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #940 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-E3EB27C678",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-SYNC-E3EB27C678",
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "/module/pages",
+    "source": "src/AIWordPressManager.Web/Components/Pages/GlobalPagesExplorer.razor",
+    "source_intent": "RequestTrashAsync opens confirmation for a nonempty current-page selection and makes no WordPress request until explicit confirmation.",
+    "mutation": false,
+    "tenant_owned": true
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/global-pages-request-trash-control.ts",
+    "frontend_widget": "variants/laravel-aiwmweb/backend/resources/js/global-pages-confirm-trash-widget.tsx",
+    "backend": "Existing GlobalPagesTrashController::trash via authenticated tenant.context + content.edit",
+    "external": "Native WordPress REST remote trash only after ConfirmTrashAsync via GlobalPagesTrashService/ContentPlatformService",
+    "authoritative_refresh": "query.refetch() after confirmed mutation, covered by existing real remote trash tests."
+  },
+  "security": {
+    "guard": "Selection count 1..100, content.edit, no in-flight mutation.",
+    "guest_401": true,
+    "unprivileged_403": true,
+    "foreign_tenant_404": true,
+    "existing_remote_mutation_validation": true
+  },
+  "acceptance": {
+    "phpunit": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalPagesRequestTrashTerminalityTest.php",
+    "vitest": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-pages-request-trash-control.test.ts",
+    "existing_remote_tests": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalPagesConfirmTrashTerminalityTest.php"
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-E3EB27C678"
+    ],
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  }
+}

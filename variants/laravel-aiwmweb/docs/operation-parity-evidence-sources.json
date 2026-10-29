@@ -3074,6 +3074,54 @@
       ]
     },
     {
+      "label": "Issue #964 MediaBatchUploadPanel UploadClickedAsync guarded media batch",
+      "sha": "bc22c90f307d286cc70a9ffc1fd8509d955feb09",
+      "observed_pr_head": "bc22c90f307d286cc70a9ffc1fd8509d955feb09",
+      "operation_ids": [
+        "AIMW-SYNC-6766C503DA"
+      ]
+    },
+    {
+      "label": "AIMW-SYNC-38D8A24B15 Sites EnableSelectedAsync focused closure #973",
+      "sha": "5098b426828505946f1b905c4400e264b52625e0",
+      "observed_pr_head": "5098b426828505946f1b905c4400e264b52625e0",
+      "operation_ids": [
+        "AIMW-SYNC-38D8A24B15"
+      ]
+    },
+    {
+      "label": "AIMW-SYNC-7C77CF7F7A GlobalUsersWorkspace RefreshAsync focused closure #959",
+      "sha": "370a894852e38f9ab62b4937d5154c4509c1b62e",
+      "observed_pr_head": "370a894852e38f9ab62b4937d5154c4509c1b62e",
+      "operation_ids": [
+        "AIMW-SYNC-7C77CF7F7A"
+      ]
+    },
+    {
+      "label": "AIMW-SYNC-2A256826D2 GlobalMediaExplorer Open synchronization focused closure #932",
+      "sha": "840c30bdea70ab7853e204e03fb4f2c2abcda44b",
+      "observed_pr_head": "840c30bdea70ab7853e204e03fb4f2c2abcda44b",
+      "operation_ids": [
+        "AIMW-SYNC-2A256826D2"
+      ]
+    },
+    {
+      "label": "Issue #940 Global Pages RequestTrashAsync operation-scoped closure",
+      "sha": "b9b6d4854dd6ffa315ef5ab4a3ea7fec9a971132",
+      "observed_pr_head": "b9b6d4854dd6ffa315ef5ab4a3ea7fec9a971132",
+      "operation_ids": [
+        "AIMW-SYNC-E3EB27C678"
+      ]
+    },
+    {
+      "label": "Issue #941 Global Pages PublishSelectedAsync operation-scoped closure",
+      "sha": "f997f36c7763b8b54023c58386f447653012cb88",
+      "observed_pr_head": "f997f36c7763b8b54023c58386f447653012cb88",
+      "operation_ids": [
+        "AIMW-SYNC-ECAB44A389"
+      ]
+    },
+    {
       "label": "MediaManager SuggestAltClickedAsync focused #966",
       "sha": "5fa48533f6fd19fca4f2b9cc85f870f97b3d0d2f",
       "observed_pr_head": "5fa48533f6fd19fca4f2b9cc85f870f97b3d0d2f",

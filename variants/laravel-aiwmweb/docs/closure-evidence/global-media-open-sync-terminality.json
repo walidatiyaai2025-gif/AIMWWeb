@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #932 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-2A256826D2",
+  "terminal_state": "ADAPTED",
+  "domain": "sync",
+  "kind": "visible_control",
+  "canonical_operation": {
+    "operation_id": "AIMW-SYNC-2A256826D2",
+    "terminal_state": "ADAPTED",
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "/module/media",
+    "source_control": "Open synchronization",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/GlobalMediaExplorer.razor"
+  },
+  "source_intent": {
+    "behavior": "Navigate from GlobalMediaExplorer to the synchronization workspace; navigation is tenant-owned and does not execute a remote mutation."
+  },
+  "laravel_runtime": {
+    "control": "variants/laravel-aiwmweb/backend/resources/js/global-media-sync-link-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "route": "/tenants/{tenant}/module/sync",
+    "canonical_operation_marker": "AIMW-SYNC-2A256826D2",
+    "mutation": false,
+    "fabricated_success": false
+  },
+  "security": {
+    "required_permissions": [
+      "tenant.view",
+      "content.view",
+      "sync.view"
+    ],
+    "media_scope": "media.read",
+    "tenant_from_authenticated_context": true,
+    "foreign_tenant_path_encoded": true,
+    "destination_authoritative_server_boundary": "protected tenant route; server returns 404 for nonexistent foreign context, and 403 for denied roles",
+    "no_cross_tenant_navigation": true
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-media-sync-link-control.test.tsx",
+    "cases": [
+      "correct authorized destination",
+      "operation marker",
+      "forged foreign tenant URL encoded to prevent cross-tenant redirect and protected 404 boundary",
+      "missing permission fails closed before 403",
+      "disabled synchronization",
+      "missing media scope",
+      "no remote mutation"
+    ]
+  },
+  "provenance": {
+    "canonical_branch": "worker/932-global-media-open-sync",
+    "implementation_test_sha": "672c46c07a750c29951948c1a62fa96d026eb976",
+    "issue": 932
+  },
+  "scope": {
+    "only_operation_claimed": "AIMW-SYNC-2A256826D2",
+    "sibling_ops_claimed": false,
+    "aspnet_modified": false,
+    "reconciliation_hand_edited": false
+  }
+}

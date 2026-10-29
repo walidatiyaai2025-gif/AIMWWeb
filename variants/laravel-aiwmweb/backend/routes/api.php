@@ -7,6 +7,7 @@ use App\Http\Controllers\EmailNotificationController;
 use App\Http\Controllers\GlobalPagesDraftController;
 use App\Http\Controllers\GlobalPagesPendingController;
 use App\Http\Controllers\GlobalPagesPrivateController;
+use App\Http\Controllers\GlobalPagesPublishController;
 use App\Http\Controllers\GlobalPagesTrashController;
 use App\Http\Controllers\GlobalPostsPendingController;
 use App\Http\Controllers\GlobalPostsPrivateController;
@@ -67,7 +68,10 @@ Route::prefix('v1/tenants/{tenant}/sites/{site}')->middleware(['web', 'tenant.co
     Route::post('content/items/{content}/revisions/{revision}/restore', [ContentApiController::class, 'restoreRevision']);
 
     Route::get('media', [ContentApiController::class, 'media']);
-    Route::post('media', [ContentApiController::class, 'uploadMedia']);
+    Route::post('media', [ContentApiController::class, 'uploadMedia'])
+        ->middleware('auth')
+        ->defaults('canonical_operation_id', ContentApiController::MEDIA_BATCH_UPLOAD_OPERATION_ID)
+        ->name('api.v1.media.batch-upload');
     Route::get('media/{media}', [ContentApiController::class, 'mediaDetails'])->middleware('auth');
     Route::patch('media/{media}', [ContentApiController::class, 'updateMedia']);
     Route::delete('media/{media}', [ContentApiController::class, 'deleteMedia'])
@@ -149,6 +153,9 @@ Route::prefix('v1/tenants/{tenant}')
         Route::post('/global-pages/pending', [GlobalPagesPendingController::class, 'pending'])
             ->defaults('canonical_operation_id', GlobalPagesPendingController::OPERATION_ID)
             ->name('api.v1.global-pages.pending');
+        Route::post('/global-pages/publish', [GlobalPagesPublishController::class, 'publish'])
+            ->defaults('canonical_operation_id', GlobalPagesPublishController::OPERATION_ID)
+            ->name('api.v1.global-pages.publish');
         Route::post('/global-pages/trash', [GlobalPagesTrashController::class, 'trash'])
             ->defaults('canonical_operation_id', GlobalPagesTrashController::OPERATION_ID)
             ->name('api.v1.global-pages.trash');
