@@ -31644,31 +31644,21 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/global-pages-reset-control.tsx",
+      "laravel_destination": "",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "ADAPTED",
-      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-pages-reset-control.test.tsx",
-      "evidence": "Issue #942 Global Pages ResetAsync operation-scoped closure@500ef769966595f02848c8d40f586418bedafd84: variants/laravel-aiwmweb/backend/resources/js/global-pages-reset-control.tsx; focused-closure:AIMW-SYNC-FD27B795ED; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/global-pages-reset-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-pages-reset-terminality.json",
+      "migration_state": "PENDING",
+      "acceptance_test": "",
+      "evidence": "",
       "reconciliation": {
-        "decision": "ADAPTED",
-        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "Issue #942 Global Pages ResetAsync operation-scoped closure",
-        "source_sha": "500ef769966595f02848c8d40f586418bedafd84",
-        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/global-pages-reset-control.tsx",
-        "evidence_mode": "focused_closure_contract",
-        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/global-pages-reset-terminality.json",
-        "signals": [
-          "operation:AIMW-SYNC-FD27B795ED",
-          "production-marker:variants/laravel-aiwmweb/backend/resources/js/global-pages-reset-control.tsx",
-          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/global-pages-reset-control.test.tsx",
-          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-pages-reset-terminality.json",
-          "scope:operation-specific",
-          "test:tenant-isolation"
-        ]
+        "decision": "PENDING",
+        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
+        "source_label": null,
+        "source_sha": null,
+        "destination_path": null
       }
     },
     {
@@ -32689,21 +32679,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/dashboard-refresh-clicked-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DashboardRefreshClickedTerminalityTest.php",
+      "evidence": "Issue #962 Dashboard RefreshClickedAsync tenant-scoped focused closure@a5bbcea64b94469f28544162b2d34223f354c75b: variants/laravel-aiwmweb/backend/resources/js/dashboard-refresh-clicked-control.tsx; focused-closure:AIMW-SYNC-8C35E9A7A0; test:variants/laravel-aiwmweb/backend/tests/Feature/DashboardRefreshClickedTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/dashboard-refresh-clicked-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "Issue #962 Dashboard RefreshClickedAsync tenant-scoped focused closure",
+        "source_sha": "a5bbcea64b94469f28544162b2d34223f354c75b",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/dashboard-refresh-clicked-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/dashboard-refresh-clicked-terminality.json",
+        "signals": [
+          "operation:AIMW-SYNC-8C35E9A7A0",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/dashboard-refresh-clicked-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/DashboardRefreshClickedTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/dashboard-refresh-clicked-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -38358,11 +38358,11 @@
       "AIMW-SYNC-4B986B2651",
       "AIMW-SYNC-4FDCFDA33F",
       "AIMW-SYNC-7A726BAF5F",
-      "AIMW-SYNC-8C35E9A7A0",
       "AIMW-SYNC-AE16CF49C6",
       "AIMW-SYNC-B78216241F",
       "AIMW-SYNC-D5CE5A213B",
-      "AIMW-SYNC-ED1442005E"
+      "AIMW-SYNC-ED1442005E",
+      "AIMW-SYNC-FD27B795ED"
     ],
     "taxonomy": []
   },
@@ -39995,6 +39995,7 @@
       "AIMW-SYNC-8409FB077A",
       "AIMW-SYNC-8719C812DC",
       "AIMW-SYNC-89777052CB",
+      "AIMW-SYNC-8C35E9A7A0",
       "AIMW-SYNC-8D6F1C5EAA",
       "AIMW-SYNC-9504A57CAE",
       "AIMW-SYNC-9ABD7DEDBB",
@@ -40035,7 +40036,6 @@
       "AIMW-SYNC-F340B5445A",
       "AIMW-SYNC-F7BCCD650C",
       "AIMW-SYNC-F7CE702C7D",
-      "AIMW-SYNC-FD27B795ED",
       "AIMW-SYNC-FF579F0EBF",
       "AIMW-TAXO-005925568C",
       "AIMW-TAXO-39CDD7EF81",
@@ -41399,10 +41399,10 @@
         ]
       },
       {
-        "label": "Issue #942 Global Pages ResetAsync operation-scoped closure",
-        "sha": "500ef769966595f02848c8d40f586418bedafd84",
+        "label": "Issue #962 Dashboard RefreshClickedAsync tenant-scoped focused closure",
+        "sha": "a5bbcea64b94469f28544162b2d34223f354c75b",
         "operation_ids": [
-          "AIMW-SYNC-FD27B795ED"
+          "AIMW-SYNC-8C35E9A7A0"
         ]
       }
     ],
