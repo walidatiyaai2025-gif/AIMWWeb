@@ -3128,6 +3128,14 @@
       "operation_ids": [
         "AIMW-SYNC-8C35E9A7A0"
       ]
+    },
+    {
+      "label": "Issue #942 Global Pages ResetAsync operation-scoped closure",
+      "sha": "500ef769966595f02848c8d40f586418bedafd84",
+      "observed_pr_head": "500ef769966595f02848c8d40f586418bedafd84",
+      "operation_ids": [
+        "AIMW-SYNC-FD27B795ED"
+      ]
     }
   ],
   "sources": [
