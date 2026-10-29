@@ -3144,8 +3144,7 @@
       "operation_ids": [
         "AIMW-SYNC-21483C88FA"
       ]
-    }
-,
+    },
     {
       "label": "Issue #935 Global Pages DraftSelectedAsync — merged PR #1322 runtime and focused tests",
       "sha": "e3f3a6859b44bc6e6f48667c6633e1804a57fba5",
@@ -3153,7 +3152,8 @@
       "operation_ids": [
         "AIMW-SYNC-3389FB622C"
       ]
-    }  ],
+    }
+  ],
   "sources": [
     {
       "label": "AIMW-MEDI-F55A549341 GlobalMediaExplorer Posts link focused closure",
