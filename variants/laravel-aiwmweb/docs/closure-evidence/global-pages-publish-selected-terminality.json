@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #941 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-ECAB44A389",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-SYNC-ECAB44A389",
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "/module/pages",
+    "source": "src/AIWordPressManager.Web/Components/Pages/GlobalPagesExplorer.razor",
+    "source_control": "PublishSelectedAsync",
+    "source_intent": "Group selected pages by site and queue a tenant-scoped WordPress publish job for each site; report queue acceptance, not fabricated remote publication.",
+    "mutation": true,
+    "tenant_owned": true,
+    "risk": "high"
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/global-pages-confirm-trash-widget.tsx",
+    "helper": "variants/laravel-aiwmweb/backend/resources/js/global-pages-publish-selected-control.ts",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/GlobalPagesPublishController.php",
+    "route": "POST /api/v1/tenants/{tenant}/global-pages/publish",
+    "queue_job": "variants/laravel-aiwmweb/backend/app/Jobs/BulkContentMutationJob.php",
+    "permission": "content.edit",
+    "grouping": "one tenant-aware BulkContentMutationJob per selected site",
+    "action": "publish"
+  },
+  "security": {
+    "tenant_context_required": true,
+    "site_and_content_lookup_tenant_scoped": true,
+    "caller_owned_identity_fields_rejected": true,
+    "foreign_tenant": "404",
+    "foreign_site": "422 before queue dispatch",
+    "missing_content_edit": "403",
+    "duplicate_targets": "422 before queue dispatch",
+    "fake_success": false
+  },
+  "acceptance": {
+    "backend_test": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalPagesPublishSelectedTerminalityTest.php",
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-pages-publish-selected-terminality.test.ts",
+    "proofs": [
+      "exact canonical PublishSelectedAsync operation identity",
+      "existing global-pages selection without duplicate table",
+      "server-derived tenant and actor",
+      "multi-site selection grouped by tenant and site",
+      "guest, missing permission, foreign tenant/site, identity injection and duplicates fail closed"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-ECAB44A389"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  }
+}
