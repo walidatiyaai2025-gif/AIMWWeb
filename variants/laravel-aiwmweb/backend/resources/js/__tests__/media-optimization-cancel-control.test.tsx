@@ -52,6 +52,9 @@ describe('AIMW-SYNC-4B986B2651 MediaManager CancelOptimizationClickedAsync', () 
         expect(screen.getByLabelText('Media alt text')).toHaveValue('Current remote alt');
         expect(screen.getByLabelText('Media caption')).toHaveValue('Published caption');
         expect(fetchMock).toHaveBeenCalledTimes(2);
+        expect(fetchMock).toHaveBeenNthCalledWith(1, `${endpoint}/5`, expect.objectContaining({ credentials: 'same-origin' }));
+        expect(fetchMock).toHaveBeenNthCalledWith(2, `${endpoint}/5`, expect.objectContaining({ credentials: 'same-origin' }));
+        expect(fetchMock.mock.calls.every((call) => (call as unknown as [unknown, RequestInit])[1]?.method !== 'PATCH')).toBe(true);
         expect(onReconcile).not.toHaveBeenCalled();
     });
 
