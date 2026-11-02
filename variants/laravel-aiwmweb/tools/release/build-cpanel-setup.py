@@ -91,6 +91,18 @@ def cpanel_index(contents: bytes) -> bytes:
     if content.count(marker) != 1:
         raise ValueError("Cannot attach public_path to cPanel front controller.")
     content = content.replace(marker, marker+"\n$app->usePublicPath(__DIR__);")
+    # Opening the domain on a clean installation must enter the wizard
+    # automatically, not show a framework starter/500 before setup.
+    entrypoint = """if (( ! is_file(__DIR__.'/../app/.env') ||
+    is_file(__DIR__.'/../app/storage/app/aiwm-install/fresh-migration-pending.lock')) &&
+    is_file(__DIR__.'/install.php')) {
+    header('Location: /install.php', true, 302);
+    exit;
+}
+
+"""
+    content = content.replace("define('LARAVEL_START', microtime(true));",
+        "define('LARAVEL_START', microtime(true));\\n\\n" + entrypoint.replace('! ', '! '))
     return content.encode("utf-8")
 
 
