@@ -8,6 +8,7 @@ final class AIMW_Connector_Admin
     {
         add_action('admin_menu', [self::class, 'menu']);
         add_action('admin_post_aimw_connector_save', [self::class, 'save']);
+        add_action('admin_post_aimw_connector_pair', [self::class, 'pair']);
         add_action('admin_post_aimw_connector_emergency_disconnect', [self::class, 'disconnect']);
     }
 
@@ -31,6 +32,27 @@ final class AIMW_Connector_Admin
             <p><strong>Connection:</strong> <?php echo esc_html($state['connection']); ?> &nbsp; <strong>Protocol state:</strong> <?php echo esc_html($state['protocol_state']); ?></p>
             <p><strong>Connector identity:</strong> <?php echo esc_html((string) ($config['identity'] ?? 'Not paired')); ?></p>
             <p><strong>Secret:</strong> <em>stored locally and never displayed</em></p>
+
+
+            <h2>Connect to AI WordPress Manager</h2>
+            <p>First add and verify this WordPress site inside AI WordPress Manager using a WordPress Application Password. Then generate the site's one-time Connector pairing token there. Installing this plugin alone does not connect the sites.</p>
+            <?php if (isset($_GET['pair_status'])) : ?>
+                <?php if ($_GET['pair_status'] === 'connected') : ?>
+                    <div class="notice notice-success" role="status"><p>Pairing confirmed by the Laravel platform. Review the enabled scopes below.</p></div>
+                <?php else : ?>
+                    <div class="notice notice-error" role="alert"><p>Pairing failed. Verify the HTTPS platform URL and unexpired pairing token, then try again.</p></div>
+                <?php endif; ?>
+            <?php endif; ?>
+            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="max-width:640px">
+                <input type="hidden" name="action" value="aimw_connector_pair">
+                <?php wp_nonce_field('aimw_connector_pair'); ?>
+                <p><label for="aimw-platform-url"><strong>Laravel platform HTTPS URL</strong></label><br>
+                    <input id="aimw-platform-url" type="url" name="platform_url" value="<?php echo esc_attr((string) ($config['platform_url'] ?? '')); ?>" placeholder="https://aiwm.example.com" class="regular-text" required></p>
+                <p><label for="aimw-pair-token"><strong>One-time pairing token (expires in 10 minutes)</strong></label><br>
+                    <input id="aimw-pair-token" type="password" name="pairing_token" class="regular-text" autocomplete="off" required></p>
+                <p><button class="button button-primary" type="submit">Pair with Laravel platform</button></p>
+            </form>
+            <p>Pairing uses an authenticated WordPress administrator session. The token is never stored in this settings form; do not share it or paste it into public logs.</p>
 
             <h2>Owner-enabled scopes</h2>
             <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
@@ -76,6 +98,35 @@ final class AIMW_Connector_Admin
             </form>
         </div>
         <?php
+    }
+
+
+    public static function pair(): void
+    {
+        self::guard('aimw_connector_pair');
+        $url = isset($_POST['platform_url']) && is_string($_POST['platform_url'])
+            ? esc_url_raw(wp_unslash($_POST['platform_url']))
+            : '';
+        $token = isset($_POST['pairing_token']) && is_string($_POST['pairing_token'])
+            ? sanitize_text_field(wp_unslash($_POST['pairing_token']))
+            : '';
+
+        $valid = parse_url($url, PHP_URL_SCHEME) === 'https'
+            && wp_http_validate_url($url) !== false
+            && $token !== '' && strlen($token) <= 4096;
+        $status = 'failed';
+        if ($valid) {
+            $request = new WP_REST_Request('POST', '/aimw/v1/pair');
+            $request->set_param('platform_url', $url);
+            $request->set_param('pairing_token', $token);
+            $result = AIMW_Connector_V1::pair($request);
+            if (! is_wp_error($result) && is_array($result) && ! empty($result['paired'])) {
+                $status = 'connected';
+            }
+        }
+
+        wp_safe_redirect(add_query_arg('pair_status', $status, admin_url('tools.php?page=aimw-connector')));
+        exit;
     }
 
     public static function save(): void
