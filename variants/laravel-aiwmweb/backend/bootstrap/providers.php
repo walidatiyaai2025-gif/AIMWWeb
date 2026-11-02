@@ -32,6 +32,7 @@ use App\Providers\SitesConnectRouteServiceProvider;
 use App\Providers\SiteSettingsRouteServiceProvider;
 use App\Providers\SubscriptionPlansAdminRouteServiceProvider;
 use App\Providers\SystemHealthRouteServiceProvider;
+use App\Providers\SystemUpdateRouteServiceProvider;
 
 return [
     AppServiceProvider::class,
@@ -66,4 +67,5 @@ return [
     SeoVisibleControlRouteServiceProvider::class,
     SubscriptionPlansAdminRouteServiceProvider::class,
     SystemHealthRouteServiceProvider::class,
+    SystemUpdateRouteServiceProvider::class,
 ];
