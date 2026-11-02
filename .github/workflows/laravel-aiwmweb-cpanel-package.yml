@@ -86,6 +86,30 @@ jobs:
                   assert hashlib.sha256(archive.read(path)).hexdigest() == expected, path
               print("Verified one-ZIP cPanel setup from exact SHA", manifest["source_sha"])
 
+      - name: Smoke-test extracted Setup ZIP and one-time existing-install wizard
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$(mktemp -d)"
+          unzip -q artifacts/cpanel/AIWMWeb-Laravel-Setup.zip -d "$root"
+          php -l "$root/public/index.php"
+          php -l "$root/public/install.php"
+          php -r 'echo "APP_NAME=AIWMWeb\nAPP_ENV=production\nAPP_DEBUG=false\nAPP_KEY=base64:".base64_encode(random_bytes(32))."\nAPP_URL=https://example.invalid\nDB_CONNECTION=sqlite\nDB_DATABASE=:memory:\nCACHE_STORE=file\nSESSION_DRIVER=file\nQUEUE_CONNECTION=sync\n";' > "$root/app/.env"
+          php -r '$_SERVER["HTTPS"]="on"; $_SERVER["REQUEST_METHOD"]="GET"; include $argv[1];' \
+            "$root/public/install.php" > /tmp/aiwm-setup-greeting.html
+          grep -q "AIWMWeb" /tmp/aiwm-setup-greeting.html
+          test -s "$root/app/storage/app/aiwm-install/owner-code.txt"
+          export AIWM_OWNER_CODE
+          AIWM_OWNER_CODE="$(cat "$root/app/storage/app/aiwm-install/owner-code.txt")"
+          php -r '$_SERVER["HTTPS"]="on"; $_SERVER["REQUEST_METHOD"]="POST"; $_POST=["owner_code"=>getenv("AIWM_OWNER_CODE"),"backup_confirm"=>"yes"]; include $argv[1];' \
+            "$root/public/install.php" > /tmp/aiwm-setup-finished.html
+          grep -q 'AIWM_UPDATES_ENABLED="true"' "$root/app/.env"
+          grep -q '^AIWM_UPDATES_PUBLIC_KEY=' "$root/app/.env"
+          test -s "$root/app/storage/app/aiwm-install/installed.lock"
+          test ! -e "$root/public/install.php"
+          grep -q "تم تجهيز AIWMWeb" /tmp/aiwm-setup-finished.html
+          echo "Extracted Setup ZIP, owner proof, updater activation and one-time lock verified."
+
       - name: Sign admin update only on approved manual release from green main
         env:
           AIWM_UPDATES_SECRET_KEY: ${{ secrets.AIWM_UPDATES_SECRET_KEY }}
