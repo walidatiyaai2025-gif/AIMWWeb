@@ -1,0 +1,108 @@
+name: Laravel AIWMWeb cPanel Setup ZIP
+
+on:
+  pull_request:
+    paths:
+      - 'variants/laravel-aiwmweb/**'
+      - '.github/workflows/laravel-aiwmweb-cpanel-package.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'variants/laravel-aiwmweb/**'
+      - '.github/workflows/laravel-aiwmweb-cpanel-package.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-cpanel-zip:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Prepare PHP 8.4 and required extensions
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_mysql, pdo_sqlite, zip, sodium, fileinfo, openssl
+          coverage: none
+
+      - name: Install production Composer dependencies
+        working-directory: variants/laravel-aiwmweb/backend
+        run: composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction --no-progress
+
+      - name: Install and build production frontend
+        working-directory: variants/laravel-aiwmweb/backend
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+
+      - name: Check installer PHP syntax and packager Python
+        run: |
+          php -l variants/laravel-aiwmweb/tools/release/cpanel-one-time-install.php
+          python3 -m py_compile variants/laravel-aiwmweb/tools/release/build-cpanel-setup.py
+
+      - name: Produce full installable Laravel Setup ZIP
+        shell: bash
+        run: |
+          mkdir -p artifacts/cpanel
+          python3 variants/laravel-aiwmweb/tools/release/build-cpanel-setup.py \
+            --sha "$GITHUB_SHA" \
+            --output artifacts/cpanel/AIWMWeb-Laravel-Setup.zip
+
+      - name: Verify artifact safety and runnable layout
+        shell: python
+        run: |
+          from pathlib import PurePosixPath
+          from zipfile import ZipFile
+          import hashlib, json, pathlib
+          name = pathlib.Path("artifacts/cpanel/AIWMWeb-Laravel-Setup.zip")
+          with ZipFile(name) as archive:
+              members = archive.namelist()
+              required = [
+                  "app/vendor/autoload.php", "app/artisan", "app/bootstrap/app.php",
+                  "app/.env.example", "public/index.php", "public/.htaccess",
+                  "public/build/manifest.json", "public/install.php",
+                  "SETUP-MANIFEST.json", "START-HERE.txt",
+              ]
+              for path in required:
+                  assert path in members, f"Missing required deployable: {path}"
+              assert "app/.env" not in members, "NEVER bundle production secrets"
+              assert not any(n.startswith("app/storage/") and not n.endswith("/") for n in members)
+              for n in members:
+                  p = PurePosixPath(n)
+                  assert not p.is_absolute() and ".." not in p.parts and "\\" not in n
+              index = archive.read("public/index.php").decode()
+              assert "../app/vendor/autoload.php" in index and "usePublicPath(__DIR__)" in index
+              manifest = json.loads(archive.read("SETUP-MANIFEST.json"))
+              assert manifest["source_sha"] == "${{ github.sha }}"
+              for path, expected in manifest["files"].items():
+                  assert hashlib.sha256(archive.read(path)).hexdigest() == expected, path
+              print("Verified one-ZIP cPanel setup from exact SHA", manifest["source_sha"])
+
+      - name: Generate signed admin update ZIP when release key is provisioned
+        env:
+          AIWM_UPDATES_SECRET_KEY: ${{ secrets.AIWM_UPDATES_SECRET_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" != "pull_request" && -n "${AIWM_UPDATES_SECRET_KEY:-}" ]]; then
+            php variants/laravel-aiwmweb/tools/release/build-signed-update.php \
+              "1.0.$GITHUB_RUN_NUMBER" "$GITHUB_SHA" artifacts/cpanel
+            test -s artifacts/cpanel/AIWMWeb-Laravel-signed-bundle.zip
+          else
+            echo "Signed update not produced: provision AIWM_UPDATES_SECRET_KEY on a trusted main workflow."
+          fi
+
+      - name: Upload full Setup ZIP and optional signed update
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIWMWeb-Laravel-cPanel-${{ github.sha }}
+          path: artifacts/cpanel/
+          if-no-files-found: error
+          retention-days: 30
