@@ -96,4 +96,26 @@ file_put_contents(
     $output.'/AIWMWeb-Laravel-release.sig',
     base64_encode(sodium_crypto_sign_detached($json, $private))."\n"
 );
-fwrite(STDOUT, "Built signed release ".$argv[1]." @ ".$argv[2]." (".count($hashes)." files). Publish all three artifacts on one approved stable GitHub release.\n");
+$bundleName = 'AIWMWeb-Laravel-signed-bundle.zip';
+$bundle = new ZipArchive;
+
+if ($bundle->open($output.'/'.$bundleName, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+    throw new RuntimeException('Cannot create one-file signed update bundle.');
+}
+
+foreach (['AIWMWeb-Laravel-release.json', 'AIWMWeb-Laravel-release.sig', $packageName] as $assetName) {
+    if (! $bundle->addFile($output.'/'.$assetName, $assetName)) {
+        throw new RuntimeException('Cannot include a signed asset in upload bundle.');
+    }
+
+    if ($assetName === $packageName) {
+        $bundle->setCompressionName($assetName, ZipArchive::CM_STORE);
+    }
+}
+
+if (! $bundle->close() || filesize($output.'/'.$bundleName) > 167772160) {
+    throw new RuntimeException('Signed upload bundle exceeds 160 MiB.');
+}
+
+fwrite(STDOUT, "Built signed release ".$argv[1]." @ ".$argv[2]." (".count($hashes)." files). GitHub: publish the three individual assets. Admin upload: use ".$bundleName.". Do not expose the secret signing key.\n");
+
