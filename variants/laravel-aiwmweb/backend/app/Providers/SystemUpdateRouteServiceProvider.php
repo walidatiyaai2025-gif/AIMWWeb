@@ -16,6 +16,7 @@ final class SystemUpdateRouteServiceProvider extends ServiceProvider
                 Route::get('/', [SystemUpdateController::class, 'index'])->name('platform.updates.index');
                 Route::post('/check', [SystemUpdateController::class, 'check'])->name('platform.updates.check');
                 Route::post('/install', [SystemUpdateController::class, 'install'])->name('platform.updates.install');
+                Route::post('/upload', [SystemUpdateController::class, 'upload'])->name('platform.updates.upload');
             });
     }
 }
