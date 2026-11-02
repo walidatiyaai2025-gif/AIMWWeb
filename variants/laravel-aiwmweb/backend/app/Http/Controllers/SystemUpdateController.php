@@ -15,11 +15,14 @@ final class SystemUpdateController extends Controller
     {
         $file = storage_path('app/system-updates/history.jsonl');
         $entries = [];
+
         if (is_file($file)) {
             // The journal is a local, append-only provenance log; limit display size.
             $lines = @file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [];
+
             foreach (array_slice($lines, -8) as $line) {
                 $record = json_decode($line, true);
+
                 if (is_array($record)) {
                     $entries[] = $record;
                 }
@@ -42,6 +45,7 @@ final class SystemUpdateController extends Controller
                 'sha' => $latest['sha'],
                 'available' => $latest['available'],
             ]);
+
             return back()->with('status', $latest['available']
                 ? 'A newer signed release has been verified.'
                 : 'No newer approved signed release is available.');
@@ -53,14 +57,17 @@ final class SystemUpdateController extends Controller
     public function install(Request $request, SystemUpdateService $updates): RedirectResponse
     {
         $request->validate(['confirmation' => ['required', 'in:INSTALL']]);
+
         try {
             $receipt = $updates->install((int) $request->user()->getAuthIdentifier());
+
             return redirect()->route('platform.updates.index')->with(
                 'status',
                 'Installed signed release '.$receipt['version'].' ('.substr($receipt['sha'], 0, 12).').'
             );
         } catch (Throwable $e) {
             report($e);
+
             return redirect()->route('platform.updates.index')->withErrors([
                 'update' => $e instanceof RuntimeException ? $e->getMessage() : 'Update failed; review server logs and recovery snapshot.',
             ]);
