@@ -34,13 +34,13 @@ jobs:
       run:
         working-directory: variants/laravel-aiwmweb/backend
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
           extensions: mbstring, pdo_sqlite, sqlite3, redis
           coverage: none
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: ~/.cache/composer/files
           key: composer-${{ runner.os }}-php84-${{ hashFiles('variants/laravel-aiwmweb/backend/composer.lock') }}

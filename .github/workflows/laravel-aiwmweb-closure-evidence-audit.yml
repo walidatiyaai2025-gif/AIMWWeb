@@ -17,13 +17,13 @@ jobs:
   audit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: Audit existing closure evidence without regenerating parity
         run: python variants/laravel-aiwmweb/tools/audit_closure_inventory.py
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: laravel-aiwmweb-closure-evidence-audit
           path: variants/laravel-aiwmweb/docs/closure-evidence-audit.json

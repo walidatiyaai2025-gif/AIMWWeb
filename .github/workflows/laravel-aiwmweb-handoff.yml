@@ -138,7 +138,7 @@ jobs:
         if: >-
           (github.event_name == 'workflow_dispatch' && inputs.command == 'advance') ||
           (github.event_name == 'pull_request' && env.PR_MERGED == 'true' && env.PR_BASE == 'worker/laravel-aiwmweb-closure-composition')
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: worker/laravel-aiwmweb-closure-composition
           fetch-depth: 1
