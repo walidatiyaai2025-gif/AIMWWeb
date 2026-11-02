@@ -158,6 +158,7 @@ final class SystemUpdateService
                         throw new RuntimeException('File replacement verification failed.');
                     }
                 }
+                Artisan::call('optimize:clear');
                 $this->atomicJson($this->dataPath('installed.json'), $receipt);
             } catch (Throwable $e) {
                 $this->restoreBackup($backup);
