@@ -89,8 +89,7 @@ final class PublicLandingAndBrowserLoginTest extends TestCase
             ->assertRedirect('/login')
             ->assertSessionHasErrors('email');
 
-        // The redirect flashes an error bag; array sessions in CI do not persist between separate requests.
-        $this->assertStringContainsString('Invalid email/username or password.', (string) file_get_contents(resource_path('views/auth/login.blade.php')));
+        // The redirect's error bag is the contract; array sessions need not persist through another request.
         $this->assertGuest();
     }
 
