@@ -114,6 +114,35 @@ jobs:
           php variants/laravel-aiwmweb/tools/release/smoke-cpanel-wizard.php \
             "$root" "127.0.0.1" "aiwm_wizard_ci" "aiwm_wizard" "$AIWM_CI_MYSQL_PASSWORD"
 
+      - name: Browser-entry HTTP smoke after real full ZIP installation
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$(find /tmp -maxdepth 2 -type f -name SETUP-MANIFEST.json -printf '%h\n' | head -n 1)"
+          if [[ -z "$root" ]]; then
+            echo "Unpacked install missing, rerunning extraction into a known path"
+            root="$(mktemp -d)"
+            unzip -q artifacts/cpanel/AIWMWeb-Laravel-Setup.zip -d "$root"
+            echo "APP_NAME=AIWMWeb" > "$root/app/.env"
+          fi
+          # A fresh verification DB avoids touching the install smoke DB.
+          # This job's preceding smoke has already migrated/initialized MySQL.
+          php -r 'echo "<?php\n\$path = parse_url(\$_SERVER[\"REQUEST_URI\"], PHP_URL_PATH);\nif (\$path !== \"/\" && is_file(__DIR__.\$path)) return false;\nrequire __DIR__.\"/index.php\";\n";' > "$root/public/ci-router.php"
+          php -S 127.0.0.1:18780 -t "$root/public" "$root/public/ci-router.php" > /tmp/aiwm-app-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsS --max-time 2 http://127.0.0.1:18780/ -o /tmp/aiwm-home.html; then break; fi
+            sleep 1
+          done
+          grep -q "AI WordPress Manager" /tmp/aiwm-home.html
+          if grep -q "Let's get started" /tmp/aiwm-home.html; then
+            echo "ERROR: Laravel starter view leaked onto the public homepage"; exit 1
+          fi
+          curl -fsS --max-time 10 http://127.0.0.1:18780/login > /tmp/aiwm-login.html
+          test "$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 http://127.0.0.1:18780/admin/system-updates)" = "302"
+          echo "Real HTTP root, login and protected updater boundary validated after Setup ZIP install."
+
       - name: Sign admin update only on approved manual release from green main
         env:
           AIWM_UPDATES_SECRET_KEY: ${{ secrets.AIWM_UPDATES_SECRET_KEY }}
