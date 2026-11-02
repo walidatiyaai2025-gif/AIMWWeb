@@ -28,7 +28,7 @@ final class PublicLandingAndBrowserLoginTest extends TestCase
             ->assertSee('AI WordPress Manager')
             ->assertSee('المميزات')
             ->assertSee('Application Password')
-            ->assertSee('href="/login"', false)
+            ->assertSee('href="'.url('/login').'"', false)
             ->assertDontSee('Laravel 13');
 
         $this->get('/?lang=en')
