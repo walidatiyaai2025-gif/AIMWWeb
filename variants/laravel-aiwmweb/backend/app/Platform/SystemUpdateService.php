@@ -2,6 +2,7 @@
 
 namespace App\Platform;
 
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
@@ -92,25 +93,7 @@ final class SystemUpdateService
 
         $manifestBytes = $this->downloadSmall($assets[self::MANIFEST]['url'], 4194304);
         $signatureBytes = $this->downloadSmall($assets[self::SIGNATURE]['url'], 4096);
-        $signature = base64_decode(trim($signatureBytes), true);
-
-        if ($signature === false || strlen($signature) !== SODIUM_CRYPTO_SIGN_BYTES ||
-            ! sodium_crypto_sign_verify_detached($signature, $manifestBytes, $this->publicKey())) {
-            throw new RuntimeException('Release manifest signature could not be verified.');
-        }
-
-        $manifest = json_decode($manifestBytes, true);
-
-        if (! is_array($manifest) ||
-            ($manifest['product'] ?? '') !== 'LARAVEL_AIWMWEB' ||
-            ! preg_match('/^[0-9]+\.[0-9]+\.[0-9]+$/D', (string) ($manifest['version'] ?? '')) ||
-            ! preg_match('/^[a-f0-9]{40}$/D', (string) ($manifest['sha'] ?? '')) ||
-            ! preg_match('/^[a-f0-9]{64}$/D', (string) ($manifest['sha256'] ?? '')) ||
-            ($manifest['package'] ?? '') !== self::PACKAGE ||
-            ! is_array($manifest['files'] ?? null) || $manifest['files'] === [] ||
-            count($manifest['files']) > self::MAX_FILES) {
-            throw new RuntimeException('Release manifest is invalid.');
-        }
+        $manifest = $this->verifySignedManifest($manifestBytes, $signatureBytes);
 
         $current = $this->state()['version'];
         $available = version_compare($manifest['version'], $current, '>');
@@ -125,7 +108,7 @@ final class SystemUpdateService
         ];
     }
 
-    public function install(int $actorId): array
+    public function install(int $actorId, ?UploadedFile $uploadedBundle = null): array
     {
         $this->assertReady();
         $folder = $this->dataPath('');
@@ -143,12 +126,6 @@ final class SystemUpdateService
         $work = null;
 
         try {
-            $release = $this->latest();
-
-            if (! $release['available']) {
-                throw new RuntimeException('This release is not newer than the installed version.');
-            }
-
             $id = bin2hex(random_bytes(12));
             $work = $this->dataPath('work/'.$id);
 
@@ -157,13 +134,24 @@ final class SystemUpdateService
             }
 
             $zipPath = $work.'/package.zip';
-            $asset = $release['package_asset'];
-            $response = Http::timeout(180)->withOptions(['sink' => $zipPath])->get($asset['url']);
 
-            if (! $response->successful() || ! is_file($zipPath) ||
-                filesize($zipPath) < 1 || filesize($zipPath) > self::MAX_PACKAGE ||
-                ! hash_equals($release['manifest']['sha256'], hash_file('sha256', $zipPath))) {
-                throw new RuntimeException('Package download or SHA-256 verification failed.');
+            if ($uploadedBundle !== null) {
+                // Only signed three-part release bundles are accepted; never raw ZIP source.
+                $release = $this->unpackUploadedBundle($uploadedBundle, $zipPath);
+            } else {
+                $release = $this->latest();
+                $asset = $release['package_asset'];
+                $response = Http::timeout(180)->withOptions(['sink' => $zipPath])->get($asset['url']);
+
+                if (! $response->successful() || ! is_file($zipPath) ||
+                    filesize($zipPath) < 1 || filesize($zipPath) > self::MAX_PACKAGE ||
+                    ! hash_equals($release['manifest']['sha256'], hash_file('sha256', $zipPath))) {
+                    throw new RuntimeException('Package download or SHA-256 verification failed.');
+                }
+            }
+
+            if (! $release['available']) {
+                throw new RuntimeException('This release is not newer than the installed version.');
             }
 
             $files = $this->stageZip($zipPath, $work.'/staged', $release['manifest']['files']);
@@ -224,6 +212,143 @@ final class SystemUpdateService
             flock($lock, LOCK_UN);
             fclose($lock);
         }
+    }
+
+    /**
+     * Unpack a one-file transport wrapper. The verified INNER ZIP remains the
+     * exact artifact covered by the signed SHA256 and per-file hashes.
+     *
+     * @return array{version:string,sha:string,available:bool,manifest:array}
+     */
+    private function unpackUploadedBundle(UploadedFile $bundle, string $destination): array
+    {
+        $source = $bundle->getRealPath();
+
+        if (! $bundle->isValid() || $source === false || ! is_file($source) ||
+            filesize($source) < 1 || filesize($source) > 167772160) {
+            throw new RuntimeException('Uploaded update ZIP is missing or exceeds the 160 MiB limit.');
+        }
+
+        $archive = new ZipArchive;
+
+        if ($archive->open($source) !== true) {
+            throw new RuntimeException('Uploaded update is not a ZIP archive.');
+        }
+
+        try {
+            $names = [self::MANIFEST, self::SIGNATURE, self::PACKAGE];
+
+            if ($archive->numFiles !== count($names)) {
+                throw new RuntimeException('The update ZIP must contain exactly three signed release assets.');
+            }
+
+            $maxSizes = [self::MANIFEST => 4194304, self::SIGNATURE => 4096, self::PACKAGE => self::MAX_PACKAGE];
+            $seen = [];
+
+            for ($index = 0; $index < $archive->numFiles; $index++) {
+                $stat = $archive->statIndex($index);
+                $name = $stat['name'] ?? '';
+
+                if (! in_array($name, $names, true) || isset($seen[$name]) ||
+                    (int) ($stat['size'] ?? -1) < 1 ||
+                    (int) ($stat['size'] ?? -1) > $maxSizes[$name]) {
+                    throw new RuntimeException('Uploaded ZIP contains an unexpected, duplicate or oversized asset.');
+                }
+
+                $seen[$name] = true;
+                $archive->getExternalAttributesIndex($index, $opsys, $attributes);
+
+                if ($opsys === ZipArchive::OPSYS_UNIX && (($attributes >> 16) & 0170000) === 0120000) {
+                    throw new RuntimeException('Symlinks are forbidden in update bundles.');
+                }
+            }
+
+            if (count($seen) !== count($names)) {
+                throw new RuntimeException('Uploaded ZIP is missing signed release assets.');
+            }
+
+            $manifestBytes = $archive->getFromName(self::MANIFEST);
+            $signatureBytes = $archive->getFromName(self::SIGNATURE);
+
+            if ($manifestBytes === false || $signatureBytes === false) {
+                throw new RuntimeException('Cannot read signed release metadata from uploaded ZIP.');
+            }
+
+            $manifest = $this->verifySignedManifest($manifestBytes, $signatureBytes);
+            $input = $archive->getStream(self::PACKAGE);
+            $output = fopen($destination, 'wb');
+
+            if (! $input || ! $output) {
+                if ($input) {
+                    fclose($input);
+                }
+
+                if ($output) {
+                    fclose($output);
+                }
+
+                throw new RuntimeException('Cannot stage the signed package.');
+            }
+
+            try {
+                $count = stream_copy_to_stream($input, $output, self::MAX_PACKAGE + 1);
+            } finally {
+                fclose($input);
+                fclose($output);
+            }
+
+            if ($count !== $archive->statName(self::PACKAGE)['size'] ||
+                ! is_file($destination) || filesize($destination) > self::MAX_PACKAGE ||
+                ! hash_equals($manifest['sha256'], hash_file('sha256', $destination))) {
+                throw new RuntimeException('Uploaded package does not match the signed SHA256.');
+            }
+
+            $current = $this->state()['version'];
+
+            return [
+                'version' => $manifest['version'],
+                'sha' => $manifest['sha'],
+                'available' => version_compare($manifest['version'], $current, '>'),
+                'manifest' => $manifest,
+            ];
+        } finally {
+            $archive->close();
+        }
+    }
+
+    /** Validate identical signature + manifest contract for GitHub and uploaded bundles. */
+    private function verifySignedManifest(string $manifestBytes, string $signatureBytes): array
+    {
+        $signature = base64_decode(trim($signatureBytes), true);
+
+        if ($signature === false || strlen($signature) !== SODIUM_CRYPTO_SIGN_BYTES ||
+            ! sodium_crypto_sign_verify_detached($signature, $manifestBytes, $this->publicKey())) {
+            throw new RuntimeException('Release manifest signature could not be verified.');
+        }
+
+        $manifest = json_decode($manifestBytes, true);
+
+        if (! is_array($manifest) ||
+            ($manifest['product'] ?? '') !== 'LARAVEL_AIWMWEB' ||
+            ! preg_match('/^[0-9]+\.[0-9]+\.[0-9]+$/D', (string) ($manifest['version'] ?? '')) ||
+            ! preg_match('/^[a-f0-9]{40}$/D', (string) ($manifest['sha'] ?? '')) ||
+            ! preg_match('/^[a-f0-9]{64}$/D', (string) ($manifest['sha256'] ?? '')) ||
+            ($manifest['package'] ?? '') !== self::PACKAGE ||
+            ! is_array($manifest['files'] ?? null) || $manifest['files'] === [] ||
+            count($manifest['files']) > self::MAX_FILES) {
+            throw new RuntimeException('Release manifest is invalid.');
+        }
+
+        foreach ($manifest['files'] as $name => $hash) {
+            if (! is_string($name) || ! is_string($hash) ||
+                ! preg_match('/^[a-f0-9]{64}$/D', $hash)) {
+                throw new RuntimeException('Release file manifest is invalid.');
+            }
+
+            $this->validatePath($name);
+        }
+
+        return $manifest;
     }
 
     private function assertReady(): void
