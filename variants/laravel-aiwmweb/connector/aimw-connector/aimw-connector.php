@@ -2,7 +2,7 @@
 /**
  * Plugin Name: AIMW Connector
  * Description: Signed, scoped semantic operations for Laravel AIWMWeb.
- * Version: 0.2.0
+ * Version: 0.2.1
  * Requires PHP: 8.0
  */
 
@@ -15,7 +15,7 @@ require_once __DIR__.'/includes/class-aimw-connector-admin.php';
 
 final class AIMW_Connector_V1
 {
-    public const PLUGIN_VERSION = '0.2.0';
+    public const PLUGIN_VERSION = '0.2.1';
     public const PROTOCOL_VERSION = '1';
     public const CLOCK_SKEW_SECONDS = 300;
     private const NS = 'aimw/v1';
