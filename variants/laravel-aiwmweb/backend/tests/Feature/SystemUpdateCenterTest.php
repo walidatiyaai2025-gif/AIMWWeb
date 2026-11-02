@@ -131,7 +131,7 @@ final class SystemUpdateCenterTest extends TestCase
 
         try {
             $inner = new ZipArchive;
-            $this->assertTrue($inner->open($payload, ZipArchive::OVERWRITE) === true);
+            $this->assertTrue($inner->open($payload, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true);
             $contents = "<?php\n// Update bundle verification fixture.\n";
             $inner->addFromString('app/SignedUpdateMarker.php', $contents);
             $this->assertTrue($inner->close());
@@ -146,7 +146,7 @@ final class SystemUpdateCenterTest extends TestCase
             ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
 
             $bundle = new ZipArchive;
-            $this->assertTrue($bundle->open($bundlePath, ZipArchive::OVERWRITE) === true);
+            $this->assertTrue($bundle->open($bundlePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true);
             $bundle->addFromString('AIWMWeb-Laravel-release.json', $manifest);
             $bundle->addFromString('AIWMWeb-Laravel-release.sig', base64_encode(
                 sodium_crypto_sign_detached($manifest, sodium_crypto_sign_secretkey($keys)),
