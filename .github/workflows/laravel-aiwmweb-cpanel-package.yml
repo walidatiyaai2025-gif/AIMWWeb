@@ -109,6 +109,7 @@ jobs:
           set -euo pipefail
           root="$(mktemp -d)"
           unzip -q artifacts/cpanel/AIWMWeb-Laravel-Setup.zip -d "$root"
+          echo "AIWM_SMOKE_ROOT=$root" >> "$GITHUB_ENV"
           php -l "$root/public/index.php"
           php -l "$root/public/install.php"
           php variants/laravel-aiwmweb/tools/release/smoke-cpanel-wizard.php \
@@ -118,13 +119,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          root="$(find /tmp -maxdepth 2 -type f -name SETUP-MANIFEST.json -printf '%h\n' | head -n 1)"
-          if [[ -z "$root" ]]; then
-            echo "Unpacked install missing, rerunning extraction into a known path"
-            root="$(mktemp -d)"
-            unzip -q artifacts/cpanel/AIWMWeb-Laravel-Setup.zip -d "$root"
-            echo "APP_NAME=AIWMWeb" > "$root/app/.env"
-          fi
+          root="${AIWM_SMOKE_ROOT:?CI smoke must export its own extracted ZIP path}"
+          test -s "$root/SETUP-MANIFEST.json"
+          test -s "$root/app/.env"
           # A fresh verification DB avoids touching the install smoke DB.
           # This job's preceding smoke has already migrated/initialized MySQL.
           php -r 'echo "<?php\n\$path = parse_url(\$_SERVER[\"REQUEST_URI\"], PHP_URL_PATH);\nif (\$path !== \"/\" && is_file(__DIR__.\$path)) return false;\nrequire __DIR__.\"/index.php\";\n";' > "$root/public/ci-router.php"
