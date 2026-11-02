@@ -46,6 +46,10 @@ class SetupMutationTerminalityTest extends TestCase
 
         $user = User::query()->sole();
         $this->assertSame('owner@example.test', $user->email);
+        $this->assertTrue($user->platform_admin, 'The first setup owner must be able to access platform system updates.');
+        $this->actingAs($user)->get('/admin/system-updates')->assertOk();
+        auth()->logout();
+
         $this->assertNotSame($password, $user->getRawOriginal('password'));
         $this->assertTrue(Hash::check($password, $user->getRawOriginal('password')));
 
