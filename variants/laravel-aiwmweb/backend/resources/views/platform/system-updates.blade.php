@@ -86,6 +86,27 @@
         @else
             <div class="alert">{{ $t('Setup is required once: configure the release-signing public key and enable approved updates on the server. Installation is disabled until then.', 'يلزم الإعداد الأول مرة واحدة: وضع المفتاح العام للتحقق من توقيع الإصدار وتفعيل التحديثات على السيرفر. التثبيت معطّل حتى ذلك الوقت.') }}</div>
         @endif
+        <hr style="border:0;border-top:1px solid var(--edge);margin:25px 0">
+        <h2>{{ $t('Upload a signed update ZIP', 'رفع تحديث ZIP من لوحة الإدارة') }}</h2>
+        <p class="muted">{{ $t(
+            'Select one signed AIWMWeb release bundle from your computer. The server will verify its digital signature, hashes and paths before installing. Arbitrary ZIP files are rejected.',
+            'اختر ملف ZIP واحدًا لحزمة AIWMWeb الموقّعة من جهازك. يتحقق السيرفر من التوقيع والبصمات والمسارات قبل التثبيت، ويرفض ملفات ZIP العشوائية.'
+        ) }}</p>
+        @if($state['enabled'] && $state['configured'])
+            <form method="post" action="{{ route('platform.updates.upload') }}" enctype="multipart/form-data">
+                @csrf
+                <label for="update_bundle">{{ $t('Signed update bundle (.zip)', 'حزمة التحديث الموقّعة (.zip)') }}</label>
+                <input id="update_bundle" type="file" name="update_bundle" accept=".zip,application/zip" required style="width:100%;max-width:480px">
+                <label for="upload_confirmation">{{ $t('Type INSTALL to confirm installation', 'اكتب INSTALL لتأكيد التثبيت') }}</label>
+                <input id="upload_confirmation" name="confirmation" required autocomplete="off" pattern="INSTALL" placeholder="INSTALL">
+                <div style="margin-top:12px">
+                    <button type="submit" class="install">{{ $t('Upload ZIP and install update', 'رفع ZIP وتثبيت التحديث') }}</button>
+                </div>
+            </form>
+        @else
+            <p class="alert">{{ $t('ZIP installation remains disabled until the one-time signing setup is complete.', 'تثبيت ZIP معطّل حتى اكتمال إعداد مفتاح التوقيع لأول مرة.') }}</p>
+        @endif
+        <small>{{ $t('Maximum upload: 160 MiB. Hosting PHP upload_max_filesize and post_max_size must be configured accordingly. The ZIP must contain a signed manifest, detached signature and the exact release ZIP.', 'الحجم الأقصى: 160 ميجابايت. يجب تهيئة حدود الرفع في PHP على الاستضافة. الحزمة تحتوي على ملف تعريف الإصدار الموقّع، والتوقيع المنفصل، وZIP الملفات الأصلي.') }}</small>
         <small>{{ $t('Database schema changes are not deployed by this safe first release channel. Requires signed artifacts and writable files; never uploads an arbitrary ZIP.', 'هذه القناة الآمنة لا تنفذ تعديلات قاعدة البيانات. تتطلب حزمًا موقعة وصلاحيات كتابة، ولا تقبل ZIP عشوائيًا.') }}</small>
     </section>
     <section class="panel" aria-labelledby="history">
