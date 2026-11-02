@@ -192,9 +192,33 @@ try {
             $environment = setupPutEnv($environment, $key, $value);
         }
 
+        setupPersist($private.'/fresh-migration-pending.lock', gmdate('c')."\n");
         setupPersist($envPath, $environment);
     }
 
+    // A failed or timed-out fresh migration must remain retryable; never
+    // mark a half-initialized database as successfully installed.
+    require $appRoot.'/vendor/autoload.php';
+    $app = require $appRoot.'/bootstrap/app.php';
+    $app->usePublicPath(__DIR__);
+    $console = $app->make(\Illuminate\Contracts\Console\Kernel::class);
+    $console->bootstrap();
+    $console->call('optimize:clear');
+
+    $pendingMigration = $private.'/fresh-migration-pending.lock';
+
+    if (! $installed || is_file($pendingMigration)) {
+        $exit = $console->call('migrate', ['--force' => true]);
+
+        if ($exit !== 0) {
+            setupFail('Database migrations failed. Check protected Laravel logs; the database was not reset.');
+        }
+
+        @unlink($pendingMigration);
+    }
+
+    // Do NOT mint and persist the verification public key until migrations
+    // have succeeded: otherwise a failed setup would lose its secret key.
     $env = (string) file_get_contents($envPath);
     $existingPublicKey = null;
 
@@ -214,21 +238,7 @@ try {
     $env = setupPutEnv($env, 'AIWM_UPDATES_PUBLIC_ROOT', __DIR__);
     $env = setupPutEnv($env, 'AIWM_UPDATES_ENABLED', 'true');
     setupPersist($envPath, $env);
-
-    require $appRoot.'/vendor/autoload.php';
-    $app = require $appRoot.'/bootstrap/app.php';
-    $app->usePublicPath(__DIR__);
-    $console = $app->make(\Illuminate\Contracts\Console\Kernel::class);
-    $console->bootstrap();
     $console->call('optimize:clear');
-
-    if (! $installed) {
-        $exit = $console->call('migrate', ['--force' => true]);
-
-        if ($exit !== 0) {
-            setupFail('Database migrations failed. Check protected Laravel logs; the database was not reset.');
-        }
-    }
 
     // Lock before revealing signing key; subsequent GET/POST cannot reopen setup.
     setupPersist($installedLock, gmdate('c')."\n");
