@@ -150,7 +150,7 @@ final class SystemUpdateService
             try {
                 Artisan::call('down', ['--retry' => 30]);
                 foreach ($files as $name => $hash) {
-                    $target = base_path($name);
+                    $target = $this->targetPath($name);
                     $temp = dirname($target).'/.aiwm-update-'.$id;
                     if (! copy($work.'/staged/'.$name, $temp) || ! rename($temp, $target) ||
                         ! hash_equals($hash, hash_file('sha256', $target))) {
@@ -253,7 +253,7 @@ final class SystemUpdateService
                 if ($copied !== $stat['size'] || ! hash_equals($expected[$name], hash_file('sha256', $target))) {
                     throw new RuntimeException('Signed package file verification failed.');
                 }
-                $destination = base_path($name);
+                $destination = $this->targetPath($name);
                 $this->assertSafeDestination($destination);
             }
             return $expected;
@@ -271,7 +271,7 @@ final class SystemUpdateService
         }
         $allowed = ['app/', 'config/', 'resources/', 'routes/', 'vendor/', 'public/build/'];
         if (! in_array($path, ['composer.json', 'composer.lock', 'artisan', 'bootstrap/app.php', 'bootstrap/providers.php'], true) &&
-            ! array_any($allowed, fn (string $prefix) => str_starts_with($path, $prefix))) {
+            ! $this->hasAllowedPrefix($allowed, $path)) {
             throw new RuntimeException('File is outside the allowed update directories.');
         }
         if (str_starts_with($path, 'resources/') && str_contains($path, 'private')) {
@@ -279,13 +279,32 @@ final class SystemUpdateService
         }
     }
 
+    private function hasAllowedPrefix(array $prefixes, string $path): bool
+    {
+        foreach ($prefixes as $prefix) {
+            if (str_starts_with($path, $prefix)) return true;
+        }
+        return false;
+    }
+
+    private function targetPath(string $name): string
+    {
+        return str_starts_with($name, 'public/')
+            ? public_path(substr($name, strlen('public/')))
+            : base_path($name);
+    }
+
     private function assertSafeDestination(string $target): void
     {
-        $root = realpath(base_path());
+        $publicRoot = realpath(public_path());
+        $appRoot = realpath(base_path());
+        $publicPath = rtrim(public_path(), '/').'/';
+        $isPublic = str_starts_with($target, $publicPath);
+        $root = $isPublic ? $publicRoot : $appRoot;
         if ($root === false) {
             throw new RuntimeException('Invalid application root.');
         }
-        $relative = substr($target, strlen(base_path()) + 1);
+        $relative = substr($target, strlen($isPublic ? public_path() : base_path()) + 1);
         $cursor = $root;
         foreach (explode('/', $relative) as $part) {
             $cursor .= '/'.$part;
@@ -302,7 +321,7 @@ final class SystemUpdateService
         }
         $existed = [];
         foreach ($files as $name => $_) {
-            $target = base_path($name);
+            $target = $this->targetPath($name);
             $this->assertSafeDestination($target);
             $existed[$name] = is_file($target);
             if ($existed[$name]) {
@@ -336,7 +355,7 @@ final class SystemUpdateService
             throw new RuntimeException('Rollback inventory is missing; manual recovery is required.');
         }
         foreach ($existing as $name => $wasPresent) {
-            $target = base_path($name);
+            $target = $this->targetPath($name);
             if ($wasPresent) {
                 if (! copy($backup.'/original/'.$name, $target)) {
                     throw new RuntimeException('Automatic rollback failed; use the saved backup.');
