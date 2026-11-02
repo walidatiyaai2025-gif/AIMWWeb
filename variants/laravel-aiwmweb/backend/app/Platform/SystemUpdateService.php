@@ -15,11 +15,17 @@ use ZipArchive;
 final class SystemUpdateService
 {
     private const RELEASE_API = 'https://api.github.com/repos/walidatiyaai2025-gif/AIMWWeb/releases/latest';
+
     private const MANIFEST = 'AIWMWeb-Laravel-release.json';
+
     private const SIGNATURE = 'AIWMWeb-Laravel-release.sig';
+
     private const PACKAGE = 'AIWMWeb-Laravel-update.zip';
+
     private const MAX_PACKAGE = 157286400;
+
     private const MAX_FILES = 25000;
+
     private const MAX_UNCOMPRESSED = 314572800;
 
     public function state(): array
@@ -66,13 +72,13 @@ final class SystemUpdateService
                 throw new RuntimeException('Release is missing a required signed artifact.');
             }
         }
-        if ($assets[self::MANIFEST]['size'] > 262144 ||
+        if ($assets[self::MANIFEST]['size'] > 4194304 ||
             $assets[self::SIGNATURE]['size'] > 4096 ||
             $assets[self::PACKAGE]['size'] < 1 ||
             $assets[self::PACKAGE]['size'] > self::MAX_PACKAGE) {
             throw new RuntimeException('Release asset size is outside the approved limits.');
         }
-        $manifestBytes = $this->downloadSmall($assets[self::MANIFEST]['url'], 262144);
+        $manifestBytes = $this->downloadSmall($assets[self::MANIFEST]['url'], 4194304);
         $signatureBytes = $this->downloadSmall($assets[self::SIGNATURE]['url'], 4096);
         $signature = base64_decode(trim($signatureBytes), true);
         if ($signature === false || strlen($signature) !== SODIUM_CRYPTO_SIGN_BYTES ||
@@ -148,7 +154,9 @@ final class SystemUpdateService
                 ] : null,
             ];
             try {
-                Artisan::call('down', ['--retry' => 30]);
+                if (Artisan::call('down', ['--retry' => 30]) !== 0) {
+                    throw new RuntimeException('Could not enter maintenance mode.');
+                }
                 foreach ($files as $name => $hash) {
                     $target = $this->targetPath($name);
                     $temp = dirname($target).'/.aiwm-update-'.$id;
@@ -158,7 +166,9 @@ final class SystemUpdateService
                         throw new RuntimeException('File replacement verification failed.');
                     }
                 }
-                Artisan::call('optimize:clear');
+                if (Artisan::call('optimize:clear') !== 0) {
+                    throw new RuntimeException('Could not clear Laravel caches.');
+                }
                 $this->atomicJson($this->dataPath('installed.json'), $receipt);
             } catch (Throwable $e) {
                 $this->restoreBackup($backup);
@@ -228,7 +238,7 @@ final class SystemUpdateService
                 }
                 $seen[$name] = true;
                 $total += (int) ($stat['size'] ?? 0);
-                if ($total > self::MAX_UNCOMPRESSED || (int) ($stat['size'] ?? 0) > 26214400) {
+                if ($total > self::MAX_UNCOMPRESSED || (int) ($stat['size'] ?? 0) > 419430400) {
                     throw new RuntimeException('Package exceeds extraction limits.');
                 }
                 $zip->getExternalAttributesIndex($i, $opsys, $attrs);
@@ -246,7 +256,7 @@ final class SystemUpdateService
                     throw new RuntimeException('Cannot stage package file.');
                 }
                 try {
-                    $copied = stream_copy_to_stream($in, $out, 26214401);
+                    $copied = stream_copy_to_stream($in, $out, 419430401);
                 } finally {
                     fclose($in);
                     fclose($out);
@@ -283,8 +293,11 @@ final class SystemUpdateService
     private function hasAllowedPrefix(array $prefixes, string $path): bool
     {
         foreach ($prefixes as $prefix) {
-            if (str_starts_with($path, $prefix)) return true;
+            if (str_starts_with($path, $prefix)) {
+                return true;
+            }
         }
+
         return false;
     }
 
@@ -374,7 +387,10 @@ final class SystemUpdateService
 
     private function readJson(string $path): ?array
     {
-        if (! is_file($path)) return null;
+        if (! is_file($path)) {
+            return null;
+        }
+
         $data = json_decode((string) file_get_contents($path), true);
         return is_array($data) ? $data : null;
     }
@@ -391,17 +407,27 @@ final class SystemUpdateService
     private function history(array $row): void
     {
         $file = $this->dataPath('history.jsonl');
-        if (! is_dir(dirname($file))) @mkdir(dirname($file), 0700, true);
+        if (! is_dir(dirname($file))) {
+            @mkdir(dirname($file), 0700, true);
+        }
+
         @file_put_contents($file, json_encode($row, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)."\n", FILE_APPEND | LOCK_EX);
     }
 
     private function removeTree(string $dir): void
     {
-        if (! is_dir($dir) || is_link($dir)) return;
-        foreach (new \FilesystemIterator($dir) as $entry) {
-            if ($entry->isDir() && ! $entry->isLink()) $this->removeTree($entry->getPathname());
-            else @unlink($entry->getPathname());
+        if (! is_dir($dir) || is_link($dir)) {
+            return;
         }
+
+        foreach (new \FilesystemIterator($dir) as $entry) {
+            if ($entry->isDir() && ! $entry->isLink()) {
+                $this->removeTree($entry->getPathname());
+            } else {
+                @unlink($entry->getPathname());
+            }
+        }
+
         @rmdir($dir);
     }
 }
