@@ -13,17 +13,21 @@
     ];
 @endphp
 <!doctype html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>About this build</title>
+    <title>About this build — AI WordPress Manager</title>
+    <link rel="stylesheet" href="{{ asset('css/marketing.css') }}">
     @vite('resources/js/about-build-copy-report.ts')
 </head>
-<body>
+<body class="build-page">
     <main>
+        <nav class="build-topnav" aria-label="Workspace navigation"><a href="{{ url('/tenants/'.rawurlencode($tenantSlug)) }}">← Back to workspace</a><a href="{{ url('/') }}">Product overview</a></nav>
+        <header class="build-heading">
         <h1>About this build</h1>
         <p>Verify the deployed build and review what shipped in the current release.</p>
+        </header>
         @if ($buildApiUrl)
             <p><a href="{{ $buildApiUrl }}" target="_blank" rel="noopener noreferrer" data-canonical-operation="AIMW-CONT-EBD53650BC">Open build API</a></p>
         @endif

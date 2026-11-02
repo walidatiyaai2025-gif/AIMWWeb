@@ -18,7 +18,7 @@
     </style>
 </head>
 <body>
-<form class="card" method="post" action="/api/login">
+<form class="card" method="post" action="{{ route('login.store') }}">
     @csrf
     <div class="brand">AI WordPress Manager</div>
     <div class="sub">Sign in to continue to your workspace</div>
@@ -27,14 +27,14 @@
         <div class="success" role="status">Account created. Sign in to continue.</div>
     @endif
 
-    @if ($error !== '')
-        <div class="error" role="alert">{{ $error }}</div>
+    @if ($errors->any() || $error !== '')
+        <div class="error" role="alert">{{ $errors->first() ?: $error }}</div>
     @endif
 
-    <input type="hidden" name="returnUrl" value="{{ $returnUrl }}">
+    <input type="hidden" name="returnUrl" value="{{ old('returnUrl', $returnUrl) }}">
 
     <label for="login-identifier">Username or email</label>
-    <input id="login-identifier" type="text" name="email" autocomplete="username" required autofocus>
+    <input id="login-identifier" type="text" name="email" value="{{ old('email') }}" autocomplete="username" required autofocus>
 
     <label for="login-password">Password</label>
     <input id="login-password" type="password" name="password" autocomplete="current-password" required>
