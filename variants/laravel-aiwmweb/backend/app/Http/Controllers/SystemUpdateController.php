@@ -54,6 +54,36 @@ final class SystemUpdateController extends Controller
         }
     }
 
+    /**
+     * Accepts exactly one signed transport bundle, not arbitrary uploaded PHP.
+     * The signing key is never disclosed to or supplied by the browser.
+     */
+    public function upload(Request $request, SystemUpdateService $updates): RedirectResponse
+    {
+        $request->validate([
+            'confirmation' => ['required', 'in:INSTALL'],
+            'update_bundle' => ['required', 'file', 'mimes:zip', 'max:163840'],
+        ]);
+
+        try {
+            $receipt = $updates->install(
+                (int) $request->user()->getAuthIdentifier(),
+                $request->file('update_bundle'),
+            );
+
+            return redirect()->route('platform.updates.index')->with(
+                'status',
+                'Installed uploaded signed release '.$receipt['version'].' ('.substr($receipt['sha'], 0, 12).').'
+            );
+        } catch (Throwable $e) {
+            report($e);
+
+            return redirect()->route('platform.updates.index')->withErrors([
+                'update' => $e instanceof RuntimeException ? $e->getMessage() : 'Upload failed; review server logs and recovery snapshot.',
+            ]);
+        }
+    }
+
     public function install(Request $request, SystemUpdateService $updates): RedirectResponse
     {
         $request->validate(['confirmation' => ['required', 'in:INSTALL']]);
