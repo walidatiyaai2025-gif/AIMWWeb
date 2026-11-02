@@ -301,24 +301,30 @@ final class SystemUpdateService
         return false;
     }
 
+    private function publicRoot(): string
+    {
+        $configured = trim((string) config('system_updates.public_root', ''));
+
+        return rtrim($configured !== '' ? $configured : public_path(), '/');
+    }
+
     private function targetPath(string $name): string
     {
         return str_starts_with($name, 'public/')
-            ? public_path(substr($name, strlen('public/')))
+            ? $this->publicRoot().'/'.substr($name, strlen('public/'))
             : base_path($name);
     }
 
     private function assertSafeDestination(string $target): void
     {
-        $publicRoot = realpath(public_path());
+        $publicRoot = realpath($this->publicRoot());
         $appRoot = realpath(base_path());
-        $publicPath = rtrim(public_path(), '/').'/';
-        $isPublic = str_starts_with($target, $publicPath);
+        $isPublic = str_starts_with($target, $this->publicRoot().'/');
         $root = $isPublic ? $publicRoot : $appRoot;
         if ($root === false) {
             throw new RuntimeException('Invalid application root.');
         }
-        $relative = substr($target, strlen($isPublic ? public_path() : base_path()) + 1);
+        $relative = substr($target, strlen($isPublic ? $this->publicRoot() : base_path()) + 1);
         $cursor = $root;
         foreach (explode('/', $relative) as $part) {
             $cursor .= '/'.$part;
