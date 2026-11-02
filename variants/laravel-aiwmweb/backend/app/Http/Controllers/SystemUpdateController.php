@@ -20,7 +20,9 @@ final class SystemUpdateController extends Controller
             $lines = @file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [];
             foreach (array_slice($lines, -8) as $line) {
                 $record = json_decode($line, true);
-                if (is_array($record)) $entries[] = $record;
+                if (is_array($record)) {
+                    $entries[] = $record;
+                }
             }
         }
 
