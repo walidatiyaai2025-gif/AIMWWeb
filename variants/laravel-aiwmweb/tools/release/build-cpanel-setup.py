@@ -93,7 +93,7 @@ def cpanel_index(contents: bytes) -> bytes:
     content = content.replace(marker, marker+"\n$app->usePublicPath(__DIR__);")
     # Opening the domain on a clean installation must enter the wizard
     # automatically, not show a framework starter/500 before setup.
-    entrypoint = """if (( ! is_file(__DIR__.'/../app/.env') ||
+    entrypoint = """if ((! is_file(__DIR__.'/../app/.env') ||
     is_file(__DIR__.'/../app/storage/app/aiwm-install/fresh-migration-pending.lock')) &&
     is_file(__DIR__.'/install.php')) {
     header('Location: /install.php', true, 302);
@@ -102,7 +102,7 @@ def cpanel_index(contents: bytes) -> bytes:
 
 """
     content = content.replace("define('LARAVEL_START', microtime(true));",
-        "define('LARAVEL_START', microtime(true));\\n\\n" + entrypoint.replace('! ', '! '))
+        "define('LARAVEL_START', microtime(true));\n\n" + entrypoint)
     return content.encode("utf-8")
 
 
