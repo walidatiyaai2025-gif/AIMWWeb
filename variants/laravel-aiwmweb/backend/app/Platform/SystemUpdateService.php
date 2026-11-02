@@ -202,7 +202,12 @@ final class SystemUpdateService
 
     private function publicKey(): ?string
     {
+        if (! defined('SODIUM_CRYPTO_SIGN_PUBLICKEYBYTES')) {
+            return null;
+        }
+
         $key = base64_decode(trim((string) config('system_updates.public_key', '')), true);
+
         return $key !== false && strlen($key) === SODIUM_CRYPTO_SIGN_PUBLICKEYBYTES ? $key : null;
     }
 
