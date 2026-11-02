@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\TenantMembership;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 final class LoginReadController extends Controller
@@ -26,7 +26,6 @@ final class LoginReadController extends Controller
             'error' => $error,
         ]);
     }
-
 
     public function store(Request $request): RedirectResponse
     {
