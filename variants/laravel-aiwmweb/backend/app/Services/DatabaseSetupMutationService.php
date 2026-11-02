@@ -59,6 +59,12 @@ final class DatabaseSetupMutationService
                 'password' => $input['admin_password'],
             ]);
 
+            // This is the first and only identity in a fresh install.
+            // Give the bootstrap owner platform control-plane authority
+            // explicitly; tenant Owner RBAC alone does not pass platform.admin.
+            // The preflight above denies all attempts if any identity exists.
+            $user->forceFill(['platform_admin' => true])->save();
+
             $this->tenantContext->activate($tenant);
             try {
                 $membership = TenantMembership::query()->create([
