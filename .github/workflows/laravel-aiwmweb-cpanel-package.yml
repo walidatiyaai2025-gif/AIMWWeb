@@ -20,6 +20,21 @@ jobs:
   build-cpanel-zip:
     runs-on: ubuntu-latest
     timeout-minutes: 35
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: ci-root-only
+          MYSQL_DATABASE: aiwm_wizard_ci
+          MYSQL_USER: aiwm_wizard
+          MYSQL_PASSWORD: ci-user-only
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
     steps:
       - name: Checkout exact source
         uses: actions/checkout@v4
@@ -86,29 +101,44 @@ jobs:
                   assert hashlib.sha256(archive.read(path)).hexdigest() == expected, path
               print("Verified one-ZIP cPanel setup from exact SHA", manifest["source_sha"])
 
-      - name: Smoke-test extracted Setup ZIP and one-time existing-install wizard
+      - name: Smoke-test all wizard steps from the actual ZIP against empty MySQL
         shell: bash
+        env:
+          AIWM_CI_MYSQL_PASSWORD: ci-user-only
         run: |
           set -euo pipefail
           root="$(mktemp -d)"
           unzip -q artifacts/cpanel/AIWMWeb-Laravel-Setup.zip -d "$root"
+          echo "AIWM_SMOKE_ROOT=$root" >> "$GITHUB_ENV"
           php -l "$root/public/index.php"
           php -l "$root/public/install.php"
-          php -r 'echo "APP_NAME=AIWMWeb\nAPP_ENV=production\nAPP_DEBUG=false\nAPP_KEY=base64:".base64_encode(random_bytes(32))."\nAPP_URL=https://example.invalid\nDB_CONNECTION=sqlite\nDB_DATABASE=:memory:\nCACHE_STORE=file\nSESSION_DRIVER=file\nQUEUE_CONNECTION=sync\n";' > "$root/app/.env"
-          php -r '$_SERVER["HTTPS"]="on"; $_SERVER["REQUEST_METHOD"]="GET"; include $argv[1];' \
-            "$root/public/install.php" > /tmp/aiwm-setup-greeting.html
-          grep -q "AIWMWeb" /tmp/aiwm-setup-greeting.html
-          test -s "$root/app/storage/app/aiwm-install/owner-code.txt"
-          export AIWM_OWNER_CODE
-          AIWM_OWNER_CODE="$(cat "$root/app/storage/app/aiwm-install/owner-code.txt")"
-          php -r '$_SERVER["HTTPS"]="on"; $_SERVER["REQUEST_METHOD"]="POST"; $_POST=["owner_code"=>getenv("AIWM_OWNER_CODE"),"backup_confirm"=>"yes"]; include $argv[1];' \
-            "$root/public/install.php" > /tmp/aiwm-setup-finished.html
-          grep -q 'AIWM_UPDATES_ENABLED="true"' "$root/app/.env"
-          grep -q '^AIWM_UPDATES_PUBLIC_KEY=' "$root/app/.env"
-          test -s "$root/app/storage/app/aiwm-install/installed.lock"
-          test ! -e "$root/public/install.php"
-          grep -q "تم تجهيز AIWMWeb" /tmp/aiwm-setup-finished.html
-          echo "Extracted Setup ZIP, owner proof, updater activation and one-time lock verified."
+          php variants/laravel-aiwmweb/tools/release/smoke-cpanel-wizard.php \
+            "$root" "127.0.0.1" "aiwm_wizard_ci" "aiwm_wizard" "$AIWM_CI_MYSQL_PASSWORD"
+
+      - name: Browser-entry HTTP smoke after real full ZIP installation
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="${AIWM_SMOKE_ROOT:?CI smoke must export its own extracted ZIP path}"
+          test -s "$root/SETUP-MANIFEST.json"
+          test -s "$root/app/.env"
+          # A fresh verification DB avoids touching the install smoke DB.
+          # This job's preceding smoke has already migrated/initialized MySQL.
+          php -r 'echo "<?php\n\$path = parse_url(\$_SERVER[\"REQUEST_URI\"], PHP_URL_PATH);\nif (\$path !== \"/\" && is_file(__DIR__.\$path)) return false;\nrequire __DIR__.\"/index.php\";\n";' > "$root/public/ci-router.php"
+          php -S 127.0.0.1:18780 -t "$root/public" "$root/public/ci-router.php" > /tmp/aiwm-app-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsS --max-time 2 http://127.0.0.1:18780/ -o /tmp/aiwm-home.html; then break; fi
+            sleep 1
+          done
+          grep -q "AI WordPress Manager" /tmp/aiwm-home.html
+          if grep -q "Let's get started" /tmp/aiwm-home.html; then
+            echo "ERROR: Laravel starter view leaked onto the public homepage"; exit 1
+          fi
+          curl -fsS --max-time 10 http://127.0.0.1:18780/login > /tmp/aiwm-login.html
+          test "$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 http://127.0.0.1:18780/admin/system-updates)" = "302"
+          echo "Real HTTP root, login and protected updater boundary validated after Setup ZIP install."
 
       - name: Sign admin update only on approved manual release from green main
         env:

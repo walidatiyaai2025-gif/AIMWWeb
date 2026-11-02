@@ -91,6 +91,18 @@ def cpanel_index(contents: bytes) -> bytes:
     if content.count(marker) != 1:
         raise ValueError("Cannot attach public_path to cPanel front controller.")
     content = content.replace(marker, marker+"\n$app->usePublicPath(__DIR__);")
+    # Opening the domain on a clean installation must enter the wizard
+    # automatically, not show a framework starter/500 before setup.
+    entrypoint = """if ((! is_file(__DIR__.'/../app/.env') ||
+    is_file(__DIR__.'/../app/storage/app/aiwm-install/fresh-migration-pending.lock')) &&
+    is_file(__DIR__.'/install.php')) {
+    header('Location: /install.php', true, 302);
+    exit;
+}
+
+"""
+    content = content.replace("define('LARAVEL_START', microtime(true));",
+        "define('LARAVEL_START', microtime(true));\n\n" + entrypoint)
     return content.encode("utf-8")
 
 
@@ -159,20 +171,29 @@ def write_zip(target: Path, commit: str) -> None:
         archive.writestr("SETUP-MANIFEST.json", info)
 
         readme = (
-            "AIWMWeb Laravel — cPanel FULL SETUP\n"
+            "AIWMWeb Laravel — cPanel FULL CLEAN INSTALL\n"
             f"SOURCE_SHA={commit}\n"
-            "This package contains Laravel, production Composer vendor and Vite assets.\n"
-            "Extract this ZIP into the folder containing your app/ and public/ dirs.\n"
-            "In cPanel Domains point the domain document root at this folder's public/.\n"
-            "Open https://your-domain/install.php, enter the private owner-code from\n"
-            "app/storage/app/aiwm-install/owner-code.txt and finish the one-time setup.\n"
-            "Existing .env, storage and user database remain untouched by extraction.\n"
-            "For a new install create a blank MySQL DB/user in cPanel first.\n"
-            "After setup: /admin/system-updates accepts only signed future update ZIPs.\n"
-            "KEEP THE ONE-TIME SIGNING SECRET PRIVATE. Save it in GitHub Actions\n"
-            "AIWM_UPDATES_SECRET_KEY. The public verification key is set on the server.\n"
-            "Do not upload this setup ZIP into the admin update form.\n"
-            "Do not extract if a backup of existing code and DB is missing.\n"
+            "Setup ZIP includes production Laravel vendor and built frontend.\n"
+            "For a BRAND-NEW installation use an EMPTY MySQL database and a\n"
+            "CLEAN folder; never overwrite existing production .env or data.\n"
+            "1. Extract this ZIP in the new folder, creating app/ and public/.\n"
+            "2. In cPanel Domains point document root to this folder's public/.\n"
+            "3. In cPanel MySQL Databases create one empty database and user.\n"
+            "4. Open https://your-domain/install.php over HTTPS.\n"
+            "5. Click NEXT after server checks, enter MySQL credentials and\n"
+            "   click NEXT, then enter platform/workspace/owner and INSTALL.\n"
+            "6. The wizard runs all migrations, creates the first tenant Owner\n"
+            "   AND platform administrator, validates database/frontend,\n"
+            "   closes the installer and offers the login page.\n"
+            "After login the platform is ready for core functions; external\n"
+            "AI keys, WordPress connections and cron/queue hosting services\n"
+            "still need REAL credentials/provisioning; never fabricate them.\n"
+            "The Settings > System Updates page accepts signed ZIPs only.\n"
+            "Signing remains disabled until a NEW trusted private CI key and\n"
+            "its matching public verification key are configured. DO NOT USE\n"
+            "any previously screenshot-shared/compromised signing key.\n"
+            "Do NOT upload this full Setup ZIP into the admin update form.\n"
+            "Never extract over an existing database/site without backups.\n"
         ).encode("utf-8")
         archive.writestr("START-HERE.txt", readme)
 
