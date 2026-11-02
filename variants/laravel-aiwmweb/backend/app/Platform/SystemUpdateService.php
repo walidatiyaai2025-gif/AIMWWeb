@@ -238,7 +238,7 @@ final class SystemUpdateService
                 }
                 $seen[$name] = true;
                 $total += (int) ($stat['size'] ?? 0);
-                if ($total > self::MAX_UNCOMPRESSED || (int) ($stat['size'] ?? 0) > 419430400) {
+                if ($total > self::MAX_UNCOMPRESSED || (int) ($stat['size'] ?? 0) > 26214400) {
                     throw new RuntimeException('Package exceeds extraction limits.');
                 }
                 $zip->getExternalAttributesIndex($i, $opsys, $attrs);
@@ -256,7 +256,7 @@ final class SystemUpdateService
                     throw new RuntimeException('Cannot stage package file.');
                 }
                 try {
-                    $copied = stream_copy_to_stream($in, $out, 419430401);
+                    $copied = stream_copy_to_stream($in, $out, 26214401);
                 } finally {
                     fclose($in);
                     fclose($out);
