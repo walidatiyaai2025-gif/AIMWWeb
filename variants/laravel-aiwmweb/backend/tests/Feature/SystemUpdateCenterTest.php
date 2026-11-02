@@ -6,10 +6,12 @@ use App\Models\User;
 use App\Platform\SystemUpdateService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 use RuntimeException;
 use Tests\TestCase;
+use ZipArchive;
 
 final class SystemUpdateCenterTest extends TestCase
 {
@@ -21,6 +23,7 @@ final class SystemUpdateCenterTest extends TestCase
             ['GET', '/admin/system-updates'],
             ['POST', '/admin/system-updates/check'],
             ['POST', '/admin/system-updates/install'],
+            ['POST', '/admin/system-updates/upload'],
         ] as [$method, $path]) {
             $route = Route::getRoutes()->match(Request::create($path, $method));
             $this->assertContains('web', $route->gatherMiddleware());
@@ -35,11 +38,13 @@ final class SystemUpdateCenterTest extends TestCase
         $this->get('/admin/system-updates')->assertRedirect('/login');
         $this->post('/admin/system-updates/check')->assertRedirect('/login');
         $this->post('/admin/system-updates/install', ['confirmation' => 'INSTALL'])->assertRedirect('/login');
+        $this->post('/admin/system-updates/upload', ['confirmation' => 'INSTALL'])->assertRedirect('/login');
 
         $user = User::factory()->create(['platform_admin' => false]);
         $this->actingAs($user)->get('/admin/system-updates')->assertForbidden();
         $this->actingAs($user)->post('/admin/system-updates/check')->assertForbidden();
         $this->actingAs($user)->post('/admin/system-updates/install', ['confirmation' => 'INSTALL'])->assertForbidden();
+        $this->actingAs($user)->post('/admin/system-updates/upload', ['confirmation' => 'INSTALL'])->assertForbidden();
     }
 
     public function test_update_page_honestly_disables_installation_without_signing_configuration(): void
@@ -111,6 +116,90 @@ final class SystemUpdateCenterTest extends TestCase
             $method->invoke($service, $path);
             $this->assertTrue(true);
         }
+    }
+
+    public function test_uploaded_signed_bundle_verifies_manifest_and_exact_inner_package_hash(): void
+    {
+        $keys = sodium_crypto_sign_keypair();
+        config()->set('system_updates.enabled', true);
+        config()->set('system_updates.public_key', base64_encode(sodium_crypto_sign_publickey($keys)));
+        config()->set('system_updates.current_version', '0.0.0');
+
+        $payload = tempnam(sys_get_temp_dir(), 'aiwm-payload-');
+        $bundlePath = tempnam(sys_get_temp_dir(), 'aiwm-bundle-');
+        $staged = tempnam(sys_get_temp_dir(), 'aiwm-stage-');
+
+        try {
+            $inner = new ZipArchive;
+            $this->assertTrue($inner->open($payload, ZipArchive::OVERWRITE) === true);
+            $contents = "<?php\n// Update bundle verification fixture.\n";
+            $inner->addFromString('app/SignedUpdateMarker.php', $contents);
+            $this->assertTrue($inner->close());
+
+            $manifest = json_encode([
+                'product' => 'LARAVEL_AIWMWEB',
+                'version' => '9.9.9',
+                'sha' => str_repeat('a', 40),
+                'package' => 'AIWMWeb-Laravel-update.zip',
+                'sha256' => hash_file('sha256', $payload),
+                'files' => ['app/SignedUpdateMarker.php' => hash('sha256', $contents)],
+            ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
+
+            $bundle = new ZipArchive;
+            $this->assertTrue($bundle->open($bundlePath, ZipArchive::OVERWRITE) === true);
+            $bundle->addFromString('AIWMWeb-Laravel-release.json', $manifest);
+            $bundle->addFromString('AIWMWeb-Laravel-release.sig', base64_encode(
+                sodium_crypto_sign_detached($manifest, sodium_crypto_sign_secretkey($keys)),
+            ));
+            $bundle->addFile($payload, 'AIWMWeb-Laravel-update.zip');
+            $this->assertTrue($bundle->close());
+
+            $verified = (new \ReflectionMethod(SystemUpdateService::class, 'unpackUploadedBundle'))
+                ->invoke(
+                    app(SystemUpdateService::class),
+                    new UploadedFile($bundlePath, 'signed-bundle.zip', 'application/zip', null, true),
+                    $staged,
+                );
+            $this->assertSame('9.9.9', $verified['version']);
+            $this->assertSame(str_repeat('a', 40), $verified['sha']);
+            $this->assertTrue($verified['available']);
+            $this->assertSame(hash_file('sha256', $payload), hash_file('sha256', $staged));
+
+            $tampered = new ZipArchive;
+            $this->assertTrue($tampered->open($bundlePath) === true);
+            $tampered->addFromString('AIWMWeb-Laravel-release.sig', base64_encode(str_repeat('x', 64)));
+            $this->assertTrue($tampered->close());
+
+            try {
+                (new \ReflectionMethod(SystemUpdateService::class, 'unpackUploadedBundle'))
+                    ->invoke(
+                        app(SystemUpdateService::class),
+                        new UploadedFile($bundlePath, 'tampered.zip', 'application/zip', null, true),
+                        $staged,
+                    );
+                $this->fail('Forged ZIP signature was accepted.');
+            } catch (RuntimeException $e) {
+                $this->assertStringContainsString('signature could not be verified', $e->getMessage());
+            }
+        } finally {
+            @unlink($payload);
+            @unlink($bundlePath);
+            @unlink($staged);
+        }
+    }
+
+    public function test_upload_endpoint_rejects_missing_confirmation_or_non_zip_file(): void
+    {
+        $admin = User::factory()->create(['platform_admin' => true]);
+
+        $this->actingAs($admin)->post('/admin/system-updates/upload', [
+            'update_bundle' => UploadedFile::fake()->createWithContent('unsafe.txt', 'not signed'),
+        ])->assertSessionHasErrors('confirmation');
+
+        $this->actingAs($admin)->post('/admin/system-updates/upload', [
+            'confirmation' => 'INSTALL',
+            'update_bundle' => UploadedFile::fake()->createWithContent('unsafe.txt', 'not signed'),
+        ])->assertSessionHasErrors('update_bundle');
     }
 
     private function fakeRelease(string $manifest, string $signature): void
