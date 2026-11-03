@@ -18,7 +18,7 @@ function context(): FrontendContext {
         user: { id: 1, name: 'Owner', email: 'owner@example.test' },
         tenant: { slug: 'alpha', name: 'Alpha' },
         tenants: [{ slug: 'alpha', name: 'Alpha' }],
-        permissions: ['tenant.view', 'sites.view', 'sites.manage', 'ai.use'],
+        permissions: ['tenant.view', 'sites.view', 'sites.manage', 'connector.manage', 'ai.use'],
         connectors: [],
         capabilities: {},
         api: {
