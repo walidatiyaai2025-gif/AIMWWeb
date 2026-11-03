@@ -257,7 +257,7 @@ export function MainLayoutParityControls({ context }: { context: FrontendContext
     const availablePaths = useMemo(() => new Set(availableRoutes.map((route) => route.path)), [availableRoutes]);
 
     useEffect(() => {
-        setTopbarTarget(document.querySelector<HTMLElement>('.topbar-actions'));
+        setTopbarTarget(document.querySelector<HTMLElement>('.page-heading-actions'));
         setFooterTarget(document.querySelector<HTMLElement>('.sidebar-footer'));
 
         const syncCommandDialog = () => setCommandDialogTarget(document.querySelector<HTMLElement>('#command-palette-dialog'));
