@@ -270,7 +270,7 @@ export function DataTable({
     };
 
     return (
-        <div className="table-scroll" tabIndex={0} role="region" aria-label={locale === 'ar' ? 'جدول البيانات' : 'Data table'}>
+        <div className={`table-scroll${fallbackColumns.length === 1 ? ' single-column-records' : ''}`} data-data-columns={fallbackColumns.length} tabIndex={0} role="region" aria-label={locale === 'ar' ? 'جدول البيانات' : 'Data table'}>
             <table className="data-table">
                 <thead>
                     <tr>
@@ -281,7 +281,7 @@ export function DataTable({
                 <tbody>
                     {rows.map((row, index) => (
                         <tr key={String(row.id ?? index)}>
-                            {fallbackColumns.map((column) => <td key={column}>{format(row[column])}</td>)}
+                            {fallbackColumns.map((column) => <td key={column} data-label={column.replaceAll('_', ' ')}>{format(row[column])}</td>)}
                             {renderActions ? <td>{renderActions(row)}</td> : null}
                         </tr>
                     ))}

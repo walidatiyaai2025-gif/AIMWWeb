@@ -75,9 +75,9 @@ describe(`${SETTINGS_OPEN_ACCESSIBILITY_OPERATION_ID} Settings OpenAccessibility
         expect(window.localStorage.getItem('aiwm-accessibility-motion')).toBe('reduced');
         expect(document.getElementById('aiwm-laravel-accessibility-runtime')).not.toBeNull();
         const scaleRules = document.getElementById('aiwm-laravel-accessibility-runtime')?.textContent ?? '';
-        expect(scaleRules).toContain('font-size: 45%');
-        expect(scaleRules).toContain('font-size: 50%');
         expect(scaleRules).toContain('font-size: 56.25%');
+        expect(scaleRules).toContain('font-size: 62.5%');
+        expect(scaleRules).toContain('font-size: 70.3125%');
     });
 
     it('resets the persisted display state to the source defaults', () => {
