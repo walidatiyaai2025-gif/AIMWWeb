@@ -47,7 +47,7 @@ describe('Responsive data-only workspace layout', () => {
         expect(cards.querySelectorAll('article.site-record-card')).toHaveLength(3);
         expect(container.querySelector('.table-scroll')).toBeNull();
         expect(screen.getByRole('heading', { name: 'First site' })).toBeInTheDocument();
-        expect(screen.getByText('connected')).toBeInTheDocument();
+        expect(screen.getAllByText('connected')).toHaveLength(2);
         expect(screen.getByRole('button', { name: 'Open 13' })).toBeInTheDocument();
     });
 
