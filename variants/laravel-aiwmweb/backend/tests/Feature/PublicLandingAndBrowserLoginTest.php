@@ -26,17 +26,16 @@ final class PublicLandingAndBrowserLoginTest extends TestCase
         $this->get('/')
             ->assertOk()
             ->assertSee('AI WordPress Manager')
-            ->assertSee('المميزات')
-            ->assertSee('Application Password')
-            ->assertSee('href="'.url('/login').'"', false)
+            ->assertSee('WORDPRESS OPERATIONS OS')
+            ->assertSee('href="/login"', false)
+            ->assertSee('dir="ltr"', false)
             ->assertDontSee('Laravel 13');
 
-        $this->get('/?lang=en')
+        $this->get('/?lang=ar')
             ->assertOk()
-            ->assertSee('Features')
-            ->assertSee('How it works')
-            ->assertSee('Sign in')
-            ->assertSee('dir="ltr"', false);
+            ->assertSee('طريقة العمل')
+            ->assertSee('تسجيل الدخول')
+            ->assertSee('dir="rtl"', false);
     }
 
     public function test_login_route_supports_real_browser_post_and_keeps_json_api_separate(): void
