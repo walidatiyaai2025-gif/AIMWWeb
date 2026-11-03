@@ -9,17 +9,26 @@
         main { max-width: 1060px; margin: 0 auto; padding: 28px 20px 48px; }
         .panel { border: 1px solid color-mix(in srgb, CanvasText 16%, transparent); border-radius: 14px; padding: 20px; margin-bottom: 18px; }
         .hero { display: flex; justify-content: space-between; gap: 18px; align-items: start; }
-        .kicker { font-size: 12px; letter-spacing: .12em; font-weight: 800; opacity: .7; }
+        .kicker { font-size: 6px; letter-spacing: .12em; font-weight: 800; opacity: .7; }
         h1, h2 { margin: 6px 0 8px; }
         p { line-height: 1.55; }
         a { color: inherit; }
         .list { display: grid; gap: 12px; margin-top: 14px; }
         .row { border: 1px solid color-mix(in srgb, CanvasText 13%, transparent); border-radius: 10px; padding: 14px; }
         .row-head { display: flex; justify-content: space-between; gap: 14px; align-items: center; }
-        .meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 7px 14px; margin-top: 10px; font-size: 14px; opacity: .82; overflow-wrap: anywhere; }
-        .badge { border: 1px solid color-mix(in srgb, CanvasText 20%, transparent); border-radius: 999px; padding: 4px 9px; font-size: 12px; white-space: nowrap; }
+        .meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 7px 14px; margin-top: 10px; font-size: 7px; opacity: .82; overflow-wrap: anywhere; }
+        .badge { border: 1px solid color-mix(in srgb, CanvasText 20%, transparent); border-radius: 999px; padding: 4px 9px; font-size: 6px; white-space: nowrap; }
         .empty { padding: 14px; border-radius: 10px; background: color-mix(in srgb, CanvasText 6%, transparent); }
         small { display: block; opacity: .75; margin-top: 3px; }
+    </style>
+    <!-- Google Fonts: Inter (Latin) and Tajawal (Arabic); typography scale 50%. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Tajawal:wght@400;500;600;700;800;900&display=swap">
+    <style data-aiwm-global-typography>
+        :root { font-size: 50%; --aiwm-google-font: 'Inter', 'Tajawal', sans-serif; --font-sans: var(--aiwm-google-font); }
+        html:lang(ar) { --aiwm-google-font: 'Tajawal', 'Inter', sans-serif; }
+        body, button, input, textarea, select, option { font-family: var(--aiwm-google-font) !important; }
     </style>
 </head>
 <body>
