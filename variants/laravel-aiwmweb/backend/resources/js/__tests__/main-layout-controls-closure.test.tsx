@@ -113,4 +113,28 @@ describe('MainLayout canonical local controls', () => {
         await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Quick search' })).not.toBeInTheDocument());
         expect(screen.getByRole('dialog', { name: 'Favorites and recent pages' })).toBeInTheDocument();
     });
+    it('separates the global header from RTL/LTR page shortcuts without changing canonical navigation', async () => {
+        window.localStorage.setItem('aiwm.locale', 'ar');
+        const { unmount } = renderControls('/tenants/alpha/');
+
+        const topbar = document.querySelector('.topbar');
+        const headingRow = document.querySelector('.page-heading-row');
+        expect(topbar).not.toBeNull();
+        expect(headingRow).not.toBeNull();
+        expect(topbar?.querySelector('.topbar-brand')).toHaveAttribute('href', '/tenants/alpha/');
+        expect(topbar?.querySelector('.topbar-title')).toBeNull();
+        expect(headingRow?.querySelector('.topbar-title')).not.toBeNull();
+        expect(headingRow?.querySelector('.page-heading-actions')).not.toBeNull();
+        expect(headingRow?.querySelector('.user-chip')).not.toBeNull();
+        await waitFor(() => expect(headingRow?.querySelector('[data-canonical-operation="' + MAIN_LAYOUT_OPERATION_IDS.openRecentPages + '"]')).not.toBeNull());
+        expect(topbar?.querySelector('#command-palette-trigger')).not.toBeNull();
+        expect(document.querySelector('.app-shell')).toHaveAttribute('dir', 'rtl');
+        unmount();
+
+        window.localStorage.setItem('aiwm.locale', 'en');
+        renderControls('/tenants/alpha/');
+        expect(document.querySelector('.app-shell')).toHaveAttribute('dir', 'ltr');
+        expect(document.querySelector('.page-heading-row #page-title')).not.toBeNull();
+    });
+
 });
