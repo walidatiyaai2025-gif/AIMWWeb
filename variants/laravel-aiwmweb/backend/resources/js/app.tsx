@@ -221,7 +221,7 @@ function AiWorkspaceRoute() {
     return <AiWorkspaceHub context={context} />;
 }
 
-export function RouteElement({ route }: { route: WorkspaceRoute }) {
+function RouteElement({ route }: { route: WorkspaceRoute }) {
     const { context } = useOutletContext<OutletState>();
     if (route.key === 'site-snapshot' || route.key === 'site-offline-data') return <SiteDataSnapshotSyncControl context={context} />;
     if (route.key === 'site-connection-center' || route.key === 'site-connection-operations') return <SiteConnectionCenterSyncControl context={context} />;
