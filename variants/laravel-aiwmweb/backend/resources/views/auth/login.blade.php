@@ -7,21 +7,21 @@
     <style>
         body { margin: 0; min-height: 100vh; display: grid; place-items: center; font-family: Segoe UI, Arial, sans-serif; background: #0b0f17; color: #f9fafb; }
         .card { width: min(410px, 90vw); box-sizing: border-box; padding: 32px; border: 1px solid #243244; border-radius: 20px; background: #111827; }
-        .brand { margin-bottom: 6px; font-size: 15px; font-weight: 750; }
+        .brand { margin-bottom: 6px; font-size: 18.75px; font-weight: 750; }
         .sub { margin-bottom: 22px; color: #9ca3af; }
-        .error { margin-bottom: 16px; padding: 11px 12px; border: 1px solid #ef444455; border-radius: 10px; background: #7f1d1d33; color: #fecaca; font-size: 8.125px; }
-        .success { margin-bottom: 16px; padding: 11px 12px; border: 1px solid #10b98155; border-radius: 10px; background: #064e3b55; color: #a7f3d0; font-size: 8.125px; }
+        .error { margin-bottom: 16px; padding: 11px 12px; border: 1px solid #ef444455; border-radius: 10px; background: #7f1d1d33; color: #fecaca; font-size: 10.15625px; }
+        .success { margin-bottom: 16px; padding: 11px 12px; border: 1px solid #10b98155; border-radius: 10px; background: #064e3b55; color: #a7f3d0; font-size: 10.15625px; }
         label { display: block; margin: 14px 0 6px; }
         input { width: 100%; box-sizing: border-box; padding: 12px; border: 1px solid #374151; border-radius: 9px; background: #0b0f17; color: #fff; }
         button { width: 100%; margin-top: 20px; padding: 12px; border: 0; border-radius: 9px; background: #10b981; color: #062a1f; font-weight: 800; cursor: pointer; }
-        .back { display: block; margin-top: 18px; text-align: center; color: #9ca3af; text-decoration: none; font-size: 8.125px; }
+        .back { display: block; margin-top: 18px; text-align: center; color: #9ca3af; text-decoration: none; font-size: 10.15625px; }
     </style>
-    <!-- Google Fonts: Inter (Latin) and Tajawal (Arabic); typography 25% larger than previous baseline. -->
+    <!-- Google Fonts: Inter (Latin) and Tajawal (Arabic); typography 25% larger than the 62.5% baseline. -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=Tajawal:wght@400;500;700;800;900&amp;display=swap">
     <style data-aiwm-global-typography>
-        :root { font-size: 62.5%; --aiwm-google-font: 'Inter', 'Tajawal', sans-serif; --font-sans: var(--aiwm-google-font); }
+        :root { font-size: 78.125%; --aiwm-google-font: 'Inter', 'Tajawal', sans-serif; --font-sans: var(--aiwm-google-font); }
         html:lang(ar) { --aiwm-google-font: 'Tajawal', 'Inter', sans-serif; }
         body, button, input, textarea, select, option { font-family: var(--aiwm-google-font) !important; }
     </style>
