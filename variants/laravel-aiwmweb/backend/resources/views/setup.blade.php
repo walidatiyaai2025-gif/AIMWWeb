@@ -16,14 +16,14 @@
         label { display: grid; gap: 6px; }
         input { box-sizing: border-box; width: 100%; padding: 11px 12px; border-radius: 9px; border: 1px solid #374151; background: #0b0f17; color: #fff; }
         button { padding: 12px 16px; border: 0; border-radius: 9px; background: #10b981; color: #062a1f; font-weight: 800; cursor: pointer; }
-        .hint { font-size: 6.5px; color: #9ca3af; }
+        .hint { font-size: 8.125px; color: #9ca3af; }
     </style>
-    <!-- Google Fonts: Inter (Latin) and Tajawal (Arabic); typography scale 50%. -->
+    <!-- Google Fonts: Inter (Latin) and Tajawal (Arabic); typography 25% larger than previous baseline. -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=Tajawal:wght@400;500;700;800;900&amp;display=swap">
     <style data-aiwm-global-typography>
-        :root { font-size: 50%; --aiwm-google-font: 'Inter', 'Tajawal', sans-serif; --font-sans: var(--aiwm-google-font); }
+        :root { font-size: 62.5%; --aiwm-google-font: 'Inter', 'Tajawal', sans-serif; --font-sans: var(--aiwm-google-font); }
         html:lang(ar) { --aiwm-google-font: 'Tajawal', 'Inter', sans-serif; }
         body, button, input, textarea, select, option { font-family: var(--aiwm-google-font) !important; }
     </style>

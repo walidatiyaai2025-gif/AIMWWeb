@@ -16,14 +16,14 @@
         main { max-width:920px; padding:32px 20px 65px; margin:auto; }
         .top { display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; }
         .back { color:var(--green); font-weight:650; text-decoration:none; }
-        h1 { margin:12px 0 4px; font-size:clamp(13px,2vw,19px); }
-        h2 { font-size:10.5px; margin:0 0 12px; }
+        h1 { margin:12px 0 4px; font-size:clamp(16.25px,2.5vw,23.75px); }
+        h2 { font-size:13.125px; margin:0 0 12px; }
         .muted { color:var(--muted); }
         .panel { background:white; padding:24px; border:1px solid var(--edge); border-radius:17px; margin-top:18px; box-shadow:0 2px 7px #192f4510; }
         .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; }
         .stat { padding:16px; background:#f5f9f8; border-radius:12px; overflow-wrap:anywhere; }
-        .stat span { display:block; font-size:6.5px; color:var(--muted); }
-        .stat strong { font-size:9.5px; }
+        .stat span { display:block; font-size:8.125px; color:var(--muted); }
+        .stat strong { font-size:11.875px; }
         .alert { border-radius:10px; padding:14px; margin-top:18px; background:#fff6e4; border:1px solid #e6c775; }
         .ok { background:#e9f8ef; border-color:#78bd9c; }
         .error { background:#fff1ee; border-color:#e5a49f; }
@@ -38,14 +38,17 @@
         .record { border-top:1px solid var(--edge); padding:12px 0; }
         :focus-visible { outline:3px solid #e1a433; outline-offset:3px; }
     </style>
-    <!-- Google Fonts: Inter (Latin) and Tajawal (Arabic); typography scale 50%. -->
+    <!-- Google Fonts: Inter (Latin) and Tajawal (Arabic); typography 25% larger than previous baseline. -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=Tajawal:wght@400;500;700;800;900&amp;display=swap">
     <style data-aiwm-global-typography>
-        :root { font-size: 50%; --aiwm-google-font: 'Inter', 'Tajawal', sans-serif; --font-sans: var(--aiwm-google-font); }
+        :root { font-size: 62.5%; --aiwm-google-font: 'Inter', 'Tajawal', sans-serif; --font-sans: var(--aiwm-google-font); }
         html:lang(ar) { --aiwm-google-font: 'Tajawal', 'Inter', sans-serif; }
         body, button, input, textarea, select, option { font-family: var(--aiwm-google-font) !important; }
+        @media (min-width: 1140px) { main :is(.cards, .record-grid, .data-cards, .details-grid, .stats-grid, .summary-grid, .info-grid, .settings-grid), main dl:has(> div) { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; } }
+        @media (min-width: 701px) and (max-width: 1139px) { main :is(.cards, .record-grid, .data-cards, .details-grid, .stats-grid, .summary-grid, .info-grid, .settings-grid), main dl:has(> div) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } }
+        @media (max-width: 700px) { main :is(.cards, .record-grid, .data-cards, .details-grid, .stats-grid, .summary-grid, .info-grid, .settings-grid), main dl:has(> div) { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; } }
     </style>
 </head>
 <body>
