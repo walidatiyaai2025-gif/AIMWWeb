@@ -7,27 +7,27 @@
     <style>
         body { margin: 0; min-height: 100vh; display: grid; place-items: center; font-family: Segoe UI, Arial, sans-serif; background: #0b0f17; color: #f9fafb; }
         .card { width: min(470px, 92vw); box-sizing: border-box; padding: 32px; border: 1px solid #243244; border-radius: 20px; background: #111827; }
-        .brand { margin-bottom: 8px; font-size: 12px; font-weight: 750; }
-        .trial { display: inline-block; margin-bottom: 14px; padding: 5px 9px; border-radius: 999px; background: #064e3b; color: #a7f3d0; font-size: 5.5px; font-weight: 800; letter-spacing: .04em; }
-        h1 { margin: 0 0 8px; font-size: 13px; }
+        .brand { margin-bottom: 8px; font-size: 15px; font-weight: 750; }
+        .trial { display: inline-block; margin-bottom: 14px; padding: 5px 9px; border-radius: 999px; background: #064e3b; color: #a7f3d0; font-size: 6.875px; font-weight: 800; letter-spacing: .04em; }
+        h1 { margin: 0 0 8px; font-size: 16.25px; }
         .sub { margin: 0 0 20px; color: #9ca3af; line-height: 1.45; }
-        .alert { margin-bottom: 16px; padding: 11px 12px; border-radius: 10px; font-size: 6.5px; }
+        .alert { margin-bottom: 16px; padding: 11px 12px; border-radius: 10px; font-size: 8.125px; }
         .error { border: 1px solid #ef444455; background: #7f1d1d33; color: #fecaca; }
         .success { border: 1px solid #10b98155; background: #064e3b55; color: #a7f3d0; }
         label { display: block; margin: 14px 0 6px; }
         input { width: 100%; box-sizing: border-box; padding: 12px; border: 1px solid #374151; border-radius: 9px; background: #0b0f17; color: #fff; }
         small { display: block; margin-top: 6px; color: #9ca3af; }
         button { width: 100%; margin-top: 20px; padding: 12px; border: 0; border-radius: 9px; background: #10b981; color: #062a1f; font-weight: 800; cursor: pointer; }
-        .limits { display: grid; gap: 6px; margin: 20px 0; color: #d1d5db; font-size: 6.5px; }
-        .footer { text-align: center; color: #9ca3af; font-size: 6.5px; }
+        .limits { display: grid; gap: 6px; margin: 20px 0; color: #d1d5db; font-size: 8.125px; }
+        .footer { text-align: center; color: #9ca3af; font-size: 8.125px; }
         a { color: #6ee7b7; }
     </style>
-    <!-- Google Fonts: Inter (Latin) and Tajawal (Arabic); typography scale 50%. -->
+    <!-- Google Fonts: Inter (Latin) and Tajawal (Arabic); typography 25% larger than previous baseline. -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=Tajawal:wght@400;500;700;800;900&amp;display=swap">
     <style data-aiwm-global-typography>
-        :root { font-size: 50%; --aiwm-google-font: 'Inter', 'Tajawal', sans-serif; --font-sans: var(--aiwm-google-font); }
+        :root { font-size: 62.5%; --aiwm-google-font: 'Inter', 'Tajawal', sans-serif; --font-sans: var(--aiwm-google-font); }
         html:lang(ar) { --aiwm-google-font: 'Tajawal', 'Inter', sans-serif; }
         body, button, input, textarea, select, option { font-family: var(--aiwm-google-font) !important; }
     </style>

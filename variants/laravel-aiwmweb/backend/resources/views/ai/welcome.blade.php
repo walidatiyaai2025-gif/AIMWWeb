@@ -14,12 +14,12 @@
         .brand { display: inline-flex; align-items: center; gap: 12px; color: inherit; text-decoration: none; font-weight: 800; letter-spacing: -.02em; }
         .brand-mark { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px; background: linear-gradient(135deg, #5eead4, #60a5fa); color: #06111e; box-shadow: 0 12px 40px rgba(96,165,250,.25); }
         .brand-copy { display: grid; gap: 2px; }
-        .brand-copy small { color: #91a4bf; font-size: 5.5px; letter-spacing: .12em; font-weight: 700; }
+        .brand-copy small { color: #91a4bf; font-size: 6.875px; letter-spacing: .12em; font-weight: 700; }
         .signin { color: #d9e7fb; text-decoration: none; border: 1px solid rgba(255,255,255,.14); border-radius: 10px; padding: 10px 15px; font-weight: 700; }
         .hero { min-height: calc(100vh - 77px); display: grid; grid-template-columns: 1.15fr .85fr; align-items: center; gap: 56px; padding: 72px 0; }
-        .eyebrow { color: #72e2d1; font-size: 6px; font-weight: 800; letter-spacing: .16em; }
-        h1 { margin: 16px 0 20px; max-width: 760px; font-size: clamp(21px, 3vw, 39px); line-height: .98; letter-spacing: -.055em; }
-        .lead { margin: 0; max-width: 700px; color: #aabbd1; font-size: clamp(8.5px, 1vw, 10.5px); line-height: 1.7; }
+        .eyebrow { color: #72e2d1; font-size: 7.5px; font-weight: 800; letter-spacing: .16em; }
+        h1 { margin: 16px 0 20px; max-width: 760px; font-size: clamp(26.25px, 3.75vw, 48.75px); line-height: .98; letter-spacing: -.055em; }
+        .lead { margin: 0; max-width: 700px; color: #aabbd1; font-size: clamp(10.625px, 1.25vw, 13.125px); line-height: 1.7; }
         .hero-actions { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
         .hero-primary { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 10px 16px; color: #06111e; text-decoration: none; font-weight: 850; border: 1px solid #72e2d1; border-radius: 11px; background: #72e2d1; }
         .hero-primary:hover, .hero-primary:focus-visible { background: #8ce9dc; border-color: #8ce9dc; outline: none; }
@@ -28,32 +28,32 @@
         .proof { margin-top: 32px; display: flex; flex-wrap: wrap; gap: 12px; color: #c9d8ec; }
         .proof span { padding: 10px 13px; border: 1px solid rgba(255,255,255,.1); border-radius: 999px; background: rgba(255,255,255,.035); }
         .panel { padding: 28px; border: 1px solid rgba(255,255,255,.1); border-radius: 24px; background: linear-gradient(180deg, rgba(20,35,59,.92), rgba(8,18,32,.92)); box-shadow: 0 30px 80px rgba(0,0,0,.32); }
-        .panel-kicker { color: #91a4bf; font-size: 5.5px; font-weight: 800; letter-spacing: .14em; }
+        .panel-kicker { color: #91a4bf; font-size: 6.875px; font-weight: 800; letter-spacing: .14em; }
         .panel-action { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; margin: 0 0 18px; padding: 8px 12px; border: 1px solid rgba(114,226,209,.45); border-radius: 10px; color: #72e2d1; text-decoration: none; font-weight: 800; }
         .panel-action:hover, .panel-action:focus-visible { background: rgba(114,226,209,.08); outline: none; }
-        .panel h2 { margin: 12px 0 18px; font-size: 12px; }
+        .panel h2 { margin: 12px 0 18px; font-size: 15px; }
         .rows { display: grid; gap: 10px; }
         .row { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 14px 15px; border-radius: 14px; background: rgba(255,255,255,.045); }
         .row b { color: #72e2d1; }
         .workflow { padding: 12px 0 72px; scroll-margin-top: 24px; }
         .workflow-head { display: flex; justify-content: space-between; align-items: end; gap: 24px; margin-bottom: 20px; }
-        .workflow-head h2 { margin: 8px 0 0; font-size: clamp(14px, 2vw, 21px); letter-spacing: -.03em; }
+        .workflow-head h2 { margin: 8px 0 0; font-size: clamp(17.5px, 2.5vw, 26.25px); letter-spacing: -.03em; }
         .workflow-head p { margin: 0; max-width: 600px; color: #91a4bf; line-height: 1.65; }
         .workflow-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
         .workflow-card { min-height: 150px; padding: 20px; border: 1px solid rgba(255,255,255,.1); border-radius: 18px; background: rgba(255,255,255,.035); }
-        .workflow-card b { display: block; color: #72e2d1; font-size: 6px; letter-spacing: .12em; }
-        .workflow-card h3 { margin: 16px 0 8px; font-size: 9px; }
+        .workflow-card b { display: block; color: #72e2d1; font-size: 7.5px; letter-spacing: .12em; }
+        .workflow-card h3 { margin: 16px 0 8px; font-size: 11.25px; }
         .workflow-card p { margin: 0; color: #9fb0c6; line-height: 1.55; }
         .pricing { padding: 12px 0 80px; }
         .pricing-head { display: flex; justify-content: space-between; align-items: end; gap: 24px; margin-bottom: 24px; }
-        .pricing-head h2 { margin: 8px 0 0; font-size: clamp(14px, 2vw, 21px); letter-spacing: -.03em; }
+        .pricing-head h2 { margin: 8px 0 0; font-size: clamp(17.5px, 2.5vw, 26.25px); letter-spacing: -.03em; }
         .pricing-head p { margin: 0; max-width: 620px; color: #91a4bf; line-height: 1.65; }
         .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; }
         .price-card { display: grid; gap: 14px; align-content: start; padding: 22px; border: 1px solid rgba(255,255,255,.1); border-radius: 20px; background: rgba(255,255,255,.035); }
-        .price-card h3 { margin: 0; font-size: 11px; }
+        .price-card h3 { margin: 0; font-size: 13.75px; }
         .price-card p { margin: 0; color: #9fb0c6; line-height: 1.55; }
-        .price { font-size: 12px; font-weight: 850; }
-        .price small { font-size: 6.5px; color: #91a4bf; font-weight: 650; }
+        .price { font-size: 15px; font-weight: 850; }
+        .price small { font-size: 8.125px; color: #91a4bf; font-weight: 650; }
         .price-cta { display: inline-flex; justify-content: center; align-items: center; min-height: 44px; padding: 10px 14px; border-radius: 11px; background: #72e2d1; color: #06111e; text-decoration: none; font-weight: 850; }
         .pricing-empty { padding: 18px; border: 1px solid rgba(255,255,255,.1); border-radius: 14px; color: #aabbd1; background: rgba(255,255,255,.03); }
         .public-footer { min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-top: 1px solid rgba(255,255,255,.08); color: #91a4bf; }
@@ -65,12 +65,12 @@
         @media (max-width: 820px) { .hero { grid-template-columns: 1fr; padding: 48px 0; } .panel { order: -1; } .workflow-head, .pricing-head { align-items: start; flex-direction: column; } .workflow-grid { grid-template-columns: 1fr 1fr; } }
         @media (max-width: 560px) { .workflow-grid { grid-template-columns: 1fr; } }
     </style>
-    <!-- Google Fonts: Inter (Latin) and Tajawal (Arabic); typography scale 50%. -->
+    <!-- Google Fonts: Inter (Latin) and Tajawal (Arabic); typography 25% larger than previous baseline. -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=Tajawal:wght@400;500;700;800;900&amp;display=swap">
     <style data-aiwm-global-typography>
-        :root { font-size: 50%; --aiwm-google-font: 'Inter', 'Tajawal', sans-serif; --font-sans: var(--aiwm-google-font); }
+        :root { font-size: 62.5%; --aiwm-google-font: 'Inter', 'Tajawal', sans-serif; --font-sans: var(--aiwm-google-font); }
         html:lang(ar) { --aiwm-google-font: 'Tajawal', 'Inter', sans-serif; }
         body, button, input, textarea, select, option { font-family: var(--aiwm-google-font) !important; }
     </style>
