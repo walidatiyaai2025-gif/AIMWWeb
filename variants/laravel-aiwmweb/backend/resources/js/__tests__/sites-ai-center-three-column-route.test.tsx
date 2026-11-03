@@ -1,13 +1,17 @@
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 // Route markup is composed inside RouteElement which requires TenantBootstrap's
 // authenticated React Query outlet. Validate the actual owner-facing route
 // composition and breakpoints without synthesizing a separate authentication shell.
-const app = readFileSync(new URL('../app.tsx', import.meta.url), 'utf8');
-const page = readFileSync(new URL('../pages.tsx', import.meta.url), 'utf8');
-const approval = readFileSync(new URL('../ai-center-approval-status-control.tsx', import.meta.url), 'utf8');
-const css = readFileSync(new URL('../../css/app.css', import.meta.url), 'utf8');
+// Vitest's jsdom runtime uses an http: import.meta.url. Node file reads
+// must instead be anchored to the backend package's working directory.
+const jsPath = resolve(process.cwd(), 'resources/js');
+const app = readFileSync(resolve(jsPath, 'app.tsx'), 'utf8');
+const page = readFileSync(resolve(jsPath, 'pages.tsx'), 'utf8');
+const approval = readFileSync(resolve(jsPath, 'ai-center-approval-status-control.tsx'), 'utf8');
+const css = readFileSync(resolve(process.cwd(), 'resources/css/app.css'), 'utf8');
 
 describe('Sites and AI Center compact route layout contract', () => {
     it('groups the six actual Sites operations before the real resource list', () => {
