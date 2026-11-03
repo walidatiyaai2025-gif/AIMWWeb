@@ -782,7 +782,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                     : (route.key === 'sites' ? SITES_RELOAD_OPERATION_ID : undefined)));
 
     return (
-        <div className="workspace-stack">
+        <div className={route.key === 'ai-center' ? 'workspace-stack ai-center-resource-grid' : 'workspace-stack'}>
             <section className="toolbar-panel" aria-label={locale === 'ar' ? 'أدوات مساحة العمل' : 'Workspace tools'}>
                 {route.key === 'email-history' ? (
                     <EmailHistoryFiltersControl

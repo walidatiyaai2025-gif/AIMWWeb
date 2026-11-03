@@ -47,9 +47,9 @@ function ensureRuntimeStyles(): void {
     const style = document.createElement('style');
     style.id = 'aiwm-laravel-accessibility-runtime';
     style.textContent = [
-        'html[data-font-scale="small"] { font-size: 56.25%; }',
-        'html[data-font-scale="normal"] { font-size: 62.5%; }',
-        'html[data-font-scale="large"] { font-size: 70.3125%; }',
+        'html[data-font-scale="small"] { font-size: 70.3125%; }',
+        'html[data-font-scale="normal"] { font-size: 78.125%; }',
+        'html[data-font-scale="large"] { font-size: 87.890625%; }',
         'html[data-density="compact"] .panel, html[data-density="compact"] .toolbar-panel { padding: .75rem !important; }',
         'html[data-density="compact"] .workspace-stack { gap: .65rem !important; }',
         'html[data-density="comfortable"] .panel, html[data-density="comfortable"] .toolbar-panel { padding: 1.35rem !important; }',
