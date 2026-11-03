@@ -696,14 +696,10 @@ export function AppShell({ context, children }: { context: FrontendContext; chil
             <button className="nav-backdrop" type="button" tabIndex={-1} aria-label={locale === 'ar' ? 'إغلاق القائمة' : 'Close navigation'} onClick={() => setSidebarOpen(false)} />
             <div className="main-area">
                 <header className="topbar">
-                    <div className="topbar-title">
-                        <button type="button" className="icon-button sidebar-toggle" onClick={() => { if (window.matchMedia('(max-width: 700px)').matches) setSidebarOpen(true); else toggleCollapse(); }} aria-label={locale === 'ar' ? 'تبديل القائمة الجانبية' : 'Toggle sidebar'}>☰</button>
-                        <div className="heading-block">
-                            <nav className="breadcrumb" aria-label={locale === 'ar' ? 'مسار الصفحة' : 'Breadcrumb'}><span>{groups[currentRoute.group][locale]}</span><b aria-hidden="true">›</b><strong>{currentRoute.label[locale]}</strong></nav>
-                            <h1 id="page-title">{currentRoute.label[locale]}</h1>
-                            <small>{currentRoute.description[locale]}</small>
-                        </div>
-                    </div>
+                    <Link className="topbar-brand" to={tenantUrl(context.tenant.slug, '/')} aria-label="AI WordPress Manager">
+                        <span className="brand-mark" aria-hidden="true">AI</span>
+                        <span className="brand-copy"><strong>AI WordPress Manager</strong><small>Laravel AIWMWeb</small></span>
+                    </Link>
                     <div className="topbar-actions">
                         <button
                             ref={commandTriggerRef}
@@ -729,9 +725,21 @@ export function AppShell({ context, children }: { context: FrontendContext; chil
                         </label>
                         <button type="button" className="icon-button" onClick={() => setMode(mode === 'dark' ? 'light' : 'dark')} aria-label={locale === 'ar' ? 'تبديل الوضع الفاتح والداكن' : 'Toggle light and dark mode'}>{mode === 'dark' ? '☾' : '☀'}</button>
                         <button type="button" className="language-switch" onClick={toggleLocale} aria-label={locale === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}>🌐 <span>{locale === 'ar' ? 'EN' : 'العربية'}</span></button>
-                        <div className="user-chip" title={context.user.email}><span aria-hidden="true">{context.user.name.slice(0, 1).toUpperCase()}</span><div><strong>{context.user.name}</strong><small>{context.tenant.name}</small></div></div>
                     </div>
                 </header>
+                <div className="page-heading-row">
+                    <div className="topbar-title">
+                        <button type="button" className="icon-button sidebar-toggle" onClick={() => { if (window.matchMedia('(max-width: 700px)').matches) setSidebarOpen(true); else toggleCollapse(); }} aria-label={locale === 'ar' ? 'تبديل القائمة الجانبية' : 'Toggle sidebar'}>☰</button>
+                        <div className="heading-block">
+                            <nav className="breadcrumb" aria-label={locale === 'ar' ? 'مسار الصفحة' : 'Breadcrumb'}><span>{groups[currentRoute.group][locale]}</span><b aria-hidden="true">›</b><strong>{currentRoute.label[locale]}</strong></nav>
+                            <h1 id="page-title">{currentRoute.label[locale]}</h1>
+                            <small>{currentRoute.description[locale]}</small>
+                        </div>
+                    </div>
+                    <div className="page-heading-actions" aria-label={locale === 'ar' ? 'اختصارات الصفحة' : 'Page shortcuts'}>
+                        <div className="user-chip" title={context.user.email}><span aria-hidden="true">{context.user.name.slice(0, 1).toUpperCase()}</span><div><strong>{context.user.name}</strong><small>{context.tenant.name}</small></div></div>
+                    </div>
+                </div>
                 <main id="main-content" className="content" tabIndex={-1} aria-labelledby="page-title">{children}</main>
             </div>
             <CommandPalette context={context} open={commandOpen} onClose={() => setCommandOpen(false)} triggerRef={commandTriggerRef} />
