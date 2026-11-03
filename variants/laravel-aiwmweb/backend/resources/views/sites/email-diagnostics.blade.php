@@ -65,12 +65,12 @@
         .result { margin-top: 16px; padding: 14px; border: 1px solid color-mix(in srgb, CanvasText 18%, transparent); border-radius: 10px; }
         @media (max-width: 640px) { main { margin-top: 20px; } header { display: grid; } dl { grid-template-columns: 1fr; } }
     </style>
-    <!-- Google Fonts: Inter (Latin) and Tajawal (Arabic); typography 25% larger than previous baseline. -->
+    <!-- Google Fonts: Inter (Latin) and Tajawal (Arabic); typography 25% larger than 62.5% baseline. -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=Tajawal:wght@400;500;700;800;900&amp;display=swap">
     <style data-aiwm-global-typography>
-        :root { font-size: 62.5%; --aiwm-google-font: 'Inter', 'Tajawal', sans-serif; --font-sans: var(--aiwm-google-font); }
+        :root { font-size: 78.125%; --aiwm-google-font: 'Inter', 'Tajawal', sans-serif; --font-sans: var(--aiwm-google-font); }
         html:lang(ar) { --aiwm-google-font: 'Tajawal', 'Inter', sans-serif; }
         body, button, input, textarea, select, option { font-family: var(--aiwm-google-font) !important; }
         @media (min-width: 1140px) { main :is(.cards, .record-grid, .data-cards, .details-grid, .stats-grid, .summary-grid, .info-grid, .settings-grid), main dl:has(> div) { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; } }
