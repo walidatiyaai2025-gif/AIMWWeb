@@ -121,7 +121,7 @@ describe('MainLayout canonical local controls', () => {
         const headingRow = document.querySelector('.page-heading-row');
         expect(topbar).not.toBeNull();
         expect(headingRow).not.toBeNull();
-        expect(topbar?.querySelector('.topbar-brand')).toHaveAttribute('href', '/tenants/alpha/');
+        expect(topbar?.querySelector('.topbar-brand')).toHaveAttribute('href', '/tenants/alpha');
         expect(topbar?.querySelector('.topbar-title')).toBeNull();
         expect(headingRow?.querySelector('.topbar-title')).not.toBeNull();
         expect(headingRow?.querySelector('.page-heading-actions')).not.toBeNull();
