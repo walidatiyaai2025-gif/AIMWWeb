@@ -1,7 +1,7 @@
 <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Laravel AIWMWeb Demo</title><style>body{font:7.5px system-ui;max-width:1100px;margin:auto;padding:2rem;background:#f6f7fb;color:#172033}section{background:white;padding:1rem;margin:1rem 0;border-radius:10px}input,button,textarea{padding:.6rem;margin:.25rem}pre{white-space:pre-wrap;background:#101827;color:#d8e4ff;padding:1rem;min-height:8rem}.row{display:flex;flex-wrap:wrap;gap:.5rem}</style>    <!-- Google Fonts: Inter (Latin) and Tajawal (Arabic); typography scale 50%. -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Tajawal:wght@400;500;600;700;800;900&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=Tajawal:wght@400;500;700;800;900&amp;display=swap">
     <style data-aiwm-global-typography>
         :root { font-size: 50%; --aiwm-google-font: 'Inter', 'Tajawal', sans-serif; --font-sans: var(--aiwm-google-font); }
         html:lang(ar) { --aiwm-google-font: 'Tajawal', 'Inter', sans-serif; }
