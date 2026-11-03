@@ -16,8 +16,8 @@
         body { margin: 0; background: #0b0f17; color: #f8fafc; }
         .error-page { min-height: 100vh; display: grid; place-items: center; padding: 32px; box-sizing: border-box; }
         .error-card { width: min(760px, 100%); padding: 32px; box-sizing: border-box; border: 1px solid rgba(248, 113, 113, .3); border-radius: 18px; background: rgba(255, 255, 255, .04); box-shadow: 0 18px 50px rgba(0, 0, 0, .28); }
-        .kicker { display: inline-block; color: #f87171; font-size: 12px; font-weight: 900; letter-spacing: .14em; }
-        h1 { margin: 10px 0; font-size: clamp(28px, 4vw, 42px); }
+        .kicker { display: inline-block; color: #f87171; font-size: 6px; font-weight: 900; letter-spacing: .14em; }
+        h1 { margin: 10px 0; font-size: clamp(14px, 2vw, 21px); }
         p { color: #cbd5e1; line-height: 1.65; }
         .diagnostics { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 24px 0; }
         .diagnostic { padding: 14px; border: 1px solid rgba(148, 163, 184, .25); border-radius: 12px; background: rgba(15, 23, 42, .65); min-width: 0; }
@@ -31,6 +31,15 @@
         .copy-status { margin: 12px 0 0; }
         .copy-error { margin-top: 12px; }
         [hidden] { display: none !important; }
+    </style>
+    <!-- Google Fonts: Inter (Latin) and Tajawal (Arabic); typography scale 50%. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Tajawal:wght@400;500;600;700;800;900&display=swap">
+    <style data-aiwm-global-typography>
+        :root { font-size: 50%; --aiwm-google-font: 'Inter', 'Tajawal', sans-serif; --font-sans: var(--aiwm-google-font); }
+        html:lang(ar) { --aiwm-google-font: 'Tajawal', 'Inter', sans-serif; }
+        body, button, input, textarea, select, option { font-family: var(--aiwm-google-font) !important; }
     </style>
 </head>
 <body>

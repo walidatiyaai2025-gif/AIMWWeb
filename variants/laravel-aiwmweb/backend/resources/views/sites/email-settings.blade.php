@@ -91,6 +91,15 @@
         th, td { padding: 10px; text-align: start; border-bottom: 1px solid color-mix(in srgb, CanvasText 14%, transparent); }
         @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } main { margin-top: 20px; } }
     </style>
+    <!-- Google Fonts: Inter (Latin) and Tajawal (Arabic); typography scale 50%. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Tajawal:wght@400;500;600;700;800;900&display=swap">
+    <style data-aiwm-global-typography>
+        :root { font-size: 50%; --aiwm-google-font: 'Inter', 'Tajawal', sans-serif; --font-sans: var(--aiwm-google-font); }
+        html:lang(ar) { --aiwm-google-font: 'Tajawal', 'Inter', sans-serif; }
+        body, button, input, textarea, select, option { font-family: var(--aiwm-google-font) !important; }
+    </style>
 </head>
 <body>
 <main>
