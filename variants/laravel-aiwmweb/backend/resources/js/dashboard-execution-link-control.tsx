@@ -28,7 +28,7 @@ export function DashboardExecutionLinkControl({ context }: { context: FrontendCo
     if (!canOpenDashboardExecution(context)) return null;
 
     return (
-        <section className="panel" aria-label={locale === 'ar' ? 'اختصارات لوحة التحكم' : 'Dashboard shortcuts'}>
+        <section className="panel dashboard-return-panel" aria-label={locale === 'ar' ? 'اختصارات لوحة التحكم' : 'Dashboard shortcuts'}>
             <div className="panel-header">
                 <div>
                     <span className="workspace-kicker">OPERATIONS</span>
