@@ -29,6 +29,28 @@ describe('Responsive data-only workspace layout', () => {
         expect(screen.getByRole('button', { name: 'Open Third site' })).toBeInTheDocument();
     });
 
+    it('renders multi-field Sites as individual cards while preserving every action', () => {
+        const { container } = render(
+            <LocaleProvider>
+                <DataTable
+                    layout="cards"
+                    rows={[
+                        { id: 11, name: 'First site', status: 'active', connection_status: 'connected' },
+                        { id: 12, name: 'Second site', status: 'disabled', connection_status: 'failed' },
+                        { id: 13, name: 'Third site', status: 'active', connection_status: 'connected' },
+                    ]}
+                    renderActions={(row) => <button type="button">Open {String(row.id)}</button>}
+                />
+            </LocaleProvider>,
+        );
+        const cards = screen.getByRole('list', { name: 'Site cards' });
+        expect(cards.querySelectorAll('article.site-record-card')).toHaveLength(3);
+        expect(container.querySelector('.table-scroll')).toBeNull();
+        expect(screen.getByRole('heading', { name: 'First site' })).toBeInTheDocument();
+        expect(screen.getByText('connected')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Open 13' })).toBeInTheDocument();
+    });
+
     it('keeps multi-field tables in their canonical full-width tabular form', () => {
         const { container } = render(
             <LocaleProvider>

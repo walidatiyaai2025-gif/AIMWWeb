@@ -752,3 +752,93 @@ body, button, input, textarea, select, option { font-family: var(--aiwm-google-f
 @media (max-width: 700px) {
     .single-column-records .data-table tbody { grid-template-columns: minmax(0, 1fr); padding: 10px; gap: 10px; }
 }
+
+/* Site directory: real site records, three across instead of stacked rows.
+   The native resource query, site filter buttons and every row action stay unchanged. */
+.site-record-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 18px;
+    padding: 18px;
+}
+.site-record-card {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 18px;
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    background: linear-gradient(155deg, var(--surface2), var(--surface));
+    box-shadow: 0 9px 25px rgba(0, 4, 15, .15);
+    overflow-wrap: anywhere;
+}
+.site-record-header {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+}
+.site-record-header h3 {
+    min-width: 0;
+    margin: 0;
+    font-size: 1.3rem;
+    line-height: 1.35;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+.site-record-symbol {
+    display: grid;
+    place-items: center;
+    flex: 0 0 38px;
+    height: 38px;
+    color: var(--accent-strong);
+    background: var(--accent-soft);
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    font-size: 1.7rem;
+}
+.site-record-details {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    margin: 0;
+    gap: 11px 14px;
+}
+.site-record-detail { min-width: 0; }
+.site-record-detail dt { color: var(--muted); font-size: .95rem; }
+.site-record-detail dd {
+    min-width: 0;
+    margin: 4px 0 0;
+    font-size: 1.05rem;
+    font-weight: 650;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+    unicode-bidi: plaintext;
+}
+.site-record-actions {
+    margin-top: auto;
+    padding-top: 13px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex-wrap: wrap;
+}
+.site-record-actions .site-row-actions {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+.site-record-actions a { overflow-wrap: anywhere; }
+@media (min-width: 701px) and (max-width: 1023px) {
+    .site-record-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; }
+}
+@media (max-width: 700px) {
+    .site-record-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 11px; }
+    .site-record-card { padding: 14px; }
+}

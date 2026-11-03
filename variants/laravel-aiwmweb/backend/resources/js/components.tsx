@@ -252,9 +252,11 @@ export function LoadingState() {
 export function DataTable({
     rows,
     renderActions,
+    layout = 'table',
 }: {
     rows: Array<Record<string, unknown>>;
     renderActions?: (row: Record<string, unknown>) => React.ReactNode;
+    layout?: 'table' | 'cards';
 }) {
     const { locale } = useLocale();
     const preferred = ['id', 'title', 'name', 'status', 'type', 'site', 'updated_at', 'updatedAt', 'created_at'];
@@ -268,6 +270,58 @@ export function DataTable({
         if (typeof value === 'object') return JSON.stringify(value);
         return String(value);
     };
+
+
+    if (layout === 'cards') {
+        const cardColumns = Array.from(new Set([
+            ...fallbackColumns,
+            ...['connection_status', 'url', 'site_url'].filter((column) => available.has(column)),
+        ]));
+        const labels: Record<string, string> = locale === 'ar' ? {
+            id: 'الرقم', name: 'الاسم', title: 'العنوان', status: 'الحالة',
+            connection_status: 'حالة الاتصال', url: 'الرابط', site_url: 'رابط الموقع',
+            type: 'النوع', site: 'الموقع', updated_at: 'آخر تعديل',
+            updatedAt: 'آخر تعديل', created_at: 'تاريخ الإنشاء',
+        } : {
+            id: 'ID', name: 'Name', title: 'Title', status: 'Status',
+            connection_status: 'Connection status', url: 'URL', site_url: 'Site URL',
+            type: 'Type', site: 'Site', updated_at: 'Updated',
+            updatedAt: 'Updated', created_at: 'Created',
+        };
+
+        return (
+            <div className="site-record-grid" role="list" aria-label={locale === 'ar' ? 'بطاقات المواقع' : 'Site cards'}>
+                {rows.map((row, index) => {
+                    const headingKey = ['name', 'title', 'site_url', 'url', 'id']
+                        .find((key) => row[key] !== null && row[key] !== undefined && String(row[key]).trim() !== '');
+                    const heading = headingKey ? String(row[headingKey]) : (locale === 'ar' ? 'موقع بدون اسم' : 'Unnamed site');
+                    return (
+                        <article className="site-record-card" role="listitem" key={String(row.id ?? index)}>
+                            <header className="site-record-header">
+                                <span className="site-record-symbol" aria-hidden="true">◎</span>
+                                <h3>{heading}</h3>
+                            </header>
+                            <dl className="site-record-details">
+                                {cardColumns.filter((column) => column !== headingKey).map((column) => (
+                                    <div className="site-record-detail" key={column}>
+                                        <dt>{labels[column] ?? column.replaceAll('_', ' ')}</dt>
+                                        <dd dir={column === 'url' || column === 'site_url' ? 'ltr' : undefined}>
+                                            {format(row[column])}
+                                        </dd>
+                                    </div>
+                                ))}
+                            </dl>
+                            {renderActions ? (
+                                <footer className="site-record-actions" aria-label={locale === 'ar' ? 'إجراءات الموقع' : 'Site actions'}>
+                                    {renderActions(row)}
+                                </footer>
+                            ) : null}
+                        </article>
+                    );
+                })}
+            </div>
+        );
+    }
 
     return (
         <div className={`table-scroll${fallbackColumns.length === 1 ? ' single-column-records' : ''}`} data-data-columns={fallbackColumns.length} tabIndex={0} role="region" aria-label={locale === 'ar' ? 'جدول البيانات' : 'Data table'}>

@@ -1213,6 +1213,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                 {visibleRows.length ? (
                     <DataTable
                         rows={visibleRows}
+                        layout={route.key === 'sites' ? 'cards' : 'table'}
                         renderActions={route.key === 'site-operations' ? (row) => (
                             <SiteOperationsDetailsLinkControl context={context} row={row} />
                         ) : route.key === 'site-reliability' ? (row) => (
