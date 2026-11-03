@@ -83,6 +83,7 @@ function MainLayoutRuntimeMarkers() {
         const markers: Array<[string, string]> = [
             ['.skip-link', MAIN_LAYOUT_OPERATION_IDS.skipToContent],
             ['.brand', MAIN_LAYOUT_OPERATION_IDS.home],
+            ['.topbar-brand', MAIN_LAYOUT_OPERATION_IDS.home],
             ['.sidebar-toggle', MAIN_LAYOUT_OPERATION_IDS.toggleSidebar],
             ['#command-palette-trigger', MAIN_LAYOUT_OPERATION_IDS.openCommandPalette],
             ['.language-switch', MAIN_LAYOUT_OPERATION_IDS.switchLanguage],
