@@ -131,7 +131,9 @@ jobs:
         run: |
           set -euo pipefail
           tmp="$(mktemp -d)"
-          trap 'rm -rf "$tmp"' EXIT
+          # Retain this EPHEMERAL, non-production signed artifact for the next
+          # acceptance step in the same disposable GitHub Actions runner.
+          echo "AIWM_CI_SIGNED_DIR=$tmp" >> "$GITHUB_ENV"
           # The CI test key is random, never provisioned to any deployment and never uploaded.
           CI_ONLY_SIGN_KEY="$(php -r '$p=sodium_crypto_sign_keypair(); file_put_contents($argv[1], base64_encode(sodium_crypto_sign_publickey($p))); echo base64_encode(sodium_crypto_sign_secretkey($p));' "$tmp/public-key")"
           AIWM_UPDATES_SECRET_KEY="$CI_ONLY_SIGN_KEY" php variants/laravel-aiwmweb/tools/release/build-signed-update.php "0.0.$GITHUB_RUN_NUMBER" "$SOURCE_SHA" "$tmp"
@@ -179,7 +181,9 @@ jobs:
           set -euo pipefail
           root="${AIWM_SMOKE_ROOT:?Prior Setup ZIP smoke must export extracted installation path}"
           php -l variants/laravel-aiwmweb/tools/release/smoke-signed-upgrade.php
-          php variants/laravel-aiwmweb/tools/release/smoke-signed-upgrade.php "$root"
+          php variants/laravel-aiwmweb/tools/release/smoke-signed-upgrade.php \
+            "$root" "$AIWM_CI_SIGNED_DIR/AIWMWeb-Laravel-signed-bundle.zip" "$AIWM_CI_SIGNED_DIR/public-key"
+          rm -rf "$AIWM_CI_SIGNED_DIR"
 
       - name: Sign admin update only on approved manual release from green main
         env:
