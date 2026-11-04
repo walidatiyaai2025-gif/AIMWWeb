@@ -35,6 +35,7 @@ function executeStep(string $installer, string $id, array $post = []): string
     $code = <<<'CODE'
 $_SERVER['HTTPS'] = 'on';
 $_SERVER['HTTP_HOST'] = 'aiwm.example.test';
+$_SERVER['REQUEST_URI'] = '/install';
 $_SERVER['REQUEST_METHOD'] = $argv[3] === 'POST' ? 'POST' : 'GET';
 $_COOKIE['AIWM_FIRST_SETUP'] = $argv[2];
 $_POST = json_decode(base64_decode($argv[4]), true, flags: JSON_THROW_ON_ERROR);
@@ -64,6 +65,8 @@ function requireOutput(string $actual, string $needle): void
     }
 }
 
+$canonical = executeStep($root.'/public/index.php', $sessionId);
+requireOutput($canonical, 'مرحبًا بك في معالج AIWMWeb');
 $first = executeStep($installer, $sessionId);
 requireOutput($first, 'مرحبًا بك في معالج AIWMWeb');
 requireOutput($first, 'تحقق من الملكية ثم التالي');
