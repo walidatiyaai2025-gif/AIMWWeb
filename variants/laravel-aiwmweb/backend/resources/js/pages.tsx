@@ -51,6 +51,7 @@ import { DashboardSitesNavigationControl } from './dashboard-sites-navigation-co
 import { DashboardSystemHealthNavigationControl } from './dashboard-system-health-navigation-control';
 import { DashboardSitesQuickAccessControl } from './dashboard-sites-quick-access-control';
 import { DashboardMediaNavigationControl } from './dashboard-media-navigation-control';
+import { DashboardConnectorDownloadControl } from './dashboard-connector-download-control';
 import { LiveSystemStatusRefreshControl } from './live-system-status-refresh-control';
 import { EMAIL_HISTORY_CLEAR_FILTERS_OPERATION_ID, EmailHistoryFiltersControl, type EmailHistoryFilterState } from './email-history-filters-control';
 import { GlobalUsersFullManagementControl } from './global-users-full-management-control';
@@ -273,6 +274,7 @@ function DashboardContent({ context, route }: { context: FrontendContext; route:
                 <DashboardSystemHealthNavigationControl context={context} />
                 <DashboardSitesQuickAccessControl context={context} />
                 <DashboardMediaNavigationControl context={context} />
+                <DashboardConnectorDownloadControl />
                 </div>
             </section>
             {metrics.length ? (

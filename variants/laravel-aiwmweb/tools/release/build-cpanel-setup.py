@@ -113,6 +113,59 @@ if ((! is_file(__DIR__.'/../app/.env') ||
     return content.encode("utf-8")
 
 
+def package_wordpress_connector(commit: str) -> Path:
+    """Build an installable WordPress plugin ZIP from this exact repository source.
+
+    Both clean Setup ZIP and signed Admin Update ZIP must deliver the same plugin
+    artifact. Never fetch a moving GitHub branch from a production web request.
+    """
+    plugin = VARIANT / "connector" / "aimw-connector"
+    main_file = plugin / "aimw-connector.php"
+    if not main_file.is_file() or main_file.is_symlink():
+        raise FileNotFoundError("Canonical WordPress Connector plugin is missing.")
+    if b"Plugin Name:" not in main_file.read_bytes():
+        raise ValueError("WordPress Connector lacks the required plugin header.")
+
+    target = BACKEND / "public" / "downloads" / "aimw-connector.zip"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    source_files = sorted(plugin.rglob("*"))
+    files = []
+    total = 0
+    for item in source_files:
+        if item.is_symlink():
+            raise ValueError(f"Connector source symlink is forbidden: {item}")
+        if item.is_dir():
+            continue
+        if not item.is_file():
+            raise ValueError(f"Connector source must be a regular file: {item}")
+        name = "aimw-connector/" + item.relative_to(plugin).as_posix()
+        safe_name(name)
+        size = item.stat().st_size
+        total += size
+        if size > 10 * 1024 * 1024 or total > 25 * 1024 * 1024:
+            raise ValueError("Connector plugin exceeded package size limits.")
+        files.append((name, item))
+    if len(files) < 1 or len(files) > 1000:
+        raise ValueError("Invalid Connector file count.")
+
+    with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
+        for name, item in files:
+            archive.write(item, arcname=name)
+        archive.writestr(
+            "aimw-connector/AIMW-CONNECTOR-MANIFEST.json",
+            json.dumps({
+                "product": "AIMW Connector",
+                "source_sha": commit,
+                "install_path": "wp-content/plugins/aimw-connector",
+            }, sort_keys=True, separators=(",", ":")).encode("utf-8"),
+        )
+    with zipfile.ZipFile(target) as archive:
+        names = archive.namelist()
+        if "aimw-connector/aimw-connector.php" not in names or archive.testzip() is not None:
+            raise ValueError("Generated WordPress Connector ZIP failed verification.")
+    return target
+
+
 def write_zip(target: Path, commit: str, version: str) -> None:
     if not re.fullmatch(r"[a-f0-9]{40}", commit):
         raise ValueError("Exact 40-char source commit is required.")
@@ -128,6 +181,8 @@ def write_zip(target: Path, commit: str, version: str) -> None:
     if not installer.is_file():
         raise FileNotFoundError("Missing owner-gated one-time web installer.")
 
+    connector_zip = package_wordpress_connector(commit)
+    assert connector_zip.is_file()
     pairs: dict[str, Path] = dict(entries())
     for path in sorted((BACKEND / "public").rglob("*")):
         if not path.is_file() or path.is_symlink() or path.name in OMIT_NAMES:
@@ -159,11 +214,22 @@ def write_zip(target: Path, commit: str, version: str) -> None:
             if total > MAX_TOTAL:
                 raise ValueError("Uncompressed setup exceeds maximum total size.")
             metadata[archive_name] = digest(data)
-            archive.writestr(archive_name, data)
+            # ZIP writestr() defaults to mode 0600; that caused 403s for public
+            # JS/CSS on cPanel where the web-server user differs from the
+            # extracting account. Explicitly deliver public app assets as 0644.
+            info = zipfile.ZipInfo(archive_name)
+            info.create_system = 3
+            info.external_attr = (stat.S_IFREG | 0o644) << 16
+            info.compress_type = zipfile.ZIP_DEFLATED
+            archive.writestr(info, data, compress_type=zipfile.ZIP_DEFLATED, compresslevel=6)
 
         for directory in SKELETON:
             safe_name(directory)
-            archive.writestr(directory, b"")
+            info = zipfile.ZipInfo(directory)
+            info.create_system = 3
+            info.external_attr = (stat.S_IFDIR | 0o755) << 16
+            info.compress_type = zipfile.ZIP_STORED
+            archive.writestr(info, b"")
 
         # The archive manifest describes the exact source, not a fabricated release number.
         info = json.dumps({
@@ -177,6 +243,7 @@ def write_zip(target: Path, commit: str, version: str) -> None:
             "document_root": "public/",
             "first_run": "/install",
             "future_updates": "/admin/system-updates",
+            "wordpress_connector_download": "/downloads/aimw-connector.zip",
         }, sort_keys=True, separators=(",", ":")).encode()
         archive.writestr("SETUP-MANIFEST.json", info)
         archive.writestr("BUILD-INFO.json", json.dumps({
@@ -214,6 +281,8 @@ def write_zip(target: Path, commit: str, version: str) -> None:
             "After login the platform is ready for core functions; external\n"
             "AI keys, WordPress connections and cron/queue hosting services\n"
             "still need REAL credentials/provisioning; never fabricate them.\n"
+            "Download the WordPress connector from /downloads/aimw-connector.zip.\n"
+            "In WordPress: Plugins > Add New > Upload Plugin > Install Now.\n"
             "The Settings > System Updates page accepts signed ZIPs only.\n"
             "Signing remains disabled until a NEW trusted private CI key and\n"
             "its matching public verification key are configured. DO NOT USE\n"

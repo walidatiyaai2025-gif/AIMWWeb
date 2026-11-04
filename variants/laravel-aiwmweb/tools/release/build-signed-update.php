@@ -50,7 +50,10 @@ foreach (['app', 'config', 'resources', 'routes', 'vendor', 'public/build', 'dat
         $files[$relative] = $entry->getPathname();
     }
 }
-foreach (['artisan', 'composer.json', 'composer.lock', 'bootstrap/app.php', 'bootstrap/providers.php'] as $name) {
+foreach (['artisan', 'composer.json', 'composer.lock', 'bootstrap/app.php', 'bootstrap/providers.php', 'public/downloads/aimw-connector.zip'] as $name) {
+    if (! is_file($base.'/'.$name) || is_link($base.'/'.$name)) {
+        throw new RuntimeException('Missing release file or unsafe symlink: '.$name);
+    }
     $files[$name] = $base.'/'.$name;
 }
 ksort($files, SORT_STRING);
