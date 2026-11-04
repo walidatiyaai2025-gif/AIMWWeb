@@ -165,18 +165,50 @@ try {
         $config->set('system_updates.public_key', base64_encode(sodium_crypto_sign_publickey($keys)));
     }
 
+    $migrationName = 'database/migrations/2099_01_01_000000_create_aiwm_ci_signed_upgrade_probe.php';
+    $probeMigrationPath = base_path($migrationName);
+    $migrationCode = <<<'PHP'
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('aiwm_ci_signed_upgrade_probe', function (Blueprint $table): void {
+            $table->id();
+            $table->string('test_marker')->nullable();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('aiwm_ci_signed_upgrade_probe');
+    }
+};
+PHP;
     $marker = "<?php\n// Exact extracted ZIP signed-upgrade smoke probe.\n";
     $inner = new ZipArchive();
     $assert($inner->open($payload, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true, 'Cannot create payload ZIP');
     $assert($inner->addFromString('app/SignedUpgradeAcceptanceProbe.php', $marker), 'Cannot add signed payload');
+    $assert($inner->addFromString($migrationName, $migrationCode), 'Cannot add signed migration');
     $assert($inner->close(), 'Cannot close payload ZIP');
     $manifest = json_encode([
         'product' => 'LARAVEL_AIWMWEB',
         'version' => '99.99.99',
+        'minimum_supported_version' => '0.0.0',
+        'migration_policy' => 'forward_only',
+        'schema_migrations' => [$migrationName],
         'sha' => str_repeat('a', 40),
         'package' => 'AIWMWeb-Laravel-update.zip',
         'sha256' => hash_file('sha256', $payload),
-        'files' => ['app/SignedUpgradeAcceptanceProbe.php' => hash('sha256', $marker)],
+        'files' => [
+            'app/SignedUpgradeAcceptanceProbe.php' => hash('sha256', $marker),
+            $migrationName => hash('sha256', $migrationCode),
+        ],
     ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
     $signature = base64_encode(sodium_crypto_sign_detached(
         $manifest,
@@ -244,11 +276,13 @@ try {
     } finally {
         DB::statement('DROP TRIGGER IF EXISTS '.$unsupportedTrigger);
     }
-    $assert($preview['file_count'] === 1 && $preview['version'] === '99.99.99', 'Signed bundle verification');
+    $assert($preview['file_count'] === 2 && $preview['version'] === '99.99.99', 'Signed bundle verification');
     $assert(! is_file($probePath), 'Dry-run verification mutated application');
 
     $result = $service->install(1, $upload);
     $assert($result['version'] === '99.99.99', 'Incorrect installed release version');
+    $assert(\Illuminate\Support\Facades\Schema::hasTable('aiwm_ci_signed_upgrade_probe'), 'Signed migration was not applied');
+    $assert(in_array($migrationName, $result['schema_migrations'], true), 'Signed migration not recorded in update receipt');
     $assert(is_file($probePath) && hash_file('sha256', $probePath) === hash('sha256', $marker), 'Signed code payload not applied');
     $assert(isset($result['database_backup']['id']) && $result['database_backup']['verified'] === true, 'Verified MySQL backup receipt missing');
     $dbReceipt = $app->make(VerifiedMysqlBackupService::class)->verify($result['database_backup']['id']);
@@ -274,6 +308,9 @@ try {
 } finally {
     if (is_file($probePath)) {
         unlink($probePath);
+    }
+    if (isset($probeMigrationPath) && is_file($probeMigrationPath)) {
+        unlink($probeMigrationPath);
     }
     if (isset($protectedUpload) && is_file($protectedUpload)) {
         unlink($protectedUpload);
