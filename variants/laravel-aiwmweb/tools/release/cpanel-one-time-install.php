@@ -127,7 +127,7 @@ function aiwmDatabase(array $db): PDO
 {
     try {
         $pdo = new PDO(
-            'mysql:host='.$db['host'].';port=3306;dbname='.$db['name'].';charset=utf8mb4',
+            'mysql:host='.$db['host'].';port='.$db['port'].';dbname='.$db['name'].';charset=utf8mb4',
             $db['user'],
             $db['password'],
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_TIMEOUT => 5],
@@ -283,12 +283,15 @@ try {
             if (empty($_SESSION['aiwm_owner_verified'])) { aiwmFailure('يجب إثبات ملكية الاستضافة أولًا.'); }
             $db = [
                 'host' => trim((string) ($_POST['db_host'] ?? '')),
+                'port' => (string) ($_POST['db_port'] ?? '3306'),
                 'name' => trim((string) ($_POST['db_name'] ?? '')),
                 'user' => trim((string) ($_POST['db_user'] ?? '')),
                 'password' => (string) ($_POST['db_password'] ?? ''),
             ];
 
             if (! preg_match('/^[a-zA-Z0-9_.-]{1,140}$/D', $db['host']) ||
+                ! preg_match('/^[1-9][0-9]{0,4}$/D', $db['port']) ||
+                (int) $db['port'] > 65535 ||
                 ! preg_match('/^[a-zA-Z0-9_]{1,128}$/D', $db['name']) ||
                 ! preg_match('/^[a-zA-Z0-9_]{1,128}$/D', $db['user']) ||
                 $db['password'] === '') {
@@ -414,7 +417,7 @@ try {
                 'APP_TIMEZONE' => $_SESSION['aiwm_platform']['timezone'],
                 'DB_CONNECTION' => 'mysql',
                 'DB_HOST' => $db['host'],
-                'DB_PORT' => '3306',
+                'DB_PORT' => $db['port'],
                 'DB_DATABASE' => $db['name'],
                 'DB_USERNAME' => $db['user'],
                 'DB_PASSWORD' => $db['password'],
@@ -519,6 +522,7 @@ try {
     }
     if ($stage === 'database') {
         $fields = '<label>DB Host</label><input name="db_host" value="localhost" required maxlength="140">'
+            .'<label>DB Port</label><input type="number" name="db_port" value="3306" min="1" max="65535" required>'
             .'<label>Database Name</label><input name="db_name" required maxlength="128">'
             .'<label>Database Username</label><input name="db_user" required maxlength="128">'
             .'<label>Database Password</label><input type="password" name="db_password" required autocomplete="new-password">';
