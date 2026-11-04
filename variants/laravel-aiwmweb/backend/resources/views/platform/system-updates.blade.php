@@ -121,7 +121,24 @@
             <p class="alert">{{ $t('ZIP installation remains disabled until the one-time signing setup is complete.', 'تثبيت ZIP معطّل حتى اكتمال إعداد مفتاح التوقيع لأول مرة.') }}</p>
         @endif
         <small>{{ $t('Maximum upload: 160 MiB. Hosting PHP upload_max_filesize and post_max_size must be configured accordingly. The ZIP must contain a signed manifest, detached signature and the exact release ZIP.', 'الحجم الأقصى: 160 ميجابايت. يجب تهيئة حدود الرفع في PHP على الاستضافة. الحزمة تحتوي على ملف تعريف الإصدار الموقّع، والتوقيع المنفصل، وZIP الملفات الأصلي.') }}</small>
-        <small>{{ $t('Database schema changes are not deployed by this safe first release channel. Requires signed artifacts and writable files; never uploads an arbitrary ZIP.', 'هذه القناة الآمنة لا تنفذ تعديلات قاعدة البيانات. تتطلب حزمًا موقعة وصلاحيات كتابة، ولا تقبل ZIP عشوائيًا.') }}</small>
+        <small>{{ $t('Signed forward-only Laravel migrations run after verified MySQL backup. If a migration fails, maintenance mode stays enabled and assisted recovery from the isolated backup is required; database rollback is never assumed.', 'تُنفذ ترحيلات Laravel الموقّعة بعد النسخ الاحتياطي الموثق لقاعدة MySQL. عند فشل ترحيل تبقى الصيانة مفعّلة ويلزم الاسترجاع الموجّه من النسخة المعزولة، ولا يُفترض إمكانية التراجع الآلي عن قاعدة البيانات.') }}</small>
+    </section>
+    <section class="panel" aria-labelledby="backup-now">
+        <h2 id="backup-now">{{ $t('Backup & Recovery', 'النسخ الاحتياطي والاسترجاع') }}</h2>
+        <p class="muted">{{ $t(
+            'Backup Now encrypts an InnoDB consistent snapshot and verifies its integrity. It requires MySQL and private writable storage. Restore is intentionally limited to a separate empty recovery database; production restore is not automatic.',
+            'ينشئ النسخ الاحتياطي نسخة متسقة مشفرة من InnoDB ويتحقق من سلامتها. يتطلب MySQL وتخزينًا خاصًا قابلًا للكتابة. الاسترجاع متاح فقط إلى قاعدة بيانات منفصلة وفارغة، ولا يتم على قاعدة الإنتاج تلقائيًا.'
+        ) }}</p>
+        <form method="post" action="{{ route('platform.updates.backup') }}">
+            @csrf
+            <label for="backup_confirmation">{{ $t('Type BACKUP to confirm', 'اكتب BACKUP لتأكيد النسخ الاحتياطي') }}</label>
+            <input id="backup_confirmation" name="confirmation" pattern="BACKUP" required autocomplete="off">
+            <button type="submit">{{ $t('Backup Now', 'نسخ احتياطي الآن') }}</button>
+        </form>
+        <p class="muted">{{ $t(
+            'Do not use one-click update for irreversible schema migrations until a tested, separately recoverable database snapshot exists.',
+            'لا تستخدم التحديث بضغطة واحدة مع ترحيلات قاعدة بيانات غير القابلة للعكس إلا بعد وجود نسخة قابلة للاسترجاع ومختبرة.'
+        ) }}</p>
     </section>
     <section class="panel" aria-labelledby="history">
         <h2 id="history">{{ $t('Recent update history', 'سجل آخر التحديثات') }}</h2>

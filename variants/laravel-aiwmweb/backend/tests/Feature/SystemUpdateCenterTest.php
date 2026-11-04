@@ -7,6 +7,8 @@ use App\Platform\SystemUpdateService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
@@ -26,22 +28,30 @@ final class SystemUpdateCenterTest extends TestCase
             ['POST', '/admin/system-updates/install'],
             ['POST', '/admin/system-updates/upload'],
             ['POST', '/admin/system-updates/verify'],
+            ['POST', '/admin/system-updates/backup'],
         ] as [$method, $path]) {
             $route = Route::getRoutes()->match(Request::create($path, $method));
             $this->assertContains('web', $route->gatherMiddleware());
             $this->assertContains('auth', $route->gatherMiddleware());
             $this->assertContains('platform.admin', $route->gatherMiddleware());
+            $this->assertContains('throttle:5,1', $route->gatherMiddleware());
             $this->assertNotContains('tenant.context', $route->gatherMiddleware());
         }
     }
 
     public function test_guest_and_tenant_admin_cannot_access_update_routes(): void
     {
+        // This test verifies AUTHORIZATION in isolation: twelve denial requests
+        // would otherwise legitimately trip the five-per-minute rate limiter.
+        // The separate route-contract assertion above still enforces throttle.
+        $this->withoutMiddleware(ThrottleRequests::class);
+
         $this->get('/admin/system-updates')->assertRedirect('/login');
         $this->post('/admin/system-updates/check')->assertRedirect('/login');
         $this->post('/admin/system-updates/install', ['confirmation' => 'INSTALL'])->assertRedirect('/login');
         $this->post('/admin/system-updates/upload', ['confirmation' => 'INSTALL'])->assertRedirect('/login');
         $this->post('/admin/system-updates/verify')->assertRedirect('/login');
+        $this->post('/admin/system-updates/backup', ['confirmation' => 'BACKUP'])->assertRedirect('/login');
 
         $user = User::factory()->create(['platform_admin' => false]);
         $this->actingAs($user)->get('/admin/system-updates')->assertForbidden();
@@ -49,6 +59,19 @@ final class SystemUpdateCenterTest extends TestCase
         $this->actingAs($user)->post('/admin/system-updates/install', ['confirmation' => 'INSTALL'])->assertForbidden();
         $this->actingAs($user)->post('/admin/system-updates/upload', ['confirmation' => 'INSTALL'])->assertForbidden();
         $this->actingAs($user)->post('/admin/system-updates/verify')->assertForbidden();
+        $this->actingAs($user)->post('/admin/system-updates/backup', ['confirmation' => 'BACKUP'])->assertForbidden();
+    }
+
+    public function test_backup_now_requires_confirmation_and_never_exposes_database_keys(): void
+    {
+        $admin = User::factory()->create(['platform_admin' => true]);
+        $this->actingAs($admin)->get('/admin/system-updates')
+            ->assertOk()
+            ->assertSee('Backup Now')
+            ->assertDontSee('AIWM_UPDATES_SECRET_KEY');
+
+        $this->actingAs($admin)->post('/admin/system-updates/backup')
+            ->assertSessionHasErrors('confirmation');
     }
 
     public function test_update_page_honestly_disables_installation_without_signing_configuration(): void
@@ -173,6 +196,26 @@ final class SystemUpdateCenterTest extends TestCase
             $this->assertSame(str_repeat('a', 40), $verified['sha']);
             $this->assertTrue($verified['available']);
             $this->assertSame(hash_file('sha256', $payload), hash_file('sha256', $staged));
+
+            // Verify that a valid signed ZIP cannot change code when the database
+            // snapshot prerequisite is unsupported (SQLite CI test connection).
+            if (DB::connection()->getDriverName() === 'sqlite') {
+                $target = base_path('app/SignedUpdateMarker.php');
+                $originalContents = is_file($target) ? file_get_contents($target) : null;
+
+                try {
+                    app(SystemUpdateService::class)->install(
+                        1,
+                        new UploadedFile($bundlePath, 'signed-bundle.zip', 'application/zip', null, true),
+                    );
+                    $this->fail('A signed ZIP must not mutate code without verified MySQL backup.');
+                } catch (RuntimeException $e) {
+                    $this->assertStringContainsString('requires mysql and sodium', $e->getMessage());
+                }
+
+                $this->assertSame($originalContents, is_file($target) ? file_get_contents($target) : null);
+                $this->assertFileDoesNotExist(storage_path('app/system-updates/installed.json'));
+            }
 
             $tampered = new ZipArchive;
             $this->assertTrue($tampered->open($bundlePath) === true);
