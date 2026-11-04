@@ -88,6 +88,37 @@ $attacker = executeStep($installer, $sessionId, ['csrf' => $csrf, 'action' => 'r
 requireOutput($attacker, 'إثبات ملكية الاستضافة غير صحيح');
 requireOutput($first, 'الملكية');
 
+// An existing .env WITHOUT the installer-created pending marker is always a
+// protected existing site. Simulate interrupted .env creation only after
+// proving that unrelated pre-existing configuration is rejected.
+$resumeKey = 'base64:'.base64_encode(random_bytes(32));
+$draft = (string) file_get_contents($root.'/app/.env.example');
+$draft = preg_replace('/^APP_KEY=.*$/m', 'APP_KEY="'.$resumeKey.'"', $draft);
+if (! is_string($draft) || file_put_contents($root.'/app/.env', $draft) === false) {
+    throw new RuntimeException('Unable to simulate private interrupted setup state.');
+}
+$protected = executeStep($installer, $sessionId);
+requireOutput($protected, 'الموقع مثبت بالفعل');
+file_put_contents($private.'/fresh-migration-pending.lock', json_encode([
+    'version' => 1, 'url' => 'https://aiwm.example.test',
+    'database' => ['host' => $host, 'port' => '3306', 'name' => $database, 'user' => $username],
+], JSON_THROW_ON_ERROR)."\\n");
+// Simulate browser cookie loss after .env was committed, but before migrations
+// or identity creation: the new session must reprove the original owner token.
+@unlink($private.'/sess_'.$sessionId);
+$sessionId = 'aiwmresume'.bin2hex(random_bytes(10));
+session_id($sessionId);
+session_start();
+$_SESSION['aiwm_csrf'] = $csrf;
+session_write_close();
+$resumePage = executeStep($installer, $sessionId);
+requireOutput($resumePage, 'تحقق من الملكية ثم التالي');
+$noBypass = executeStep($installer, $sessionId, ['csrf' => $csrf, 'action' => 'database']);
+requireOutput($noBypass, 'يجب إعادة إثبات ملكية الاستضافة');
+$badResumeProof = executeStep($installer, $sessionId, ['csrf' => $csrf, 'action' => 'requirements',
+    'owner_activation_secret' => str_repeat('f', 64)]);
+requireOutput($badResumeProof, 'إثبات ملكية الاستضافة غير صحيح');
+
 $phpPage = executeStep($installer, $sessionId, ['csrf' => $csrf, 'action' => 'requirements', 'owner_activation_secret' => $ownerSecret]);
 requireOutput($phpPage, 'PHP Requirements &amp; Extensions');
 requireOutput($phpPage, '15. Finish');
@@ -119,6 +150,12 @@ $stages = [
 foreach ($stages as [$action, $fields, $expected]) {
     if ($action === 'database') {
         // Reject a malicious/out-of-range DB port before opening a socket or advancing.
+        // The recovered checkpoint is pinned to the original database endpoint,
+        // not merely to a valid MySQL credential set.
+        $wrongDatabase = executeStep($installer, $sessionId, ['csrf' => $csrf, 'action' => 'database',
+            'db_host' => $host, 'db_port' => '3307', 'db_name' => $database,
+            'db_user' => $username, 'db_password' => $password]);
+        requireOutput($wrongDatabase, 'نفس اتصال قاعدة البيانات الأصلي');
         foreach (['0', '65536', '3306;DROP DATABASE'] as $badPort) {
             $invalid = executeStep($installer, $sessionId, ['csrf' => $csrf, 'action' => $action]
                 + ['db_host' => $host, 'db_port' => $badPort, 'db_name' => $database,
@@ -161,6 +198,7 @@ if (is_file($installer)) {
 $env = file_get_contents($root.'/app/.env');
 if (! str_contains($env, 'AIWM_UPDATES_ENABLED="false"') ||
     ! str_contains($env, 'APP_ENV="production"') ||
+    ! str_contains($env, 'APP_KEY="'.$resumeKey.'"') ||
     ! str_contains($env, 'DB_PORT="3306"') ||
     str_contains($env, 'AIWM_UPDATES_SECRET_KEY')) {
     throw new RuntimeException('Unexpected unsafe production environment or signing secret.');
@@ -197,4 +235,4 @@ if ($ownerCount !== 1) {
     throw new RuntimeException('Unexpected seeded demonstration identity detected.');
 }
 
-fwrite(STDOUT, "FIFTEEN_STAGE_WIZARD=PASS INSTALL_LEASE=PASS OWNER_ACTIVATION=PASS ANONYMOUS_TAKEOVER=REJECTED DATABASE=PASS DB_PORT=VERIFIED PLATFORM_OWNER=PASS FIRST_RUN_LOCK=PASS SIGNING_FAIL_CLOSED=PASS\n");
+fwrite(STDOUT, "FIFTEEN_STAGE_WIZARD=PASS INSTALL_LEASE=PASS OWNER_ACTIVATION=PASS ANONYMOUS_TAKEOVER=REJECTED DATABASE=PASS DB_PORT=VERIFIED INTERRUPTED_OWNER_REPROOF=PASS RESUME_DB_PINNED=PASS PLATFORM_OWNER=PASS FIRST_RUN_LOCK=PASS SIGNING_FAIL_CLOSED=PASS\n");
