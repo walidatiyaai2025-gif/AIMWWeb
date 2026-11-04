@@ -23,13 +23,14 @@ final class VerifiedMysqlBackupService
     public function backupNow(int $actorId): array
     {
         $pdo = DB::connection()->getPdo();
-        if (DB::connection()->getDriverName() !== 'mysql' || ! extension_loaded('sodium')) {
+        if (DB::connection()->getDriverName() !== 'mysql' || extension_loaded('sodium') === false) {
             throw new RuntimeException('Verified MySQL/InnoDB backup requires mysql and sodium; one-click updates are blocked.');
         }
 
         $catalog = $pdo->query('SELECT TABLE_NAME, TABLE_TYPE, ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() ORDER BY TABLE_NAME')
             ->fetchAll(PDO::FETCH_ASSOC);
-        if (! is_array($catalog) || $catalog === []) {
+
+        if (is_array($catalog) === false || $catalog === []) {
             throw new RuntimeException('Cannot create backup of an empty or unreadable schema.');
         }
 
@@ -41,12 +42,15 @@ final class VerifiedMysqlBackupService
 
         $id = bin2hex(random_bytes(12));
         $folder = storage_path('app/system-updates/backups/mysql-'.$id);
-        if (! mkdir($folder, 0700, true)) {
+
+        if (mkdir($folder, 0700, true) === false) {
             throw new RuntimeException('Cannot allocate private database backup directory.');
         }
 
         $path = $folder.'/snapshot.enc';
+
         $stream = @fopen($path, 'xb');
+
         if ($stream === false) {
             throw new RuntimeException('Cannot create private database snapshot.');
         }
@@ -71,7 +75,7 @@ final class VerifiedMysqlBackupService
                 $escaped = $this->identifier($name);
                 $definition = $pdo->query('SHOW CREATE TABLE '.$escaped)->fetch(PDO::FETCH_ASSOC);
                 $columns = $pdo->query('SHOW COLUMNS FROM '.$escaped)->fetchAll(PDO::FETCH_ASSOC);
-                if (! is_array($definition) || ! isset($definition['Create Table']) || ! is_array($columns)) {
+                if (is_array($definition) === false || isset($definition['Create Table']) === false || is_array($columns) === false) {
                     throw new RuntimeException('Cannot read consistent schema metadata.');
                 }
                 $tables[] = [
@@ -145,7 +149,8 @@ final class VerifiedMysqlBackupService
     {
         [$folder, $receipt] = $this->receipt($id);
         $path = $folder.'/snapshot.enc';
-        if (! is_file($path) || ! hash_equals((string) $receipt['sha256'], (string) hash_file('sha256', $path))) {
+
+        if (is_file($path) === false || hash_equals((string) $receipt['sha256'], (string) hash_file('sha256', $path))) {
             throw new RuntimeException('Database backup checksum verification failed.');
         }
 
@@ -158,11 +163,11 @@ final class VerifiedMysqlBackupService
             }
             if ($record['type'] === 'schema' && $tables === [] && $rows === 0) {
                 $tables = $record['tables'] ?? [];
-                if (! is_array($tables) || $tables === []) {
+                if (is_array($tables) === false || $tables === []) {
                     throw new RuntimeException('Database backup schema inventory is invalid.');
                 }
-            } elseif ($record['type'] === 'row' && $tables !== [] && ! $isFinal) {
-                ++$rows;
+            } elseif ($record['type'] === 'row' && $tables !== [] && $isFinal === false) {
+                $rows++;
             } elseif ($record['type'] === 'end' && $isFinal) {
                 if ($tables === [] || $rows !== ($record['rows'] ?? null) ||
                     count($tables) !== ($record['tables'] ?? null)) {
@@ -174,7 +179,7 @@ final class VerifiedMysqlBackupService
             }
         });
 
-        if (! $finished || $rows !== $receipt['rows'] || count($tables) !== $receipt['tables']) {
+        if ($finished === false || $rows !== $receipt['rows'] || count($tables) !== $receipt['tables']) {
             throw new RuntimeException('Database backup cannot be verified completely.');
         }
 
@@ -208,7 +213,7 @@ final class VerifiedMysqlBackupService
                         );
                     }
                 } elseif ($record['type'] === 'row') {
-                    if (! isset($statements[$record['table']])) {
+                    if (isset($statements[$record['table']]) === false) {
                         throw new RuntimeException('Recovery row does not map to a verified table.');
                     }
                     $values = array_map(static function ($value) {
@@ -222,7 +227,7 @@ final class VerifiedMysqlBackupService
 
                         return $decoded;
                     }, $record['cells']);
-                    if (! $statements[$record['table']]->execute($values)) {
+                    if ($statements[$record['table']]->execute($values) === false) {
                         throw new RuntimeException('Recovery insertion failed.');
                     }
                 }
@@ -235,14 +240,15 @@ final class VerifiedMysqlBackupService
     /** @return array{0: string, 1: array} */
     private function receipt(string $id): array
     {
-        if (! preg_match('/^[a-f0-9]{24}$/D', $id)) {
+        if (preg_match('/^[a-f0-9]{24}$/D', $id) !== 1) {
             throw new RuntimeException('Invalid database backup identifier.');
         }
         $folder = storage_path('app/system-updates/backups/mysql-'.$id);
         $file = $folder.'/receipt.json';
         $receipt = is_file($file) ? json_decode((string) file_get_contents($file), true) : null;
-        if (! is_array($receipt) || ($receipt['id'] ?? '') !== $id ||
-            ! preg_match('/^[a-f0-9]{64}$/D', (string) ($receipt['sha256'] ?? ''))) {
+
+        if (is_array($receipt) === false || ($receipt['id'] ?? '') !== $id ||
+            preg_match('/^[a-f0-9]{64}$/D', (string) ($receipt['sha256'] ?? '')) !== 1) {
             throw new RuntimeException('Verified database backup receipt is missing.');
         }
 
@@ -253,7 +259,8 @@ final class VerifiedMysqlBackupService
     {
         $raw = (string) config('app.key');
         $key = str_starts_with($raw, 'base64:') ? base64_decode(substr($raw, 7), true) : $raw;
-        if (! is_string($key) || strlen($key) !== 32) {
+
+        if (is_string($key) === false || strlen($key) !== 32) {
             throw new RuntimeException('A secure 256-bit APP_KEY is required to encrypt database backups.');
         }
 
@@ -307,7 +314,7 @@ final class VerifiedMysqlBackupService
             }
             $crypto = sodium_crypto_secretstream_xchacha20poly1305_init_pull($header, $this->key($salt));
             $finished = false;
-            while (! feof($stream)) {
+            while (feof($stream) === false) {
                 $length = fread($stream, 4);
                 if ($length === '') {
                     break;
@@ -333,7 +340,7 @@ final class VerifiedMysqlBackupService
                 }
                 [$plain, $tag] = $decoded;
                 $record = json_decode($plain, true, 512, JSON_THROW_ON_ERROR);
-                if (! is_array($record) || ! is_string($record['type'] ?? null)) {
+                if (is_array($record) === false || is_string($record['type'] ?? null) === false) {
                     throw new RuntimeException('Database backup record is invalid.');
                 }
                 $final = $tag === SODIUM_CRYPTO_SECRETSTREAM_XCHACHA20POLY1305_TAG_FINAL;
