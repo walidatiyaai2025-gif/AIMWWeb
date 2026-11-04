@@ -64,6 +64,22 @@ final class VerifiedMysqlBackupService
             throw new RuntimeException('Cannot create backup of an empty or unreadable schema.');
         }
 
+        // A table-only restore cannot faithfully reconstruct database triggers,
+        // stored functions/procedures or scheduled events. Refuse snapshots that
+        // could falsely pass as complete recovery images.
+        foreach ([
+            ['TRIGGERS', 'TRIGGER_SCHEMA'],
+            ['ROUTINES', 'ROUTINE_SCHEMA'],
+            ['EVENTS', 'EVENT_SCHEMA'],
+        ] as [$objectType, $schemaColumn]) {
+            $statement = $pdo->query(
+                'SELECT COUNT(*) FROM information_schema.'.$objectType.' WHERE '.$schemaColumn.'=DATABASE()',
+            );
+            if ($statement === false || (int) $statement->fetchColumn() !== 0) {
+                throw new RuntimeException('Database has unsupported schema objects; verified MySQL backup and ZIP update are blocked.');
+            }
+        }
+
         foreach ($catalog as $table) {
             if ($table['TABLE_TYPE'] !== 'BASE TABLE' || strtoupper((string) $table['ENGINE']) !== 'INNODB') {
                 throw new RuntimeException('Non-InnoDB tables or views require an assisted consistent backup; update blocked.');
