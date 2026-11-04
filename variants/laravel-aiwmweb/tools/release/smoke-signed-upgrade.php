@@ -128,15 +128,15 @@ try {
             $host = (string) ($mysql['host'] ?? '127.0.0.1');
             $port = (string) ($mysql['port'] ?? '3306');
             $dsn = 'mysql:host='.$host.';port='.$port.';charset=utf8mb4';
-            $adminPdo = new \\PDO($dsn, 'root', $argv[4], [\\PDO::ATTR_ERRMODE => \\PDO::ERRMODE_EXCEPTION]);
+            $adminPdo = new \PDO($dsn, 'root', $argv[4], [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]);
             $recoverySchema = 'aiwm_ci_recovery_'.bin2hex(random_bytes(6));
             $adminPdo->exec('CREATE DATABASE `'.$recoverySchema.'` CHARACTER SET utf8mb4');
             try {
-                $recovered = new \\PDO(
+                $recovered = new \PDO(
                     'mysql:host='.$host.';port='.$port.';dbname='.$recoverySchema.';charset=utf8mb4',
                     'root',
                     $argv[4],
-                    [\\PDO::ATTR_ERRMODE => \\PDO::ERRMODE_EXCEPTION],
+                    [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION],
                 );
                 $snapshot = $app->make(VerifiedMysqlBackupService::class);
                 $snapshot->restoreToEmptyDatabase($fullReceipt['database_backup']['id'], $recovered);
