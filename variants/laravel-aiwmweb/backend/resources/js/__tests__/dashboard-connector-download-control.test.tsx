@@ -1,4 +1,6 @@
 import React from 'react';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { DashboardConnectorDownloadControl, DASHBOARD_CONNECTOR_DOWNLOAD_OPERATION_ID } from '../dashboard-connector-download-control';
@@ -17,6 +19,12 @@ describe('Dashboard WordPress Connector download', () => {
         expect(download).toHaveAttribute('download', 'aimw-connector.zip');
         expect(download).toHaveAttribute('data-canonical-operation', DASHBOARD_CONNECTOR_DOWNLOAD_OPERATION_ID);
         expect(download).not.toHaveAttribute('target');
+    });
+
+    it('is actually included in the authoritative dashboard actions', () => {
+        const source = readFileSync(resolve(process.cwd(), 'resources/js/pages.tsx'), 'utf8');
+        expect(source).toContain("import { DashboardConnectorDownloadControl } from './dashboard-connector-download-control';");
+        expect(source).toContain('<DashboardConnectorDownloadControl />');
     });
 
     it('exposes an Arabic label without changing the verified download target', () => {
