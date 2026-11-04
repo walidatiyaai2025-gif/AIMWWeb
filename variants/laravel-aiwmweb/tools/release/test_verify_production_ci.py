@@ -18,7 +18,7 @@ def main(sha=SHA):
 
 def sample():
     return {"workflow_runs": [
-        {"name": name, "id": n + 1, "created_at": "2026-11-04T07:00:00Z",
+        {"name": name, "path": module.REQUIRED_WORKFLOWS[name], "id": n + 1, "created_at": "2026-11-04T07:00:00Z",
          "event": "push", "head_sha": SHA, "head_branch": "main",
          "status": "completed", "conclusion": "success"}
         for n, name in enumerate(module.REQUIRED)
@@ -45,6 +45,12 @@ class ReleaseGateTests(unittest.TestCase):
             data["workflow_runs"][0]["event"] = event
             with self.assertRaisesRegex(ValueError, "absent"):
                 module.verify(main(), data, SHA)
+
+    def test_workflow_name_spoof_does_not_satisfy_required_ci(self):
+        data = sample()
+        data["workflow_runs"][0]["path"] = ".github/workflows/unrelated-build.yml"
+        with self.assertRaisesRegex(ValueError, "absent"):
+            module.verify(main(), data, SHA)
 
     def test_wrong_commit_or_branch_does_not_count(self):
         for key, value in (("head_sha", "b" * 40), ("head_branch", "feature")):
