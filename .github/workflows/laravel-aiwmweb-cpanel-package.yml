@@ -73,6 +73,7 @@ jobs:
           mkdir -p artifacts/cpanel
           python3 variants/laravel-aiwmweb/tools/release/build-cpanel-setup.py \
             --sha "$SOURCE_SHA" \
+            --version "$BUILD_VERSION" \
             --output artifacts/cpanel/AIWMWeb-Laravel-Setup.zip
           cp artifacts/cpanel/AIWMWeb-Laravel-Setup.zip "artifacts/cpanel/AIWMWeb-Setup-v${BUILD_VERSION}.zip"
 
