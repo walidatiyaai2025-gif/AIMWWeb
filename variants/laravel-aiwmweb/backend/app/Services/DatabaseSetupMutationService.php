@@ -8,6 +8,7 @@ use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
 use App\Tenancy\TenantContext;
+use Database\Seeders\ProductionWorkspaceSeeder;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -77,6 +78,9 @@ final class DatabaseSetupMutationService
 
                 $role->permissions()->attach($permissions->pluck('id')->all(), ['tenant_id' => $tenant->id]);
                 $membership->roles()->attach($role->id, ['tenant_id' => $tenant->id]);
+                // Initialize non-secret editable defaults atomically with the first
+                // owner identity. A failure rolls back tenant, user, RBAC and seed.
+                app(ProductionWorkspaceSeeder::class)->seedTenant((int) $tenant->id);
             } finally {
                 $this->tenantContext->forget();
             }

@@ -10,15 +10,13 @@ class DatabaseSeeder extends Seeder
     use WithoutModelEvents;
 
     /**
-     * Never create fake users or passwords on a production installation.
-     * The first platform owner must be created only by the owner-authorized
-     * setup flow, which enforces tenant membership and platform RBAC.
-     *
-     * Product reference data seeders will be registered here only once
-     * they have explicit idempotent business keys and admin edit contracts.
+     * Seed only non-secret, editable workspace reference settings.
+     * Identity and the first platform administrator are created exclusively
+     * by the authenticated hosting-owner setup transaction.
+     * Commercial plans/prices must be configured explicitly by administrators.
      */
     public function run(): void
     {
-        // Intentionally no anonymous or demonstration identities.
+        $this->call(ProductionWorkspaceSeeder::class);
     }
 }
