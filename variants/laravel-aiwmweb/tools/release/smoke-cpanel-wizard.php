@@ -1,7 +1,7 @@
 <?php
 
 /**
- * CI-only exact ZIP acceptance: run real four-step PHP installer over an
+ * CI-only exact ZIP acceptance: run actual cPanel PHP installer over an
  * empty MySQL database and assert Laravel owner/platform control readiness.
  *
  * Args: EXTRACTED_ZIP_ROOT DB_HOST DB_NAME DB_USER DB_PASSWORD
@@ -66,10 +66,26 @@ function requireOutput(string $actual, string $needle): void
 
 $first = executeStep($installer, $sessionId);
 requireOutput($first, 'مرحبًا بك في معالج AIWMWeb');
-requireOutput($first, 'التالي: قاعدة البيانات');
+requireOutput($first, 'تحقق من الملكية ثم التالي');
+$ownerSecretPath = $private.'/owner-activation.secret';
+if (! is_file($ownerSecretPath)) {
+    throw new RuntimeException('Owner activation challenge was not created in private storage.');
+}
+$ownerSecret = trim((string) file_get_contents($ownerSecretPath));
+if (! preg_match('/^[a-f0-9]{64}$/D', $ownerSecret)) {
+    throw new RuntimeException('Invalid randomly generated hosting owner challenge.');
+}
+if (str_contains($first, $ownerSecret)) {
+    throw new RuntimeException('Owner activation challenge leaked in the public installer page.');
+}
+// A network-only visitor cannot advance with MySQL credentials or a guessed token.
+$attacker = executeStep($installer, $sessionId, ['csrf' => $csrf, 'action' => 'requirements',
+    'owner_activation_secret' => str_repeat('0', 64),
+]);
+requireOutput($attacker, 'إثبات ملكية الاستضافة غير صحيح');
 requireOutput($first, 'فحص السيرفر');
 
-$databasePage = executeStep($installer, $sessionId, ['csrf' => $csrf, 'action' => 'requirements']);
+$databasePage = executeStep($installer, $sessionId, ['csrf' => $csrf, 'action' => 'requirements', 'owner_activation_secret' => $ownerSecret]);
 requireOutput($databasePage, 'إعداد قاعدة بيانات MySQL');
 $ownerPage = executeStep($installer, $sessionId, [
     'csrf' => $csrf, 'action' => 'database',
@@ -92,6 +108,9 @@ $finished = executeStep($installer, $sessionId, [
 requireOutput($finished, 'تم التثبيت بنجاح');
 requireOutput($finished, 'فتح المنصة وتسجيل الدخول');
 
+if (is_file($ownerSecretPath)) {
+    throw new RuntimeException('Owner activation proof was not consumed after installation.');
+}
 if (! is_file($root.'/app/.env') || ! is_file($private.'/installed.lock')) {
     throw new RuntimeException('The installer failed to persist the completed runtime and lock.');
 }
@@ -122,4 +141,4 @@ if ($count < 1) {
     throw new RuntimeException('No tenant membership was created.');
 }
 
-fwrite(STDOUT, "FOUR-STAGE-WIZARD=PASS DATABASE=PASS PLATFORM_OWNER=PASS FIRST_RUN_LOCK=PASS SIGNING_FAIL_CLOSED=PASS\n");
+fwrite(STDOUT, "OWNER_ACTIVATION=PASS ANONYMOUS_TAKEOVER=REJECTED DATABASE=PASS PLATFORM_OWNER=PASS FIRST_RUN_LOCK=PASS SIGNING_FAIL_CLOSED=PASS\n");
