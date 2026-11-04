@@ -57,7 +57,7 @@ final class AIMW_Connector_Admin
                             <p class="description">Generate the token from the selected WordPress site in AIWMWeb. Never paste your WordPress or platform password here.</p></td>
                     </tr>
                 </table>
-                <?php submit_button('Connect &amp; Verify'); ?>
+                <?php submit_button('Connect & Verify'); ?>
             </form>
 
             <h2>Owner-enabled scopes</h2>
