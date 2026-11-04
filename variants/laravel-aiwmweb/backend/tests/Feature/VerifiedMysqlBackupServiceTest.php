@@ -89,9 +89,9 @@ final class VerifiedMysqlBackupServiceTest extends TestCase
         Artisan::call('migrate', ['--force' => true]);
         $table = 'aiwm_snapshot_gen_'.bin2hex(random_bytes(5));
         DB::statement('CREATE TABLE '.$this->identifier($table).' ('
-            .'\`id\` BIGINT UNSIGNED NOT NULL PRIMARY KEY, '
-            .'\`source\` INT NOT NULL, '
-            .'\`computed\` INT GENERATED ALWAYS AS (\`source\` + 1) STORED'
+            .'`id` BIGINT UNSIGNED NOT NULL PRIMARY KEY, '
+            .'`source` INT NOT NULL, '
+            .'`computed` INT GENERATED ALWAYS AS (`source` + 1) STORED'
             .') ENGINE=InnoDB');
 
         try {
