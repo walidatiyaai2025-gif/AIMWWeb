@@ -7,6 +7,7 @@ use App\Platform\SystemUpdateService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 use RuntimeException;
@@ -243,7 +244,7 @@ final class SystemUpdateCenterTest extends TestCase
             $this->assertSame('do-not-overwrite-on-corruption', file_get_contents($target));
         } finally {
             @unlink($target);
-            \Illuminate\Support\Facades\File::deleteDirectory($backup);
+            File::deleteDirectory($backup);
         }
     }
 
