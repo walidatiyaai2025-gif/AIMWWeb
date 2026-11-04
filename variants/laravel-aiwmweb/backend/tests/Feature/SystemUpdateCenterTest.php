@@ -291,6 +291,81 @@ final class SystemUpdateCenterTest extends TestCase
         }
     }
 
+    public function test_apply_rechecks_swapped_parent_and_never_writes_outside_app(): void
+    {
+        $directory = 'AIWMApplySymlinkProbe-'.bin2hex(random_bytes(5));
+        $parent = base_path('app/'.$directory);
+        $outside = sys_get_temp_dir().'/aiwm-apply-outside-'.bin2hex(random_bytes(6));
+        $source = tempnam(sys_get_temp_dir(), 'aiwm-apply-source-');
+        $filename = 'app/'.$directory.'/Updated.php';
+
+        try {
+            $this->assertTrue(mkdir($outside, 0700));
+            file_put_contents($outside.'/Updated.php', 'external-unchanged');
+            file_put_contents($source, 'signed-new-file');
+            // Simulate a parent-directory swap *after* staging/backup and
+            // immediately before the updater applies its signed file.
+            $this->assertTrue(symlink($outside, $parent));
+
+            try {
+                (new \ReflectionMethod(SystemUpdateService::class, 'applyStagedFile'))
+                    ->invoke(app(SystemUpdateService::class), $filename, $source, hash('sha256', 'signed-new-file'), 'probe');
+                $this->fail('Applying a staged update followed a swapped parent symlink.');
+            } catch (RuntimeException $e) {
+                $this->assertStringContainsString('symbolic link', $e->getMessage());
+            }
+
+            $this->assertSame('external-unchanged', file_get_contents($outside.'/Updated.php'));
+            $this->assertFileDoesNotExist($outside.'/.aiwm-update-probe');
+        } finally {
+            @unlink($parent);
+            @unlink($outside.'/Updated.php');
+            @rmdir($outside);
+            if (is_string($source)) {
+                @unlink($source);
+            }
+        }
+    }
+
+    public function test_apply_rejects_planted_temporary_symlink_before_copy(): void
+    {
+        $filename = 'app/AIWMApplyTempProbe-'.bin2hex(random_bytes(6)).'.php';
+        $target = base_path($filename);
+        $outside = tempnam(sys_get_temp_dir(), 'aiwm-apply-temp-outside-');
+        $source = tempnam(sys_get_temp_dir(), 'aiwm-apply-temp-source-');
+        $id = 'planted-'.bin2hex(random_bytes(4));
+        $temp = dirname($target).'/.aiwm-update-'.$id;
+
+        try {
+            $this->assertNotFalse($outside);
+            $this->assertNotFalse($source);
+            file_put_contents($outside, 'private-unchanged');
+            file_put_contents($source, 'signed-update');
+            $this->assertTrue(symlink($outside, $temp));
+
+            try {
+                (new \ReflectionMethod(SystemUpdateService::class, 'applyStagedFile'))
+                    ->invoke(app(SystemUpdateService::class), $filename, $source, hash('sha256', 'signed-update'), $id);
+                $this->fail('A planted update temp symlink was followed.');
+            } catch (RuntimeException $e) {
+                $this->assertStringContainsString('temporary path', $e->getMessage());
+            }
+
+            $this->assertSame('private-unchanged', file_get_contents($outside));
+            $this->assertFileDoesNotExist($target);
+            $this->assertTrue(is_link($temp));
+        } finally {
+            @unlink($temp);
+            @unlink($target);
+            if (is_string($outside)) {
+                @unlink($outside);
+            }
+            if (is_string($source)) {
+                @unlink($source);
+            }
+        }
+    }
+
     public function test_rollback_refuses_symlink_swapped_target_and_preserves_external_file(): void
     {
         $filename = 'app/AIWMRollbackSymlinkProbe-'.bin2hex(random_bytes(5)).'.php';
