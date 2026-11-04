@@ -119,10 +119,12 @@ $stages = [
 foreach ($stages as [$action, $fields, $expected]) {
     if ($action === 'database') {
         // Reject a malicious/out-of-range DB port before opening a socket or advancing.
-        $invalid = executeStep($installer, $sessionId, ['csrf' => $csrf, 'action' => $action]
-            + ['db_host' => $host, 'db_port' => '65536', 'db_name' => $database,
-                'db_user' => $username, 'db_password' => $password]);
-        requireOutput($invalid, 'أدخل بيانات MySQL الصحيحة');
+        foreach (['0', '65536', '3306;DROP DATABASE'] as $badPort) {
+            $invalid = executeStep($installer, $sessionId, ['csrf' => $csrf, 'action' => $action]
+                + ['db_host' => $host, 'db_port' => $badPort, 'db_name' => $database,
+                    'db_user' => $username, 'db_password' => $password]);
+            requireOutput($invalid, 'أدخل بيانات MySQL الصحيحة');
+        }
     }
     $response = executeStep($installer, $sessionId, ['csrf' => $csrf, 'action' => $action] + $fields);
     requireOutput($response, $expected);
