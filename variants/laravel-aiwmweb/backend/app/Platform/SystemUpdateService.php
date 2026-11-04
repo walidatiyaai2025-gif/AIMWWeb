@@ -108,6 +108,43 @@ final class SystemUpdateService
         ];
     }
 
+    /**
+     * Dry-run signed ZIP verification: never enters maintenance or changes application
+     * code, database, installed version, or deployment files. All staging is private.
+     *
+     * @return array{version: string, sha: string, file_count: int}
+     */
+    public function verifyUpload(UploadedFile $uploadedBundle): array
+    {
+        $this->assertReady();
+
+        $work = $this->dataPath('work/verify-'.bin2hex(random_bytes(12)));
+        if (! mkdir($work, 0700, true)) {
+            throw new RuntimeException('Cannot create private verification staging.');
+        }
+
+        try {
+            $release = $this->unpackUploadedBundle($uploadedBundle, $work.'/package.zip');
+            if (! $release['available']) {
+                throw new RuntimeException('Only newer signed releases can be verified for installation.');
+            }
+
+            $files = $this->stageZip(
+                $work.'/package.zip',
+                $work.'/staged',
+                $release['manifest']['files'],
+            );
+
+            return [
+                'version' => $release['version'],
+                'sha' => $release['sha'],
+                'file_count' => count($files),
+            ];
+        } finally {
+            $this->removeTree($work);
+        }
+    }
+
     public function install(int $actorId, ?UploadedFile $uploadedBundle = null): array
     {
         $this->assertReady();
