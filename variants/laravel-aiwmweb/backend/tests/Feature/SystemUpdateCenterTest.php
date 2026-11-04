@@ -116,7 +116,7 @@ final class SystemUpdateCenterTest extends TestCase
                 // Expected rejection.
             }
         }
-        foreach (['app/Http/Controllers/Safe.php', 'public/build/assets/app.js', 'vendor/composer/installed.json'] as $path) {
+        foreach (['app/Http/Controllers/Safe.php', 'public/build/assets/app.js', 'vendor/composer/installed.json', 'vendor/symfony/http-foundation/Session/Storage/Handler/AbstractSessionHandler.php'] as $path) {
             $method->invoke($service, $path);
             $this->assertTrue(true);
         }
