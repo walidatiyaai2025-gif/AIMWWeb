@@ -184,6 +184,24 @@ try {
     } finally {
         DB::statement('DROP VIEW IF EXISTS '.$unsupportedView);
     }
+    // A trigger would be omitted by a table-only recovery image. Verify
+    // that signed updates refuse this schema rather than silently losing it.
+    $unsupportedTrigger = 'aiwm_ci_unsupported_backup_trigger';
+    DB::statement(
+        'CREATE TRIGGER '.$unsupportedTrigger.
+        ' BEFORE INSERT ON tenants FOR EACH ROW SET NEW.name = NEW.name',
+    );
+    try {
+        try {
+            $service->install(1, $upload);
+            throw new RuntimeException('UNSAFE UPDATE ACCEPTED WITH UNSUPPORTED DATABASE TRIGGER');
+        } catch (RuntimeException $e) {
+            $assert(str_contains($e->getMessage(), 'unsupported schema objects'), 'Unsupported MySQL trigger rejection');
+        }
+        $assert(! is_file($probePath), 'Rejected trigger schema modified code files');
+    } finally {
+        DB::statement('DROP TRIGGER IF EXISTS '.$unsupportedTrigger);
+    }
     $assert($preview['file_count'] === 1 && $preview['version'] === '99.99.99', 'Signed bundle verification');
     $assert(! is_file($probePath), 'Dry-run verification mutated application');
 
