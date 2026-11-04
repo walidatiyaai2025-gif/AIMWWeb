@@ -172,4 +172,19 @@ if ($count < 1) {
     throw new RuntimeException('No tenant membership was created.');
 }
 
+// Verify the REAL production billing reference data from the extracted Setup
+// ZIP (migrations seed five editable plans; DatabaseSeeder never adds demos).
+$planCodes = $pdo->query('SELECT code FROM billing_plans ORDER BY display_order')->fetchAll(PDO::FETCH_COLUMN);
+if ($planCodes !== ['free-trial', 'starter', 'pro', 'business', 'enterprise']) {
+    throw new RuntimeException('Canonical editable production billing plans were not seeded.');
+}
+$trial = $pdo->query("SELECT trial_period_days, price_minor FROM billing_plans WHERE code='free-trial'")->fetch(PDO::FETCH_ASSOC);
+if (!$trial || (int) $trial['trial_period_days'] !== 14 || (int) $trial['price_minor'] !== 0) {
+    throw new RuntimeException('Production trial plan reference values are not available.');
+}
+$ownerCount = (int) $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn();
+if ($ownerCount !== 1) {
+    throw new RuntimeException('Unexpected seeded demonstration identity detected.');
+}
+
 fwrite(STDOUT, "FIFTEEN_STAGE_WIZARD=PASS INSTALL_LEASE=PASS OWNER_ACTIVATION=PASS ANONYMOUS_TAKEOVER=REJECTED DATABASE=PASS PLATFORM_OWNER=PASS FIRST_RUN_LOCK=PASS SIGNING_FAIL_CLOSED=PASS\n");
