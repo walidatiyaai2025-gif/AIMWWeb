@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Platform\SystemUpdateService;
+use App\Platform\VerifiedMysqlBackupService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -51,6 +52,26 @@ final class SystemUpdateController extends Controller
                 : 'No newer approved signed release is available.');
         } catch (Throwable $e) {
             return back()->withErrors(['update' => $e->getMessage()]);
+        }
+    }
+
+    /** Backup Now creates a verified encrypted snapshot; never performs a restore on live data. */
+    public function backup(Request $request, VerifiedMysqlBackupService $backups): RedirectResponse
+    {
+        $request->validate(['confirmation' => ['required', 'in:BACKUP']]);
+
+        try {
+            $receipt = $backups->backupNow((int) $request->user()->getAuthIdentifier());
+
+            return back()->with('status', 'Encrypted MySQL backup verified: '.$receipt['id'].' ('.$receipt['rows'].' rows).');
+        } catch (Throwable $e) {
+            report($e);
+
+            return back()->withErrors([
+                'update' => $e instanceof RuntimeException
+                    ? $e->getMessage()
+                    : 'Database backup failed; no update was applied.',
+            ]);
         }
     }
 
