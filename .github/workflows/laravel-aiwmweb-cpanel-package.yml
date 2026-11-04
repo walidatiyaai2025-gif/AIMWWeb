@@ -91,6 +91,7 @@ jobs:
                   "app/.env.example", "public/index.php", "public/.htaccess",
                   "public/build/manifest.json", "public/install.php",
                   "SETUP-MANIFEST.json", "START-HERE.txt",
+                  "BUILD-INFO.json", "RELEASE-NOTES.txt",
               ]
               for path in required:
                   assert path in members, f"Missing required deployable: {path}"
@@ -104,6 +105,9 @@ jobs:
               manifest = json.loads(archive.read("SETUP-MANIFEST.json"))
               assert manifest["source_sha"] == "${{ github.event.pull_request.head.sha || github.sha }}"
               assert manifest["version"] == "${{ env.BUILD_VERSION }}"
+              build_info = json.loads(archive.read("BUILD-INFO.json"))
+              assert build_info["source_sha"] == manifest["source_sha"]
+              assert build_info["version"] == manifest["version"]
               for path, expected in manifest["files"].items():
                   assert hashlib.sha256(archive.read(path)).hexdigest() == expected, path
               print("Verified one-ZIP cPanel setup from exact SHA", manifest["source_sha"])
