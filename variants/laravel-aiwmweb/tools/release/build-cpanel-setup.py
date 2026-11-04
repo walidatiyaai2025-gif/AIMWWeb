@@ -179,6 +179,20 @@ def write_zip(target: Path, commit: str, version: str) -> None:
             "future_updates": "/admin/system-updates",
         }, sort_keys=True, separators=(",", ":")).encode()
         archive.writestr("SETUP-MANIFEST.json", info)
+        archive.writestr("BUILD-INFO.json", json.dumps({
+            "product": "LARAVEL_AIWMWEB", "version": version,
+            "source_sha": commit, "runtime": "Laravel",
+            "php_minimum": "8.3", "database": "MySQL/MariaDB",
+            "deployment": "cPanel app/ and public/ layout",
+            "release_acceptance": "Must pass external signing, fresh install, upgrade and required CI gates",
+        }, sort_keys=True, indent=2).encode("utf-8"))
+        archive.writestr("RELEASE-NOTES.txt", (
+            "AIWMWeb Laravel FOODEX-standard installation candidate\\n"
+            f"Version: {version}\\nSource: {commit}\\n"
+            "15-stage ownership-gated browser setup with tenant/RBAC initialization.\\n"
+            "Admin updates require verified signed ZIPs and separately validated backup/recovery.\\n"
+            "A successful ZIP build by itself is NOT a production release approval.\\n"
+        ).encode("utf-8"))
 
         readme = (
             "AIWMWeb Laravel — cPanel FULL CLEAN INSTALL\n"
