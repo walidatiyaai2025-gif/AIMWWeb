@@ -22,6 +22,36 @@ final class VerifiedMysqlBackupService
     /** @return array{id: string, sha256: string, rows: int, tables: int, verified: bool} */
     public function backupNow(int $actorId): array
     {
+        $directory = storage_path('app/system-updates');
+        if (is_dir($directory) === false && mkdir($directory, 0700, true) === false) {
+            throw new RuntimeException('Cannot allocate private backup lock.');
+        }
+
+        $path = $directory.'/mysql-snapshot.lock';
+        if (is_link($directory) || is_link($path)) {
+            throw new RuntimeException('Unsafe database snapshot lock location.');
+        }
+
+        $handle = @fopen($path, 'c');
+        if ($handle === false) {
+            throw new RuntimeException('Cannot open private snapshot lock.');
+        }
+
+        try {
+            if (flock($handle, LOCK_EX | LOCK_NB) === false) {
+                throw new RuntimeException('A database backup is already running.');
+            }
+
+            return $this->performSnapshot($actorId);
+        } finally {
+            flock($handle, LOCK_UN);
+            fclose($handle);
+        }
+    }
+
+    /** @return array{id: string, sha256: string, rows: int, tables: int, verified: bool} */
+    private function performSnapshot(int $actorId): array
+    {
         $pdo = DB::connection()->getPdo();
         if (DB::connection()->getDriverName() !== 'mysql' || extension_loaded('sodium') === false) {
             throw new RuntimeException('Verified MySQL/InnoDB backup requires mysql and sodium; one-click updates are blocked.');
