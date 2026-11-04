@@ -7,6 +7,7 @@ use App\Platform\SystemUpdateService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
@@ -43,7 +44,7 @@ final class SystemUpdateCenterTest extends TestCase
         // This test verifies AUTHORIZATION in isolation: twelve denial requests
         // would otherwise legitimately trip the five-per-minute rate limiter.
         // The separate route-contract assertion above still enforces throttle.
-        $this->withoutMiddleware(\Illuminate\Routing\Middleware\ThrottleRequests::class);
+        $this->withoutMiddleware(ThrottleRequests::class);
 
         $this->get('/admin/system-updates')->assertRedirect('/login');
         $this->post('/admin/system-updates/check')->assertRedirect('/login');
