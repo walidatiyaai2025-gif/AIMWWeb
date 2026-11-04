@@ -192,6 +192,10 @@ final class SystemUpdateService
             }
 
             $files = $this->stageZip($zipPath, $work.'/staged', $release['manifest']['files']);
+            // An update must never mutate code before a consistent, encrypted,
+            // independently verified database snapshot has been completed.
+            // On unsupported shared hosting the operation fails closed here.
+            $databaseBackup = app(VerifiedMysqlBackupService::class)->backupNow($actorId);
             $backup = $this->dataPath('backups/'.$id);
             $this->backupFiles($files, $backup);
             $previous = $this->readJson($this->dataPath('installed.json'));
@@ -200,6 +204,7 @@ final class SystemUpdateService
                 'version' => $release['version'],
                 'sha' => $release['sha'],
                 'actor_id' => $actorId,
+                'database_backup' => $databaseBackup,
                 'installed_at' => now()->toIso8601String(),
                 'previous' => $previous ? [
                     'version' => $previous['version'] ?? 'unknown',
