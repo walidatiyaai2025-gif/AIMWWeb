@@ -291,6 +291,85 @@ final class SystemUpdateCenterTest extends TestCase
         }
     }
 
+    public function test_rollback_refuses_symlink_swapped_target_and_preserves_external_file(): void
+    {
+        $filename = 'app/AIWMRollbackSymlinkProbe-'.bin2hex(random_bytes(5)).'.php';
+        $target = base_path($filename);
+        $outside = tempnam(sys_get_temp_dir(), 'aiwm-rollback-outside-');
+        $backup = storage_path('framework/testing/aiwm-rollback-link-'.bin2hex(random_bytes(5)));
+        $service = app(SystemUpdateService::class);
+        $backupMethod = new \ReflectionMethod($service, 'backupFiles');
+        $restoreMethod = new \ReflectionMethod($service, 'restoreBackup');
+
+        try {
+            $this->assertNotFalse($outside);
+            file_put_contents($outside, 'private-file-must-not-change');
+            file_put_contents($target, 'original');
+            $backupMethod->invoke($service, [$filename => hash('sha256', 'updated')], $backup);
+
+            // An attacker swaps the app file for a symlink between the verified
+            // backup and automatic rollback of an interrupted update.
+            unlink($target);
+            $this->assertTrue(symlink($outside, $target));
+
+            try {
+                $restoreMethod->invoke($service, $backup);
+                $this->fail('Rollback followed a swapped symbolic link.');
+            } catch (RuntimeException $e) {
+                $this->assertStringContainsString('symbolic link', $e->getMessage());
+            }
+
+            $this->assertSame('private-file-must-not-change', file_get_contents($outside));
+            $this->assertTrue(is_link($target));
+        } finally {
+            @unlink($target);
+            if (is_string($outside)) {
+                @unlink($outside);
+            }
+            File::deleteDirectory($backup);
+        }
+    }
+
+    public function test_rollback_refuses_tampered_inventory_path_before_touching_files(): void
+    {
+        $filename = 'app/AIWMRollbackInventoryProbe-'.bin2hex(random_bytes(5)).'.php';
+        $target = base_path($filename);
+        $outside = tempnam(sys_get_temp_dir(), 'aiwm-rollback-inventory-');
+        $backup = storage_path('framework/testing/aiwm-rollback-path-'.bin2hex(random_bytes(5)));
+        $service = app(SystemUpdateService::class);
+        $backupMethod = new \ReflectionMethod($service, 'backupFiles');
+        $restoreMethod = new \ReflectionMethod($service, 'restoreBackup');
+
+        try {
+            $this->assertNotFalse($outside);
+            file_put_contents($outside, 'private-data');
+            file_put_contents($target, 'original');
+            $backupMethod->invoke($service, [$filename => hash('sha256', 'updated')], $backup);
+
+            // A backup inventory is private state, but rollback must validate
+            // it again rather than trusting altered JSON path keys.
+            file_put_contents($backup.'/files.json', json_encode([
+                '../storage/app/foreign-data' => false,
+            ], JSON_THROW_ON_ERROR));
+
+            try {
+                $restoreMethod->invoke($service, $backup);
+                $this->fail('Rollback accepted a traversal path from inventory.');
+            } catch (RuntimeException $e) {
+                $this->assertStringContainsString('Unsafe file path', $e->getMessage());
+            }
+
+            $this->assertSame('original', file_get_contents($target));
+            $this->assertSame('private-data', file_get_contents($outside));
+        } finally {
+            @unlink($target);
+            if (is_string($outside)) {
+                @unlink($outside);
+            }
+            File::deleteDirectory($backup);
+        }
+    }
+
     private function fakeRelease(string $manifest, string $signature): void
     {
         $prefix = 'https://github.com/walidatiyaai2025-gif/AIMWWeb/releases/download/v9.9.9/';
