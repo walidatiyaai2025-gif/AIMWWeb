@@ -97,7 +97,7 @@ final class VerifiedMysqlBackupService
                     $this->writeRecord($stream, $crypto, [
                         'type' => 'row', 'table' => $table['name'], 'cells' => $cells,
                     ]);
-                    ++$rows;
+                    $rows++;
                 }
                 $stmt->closeCursor();
             }
