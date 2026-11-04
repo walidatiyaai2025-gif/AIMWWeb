@@ -177,12 +177,14 @@ jobs:
 
       - name: Real signed ZIP upgrade on the extracted cPanel MySQL installation
         shell: bash
+        env:
+          AIWM_CI_MYSQL_ROOT_PASSWORD: ci-root-only
         run: |
           set -euo pipefail
           root="${AIWM_SMOKE_ROOT:?Prior Setup ZIP smoke must export extracted installation path}"
           php -l variants/laravel-aiwmweb/tools/release/smoke-signed-upgrade.php
           php variants/laravel-aiwmweb/tools/release/smoke-signed-upgrade.php \
-            "$root" "$AIWM_CI_SIGNED_DIR/AIWMWeb-Laravel-signed-bundle.zip" "$AIWM_CI_SIGNED_DIR/public-key"
+            "$root" "$AIWM_CI_SIGNED_DIR/AIWMWeb-Laravel-signed-bundle.zip" "$AIWM_CI_SIGNED_DIR/public-key" "$AIWM_CI_MYSQL_ROOT_PASSWORD"
           rm -rf "$AIWM_CI_SIGNED_DIR"
 
       - name: Sign admin update only on approved manual release from green main
