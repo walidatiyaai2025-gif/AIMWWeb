@@ -569,6 +569,7 @@ final class SystemUpdateService
         }
 
         $existed = [];
+        $hashes = [];
 
         foreach ($files as $name => $_) {
             $target = $this->targetPath($name);
@@ -582,9 +583,12 @@ final class SystemUpdateService
                     throw new RuntimeException('Cannot allocate update backup.');
                 }
 
-                if (! copy($target, $destination)) {
-                    throw new RuntimeException('Cannot back up '.$name);
+                $originalHash = hash_file('sha256', $target);
+                if (! is_string($originalHash) || ! copy($target, $destination) ||
+                    ! hash_equals($originalHash, (string) hash_file('sha256', $destination))) {
+                    throw new RuntimeException('Verified backup failed for '.$name);
                 }
+                $hashes[$name] = $originalHash;
             } elseif (file_exists($target)) {
                 throw new RuntimeException('Update would overwrite a non-file.');
             }
@@ -601,14 +605,16 @@ final class SystemUpdateService
                 }
             }
         }
+        $this->atomicJson($backup.'/hashes.json', $hashes);
         $this->atomicJson($backup.'/files.json', $existed);
     }
 
     private function restoreBackup(string $backup): void
     {
         $existing = $this->readJson($backup.'/files.json');
+        $hashes = $this->readJson($backup.'/hashes.json');
 
-        if ($existing === null) {
+        if ($existing === null || $hashes === null) {
             throw new RuntimeException('Rollback inventory is missing; manual recovery is required.');
         }
 
@@ -616,7 +622,14 @@ final class SystemUpdateService
             $target = $this->targetPath($name);
 
             if ($wasPresent) {
-                if (! copy($backup.'/original/'.$name, $target)) {
+                $source = $backup.'/original/'.$name;
+                $expected = $hashes[$name] ?? null;
+                if (! is_string($expected) || ! preg_match('/^[a-f0-9]{64}$/D', $expected) ||
+                    ! is_file($source) || ! hash_equals($expected, (string) hash_file('sha256', $source))) {
+                    throw new RuntimeException('Backup integrity verification failed; manual recovery is required.');
+                }
+                if (! copy($source, $target) ||
+                    ! hash_equals($expected, (string) hash_file('sha256', $target))) {
                     throw new RuntimeException('Automatic rollback failed; use the saved backup.');
                 }
             } else {
