@@ -115,6 +115,28 @@ jobs:
           php variants/laravel-aiwmweb/tools/release/smoke-cpanel-wizard.php \
             "$root" "127.0.0.1" "aiwm_wizard_ci" "aiwm_wizard" "$AIWM_CI_MYSQL_PASSWORD"
 
+      - name: Verify CI-only signed update bundle with ephemeral Ed25519 key
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp -d)"
+          trap 'rm -rf "$tmp"' EXIT
+          # The CI test key is random, never provisioned to any deployment and never uploaded.
+          CI_ONLY_SIGN_KEY="$(php -r '$p=sodium_crypto_sign_keypair(); file_put_contents($argv[1], base64_encode(sodium_crypto_sign_publickey($p))); echo base64_encode(sodium_crypto_sign_secretkey($p));' "$tmp/public-key")"
+          AIWM_UPDATES_SECRET_KEY="$CI_ONLY_SIGN_KEY" php variants/laravel-aiwmweb/tools/release/build-signed-update.php "0.0.$GITHUB_RUN_NUMBER" "$GITHUB_SHA" "$tmp"
+          unset CI_ONLY_SIGN_KEY
+          unzip -t "$tmp/AIWMWeb-Laravel-signed-bundle.zip" >/dev/null
+          php -r '
+            $m=file_get_contents($argv[1]."/AIWMWeb-Laravel-release.json");
+            $s=base64_decode(trim(file_get_contents($argv[1]."/AIWMWeb-Laravel-release.sig")), true);
+            $p=base64_decode(file_get_contents($argv[1]."/public-key"), true);
+            $j=json_decode($m, true, flags: JSON_THROW_ON_ERROR);
+            if (!sodium_crypto_sign_verify_detached($s,$m,$p) ||
+                !hash_equals($j["sha256"],hash_file("sha256",$argv[1]."/AIWMWeb-Laravel-update.zip")) ||
+                $j["sha"]!==$argv[2]) { exit(1); }
+            echo "Ephemeral signed bundle verified at exact source SHA, NOT a production release.\\n";
+          ' "$tmp" "$GITHUB_SHA"
+
       - name: Browser-entry HTTP smoke after real full ZIP installation
         shell: bash
         run: |
