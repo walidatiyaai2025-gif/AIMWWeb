@@ -107,6 +107,24 @@ try {
     $assert($bundle->close(), 'Cannot close transport ZIP');
 
     $service = $app->make(SystemUpdateService::class);
+
+    // The same real installer must reject a forged detached signature before
+    // any code mutation, even when the inner ZIP and SHA-256 are otherwise valid.
+    $forgedPath = $work.'/forged.zip';
+    $forged = new ZipArchive();
+    $assert($forged->open($forgedPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true, 'Cannot create forged fixture');
+    $forged->addFromString('AIWMWeb-Laravel-release.json', $manifest);
+    $forged->addFromString('AIWMWeb-Laravel-release.sig', base64_encode(random_bytes(SODIUM_CRYPTO_SIGN_BYTES)));
+    $forged->addFile($payload, 'AIWMWeb-Laravel-update.zip');
+    $assert($forged->close(), 'Cannot close forged fixture');
+    try {
+        $service->verifyUpload(new UploadedFile($forgedPath, 'forged.zip', 'application/zip', null, true));
+        throw new RuntimeException('FORGED SIGNATURE ACCEPTED');
+    } catch (RuntimeException $e) {
+        $assert(str_contains($e->getMessage(), 'signature could not be verified'), 'Invalid-signature rejection');
+    }
+    $assert(! is_file($probePath), 'Forged signature mutated application');
+
     $upload = new UploadedFile($transport, 'AIWMWeb-Update-v99.99.99.zip', 'application/zip', null, true);
     $preview = $service->verifyUpload($upload);
     $assert($preview['file_count'] === 1 && $preview['version'] === '99.99.99', 'Signed bundle verification');
@@ -124,6 +142,14 @@ try {
         ->where('key', 'ci.upgrade.preservation')->value('value');
     $assert(json_decode((string) $value, true) === ['preserved' => true], 'Tenant settings changed');
     $assert(! is_file(storage_path('framework/down')), 'Site remained in maintenance after successful update');
+
+    // A previously installed signed release is never eligible for reinstallation.
+    try {
+        $service->verifyUpload($upload);
+        throw new RuntimeException('SIGNED REPLAY/DOWNGRADE ACCEPTED');
+    } catch (RuntimeException $e) {
+        $assert(str_contains($e->getMessage(), 'Only newer signed releases'), 'Replay/downgrade rejection');
+    }
 
     echo "PASS: signed ZIP verified, applied after authenticated MySQL backup; tenant, settings and user count preserved.\n";
 } finally {
