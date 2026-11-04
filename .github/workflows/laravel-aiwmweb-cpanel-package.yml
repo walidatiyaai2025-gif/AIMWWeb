@@ -192,6 +192,9 @@ jobs:
             "$root" "$AIWM_CI_SIGNED_DIR/AIWMWeb-Laravel-signed-bundle.zip" "$AIWM_CI_SIGNED_DIR/public-key" "$AIWM_CI_MYSQL_ROOT_PASSWORD"
           rm -rf "$AIWM_CI_SIGNED_DIR"
 
+      - name: Test immutable-main production release gate against adversarial evidence
+        run: python3 -m unittest discover -s variants/laravel-aiwmweb/tools/release -p 'test_verify_production_ci.py'
+
       - name: Sign admin update only on approved manual release from green main
         env:
           AIWM_UPDATES_SECRET_KEY: ${{ secrets.AIWM_UPDATES_SECRET_KEY }}
@@ -222,20 +225,10 @@ jobs:
             }
           '
 
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$SOURCE_SHA&per_page=100"             > /tmp/aiwm-release-gates.json
-          python3 - <<'PY'
-          import json
-          data = json.load(open("/tmp/aiwm-release-gates.json", encoding="utf-8"))
-          required = {"Laravel AIWMWeb Acceptance", "Build", "Final Historical Acceptance", "UX Regression Gate"}
-          successful = {
-              item.get("name") for item in data.get("workflow_runs", [])
-              if item.get("status") == "completed" and item.get("conclusion") == "success"
-          }
-          missing = sorted(required - successful)
-          if missing:
-              raise SystemExit("BLOCKED: exact-head main CI gates not green: " + ", ".join(missing))
-          print("Approved exact-main release CI", ", ".join(sorted(required)))
-          PY
+          gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" > /tmp/aiwm-current-main.json
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$SOURCE_SHA&event=push&per_page=100" > /tmp/aiwm-release-gates.json
+          python3 variants/laravel-aiwmweb/tools/release/verify-production-ci.py \
+            /tmp/aiwm-current-main.json /tmp/aiwm-release-gates.json "$SOURCE_SHA"
 
           php variants/laravel-aiwmweb/tools/release/build-signed-update.php \
             "$BUILD_VERSION" "$SOURCE_SHA" artifacts/cpanel
@@ -328,6 +321,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # The main ref can move after the build job but before publication.
+          current_main="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')"
+          [[ "$current_main" == "$SOURCE_SHA" ]] || { echo 'BLOCKED: main changed after signing; rebuild from current HEAD'; exit 1; }
           if gh release view "v${BUILD_VERSION}" >/dev/null 2>&1; then
             echo 'BLOCKED: release tag already exists; refusing to overwrite or republish'
             exit 1
