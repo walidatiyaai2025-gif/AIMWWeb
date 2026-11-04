@@ -140,6 +140,19 @@ function aiwmDatabase(array $db): PDO
     }
 }
 
+/** Translate only hard-coded wizard copy. Never alter persisted tenant values. */
+function aiwmUiText(string $text): string
+{
+    if (($_SESSION['aiwm_ui_lang'] ?? 'ar') !== 'en') {
+        return $text;
+    }
+
+    static $translations = null;
+    $translations ??= json_decode('{"مرحبًا بك في معالج AIWMWeb":"Welcome to the AIWMWeb Setup Wizard","تحقق من الملكية ثم التالي":"Verify ownership and continue","الملكية":"Ownership","الصلاحيات":"Permissions","الدومين":"Domain","المنصة":"Platform","المستأجر":"Tenant","المدير":"Administrator","مراحل التثبيت":"Installation steps","التالي":"Next","تثبيت آمن لمرة واحدة — قاعدة بيانات جديدة فقط — لا تُعرض كلمات المرور أو مفاتيح التوقيع في السجلات.":"Secure one-time installation — fresh database only — passwords and signing keys are never logged.","حزمة Laravel مكتملة؛ ثبّتها في مجلد جديد مع قاعدة MySQL فارغة. لا حاجة إلى Terminal أو Composer على الاستضافة.":"This complete Laravel package must be installed in a new directory with an empty MySQL database. No server terminal or Composer is required.","اقرأ رمز إثبات ملكية الاستضافة من ":"Read the hosting ownership proof from "," عبر cPanel File Manager. لا تشاركه.":" using cPanel File Manager. Do not share it.","رمز تفعيل مالك الاستضافة":"Hosting owner activation secret","إصدار PHP والامتدادات المطلوبة وComposer vendor وFrontend build اجتازت فحص السيرفر الحقيقي.":"The PHP version, required extensions, Composer production dependencies, and frontend build passed checks on this server.","فُحصت مجلدات Storage وCache وصلاحيات الكتابة.":"Storage, cache, and write permissions have been checked.","يجب أن يشير Document Root في cPanel إلى ":"The cPanel Document Root must point to ","؛ لا يمكن تجاوز ذلك من PHP بدون صلاحية الاستضافة.":"; PHP cannot change this without hosting permissions.","لا يُقبل تثبيت على نطاق مختلف عن نطاق الطلب الحالي عبر HTTPS.":"The installation URL must match this HTTPS request domain.","تحقق من الدومين ثم التالي":"Verify domain and continue","إعداد قاعدة بيانات MySQL":"Configure MySQL Database","أنشئ قاعدة MySQL ومستخدمًا بصلاحياتها من cPanel أولًا. يتم رفض أي قاعدة تحتوي على جداول سابقة.":"First create a MySQL database and authorized user in cPanel. Databases with existing tables are rejected.","اختبار الاتصال والتالي":"Test connection and continue","تم التأكد من أن قاعدة البيانات متصلة وفارغة.":"The database connection succeeded and the database is empty.","اسم المنصة":"Platform name","اسم مساحة العمل":"Workspace name","اسم المدير":"Administrator name","البريد الإلكتروني":"Email address","كلمة المرور (12 حرفًا على الأقل)":"Password (at least 12 characters)","تأكيد كلمة المرور":"Confirm password","سيُنشأ ":"The installer will create "," بصلاحيات خاصة مع APP_KEY عشوائي عند تنفيذ التثبيت، وليس داخل ZIP. يتم حماية الملف من الكتابة فوق موقع قائم.":" with private permissions and a random APP_KEY during installation, not inside the ZIP. Existing installations are protected against overwrite.","سيتم اختبار الكتابة الفعلية إلى Storage. رابط التخزين العام يعتمد على دعم الاستضافة؛ تحقّق من صلاحيات public/ وSymlinks من cPanel.":"Storage write access will be tested. Public storage linking depends on the host; verify public/ permissions and symlink support in cPanel.","اختبر Storage ثم التالي":"Test storage and continue","File Cache وSessions جاهزان دون Redis. Database Queue تحتاج تشغيل Worker من الاستضافة؛ اختر sync عند غياب Worker.":"File cache and sessions work without Redis. Database queues require a hosting worker; choose sync when no worker is available.","سيُستخدم Mail log افتراضيًا. لم يتم ضبط SMTP أو إرسال بريد حقيقي؛ أعد ضبطه واختبره من إعدادات الإدارة بعد التثبيت.":"Mail logging will be used by default. SMTP is not configured and no real email has been sent; configure and test mail in the admin settings after installation.","تأكيد وضع Mail ثم التالي":"Confirm mail mode and continue","إنشاء Cron يحتاج صلاحيات cPanel. لا يتم الادعاء بتشغيل Scheduler تلقائيًا. أضف مهمة Laravel schedule:run كل دقيقة من cPanel Cron Jobs عندما تدعم الاستضافة ذلك.":"Creating Cron jobs requires cPanel permissions. The scheduler is not automatically claimed as active. Configure Laravel schedule:run every minute in cPanel Cron Jobs if supported.","سيتم تشغيل الترحيلات، وإنشاء مدير المنصة وTenant مع RBAC، وفحص سلامة الهوية. لا تُنشأ حسابات تجريبية أو بيانات سرية افتراضية.":"Migrations, the platform administrator, tenant, RBAC, and identity health checks will run. No demo accounts or default secrets are created.","تثبيت النظام → Finish":"Install system → Finish","التثبيت مكتمل بالفعل":"Installation already completed","هذا المعالج مقفل. ":"This installer is locked. ","تسجيل الدخول":"Sign in","الموقع مثبت بالفعل":"An installation already exists","يوجد ملف إعدادات سابق. حرصًا على حماية بياناتك لا يمكن تثبيت نظام جديد فوق قاعدة بيانات قائمة. استخدم مجلدًا وقاعدة بيانات جديدين أو استرجع النسخة الاحتياطية.":"An environment file already exists. To protect your data, this wizard cannot overwrite an existing installation. Use a new directory and empty database, or restore a verified backup.","فحص متطلبات الاستضافة":"Hosting requirement checks","فعّل المتطلبات الموضحة قبل استكمال التثبيت.":"Enable the listed requirements before continuing.","يجب فتح معالج التثبيت عبر HTTPS.":"Open the setup wizard using HTTPS.","يجب إعادة إثبات ملكية الاستضافة قبل استئناف التثبيت.":"Hosting ownership must be reverified before resuming installation.","انتهت صلاحية إثبات ملكية الاستضافة؛ ابدأ التفعيل مرة أخرى.":"Hosting ownership proof has expired; restart activation.","انتهت صلاحية نموذج التثبيت؛ أعد تحميل الصفحة.":"The setup form has expired; reload the page.","إثبات ملكية الاستضافة غير صحيح. اقرأ ملف التفعيل الخاص من cPanel File Manager.":"Invalid hosting ownership proof. Read the private activation file in cPanel File Manager.","فشل الاتصال بقاعدة البيانات. تأكد من الاسم والمستخدم وكلمة المرور في cPanel.":"Database connection failed. Check database name, user, and password in cPanel.","تعذّر إكمال الخطوة":"Could not complete this step","لم يتم حذف أي بيانات أو جداول. راجع البيانات وأعد فتح المعالج لاستكمال التثبيت.":"No data or tables were deleted. Review the configuration and reopen the wizard to resume.","العودة إلى المعالج":"Return to wizard","حدث خطأ في التثبيت. راجع ملف Laravel log دون إعادة تهيئة قاعدة البيانات.":"Installation error. Check the Laravel log without reinitializing the database.","تم التثبيت بنجاح":"Installation completed successfully","نجح اتصال MySQL، الترحيل، إنشاء مساحة العمل، حساب المدير بصلاحية المنصة، وفحص ملفات الواجهة.":"MySQL connection, migrations, workspace setup, platform administrator creation and frontend checks succeeded.","تم إغلاق معالج التثبيت. ادخل بحساب المدير الذي أنشأته.":"The installer is locked. Sign in with the administrator account you created.","فتح المنصة وتسجيل الدخول":"Open platform and sign in","نظام رفع التحديثات الموقعة موجود في لوحة الإدارة، لكن تثبيتها يظل معطّلًا حتى إعداد مفتاح التوقيع الخاص في نظام الإصدارات. مفاتيح التوقيع لا تُعرض في صفحات عامة.":"Signed ZIP updates are available in the administration dashboard but remain disabled until the trusted release signing key is configured. Signing secrets are never displayed on public pages.","مرحلة التثبيت غير معروفة.":"Unknown installation step.","أكمل فحص قاعدة البيانات أولًا.":"Complete the database checks first.","يجب إثبات ملكية الاستضافة أولًا.":"Verify hosting ownership first.","تثبيت آخر قيد التنفيذ":"Another installation is in progress"}', true, 512, JSON_THROW_ON_ERROR);
+
+    return strtr($text, $translations);
+}
+
 function aiwmPage(string $title, int $step, string $body, ?string $error = null): never
 {
     $steps = [
@@ -147,24 +160,26 @@ function aiwmPage(string $title, int $step, string $body, ?string $error = null)
         'المنصة', 'المستأجر', 'المدير', '.env', 'Storage',
         'Queue', 'Mail', 'Cron', 'Migrations', 'Finish',
     ];
-    $progress = '<nav aria-label="مراحل التثبيت" class="steps">';
+    $language = ($_SESSION['aiwm_ui_lang'] ?? 'ar') === 'en' ? 'en' : 'ar';
+    $direction = $language === 'en' ? 'ltr' : 'rtl';
+    $progress = '<nav aria-label="'.aiwmEscape(aiwmUiText('مراحل التثبيت')).'" class="steps">';
 
     foreach ($steps as $index => $caption) {
         $current = $index === $step ? ' active' : '';
         $done = $index < $step ? ' done' : '';
-        $progress .= '<span class="step'.$current.$done.'">'.($index + 1).'. '.aiwmEscape($caption).'</span>';
+        $progress .= '<span class="step'.$current.$done.'">'.($index + 1).'. '.aiwmEscape(aiwmUiText($caption)).'</span>';
     }
 
     $progress .= '</nav>';
-    $errorHtml = $error === null ? '' : '<p class="error" role="alert">'.aiwmEscape($error).'</p>';
+    $errorHtml = $error === null ? '' : '<p class="error" role="alert">'.aiwmEscape(aiwmUiText($error)).'</p>';
     $token = isset($_SESSION['aiwm_csrf']) ? (string) $_SESSION['aiwm_csrf'] : '';
-    $body = str_replace('@@CSRF@@', aiwmEscape($token), $body);
+    $body = aiwmUiText(str_replace('@@CSRF@@', aiwmEscape($token), $body));
 
-    echo '<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">';
-    echo '<title>'.aiwmEscape($title).' — AIWMWeb</title>';
+    echo '<!doctype html><html lang="'.aiwmEscape($language).'" dir="'.aiwmEscape($direction).'"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">';
+    echo '<title>'.aiwmEscape(aiwmUiText($title)).' — AIWMWeb</title>';
     echo '<style>:root{font-family:system-ui,Tahoma,sans-serif;color-scheme:dark}*{box-sizing:border-box}body{margin:0;padding:3rem 1rem;min-height:100vh;background:radial-gradient(circle at 20% 0,#1a3550,#0b1220 65%);color:#e8f4fa}main{max-width:820px;margin:auto;background:#131f30;padding:clamp(18px,4vw,36px);border:1px solid #345169;border-radius:22px;box-shadow:0 18px 70px #0005}h1{font-size:clamp(1.5rem,4vw,2rem);margin:.5rem 0 1rem}.logo{color:#6ee7c7;font-weight:800;letter-spacing:.07em}.steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin:24px 0}.step{border:1px solid #345169;border-radius:8px;padding:10px 6px;font-size:12px;text-align:center;color:#a1b9cc}.active{background:#175545;color:white}.done{border-color:#1eae86;color:#73e8bf}p{line-height:1.75;color:#b9cede}label{display:block;margin:15px 0 6px;font-weight:600}input,select{width:100%;padding:13px;background:#0a1624;border:1px solid #456075;border-radius:9px;color:white;font-size:1rem}input:focus,button:focus{outline:2px solid #6ee7c7}button,.button{display:inline-block;cursor:pointer;margin-top:20px;padding:13px 22px;border:0;border-radius:10px;font-size:1rem;font-weight:800;color:#071d17;background:#6ee7c7;text-decoration:none}.error{border:1px solid #cf716b;background:#421e25;padding:12px;color:#ffd0ca;border-radius:9px}.pass{padding:10px;color:#9df2d6;border-right:3px solid #6ee7c7}.warn{padding:10px;color:#ffdeab;border-right:3px solid #e3a94f}.footer{font-size:12px;margin-top:24px;color:#8faabd}code{direction:ltr;unicode-bidi:plaintext;display:inline-block}form{margin-top:15px}.hint{color:#a9bfd1;font-size:13px}</style>';
-    echo '</head><body><main><div class="logo">AIWMWEB | SETUP</div>'.$progress.'<h1>'.aiwmEscape($title).'</h1>'.$errorHtml.$body;
-    echo '<p class="footer">تثبيت آمن لمرة واحدة — قاعدة بيانات جديدة فقط — لا تُعرض كلمات المرور أو مفاتيح التوقيع في السجلات.</p></main></body></html>';
+    echo '</head><body><main><div class="logo">AIWMWEB | SETUP</div><div class="hint" aria-label="Language"><a href="/install?lang=ar" hreflang="ar" style="color:#6ee7c7">العربية</a> | <a href="/install?lang=en" hreflang="en" style="color:#6ee7c7">English</a></div>'.$progress.'<h1>'.aiwmEscape(aiwmUiText($title)).'</h1>'.$errorHtml.$body;
+    echo '<p class="footer">'.aiwmEscape(aiwmUiText('تثبيت آمن لمرة واحدة — قاعدة بيانات جديدة فقط — لا تُعرض كلمات المرور أو مفاتيح التوقيع في السجلات.')).'</p></main></body></html>';
     exit;
 }
 
@@ -212,6 +227,12 @@ try {
         'secure' => true, 'httponly' => true, 'samesite' => 'Strict',
     ]);
     session_start();
+
+    // UI language is session-scoped and never authorizes setup or affects CSRF.
+    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET' &&
+        isset($_GET['lang']) && in_array($_GET['lang'], ['ar', 'en'], true)) {
+        $_SESSION['aiwm_ui_lang'] = $_GET['lang'];
+    }
 
     if (! isset($_SESSION['aiwm_csrf'])) {
         $_SESSION['aiwm_csrf'] = bin2hex(random_bytes(32));
@@ -349,6 +370,7 @@ try {
                 aiwmFailure('اسم المنصة أو اللغة أو المنطقة الزمنية غير صالح.');
             }
             $_SESSION['aiwm_platform'] = ['name' => $name, 'locale' => $locale, 'timezone' => $timezone];
+            $_SESSION['aiwm_ui_lang'] = $locale;
             $_SESSION['aiwm_step'] = 'tenant';
         } elseif ($action === 'tenant') {
             if (($_SESSION['aiwm_step'] ?? '') !== 'tenant') { aiwmFailure('ترتيب مراحل التثبيت غير صحيح.'); }
