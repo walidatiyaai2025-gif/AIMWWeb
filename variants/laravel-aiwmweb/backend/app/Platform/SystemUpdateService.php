@@ -226,15 +226,7 @@ final class SystemUpdateService
                 $maintenanceActive = true;
 
                 foreach ($files as $name => $hash) {
-                    $target = $this->targetPath($name);
-                    $temp = dirname($target).'/.aiwm-update-'.$id;
-
-                    if (! copy($work.'/staged/'.$name, $temp) || ! rename($temp, $target) ||
-                        ! hash_equals($hash, hash_file('sha256', $target))) {
-                        @unlink($temp);
-
-                        throw new RuntimeException('File replacement verification failed.');
-                    }
+                    $this->applyStagedFile($name, $work.'/staged/'.$name, $hash, $id);
                 }
 
                 if ($migrationFiles !== []) {
@@ -556,6 +548,45 @@ final class SystemUpdateService
             return $expected;
         } finally {
             $zip->close();
+        }
+    }
+
+    /**
+     * Revalidate the destination at the instant files are applied, not only
+     * during ZIP staging and backup. A swapped directory or temporary link
+     * must not redirect an otherwise valid signed update outside the app.
+     */
+    private function applyStagedFile(string $name, string $source, string $hash, string $id): void
+    {
+        $this->validatePath($name);
+        $target = $this->targetPath($name);
+        $this->assertSafeDestination($target);
+        $temp = dirname($target).'/.aiwm-update-'.$id;
+
+        // A leftover file or attacker-planted link cannot be used as the
+        // staging destination. Never follow an existing temporary pathname.
+        if (file_exists($temp) || is_link($temp)) {
+            throw new RuntimeException('Unsafe or occupied update temporary path.');
+        }
+
+        if (! copy($source, $temp)) {
+            throw new RuntimeException('File replacement verification failed.');
+        }
+
+        try {
+            // Check again after copying and before the atomic rename, since
+            // both the destination and parent may have changed meanwhile.
+            $this->assertSafeDestination($target);
+            $this->assertSafeDestination($temp);
+
+            if (! rename($temp, $target) ||
+                ! hash_equals($hash, (string) hash_file('sha256', $target))) {
+                throw new RuntimeException('File replacement verification failed.');
+            }
+        } finally {
+            if (file_exists($temp) || is_link($temp)) {
+                @unlink($temp);
+            }
         }
     }
 
