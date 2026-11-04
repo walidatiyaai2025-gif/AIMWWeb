@@ -257,9 +257,12 @@ class DurableAiBatchTest extends TestCase
         $this->assertSame(1, DB::table('durable_ai_gate')->count());
     }
 
-    public function test_cpanel_setup_routes_are_inaccessible(): void
+    public function test_legacy_setup_route_redirects_safely_without_exposing_owner_bootstrap(): void
     {
-        $this->get('https://localhost/setup')->assertNotFound();
+        // The FOODEX installer intentionally retains a safe legacy alias:
+        // a guest GET redirects rather than exposing a first-admin mutation.
+        $this->get('https://localhost/setup')->assertRedirect();
+        // The legacy alias is not a POST bootstrap endpoint.
         $this->post('https://localhost/setup')->assertNotFound();
     }
 
