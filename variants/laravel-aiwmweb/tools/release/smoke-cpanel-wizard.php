@@ -117,7 +117,19 @@ foreach ($stages as [$action, $fields, $expected]) {
     $response = executeStep($installer, $sessionId, ['csrf' => $csrf, 'action' => $action] + $fields);
     requireOutput($response, $expected);
 }
-// A forged jump straight into install must not mutate an empty database.
+// Simulate a second concurrent setup worker holding the migration lease.
+$lease = fopen($private.'/migration-install.lock', 'c');
+if ($lease === false || ! flock($lease, LOCK_EX | LOCK_NB)) {
+    throw new RuntimeException('Cannot acquire simulated installation concurrency lease.');
+}
+try {
+    $blocked = executeStep($installer, $sessionId, ['csrf' => $csrf, 'action' => 'install']);
+    requireOutput($blocked, 'تثبيت آخر قيد التنفيذ');
+} finally {
+    flock($lease, LOCK_UN);
+    fclose($lease);
+}
+// The legitimate owner may finish after the competing worker has exited.
 $finished = executeStep($installer, $sessionId, [
     'csrf' => $csrf, 'action' => 'install',
 ]);
@@ -157,4 +169,4 @@ if ($count < 1) {
     throw new RuntimeException('No tenant membership was created.');
 }
 
-fwrite(STDOUT, "FIFTEEN_STAGE_WIZARD=PASS OWNER_ACTIVATION=PASS ANONYMOUS_TAKEOVER=REJECTED DATABASE=PASS PLATFORM_OWNER=PASS FIRST_RUN_LOCK=PASS SIGNING_FAIL_CLOSED=PASS\n");
+fwrite(STDOUT, "FIFTEEN_STAGE_WIZARD=PASS INSTALL_LEASE=PASS OWNER_ACTIVATION=PASS ANONYMOUS_TAKEOVER=REJECTED DATABASE=PASS PLATFORM_OWNER=PASS FIRST_RUN_LOCK=PASS SIGNING_FAIL_CLOSED=PASS\n");
