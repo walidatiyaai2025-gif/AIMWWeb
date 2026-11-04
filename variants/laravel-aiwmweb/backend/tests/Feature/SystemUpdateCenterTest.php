@@ -7,6 +7,7 @@ use App\Platform\SystemUpdateService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 use RuntimeException;
@@ -24,6 +25,7 @@ final class SystemUpdateCenterTest extends TestCase
             ['POST', '/admin/system-updates/check'],
             ['POST', '/admin/system-updates/install'],
             ['POST', '/admin/system-updates/upload'],
+            ['POST', '/admin/system-updates/verify'],
         ] as [$method, $path]) {
             $route = Route::getRoutes()->match(Request::create($path, $method));
             $this->assertContains('web', $route->gatherMiddleware());
@@ -39,12 +41,14 @@ final class SystemUpdateCenterTest extends TestCase
         $this->post('/admin/system-updates/check')->assertRedirect('/login');
         $this->post('/admin/system-updates/install', ['confirmation' => 'INSTALL'])->assertRedirect('/login');
         $this->post('/admin/system-updates/upload', ['confirmation' => 'INSTALL'])->assertRedirect('/login');
+        $this->post('/admin/system-updates/verify')->assertRedirect('/login');
 
         $user = User::factory()->create(['platform_admin' => false]);
         $this->actingAs($user)->get('/admin/system-updates')->assertForbidden();
         $this->actingAs($user)->post('/admin/system-updates/check')->assertForbidden();
         $this->actingAs($user)->post('/admin/system-updates/install', ['confirmation' => 'INSTALL'])->assertForbidden();
         $this->actingAs($user)->post('/admin/system-updates/upload', ['confirmation' => 'INSTALL'])->assertForbidden();
+        $this->actingAs($user)->post('/admin/system-updates/verify')->assertForbidden();
     }
 
     public function test_update_page_honestly_disables_installation_without_signing_configuration(): void
@@ -112,7 +116,7 @@ final class SystemUpdateCenterTest extends TestCase
                 // Expected rejection.
             }
         }
-        foreach (['app/Http/Controllers/Safe.php', 'public/build/assets/app.js', 'vendor/composer/installed.json'] as $path) {
+        foreach (['app/Http/Controllers/Safe.php', 'public/build/assets/app.js', 'vendor/composer/installed.json', 'vendor/symfony/http-foundation/Session/Storage/Handler/AbstractSessionHandler.php'] as $path) {
             $method->invoke($service, $path);
             $this->assertTrue(true);
         }
@@ -160,6 +164,11 @@ final class SystemUpdateCenterTest extends TestCase
                     new UploadedFile($bundlePath, 'signed-bundle.zip', 'application/zip', null, true),
                     $staged,
                 );
+            $preview = app(SystemUpdateService::class)->verifyUpload(
+                new UploadedFile($bundlePath, 'signed-bundle.zip', 'application/zip', null, true),
+            );
+            $this->assertSame('9.9.9', $preview['version']);
+            $this->assertSame(1, $preview['file_count']);
             $this->assertSame('9.9.9', $verified['version']);
             $this->assertSame(str_repeat('a', 40), $verified['sha']);
             $this->assertTrue($verified['available']);
@@ -196,10 +205,47 @@ final class SystemUpdateCenterTest extends TestCase
             'update_bundle' => UploadedFile::fake()->createWithContent('unsafe.txt', 'not signed'),
         ])->assertSessionHasErrors('confirmation');
 
+        $this->actingAs($admin)->post('/admin/system-updates/verify', [
+            'update_bundle' => UploadedFile::fake()->createWithContent('unsafe.txt', 'not signed'),
+        ])->assertSessionHasErrors('update_bundle');
+
         $this->actingAs($admin)->post('/admin/system-updates/upload', [
             'confirmation' => 'INSTALL',
             'update_bundle' => UploadedFile::fake()->createWithContent('unsafe.txt', 'not signed'),
         ])->assertSessionHasErrors('update_bundle');
+    }
+
+    public function test_file_backup_is_hashed_and_tampered_restore_fails_closed(): void
+    {
+        $filename = 'app/AIWMBackupIntegrityProbe-'.bin2hex(random_bytes(5)).'.php';
+        $target = base_path($filename);
+        $backup = storage_path('framework/testing/aiwm-backup-'.bin2hex(random_bytes(5)));
+        $service = app(SystemUpdateService::class);
+        $backupMethod = new \ReflectionMethod($service, 'backupFiles');
+        $restoreMethod = new \ReflectionMethod($service, 'restoreBackup');
+
+        try {
+            file_put_contents($target, 'safe-original');
+            $backupMethod->invoke($service, [$filename => hash('sha256', 'safe-next')], $backup);
+            $this->assertFileExists($backup.'/hashes.json');
+
+            file_put_contents($target, 'changed-by-update');
+            $restoreMethod->invoke($service, $backup);
+            $this->assertSame('safe-original', file_get_contents($target));
+
+            file_put_contents($backup.'/original/'.$filename, 'tampered-backup');
+            file_put_contents($target, 'do-not-overwrite-on-corruption');
+            try {
+                $restoreMethod->invoke($service, $backup);
+                $this->fail('Corrupted backup must be rejected before file restore.');
+            } catch (RuntimeException $e) {
+                $this->assertStringContainsString('Backup integrity verification failed', $e->getMessage());
+            }
+            $this->assertSame('do-not-overwrite-on-corruption', file_get_contents($target));
+        } finally {
+            @unlink($target);
+            File::deleteDirectory($backup);
+        }
     }
 
     private function fakeRelease(string $manifest, string $signature): void

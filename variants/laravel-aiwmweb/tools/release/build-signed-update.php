@@ -66,7 +66,8 @@ $hashes = [];
 $total = 0;
 foreach ($files as $name => $absolute) {
     if (strlen($name) > 240 || ! preg_match('#^[A-Za-z0-9_./@+~-]+$#D', $name) ||
-        preg_match('#(^|/)(\.{1,2}|\.env|storage|\.git)(/|$)#i', $name)) {
+        preg_match('#(^|/)(\.{1,2}|\.env|\.git)(/|$)#i', $name) ||
+        preg_match('#^(storage|app/storage|public/storage)(/|$)#i', $name)) {
         throw new RuntimeException('Unsafe release path: '.$name);
     }
     $size = filesize($absolute);

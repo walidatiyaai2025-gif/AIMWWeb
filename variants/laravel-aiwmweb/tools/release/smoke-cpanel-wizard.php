@@ -1,7 +1,7 @@
 <?php
 
 /**
- * CI-only exact ZIP acceptance: run real four-step PHP installer over an
+ * CI-only exact ZIP acceptance: run actual cPanel PHP installer over an
  * empty MySQL database and assert Laravel owner/platform control readiness.
  *
  * Args: EXTRACTED_ZIP_ROOT DB_HOST DB_NAME DB_USER DB_PASSWORD
@@ -35,6 +35,7 @@ function executeStep(string $installer, string $id, array $post = []): string
     $code = <<<'CODE'
 $_SERVER['HTTPS'] = 'on';
 $_SERVER['HTTP_HOST'] = 'aiwm.example.test';
+$_SERVER['REQUEST_URI'] = '/install';
 $_SERVER['REQUEST_METHOD'] = $argv[3] === 'POST' ? 'POST' : 'GET';
 $_COOKIE['AIWM_FIRST_SETUP'] = $argv[2];
 $_POST = json_decode(base64_decode($argv[4]), true, flags: JSON_THROW_ON_ERROR);
@@ -64,34 +65,83 @@ function requireOutput(string $actual, string $needle): void
     }
 }
 
+$canonical = executeStep($root.'/public/index.php', $sessionId);
+requireOutput($canonical, 'مرحبًا بك في معالج AIWMWeb');
 $first = executeStep($installer, $sessionId);
 requireOutput($first, 'مرحبًا بك في معالج AIWMWeb');
-requireOutput($first, 'التالي: قاعدة البيانات');
-requireOutput($first, 'فحص السيرفر');
-
-$databasePage = executeStep($installer, $sessionId, ['csrf' => $csrf, 'action' => 'requirements']);
-requireOutput($databasePage, 'إعداد قاعدة بيانات MySQL');
-$ownerPage = executeStep($installer, $sessionId, [
-    'csrf' => $csrf, 'action' => 'database',
-    'db_host' => $host, 'db_name' => $database,
-    'db_user' => $username, 'db_password' => $password,
+requireOutput($first, 'تحقق من الملكية ثم التالي');
+$ownerSecretPath = $private.'/owner-activation.secret';
+if (! is_file($ownerSecretPath)) {
+    throw new RuntimeException('Owner activation challenge was not created in private storage.');
+}
+$ownerSecret = trim((string) file_get_contents($ownerSecretPath));
+if (! preg_match('/^[a-f0-9]{64}$/D', $ownerSecret)) {
+    throw new RuntimeException('Invalid randomly generated hosting owner challenge.');
+}
+if (str_contains($first, $ownerSecret)) {
+    throw new RuntimeException('Owner activation challenge leaked in the public installer page.');
+}
+// A network-only visitor cannot advance with MySQL credentials or a guessed token.
+$attacker = executeStep($installer, $sessionId, ['csrf' => $csrf, 'action' => 'requirements',
+    'owner_activation_secret' => str_repeat('0', 64),
 ]);
-requireOutput($ownerPage, 'إعداد المنصة وحساب المدير');
-requireOutput($ownerPage, 'قاعدة البيانات متصلة وفارغة');
+requireOutput($attacker, 'إثبات ملكية الاستضافة غير صحيح');
+requireOutput($first, 'الملكية');
 
+$phpPage = executeStep($installer, $sessionId, ['csrf' => $csrf, 'action' => 'requirements', 'owner_activation_secret' => $ownerSecret]);
+requireOutput($phpPage, 'PHP Requirements &amp; Extensions');
+requireOutput($phpPage, '15. Finish');
+// Owner activation rotates the PHP session identifier to prevent fixation.
+$sessionFiles = glob($private.'/sess_*');
+if (! is_array($sessionFiles) || count($sessionFiles) !== 1) {
+    throw new RuntimeException('Expected one rotated first-run owner session.');
+}
+$sessionId = substr(basename($sessionFiles[0]), strlen('sess_'));
+if ($sessionId === '') { throw new RuntimeException('Owner activation did not establish a valid session.'); }
+
+$stages = [
+    ['php', [], 'File Permissions &amp; Hosting'],
+    ['permissions', [], 'Domain / HTTPS / APP_URL'],
+    ['domain', ['app_url' => 'https://aiwm.example.test'], 'إعداد قاعدة بيانات MySQL'],
+    ['database', ['db_host' => $host, 'db_name' => $database,
+        'db_user' => $username, 'db_password' => $password], 'Platform / Language / Timezone'],
+    ['platform', ['platform_name' => 'AIWMWeb', 'locale' => 'ar', 'timezone' => 'Asia/Kuwait'], 'Workspace / Tenant'],
+    ['tenant', ['tenant_name' => 'CI Smoke Workspace'], 'Create Super Admin'],
+    ['admin', ['admin_name' => 'CI Owner', 'admin_email' => 'ci-owner@example.test',
+        'admin_password' => 'Only-For-CI-Smoke-1234!',
+        'admin_password_confirmation' => 'Only-For-CI-Smoke-1234!'], 'Secure Environment / APP_KEY'],
+    ['environment', [], 'Storage / Uploads'],
+    ['storage', [], 'Cache / Queue'],
+    ['queue', ['queue_mode' => 'sync'], 'Mail Configuration'],
+    ['mail', [], 'Scheduler / Cron'],
+    ['scheduler', [], 'Migrations / Seeders'],
+];
+foreach ($stages as [$action, $fields, $expected]) {
+    $response = executeStep($installer, $sessionId, ['csrf' => $csrf, 'action' => $action] + $fields);
+    requireOutput($response, $expected);
+}
+// Simulate a second concurrent setup worker holding the migration lease.
+$lease = fopen($private.'/migration-install.lock', 'c');
+if ($lease === false || ! flock($lease, LOCK_EX | LOCK_NB)) {
+    throw new RuntimeException('Cannot acquire simulated installation concurrency lease.');
+}
+try {
+    $blocked = executeStep($installer, $sessionId, ['csrf' => $csrf, 'action' => 'install']);
+    requireOutput($blocked, 'تثبيت آخر قيد التنفيذ');
+} finally {
+    flock($lease, LOCK_UN);
+    fclose($lease);
+}
+// The legitimate owner may finish after the competing worker has exited.
 $finished = executeStep($installer, $sessionId, [
     'csrf' => $csrf, 'action' => 'install',
-    'platform_name' => 'AIWMWeb',
-    'tenant_name' => 'CI Smoke Workspace',
-    'admin_name' => 'CI Owner',
-    'admin_email' => 'ci-owner@example.test',
-    'admin_password' => 'Only-For-CI-Smoke-1234!',
-    'admin_password_confirmation' => 'Only-For-CI-Smoke-1234!',
-    'app_url' => 'https://aiwm.example.test',
 ]);
 requireOutput($finished, 'تم التثبيت بنجاح');
 requireOutput($finished, 'فتح المنصة وتسجيل الدخول');
 
+if (is_file($ownerSecretPath)) {
+    throw new RuntimeException('Owner activation proof was not consumed after installation.');
+}
 if (! is_file($root.'/app/.env') || ! is_file($private.'/installed.lock')) {
     throw new RuntimeException('The installer failed to persist the completed runtime and lock.');
 }
@@ -122,4 +172,4 @@ if ($count < 1) {
     throw new RuntimeException('No tenant membership was created.');
 }
 
-fwrite(STDOUT, "FOUR-STAGE-WIZARD=PASS DATABASE=PASS PLATFORM_OWNER=PASS FIRST_RUN_LOCK=PASS SIGNING_FAIL_CLOSED=PASS\n");
+fwrite(STDOUT, "FIFTEEN_STAGE_WIZARD=PASS INSTALL_LEASE=PASS OWNER_ACTIVATION=PASS ANONYMOUS_TAKEOVER=REJECTED DATABASE=PASS PLATFORM_OWNER=PASS FIRST_RUN_LOCK=PASS SIGNING_FAIL_CLOSED=PASS\n");

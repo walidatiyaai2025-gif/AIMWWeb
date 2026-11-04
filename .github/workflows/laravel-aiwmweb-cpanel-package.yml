@@ -20,6 +20,9 @@ jobs:
   build-cpanel-zip:
     runs-on: ubuntu-latest
     timeout-minutes: 35
+    env:
+      SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      BUILD_VERSION: ${{ github.event_name == 'workflow_dispatch' && format('1.0.{0}', github.run_number) || '0.0.0' }}
     services:
       mysql:
         image: mysql:8.4
@@ -40,6 +43,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Prepare PHP 8.4 and required extensions
         uses: shivammathur/setup-php@v2
@@ -68,8 +72,10 @@ jobs:
         run: |
           mkdir -p artifacts/cpanel
           python3 variants/laravel-aiwmweb/tools/release/build-cpanel-setup.py \
-            --sha "$GITHUB_SHA" \
+            --sha "$SOURCE_SHA" \
+            --version "$BUILD_VERSION" \
             --output artifacts/cpanel/AIWMWeb-Laravel-Setup.zip
+          cp artifacts/cpanel/AIWMWeb-Laravel-Setup.zip "artifacts/cpanel/AIWMWeb-Setup-v${BUILD_VERSION}.zip"
 
       - name: Verify artifact safety and runnable layout
         shell: python
@@ -85,6 +91,7 @@ jobs:
                   "app/.env.example", "public/index.php", "public/.htaccess",
                   "public/build/manifest.json", "public/install.php",
                   "SETUP-MANIFEST.json", "START-HERE.txt",
+                  "BUILD-INFO.json", "RELEASE-NOTES.txt",
               ]
               for path in required:
                   assert path in members, f"Missing required deployable: {path}"
@@ -96,7 +103,11 @@ jobs:
               index = archive.read("public/index.php").decode()
               assert "../app/vendor/autoload.php" in index and "usePublicPath(__DIR__)" in index
               manifest = json.loads(archive.read("SETUP-MANIFEST.json"))
-              assert manifest["source_sha"] == "${{ github.sha }}"
+              assert manifest["source_sha"] == "${{ github.event.pull_request.head.sha || github.sha }}"
+              assert manifest["version"] == "${{ env.BUILD_VERSION }}"
+              build_info = json.loads(archive.read("BUILD-INFO.json"))
+              assert build_info["source_sha"] == manifest["source_sha"]
+              assert build_info["version"] == manifest["version"]
               for path, expected in manifest["files"].items():
                   assert hashlib.sha256(archive.read(path)).hexdigest() == expected, path
               print("Verified one-ZIP cPanel setup from exact SHA", manifest["source_sha"])
@@ -114,6 +125,28 @@ jobs:
           php -l "$root/public/install.php"
           php variants/laravel-aiwmweb/tools/release/smoke-cpanel-wizard.php \
             "$root" "127.0.0.1" "aiwm_wizard_ci" "aiwm_wizard" "$AIWM_CI_MYSQL_PASSWORD"
+
+      - name: Verify CI-only signed update bundle with ephemeral Ed25519 key
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp -d)"
+          trap 'rm -rf "$tmp"' EXIT
+          # The CI test key is random, never provisioned to any deployment and never uploaded.
+          CI_ONLY_SIGN_KEY="$(php -r '$p=sodium_crypto_sign_keypair(); file_put_contents($argv[1], base64_encode(sodium_crypto_sign_publickey($p))); echo base64_encode(sodium_crypto_sign_secretkey($p));' "$tmp/public-key")"
+          AIWM_UPDATES_SECRET_KEY="$CI_ONLY_SIGN_KEY" php variants/laravel-aiwmweb/tools/release/build-signed-update.php "0.0.$GITHUB_RUN_NUMBER" "$SOURCE_SHA" "$tmp"
+          unset CI_ONLY_SIGN_KEY
+          unzip -t "$tmp/AIWMWeb-Laravel-signed-bundle.zip" >/dev/null
+          php -r '
+            $m=file_get_contents($argv[1]."/AIWMWeb-Laravel-release.json");
+            $s=base64_decode(trim(file_get_contents($argv[1]."/AIWMWeb-Laravel-release.sig")), true);
+            $p=base64_decode(file_get_contents($argv[1]."/public-key"), true);
+            $j=json_decode($m, true, flags: JSON_THROW_ON_ERROR);
+            if (!sodium_crypto_sign_verify_detached($s,$m,$p) ||
+                !hash_equals($j["sha256"],hash_file("sha256",$argv[1]."/AIWMWeb-Laravel-update.zip")) ||
+                $j["sha"]!==$argv[2]) { exit(1); }
+            echo "Ephemeral signed bundle verified at exact source SHA, NOT a production release.\\n";
+          ' "$tmp" "$SOURCE_SHA"
 
       - name: Browser-entry HTTP smoke after real full ZIP installation
         shell: bash
@@ -154,7 +187,7 @@ jobs:
           [[ "$GITHUB_REF" == "refs/heads/main" ]] || { echo "ERROR: releases must come from main"; exit 1; }
           [[ -n "${AIWM_UPDATES_SECRET_KEY:-}" ]] || { echo "ERROR: configure AIWM_UPDATES_SECRET_KEY in Actions secrets"; exit 1; }
 
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$GITHUB_SHA&per_page=100"             > /tmp/aiwm-release-gates.json
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$SOURCE_SHA&per_page=100"             > /tmp/aiwm-release-gates.json
           python3 - <<'PY'
           import json
           data = json.load(open("/tmp/aiwm-release-gates.json", encoding="utf-8"))
@@ -170,13 +203,14 @@ jobs:
           PY
 
           php variants/laravel-aiwmweb/tools/release/build-signed-update.php \
-            "1.0.$GITHUB_RUN_NUMBER" "$GITHUB_SHA" artifacts/cpanel
+            "$BUILD_VERSION" "$SOURCE_SHA" artifacts/cpanel
+          cp artifacts/cpanel/AIWMWeb-Laravel-signed-bundle.zip "artifacts/cpanel/AIWMWeb-Update-v${BUILD_VERSION}.zip"
           test -s artifacts/cpanel/AIWMWeb-Laravel-signed-bundle.zip
 
       - name: Upload full Setup ZIP and optional signed update
         uses: actions/upload-artifact@v4
         with:
-          name: AIWMWeb-Laravel-cPanel-${{ github.sha }}
+          name: AIWMWeb-Laravel-cPanel-${{ github.event.pull_request.head.sha || github.sha }}
           path: artifacts/cpanel/
           if-no-files-found: error
           retention-days: 30

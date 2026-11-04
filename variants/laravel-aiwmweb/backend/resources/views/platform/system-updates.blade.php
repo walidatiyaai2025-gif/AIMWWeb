@@ -93,6 +93,20 @@
             'اختر ملف ZIP واحدًا لحزمة AIWMWeb الموقّعة من جهازك. يتحقق السيرفر من التوقيع والبصمات والمسارات قبل التثبيت، ويرفض ملفات ZIP العشوائية.'
         ) }}</p>
         @if($state['enabled'] && $state['configured'])
+            <form method="post" action="{{ route('platform.updates.verify') }}" enctype="multipart/form-data">
+                @csrf
+                <label for="verify_bundle">{{ $t('Verify Package — signed ZIP (no installation)', 'التحقق من الحزمة — ZIP موقّع دون تثبيت') }}</label>
+                <input id="verify_bundle" type="file" name="update_bundle" accept=".zip,application/zip" required style="width:100%;max-width:480px">
+                <button type="submit">{{ $t('Verify Package', 'التحقق من الحزمة') }}</button>
+            </form>
+            @if(session('system_update_verified'))
+                <div class="alert ok" role="status">
+                    {{ $t('Signature and file hashes verified:', 'تم التحقق من التوقيع وبصمات الملفات:') }}
+                    <strong>{{ session('system_update_verified')['version'] }}</strong>
+                    <code>{{ substr(session('system_update_verified')['sha'], 0, 12) }}</code>
+                    ({{ session('system_update_verified')['file_count'] }} {{ $t('files', 'ملف') }})
+                </div>
+            @endif
             <form method="post" action="{{ route('platform.updates.upload') }}" enctype="multipart/form-data">
                 @csrf
                 <label for="update_bundle">{{ $t('Signed update bundle (.zip)', 'حزمة التحديث الموقّعة (.zip)') }}</label>

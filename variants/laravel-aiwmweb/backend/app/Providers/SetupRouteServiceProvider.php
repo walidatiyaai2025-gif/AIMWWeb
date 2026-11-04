@@ -11,11 +11,11 @@ final class SetupRouteServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
-        Route::middleware('web')
+        Route::middleware(['web', 'throttle:10,1'])
             ->get('/setup', SetupReadController::class)
             ->name('canonical.api.setup');
 
-        Route::middleware('web')
+        Route::middleware(['web', 'throttle:5,1'])
             ->post('/setup', SetupMutationController::class)
             ->name('canonical.api.setup.submit');
     }

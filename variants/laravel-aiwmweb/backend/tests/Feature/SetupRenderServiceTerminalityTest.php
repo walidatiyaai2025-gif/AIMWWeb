@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Services\DatabaseSetupPageService;
+use App\Services\SetupOwnerProof;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Route as RoutingRoute;
 use Illuminate\Support\Facades\Route;
@@ -11,6 +12,15 @@ use Tests\TestCase;
 class SetupRenderServiceTerminalityTest extends TestCase
 {
     use RefreshDatabase;
+
+    private function ownerActivation(): string
+    {
+        $file = storage_path('framework/testing/activation-'.bin2hex(random_bytes(8)).'.secret');
+        config()->set('setup.owner_proof_file', $file);
+        app(SetupOwnerProof::class)->ensureIssued();
+
+        return trim((string) file_get_contents($file));
+    }
 
     public function test_canonical_render_page_operation_is_the_setup_rendering_service_contract(): void
     {
@@ -55,13 +65,13 @@ class SetupRenderServiceTerminalityTest extends TestCase
         $html = (string) $response->getContent();
 
         $this->assertSame(200, $response->getStatusCode());
-        $this->assertStringContainsString('Database setup required', $html);
+        $this->assertStringContainsString('Hosting owner activation required', $html);
         $this->assertStringContainsString('Database reachable:</strong> yes', $html);
         $this->assertStringContainsString('Migrations ready:</strong> yes', $html);
         $this->assertStringContainsString('Identity ready:</strong> no', $html);
         $this->assertStringContainsString('method="post"', $html);
         $this->assertStringContainsString('/setup', $html);
-        $this->assertStringContainsString('This form never accepts or persists a database password or connection string.', $html);
+        $this->assertStringContainsString('Database credentials alone do not authorize a new platform owner.', $html);
     }
 
     public function test_page_service_escapes_failure_text_and_never_reads_database_credentials_into_the_page(): void
@@ -96,7 +106,7 @@ class SetupRenderServiceTerminalityTest extends TestCase
 
         $this->get('/tenants/'.$foreignTenant.'/setup')
             ->assertRedirect()
-            ->assertDontSee('Database setup required')
+            ->assertDontSee('Hosting owner activation required')
             ->assertDontSee($foreignTenant);
     }
 
@@ -104,11 +114,12 @@ class SetupRenderServiceTerminalityTest extends TestCase
     {
         $this->get('/setup')
             ->assertOk()
-            ->assertSee('Database setup required');
+            ->assertSee('Hosting owner activation required');
 
         $password = 'correct-horse-battery-staple';
         $this->post('/setup', [
             'tenant_name' => 'Primary Workspace',
+            'owner_activation_secret' => $this->ownerActivation(),
             'admin_name' => 'First Owner',
             'admin_email' => 'owner@example.test',
             'admin_password' => $password,

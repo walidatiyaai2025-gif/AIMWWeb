@@ -93,11 +93,18 @@ def cpanel_index(contents: bytes) -> bytes:
     content = content.replace(marker, marker+"\n$app->usePublicPath(__DIR__);")
     # Opening the domain on a clean installation must enter the wizard
     # automatically, not show a framework starter/500 before setup.
-    entrypoint = """if ((! is_file(__DIR__.'/../app/.env') ||
+    entrypoint = """$setupRequestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+if ((! is_file(__DIR__.'/../app/.env') ||
     is_file(__DIR__.'/../app/storage/app/aiwm-install/fresh-migration-pending.lock')) &&
     is_file(__DIR__.'/install.php')) {
-    header('Location: /install.php', true, 302);
-    exit;
+    if ($setupRequestPath === '/install') {
+        require __DIR__.'/install.php';
+        exit;
+    }
+    if ($setupRequestPath === '/' || $setupRequestPath === '/setup') {
+        header('Location: /install', true, 302);
+        exit;
+    }
 }
 
 """
@@ -106,10 +113,12 @@ def cpanel_index(contents: bytes) -> bytes:
     return content.encode("utf-8")
 
 
-def write_zip(target: Path, commit: str) -> None:
+def write_zip(target: Path, commit: str, version: str) -> None:
     if not re.fullmatch(r"[a-f0-9]{40}", commit):
         raise ValueError("Exact 40-char source commit is required.")
 
+    if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version):
+        raise ValueError("Setup version must be MAJOR.MINOR.PATCH.")
     if not (BACKEND / "vendor/autoload.php").is_file():
         raise FileNotFoundError("Build missing Composer vendor/autoload.php.")
     if not (BACKEND / "public/build/manifest.json").is_file():
@@ -161,27 +170,44 @@ def write_zip(target: Path, commit: str) -> None:
             "product": "LARAVEL_AIWMWEB",
             "channel": "cpanel-full-setup",
             "source_sha": commit,
+            "version": version,
             "file_count": len(metadata),
             "files": metadata,
             "preserves": ["app/.env", "app/storage/**", "app/bootstrap/cache/**", "production database"],
             "document_root": "public/",
-            "first_run": "/install.php",
+            "first_run": "/install",
             "future_updates": "/admin/system-updates",
         }, sort_keys=True, separators=(",", ":")).encode()
         archive.writestr("SETUP-MANIFEST.json", info)
+        archive.writestr("BUILD-INFO.json", json.dumps({
+            "product": "LARAVEL_AIWMWEB", "version": version,
+            "source_sha": commit, "runtime": "Laravel",
+            "php_minimum": "8.3", "database": "MySQL/MariaDB",
+            "deployment": "cPanel app/ and public/ layout",
+            "release_acceptance": "Must pass external signing, fresh install, upgrade and required CI gates",
+        }, sort_keys=True, indent=2).encode("utf-8"))
+        archive.writestr("RELEASE-NOTES.txt", (
+            "AIWMWeb Laravel FOODEX-standard installation candidate\n"
+            f"Version: {version}\nSource: {commit}\n"
+            "15-stage ownership-gated browser setup with tenant/RBAC initialization.\n"
+            "Admin updates require verified signed ZIPs and separately validated backup/recovery.\n"
+            "A successful ZIP build by itself is NOT a production release approval.\n"
+        ).encode("utf-8"))
 
         readme = (
             "AIWMWeb Laravel — cPanel FULL CLEAN INSTALL\n"
             f"SOURCE_SHA={commit}\n"
+            f"VERSION={version}\n"
             "Setup ZIP includes production Laravel vendor and built frontend.\n"
             "For a BRAND-NEW installation use an EMPTY MySQL database and a\n"
             "CLEAN folder; never overwrite existing production .env or data.\n"
             "1. Extract this ZIP in the new folder, creating app/ and public/.\n"
             "2. In cPanel Domains point document root to this folder's public/.\n"
             "3. In cPanel MySQL Databases create one empty database and user.\n"
-            "4. Open https://your-domain/install.php over HTTPS.\n"
-            "5. Click NEXT after server checks, enter MySQL credentials and\n"
-            "   click NEXT, then enter platform/workspace/owner and INSTALL.\n"
+            "4. Open https://your-domain/install over HTTPS (legacy /install.php supported).\n"
+            "5. Complete 15 stages: ownership, PHP, permissions, domain, MySQL,\n"
+            "   platform, workspace, admin, env, storage, queue, mail, Cron,\n"
+            "   migrations and health check.\n"
             "6. The wizard runs all migrations, creates the first tenant Owner\n"
             "   AND platform administrator, validates database/frontend,\n"
             "   closes the installer and offers the login page.\n"
@@ -207,10 +233,11 @@ def write_zip(target: Path, commit: str) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--sha", required=True)
+    parser.add_argument("--version", default="0.0.0")
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
     try:
-        write_zip(Path(args.output).resolve(), args.sha)
+        write_zip(Path(args.output).resolve(), args.sha, args.version)
         return 0
     except Exception as exc:
         print(f"SETUP BUILD FAIL CLOSED: {exc}", file=sys.stderr)
