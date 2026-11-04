@@ -124,6 +124,14 @@ final class VerifiedMysqlBackupService
                 if (is_array($definition) === false || isset($definition['Create Table']) === false || is_array($columns) === false) {
                     throw new RuntimeException('Cannot read consistent schema metadata.');
                 }
+                // Generated columns cannot be explicitly inserted during an isolated
+                // restore. Fail before declaring this snapshot verified, rather than
+                // creating an apparently valid backup that cannot be recovered.
+                foreach ($columns as $column) {
+                    if (preg_match('/\\b(?:VIRTUAL|STORED|PERSISTENT)\\s+GENERATED\\b/i', (string) ($column['Extra'] ?? '')) === 1) {
+                        throw new RuntimeException('Generated columns cannot be safely restored by this MySQL snapshot format; signed ZIP update blocked.');
+                    }
+                }
                 $tables[] = [
                     'name' => $name,
                     'ddl' => (string) $definition['Create Table'],

@@ -80,6 +80,29 @@ final class VerifiedMysqlBackupServiceTest extends TestCase
         }
     }
 
+    public function test_generated_columns_block_snapshot_before_an_unrestorable_backup_is_accepted(): void
+    {
+        if (DB::connection()->getDriverName() !== 'mysql') {
+            $this->markTestSkipped('A disposable MySQL service is required for generated-column safety acceptance.');
+        }
+
+        Artisan::call('migrate', ['--force' => true]);
+        $table = 'aiwm_snapshot_gen_'.bin2hex(random_bytes(5));
+        DB::statement('CREATE TABLE '.$this->identifier($table).' ('
+            .'`id` BIGINT UNSIGNED NOT NULL PRIMARY KEY, '
+            .'`source` INT NOT NULL, '
+            .'`computed` INT GENERATED ALWAYS AS (`source` + 1) STORED'
+            .') ENGINE=InnoDB');
+
+        try {
+            $this->expectException(RuntimeException::class);
+            $this->expectExceptionMessage('Generated columns cannot be safely restored');
+            app(VerifiedMysqlBackupService::class)->backupNow(1);
+        } finally {
+            DB::statement('DROP TABLE IF EXISTS '.$this->identifier($table));
+        }
+    }
+
     private function identifier(string $name): string
     {
         return '`'.str_replace('`', '``', $name).'`';
