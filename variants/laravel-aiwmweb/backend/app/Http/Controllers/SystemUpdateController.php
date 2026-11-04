@@ -54,6 +54,27 @@ final class SystemUpdateController extends Controller
         }
     }
 
+    /** Verify a signed ZIP without applying any changes to the installation. */
+    public function verify(Request $request, SystemUpdateService $updates): RedirectResponse
+    {
+        $request->validate([
+            'update_bundle' => ['required', 'file', 'mimes:zip', 'max:163840'],
+        ]);
+
+        try {
+            $verified = $updates->verifyUpload($request->file('update_bundle'));
+            $request->session()->flash('system_update_verified', $verified);
+
+            return back()->with('status', 'Signed ZIP verified without installation. Select the bundle again to install.');
+        } catch (Throwable $e) {
+            report($e);
+
+            return back()->withErrors([
+                'update' => $e instanceof RuntimeException ? $e->getMessage() : 'Package verification failed.',
+            ]);
+        }
+    }
+
     /**
      * Accepts exactly one signed transport bundle, not arbitrary uploaded PHP.
      * The signing key is never disclosed to or supplied by the browser.
