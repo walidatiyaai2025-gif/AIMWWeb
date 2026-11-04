@@ -103,6 +103,20 @@ file_put_contents($private.'/fresh-migration-pending.lock', json_encode([
     'version' => 1, 'url' => 'https://aiwm.example.test',
     'database' => ['host' => $host, 'port' => '3306', 'name' => $database, 'user' => $username],
 ], JSON_THROW_ON_ERROR)."\n");
+// Missing original challenge must NOT silently mint a replacement after .env
+// has been written, even if an interrupted-setup marker exists.
+if (! rename($ownerSecretPath, $ownerSecretPath.'.held')) {
+    throw new RuntimeException('Cannot stage owner-proof loss test.');
+}
+try {
+    $lostProof = executeStep($installer, $sessionId);
+    requireOutput($lostProof, 'الموقع مثبت بالفعل');
+    if (is_file($ownerSecretPath)) {
+        throw new RuntimeException('An interrupted setup regenerated its consumed owner proof.');
+    }
+} finally {
+    rename($ownerSecretPath.'.held', $ownerSecretPath);
+}
 // Simulate browser cookie loss after .env was committed, but before migrations
 // or identity creation: the new session must reprove the original owner token.
 @unlink($private.'/sess_'.$sessionId);
