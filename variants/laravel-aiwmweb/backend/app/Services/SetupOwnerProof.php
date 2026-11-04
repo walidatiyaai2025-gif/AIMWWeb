@@ -22,6 +22,7 @@ final class SetupOwnerProof
     {
         $path = $this->path();
         $directory = dirname($path);
+
         if (is_dir($directory) === false && mkdir($directory, 0700, true) === false && is_dir($directory) === false) {
             throw new RuntimeException('Private setup storage is unavailable.');
         }
@@ -36,10 +37,12 @@ final class SetupOwnerProof
 
         // Atomic creation ensures that anonymous page views cannot rotate the owner's proof.
         $handle = @fopen($path, 'x');
+
         if ($handle === false) {
             if (is_file($path) && is_link($path) === false) {
                 return;
             }
+
             throw new RuntimeException('Could not create owner activation challenge.');
         }
 
@@ -56,6 +59,7 @@ final class SetupOwnerProof
     {
         $path = $this->path();
         $submitted = $request->input('owner_activation_secret');
+
         if (is_string($submitted) === false || preg_match('/^[a-f0-9]{64}$/D', $submitted) !== 1) {
             return false;
         }
@@ -65,12 +69,14 @@ final class SetupOwnerProof
         }
 
         $expected = @file_get_contents($path);
+
         return is_string($expected) && hash_equals(trim($expected), $submitted);
     }
 
     public function consume(): void
     {
         $path = $this->path();
+
         if (is_file($path) && is_link($path) === false) {
             @unlink($path);
         }
@@ -79,11 +85,13 @@ final class SetupOwnerProof
     public function withLock(callable $action): mixed
     {
         $lock = $this->path().'.lock';
+
         if (is_link($lock)) {
             throw new RuntimeException('Unsafe setup lock.');
         }
 
         $handle = @fopen($lock, 'c');
+
         if ($handle === false) {
             throw new RuntimeException('Setup lock is unavailable.');
         }
@@ -92,6 +100,7 @@ final class SetupOwnerProof
             if (flock($handle, LOCK_EX | LOCK_NB) === false) {
                 throw new RuntimeException('Another setup operation is in progress.');
             }
+
             return $action();
         } finally {
             flock($handle, LOCK_UN);
