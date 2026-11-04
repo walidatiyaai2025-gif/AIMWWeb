@@ -131,7 +131,7 @@ final class SystemUpdateCenterTest extends TestCase
     {
         $service = new SystemUpdateService;
         $method = new \ReflectionMethod($service, 'validatePath');
-        foreach (['../.env', 'storage/logs/app.log', 'app/../../.env', 'public/index.php', 'public/.htaccess', 'app/.env', 'app\\x.php', 'database/migrations/new.php'] as $path) {
+        foreach (['../.env', 'storage/logs/app.log', 'app/../../.env', 'public/index.php', 'public/.htaccess', 'public/downloads/other.zip', 'public/downloads/aimw-connector.zip/evil.php', 'app/.env', 'app\\x.php', 'database/migrations/new.php'] as $path) {
             try {
                 $method->invoke($service, $path);
                 $this->fail('Unsafe update path accepted: '.$path);
@@ -139,7 +139,7 @@ final class SystemUpdateCenterTest extends TestCase
                 // Expected rejection.
             }
         }
-        foreach (['app/Http/Controllers/Safe.php', 'public/build/assets/app.js', 'vendor/composer/installed.json', 'vendor/symfony/http-foundation/Session/Storage/Handler/AbstractSessionHandler.php'] as $path) {
+        foreach (['app/Http/Controllers/Safe.php', 'public/build/assets/app.js', 'public/downloads/aimw-connector.zip', 'vendor/composer/installed.json', 'vendor/symfony/http-foundation/Session/Storage/Handler/AbstractSessionHandler.php'] as $path) {
             $method->invoke($service, $path);
             $this->assertTrue(true);
         }
