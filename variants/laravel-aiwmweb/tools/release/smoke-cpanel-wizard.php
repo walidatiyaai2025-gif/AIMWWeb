@@ -87,6 +87,16 @@ requireOutput($first, 'فحص السيرفر');
 
 $databasePage = executeStep($installer, $sessionId, ['csrf' => $csrf, 'action' => 'requirements', 'owner_activation_secret' => $ownerSecret]);
 requireOutput($databasePage, 'إعداد قاعدة بيانات MySQL');
+// Owner activation rotates the PHP session identifier to prevent fixation.
+// The CLI harness must follow the new cookie, just as a real browser does.
+$sessionFiles = glob($private.'/sess_*');
+if (! is_array($sessionFiles) || count($sessionFiles) !== 1) {
+    throw new RuntimeException('Expected one rotated first-run owner session.');
+}
+$sessionId = substr(basename($sessionFiles[0]), strlen('sess_'));
+if ($sessionId === '') {
+    throw new RuntimeException('Owner activation did not establish a valid session.');
+}
 $ownerPage = executeStep($installer, $sessionId, [
     'csrf' => $csrf, 'action' => 'database',
     'db_host' => $host, 'db_name' => $database,
