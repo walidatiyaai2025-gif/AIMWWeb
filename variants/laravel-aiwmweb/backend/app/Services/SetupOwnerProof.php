@@ -71,7 +71,7 @@ final class SetupOwnerProof
     public function consume(): void
     {
         $path = $this->path();
-        if (is_file($path) && ! is_link($path)) {
+        if (is_file($path) && is_link($path) === false) {
             @unlink($path);
         }
     }
