@@ -186,7 +186,7 @@ def write_zip(target: Path, commit: str) -> None:
             "1. Extract this ZIP in the new folder, creating app/ and public/.\n"
             "2. In cPanel Domains point document root to this folder's public/.\n"
             "3. In cPanel MySQL Databases create one empty database and user.\n"
-            "4. Open https://your-domain/install.php over HTTPS.\n"
+            "4. Open https://your-domain/install over HTTPS (legacy /install.php supported).\n"
             "5. Click NEXT after server checks, enter MySQL credentials and\n"
             "   click NEXT, then enter platform/workspace/owner and INSTALL.\n"
             "6. The wizard runs all migrations, creates the first tenant Owner\n"
