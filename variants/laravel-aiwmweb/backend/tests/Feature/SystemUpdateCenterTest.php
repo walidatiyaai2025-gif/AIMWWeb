@@ -308,7 +308,7 @@ final class SystemUpdateCenterTest extends TestCase
             $this->assertTrue(symlink($outside, $parent));
 
             try {
-                (new \\ReflectionMethod(SystemUpdateService::class, 'applyStagedFile'))
+                (new \ReflectionMethod(SystemUpdateService::class, 'applyStagedFile'))
                     ->invoke(app(SystemUpdateService::class), $filename, $source, hash('sha256', 'signed-new-file'), 'probe');
                 $this->fail('Applying a staged update followed a swapped parent symlink.');
             } catch (RuntimeException $e) {
@@ -344,7 +344,7 @@ final class SystemUpdateCenterTest extends TestCase
             $this->assertTrue(symlink($outside, $temp));
 
             try {
-                (new \\ReflectionMethod(SystemUpdateService::class, 'applyStagedFile'))
+                (new \ReflectionMethod(SystemUpdateService::class, 'applyStagedFile'))
                     ->invoke(app(SystemUpdateService::class), $filename, $source, hash('sha256', 'signed-update'), $id);
                 $this->fail('A planted update temp symlink was followed.');
             } catch (RuntimeException $e) {
