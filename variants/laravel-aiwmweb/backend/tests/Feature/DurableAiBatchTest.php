@@ -257,13 +257,19 @@ class DurableAiBatchTest extends TestCase
         $this->assertSame(1, DB::table('durable_ai_gate')->count());
     }
 
-    public function test_legacy_setup_route_redirects_safely_without_exposing_owner_bootstrap(): void
+    public function test_legacy_setup_alias_redirects_without_creating_users_or_tenants(): void
     {
-        // The FOODEX installer intentionally retains a safe legacy alias:
-        // a guest GET redirects rather than exposing a first-admin mutation.
+        // The FOODEX installer intentionally retains a safe legacy alias.
+        // Both methods redirect to the guarded installer; neither can bypass
+        // hosting-owner proof to mutate the production identity registry.
+        $usersBefore = DB::table('users')->count();
+        $tenantsBefore = DB::table('tenants')->count();
+
         $this->get('https://localhost/setup')->assertRedirect();
-        // The legacy alias is not a POST bootstrap endpoint.
-        $this->post('https://localhost/setup')->assertNotFound();
+        $this->post('https://localhost/setup')->assertRedirect();
+
+        $this->assertSame($usersBefore, DB::table('users')->count());
+        $this->assertSame($tenantsBefore, DB::table('tenants')->count());
     }
 
     public function test_php83_job_round_trip_preserves_readonly_tenant_provenance(): void
