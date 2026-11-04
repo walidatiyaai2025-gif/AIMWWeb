@@ -102,7 +102,7 @@ requireOutput($protected, 'الموقع مثبت بالفعل');
 file_put_contents($private.'/fresh-migration-pending.lock', json_encode([
     'version' => 1, 'url' => 'https://aiwm.example.test',
     'database' => ['host' => $host, 'port' => '3306', 'name' => $database, 'user' => $username],
-], JSON_THROW_ON_ERROR)."\\n");
+], JSON_THROW_ON_ERROR)."\n");
 // Simulate browser cookie loss after .env was committed, but before migrations
 // or identity creation: the new session must reprove the original owner token.
 @unlink($private.'/sess_'.$sessionId);
