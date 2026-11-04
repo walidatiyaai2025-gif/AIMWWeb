@@ -214,11 +214,22 @@ def write_zip(target: Path, commit: str, version: str) -> None:
             if total > MAX_TOTAL:
                 raise ValueError("Uncompressed setup exceeds maximum total size.")
             metadata[archive_name] = digest(data)
-            archive.writestr(archive_name, data)
+            # ZIP writestr() defaults to mode 0600; that caused 403s for public
+            # JS/CSS on cPanel where the web-server user differs from the
+            # extracting account. Explicitly deliver public app assets as 0644.
+            info = zipfile.ZipInfo(archive_name)
+            info.create_system = 3
+            info.external_attr = (stat.S_IFREG | 0o644) << 16
+            info.compress_type = zipfile.ZIP_DEFLATED
+            archive.writestr(info, data, compress_type=zipfile.ZIP_DEFLATED, compresslevel=6)
 
         for directory in SKELETON:
             safe_name(directory)
-            archive.writestr(directory, b"")
+            info = zipfile.ZipInfo(directory)
+            info.create_system = 3
+            info.external_attr = (stat.S_IFDIR | 0o755) << 16
+            info.compress_type = zipfile.ZIP_STORED
+            archive.writestr(info, b"")
 
         # The archive manifest describes the exact source, not a fabricated release number.
         info = json.dumps({
