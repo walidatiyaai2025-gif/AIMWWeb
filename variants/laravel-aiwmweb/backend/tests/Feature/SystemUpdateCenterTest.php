@@ -24,6 +24,7 @@ final class SystemUpdateCenterTest extends TestCase
             ['POST', '/admin/system-updates/check'],
             ['POST', '/admin/system-updates/install'],
             ['POST', '/admin/system-updates/upload'],
+            ['POST', '/admin/system-updates/verify'],
         ] as [$method, $path]) {
             $route = Route::getRoutes()->match(Request::create($path, $method));
             $this->assertContains('web', $route->gatherMiddleware());
@@ -39,12 +40,14 @@ final class SystemUpdateCenterTest extends TestCase
         $this->post('/admin/system-updates/check')->assertRedirect('/login');
         $this->post('/admin/system-updates/install', ['confirmation' => 'INSTALL'])->assertRedirect('/login');
         $this->post('/admin/system-updates/upload', ['confirmation' => 'INSTALL'])->assertRedirect('/login');
+        $this->post('/admin/system-updates/verify')->assertRedirect('/login');
 
         $user = User::factory()->create(['platform_admin' => false]);
         $this->actingAs($user)->get('/admin/system-updates')->assertForbidden();
         $this->actingAs($user)->post('/admin/system-updates/check')->assertForbidden();
         $this->actingAs($user)->post('/admin/system-updates/install', ['confirmation' => 'INSTALL'])->assertForbidden();
         $this->actingAs($user)->post('/admin/system-updates/upload', ['confirmation' => 'INSTALL'])->assertForbidden();
+        $this->actingAs($user)->post('/admin/system-updates/verify')->assertForbidden();
     }
 
     public function test_update_page_honestly_disables_installation_without_signing_configuration(): void
@@ -160,6 +163,11 @@ final class SystemUpdateCenterTest extends TestCase
                     new UploadedFile($bundlePath, 'signed-bundle.zip', 'application/zip', null, true),
                     $staged,
                 );
+            $preview = app(SystemUpdateService::class)->verifyUpload(
+                new UploadedFile($bundlePath, 'signed-bundle.zip', 'application/zip', null, true),
+            );
+            $this->assertSame('9.9.9', $preview['version']);
+            $this->assertSame(1, $preview['file_count']);
             $this->assertSame('9.9.9', $verified['version']);
             $this->assertSame(str_repeat('a', 40), $verified['sha']);
             $this->assertTrue($verified['available']);
@@ -195,6 +203,10 @@ final class SystemUpdateCenterTest extends TestCase
         $this->actingAs($admin)->post('/admin/system-updates/upload', [
             'update_bundle' => UploadedFile::fake()->createWithContent('unsafe.txt', 'not signed'),
         ])->assertSessionHasErrors('confirmation');
+
+        $this->actingAs($admin)->post('/admin/system-updates/verify', [
+            'update_bundle' => UploadedFile::fake()->createWithContent('unsafe.txt', 'not signed'),
+        ])->assertSessionHasErrors('update_bundle');
 
         $this->actingAs($admin)->post('/admin/system-updates/upload', [
             'confirmation' => 'INSTALL',
