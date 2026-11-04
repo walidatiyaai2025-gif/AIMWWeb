@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Http\Controllers\SetupMutationController;
 use App\Models\Tenant;
+use App\Services\DatabaseSetupMutationService;
 use App\Models\TenantMembership;
 use App\Models\User;
 use App\Services\SetupOwnerProof;
@@ -12,6 +13,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
+use RuntimeException;
 use Tests\TestCase;
 
 class SetupMutationTerminalityTest extends TestCase
@@ -138,14 +140,14 @@ class SetupMutationTerminalityTest extends TestCase
         DB::table('migrations')->where('migration', $migration)->delete();
 
         try {
-            app(\App\Services\DatabaseSetupMutationService::class)->apply([
+            app(DatabaseSetupMutationService::class)->apply([
                 'tenant_name' => 'Overwrite Attempt',
                 'admin_name' => 'Attacker',
                 'admin_email' => 'attacker@example.test',
                 'admin_password' => 'correct-horse-battery-staple',
             ]);
             $this->fail('First-run setup accepted an existing user.');
-        } catch (\RuntimeException $e) {
+        } catch (RuntimeException $e) {
             $this->assertStringContainsString('Existing identity state', $e->getMessage());
         }
 
@@ -163,14 +165,14 @@ class SetupMutationTerminalityTest extends TestCase
         DB::table('migrations')->where('migration', $migration)->delete();
 
         try {
-            app(\App\Services\DatabaseSetupMutationService::class)->apply([
+            app(DatabaseSetupMutationService::class)->apply([
                 'tenant_name' => 'Second Owner',
                 'admin_name' => 'Attacker',
                 'admin_email' => 'attacker@example.test',
                 'admin_password' => 'correct-horse-battery-staple',
             ]);
             $this->fail('First-run setup accepted an existing tenant.');
-        } catch (\RuntimeException $e) {
+        } catch (RuntimeException $e) {
             $this->assertStringContainsString('Existing identity state', $e->getMessage());
         }
 
