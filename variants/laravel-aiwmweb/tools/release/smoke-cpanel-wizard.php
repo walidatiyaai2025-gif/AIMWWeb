@@ -86,7 +86,7 @@ requireOutput($attacker, 'إثبات ملكية الاستضافة غير صحي
 requireOutput($first, 'الملكية');
 
 $phpPage = executeStep($installer, $sessionId, ['csrf' => $csrf, 'action' => 'requirements', 'owner_activation_secret' => $ownerSecret]);
-requireOutput($phpPage, 'PHP Requirements & Extensions');
+requireOutput($phpPage, 'PHP Requirements &amp; Extensions');
 requireOutput($phpPage, '15. Finish');
 // Owner activation rotates the PHP session identifier to prevent fixation.
 $sessionFiles = glob($private.'/sess_*');
@@ -97,7 +97,7 @@ $sessionId = substr(basename($sessionFiles[0]), strlen('sess_'));
 if ($sessionId === '') { throw new RuntimeException('Owner activation did not establish a valid session.'); }
 
 $stages = [
-    ['php', [], 'File Permissions & Hosting'],
+    ['php', [], 'File Permissions &amp; Hosting'],
     ['permissions', [], 'Domain / HTTPS / APP_URL'],
     ['domain', ['app_url' => 'https://aiwm.example.test'], 'إعداد قاعدة بيانات MySQL'],
     ['database', ['db_host' => $host, 'db_name' => $database,
