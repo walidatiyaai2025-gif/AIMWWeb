@@ -93,11 +93,18 @@ def cpanel_index(contents: bytes) -> bytes:
     content = content.replace(marker, marker+"\n$app->usePublicPath(__DIR__);")
     # Opening the domain on a clean installation must enter the wizard
     # automatically, not show a framework starter/500 before setup.
-    entrypoint = """if ((! is_file(__DIR__.'/../app/.env') ||
+    entrypoint = """$setupRequestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+if ((! is_file(__DIR__.'/../app/.env') ||
     is_file(__DIR__.'/../app/storage/app/aiwm-install/fresh-migration-pending.lock')) &&
     is_file(__DIR__.'/install.php')) {
-    header('Location: /install.php', true, 302);
-    exit;
+    if ($setupRequestPath === '/install') {
+        require __DIR__.'/install.php';
+        exit;
+    }
+    if ($setupRequestPath === '/' || $setupRequestPath === '/setup') {
+        header('Location: /install', true, 302);
+        exit;
+    }
 }
 
 """
@@ -165,7 +172,7 @@ def write_zip(target: Path, commit: str) -> None:
             "files": metadata,
             "preserves": ["app/.env", "app/storage/**", "app/bootstrap/cache/**", "production database"],
             "document_root": "public/",
-            "first_run": "/install.php",
+            "first_run": "/install",
             "future_updates": "/admin/system-updates",
         }, sort_keys=True, separators=(",", ":")).encode()
         archive.writestr("SETUP-MANIFEST.json", info)
