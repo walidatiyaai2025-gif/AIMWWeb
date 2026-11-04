@@ -150,7 +150,7 @@ final class VerifiedMysqlBackupService
         [$folder, $receipt] = $this->receipt($id);
         $path = $folder.'/snapshot.enc';
 
-        if (is_file($path) === false || hash_equals((string) $receipt['sha256'], (string) hash_file('sha256', $path))) {
+        if (is_file($path) === false || hash_equals((string) $receipt['sha256'], (string) hash_file('sha256', $path)) === false) {
             throw new RuntimeException('Database backup checksum verification failed.');
         }
 
