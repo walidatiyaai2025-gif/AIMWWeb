@@ -212,10 +212,14 @@ final class SystemUpdateService
                 ] : null,
             ];
 
+            $maintenanceActive = false;
+            $recoveryVerified = true;
+
             try {
                 if (Artisan::call('down', ['--retry' => 30]) !== 0) {
                     throw new RuntimeException('Could not enter maintenance mode.');
                 }
+                $maintenanceActive = true;
 
                 foreach ($files as $name => $hash) {
                     $target = $this->targetPath($name);
@@ -234,11 +238,25 @@ final class SystemUpdateService
                 }
                 $this->atomicJson($this->dataPath('installed.json'), $receipt);
             } catch (Throwable $e) {
-                $this->restoreBackup($backup);
+                try {
+                    $this->restoreBackup($backup);
+                } catch (Throwable $restoreFailure) {
+                    // Never serve a potentially mixed-version application after a
+                    // failed rollback. Preserve maintenance mode for manual recovery.
+                    $recoveryVerified = false;
+
+                    throw new RuntimeException(
+                        'Update rollback could not be verified; maintenance mode remains enabled. Manual recovery is required.',
+                        0,
+                        $restoreFailure,
+                    );
+                }
 
                 throw $e;
             } finally {
-                Artisan::call('up');
+                if ($maintenanceActive && $recoveryVerified && Artisan::call('up') !== 0) {
+                    throw new RuntimeException('Could not exit maintenance mode; manual recovery is required.');
+                }
             }
             $this->history(['status' => 'installed'] + $receipt);
 
