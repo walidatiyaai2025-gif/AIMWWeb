@@ -3,8 +3,8 @@
 /**
  * AIWMWeb fresh-install wizard for a cPanel ZIP package.
  *
- * Fresh database credentials are proof of ownership of the fresh database.
- * No publicly embedded installation token or signing secret is shipped.
+ * Fresh database credentials are NOT proof of hosting ownership.
+ * A private random owner activation secret must be read via cPanel File Manager.
  * Existing installations are never taken over or reset.
  */
 declare(strict_types=1);
@@ -21,6 +21,7 @@ $stateDir = $appRoot.'/storage/app/aiwm-install';
 $envPath = $appRoot.'/.env';
 $lockPath = $stateDir.'/installed.lock';
 $pendingPath = $stateDir.'/fresh-migration-pending.lock';
+$ownerPath = $stateDir.'/owner-activation.secret';
 
 function aiwmEscape(string $value): string
 {
@@ -149,6 +150,19 @@ try {
         aiwmFailure('Cannot create private installer directory.');
     }
 
+    if (is_link($stateDir) || is_link($ownerPath)) {
+        aiwmFailure('Unsafe owner activation path.');
+    }
+    // Created once, atomically, outside the public document root.
+    if (! is_file($ownerPath) && ! is_file($lockPath)) {
+        $ownerHandle = @fopen($ownerPath, 'x');
+        if ($ownerHandle !== false) {
+            chmod($ownerPath, 0600);
+            fwrite($ownerHandle, bin2hex(random_bytes(32)));
+            fclose($ownerHandle);
+        }
+    }
+
     // No upgrade/takeover through an anonymous first-run web installer.
     if (is_file($lockPath)) {
         http_response_code(410);
@@ -192,8 +206,18 @@ try {
         }
 
         if ($action === 'requirements') {
+            $submittedProof = (string) ($_POST['owner_activation_secret'] ?? '');
+            $expectedProof = is_file($ownerPath) && ! is_link($ownerPath)
+                ? @file_get_contents($ownerPath) : false;
+            if (! is_string($expectedProof) || ! preg_match('/^[a-f0-9]{64}$/D', $submittedProof)
+                || ! hash_equals(trim($expectedProof), $submittedProof)) {
+                aiwmFailure('إثبات ملكية الاستضافة غير صحيح. اقرأ ملف التفعيل الخاص من cPanel File Manager.');
+            }
+            session_regenerate_id(true);
+            $_SESSION['aiwm_owner_verified'] = true;
             $_SESSION['aiwm_step'] = 'database';
         } elseif ($action === 'database') {
+            if (empty($_SESSION['aiwm_owner_verified'])) { aiwmFailure('يجب إثبات ملكية الاستضافة أولًا.'); }
             $db = [
                 'host' => trim((string) ($_POST['db_host'] ?? '')),
                 'name' => trim((string) ($_POST['db_name'] ?? '')),
@@ -220,6 +244,7 @@ try {
             $_SESSION['aiwm_db'] = $db;
             $_SESSION['aiwm_step'] = 'owner';
         } elseif ($action === 'install') {
+            if (empty($_SESSION['aiwm_owner_verified'])) { aiwmFailure('يجب إثبات ملكية الاستضافة أولًا.'); }
             if (($_SESSION['aiwm_step'] ?? '') !== 'owner' || ! isset($_SESSION['aiwm_db'])) {
                 aiwmFailure('أكمل فحص قاعدة البيانات أولًا.');
             }
@@ -317,9 +342,10 @@ try {
             $console->call('view:cache');
             $console->call('optimize:clear');
             aiwmSave($lockPath, gmdate('c')."\n");
+            @unlink($ownerPath);
             @unlink($pendingPath);
 
-            unset($_SESSION['aiwm_db'], $_SESSION['aiwm_authorized']);
+            unset($_SESSION['aiwm_db'], $_SESSION['aiwm_authorized'], $_SESSION['aiwm_owner_verified']);
             $_SESSION['aiwm_step'] = 'complete';
             // The installer file may be owned by a deployment process and
             // therefore not removable. installed.lock keeps it closed.
@@ -340,7 +366,8 @@ try {
     if ($stage === 'requirements') {
         $body = $formNotice.'<p class="pass">PHP والمتطلبات وملفات الواجهة وصلاحيات الكتابة: جاهزة.</p>'
             .'<p>تأكد من أن Document Root للدومين يشير إلى مجلد <code>public</code> وأنك أنشأت قاعدة MySQL فارغة في cPanel.</p>'
-            .aiwmForm('requirements', '', 'التالي: قاعدة البيانات');
+            .'<p class="warn">لإثبات ملكية الاستضافة افتح cPanel File Manager واقرأ الملف الخاص <code>app/storage/app/aiwm-install/owner-activation.secret</code>. لا ترسل هذا الرمز لأي شخص.</p>'
+            .aiwmForm('requirements', '<label>رمز تفعيل مالك الاستضافة</label><input type="password" name="owner_activation_secret" minlength="64" maxlength="64" required autocomplete="off">', 'تحقق من الملكية ثم التالي');
         aiwmPage('مرحبًا بك في معالج AIWMWeb', 0, $body);
     }
 
