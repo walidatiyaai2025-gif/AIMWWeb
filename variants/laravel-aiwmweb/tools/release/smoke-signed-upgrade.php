@@ -140,6 +140,22 @@ try {
 
     $upload = new UploadedFile($transport, 'AIWMWeb-Update-v99.99.99.zip', 'application/zip', null, true);
     $preview = $service->verifyUpload($upload);
+
+    // Failure injection against the REAL MySQL upgrade: a database view cannot
+    // be covered by the InnoDB snapshot contract. Reject before any mutation.
+    $unsupportedView = 'aiwm_ci_unsupported_backup_view';
+    DB::statement('CREATE VIEW '.$unsupportedView.' AS SELECT 1 AS id');
+    try {
+        try {
+            $service->install(1, $upload);
+            throw new RuntimeException('UNSAFE UPDATE ACCEPTED WITH UNSUPPORTED DATABASE VIEW');
+        } catch (RuntimeException $e) {
+            $assert(str_contains($e->getMessage(), 'Non-InnoDB tables or views'), 'Unsupported MySQL schema rejection');
+        }
+        $assert(! is_file($probePath), 'Rejected schema modified code files');
+    } finally {
+        DB::statement('DROP VIEW IF EXISTS '.$unsupportedView);
+    }
     $assert($preview['file_count'] === 1 && $preview['version'] === '99.99.99', 'Signed bundle verification');
     $assert(! is_file($probePath), 'Dry-run verification mutated application');
 
