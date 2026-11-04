@@ -22,6 +22,7 @@ jobs:
     timeout-minutes: 35
     env:
       SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      BUILD_VERSION: ${{ github.event_name == 'workflow_dispatch' && format('1.0.{0}', github.run_number) || '0.0.0' }}
     services:
       mysql:
         image: mysql:8.4
@@ -73,6 +74,7 @@ jobs:
           python3 variants/laravel-aiwmweb/tools/release/build-cpanel-setup.py \
             --sha "$SOURCE_SHA" \
             --output artifacts/cpanel/AIWMWeb-Laravel-Setup.zip
+          cp artifacts/cpanel/AIWMWeb-Laravel-Setup.zip "artifacts/cpanel/AIWMWeb-Setup-v${BUILD_VERSION}.zip"
 
       - name: Verify artifact safety and runnable layout
         shell: python
@@ -100,6 +102,7 @@ jobs:
               assert "../app/vendor/autoload.php" in index and "usePublicPath(__DIR__)" in index
               manifest = json.loads(archive.read("SETUP-MANIFEST.json"))
               assert manifest["source_sha"] == "${{ github.event.pull_request.head.sha || github.sha }}"
+              assert manifest["version"] == "${{ env.BUILD_VERSION }}"
               for path, expected in manifest["files"].items():
                   assert hashlib.sha256(archive.read(path)).hexdigest() == expected, path
               print("Verified one-ZIP cPanel setup from exact SHA", manifest["source_sha"])
@@ -195,7 +198,8 @@ jobs:
           PY
 
           php variants/laravel-aiwmweb/tools/release/build-signed-update.php \
-            "1.0.$GITHUB_RUN_NUMBER" "$SOURCE_SHA" artifacts/cpanel
+            "$BUILD_VERSION" "$SOURCE_SHA" artifacts/cpanel
+          cp artifacts/cpanel/AIWMWeb-Laravel-signed-bundle.zip "artifacts/cpanel/AIWMWeb-Update-v${BUILD_VERSION}.zip"
           test -s artifacts/cpanel/AIWMWeb-Laravel-signed-bundle.zip
 
       - name: Upload full Setup ZIP and optional signed update
