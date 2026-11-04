@@ -103,7 +103,7 @@ $stages = [
     ['php', [], 'File Permissions &amp; Hosting'],
     ['permissions', [], 'Domain / HTTPS / APP_URL'],
     ['domain', ['app_url' => 'https://aiwm.example.test'], 'إعداد قاعدة بيانات MySQL'],
-    ['database', ['db_host' => $host, 'db_name' => $database,
+    ['database', ['db_host' => $host, 'db_port' => '3306', 'db_name' => $database,
         'db_user' => $username, 'db_password' => $password], 'Platform / Language / Timezone'],
     ['platform', ['platform_name' => 'AIWMWeb', 'locale' => 'ar', 'timezone' => 'Asia/Kuwait'], 'Workspace / Tenant'],
     ['tenant', ['tenant_name' => 'CI Smoke Workspace'], 'Create Super Admin'],
@@ -117,6 +117,15 @@ $stages = [
     ['scheduler', [], 'Migrations / Seeders'],
 ];
 foreach ($stages as [$action, $fields, $expected]) {
+    if ($action === 'database') {
+        // Reject a malicious/out-of-range DB port before opening a socket or advancing.
+        foreach (['0', '65536', '3306;DROP DATABASE'] as $badPort) {
+            $invalid = executeStep($installer, $sessionId, ['csrf' => $csrf, 'action' => $action]
+                + ['db_host' => $host, 'db_port' => $badPort, 'db_name' => $database,
+                    'db_user' => $username, 'db_password' => $password]);
+            requireOutput($invalid, 'أدخل بيانات MySQL الصحيحة');
+        }
+    }
     $response = executeStep($installer, $sessionId, ['csrf' => $csrf, 'action' => $action] + $fields);
     requireOutput($response, $expected);
 }
@@ -152,6 +161,7 @@ if (is_file($installer)) {
 $env = file_get_contents($root.'/app/.env');
 if (! str_contains($env, 'AIWM_UPDATES_ENABLED="false"') ||
     ! str_contains($env, 'APP_ENV="production"') ||
+    ! str_contains($env, 'DB_PORT="3306"') ||
     str_contains($env, 'AIWM_UPDATES_SECRET_KEY')) {
     throw new RuntimeException('Unexpected unsafe production environment or signing secret.');
 }
@@ -187,4 +197,4 @@ if ($ownerCount !== 1) {
     throw new RuntimeException('Unexpected seeded demonstration identity detected.');
 }
 
-fwrite(STDOUT, "FIFTEEN_STAGE_WIZARD=PASS INSTALL_LEASE=PASS OWNER_ACTIVATION=PASS ANONYMOUS_TAKEOVER=REJECTED DATABASE=PASS PLATFORM_OWNER=PASS FIRST_RUN_LOCK=PASS SIGNING_FAIL_CLOSED=PASS\n");
+fwrite(STDOUT, "FIFTEEN_STAGE_WIZARD=PASS INSTALL_LEASE=PASS OWNER_ACTIVATION=PASS ANONYMOUS_TAKEOVER=REJECTED DATABASE=PASS DB_PORT=VERIFIED PLATFORM_OWNER=PASS FIRST_RUN_LOCK=PASS SIGNING_FAIL_CLOSED=PASS\n");
