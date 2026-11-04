@@ -94,6 +94,35 @@ function aiwmSave(string $path, string $data): void
     }
 }
 
+function aiwmRecordRejectedActivation(string $dir): void
+{
+    $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+    $path = $dir.'/attempt-'.hash('sha256', $ip).'.json';
+    $stream = @fopen($path, 'c+');
+    if ($stream === false || ! flock($stream, LOCK_EX)) {
+        aiwmFailure('تعذر التحقق من حد محاولات التفعيل.');
+    }
+
+    try {
+        $row = json_decode((string) stream_get_contents($stream), true);
+        $now = time();
+        if (! is_array($row) || ($row['since'] ?? 0) < $now - 900) {
+            $row = ['since' => $now, 'count' => 0];
+        }
+        ++$row['count'];
+        ftruncate($stream, 0);
+        rewind($stream);
+        fwrite($stream, json_encode($row, JSON_THROW_ON_ERROR));
+        fflush($stream);
+        if ($row['count'] > 5) {
+            aiwmFailure('تم تجاوز حد محاولات التفعيل. حاول بعد 15 دقيقة.');
+        }
+    } finally {
+        flock($stream, LOCK_UN);
+        fclose($stream);
+    }
+}
+
 function aiwmDatabase(array $db): PDO
 {
     try {
@@ -205,6 +234,11 @@ try {
     $post = ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
 
     if ($post) {
+        if ($action !== 'requirements' &&
+            (empty($_SESSION['aiwm_owner_verified']) ||
+             (int) ($_SESSION['aiwm_owner_verified_at'] ?? 0) < time() - 1800)) {
+            aiwmFailure('انتهت صلاحية إثبات ملكية الاستضافة؛ ابدأ التفعيل مرة أخرى.');
+        }
         if (! hash_equals((string) $_SESSION['aiwm_csrf'], (string) ($_POST['csrf'] ?? ''))) {
             aiwmFailure('انتهت صلاحية نموذج التثبيت؛ أعد تحميل الصفحة.');
         }
@@ -215,10 +249,12 @@ try {
                 ? @file_get_contents($ownerPath) : false;
             if (! is_string($expectedProof) || ! preg_match('/^[a-f0-9]{64}$/D', $submittedProof)
                 || ! hash_equals(trim($expectedProof), $submittedProof)) {
+                aiwmRecordRejectedActivation($stateDir);
                 aiwmFailure('إثبات ملكية الاستضافة غير صحيح. اقرأ ملف التفعيل الخاص من cPanel File Manager.');
             }
             session_regenerate_id(true);
             $_SESSION['aiwm_owner_verified'] = true;
+            $_SESSION['aiwm_owner_verified_at'] = time();
             $_SESSION['aiwm_step'] = 'php';
         } elseif ($action === 'php') {
             if (($_SESSION['aiwm_step'] ?? '') !== 'php') { aiwmFailure('ترتيب مراحل التثبيت غير صحيح.'); }
@@ -331,6 +367,14 @@ try {
                 aiwmFailure('أكمل فحص قاعدة البيانات أولًا.');
             }
 
+            // Exclusive lease covers the entire migration/identity transaction and lock creation.
+            // Multiple independent PHP sessions cannot race to create a platform administrator.
+            $lease = @fopen($stateDir.'/migration-install.lock', 'c');
+            if ($lease === false || ! flock($lease, LOCK_EX | LOCK_NB)) {
+                aiwmFailure('تثبيت آخر قيد التنفيذ. أعد المحاولة بعد انتهاء العملية.');
+            }
+            if (is_file($lockPath)) { aiwmFailure('تم إغلاق التثبيت بالفعل.'); }
+
             $name = $_SESSION['aiwm_platform']['name'];
             $workspace = $_SESSION['aiwm_tenant'];
             $owner = $_SESSION['aiwm_admin']['name'];
@@ -430,7 +474,7 @@ try {
             @unlink($pendingPath);
 
             foreach (['aiwm_db', 'aiwm_admin', 'aiwm_platform', 'aiwm_tenant', 'aiwm_url', 'aiwm_queue',
-                'aiwm_mail', 'aiwm_scheduler', 'aiwm_authorized', 'aiwm_owner_verified'] as $key) {
+                'aiwm_mail', 'aiwm_scheduler', 'aiwm_authorized', 'aiwm_owner_verified', 'aiwm_owner_verified_at'] as $key) {
                 unset($_SESSION[$key]);
             }
             session_regenerate_id(true);
