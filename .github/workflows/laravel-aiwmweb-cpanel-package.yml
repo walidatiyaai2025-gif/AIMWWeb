@@ -11,6 +11,11 @@ on:
       - 'variants/laravel-aiwmweb/**'
       - '.github/workflows/laravel-aiwmweb-cpanel-package.yml'
   workflow_dispatch:
+    inputs:
+      minimum_supported_version:
+        description: Minimum installed Laravel version compatible with this signed release
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -192,6 +197,7 @@ jobs:
           AIWM_UPDATES_SECRET_KEY: ${{ secrets.AIWM_UPDATES_SECRET_KEY }}
           AIWM_UPDATES_TRUSTED_PUBLIC_KEY: ${{ secrets.AIWM_UPDATES_TRUSTED_PUBLIC_KEY }}
           AIWM_UPDATES_SIGNER_ROTATED: ${{ secrets.AIWM_UPDATES_SIGNER_ROTATED }}
+          AIWM_MIN_SUPPORTED_VERSION: ${{ inputs.minimum_supported_version }}
           AIWM_CPANEL_ACCEPTANCE_VERIFIED: ${{ secrets.AIWM_CPANEL_ACCEPTANCE_VERIFIED }}
           GH_TOKEN: ${{ github.token }}
         shell: bash
@@ -205,6 +211,7 @@ jobs:
           [[ -n "${AIWM_UPDATES_SECRET_KEY:-}" ]] || { echo "ERROR: configure AIWM_UPDATES_SECRET_KEY in Actions secrets"; exit 1; }
           [[ "${AIWM_UPDATES_SIGNER_ROTATED:-}" == 'yes' ]] || { echo 'BLOCKED: #1404 compromised signing key must be rotated before signing'; exit 1; }
           [[ "${AIWM_CPANEL_ACCEPTANCE_VERIFIED:-}" == 'yes' ]] || { echo 'BLOCKED: actual cPanel acceptance not attested'; exit 1; }
+          [[ -n "${AIWM_MIN_SUPPORTED_VERSION:-}" ]] || { echo 'BLOCKED: minimum compatible installed version is required'; exit 1; }
           php -r '
             $secret=base64_decode((string)getenv("AIWM_UPDATES_SECRET_KEY"),true);
             $trusted=base64_decode((string)getenv("AIWM_UPDATES_TRUSTED_PUBLIC_KEY"),true);
@@ -260,6 +267,7 @@ jobs:
       SOURCE_SHA: ${{ github.sha }}
       BUILD_VERSION: ${{ format('1.0.{0}', github.run_number) }}
       AIWM_RELEASE_PUBLIC_KEY: ${{ secrets.AIWM_UPDATES_TRUSTED_PUBLIC_KEY }}
+      AIWM_MIN_SUPPORTED_VERSION: ${{ inputs.minimum_supported_version }}
       AIWM_SIGNER_ROTATION_ATTESTED: ${{ secrets.AIWM_UPDATES_SIGNER_ROTATED }}
       AIWM_CPANEL_ACCEPTANCE_ATTESTED: ${{ secrets.AIWM_CPANEL_ACCEPTANCE_VERIFIED }}
     steps:
@@ -298,7 +306,8 @@ jobs:
                 !is_string($s) || strlen($s)!==SODIUM_CRYPTO_SIGN_BYTES ||
                 !sodium_crypto_sign_verify_detached($s,$m,$p) ||
                 !hash_equals($j["sha256"],hash_file("sha256",$argv[3])) ||
-                $j["sha"]!==getenv("SOURCE_SHA") || $j["version"]!==getenv("BUILD_VERSION")) {
+                $j["sha"]!==getenv("SOURCE_SHA") || $j["version"]!==getenv("BUILD_VERSION") ||
+                $j["minimum_supported_version"]!==getenv("AIWM_MIN_SUPPORTED_VERSION")) {
               fwrite(STDERR,"BLOCKED: signed production manifest does not match trusted rotated verifier or source SHA\n"); exit(1);
             }
           ' artifacts/cpanel/AIWMWeb-Laravel-release.json artifacts/cpanel/AIWMWeb-Laravel-release.sig artifacts/cpanel/AIWMWeb-Laravel-update.zip
