@@ -2,6 +2,7 @@
 
 namespace App\AI\Platform\Providers;
 
+use App\AI\Durable\ExecutionPermit;
 use App\AI\Platform\Contracts\AiProviderClient;
 use App\AI\Platform\Enums\AiFailureKind;
 use App\AI\Platform\Enums\ProviderReadiness;
@@ -31,7 +32,7 @@ final class AnthropicCompatibleProviderClient implements AiProviderClient
         try {
             $response = Http::acceptJson()
                 ->withHeaders($this->headers($apiKey))
-                ->timeout($provider->timeout_seconds)
+                ->connectTimeout(5)->timeout(config('cpanel.enabled') ? min((int) $provider->timeout_seconds, (int) config('cpanel.provider_timeout')) : $provider->timeout_seconds)
                 ->get($this->endpoint($provider).'/models/'.rawurlencode($model->model_key));
         } catch (ConnectionException) {
             return ['state' => ProviderReadiness::Unreachable->value, 'message' => 'Anthropic-compatible provider could not be reached.'];
@@ -55,6 +56,7 @@ final class AnthropicCompatibleProviderClient implements AiProviderClient
 
     public function generate(AiProviderProfile $provider, AiModelProfile $model, ?string $apiKey, array $request): array
     {
+        app(ExecutionPermit::class)->beforeProviderCall($provider, $model, $request);
         $payload = [
             'model' => $model->model_key,
             'max_tokens' => min(
@@ -71,7 +73,7 @@ final class AnthropicCompatibleProviderClient implements AiProviderClient
         try {
             $response = Http::acceptJson()
                 ->withHeaders($this->headers($apiKey))
-                ->timeout($provider->timeout_seconds)
+                ->connectTimeout(5)->timeout(config('cpanel.enabled') ? min((int) $provider->timeout_seconds, (int) config('cpanel.provider_timeout')) : $provider->timeout_seconds)
                 ->post($this->endpoint($provider).'/messages', $payload);
         } catch (ConnectionException) {
             throw new AiPlatformException(AiFailureKind::Timeout, 'Anthropic-compatible request timed out.', true, 504);

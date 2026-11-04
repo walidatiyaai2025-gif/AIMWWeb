@@ -13,7 +13,7 @@ final class ProviderFailureMapper
         $status = $response->status();
         $retryAfter = is_numeric($response->header('Retry-After'))
             ? (int) $response->header('Retry-After')
-            : null;
+            : (($date = strtotime((string) $response->header('Retry-After'))) !== false ? max(0, $date - time()) : null);
 
         [$kind, $message, $retryable] = match (true) {
             in_array($status, [401, 403], true) => [

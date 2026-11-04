@@ -4,6 +4,7 @@ use App\Billing\Exceptions\BillingConflictException;
 use App\Billing\Exceptions\EntitlementDeniedException;
 use App\Billing\Exceptions\InvalidProviderSignatureException;
 use App\Billing\Exceptions\QuotaExceededException;
+use App\Http\Middleware\CpanelTransportPolicy;
 use App\Http\Middleware\RequestCorrelation;
 use App\Http\Middleware\RequirePlatformAdmin;
 use App\Http\Middleware\ResolveTenantContext;
@@ -37,6 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 | Request::HEADER_X_FORWARDED_PROTO,
         );
 
+        $middleware->append(CpanelTransportPolicy::class);
         $middleware->append(RequestCorrelation::class);
         $middleware->alias([
             'tenant.context' => ResolveTenantContext::class,
