@@ -8,15 +8,16 @@ import re
 import sys
 from pathlib import Path
 
-REQUIRED = (
-    "Laravel AIWMWeb Acceptance",
-    "Laravel AIWMWeb cPanel Setup ZIP",
-    "Build",
-    ".NET Build Verification",
-    "Package AIMWWeb Update",
-    "Final Historical Acceptance",
-    "UX Regression Gate",
-)
+REQUIRED_WORKFLOWS = {
+    "Laravel AIWMWeb Acceptance": ".github/workflows/laravel-aiwmweb.yml",
+    "Laravel AIWMWeb cPanel Setup ZIP": ".github/workflows/laravel-aiwmweb-cpanel-package.yml",
+    "Build": ".github/workflows/build.yml",
+    ".NET Build Verification": ".github/workflows/dotnet-build.yml",
+    "Package AIMWWeb Update": ".github/workflows/package-update.yml",
+    "Final Historical Acceptance": ".github/workflows/final-historical-acceptance.yml",
+    "UX Regression Gate": ".github/workflows/ux-regression.yml",
+}
+REQUIRED = tuple(REQUIRED_WORKFLOWS)
 
 
 def verify(main_ref: dict, runs: dict, sha: str) -> None:
@@ -27,10 +28,11 @@ def verify(main_ref: dict, runs: dict, sha: str) -> None:
     workflow_runs = runs.get("workflow_runs")
     if not isinstance(workflow_runs, list):
         raise ValueError("BLOCKED: GitHub Actions evidence is unavailable")
-    for name in REQUIRED:
+    for name in REQUIRED_WORKFLOWS:
         candidates = [
             entry for entry in workflow_runs
             if isinstance(entry, dict) and entry.get("name") == name
+            and entry.get("path") == REQUIRED_WORKFLOWS[name]
             and entry.get("event") == "push" and entry.get("head_sha") == sha
             and entry.get("head_branch") == "main"
         ]
