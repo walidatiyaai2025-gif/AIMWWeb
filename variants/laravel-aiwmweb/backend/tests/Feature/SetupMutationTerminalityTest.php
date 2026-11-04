@@ -6,12 +6,14 @@ use App\Http\Controllers\SetupMutationController;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
+use App\Services\DatabaseSetupMutationService;
 use App\Services\SetupOwnerProof;
 use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
+use RuntimeException;
 use Tests\TestCase;
 
 class SetupMutationTerminalityTest extends TestCase
@@ -124,6 +126,59 @@ class SetupMutationTerminalityTest extends TestCase
         $this->assertSame(1, DB::table('users')->count());
         $this->assertSame(0, DB::table('tenants')->count());
         $this->assertSame(0, DB::table('tenant_memberships')->count());
+    }
+
+    public function test_existing_user_blocks_first_run_before_any_pending_migration(): void
+    {
+        User::factory()->create(['email' => 'already-installed@example.test']);
+
+        // Simulate an existing deployment that has not yet run the latest
+        // migration. Setup must not apply it before rejecting ownership.
+        $migration = (string) DB::table('migrations')->orderByDesc('batch')
+            ->orderByDesc('migration')->value('migration');
+        $this->assertNotSame('', $migration);
+        DB::table('migrations')->where('migration', $migration)->delete();
+
+        try {
+            app(DatabaseSetupMutationService::class)->apply([
+                'tenant_name' => 'Overwrite Attempt',
+                'admin_name' => 'Attacker',
+                'admin_email' => 'attacker@example.test',
+                'admin_password' => 'correct-horse-battery-staple',
+            ]);
+            $this->fail('First-run setup accepted an existing user.');
+        } catch (RuntimeException $e) {
+            $this->assertStringContainsString('Existing identity state', $e->getMessage());
+        }
+
+        $this->assertDatabaseMissing('migrations', ['migration' => $migration]);
+        $this->assertSame(1, DB::table('users')->count());
+        $this->assertSame(0, DB::table('tenants')->count());
+    }
+
+    public function test_existing_tenant_also_blocks_first_run_before_migration(): void
+    {
+        Tenant::query()->create(['name' => 'Previous Tenant', 'slug' => 'previous-tenant']);
+
+        $migration = (string) DB::table('migrations')->orderByDesc('batch')
+            ->orderByDesc('migration')->value('migration');
+        DB::table('migrations')->where('migration', $migration)->delete();
+
+        try {
+            app(DatabaseSetupMutationService::class)->apply([
+                'tenant_name' => 'Second Owner',
+                'admin_name' => 'Attacker',
+                'admin_email' => 'attacker@example.test',
+                'admin_password' => 'correct-horse-battery-staple',
+            ]);
+            $this->fail('First-run setup accepted an existing tenant.');
+        } catch (RuntimeException $e) {
+            $this->assertStringContainsString('Existing identity state', $e->getMessage());
+        }
+
+        $this->assertDatabaseMissing('migrations', ['migration' => $migration]);
+        $this->assertSame(1, DB::table('tenants')->count());
+        $this->assertSame(0, DB::table('users')->count());
     }
 
     public function test_anonymous_visitor_cannot_create_platform_admin_without_hosting_owner_secret(): void

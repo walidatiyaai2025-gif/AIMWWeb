@@ -33,6 +33,15 @@ final class DatabaseSetupMutationService
             throw new RuntimeException('The configured database is not reachable. Check the deployment environment and try again.');
         }
 
+        // Reject pre-existing identities BEFORE running migrations. Migrations
+        // may alter an occupied database even if setup later refuses ownership;
+        // the first-run installer must never mutate an existing installation.
+        foreach (['users', 'tenants', 'tenant_memberships'] as $table) {
+            if (Schema::hasTable($table) && DB::table($table)->exists()) {
+                throw new RuntimeException('Existing identity state was detected. First-run setup cannot claim or overwrite an existing installation.');
+            }
+        }
+
         Artisan::call('migrate', ['--force' => true]);
 
         if (! $this->readService->status()['migrations_ready']) {
