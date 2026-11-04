@@ -30,7 +30,7 @@ session_start();
 $_SESSION['aiwm_csrf'] = $csrf;
 session_write_close();
 
-function executeStep(string $installer, string $id, array $post = []): string
+function executeStep(string $installer, string $id, array $post = [], array $get = []): string
 {
     $code = <<<'CODE'
 $_SERVER['HTTPS'] = 'on';
@@ -39,6 +39,7 @@ $_SERVER['REQUEST_URI'] = '/install';
 $_SERVER['REQUEST_METHOD'] = $argv[3] === 'POST' ? 'POST' : 'GET';
 $_COOKIE['AIWM_FIRST_SETUP'] = $argv[2];
 $_POST = json_decode(base64_decode($argv[4]), true, flags: JSON_THROW_ON_ERROR);
+$_GET = json_decode(base64_decode($argv[5]), true, flags: JSON_THROW_ON_ERROR);
 require $argv[1];
 CODE;
     $command = escapeshellarg(PHP_BINARY)
@@ -47,6 +48,7 @@ CODE;
         .' '.escapeshellarg($id)
         .' '.escapeshellarg($post === [] ? 'GET' : 'POST')
         .' '.escapeshellarg(base64_encode(json_encode($post, JSON_THROW_ON_ERROR)))
+        .' '.escapeshellarg(base64_encode(json_encode($get, JSON_THROW_ON_ERROR)))
         .' 2>&1';
     exec($command, $lines, $status);
     $output = implode("\n", $lines);
@@ -70,6 +72,20 @@ requireOutput($canonical, 'مرحبًا بك في معالج AIWMWeb');
 $first = executeStep($installer, $sessionId);
 requireOutput($first, 'مرحبًا بك في معالج AIWMWeb');
 requireOutput($first, 'تحقق من الملكية ثم التالي');
+// Switching the wizard language is a safe GET preference, not an ownership
+// bypass. Both directions must render on the exact extracted Setup ZIP.
+$english = executeStep($installer, $sessionId, [], ['lang' => 'en']);
+requireOutput($english, '<html lang="en" dir="ltr">');
+requireOutput($english, 'Welcome to the AIWMWeb Setup Wizard');
+requireOutput($english, 'Verify ownership and continue');
+requireOutput($english, 'Hosting owner activation secret');
+requireOutput($english, '15. Finish');
+$arabic = executeStep($installer, $sessionId, [], ['lang' => 'ar']);
+requireOutput($arabic, '<html lang="ar" dir="rtl">');
+requireOutput($arabic, 'تحقق من الملكية ثم التالي');
+$untrustedLanguage = executeStep($installer, $sessionId, [], ['lang' => 'unexpected']);
+requireOutput($untrustedLanguage, '<html lang="ar" dir="rtl">');
+
 $ownerSecretPath = $private.'/owner-activation.secret';
 if (! is_file($ownerSecretPath)) {
     throw new RuntimeException('Owner activation challenge was not created in private storage.');
