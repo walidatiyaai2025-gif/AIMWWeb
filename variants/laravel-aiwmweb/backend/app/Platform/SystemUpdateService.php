@@ -497,7 +497,8 @@ final class SystemUpdateService
     private function validatePath(string $path): void
     {
         if ($path === '' || strlen($path) > 240 || str_contains($path, '\\') ||
-            str_starts_with($path, '/') || preg_match('#(^|/)(\.{1,2}|\.env|storage|\.git)(/|$)#i', $path) ||
+            str_starts_with($path, '/') || preg_match('#(^|/)(\.{1,2}|\.env|\.git)(/|$)#i', $path) ||
+        preg_match('#^(storage|app/storage|public/storage)(/|$)#i', $path) ||
             ! preg_match('#^[a-zA-Z0-9_./@+~-]+$#D', $path)) {
             throw new RuntimeException('Unsafe file path in update package.');
         }
