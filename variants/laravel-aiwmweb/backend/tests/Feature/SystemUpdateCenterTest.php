@@ -291,6 +291,65 @@ final class SystemUpdateCenterTest extends TestCase
         }
     }
 
+    public function test_exclusive_apply_succeeds_and_removes_temporary_file(): void
+    {
+        $filename = 'app/AIWMExclusiveApplyProbe-'.bin2hex(random_bytes(6)).'.php';
+        $target = base_path($filename);
+        $source = tempnam(sys_get_temp_dir(), 'aiwm-apply-normal-');
+        $id = 'exclusive-'.bin2hex(random_bytes(5));
+        $temp = dirname($target).'/.aiwm-update-'.$id;
+
+        try {
+            $this->assertNotFalse($source);
+            file_put_contents($source, 'verified-new-payload');
+            file_put_contents($target, 'previous-payload');
+
+            (new \ReflectionMethod(SystemUpdateService::class, 'applyStagedFile'))
+                ->invoke(app(SystemUpdateService::class), $filename, $source, hash('sha256', 'verified-new-payload'), $id);
+
+            $this->assertSame('verified-new-payload', file_get_contents($target));
+            $this->assertFileDoesNotExist($temp);
+        } finally {
+            @unlink($target);
+            @unlink($temp);
+            if (is_string($source)) {
+                @unlink($source);
+            }
+        }
+    }
+
+    public function test_exclusive_apply_rejects_existing_regular_temporary_file(): void
+    {
+        $filename = 'app/AIWMExclusiveOccupiedProbe-'.bin2hex(random_bytes(6)).'.php';
+        $target = base_path($filename);
+        $source = tempnam(sys_get_temp_dir(), 'aiwm-apply-occupied-');
+        $id = 'occupied-'.bin2hex(random_bytes(5));
+        $temp = dirname($target).'/.aiwm-update-'.$id;
+
+        try {
+            $this->assertNotFalse($source);
+            file_put_contents($source, 'verified-new-payload');
+            file_put_contents($temp, 'existing-protected-payload');
+
+            try {
+                (new \ReflectionMethod(SystemUpdateService::class, 'applyStagedFile'))
+                    ->invoke(app(SystemUpdateService::class), $filename, $source, hash('sha256', 'verified-new-payload'), $id);
+                $this->fail('A preexisting update temporary file was overwritten.');
+            } catch (RuntimeException $e) {
+                $this->assertStringContainsString('temporary path', $e->getMessage());
+            }
+
+            $this->assertSame('existing-protected-payload', file_get_contents($temp));
+            $this->assertFileDoesNotExist($target);
+        } finally {
+            @unlink($target);
+            @unlink($temp);
+            if (is_string($source)) {
+                @unlink($source);
+            }
+        }
+    }
+
     public function test_apply_rechecks_swapped_parent_and_never_writes_outside_app(): void
     {
         $directory = 'AIWMApplySymlinkProbe-'.bin2hex(random_bytes(5));
