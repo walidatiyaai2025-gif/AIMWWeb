@@ -81,6 +81,19 @@ try {
         'updated_at' => now(),
     ]);
     $originalUsers = DB::table('users')->count();
+    $envPath = base_path('.env');
+    $assert(is_file($envPath), 'Installer did not create .env');
+    $originalEnvHash = hash_file('sha256', $envPath);
+
+    // Uploads and runtime configuration are never payload targets and must
+    // remain byte-identical through a signed application update.
+    $uploadDirectory = storage_path('app/public/uploads');
+    if (! is_dir($uploadDirectory) && ! mkdir($uploadDirectory, 0750, true)) {
+        throw new RuntimeException('Cannot create CI test upload directory');
+    }
+    $protectedUpload = $uploadDirectory.'/aiwm-upgrade-'.bin2hex(random_bytes(6)).'.bin';
+    $uploadBytes = random_bytes(160);
+    $assert(file_put_contents($protectedUpload, $uploadBytes) === strlen($uploadBytes), 'Cannot create protected upload');
 
     $marker = "<?php\n// Exact extracted ZIP signed-upgrade smoke probe.\n";
     $inner = new ZipArchive();
@@ -137,6 +150,8 @@ try {
     $dbReceipt = $app->make(VerifiedMysqlBackupService::class)->verify($result['database_backup']['id']);
     $assert($dbReceipt['sha256'] === $result['database_backup']['sha256'], 'Encrypted database backup unreadable');
     $assert((int) DB::table('users')->count() === (int) $originalUsers, 'Existing users changed');
+    $assert(hash_file('sha256', $envPath) === $originalEnvHash, 'Live .env changed during update');
+    $assert(is_file($protectedUpload) && hash_equals($uploadBytes, file_get_contents($protectedUpload)), 'Uploaded file was changed');
     $assert(DB::table('tenants')->where('slug', $slug)->exists(), 'Tenant deleted during upgrade');
     $value = DB::table('scoped_settings')->where('tenant_id', $tenantId)
         ->where('key', 'ci.upgrade.preservation')->value('value');
@@ -155,6 +170,9 @@ try {
 } finally {
     if (is_file($probePath)) {
         unlink($probePath);
+    }
+    if (isset($protectedUpload) && is_file($protectedUpload)) {
+        unlink($protectedUpload);
     }
     $deleteWork($work);
 }
