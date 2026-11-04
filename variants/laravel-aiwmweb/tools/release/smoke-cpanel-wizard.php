@@ -83,37 +83,43 @@ $attacker = executeStep($installer, $sessionId, ['csrf' => $csrf, 'action' => 'r
     'owner_activation_secret' => str_repeat('0', 64),
 ]);
 requireOutput($attacker, 'إثبات ملكية الاستضافة غير صحيح');
-requireOutput($first, 'فحص السيرفر');
+requireOutput($first, 'الملكية');
 
-$databasePage = executeStep($installer, $sessionId, ['csrf' => $csrf, 'action' => 'requirements', 'owner_activation_secret' => $ownerSecret]);
-requireOutput($databasePage, 'إعداد قاعدة بيانات MySQL');
+$phpPage = executeStep($installer, $sessionId, ['csrf' => $csrf, 'action' => 'requirements', 'owner_activation_secret' => $ownerSecret]);
+requireOutput($phpPage, 'PHP Requirements & Extensions');
+requireOutput($phpPage, '15. Finish');
 // Owner activation rotates the PHP session identifier to prevent fixation.
-// The CLI harness must follow the new cookie, just as a real browser does.
 $sessionFiles = glob($private.'/sess_*');
 if (! is_array($sessionFiles) || count($sessionFiles) !== 1) {
     throw new RuntimeException('Expected one rotated first-run owner session.');
 }
 $sessionId = substr(basename($sessionFiles[0]), strlen('sess_'));
-if ($sessionId === '') {
-    throw new RuntimeException('Owner activation did not establish a valid session.');
-}
-$ownerPage = executeStep($installer, $sessionId, [
-    'csrf' => $csrf, 'action' => 'database',
-    'db_host' => $host, 'db_name' => $database,
-    'db_user' => $username, 'db_password' => $password,
-]);
-requireOutput($ownerPage, 'إعداد المنصة وحساب المدير');
-requireOutput($ownerPage, 'قاعدة البيانات متصلة وفارغة');
+if ($sessionId === '') { throw new RuntimeException('Owner activation did not establish a valid session.'); }
 
+$stages = [
+    ['php', [], 'File Permissions & Hosting'],
+    ['permissions', [], 'Domain / HTTPS / APP_URL'],
+    ['domain', ['app_url' => 'https://aiwm.example.test'], 'إعداد قاعدة بيانات MySQL'],
+    ['database', ['db_host' => $host, 'db_name' => $database,
+        'db_user' => $username, 'db_password' => $password], 'Platform / Language / Timezone'],
+    ['platform', ['platform_name' => 'AIWMWeb', 'locale' => 'ar', 'timezone' => 'Asia/Kuwait'], 'Workspace / Tenant'],
+    ['tenant', ['tenant_name' => 'CI Smoke Workspace'], 'Create Super Admin'],
+    ['admin', ['admin_name' => 'CI Owner', 'admin_email' => 'ci-owner@example.test',
+        'admin_password' => 'Only-For-CI-Smoke-1234!',
+        'admin_password_confirmation' => 'Only-For-CI-Smoke-1234!'], 'Secure Environment / APP_KEY'],
+    ['environment', [], 'Storage / Uploads'],
+    ['storage', [], 'Cache / Queue'],
+    ['queue', ['queue_mode' => 'sync'], 'Mail Configuration'],
+    ['mail', [], 'Scheduler / Cron'],
+    ['scheduler', [], 'Migrations / Seeders'],
+];
+foreach ($stages as [$action, $fields, $expected]) {
+    $response = executeStep($installer, $sessionId, ['csrf' => $csrf, 'action' => $action] + $fields);
+    requireOutput($response, $expected);
+}
+// A forged jump straight into install must not mutate an empty database.
 $finished = executeStep($installer, $sessionId, [
     'csrf' => $csrf, 'action' => 'install',
-    'platform_name' => 'AIWMWeb',
-    'tenant_name' => 'CI Smoke Workspace',
-    'admin_name' => 'CI Owner',
-    'admin_email' => 'ci-owner@example.test',
-    'admin_password' => 'Only-For-CI-Smoke-1234!',
-    'admin_password_confirmation' => 'Only-For-CI-Smoke-1234!',
-    'app_url' => 'https://aiwm.example.test',
 ]);
 requireOutput($finished, 'تم التثبيت بنجاح');
 requireOutput($finished, 'فتح المنصة وتسجيل الدخول');
@@ -151,4 +157,4 @@ if ($count < 1) {
     throw new RuntimeException('No tenant membership was created.');
 }
 
-fwrite(STDOUT, "OWNER_ACTIVATION=PASS ANONYMOUS_TAKEOVER=REJECTED DATABASE=PASS PLATFORM_OWNER=PASS FIRST_RUN_LOCK=PASS SIGNING_FAIL_CLOSED=PASS\n");
+fwrite(STDOUT, "FIFTEEN_STAGE_WIZARD=PASS OWNER_ACTIVATION=PASS ANONYMOUS_TAKEOVER=REJECTED DATABASE=PASS PLATFORM_OWNER=PASS FIRST_RUN_LOCK=PASS SIGNING_FAIL_CLOSED=PASS\n");
