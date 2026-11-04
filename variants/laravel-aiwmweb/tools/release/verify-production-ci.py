@@ -37,8 +37,8 @@ def verify(main_ref: dict, runs: dict, sha: str) -> None:
         if not candidates:
             raise ValueError("BLOCKED: required exact-main push CI is absent: " + name)
         # Never accept an older green workflow in place of its latest failed
-        # or in-progress rerun on the same commit.
-        latest = max(candidates, key=lambda x: (str(x.get("created_at") or ""), int(x.get("id") or 0)))
+        # or in-progress rerun on the same commit. The GitHub run ID and\n        # created_at do not change on reruns; updated_at does.
+        latest = max(candidates, key=lambda x: (str(x.get("updated_at") or x.get("created_at") or ""), int(x.get("id") or 0)))
         if latest.get("status") != "completed" or latest.get("conclusion") != "success":
             raise ValueError("BLOCKED: required exact-main push CI not green: " + name)
     print("PASS: latest required push CI green on current immutable main HEAD", sha)
