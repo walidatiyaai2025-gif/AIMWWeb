@@ -64,6 +64,8 @@ describe(`${OPERATION_ID} ShowAllSites`, () => {
 
         expect(await screen.findByText('Connected site')).toBeInTheDocument();
         expect(screen.getByText('Disabled site')).toBeInTheDocument();
+        const siteCards = screen.getByRole('list', { name: 'Site cards' });
+        expect(siteCards.querySelectorAll('.site-record-card')).toHaveLength(2);
 
         const showAll = screen.getByRole('button', { name: 'All' });
         expect(showAll).toHaveAttribute('data-canonical-operation', OPERATION_ID);

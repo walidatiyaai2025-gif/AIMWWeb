@@ -58,7 +58,7 @@ describe(`${CURRENT_USER_CONNECT_SITE_OPERATION_ID} CurrentUserChip first-site c
 
         renderControl(context());
 
-        const link = await screen.findByRole('link', { name: 'Connect your first site' });
+        const link = await screen.findByRole('link', { name: 'Connect your site' });
         expect(link).toHaveAttribute('data-canonical-operation', CURRENT_USER_CONNECT_SITE_OPERATION_ID);
         expect(link).toHaveAttribute('href', '/tenants/alpha/sites/connect');
         expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -70,7 +70,7 @@ describe(`${CURRENT_USER_CONNECT_SITE_OPERATION_ID} CurrentUserChip first-site c
 
         renderControl(context());
 
-        await waitFor(() => expect(screen.queryByRole('link', { name: 'Connect your first site' })).not.toBeInTheDocument());
+        await waitFor(() => expect(screen.queryByRole('link', { name: 'Connect your site' })).not.toBeInTheDocument());
     });
 
     it('fails closed without sites manage permission and performs no sites read', async () => {
@@ -79,7 +79,7 @@ describe(`${CURRENT_USER_CONNECT_SITE_OPERATION_ID} CurrentUserChip first-site c
 
         renderControl(context({ permissions: ['tenant.view'] }));
 
-        await waitFor(() => expect(screen.queryByRole('link', { name: 'Connect your first site' })).not.toBeInTheDocument());
+        await waitFor(() => expect(screen.queryByRole('link', { name: 'Connect your site' })).not.toBeInTheDocument());
         expect(fetchMock).not.toHaveBeenCalled();
     });
 
@@ -87,7 +87,7 @@ describe(`${CURRENT_USER_CONNECT_SITE_OPERATION_ID} CurrentUserChip first-site c
         const activeFetch = vi.fn();
         vi.stubGlobal('fetch', activeFetch);
         const active = renderControl(context({ active_site: { id: 7, name: 'Active Site' } }));
-        await waitFor(() => expect(screen.queryByRole('link', { name: 'Connect your first site' })).not.toBeInTheDocument());
+        await waitFor(() => expect(screen.queryByRole('link', { name: 'Connect your site' })).not.toBeInTheDocument());
         expect(activeFetch).not.toHaveBeenCalled();
         active.unmount();
         document.querySelectorAll('.user-chip').forEach((node) => node.remove());
@@ -95,19 +95,19 @@ describe(`${CURRENT_USER_CONNECT_SITE_OPERATION_ID} CurrentUserChip first-site c
         const missingFetch = vi.fn();
         vi.stubGlobal('fetch', missingFetch);
         const missing = renderControl(context({ api: {} }));
-        await waitFor(() => expect(screen.queryByRole('link', { name: 'Connect your first site' })).not.toBeInTheDocument());
+        await waitFor(() => expect(screen.queryByRole('link', { name: 'Connect your site' })).not.toBeInTheDocument());
         expect(missingFetch).not.toHaveBeenCalled();
         missing.unmount();
         document.querySelectorAll('.user-chip').forEach((node) => node.remove());
 
         vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ data: [] })));
         const malformed = renderControl(context());
-        await waitFor(() => expect(screen.queryByRole('link', { name: 'Connect your first site' })).not.toBeInTheDocument());
+        await waitFor(() => expect(screen.queryByRole('link', { name: 'Connect your site' })).not.toBeInTheDocument());
         malformed.unmount();
         document.querySelectorAll('.user-chip').forEach((node) => node.remove());
 
         vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network unavailable')));
         renderControl(context());
-        await waitFor(() => expect(screen.queryByRole('link', { name: 'Connect your first site' })).not.toBeInTheDocument());
+        await waitFor(() => expect(screen.queryByRole('link', { name: 'Connect your site' })).not.toBeInTheDocument());
     });
 });

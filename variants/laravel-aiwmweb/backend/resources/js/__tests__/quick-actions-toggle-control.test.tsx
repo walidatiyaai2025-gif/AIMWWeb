@@ -40,7 +40,7 @@ function renderControl(value: FrontendContext) {
 
 describe('AIMW-PLAT-4C37AC806E Quick Actions toggle', () => {
     beforeEach(() => {
-        document.body.innerHTML = '<div class="topbar-actions"></div>';
+        document.body.innerHTML = '<div class="page-heading-actions"></div>';
     });
 
     afterEach(() => {

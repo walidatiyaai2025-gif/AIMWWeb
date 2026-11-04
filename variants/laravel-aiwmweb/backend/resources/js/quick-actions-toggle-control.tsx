@@ -43,7 +43,7 @@ export function QuickActionsToggleControl({ context }: { context: FrontendContex
     const actions = useMemo(() => availableSourceActions(context), [context]);
 
     useEffect(() => {
-        setTarget(document.querySelector<HTMLElement>('.topbar-actions'));
+        setTarget(document.querySelector<HTMLElement>('.page-heading-actions'));
     }, []);
 
     useEffect(() => {
