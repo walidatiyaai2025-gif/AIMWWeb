@@ -317,13 +317,24 @@ jobs:
           (cd artifacts/cpanel && sha256sum AIWMWeb-Setup-v*.zip AIWMWeb-Update-v*.zip AIWMWeb-Laravel-release.json AIWMWeb-Laravel-release.sig AIWMWeb-Laravel-update.zip AIWMWeb-Laravel-signed-bundle.zip > SHA256SUMS.txt)
           (cd artifacts/cpanel && sha256sum -c SHA256SUMS.txt)
 
+      # Validate the exact Git source verifier again after package signature
+      # checks, as a required push CI run may have been rerun in the meantime.
+      - name: Checkout exact-source release gate for publication
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
       - name: Publish verified signed artifacts as one GitHub Release
         shell: bash
         run: |
           set -euo pipefail
-          # The main ref can move after the build job but before publication.
-          current_main="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')"
-          [[ "$current_main" == "$SOURCE_SHA" ]] || { echo 'BLOCKED: main changed after signing; rebuild from current HEAD'; exit 1; }
+          # A stable main SHA is not sufficient: required push CI may have
+          # been re-run and failed after the candidate was signed.
+          gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" > /tmp/aiwm-publish-main.json
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$SOURCE_SHA&event=push&per_page=100" > /tmp/aiwm-publish-gates.json
+          python3 variants/laravel-aiwmweb/tools/release/verify-production-ci.py \
+            /tmp/aiwm-publish-main.json /tmp/aiwm-publish-gates.json "$SOURCE_SHA"
           if gh release view "v${BUILD_VERSION}" >/dev/null 2>&1; then
             echo 'BLOCKED: release tag already exists; refusing to overwrite or republish'
             exit 1

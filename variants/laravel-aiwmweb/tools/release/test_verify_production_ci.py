@@ -26,6 +26,17 @@ def sample():
 
 
 class ReleaseGateTests(unittest.TestCase):
+    def test_release_workflow_rechecks_ci_at_publication(self):
+        path = Path(__file__).resolve().parents[4] / ".github/workflows/laravel-aiwmweb-cpanel-package.yml"
+        workflow = path.read_text(encoding="utf-8")
+        publish = workflow.split("      - name: Publish verified signed artifacts as one GitHub Release", 1)[1]
+        before_release = publish.split('          gh release create "v${BUILD_VERSION}"', 1)[0]
+        self.assertIn("/tmp/aiwm-publish-main.json", before_release)
+        self.assertIn("/tmp/aiwm-publish-gates.json", before_release)
+        self.assertIn("verify-production-ci.py", before_release)
+        self.assertIn("event=push", before_release)
+        self.assertIn('"$SOURCE_SHA"', before_release)
+
     def test_exact_current_main_and_all_push_gates_pass(self):
         module.verify(main(), sample(), SHA)
 
