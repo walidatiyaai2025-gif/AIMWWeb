@@ -27,6 +27,17 @@ final class VerifiedMysqlBackupServiceTest extends TestCase
             $pdo->exec('CREATE DATABASE '.$this->identifier($recoveryDatabase).' CHARACTER SET utf8mb4');
             $created = true;
 
+            $tenantSlug = 'snapshot-'.bin2hex(random_bytes(5));
+            $tenantId = DB::table('tenants')->insertGetId([
+                'name' => 'Backup Data Tenant', 'slug' => $tenantSlug,
+                'created_at' => now(), 'updated_at' => now(),
+            ]);
+            DB::table('scoped_settings')->insert([
+                'tenant_id' => $tenantId, 'scope' => 'tenant',
+                'key' => 'backup.test', 'value' => json_encode(['preserved' => true]),
+                'is_secret' => false, 'created_at' => now(), 'updated_at' => now(),
+            ]);
+
             $sourceUsers = (int) DB::table('users')->count();
             $backup = $service->backupNow(1);
             $this->assertTrue($backup['verified']);
@@ -43,6 +54,11 @@ final class VerifiedMysqlBackupServiceTest extends TestCase
             );
             $service->restoreToEmptyDatabase($backup['id'], $target);
             $this->assertSame($sourceUsers, (int) $target->query('SELECT COUNT(*) FROM users')->fetchColumn());
+            $restored = $target->query('SELECT value FROM scoped_settings WHERE `key`="backup.test"')->fetchColumn();
+            $this->assertSame(['preserved' => true], json_decode((string) $restored, true));
+            $this->assertSame(1, (int) $target->query(
+                "SELECT COUNT(*) FROM tenants WHERE slug=".$target->quote($tenantSlug)
+            )->fetchColumn());
 
             try {
                 $service->restoreToEmptyDatabase($backup['id'], $target);
