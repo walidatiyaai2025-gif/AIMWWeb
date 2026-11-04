@@ -61,6 +61,29 @@ class ReleaseGateTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "not green"):
             module.verify(main(), data, SHA)
 
+    def test_failed_rerun_of_older_run_invalidates_newer_green_run(self):
+        data = sample()
+        # An older run may be rerun after another successful run. GitHub
+        # preserves its original created_at and run ID, but updates updated_at.
+        older = dict(data["workflow_runs"][0], id=0,
+                     created_at="2026-11-04T06:00:00Z",
+                     updated_at="2026-11-04T09:00:00Z",
+                     conclusion="failure", run_attempt=2)
+        data["workflow_runs"].append(older)
+        with self.assertRaisesRegex(ValueError, "not green"):
+            module.verify(main(), data, SHA)
+
+    def test_successful_old_rerun_does_not_mask_later_failed_run(self):
+        data = sample()
+        data["workflow_runs"][0]["updated_at"] = "2026-11-04T09:00:00Z"
+        data["workflow_runs"][0]["conclusion"] = "failure"
+        earlier_success = dict(data["workflow_runs"][0], id=0,
+                               updated_at="2026-11-04T08:00:00Z",
+                               conclusion="success")
+        data["workflow_runs"].append(earlier_success)
+        with self.assertRaisesRegex(ValueError, "not green"):
+            module.verify(main(), data, SHA)
+
     def test_in_progress_run_never_counts(self):
         data = sample()
         data["workflow_runs"][0]["status"] = "in_progress"
