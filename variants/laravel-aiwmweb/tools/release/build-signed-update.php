@@ -38,7 +38,7 @@ if ($output === false || str_starts_with($output.'/', $base.'/')) {
     throw new RuntimeException('Output directory must be outside the backend root.');
 }
 $files = [];
-foreach (['app', 'config', 'resources', 'routes', 'vendor', 'public/build'] as $folder) {
+foreach (['app', 'config', 'resources', 'routes', 'vendor', 'public/build', 'database/migrations', 'database/seeders'] as $folder) {
     $iterator = new RecursiveIteratorIterator(
         new RecursiveDirectoryIterator($base.'/'.$folder, FilesystemIterator::SKIP_DOTS)
     );
@@ -83,9 +83,21 @@ foreach ($files as $name => $absolute) {
 if (! $zip->close() || filesize($output.'/'.$packageName) > 157286400) {
     throw new RuntimeException('ZIP exceeds release limits.');
 }
+$minimumSupportedVersion = (string) (getenv('AIWM_MIN_SUPPORTED_VERSION') ?: '0.0.0');
+if (! preg_match('/^[0-9]+\\.[0-9]+\\.[0-9]+$/D', $minimumSupportedVersion) ||
+    version_compare($minimumSupportedVersion, $argv[1], '>')) {
+    throw new RuntimeException('Invalid minimum supported upgrade version.');
+}
+$schemaMigrations = array_values(array_filter(
+    array_keys($hashes),
+    static fn (string $name): bool => str_starts_with($name, 'database/migrations/'),
+));
 $manifest = [
     'product' => 'LARAVEL_AIWMWEB',
     'version' => $argv[1],
+    'minimum_supported_version' => $minimumSupportedVersion,
+    'migration_policy' => $schemaMigrations === [] ? 'none' : 'forward_only',
+    'schema_migrations' => $schemaMigrations,
     'sha' => $argv[2],
     'package' => $packageName,
     'sha256' => hash_file('sha256', $output.'/'.$packageName),
