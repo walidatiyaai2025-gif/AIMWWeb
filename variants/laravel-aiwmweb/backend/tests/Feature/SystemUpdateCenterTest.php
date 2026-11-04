@@ -33,12 +33,18 @@ final class SystemUpdateCenterTest extends TestCase
             $this->assertContains('web', $route->gatherMiddleware());
             $this->assertContains('auth', $route->gatherMiddleware());
             $this->assertContains('platform.admin', $route->gatherMiddleware());
+            $this->assertContains('throttle:5,1', $route->gatherMiddleware());
             $this->assertNotContains('tenant.context', $route->gatherMiddleware());
         }
     }
 
     public function test_guest_and_tenant_admin_cannot_access_update_routes(): void
     {
+        // This test verifies AUTHORIZATION in isolation: twelve denial requests
+        // would otherwise legitimately trip the five-per-minute rate limiter.
+        // The separate route-contract assertion above still enforces throttle.
+        $this->withoutMiddleware(\Illuminate\Routing\Middleware\ThrottleRequests::class);
+
         $this->get('/admin/system-updates')->assertRedirect('/login');
         $this->post('/admin/system-updates/check')->assertRedirect('/login');
         $this->post('/admin/system-updates/install', ['confirmation' => 'INSTALL'])->assertRedirect('/login');
