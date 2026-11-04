@@ -569,13 +569,35 @@ final class SystemUpdateService
             throw new RuntimeException('Unsafe or occupied update temporary path.');
         }
 
-        if (! copy($source, $temp)) {
-            throw new RuntimeException('File replacement verification failed.');
+        // Exclusive creation closes the check-to-copy gap: copy() would
+        // follow an attacker-created symlink between the check above and open.
+        $input = @fopen($source, 'rb');
+
+        if ($input === false) {
+            throw new RuntimeException('Cannot read verified staged update file.');
+        }
+
+        $output = @fopen($temp, 'xb');
+
+        if ($output === false) {
+            fclose($input);
+
+            throw new RuntimeException('Unsafe or occupied update temporary path.');
         }
 
         try {
-            // Check again after copying and before the atomic rename, since
-            // both the destination and parent may have changed meanwhile.
+            try {
+                $copied = stream_copy_to_stream($input, $output, 26214401);
+
+                if ($copied === false || ! fflush($output)) {
+                    throw new RuntimeException('File replacement verification failed.');
+                }
+            } finally {
+                fclose($input);
+                fclose($output);
+            }
+
+            // Recheck both paths after the exclusive write and before rename.
             $this->assertSafeDestination($target);
             $this->assertSafeDestination($temp);
 
