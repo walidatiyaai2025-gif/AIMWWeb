@@ -84,7 +84,7 @@ if (! $zip->close() || filesize($output.'/'.$packageName) > 157286400) {
     throw new RuntimeException('ZIP exceeds release limits.');
 }
 $minimumSupportedVersion = (string) (getenv('AIWM_MIN_SUPPORTED_VERSION') ?: '0.0.0');
-if (! preg_match('/^[0-9]+\\.[0-9]+\\.[0-9]+$/D', $minimumSupportedVersion) ||
+if (! preg_match('/^[0-9]+[.][0-9]+[.][0-9]+$/D', $minimumSupportedVersion) ||
     version_compare($minimumSupportedVersion, $argv[1], '>')) {
     throw new RuntimeException('Invalid minimum supported upgrade version.');
 }
