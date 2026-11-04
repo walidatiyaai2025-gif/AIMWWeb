@@ -694,7 +694,15 @@ final class SystemUpdateService
         }
 
         foreach ($existing as $name => $wasPresent) {
-            $target = $this->targetPath($name);
+            // Inventory is persisted state, not a trust boundary: an interrupted
+            // update or tampered backup must never turn rollback into an
+            // arbitrary write/delete outside the signed update allowlist.
+            $this->validatePath((string) $name);
+            $target = $this->targetPath((string) $name);
+
+            // Recheck symlinks at rollback time. The destination may have been
+            // replaced after the initial stage/backup validation.
+            $this->assertSafeDestination($target);
 
             if ($wasPresent) {
                 $source = $backup.'/original/'.$name;
