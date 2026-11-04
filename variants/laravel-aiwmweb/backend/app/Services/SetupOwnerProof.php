@@ -22,7 +22,7 @@ final class SetupOwnerProof
     {
         $path = $this->path();
         $directory = dirname($path);
-        if (! is_dir($directory) && ! mkdir($directory, 0700, true) && ! is_dir($directory)) {
+        if (is_dir($directory) === false && mkdir($directory, 0700, true) === false && is_dir($directory) === false) {
             throw new RuntimeException('Private setup storage is unavailable.');
         }
 
@@ -37,7 +37,7 @@ final class SetupOwnerProof
         // Atomic creation ensures that anonymous page views cannot rotate the owner's proof.
         $handle = @fopen($path, 'x');
         if ($handle === false) {
-            if (is_file($path) && ! is_link($path)) {
+            if (is_file($path) && is_link($path) === false) {
                 return;
             }
             throw new RuntimeException('Could not create owner activation challenge.');
@@ -56,11 +56,11 @@ final class SetupOwnerProof
     {
         $path = $this->path();
         $submitted = $request->input('owner_activation_secret');
-        if (! is_string($submitted) || ! preg_match('/^[a-f0-9]{64}$/D', $submitted)) {
+        if (is_string($submitted) === false || preg_match('/^[a-f0-9]{64}$/D', $submitted) !== 1) {
             return false;
         }
 
-        if (! is_file($path) || is_link($path)) {
+        if (is_file($path) === false || is_link($path)) {
             return false;
         }
 
@@ -89,7 +89,7 @@ final class SetupOwnerProof
         }
 
         try {
-            if (! flock($handle, LOCK_EX | LOCK_NB)) {
+            if (flock($handle, LOCK_EX | LOCK_NB) === false) {
                 throw new RuntimeException('Another setup operation is in progress.');
             }
             return $action();
