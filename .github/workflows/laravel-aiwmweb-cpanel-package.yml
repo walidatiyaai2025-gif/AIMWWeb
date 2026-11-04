@@ -173,6 +173,14 @@ jobs:
           test "$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 http://127.0.0.1:18780/admin/system-updates)" = "302"
           echo "Real HTTP root, login and protected updater boundary validated after Setup ZIP install."
 
+      - name: Real signed ZIP upgrade on the extracted cPanel MySQL installation
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="${AIWM_SMOKE_ROOT:?Prior Setup ZIP smoke must export extracted installation path}"
+          php -l variants/laravel-aiwmweb/tools/release/smoke-signed-upgrade.php
+          php variants/laravel-aiwmweb/tools/release/smoke-signed-upgrade.php "$root"
+
       - name: Sign admin update only on approved manual release from green main
         env:
           AIWM_UPDATES_SECRET_KEY: ${{ secrets.AIWM_UPDATES_SECRET_KEY }}
