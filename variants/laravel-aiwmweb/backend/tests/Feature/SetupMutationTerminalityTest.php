@@ -4,9 +4,9 @@ namespace Tests\Feature;
 
 use App\Http\Controllers\SetupMutationController;
 use App\Models\Tenant;
-use App\Services\DatabaseSetupMutationService;
 use App\Models\TenantMembership;
 use App\Models\User;
+use App\Services\DatabaseSetupMutationService;
 use App\Services\SetupOwnerProof;
 use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
