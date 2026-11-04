@@ -188,6 +188,9 @@ jobs:
       - name: Sign admin update only on approved manual release from green main
         env:
           AIWM_UPDATES_SECRET_KEY: ${{ secrets.AIWM_UPDATES_SECRET_KEY }}
+          AIWM_UPDATES_TRUSTED_PUBLIC_KEY: ${{ secrets.AIWM_UPDATES_TRUSTED_PUBLIC_KEY }}
+          AIWM_UPDATES_SIGNER_ROTATED: ${{ secrets.AIWM_UPDATES_SIGNER_ROTATED }}
+          AIWM_CPANEL_ACCEPTANCE_VERIFIED: ${{ secrets.AIWM_CPANEL_ACCEPTANCE_VERIFIED }}
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
@@ -198,6 +201,17 @@ jobs:
           fi
           [[ "$GITHUB_REF" == "refs/heads/main" ]] || { echo "ERROR: releases must come from main"; exit 1; }
           [[ -n "${AIWM_UPDATES_SECRET_KEY:-}" ]] || { echo "ERROR: configure AIWM_UPDATES_SECRET_KEY in Actions secrets"; exit 1; }
+          [[ "${AIWM_UPDATES_SIGNER_ROTATED:-}" == 'yes' ]] || { echo 'BLOCKED: #1404 compromised signing key must be rotated before signing'; exit 1; }
+          [[ "${AIWM_CPANEL_ACCEPTANCE_VERIFIED:-}" == 'yes' ]] || { echo 'BLOCKED: actual cPanel acceptance not attested'; exit 1; }
+          php -r '
+            $secret=base64_decode((string)getenv("AIWM_UPDATES_SECRET_KEY"),true);
+            $trusted=base64_decode((string)getenv("AIWM_UPDATES_TRUSTED_PUBLIC_KEY"),true);
+            if (!is_string($secret) || strlen($secret)!==SODIUM_CRYPTO_SIGN_SECRETKEYBYTES ||
+                !is_string($trusted) || strlen($trusted)!==SODIUM_CRYPTO_SIGN_PUBLICKEYBYTES ||
+                !hash_equals($trusted,sodium_crypto_sign_publickey_from_secretkey($secret))) {
+              fwrite(STDERR,"BLOCKED: release private signer does not match trusted rotated verifier\n"); exit(1);
+            }
+          '
 
           gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$SOURCE_SHA&per_page=100"             > /tmp/aiwm-release-gates.json
           python3 - <<'PY'
