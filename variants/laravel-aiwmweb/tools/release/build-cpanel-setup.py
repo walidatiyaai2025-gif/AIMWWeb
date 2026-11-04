@@ -117,7 +117,7 @@ def write_zip(target: Path, commit: str, version: str) -> None:
     if not re.fullmatch(r"[a-f0-9]{40}", commit):
         raise ValueError("Exact 40-char source commit is required.")
 
-    if not re.fullmatch(r"[0-9]+\\.[0-9]+\\.[0-9]+", version):
+    if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version):
         raise ValueError("Setup version must be MAJOR.MINOR.PATCH.")
     if not (BACKEND / "vendor/autoload.php").is_file():
         raise FileNotFoundError("Build missing Composer vendor/autoload.php.")
@@ -187,11 +187,11 @@ def write_zip(target: Path, commit: str, version: str) -> None:
             "release_acceptance": "Must pass external signing, fresh install, upgrade and required CI gates",
         }, sort_keys=True, indent=2).encode("utf-8"))
         archive.writestr("RELEASE-NOTES.txt", (
-            "AIWMWeb Laravel FOODEX-standard installation candidate\\n"
-            f"Version: {version}\\nSource: {commit}\\n"
-            "15-stage ownership-gated browser setup with tenant/RBAC initialization.\\n"
-            "Admin updates require verified signed ZIPs and separately validated backup/recovery.\\n"
-            "A successful ZIP build by itself is NOT a production release approval.\\n"
+            "AIWMWeb Laravel FOODEX-standard installation candidate\n"
+            f"Version: {version}\nSource: {commit}\n"
+            "15-stage ownership-gated browser setup with tenant/RBAC initialization.\n"
+            "Admin updates require verified signed ZIPs and separately validated backup/recovery.\n"
+            "A successful ZIP build by itself is NOT a production release approval.\n"
         ).encode("utf-8"))
 
         readme = (
