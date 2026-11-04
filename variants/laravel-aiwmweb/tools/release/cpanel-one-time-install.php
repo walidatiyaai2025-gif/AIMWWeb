@@ -187,7 +187,7 @@ try {
         aiwmFailure('Unsafe owner activation path.');
     }
     // Created once, atomically, outside the public document root.
-    if (! is_file($ownerPath) && ! is_file($lockPath)) {
+    if (! is_file($ownerPath) && ! is_file($lockPath) && ! is_file($envPath)) {
         $ownerHandle = @fopen($ownerPath, 'x');
         if ($ownerHandle !== false) {
             chmod($ownerPath, 0600);
@@ -217,10 +217,30 @@ try {
         $_SESSION['aiwm_csrf'] = bin2hex(random_bytes(32));
     }
 
+    if (is_link($pendingPath) || is_link($envPath)) {
+        aiwmFailure('Unsafe installation checkpoint path.');
+    }
+    $pendingState = is_file($pendingPath)
+        ? json_decode((string) file_get_contents($pendingPath), true) : null;
+    $trustedCheckpoint = is_array($pendingState)
+        && ($pendingState['version'] ?? null) === 1
+        && is_string($pendingState['url'] ?? null)
+        && is_array($pendingState['database'] ?? null)
+        && array_keys($pendingState['database']) === ['host', 'port', 'name', 'user'];
     $pendingAuthorized = is_file($pendingPath) && ! empty($_SESSION['aiwm_authorized']);
-    if (is_file($envPath) && ! $pendingAuthorized) {
+    // Only the original private owner challenge can reopen a setup that wrote
+    // .env but was interrupted before installed.lock. Never reopen a completed
+    // installation or an unrelated pre-existing .env.
+    $ownerCanReprove = $trustedCheckpoint && is_file($ownerPath)
+        && ! is_link($ownerPath) && is_file($envPath) && ! is_file($lockPath);
+    if (is_file($envPath) && ! $pendingAuthorized && ! $ownerCanReprove) {
         http_response_code(403);
         aiwmPage('الموقع مثبت بالفعل', 0, '<p class="warn">يوجد ملف إعدادات سابق. حرصًا على حماية بياناتك لا يمكن تثبيت نظام جديد فوق قاعدة بيانات قائمة. استخدم مجلدًا وقاعدة بيانات جديدين أو استرجع النسخة الاحتياطية.</p>');
+    }
+    if ($ownerCanReprove && ! $pendingAuthorized
+        && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST'
+        && ($_POST['action'] ?? '') !== 'requirements') {
+        aiwmFailure('يجب إعادة إثبات ملكية الاستضافة قبل استئناف التثبيت.');
     }
 
     $failures = aiwmReadiness($appRoot);
@@ -255,6 +275,9 @@ try {
             session_regenerate_id(true);
             $_SESSION['aiwm_owner_verified'] = true;
             $_SESSION['aiwm_owner_verified_at'] = time();
+            if ($ownerCanReprove) {
+                $_SESSION['aiwm_authorized'] = true;
+            }
             $_SESSION['aiwm_step'] = 'php';
         } elseif ($action === 'php') {
             if (($_SESSION['aiwm_step'] ?? '') !== 'php') { aiwmFailure('ترتيب مراحل التثبيت غير صحيح.'); }
@@ -277,6 +300,9 @@ try {
                 parse_url($url, PHP_URL_PASS) !== null) {
                 aiwmFailure('APP_URL يجب أن يطابق نطاق HTTPS الحالي.');
             }
+            if ($pendingAuthorized && (!$trustedCheckpoint || $pendingState['url'] !== $url)) {
+                aiwmFailure('استئناف التثبيت يتطلب استخدام رابط الموقع الأصلي دون تغييره.');
+            }
             $_SESSION['aiwm_url'] = $url;
             $_SESSION['aiwm_step'] = 'database';
         } elseif ($action === 'database') {
@@ -298,6 +324,10 @@ try {
                 aiwmFailure('أدخل بيانات MySQL الصحيحة لجميع الحقول.');
             }
 
+            if ($pendingAuthorized && (!$trustedCheckpoint ||
+                $pendingState['database'] !== array_intersect_key($db, array_flip(['host', 'port', 'name', 'user'])))) {
+                aiwmFailure('استئناف التثبيت يتطلب نفس اتصال قاعدة البيانات الأصلي؛ لن يتم تعديل قاعدة أخرى.');
+            }
             $pdo = aiwmDatabase($db);
 
             if (! $pendingAuthorized) {
@@ -439,7 +469,12 @@ try {
             }
 
             $_SESSION['aiwm_authorized'] = true;
-            aiwmSave($pendingPath, gmdate('c')."\n");
+            if (! $pendingAuthorized) {
+                aiwmSave($pendingPath, json_encode([
+                    'version' => 1, 'url' => $url,
+                    'database' => array_intersect_key($db, array_flip(['host', 'port', 'name', 'user'])),
+                ], JSON_THROW_ON_ERROR)."\n");
+            }
             aiwmSave($envPath, $environment);
 
             // This is the SAME Laravel identity-creation service used by
