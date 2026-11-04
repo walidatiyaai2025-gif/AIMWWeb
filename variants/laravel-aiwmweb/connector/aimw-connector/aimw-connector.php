@@ -72,11 +72,12 @@ final class AIMW_Connector_V1
     {
         $platform = rtrim(esc_url_raw((string) $request['platform_url']), '/');
         $token = sanitize_text_field((string) $request['pairing_token']);
-        if (parse_url($platform, PHP_URL_SCHEME) !== 'https' || wp_http_validate_url($platform) === false) {
-            return new WP_Error('invalid_platform_url', 'A valid public HTTPS platform URL is required.', ['status' => 422]);
-        }
-        if (! $platform || ! $token) {
-            return new WP_Error('invalid_pairing', 'Platform URL and pairing token are required.', ['status' => 422]);
+        $parts = $platform !== '' ? wp_parse_url($platform) : false;
+        if (! is_array($parts) || strtolower((string) ($parts['scheme'] ?? '')) !== 'https'
+            || empty($parts['host']) || isset($parts['user']) || isset($parts['pass'])
+            || isset($parts['query']) || isset($parts['fragment'])
+            || strlen($platform) > 1024 || $token === '' || strlen($token) > 512) {
+            return new WP_Error('invalid_pairing', 'A valid HTTPS platform URL and pairing token are required.', ['status' => 422]);
         }
         $identity = wp_generate_uuid4();
         $response = wp_safe_remote_post($platform.'/api/connector/pair', [

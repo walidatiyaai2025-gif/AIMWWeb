@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "project_id": "AIMWWEB",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "authority": "Owner constitutional amendment",
+  "effective_scope": "remaining canonical parity closure until 100% terminal",
+  "concurrency": {
+    "implementation_worker_limit": 10,
+    "fill_available_slots_when_ready_tasks_exist": true,
+    "one_task_per_worker": true,
+    "overlapping_task_leases_prohibited": true
+  },
+  "task_branch_lifecycle": {
+    "one_canonical_branch_per_task": true,
+    "manager_or_lead_reconciles_branch_before_dispatch": true,
+    "implementation_worker_may_create_branch": false,
+    "replacement_worker_reuses_existing_task_id_and_branch": true,
+    "alternate_recovery_temporary_or_duplicate_branches_prohibited": true,
+    "branch_required_status": "BRANCH_REQUIRED"
+  },
+  "duplicate_prevention": {
+    "live_race_check_required_before_write": true,
+    "reconcile_operation_id_task_id_issue_pr_branch_worker_lease_sha": true,
+    "duplicate_implementation_prohibited": true,
+    "authoritative_remaining_work": "latest full canonical parity reconciliation plus live GitHub state"
+  },
+  "branch_retirement": {
+    "required_after_verified_merge": true,
+    "require_exact_head_merge_verification": true,
+    "require_zero_unique_unmerged_commits": true,
+    "delete_promptly_after_verification": true,
+    "blind_bulk_delete_prohibited": true,
+    "force_push_cleanup_prohibited": true
+  }
+}

@@ -10,7 +10,7 @@ export function CurrentUserSettingsControl({ context }: { context: FrontendConte
     const [target, setTarget] = useState<HTMLElement | null>(null);
 
     useEffect(() => {
-        setTarget(document.querySelector<HTMLElement>('.topbar-actions'));
+        setTarget(document.querySelector<HTMLElement>('.page-heading-actions'));
     }, []);
 
     const settingsRoute = workspaceRoutes.find((route) => route.key === 'settings');

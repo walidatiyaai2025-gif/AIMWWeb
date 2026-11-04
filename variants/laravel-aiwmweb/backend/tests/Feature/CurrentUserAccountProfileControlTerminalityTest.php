@@ -124,7 +124,7 @@ class CurrentUserAccountProfileControlTerminalityTest extends TestCase
         $this->assertStringContainsString("context.permissions.includes('tenant.view')", $control);
         $this->assertStringContainsString("context.api['account.profile'] === expectedProfileApi", $control);
         $this->assertStringContainsString("tenantUrl(context.tenant.slug, '/account/profile')", $control);
-        $this->assertStringContainsString("document.querySelector<HTMLElement>('.topbar-actions')", $control);
+        $this->assertStringContainsString("document.querySelector<HTMLElement>('.page-heading-actions')", $control);
         $this->assertStringNotContainsString('{user}', $control);
         $this->assertStringNotContainsString('{membership}', $control);
     }

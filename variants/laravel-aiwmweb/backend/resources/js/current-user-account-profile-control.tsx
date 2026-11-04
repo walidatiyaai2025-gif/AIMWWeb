@@ -10,7 +10,7 @@ export function CurrentUserAccountProfileControl({ context }: { context: Fronten
     const [target, setTarget] = useState<HTMLElement | null>(null);
 
     useEffect(() => {
-        setTarget(document.querySelector<HTMLElement>('.topbar-actions'));
+        setTarget(document.querySelector<HTMLElement>('.page-heading-actions'));
     }, []);
 
     const tenant = encodeURIComponent(context.tenant.slug);

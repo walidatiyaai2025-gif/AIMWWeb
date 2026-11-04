@@ -1,13 +1,16 @@
-# AIMW Connector v0.2.1 — WordPress owner pairing
+# AIMW Connector v0.2.1
 
-Installing the plugin does **not** automatically connect a WordPress site to Laravel AIWMWeb.
+Install the `aimw-connector` directory as a WordPress plugin. An administrator pairs it by POSTing `platform_url` and the one-time `pairing_token` to `/wp-json/aimw/v1/pair` while authenticated to WordPress.
 
-1. Sign in to Laravel AIWMWeb and open **Sites > Add site** inside the correct tenant.
-2. In WordPress, open **Users > Profile > Application Passwords**, create a dedicated application password and enter it with the WordPress username in Laravel. Save/test the HTTPS WordPress REST connection.
-3. After that site is saved, use Laravel **Generate one-time pairing token** for that specific site. It expires in 10 minutes.
-4. In WordPress as an administrator open **Tools > AIMW Connector**. Supply the Laravel platform HTTPS URL and the one-time token, then press **Pair with Laravel platform**.
-5. Verify the Connector state changes to **CONNECTED**, check the enabled scopes in WordPress and confirm connectivity/verification in Laravel. Sensitive scopes are disabled until the WordPress owner explicitly enables them.
+The connector accepts only versioned semantic REST operations. It uses HMAC-SHA256, timestamp/nonce replay protection, request/correlation/operation IDs, explicit scopes, WordPress capability checks for pairing, WordPress APIs for reads/writes, idempotent execution receipts, and a bounded local audit. It provides no raw SQL, arbitrary PHP, filesystem, or command execution surface.
 
-The Connector pairing call requires a WordPress admin capability, WordPress admin nonce, a publicly resolvable HTTPS Laravel URL and a current Laravel token bound to the intended tenant/site. Avoid posting token values in tickets, screenshots, chat or logs. A failed pair does not imply success and must not modify local credentials. The plugin uses HMAC-SHA256, versioned signed requests, nonce/replay prevention and audited scoped operations. It exposes no arbitrary PHP, SQL or filesystem command execution.
 
-For cPanel staging, initial REST connection works without running a permanent queue worker; follow the cPanel runbook before enabling bounded cron for queued syncs. Do not enable remote AI/Ollama just to pair a Connector.
+## Connect from the WordPress dashboard
+
+1. Install the released `aimw-connector.zip` from WordPress → Plugins → Add New → Upload Plugin and activate it.
+2. Open WordPress → Tools → AIMW Connector.
+3. Enter the AIWMWeb Manager HTTPS URL (for example `https://aiwm.walidatiya.com`), and a one-time pairing token generated in the corresponding AIWMWeb WordPress site workflow.
+4. Click **Connect & Verify**. A successful pairing stores the server-issued connector identity and secret locally, never the one-time token. Configure the permitted scopes after pairing.
+5. If pairing fails, check HTTPS, host reachability and that the token is valid for the correct site. No secret should be pasted into tickets or logs.
+
+The pairing handler is administrator-only and CSRF-protected; outbound calls use WordPress safe HTTP validation to avoid requests to internal/private targets.

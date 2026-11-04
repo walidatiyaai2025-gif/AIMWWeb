@@ -33,26 +33,32 @@ final class AIMW_Connector_Admin
             <p><strong>Connector identity:</strong> <?php echo esc_html((string) ($config['identity'] ?? 'Not paired')); ?></p>
             <p><strong>Secret:</strong> <em>stored locally and never displayed</em></p>
 
-
-            <h2>Connect to AI WordPress Manager</h2>
-            <p>First add and verify this WordPress site inside AI WordPress Manager using a WordPress Application Password. Then generate the site's one-time Connector pairing token there. Installing this plugin alone does not connect the sites.</p>
-            <?php if (isset($_GET['pair_status'])) : ?>
-                <?php if ($_GET['pair_status'] === 'connected') : ?>
-                    <div class="notice notice-success" role="status"><p>Pairing confirmed by the Laravel platform. Review the enabled scopes below.</p></div>
-                <?php else : ?>
-                    <div class="notice notice-error" role="alert"><p>Pairing failed. Verify the HTTPS platform URL and unexpired pairing token, then try again.</p></div>
-                <?php endif; ?>
+            <h2>Connect to AIWMWeb Manager</h2>
+            <p>Enter the HTTPS address of your Laravel AIWMWeb manager and the one-time pairing token created for this WordPress site in AIWMWeb. The token is used once and is never displayed again.</p>
+            <?php if (isset($_GET['pairing']) && $_GET['pairing'] === 'success') : ?>
+                <div class="notice notice-success"><p>Connected to AIWMWeb Manager successfully.</p></div>
+            <?php elseif (isset($_GET['pairing']) && $_GET['pairing'] === 'failed') : ?>
+                <div class="notice notice-error"><p>Connection failed. Verify the Manager URL, site pairing token and HTTPS connectivity. Your token is not stored on failure.</p></div>
             <?php endif; ?>
-            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="max-width:640px">
+            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" autocomplete="off">
                 <input type="hidden" name="action" value="aimw_connector_pair">
                 <?php wp_nonce_field('aimw_connector_pair'); ?>
-                <p><label for="aimw-platform-url"><strong>Laravel platform HTTPS URL</strong></label><br>
-                    <input id="aimw-platform-url" type="url" name="platform_url" value="<?php echo esc_attr((string) ($config['platform_url'] ?? '')); ?>" placeholder="https://aiwm.example.com" class="regular-text" required></p>
-                <p><label for="aimw-pair-token"><strong>One-time pairing token (expires in 10 minutes)</strong></label><br>
-                    <input id="aimw-pair-token" type="password" name="pairing_token" class="regular-text" autocomplete="off" required></p>
-                <p><button class="button button-primary" type="submit">Pair with Laravel platform</button></p>
+                <table class="form-table" role="presentation">
+                    <tr>
+                        <th scope="row"><label for="aimw-platform-url">Manager URL</label></th>
+                        <td><input id="aimw-platform-url" name="platform_url" type="url" class="regular-text" required
+                            placeholder="https://aiwm.walidatiya.com" value="<?php echo esc_attr((string) ($config['platform_url'] ?? '')); ?>" />
+                            <p class="description">The public HTTPS URL of your AIWMWeb Laravel platform, without /login or /wp-admin.</p></td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="aimw-pairing-token">One-time pairing token</label></th>
+                        <td><input id="aimw-pairing-token" name="pairing_token" type="password" class="regular-text" required
+                            maxlength="512" autocomplete="new-password" />
+                            <p class="description">Generate the token from the selected WordPress site in AIWMWeb. Never paste your WordPress or platform password here.</p></td>
+                    </tr>
+                </table>
+                <?php submit_button('Connect & Verify'); ?>
             </form>
-            <p>Pairing uses an authenticated WordPress administrator session. The token is never stored in this settings form; do not share it or paste it into public logs.</p>
 
             <h2>Owner-enabled scopes</h2>
             <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
@@ -100,32 +106,31 @@ final class AIMW_Connector_Admin
         <?php
     }
 
-
     public static function pair(): void
     {
         self::guard('aimw_connector_pair');
-        $url = isset($_POST['platform_url']) && is_string($_POST['platform_url'])
-            ? esc_url_raw(wp_unslash($_POST['platform_url']))
-            : '';
-        $token = isset($_POST['pairing_token']) && is_string($_POST['pairing_token'])
-            ? sanitize_text_field(wp_unslash($_POST['pairing_token']))
-            : '';
+        $rawUrl = $_POST['platform_url'] ?? '';
+        $rawToken = $_POST['pairing_token'] ?? '';
+        $platform = is_string($rawUrl) ? esc_url_raw(wp_unslash($rawUrl)) : '';
+        $token = is_string($rawToken) ? (string) wp_unslash($rawToken) : '';
+        $parts = $platform !== '' ? wp_parse_url($platform) : false;
 
-        $valid = parse_url($url, PHP_URL_SCHEME) === 'https'
-            && wp_http_validate_url($url) !== false
-            && $token !== '' && strlen($token) <= 4096;
-        $status = 'failed';
-        if ($valid) {
-            $request = new WP_REST_Request('POST', '/aimw/v1/pair');
-            $request->set_param('platform_url', $url);
-            $request->set_param('pairing_token', $token);
-            $result = AIMW_Connector_V1::pair($request);
-            if (! is_wp_error($result) && is_array($result) && ! empty($result['paired'])) {
-                $status = 'connected';
-            }
+        if (! is_array($parts) || strtolower((string) ($parts['scheme'] ?? '')) !== 'https'
+            || empty($parts['host']) || isset($parts['user']) || isset($parts['pass'])
+            || isset($parts['query']) || isset($parts['fragment'])
+            || strlen($platform) > 1024 || $token === '' || strlen($token) > 512) {
+            wp_safe_redirect(admin_url('tools.php?page=aimw-connector&pairing=failed'));
+            exit;
         }
 
-        wp_safe_redirect(add_query_arg('pair_status', $status, admin_url('tools.php?page=aimw-connector')));
+        $request = new WP_REST_Request('POST', '/aimw/v1/pair');
+        $request->set_param('platform_url', $platform);
+        $request->set_param('pairing_token', $token);
+        $result = AIMW_Connector_V1::pair($request);
+        $success = ! is_wp_error($result) && is_array($result) && ! empty($result['paired']);
+
+        // Do not put the pairing token or upstream response into query strings or logs.
+        wp_safe_redirect(admin_url('tools.php?page=aimw-connector&pairing='.($success ? 'success' : 'failed')));
         exit;
     }
 

@@ -1,0 +1,353 @@
+name: Laravel AIWMWeb cPanel Setup ZIP
+
+on:
+  pull_request:
+    paths:
+      - 'variants/laravel-aiwmweb/**'
+      - '.github/workflows/laravel-aiwmweb-cpanel-package.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'variants/laravel-aiwmweb/**'
+      - '.github/workflows/laravel-aiwmweb-cpanel-package.yml'
+  workflow_dispatch:
+    inputs:
+      minimum_supported_version:
+        description: Minimum installed Laravel version compatible with this signed release
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  build-cpanel-zip:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      BUILD_VERSION: ${{ github.event_name == 'workflow_dispatch' && format('1.0.{0}', github.run_number) || '0.0.0' }}
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: ci-root-only
+          MYSQL_DATABASE: aiwm_wizard_ci
+          MYSQL_USER: aiwm_wizard
+          MYSQL_PASSWORD: ci-user-only
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Prepare PHP 8.4 and required extensions
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_mysql, pdo_sqlite, zip, sodium, fileinfo, openssl
+          coverage: none
+
+      - name: Install production Composer dependencies
+        working-directory: variants/laravel-aiwmweb/backend
+        run: composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction --no-progress
+
+      - name: Install and build production frontend
+        working-directory: variants/laravel-aiwmweb/backend
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+
+      - name: Check installer PHP syntax and packager Python
+        run: |
+          php -l variants/laravel-aiwmweb/tools/release/cpanel-one-time-install.php
+          python3 -m py_compile variants/laravel-aiwmweb/tools/release/build-cpanel-setup.py
+
+      - name: Produce full installable Laravel Setup ZIP
+        shell: bash
+        run: |
+          mkdir -p artifacts/cpanel
+          python3 variants/laravel-aiwmweb/tools/release/build-cpanel-setup.py \
+            --sha "$SOURCE_SHA" \
+            --version "$BUILD_VERSION" \
+            --output artifacts/cpanel/AIWMWeb-Laravel-Setup.zip
+          cp artifacts/cpanel/AIWMWeb-Laravel-Setup.zip "artifacts/cpanel/AIWMWeb-Setup-v${BUILD_VERSION}.zip"
+
+      - name: Verify artifact safety and runnable layout
+        shell: python
+        run: |
+          from pathlib import PurePosixPath
+          from zipfile import ZipFile
+          import hashlib, json, pathlib
+          name = pathlib.Path("artifacts/cpanel/AIWMWeb-Laravel-Setup.zip")
+          with ZipFile(name) as archive:
+              members = archive.namelist()
+              required = [
+                  "app/vendor/autoload.php", "app/artisan", "app/bootstrap/app.php",
+                  "app/.env.example", "public/index.php", "public/.htaccess",
+                  "public/build/manifest.json", "public/install.php",
+                  "SETUP-MANIFEST.json", "START-HERE.txt",
+                  "BUILD-INFO.json", "RELEASE-NOTES.txt",
+              ]
+              for path in required:
+                  assert path in members, f"Missing required deployable: {path}"
+              assert "app/.env" not in members, "NEVER bundle production secrets"
+              assert not any(n.startswith("app/storage/") and not n.endswith("/") for n in members)
+              for n in members:
+                  p = PurePosixPath(n)
+                  assert not p.is_absolute() and ".." not in p.parts and "\\" not in n
+              index = archive.read("public/index.php").decode()
+              assert "../app/vendor/autoload.php" in index and "usePublicPath(__DIR__)" in index
+              manifest = json.loads(archive.read("SETUP-MANIFEST.json"))
+              assert manifest["source_sha"] == "${{ github.event.pull_request.head.sha || github.sha }}"
+              assert manifest["version"] == "${{ env.BUILD_VERSION }}"
+              build_info = json.loads(archive.read("BUILD-INFO.json"))
+              assert build_info["source_sha"] == manifest["source_sha"]
+              assert build_info["version"] == manifest["version"]
+              for path, expected in manifest["files"].items():
+                  assert hashlib.sha256(archive.read(path)).hexdigest() == expected, path
+              print("Verified one-ZIP cPanel setup from exact SHA", manifest["source_sha"])
+
+      - name: Smoke-test all wizard steps from the actual ZIP against empty MySQL
+        shell: bash
+        env:
+          AIWM_CI_MYSQL_PASSWORD: ci-user-only
+        run: |
+          set -euo pipefail
+          root="$(mktemp -d)"
+          unzip -q artifacts/cpanel/AIWMWeb-Laravel-Setup.zip -d "$root"
+          echo "AIWM_SMOKE_ROOT=$root" >> "$GITHUB_ENV"
+          php -l "$root/public/index.php"
+          php -l "$root/public/install.php"
+          php variants/laravel-aiwmweb/tools/release/smoke-cpanel-wizard.php \
+            "$root" "127.0.0.1" "aiwm_wizard_ci" "aiwm_wizard" "$AIWM_CI_MYSQL_PASSWORD"
+
+      - name: Verify CI-only signed update bundle with ephemeral Ed25519 key
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp -d)"
+          # Retain this EPHEMERAL, non-production signed artifact for the next
+          # acceptance step in the same disposable GitHub Actions runner.
+          echo "AIWM_CI_SIGNED_DIR=$tmp" >> "$GITHUB_ENV"
+          # The CI test key is random, never provisioned to any deployment and never uploaded.
+          CI_ONLY_SIGN_KEY="$(php -r '$p=sodium_crypto_sign_keypair(); file_put_contents($argv[1], base64_encode(sodium_crypto_sign_publickey($p))); echo base64_encode(sodium_crypto_sign_secretkey($p));' "$tmp/public-key")"
+          AIWM_UPDATES_SECRET_KEY="$CI_ONLY_SIGN_KEY" php variants/laravel-aiwmweb/tools/release/build-signed-update.php "0.0.$GITHUB_RUN_NUMBER" "$SOURCE_SHA" "$tmp"
+          unset CI_ONLY_SIGN_KEY
+          unzip -t "$tmp/AIWMWeb-Laravel-signed-bundle.zip" >/dev/null
+          php -r '
+            $m=file_get_contents($argv[1]."/AIWMWeb-Laravel-release.json");
+            $s=base64_decode(trim(file_get_contents($argv[1]."/AIWMWeb-Laravel-release.sig")), true);
+            $p=base64_decode(file_get_contents($argv[1]."/public-key"), true);
+            $j=json_decode($m, true, flags: JSON_THROW_ON_ERROR);
+            if (!sodium_crypto_sign_verify_detached($s,$m,$p) ||
+                !hash_equals($j["sha256"],hash_file("sha256",$argv[1]."/AIWMWeb-Laravel-update.zip")) ||
+                $j["sha"]!==$argv[2]) { exit(1); }
+            echo "Ephemeral signed bundle verified at exact source SHA, NOT a production release.\\n";
+          ' "$tmp" "$SOURCE_SHA"
+
+      - name: Browser-entry HTTP smoke after real full ZIP installation
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="${AIWM_SMOKE_ROOT:?CI smoke must export its own extracted ZIP path}"
+          test -s "$root/SETUP-MANIFEST.json"
+          test -s "$root/app/.env"
+          # A fresh verification DB avoids touching the install smoke DB.
+          # This job's preceding smoke has already migrated/initialized MySQL.
+          php -r 'echo "<?php\n\$path = parse_url(\$_SERVER[\"REQUEST_URI\"], PHP_URL_PATH);\nif (\$path !== \"/\" && is_file(__DIR__.\$path)) return false;\nrequire __DIR__.\"/index.php\";\n";' > "$root/public/ci-router.php"
+          php -S 127.0.0.1:18780 -t "$root/public" "$root/public/ci-router.php" > /tmp/aiwm-app-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsS --max-time 2 http://127.0.0.1:18780/ -o /tmp/aiwm-home.html; then break; fi
+            sleep 1
+          done
+          grep -q "AI WordPress Manager" /tmp/aiwm-home.html
+          if grep -q "Let's get started" /tmp/aiwm-home.html; then
+            echo "ERROR: Laravel starter view leaked onto the public homepage"; exit 1
+          fi
+          curl -fsS --max-time 10 http://127.0.0.1:18780/login > /tmp/aiwm-login.html
+          test "$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 http://127.0.0.1:18780/admin/system-updates)" = "302"
+          echo "Real HTTP root, login and protected updater boundary validated after Setup ZIP install."
+
+      - name: Real signed ZIP upgrade on the extracted cPanel MySQL installation
+        shell: bash
+        env:
+          AIWM_CI_MYSQL_ROOT_PASSWORD: ci-root-only
+        run: |
+          set -euo pipefail
+          root="${AIWM_SMOKE_ROOT:?Prior Setup ZIP smoke must export extracted installation path}"
+          php -l variants/laravel-aiwmweb/tools/release/smoke-signed-upgrade.php
+          php variants/laravel-aiwmweb/tools/release/smoke-signed-upgrade.php \
+            "$root" "$AIWM_CI_SIGNED_DIR/AIWMWeb-Laravel-signed-bundle.zip" "$AIWM_CI_SIGNED_DIR/public-key" "$AIWM_CI_MYSQL_ROOT_PASSWORD"
+          rm -rf "$AIWM_CI_SIGNED_DIR"
+
+      - name: Test immutable-main production release gate against adversarial evidence
+        run: python3 -m unittest discover -s variants/laravel-aiwmweb/tools/release -p 'test_verify_production_ci.py'
+
+      - name: Sign admin update only on approved manual release from green main
+        env:
+          AIWM_UPDATES_SECRET_KEY: ${{ secrets.AIWM_UPDATES_SECRET_KEY }}
+          AIWM_UPDATES_TRUSTED_PUBLIC_KEY: ${{ secrets.AIWM_UPDATES_TRUSTED_PUBLIC_KEY }}
+          AIWM_UPDATES_SIGNER_ROTATED: ${{ secrets.AIWM_UPDATES_SIGNER_ROTATED }}
+          AIWM_MIN_SUPPORTED_VERSION: ${{ inputs.minimum_supported_version }}
+          AIWM_CPANEL_ACCEPTANCE_VERIFIED: ${{ secrets.AIWM_CPANEL_ACCEPTANCE_VERIFIED }}
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" != "workflow_dispatch" ]]; then
+            echo "Setup ZIP built. Signed release is gated behind manual approved-main release dispatch."
+            exit 0
+          fi
+          [[ "$GITHUB_REF" == "refs/heads/main" ]] || { echo "ERROR: releases must come from main"; exit 1; }
+          [[ -n "${AIWM_UPDATES_SECRET_KEY:-}" ]] || { echo "ERROR: configure AIWM_UPDATES_SECRET_KEY in Actions secrets"; exit 1; }
+          [[ "${AIWM_UPDATES_SIGNER_ROTATED:-}" == 'yes' ]] || { echo 'BLOCKED: #1404 compromised signing key must be rotated before signing'; exit 1; }
+          [[ "${AIWM_CPANEL_ACCEPTANCE_VERIFIED:-}" == 'yes' ]] || { echo 'BLOCKED: actual cPanel acceptance not attested'; exit 1; }
+          [[ -n "${AIWM_MIN_SUPPORTED_VERSION:-}" ]] || { echo 'BLOCKED: minimum compatible installed version is required'; exit 1; }
+          php -r '
+            $secret=base64_decode((string)getenv("AIWM_UPDATES_SECRET_KEY"),true);
+            $trusted=base64_decode((string)getenv("AIWM_UPDATES_TRUSTED_PUBLIC_KEY"),true);
+            if (!is_string($secret) || strlen($secret)!==SODIUM_CRYPTO_SIGN_SECRETKEYBYTES ||
+                !is_string($trusted) || strlen($trusted)!==SODIUM_CRYPTO_SIGN_PUBLICKEYBYTES ||
+                !hash_equals($trusted,sodium_crypto_sign_publickey_from_secretkey($secret))) {
+              fwrite(STDERR,"BLOCKED: release private signer does not match trusted rotated verifier\n"); exit(1);
+            }
+          '
+
+          gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" > /tmp/aiwm-current-main.json
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$SOURCE_SHA&event=push&per_page=100" > /tmp/aiwm-release-gates.json
+          python3 variants/laravel-aiwmweb/tools/release/verify-production-ci.py \
+            /tmp/aiwm-current-main.json /tmp/aiwm-release-gates.json "$SOURCE_SHA"
+
+          php variants/laravel-aiwmweb/tools/release/build-signed-update.php \
+            "$BUILD_VERSION" "$SOURCE_SHA" artifacts/cpanel
+          cp artifacts/cpanel/AIWMWeb-Laravel-signed-bundle.zip "artifacts/cpanel/AIWMWeb-Update-v${BUILD_VERSION}.zip"
+          test -s artifacts/cpanel/AIWMWeb-Laravel-signed-bundle.zip
+
+      - name: Upload full Setup ZIP and optional signed update
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIWMWeb-Laravel-cPanel-${{ github.event.pull_request.head.sha || github.sha }}
+          path: artifacts/cpanel/
+          if-no-files-found: error
+          retention-days: 30
+
+  # Production publication requires BOTH immutable green-main CI and explicit
+  # independent owner attestations for signer rotation and real cPanel acceptance.
+  # Never publish an ephemeral CI-signed bundle as a trusted release.
+  publish-approved-release:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    needs: build-cpanel-zip
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    environment: production-release
+    permissions:
+      contents: write
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_SHA: ${{ github.sha }}
+      BUILD_VERSION: ${{ format('1.0.{0}', github.run_number) }}
+      AIWM_RELEASE_PUBLIC_KEY: ${{ secrets.AIWM_UPDATES_TRUSTED_PUBLIC_KEY }}
+      AIWM_MIN_SUPPORTED_VERSION: ${{ inputs.minimum_supported_version }}
+      AIWM_SIGNER_ROTATION_ATTESTED: ${{ secrets.AIWM_UPDATES_SIGNER_ROTATED }}
+      AIWM_CPANEL_ACCEPTANCE_ATTESTED: ${{ secrets.AIWM_CPANEL_ACCEPTANCE_VERIFIED }}
+    steps:
+      - name: Download immutable exact-source release candidates
+        uses: actions/download-artifact@v4
+        with:
+          name: AIWMWeb-Laravel-cPanel-${{ github.sha }}
+          path: artifacts/cpanel
+
+      - name: Prepare sodium verifier
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: sodium, zip
+          coverage: none
+
+      - name: Verify independent production release prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "${AIWM_SIGNER_ROTATION_ATTESTED:-}" == 'yes' ]] || { echo 'BLOCKED: exposed #1404 signing key must be rotated and owner-attested'; exit 1; }
+          [[ "${AIWM_CPANEL_ACCEPTANCE_ATTESTED:-}" == 'yes' ]] || { echo 'BLOCKED: actual cPanel acceptance evidence must be owner-attested'; exit 1; }
+          [[ -n "${AIWM_RELEASE_PUBLIC_KEY:-}" ]] || { echo 'BLOCKED: trusted rotated production verifier not provisioned'; exit 1; }
+          test -s "artifacts/cpanel/AIWMWeb-Setup-v${BUILD_VERSION}.zip"
+          test -s "artifacts/cpanel/AIWMWeb-Update-v${BUILD_VERSION}.zip"
+          test -s artifacts/cpanel/AIWMWeb-Laravel-release.json
+          test -s artifacts/cpanel/AIWMWeb-Laravel-release.sig
+          test -s artifacts/cpanel/AIWMWeb-Laravel-update.zip
+          test -s artifacts/cpanel/AIWMWeb-Laravel-signed-bundle.zip
+          php -r '
+            $m=file_get_contents($argv[1]);
+            $s=base64_decode(trim(file_get_contents($argv[2])),true);
+            $p=base64_decode((string)getenv("AIWM_RELEASE_PUBLIC_KEY"),true);
+            $j=json_decode($m,true,flags:JSON_THROW_ON_ERROR);
+            if (!is_string($p) || strlen($p)!==SODIUM_CRYPTO_SIGN_PUBLICKEYBYTES ||
+                !is_string($s) || strlen($s)!==SODIUM_CRYPTO_SIGN_BYTES ||
+                !sodium_crypto_sign_verify_detached($s,$m,$p) ||
+                !hash_equals($j["sha256"],hash_file("sha256",$argv[3])) ||
+                $j["sha"]!==getenv("SOURCE_SHA") || $j["version"]!==getenv("BUILD_VERSION") ||
+                $j["minimum_supported_version"]!==getenv("AIWM_MIN_SUPPORTED_VERSION")) {
+              fwrite(STDERR,"BLOCKED: signed production manifest does not match trusted rotated verifier or source SHA\n"); exit(1);
+            }
+          ' artifacts/cpanel/AIWMWeb-Laravel-release.json artifacts/cpanel/AIWMWeb-Laravel-release.sig artifacts/cpanel/AIWMWeb-Laravel-update.zip
+          python3 - <<'PY'
+          import json, os, zipfile
+          name = 'artifacts/cpanel/AIWMWeb-Setup-v' + os.environ['BUILD_VERSION'] + '.zip'
+          with zipfile.ZipFile(name) as z:
+              m = json.loads(z.read('SETUP-MANIFEST.json'))
+              assert m['source_sha'] == os.environ['SOURCE_SHA']
+              assert m['version'] == os.environ['BUILD_VERSION']
+          PY
+          unzip -p "artifacts/cpanel/AIWMWeb-Setup-v${BUILD_VERSION}.zip" BUILD-INFO.json > artifacts/cpanel/BUILD-INFO.json
+          unzip -p "artifacts/cpanel/AIWMWeb-Setup-v${BUILD_VERSION}.zip" RELEASE-NOTES.txt > artifacts/cpanel/RELEASE-NOTES.txt
+          (cd artifacts/cpanel && sha256sum AIWMWeb-Setup-v*.zip AIWMWeb-Update-v*.zip AIWMWeb-Laravel-release.json AIWMWeb-Laravel-release.sig AIWMWeb-Laravel-update.zip AIWMWeb-Laravel-signed-bundle.zip > SHA256SUMS.txt)
+          (cd artifacts/cpanel && sha256sum -c SHA256SUMS.txt)
+
+      # Validate the exact Git source verifier again after package signature
+      # checks, as a required push CI run may have been rerun in the meantime.
+      - name: Checkout exact-source release gate for publication
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Publish verified signed artifacts as one GitHub Release
+        shell: bash
+        run: |
+          set -euo pipefail
+          # A stable main SHA is not sufficient: required push CI may have
+          # been re-run and failed after the candidate was signed.
+          gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" > /tmp/aiwm-publish-main.json
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$SOURCE_SHA&event=push&per_page=100" > /tmp/aiwm-publish-gates.json
+          python3 variants/laravel-aiwmweb/tools/release/verify-production-ci.py \
+            /tmp/aiwm-publish-main.json /tmp/aiwm-publish-gates.json "$SOURCE_SHA"
+          if gh release view "v${BUILD_VERSION}" >/dev/null 2>&1; then
+            echo 'BLOCKED: release tag already exists; refusing to overwrite or republish'
+            exit 1
+          fi
+          gh release create "v${BUILD_VERSION}" \
+            "artifacts/cpanel/AIWMWeb-Setup-v${BUILD_VERSION}.zip" \
+            "artifacts/cpanel/AIWMWeb-Update-v${BUILD_VERSION}.zip" \
+            artifacts/cpanel/AIWMWeb-Laravel-release.json \
+            artifacts/cpanel/AIWMWeb-Laravel-release.sig \
+            artifacts/cpanel/AIWMWeb-Laravel-update.zip \
+            artifacts/cpanel/AIWMWeb-Laravel-signed-bundle.zip \
+            artifacts/cpanel/BUILD-INFO.json \
+            artifacts/cpanel/RELEASE-NOTES.txt \
+            artifacts/cpanel/SHA256SUMS.txt \
+            --target "$SOURCE_SHA" --title "AIWMWeb Laravel v${BUILD_VERSION}" \
+            --notes-file artifacts/cpanel/RELEASE-NOTES.txt

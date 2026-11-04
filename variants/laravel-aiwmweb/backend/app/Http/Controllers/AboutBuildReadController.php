@@ -22,7 +22,6 @@ final class AboutBuildReadController extends Controller
         $canOpenBuildApi = $context->membership()->hasPermission('execution.view');
 
         return view('platform.about-build', [
-            'tenantSlug' => $tenant,
             'build' => $buildInformation->snapshot(),
             'buildApiUrl' => $canOpenBuildApi ? '/api/build?tenant='.rawurlencode($tenant) : null,
             'currentRelease' => null,
