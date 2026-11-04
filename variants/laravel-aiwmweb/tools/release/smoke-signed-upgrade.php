@@ -48,6 +48,7 @@ $config = config();
 $config->set('system_updates.enabled', true);
 $config->set('system_updates.public_key', base64_encode(sodium_crypto_sign_publickey($keys)));
 $config->set('system_updates.current_version', '0.0.0');
+$config->set('system_updates.public_root', $root.'/public');
 
 $assert = static function (bool $condition, string $message): void {
     if (! $condition) {
@@ -94,6 +95,33 @@ try {
     $protectedUpload = $uploadDirectory.'/aiwm-upgrade-'.bin2hex(random_bytes(6)).'.bin';
     $uploadBytes = random_bytes(160);
     $assert(file_put_contents($protectedUpload, $uploadBytes) === strlen($uploadBytes), 'Cannot create protected upload');
+
+    // First exercise the FULL byte-for-byte Update ZIP from the release
+    // packager against the real previously installed Setup ZIP. Its signing
+    // key is ephemeral and never used for production releases.
+    if (isset($argv[2], $argv[3])) {
+        $candidatePath = realpath($argv[2]);
+        $publicKeyFile = realpath($argv[3]);
+        $assert($candidatePath !== false && $publicKeyFile !== false, 'Packaged signed update artifacts missing');
+        $trustedPublicKey = trim((string) file_get_contents($publicKeyFile));
+        $assert(strlen((string) base64_decode($trustedPublicKey, true)) === SODIUM_CRYPTO_SIGN_PUBLICKEYBYTES, 'Invalid CI test public key');
+
+        $config->set('system_updates.public_key', $trustedPublicKey);
+        $fullUpdater = $app->make(SystemUpdateService::class);
+        $fullUpload = new UploadedFile($candidatePath, 'AIWMWeb-Laravel-signed-bundle.zip', 'application/zip', null, true);
+        $fullPreview = $fullUpdater->verifyUpload($fullUpload);
+        $assert($fullPreview['file_count'] > 100, 'Full signed release must include real Laravel runtime files');
+        $fullReceipt = $fullUpdater->install(1, $fullUpload);
+        $assert($fullReceipt['version'] === $fullPreview['version'], 'Full package version was not installed');
+        $assert(isset($fullReceipt['database_backup']['id']) && $fullReceipt['database_backup']['verified'], 'Full package lacked verified MySQL backup');
+        $assert((int) DB::table('users')->count() === (int) $originalUsers, 'Full signed package lost users');
+        $assert(DB::table('tenants')->where('slug', $slug)->exists(), 'Full signed package lost tenant');
+        $assert(hash_file('sha256', $envPath) === $originalEnvHash, 'Full signed package changed .env');
+        $assert(hash_equals($uploadBytes, file_get_contents($protectedUpload)), 'Full signed package changed uploads');
+        $assert(! is_file(storage_path('framework/down')), 'Full package left maintenance enabled');
+        echo "PASS: exact release-packager ZIP installed through production updater, with protected data intact.\n";
+        $config->set('system_updates.public_key', base64_encode(sodium_crypto_sign_publickey($keys)));
+    }
 
     $marker = "<?php\n// Exact extracted ZIP signed-upgrade smoke probe.\n";
     $inner = new ZipArchive();
