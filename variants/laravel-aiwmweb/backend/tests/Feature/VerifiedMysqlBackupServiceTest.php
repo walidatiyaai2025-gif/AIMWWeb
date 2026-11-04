@@ -54,11 +54,11 @@ final class VerifiedMysqlBackupServiceTest extends TestCase
             );
             $service->restoreToEmptyDatabase($backup['id'], $target);
             $this->assertSame($sourceUsers, (int) $target->query('SELECT COUNT(*) FROM users')->fetchColumn());
-            $restored = $target->query('SELECT value FROM scoped_settings WHERE `key`="backup.test"')->fetchColumn();
+            $restored = $target->query('SELECT value FROM scoped_settings WHERE `key` = \'backup.test\'')->fetchColumn();
             $this->assertSame(['preserved' => true], json_decode((string) $restored, true));
-            $this->assertSame(1, (int) $target->query(
-                "SELECT COUNT(*) FROM tenants WHERE slug=".$target->quote($tenantSlug)
-            )->fetchColumn());
+            $tenantCount = $target->prepare('SELECT COUNT(*) FROM tenants WHERE slug = ?');
+            $tenantCount->execute([$tenantSlug]);
+            $this->assertSame(1, (int) $tenantCount->fetchColumn());
 
             try {
                 $service->restoreToEmptyDatabase($backup['id'], $target);
