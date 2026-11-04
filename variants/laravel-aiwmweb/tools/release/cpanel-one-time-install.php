@@ -187,7 +187,7 @@ try {
         aiwmFailure('Unsafe owner activation path.');
     }
     // Created once, atomically, outside the public document root.
-    if (! is_file($ownerPath) && ! is_file($lockPath)) {
+    if (! is_file($ownerPath) && ! is_file($lockPath) && ! is_file($envPath)) {
         $ownerHandle = @fopen($ownerPath, 'x');
         if ($ownerHandle !== false) {
             chmod($ownerPath, 0600);
