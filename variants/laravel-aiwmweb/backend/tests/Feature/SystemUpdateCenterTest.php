@@ -7,6 +7,7 @@ use App\Platform\SystemUpdateService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
@@ -188,11 +189,13 @@ final class SystemUpdateCenterTest extends TestCase
             $this->assertSame(str_repeat('a', 40), $verified['sha']);
             $this->assertTrue($verified['available']);
             $this->assertSame(hash_file('sha256', $payload), hash_file('sha256', $staged));
+
             // Verify that a valid signed ZIP cannot change code when the database
             // snapshot prerequisite is unsupported (SQLite CI test connection).
-            if (\Illuminate\Support\Facades\DB::connection()->getDriverName() === 'sqlite') {
+            if (DB::connection()->getDriverName() === 'sqlite') {
                 $target = base_path('app/SignedUpdateMarker.php');
                 $originalContents = is_file($target) ? file_get_contents($target) : null;
+
                 try {
                     app(SystemUpdateService::class)->install(
                         1,
@@ -202,10 +205,10 @@ final class SystemUpdateCenterTest extends TestCase
                 } catch (RuntimeException $e) {
                     $this->assertStringContainsString('requires mysql and sodium', $e->getMessage());
                 }
+
                 $this->assertSame($originalContents, is_file($target) ? file_get_contents($target) : null);
                 $this->assertFileDoesNotExist(storage_path('app/system-updates/installed.json'));
             }
-
 
             $tampered = new ZipArchive;
             $this->assertTrue($tampered->open($bundlePath) === true);
