@@ -5,6 +5,7 @@ namespace App\Platform;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Throwable;
 use ZipArchive;
@@ -192,6 +193,7 @@ final class SystemUpdateService
             }
 
             $files = $this->stageZip($zipPath, $work.'/staged', $release['manifest']['files']);
+            $migrationFiles = $release['manifest']['schema_migrations'] ?? [];
             // An update must never mutate code before a consistent, encrypted,
             // independently verified database snapshot has been completed.
             // On unsupported shared hosting the operation fails closed here.
@@ -205,6 +207,7 @@ final class SystemUpdateService
                 'sha' => $release['sha'],
                 'actor_id' => $actorId,
                 'database_backup' => $databaseBackup,
+                'schema_migrations' => $migrationFiles,
                 'installed_at' => now()->toIso8601String(),
                 'previous' => $previous ? [
                     'version' => $previous['version'] ?? 'unknown',
@@ -214,6 +217,7 @@ final class SystemUpdateService
 
             $maintenanceActive = false;
             $recoveryVerified = true;
+            $migrationStarted = false;
 
             try {
                 if (Artisan::call('down', ['--retry' => 30]) !== 0) {
@@ -233,11 +237,32 @@ final class SystemUpdateService
                     }
                 }
 
+                if ($migrationFiles !== []) {
+                    // From this point a migration may have committed irreversible DDL.
+                    // Never automatically roll back only the PHP files afterwards.
+                    $migrationStarted = true;
+                    if (Artisan::call('migrate', ['--force' => true]) !== 0) {
+                        throw new RuntimeException('Signed database migrations failed.');
+                    }
+                }
+
                 if (Artisan::call('optimize:clear') !== 0) {
                     throw new RuntimeException('Could not clear Laravel caches.');
                 }
+                if ((int) DB::connection()->selectOne('SELECT 1 AS health')->health !== 1) {
+                    throw new RuntimeException('Post-upgrade database health check failed.');
+                }
                 $this->atomicJson($this->dataPath('installed.json'), $receipt);
             } catch (Throwable $e) {
+                if ($migrationStarted) {
+                    $recoveryVerified = false;
+                    throw new RuntimeException(
+                        'Database migrations may have committed; site remains in maintenance. Do not restore files alone. Use the verified isolated database snapshot and assisted recovery.',
+                        0,
+                        $e,
+                    );
+                }
+
                 try {
                     $this->restoreBackup($backup);
                 } catch (Throwable $restoreFailure) {
@@ -408,6 +433,23 @@ final class SystemUpdateService
             $this->validatePath($name);
         }
 
+        $minimum = (string) ($manifest['minimum_supported_version'] ?? '0.0.0');
+        if (! preg_match('/^[0-9]+[.][0-9]+[.][0-9]+$/D', $minimum) ||
+            version_compare($minimum, $manifest['version'], '>') ||
+            version_compare($this->state()['version'], $minimum, '<')) {
+            throw new RuntimeException('Update is incompatible with the installed version.');
+        }
+        $migrationFiles = array_values(array_filter(
+            array_keys($manifest['files']),
+            static fn (string $name): bool => str_starts_with($name, 'database/migrations/'),
+        ));
+        $declared = $manifest['schema_migrations'] ?? [];
+        if (! is_array($declared) || array_values($declared) !== $migrationFiles ||
+            ($manifest['migration_policy'] ?? ($migrationFiles === [] ? 'none' : null)) !==
+                ($migrationFiles === [] ? 'none' : 'forward_only')) {
+            throw new RuntimeException('Signed database migration inventory or policy is invalid.');
+        }
+
         return $manifest;
     }
 
@@ -526,11 +568,20 @@ final class SystemUpdateService
             throw new RuntimeException('Unsafe file path in update package.');
         }
 
-        $allowed = ['app/', 'config/', 'resources/', 'routes/', 'vendor/', 'public/build/'];
+        $allowed = ['app/', 'config/', 'resources/', 'routes/', 'vendor/', 'public/build/', 'database/migrations/', 'database/seeders/'];
 
         if (! in_array($path, ['composer.json', 'composer.lock', 'artisan', 'bootstrap/app.php', 'bootstrap/providers.php'], true) &&
             ! $this->hasAllowedPrefix($allowed, $path)) {
             throw new RuntimeException('File is outside the allowed update directories.');
+        }
+
+        if (str_starts_with($path, 'database/migrations/') &&
+            ! preg_match('#^database/migrations/[0-9]{4}_[0-9]{2}_[0-9]{2}_[0-9]{6}_[A-Za-z0-9_]+[.]php$#D', $path)) {
+            throw new RuntimeException('Unsafe migration filename in signed update.');
+        }
+        if (str_starts_with($path, 'database/seeders/') &&
+            ! preg_match('#^database/seeders/[A-Za-z0-9_/]+[.]php$#D', $path)) {
+            throw new RuntimeException('Unsafe production seeder filename in signed update.');
         }
 
         if (str_starts_with($path, 'resources/') && str_contains($path, 'private')) {
