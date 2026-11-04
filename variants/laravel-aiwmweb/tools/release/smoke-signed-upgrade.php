@@ -119,6 +119,48 @@ try {
         $assert(hash_file('sha256', $envPath) === $originalEnvHash, 'Full signed package changed .env');
         $assert(hash_equals($uploadBytes, file_get_contents($protectedUpload)), 'Full signed package changed uploads');
         $assert(! is_file(storage_path('framework/down')), 'Full package left maintenance enabled');
+
+        // Prove the encrypted pre-upgrade snapshot can actually reconstruct the
+        // users and tenant data in a SEPARATE EMPTY MySQL schema. This never
+        // rewrites production or the installed test site's live database.
+        if (isset($argv[4]) && $argv[4] !== '') {
+            $mysql = config('database.connections.mysql');
+            $host = (string) ($mysql['host'] ?? '127.0.0.1');
+            $port = (string) ($mysql['port'] ?? '3306');
+            $dsn = 'mysql:host='.$host.';port='.$port.';charset=utf8mb4';
+            $adminPdo = new \\PDO($dsn, 'root', $argv[4], [\\PDO::ATTR_ERRMODE => \\PDO::ERRMODE_EXCEPTION]);
+            $recoverySchema = 'aiwm_ci_recovery_'.bin2hex(random_bytes(6));
+            $adminPdo->exec('CREATE DATABASE `'.$recoverySchema.'` CHARACTER SET utf8mb4');
+            try {
+                $recovered = new \\PDO(
+                    'mysql:host='.$host.';port='.$port.';dbname='.$recoverySchema.';charset=utf8mb4',
+                    'root',
+                    $argv[4],
+                    [\\PDO::ATTR_ERRMODE => \\PDO::ERRMODE_EXCEPTION],
+                );
+                $snapshot = $app->make(VerifiedMysqlBackupService::class);
+                $snapshot->restoreToEmptyDatabase($fullReceipt['database_backup']['id'], $recovered);
+                $assert((int) $recovered->query('SELECT COUNT(*) FROM users')->fetchColumn() === (int) $originalUsers, 'Recovered user count differs');
+                $assert(
+                    (int) $recovered->query('SELECT COUNT(*) FROM tenants WHERE slug='.$recovered->quote($slug))->fetchColumn() === 1,
+                    'Recovery lost original tenant',
+                );
+                $restoredValue = $recovered->query(
+                    'SELECT value FROM scoped_settings WHERE tenant_id='.(int) $tenantId.
+                    ' AND `key`='.$recovered->quote('ci.upgrade.preservation'),
+                )->fetchColumn();
+                $assert(json_decode((string) $restoredValue, true) === ['preserved' => true], 'Recovery lost tenant settings');
+                try {
+                    $snapshot->restoreToEmptyDatabase($fullReceipt['database_backup']['id'], $recovered);
+                    throw new RuntimeException('RECOVERY ACCEPTED A NONEMPTY TARGET');
+                } catch (RuntimeException $e) {
+                    $assert(str_contains($e->getMessage(), 'empty isolated MySQL'), 'Nonempty recovery rejection');
+                }
+                echo "PASS: authenticated database recovery into isolated empty MySQL schema preserves users and tenant data.\n";
+            } finally {
+                $adminPdo->exec('DROP DATABASE IF EXISTS `'.$recoverySchema.'`');
+            }
+        }
         echo "PASS: exact release-packager ZIP installed through production updater, with protected data intact.\n";
         $config->set('system_updates.public_key', base64_encode(sodium_crypto_sign_publickey($keys)));
     }
