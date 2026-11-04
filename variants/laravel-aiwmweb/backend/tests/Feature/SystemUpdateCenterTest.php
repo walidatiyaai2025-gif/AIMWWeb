@@ -26,6 +26,7 @@ final class SystemUpdateCenterTest extends TestCase
             ['POST', '/admin/system-updates/install'],
             ['POST', '/admin/system-updates/upload'],
             ['POST', '/admin/system-updates/verify'],
+            ['POST', '/admin/system-updates/backup'],
         ] as [$method, $path]) {
             $route = Route::getRoutes()->match(Request::create($path, $method));
             $this->assertContains('web', $route->gatherMiddleware());
@@ -42,6 +43,7 @@ final class SystemUpdateCenterTest extends TestCase
         $this->post('/admin/system-updates/install', ['confirmation' => 'INSTALL'])->assertRedirect('/login');
         $this->post('/admin/system-updates/upload', ['confirmation' => 'INSTALL'])->assertRedirect('/login');
         $this->post('/admin/system-updates/verify')->assertRedirect('/login');
+        $this->post('/admin/system-updates/backup', ['confirmation' => 'BACKUP'])->assertRedirect('/login');
 
         $user = User::factory()->create(['platform_admin' => false]);
         $this->actingAs($user)->get('/admin/system-updates')->assertForbidden();
@@ -49,6 +51,19 @@ final class SystemUpdateCenterTest extends TestCase
         $this->actingAs($user)->post('/admin/system-updates/install', ['confirmation' => 'INSTALL'])->assertForbidden();
         $this->actingAs($user)->post('/admin/system-updates/upload', ['confirmation' => 'INSTALL'])->assertForbidden();
         $this->actingAs($user)->post('/admin/system-updates/verify')->assertForbidden();
+        $this->actingAs($user)->post('/admin/system-updates/backup', ['confirmation' => 'BACKUP'])->assertForbidden();
+    }
+
+    public function test_backup_now_requires_confirmation_and_never_exposes_database_keys(): void
+    {
+        $admin = User::factory()->create(['platform_admin' => true]);
+        $this->actingAs($admin)->get('/admin/system-updates')
+            ->assertOk()
+            ->assertSee('Backup Now')
+            ->assertDontSee('AIWM_UPDATES_SECRET_KEY');
+
+        $this->actingAs($admin)->post('/admin/system-updates/backup')
+            ->assertSessionHasErrors('confirmation');
     }
 
     public function test_update_page_honestly_disables_installation_without_signing_configuration(): void
