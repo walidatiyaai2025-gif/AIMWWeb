@@ -3,8 +3,9 @@
 namespace App\Content\Remote;
 
 use App\Connector\ConnectorResourceReader;
+use App\Connector\WordPressGateway;
+use App\Models\Site;
 use Illuminate\Support\Str;
-use RuntimeException;
 
 final class ConnectorSemanticPath
 {
@@ -37,23 +38,13 @@ final class ConnectorSemanticPath
         return $this->gateway()->execute($this->site($siteId), (string) Str::uuid(), ['operation' => $operation, 'payload' => $payload]);
     }
 
-    private function gateway(): object
+    private function gateway(): WordPressGateway
     {
-        $contract = 'App\\Connector\\WordPressGateway';
-        if (!interface_exists($contract)) {
-            throw new RuntimeException('Connector semantic gateway is not integrated yet.');
-        }
-
-        return app($contract);
+        return app(WordPressGateway::class);
     }
 
-    private function site(int $siteId): object
+    private function site(int $siteId): Site
     {
-        $class = 'App\\Models\\Site';
-        if (!class_exists($class)) {
-            throw new RuntimeException('Site model is not integrated yet.');
-        }
-
-        return $class::query()->findOrFail($siteId);
+        return Site::query()->findOrFail($siteId);
     }
 }
