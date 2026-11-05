@@ -41,7 +41,7 @@ jobs:
       AIWM_MIN_SUPPORTED_VERSION: ${{ vars.AIWM_MIN_SUPPORTED_VERSION }}
     steps:
       - name: Checkout immutable candidate only
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.SOURCE_SHA }}
           persist-credentials: false

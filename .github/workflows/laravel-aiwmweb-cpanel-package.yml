@@ -45,7 +45,7 @@ jobs:
           --health-retries=12
     steps:
       - name: Checkout exact source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -253,7 +253,7 @@ jobs:
           test -s artifacts/cpanel/AIWMWeb-Laravel-signed-bundle.zip
 
       - name: Upload full Setup ZIP and optional signed update
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: AIWMWeb-Laravel-cPanel-${{ github.event.pull_request.head.sha || github.sha }}
           path: artifacts/cpanel/
@@ -282,7 +282,7 @@ jobs:
       AIWM_CPANEL_ACCEPTANCE_ATTESTED: ${{ secrets.AIWM_CPANEL_ACCEPTANCE_VERIFIED }}
     steps:
       - name: Download immutable exact-source release candidates
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: AIWMWeb-Laravel-cPanel-${{ github.sha }}
           path: artifacts/cpanel
@@ -337,7 +337,7 @@ jobs:
       # Validate the exact Git source verifier again after package signature
       # checks, as a required push CI run may have been rerun in the meantime.
       - name: Checkout exact-source release gate for publication
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.sha }}
           persist-credentials: false

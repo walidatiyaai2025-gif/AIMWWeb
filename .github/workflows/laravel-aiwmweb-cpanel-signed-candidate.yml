@@ -27,7 +27,7 @@ jobs:
       AIWM_SIGNER_ROTATED: ${{ secrets.AIWM_UPDATES_SIGNER_ROTATED }}
     steps:
       - name: Checkout exact main SHA
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.SOURCE_SHA }}
           persist-credentials: false
@@ -142,7 +142,7 @@ jobs:
           echo "NOT_PUBLISHED. NOT_DEPLOYED. Download test artifact and exercise isolated cPanel upgrade before enabling production release." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload signed candidate for isolated staging only
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: AIWMWeb-Laravel-SIGNED-STAGING-${{ github.sha }}
           path: ${{ runner.temp }}/candidate/
