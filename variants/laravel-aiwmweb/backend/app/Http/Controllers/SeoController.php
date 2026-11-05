@@ -23,7 +23,7 @@ final class SeoController extends Controller
 {
     public const RUN_FULL_AUDIT_OPERATION_ID = 'AIMW-BILL-3C55B3C299';
 
-    public function audits(int $site, TenantAuthorizer $auth): JsonResponse
+    public function audits(string $tenant, int $site, TenantAuthorizer $auth): JsonResponse
     {
         $auth->authorize('tenant.view');
         Site::query()->findOrFail($site);
@@ -46,7 +46,7 @@ final class SeoController extends Controller
         return response()->json($audit, 202);
     }
 
-    public function findings(int $site, int $audit, TenantAuthorizer $auth): JsonResponse
+    public function findings(string $tenant, int $site, int $audit, TenantAuthorizer $auth): JsonResponse
     {
         $auth->authorize('tenant.view');
         Site::query()->findOrFail($site);
@@ -55,7 +55,7 @@ final class SeoController extends Controller
         return response()->json(SeoFinding::query()->where('seo_audit_id', $audit)->orderBy('severity')->get());
     }
 
-    public function metadata(int $site, string $type, int $remoteId, TenantAuthorizer $auth, SeoManagerService $seo): JsonResponse
+    public function metadata(string $tenant, int $site, string $type, int $remoteId, TenantAuthorizer $auth, SeoManagerService $seo): JsonResponse
     {
         $auth->authorize('tenant.view');
         abort_unless(in_array($type, ['post', 'page'], true), 422, 'Unsupported WordPress resource type.');
@@ -64,7 +64,7 @@ final class SeoController extends Controller
         return response()->json($seo->inspectRemote($model, $type, $remoteId));
     }
 
-    public function provider(int $site, int $content, TenantAuthorizer $auth, SeoManagerService $seo): JsonResponse
+    public function provider(string $tenant, int $site, int $content, TenantAuthorizer $auth, SeoManagerService $seo): JsonResponse
     {
         $auth->authorize('tenant.view');
         Site::query()->findOrFail($site);
@@ -73,7 +73,7 @@ final class SeoController extends Controller
         return response()->json($seo->providerState($model->seo_provider));
     }
 
-    public function prepare(int $site, int $finding, Request $request, TenantAuthorizer $auth, SeoManagerService $seo): JsonResponse
+    public function prepare(string $tenant, int $site, int $finding, Request $request, TenantAuthorizer $auth, SeoManagerService $seo): JsonResponse
     {
         $auth->authorize('seo.write');
         Site::query()->findOrFail($site);
@@ -85,7 +85,7 @@ final class SeoController extends Controller
         return response()->json($seo->prepareRemediation($model, $request->user()->id, (array) ($data['changes'] ?? [])), 201);
     }
 
-    public function prepareBulk(int $site, Request $request, TenantAuthorizer $auth, SeoManagerService $seo): JsonResponse
+    public function prepareBulk(string $tenant, int $site, Request $request, TenantAuthorizer $auth, SeoManagerService $seo): JsonResponse
     {
         $auth->authorize('seo.write');
         Site::query()->findOrFail($site);
@@ -114,7 +114,7 @@ final class SeoController extends Controller
         return response()->json($result, $result['failed'] === [] ? 201 : 207);
     }
 
-    public function aiProposal(int $site, int $finding, TenantAuthorizer $auth, SeoManagerService $seo): JsonResponse
+    public function aiProposal(string $tenant, int $site, int $finding, TenantAuthorizer $auth, SeoManagerService $seo): JsonResponse
     {
         $auth->authorize('ai.use');
         Site::query()->findOrFail($site);
@@ -124,7 +124,7 @@ final class SeoController extends Controller
         return response()->json($seo->generateAiProposal($model, $site));
     }
 
-    public function executeBulk(int $site, Request $request, TenantContext $context, TenantAuthorizer $auth, ExecutionCreator $creator): JsonResponse
+    public function executeBulk(string $tenant, int $site, Request $request, TenantContext $context, TenantAuthorizer $auth, ExecutionCreator $creator): JsonResponse
     {
         $auth->authorize('seo.write');
         $auth->authorize('executions.manage');
@@ -151,7 +151,7 @@ final class SeoController extends Controller
         return response()->json($result, $result['failed'] === [] ? 202 : 207);
     }
 
-    public function retry(int $site, int $execution, TenantContext $context, TenantAuthorizer $auth, SeoManagerService $seo): JsonResponse
+    public function retry(string $tenant, int $site, int $execution, TenantContext $context, TenantAuthorizer $auth, SeoManagerService $seo): JsonResponse
     {
         $auth->authorize('seo.write');
         $auth->authorize('executions.manage');
