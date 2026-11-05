@@ -47,6 +47,6 @@ describe('local WordPress read workspace routes', () => {
         const ctx = context();
         const route = workspaceRoutes.find((value) => value.key === 'posts')!;
         expect(resolveCapability(ctx, route).state).toBe('enabled');
-        expect(resolveCapability(ctx, route, 'posts.create').state).toBe('pending_integration');
+        expect(resolveCapability(ctx, route, 'posts.create').state).toBe('connector_unavailable');
     });
 });
