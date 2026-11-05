@@ -6,9 +6,9 @@ use App\Connector\WordPressGateway;
 use App\Models\Site;
 use App\Models\SyncedContent;
 use App\Models\SyncRun;
-use App\Sync\SyncDiagnosticFormatter;
 use App\Services\SeoManagerService;
 use App\Sites\SiteOperationHistoryService;
+use App\Sync\SyncDiagnosticFormatter;
 use Throwable;
 
 final class SyncSiteJob extends TenantAwareJob
