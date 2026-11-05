@@ -4,6 +4,7 @@ use App\Http\Controllers\AiBatchController;
 use App\Http\Controllers\AiUsageReadController;
 use App\Http\Controllers\ContentApiController;
 use App\Http\Controllers\ContentExplorerReadController;
+use App\Http\Controllers\DemoController;
 use App\Http\Controllers\EmailNotificationController;
 use App\Http\Controllers\GlobalPagesDraftController;
 use App\Http\Controllers\GlobalPagesPendingController;
@@ -24,6 +25,11 @@ use App\Http\Controllers\WordPressUsersController;
 use App\Sync\GlobalSynchronizationAcceptRemoteService;
 use App\Sync\GlobalSynchronizationConflictReviewService;
 use Illuminate\Support\Facades\Route;
+
+// WordPress plugin pairing is a server-to-server API call without Laravel's browser CSRF cookie.
+// Keep rate limiting and the short-lived single-use token verification in PairingService.
+Route::post('connector/pair', [DemoController::class, 'completePairing'])
+    ->middleware('throttle:20,1');
 
 Route::middleware(['web', 'auth'])->controller(PlatformReadController::class)->group(function (): void {
     Route::get('build', 'build')->name('canonical.api.build');
