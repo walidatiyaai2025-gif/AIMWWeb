@@ -2,29 +2,25 @@
 
 namespace App\Content\Remote;
 
+use App\Connector\ConnectorResourceReader;
+
 use Illuminate\Support\Str;
 use RuntimeException;
 
 final class ConnectorSemanticPath
 {
+    public function __construct(private readonly ConnectorResourceReader $resources) {}
+
     public function list(int $siteId, string $resource, array $query = []): array
     {
-        if (in_array($resource, ['posts', 'pages', 'media', 'categories', 'tags'], true) && empty($query)) {
-            $all = $this->gateway()->content($this->site($siteId));
-
-            return data_get($all, $resource, data_get($all, 'data.'.$resource, [])) ?: [];
-        }
-
-        return data_get($this->execute($siteId, 'content.list', compact('resource', 'query')), 'items', []);
+        // Never route a read through /execute: the WordPress Connector only
+        // authorizes approved mutations there, not a synthetic content.list.
+        return $this->resources->listResource($this->site($siteId), $resource, $query);
     }
 
     public function get(int $siteId, string $resource, int $remoteId): array
     {
-        $type = match ($resource) {
-            'posts' => 'post','pages' => 'page', default => $resource
-        };
-
-        return $this->gateway()->read($this->site($siteId), $type, $remoteId);
+        return $this->resources->getResource($this->site($siteId), $resource, $remoteId);
     }
 
     public function mutate(int $siteId, string $resource, ?int $remoteId, string $action, array $payload = []): array
