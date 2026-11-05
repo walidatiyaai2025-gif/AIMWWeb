@@ -8,6 +8,7 @@ REPO = VARIANT.parents[1]
 CRON = VARIANT / "backend" / "aiwm-cpanel-https-pull.php"
 WORKFLOW = REPO / ".github/workflows/laravel-aiwmweb-cpanel-https-release.yml"
 SSH_WORKFLOW = REPO / ".github/workflows/laravel-aiwmweb-cpanel-ssh-deploy.yml"
+STAGING_WORKFLOW = REPO / ".github/workflows/laravel-aiwmweb-cpanel-signed-candidate.yml"
 PACKAGER = VARIANT / "tools/release/build-signed-update.php"
 SETUP = VARIANT / "tools/release/build-cpanel-setup.py"
 UPDATER = VARIANT / "backend/app/Platform/SystemUpdateService.php"
@@ -56,6 +57,27 @@ class HttpsPullReleaseTests(unittest.TestCase):
         for forbidden in ("ssh ", "scp ", "rsync ", "StrictHostKeyChecking=no", "AIWM_DEPLOY_SSH_PRIVATE_KEY"):
             self.assertNotIn(forbidden, workflow)
         self.assertIn("AIWM_SSH_CD_ENABLED == 'true'", SSH_WORKFLOW.read_text(encoding="utf8"))
+
+    def test_signed_staging_candidate_is_manual_only_and_never_publishes(self):
+        workflow = STAGING_WORKFLOW.read_text(encoding="utf8")
+        for anchor in (
+            "workflow_dispatch:", "github.ref == 'refs/heads/main'",
+            "verify-production-ci.py", "AIWM_MIN_SUPPORTED_VERSION",
+            "secrets.AIWM_UPDATES_SECRET_KEY",
+            "secrets.AIWM_UPDATES_TRUSTED_PUBLIC_KEY",
+            "secrets.AIWM_UPDATES_SIGNER_ROTATED",
+            "prepare_signed_deploy.py", "build-signed-update.php",
+            "sodium_crypto_sign_verify_detached",
+            "hash_file(\"sha256\",", "actions/upload-artifact@v4",
+            "SIGNED_STAGING_CANDIDATE", "NOT_PUBLISHED. NOT_DEPLOYED.",
+        ):
+            self.assertIn(anchor, workflow)
+        for forbidden in (
+            "workflow_run:", "gh release create", "AIWM_HTTPS_CD_ENABLED",
+            "AIWM_CPANEL_ACCEPTANCE_VERIFIED", "ssh ", "scp ", "rsync ",
+            "StrictHostKeyChecking=no", "AIWM_DEPLOY_SSH_PRIVATE_KEY",
+        ):
+            self.assertNotIn(forbidden, workflow)
 
     def test_every_release_contains_same_private_cron_script_and_blocks_public_install(self):
         self.assertIn('"aiwm-cpanel-https-pull.php"', SETUP.read_text(encoding="utf8"))
