@@ -34,7 +34,7 @@ final class WelcomePrimaryCtaTerminalityTest extends TestCase
 
         $this->assertStringContainsString(self::OPERATION_ID, $view);
         $this->assertStringContainsString(
-            "href=\"{{ \$isAuthenticated ? '/' : route('register', [], false) }}\"",
+            "href=\"{{ \$isAuthenticated ? route('public.dashboard.bridge', [], false) : route('register', [], false) }}\"",
             $view,
         );
         $this->assertStringContainsString("'Open workspace'", $view);
@@ -65,14 +65,14 @@ final class WelcomePrimaryCtaTerminalityTest extends TestCase
             ->get('/welcome?lang=en')
             ->assertOk()
             ->assertSee('data-canonical-operation="'.self::OPERATION_ID.'"', false)
-            ->assertSee('href="/"', false)
+            ->assertSee('href="/dashboard"', false)
             ->assertSee('Open workspace');
 
         $this->actingAs($user)
             ->get('/welcome?lang=ar')
             ->assertOk()
             ->assertSee('data-canonical-operation="'.self::OPERATION_ID.'"', false)
-            ->assertSee('href="/"', false)
+            ->assertSee('href="/dashboard"', false)
             ->assertSee('فتح مساحة العمل');
     }
 

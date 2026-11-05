@@ -29,7 +29,7 @@ final class WelcomeAuthenticatedHeaderLinkTerminalityTest extends TestCase
         $this->assertStringContainsString('_isAuthenticated ? (L.IsArabic ? "لوحة التحكم" : "Dashboard")', $source);
 
         $this->assertStringContainsString(self::OPERATION_ID, $view);
-        $this->assertStringContainsString("href=\"{{ \$isAuthenticated ? '/' : '/login' }}\"", $view);
+        $this->assertStringContainsString("href=\"{{ \$isAuthenticated ? route('public.dashboard.bridge', [], false) : '/login' }}\"", $view);
         $this->assertStringContainsString("'Dashboard'", $view);
         $this->assertStringContainsString("'Sign in'", $view);
         $this->assertSame(1, substr_count($view, 'data-canonical-operation="'.self::OPERATION_ID.'"'));
@@ -58,14 +58,14 @@ final class WelcomeAuthenticatedHeaderLinkTerminalityTest extends TestCase
             ->get('/welcome?lang=en')
             ->assertOk()
             ->assertSee('data-canonical-operation="'.self::OPERATION_ID.'"', false)
-            ->assertSee('href="/"', false)
+            ->assertSee('href="/dashboard"', false)
             ->assertSee('>Dashboard</a>', false);
 
         $this->actingAs($user)
             ->get('/welcome?lang=ar')
             ->assertOk()
             ->assertSee('data-canonical-operation="'.self::OPERATION_ID.'"', false)
-            ->assertSee('href="/"', false)
+            ->assertSee('href="/dashboard"', false)
             ->assertSee('>لوحة التحكم</a>', false);
     }
 
