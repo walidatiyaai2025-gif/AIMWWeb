@@ -291,9 +291,18 @@ export function resolveCapability(
         );
         if (!supportingConnector) {
             const ownerDisabled = context.connectors.find(supportsRead);
+            // A paired Connector's content.read permits lists, not create,
+            // publish, bulk mutation or delete. Never grant write access via
+            // the legacy per-resource read scope alias.
+            const readOnlyConnector = operation !== 'view'
+                && localContentReadScopes.has(route.connectorScope!)
+                && context.connectors.some((connector) =>
+                    connector.state === 'connected' && connector.scopes.includes('content.read'));
             return {
                 state: ownerDisabled?.reason === 'disabled_by_owner' ? 'disabled_by_owner' : 'connector_unavailable',
-                reason: ownerDisabled?.reason ?? `Connector scope ${route.connectorScope} is not currently advertised.`,
+                reason: ownerDisabled?.reason ?? (readOnlyConnector
+                    ? `Action '${operation}' requires a separately authorized write capability; content.read is read-only.`
+                    : `Connector scope ${route.connectorScope} is not currently advertised.`),
             };
         }
     }

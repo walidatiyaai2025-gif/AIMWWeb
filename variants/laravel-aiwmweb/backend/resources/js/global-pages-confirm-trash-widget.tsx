@@ -398,7 +398,7 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
                         </table>
                     </div>
                 </>
-            ) : (!query.isLoading ? <p>{locale === 'ar' ? 'لا توجد صفحات متزامنة.' : 'No synchronized pages are available.'}</p> : null)}
+            ) : (!query.isLoading && !query.error ? <p>{locale === 'ar' ? 'لا توجد صفحات متزامنة.' : 'No synchronized pages are available.'}</p> : null)}
 
             {confirmOpen ? (
                 <div className="dialog-backdrop" role="presentation">

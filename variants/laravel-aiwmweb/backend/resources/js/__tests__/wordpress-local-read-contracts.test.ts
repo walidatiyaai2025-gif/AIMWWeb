@@ -47,6 +47,9 @@ describe('local WordPress read workspace routes', () => {
         const ctx = context();
         const route = workspaceRoutes.find((value) => value.key === 'posts')!;
         expect(resolveCapability(ctx, route).state).toBe('enabled');
-        expect(resolveCapability(ctx, route, 'posts.create').state).toBe('connector_unavailable');
+        const create = resolveCapability(ctx, route, 'posts.create');
+        expect(create.state).toBe('connector_unavailable');
+        expect(create.reason).toContain('content.read is read-only');
+        expect(create.reason).not.toContain('posts.read');
     });
 });

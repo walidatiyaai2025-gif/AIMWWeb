@@ -237,7 +237,7 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
         onError: (error) => notify(
             error instanceof Error
                 ? error.message
-                : (locale === 'ar' ? 'فشل نقل الصفحات إلى سلة المهملات.' : 'Moving pages to trash failed.'),
+                : (locale === 'ar' ? 'فشل نقل المقالات إلى سلة المهملات.' : 'Moving posts to trash failed.'),
             'error',
         ),
     });
@@ -269,14 +269,14 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
     };
 
     return (
-        <section className="panel data-panel" aria-label={locale === 'ar' ? 'إدارة الصفحات عبر المواقع' : 'Global posts management'}>
+        <section className="panel data-panel" aria-label={locale === 'ar' ? 'إدارة المقالات عبر المواقع' : 'Global posts management'}>
             <header className="panel-header">
                 <div>
-                    <span className="workspace-kicker">GLOBAL PAGES</span>
-                    <h2>{locale === 'ar' ? 'نقل الصفحات المحددة إلى سلة المهملات' : 'Move selected posts to trash'}</h2>
+                    <span className="workspace-kicker">GLOBAL POSTS</span>
+                    <h2>{locale === 'ar' ? 'نقل المقالات المحددة إلى سلة المهملات' : 'Move selected posts to trash'}</h2>
                     <p>{locale === 'ar'
-                        ? 'يتم التحقق من كل موقع وصفحة ضمن الحساب الحالي قبل أي تغيير.'
-                        : 'Every site and page is revalidated inside the active tenant before mutation.'}</p>
+                        ? 'يتم التحقق من كل موقع ومقال ضمن الحساب الحالي قبل أي تغيير.'
+                        : 'Every site and post is revalidated inside the active tenant before mutation.'}</p>
                 </div>
                 <span className="count-badge">{selectedTargets.length}</span>
             </header>
@@ -306,7 +306,7 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
                 </button>
             </div>
             {sitesQuery.error ? <p role="alert">{locale === 'ar' ? 'تعذر تحميل المواقع؛ استخدم البحث والحالة.' : 'Sites could not be loaded; search and status remain available.'}</p> : null}
-            {query.isLoading ? <p>{locale === 'ar' ? 'جارٍ تحميل الصفحات…' : 'Loading pages…'}</p> : null}
+            {query.isLoading ? <p>{locale === 'ar' ? 'جارٍ تحميل المقالات…' : 'Loading posts…'}</p> : null}
             {query.error ? <p role="alert">{String(query.error)}</p> : null}
 
             {rows.length ? (
@@ -378,7 +378,7 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
                         </button>
                     </div>
 
-                    <div className="table-scroll" role="region" aria-label={locale === 'ar' ? 'اختيار الصفحات' : 'Post selection'}>
+                    <div className="table-scroll" role="region" aria-label={locale === 'ar' ? 'اختيار المقالات' : 'Post selection'}>
                         <table className="data-table">
                             <thead>
                                 <tr>
@@ -419,14 +419,14 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
                         </table>
                     </div>
                 </>
-            ) : (!query.isLoading ? <p>{locale === 'ar' ? 'لا توجد صفحات متزامنة.' : 'No synchronized pages are available.'}</p> : null)}
+            ) : (!query.isLoading && !query.error ? <p>{locale === 'ar' ? 'لا توجد مقالات متزامنة بعد؛ افتح المزامنة لجلب محتوى WordPress.' : 'No synchronized posts yet; open synchronization to import WordPress content.'}</p> : null)}
 
             {confirmOpen ? (
                 <div className="dialog-backdrop" role="presentation">
                     <section className="dialog-card" role="dialog" aria-modal="true" aria-labelledby="global-posts-trash-title">
-                        <h3 id="global-posts-trash-title">{locale === 'ar' ? 'نقل الصفحات إلى سلة المهملات؟' : 'Move pages to trash?'}</h3>
+                        <h3 id="global-posts-trash-title">{locale === 'ar' ? 'نقل المقالات إلى سلة المهملات؟' : 'Move posts to trash?'}</h3>
                         <p>{locale === 'ar'
-                            ? `سيتم تغيير ${selectedTargets.length} صفحة محددة عبر مواقع WordPress الحية.`
+                            ? `سيتم تغيير ${selectedTargets.length} مقال محدد عبر مواقع WordPress الحية.`
                             : `This will change ${selectedTargets.length} selected post(s) across live WordPress sites.`}</p>
                         <div className="toolbar-actions">
                             <button
