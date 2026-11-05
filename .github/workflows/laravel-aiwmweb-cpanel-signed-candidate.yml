@@ -107,6 +107,9 @@ jobs:
           set -euo pipefail
           php variants/laravel-aiwmweb/tools/release/build-signed-update.php \
             "$VERSION" "$SOURCE_SHA" "$RUNNER_TEMP/candidate"
+          python3 variants/laravel-aiwmweb/tools/release/verify-signed-update-compat.py \
+            "$RUNNER_TEMP/candidate/AIWMWeb-Laravel-release.json" \
+            "$RUNNER_TEMP/candidate/AIWMWeb-Laravel-update.zip"
           unzip -t "$RUNNER_TEMP/candidate/AIWMWeb-Laravel-signed-bundle.zip" >/dev/null
           php -r '
             $raw=file_get_contents($argv[1]);
