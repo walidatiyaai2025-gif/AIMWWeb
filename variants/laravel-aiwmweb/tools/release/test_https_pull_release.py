@@ -60,6 +60,10 @@ class HttpsPullReleaseTests(unittest.TestCase):
     def test_every_release_contains_same_private_cron_script_and_blocks_public_install(self):
         self.assertIn('"aiwm-cpanel-https-pull.php"', SETUP.read_text(encoding="utf8"))
         self.assertIn("'aiwm-cpanel-https-pull.php'", PACKAGER.read_text(encoding="utf8"))
+        signed = PACKAGER.read_text(encoding="utf8")
+        self.assertIn("version_compare($minimumSupportedVersion, '1.0.0', '<')", signed)
+        self.assertIn("unset($files['public/downloads/aimw-connector.zip'], $files['aiwm-cpanel-https-pull.php'])", signed)
+        self.assertIn("minimum_supported_version", signed)
         self.assertIn("'aiwm-cpanel-https-pull.php'", UPDATER.read_text(encoding="utf8"))
         config = CONFIG.read_text(encoding="utf8")
         self.assertIn("'auto_pull_enabled'", config)
