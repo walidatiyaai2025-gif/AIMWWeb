@@ -147,7 +147,7 @@ describe('runtime inspector safe diagnostics', () => {
 
         expect(await screen.findByText(/Canonical content sync not started/)).toBeInTheDocument();
         expect(fetchMock).toHaveBeenCalledTimes(1);
-        expect(fetchMock.mock.calls[0][0]).toBe('/tenants/wordpress/runtime-inspector/report');
+        expect(fetchMock.mock.calls[0][0]).toBe('/tenants/wordpress/runtime-inspector/report?probe=1');
         expect(exportButton).toBeEnabled();
         fireEvent.click(exportButton);
         expect(click).toHaveBeenCalled();
