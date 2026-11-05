@@ -3,13 +3,14 @@
 namespace App\Content\Remote;
 
 use App\Connector\ConnectorResourceReader;
-
 use Illuminate\Support\Str;
 use RuntimeException;
 
 final class ConnectorSemanticPath
 {
-    public function __construct(private readonly ConnectorResourceReader $resources) {}
+    public function __construct(private readonly ConnectorResourceReader $resources)
+    {
+    }
 
     public function list(int $siteId, string $resource, array $query = []): array
     {
