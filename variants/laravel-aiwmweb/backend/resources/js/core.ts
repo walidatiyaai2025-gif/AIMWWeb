@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { recordApiObservation } from './runtime-inspector-capture';
 
 export type Locale = 'en' | 'ar';
 export type CapabilityState =
@@ -96,11 +97,21 @@ export async function apiRequest<T>(url: string, init: RequestInit = {}): Promis
     if (csrf) headers.set('X-CSRF-TOKEN', csrf);
     if (init.body && !(init.body instanceof FormData)) headers.set('Content-Type', 'application/json');
 
-    const response = await fetch(url, {
-        credentials: 'same-origin',
-        ...init,
-        headers,
-    });
+    // Only structural route, HTTP code and duration are retained in local memory.
+    // No headers, query strings, request body, response payload or token is recorded.
+    const started = Date.now();
+    let response: Response;
+    try {
+        response = await fetch(url, {
+            credentials: 'same-origin',
+            ...init,
+            headers,
+        });
+    } catch (error) {
+        recordApiObservation(url, init.method ?? 'GET', null, Date.now() - started);
+        throw error;
+    }
+    recordApiObservation(url, init.method ?? 'GET', response.status, Date.now() - started);
 
     const contentType = response.headers.get('content-type') ?? '';
     const payload = contentType.includes('application/json')
