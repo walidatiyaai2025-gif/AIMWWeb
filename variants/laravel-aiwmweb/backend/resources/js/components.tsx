@@ -666,6 +666,10 @@ export function AppShell({ context, children }: { context: FrontendContext; chil
     const location = useLocation();
     const navigate = useNavigate();
     const params = useParams();
+    const installedVersion = context.release?.version?.trim();
+    const releaseSha = context.release?.sha && /^[a-f0-9]{40}$/i.test(context.release.sha)
+        ? context.release.sha.slice(0, 12)
+        : null;
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [collapsed, setCollapsed] = useState(() => window.localStorage.getItem('aiwm.sidebar') === 'collapsed');
     const [commandOpen, setCommandOpen] = useState(false);
@@ -755,6 +759,14 @@ export function AppShell({ context, children }: { context: FrontendContext; chil
                         <span className="brand-copy"><strong>AI WordPress Manager</strong><small>Laravel AIWMWeb</small></span>
                     </Link>
                     <div className="topbar-actions">
+                        {installedVersion ? (
+                            <span
+                                className="topbar-installed-version"
+                                data-testid="installed-version"
+                                aria-label={locale === 'ar' ? `إصدار Laravel المثبت ${installedVersion}` : `Installed Laravel version ${installedVersion}`}
+                                title={releaseSha ? `Installed release · ${releaseSha}` : 'Installed release'}
+                            >v{installedVersion}</span>
+                        ) : null}
                         <button
                             ref={commandTriggerRef}
                             id="command-palette-trigger"
