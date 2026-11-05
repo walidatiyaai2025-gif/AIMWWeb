@@ -146,8 +146,11 @@ Route::prefix('v1/tenants/{tenant}/sites/{site}/seo/remediations')
         Route::post('/executions/{execution}/undo', [SeoRemediationClosureController::class, 'undo']);
     });
 
+// Session-authenticated tenant APIs are consumed by the same-origin Laravel SPA.
+// Keep the web session + CSRF middleware before auth, then tenant isolation.
+// Without web, a valid browser session appears unauthenticated (401) here.
 Route::prefix('v1/tenants/{tenant}')
-    ->middleware(['auth', 'tenant.context'])
+    ->middleware(['web', 'auth', 'tenant.context'])
     ->group(function (): void {
         Route::get('/ai/usage', [AiUsageReadController::class, 'index'])->name('canonical.api.ai-usage');
         Route::get('/global-pages', [GlobalPagesTrashController::class, 'index'])
