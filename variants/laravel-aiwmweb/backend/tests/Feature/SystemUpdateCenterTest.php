@@ -457,6 +457,58 @@ final class SystemUpdateCenterTest extends TestCase
         }
     }
 
+    public function test_rollback_restores_original_from_verified_staged_file(): void
+    {
+        $filename = 'app/AIWMRollbackAtomic-'.bin2hex(random_bytes(5)).'.php';
+        $target = base_path($filename);
+        $backup = storage_path('framework/testing/aiwm-rollback-atomic-'.bin2hex(random_bytes(5)));
+        $service = app(SystemUpdateService::class);
+
+        try {
+            file_put_contents($target, 'original-verified-content');
+            (new \ReflectionMethod($service, 'backupFiles'))
+                ->invoke($service, [$filename => hash('sha256', 'updated-content')], $backup);
+            file_put_contents($target, 'updated-content');
+
+            (new \ReflectionMethod($service, 'restoreBackup'))->invoke($service, $backup);
+
+            $this->assertSame('original-verified-content', file_get_contents($target));
+            $this->assertSame([], glob(dirname($target).'/.aiwm-rollback-*') ?: []);
+        } finally {
+            @unlink($target);
+            File::deleteDirectory($backup);
+        }
+    }
+
+    public function test_rollback_rejects_tampered_backup_and_keeps_live_file_intact(): void
+    {
+        $filename = 'app/AIWMRollbackTampered-'.bin2hex(random_bytes(5)).'.php';
+        $target = base_path($filename);
+        $backup = storage_path('framework/testing/aiwm-rollback-tamper-'.bin2hex(random_bytes(5)));
+        $service = app(SystemUpdateService::class);
+
+        try {
+            file_put_contents($target, 'original');
+            (new \ReflectionMethod($service, 'backupFiles'))
+                ->invoke($service, [$filename => hash('sha256', 'updated')], $backup);
+            file_put_contents($target, 'updated-must-remain');
+            file_put_contents($backup.'/original/'.$filename, 'tampered');
+
+            try {
+                (new \ReflectionMethod($service, 'restoreBackup'))->invoke($service, $backup);
+                $this->fail('A tampered rollback backup was accepted.');
+            } catch (RuntimeException $e) {
+                $this->assertStringContainsString('Backup integrity verification failed', $e->getMessage());
+            }
+
+            $this->assertSame('updated-must-remain', file_get_contents($target));
+            $this->assertSame([], glob(dirname($target).'/.aiwm-rollback-*') ?: []);
+        } finally {
+            @unlink($target);
+            File::deleteDirectory($backup);
+        }
+    }
+
     public function test_rollback_refuses_symlink_swapped_target_and_preserves_external_file(): void
     {
         $filename = 'app/AIWMRollbackSymlinkProbe-'.bin2hex(random_bytes(5)).'.php';

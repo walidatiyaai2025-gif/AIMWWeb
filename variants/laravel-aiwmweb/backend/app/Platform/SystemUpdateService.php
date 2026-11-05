@@ -775,9 +775,52 @@ final class SystemUpdateService
                     ! is_file($source) || ! hash_equals($expected, (string) hash_file('sha256', $source))) {
                     throw new RuntimeException('Backup integrity verification failed; manual recovery is required.');
                 }
-                if (! copy($source, $target) ||
-                    ! hash_equals($expected, (string) hash_file('sha256', $target))) {
-                    throw new RuntimeException('Automatic rollback failed; use the saved backup.');
+                // Never stream directly into the live application file: a
+                // short write, full disk or interrupted copy would corrupt it
+                // before recovery can be verified. Stage beside the target and
+                // atomically replace it only after its signed-backup hash matches.
+                $temporary = dirname($target).'/.aiwm-rollback-'.bin2hex(random_bytes(12));
+                $input = @fopen($source, 'rb');
+
+                if ($input === false) {
+                    throw new RuntimeException('Cannot read verified rollback backup.');
+                }
+
+                $output = @fopen($temporary, 'xb');
+
+                if ($output === false) {
+                    fclose($input);
+
+                    throw new RuntimeException('Cannot create exclusive rollback staging file.');
+                }
+
+                try {
+                    try {
+                        $copied = stream_copy_to_stream($input, $output, 26214401);
+
+                        if ($copied === false || ! fflush($output)) {
+                            throw new RuntimeException('Rollback staging failed; live file was not replaced.');
+                        }
+                    } finally {
+                        fclose($input);
+                        fclose($output);
+                    }
+
+                    $this->assertSafeDestination($target);
+                    $this->assertSafeDestination($temporary);
+
+                    if (! hash_equals($expected, (string) hash_file('sha256', $temporary))) {
+                        throw new RuntimeException('Rollback staging integrity failed; live file was not replaced.');
+                    }
+
+                    if (! rename($temporary, $target) ||
+                        ! hash_equals($expected, (string) hash_file('sha256', $target))) {
+                        throw new RuntimeException('Automatic rollback failed; use the saved backup.');
+                    }
+                } finally {
+                    if (file_exists($temporary) || is_link($temporary)) {
+                        @unlink($temporary);
+                    }
                 }
             } else {
                 @unlink($target);
