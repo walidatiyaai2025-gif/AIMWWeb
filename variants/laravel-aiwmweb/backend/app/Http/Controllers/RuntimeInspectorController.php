@@ -57,10 +57,10 @@ final class RuntimeInspectorController extends Controller
             $status = (string) ($site->connection_status ?? 'unknown');
             $syncState = $lastRun ? (string) $lastRun->state : null;
             $finding = match (true) {
-                ! $hasConnector => 'CONNECTOR_NOT_PAIRED',
+                !$hasConnector => 'CONNECTOR_NOT_PAIRED',
                 $revoked => 'CONNECTOR_REVOKED',
-                ! $read => 'CONTENT_READ_SCOPE_DISABLED',
-                ! in_array($status, ['paired', 'verified', 'connected'], true) => 'SITE_CONNECTION_NOT_READY',
+                !$read => 'CONTENT_READ_SCOPE_DISABLED',
+                !in_array($status, ['paired', 'verified', 'connected'], true) => 'SITE_CONNECTION_NOT_READY',
                 $lastRun === null => 'CANONICAL_SYNC_NOT_STARTED',
                 in_array($syncState, ['failed', 'partial', 'cancelled'], true) => 'LAST_SYNC_NOT_COMPLETED',
                 $syncState !== 'completed' && $syncState !== 'succeeded' => 'SYNC_RUNNING_OR_QUEUED',
