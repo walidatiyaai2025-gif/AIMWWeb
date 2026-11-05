@@ -2,7 +2,7 @@
 /**
  * Plugin Name: AIMW Connector
  * Description: Signed, scoped semantic operations for Laravel AIWMWeb.
- * Version: 0.2.1
+ * Version: 0.2.2
  * Requires PHP: 8.0
  */
 
@@ -15,7 +15,7 @@ require_once __DIR__.'/includes/class-aimw-connector-admin.php';
 
 final class AIMW_Connector_V1
 {
-    public const PLUGIN_VERSION = '0.2.1';
+    public const PLUGIN_VERSION = '0.2.2';
     public const PROTOCOL_VERSION = '1';
     public const CLOCK_SKEW_SECONDS = 300;
     private const NS = 'aimw/v1';
@@ -132,8 +132,11 @@ final class AIMW_Connector_V1
         if (empty($config['tenant_id']) || empty($config['site_id'])) {
             return new WP_Error('connector_repair_required', 'Connector identity binding is incomplete; re-pairing is required.', ['status' => 409]);
         }
-        $headers = array_change_key_case($request->get_headers(), CASE_LOWER);
-        $one = static fn (string $name): string => is_array($headers[$name] ?? null) ? (string) ($headers[$name][0] ?? '') : (string) ($headers[$name] ?? '');
+        // WP_REST_Request normalizes "-" to "_" in get_headers(). Accessing
+        // those internal keys by their original hyphenated names silently returned
+        // empty strings and rejected every valid signed request as invalid_protocol.
+        // get_header() handles WordPress's canonicalization in one place.
+        $one = static fn (string $name): string => (string) ($request->get_header($name) ?? '');
         $values = [
             'version' => $one('x-aimw-version'),
             'tenant' => $one('x-aimw-tenant'),
