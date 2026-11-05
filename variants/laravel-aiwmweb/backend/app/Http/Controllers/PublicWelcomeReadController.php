@@ -52,6 +52,38 @@ final class PublicWelcomeReadController extends Controller
         ]);
     }
 
+    /**
+     * Resolve the authenticated dashboard entry from server-owned memberships.
+     * Never trust a query-supplied tenant or choose an arbitrary tenant when
+     * a user has access to more than one workspace.
+     */
+    public function dashboard(Request $request): RedirectResponse|View
+    {
+        $user = $request->user();
+        abort_unless($user !== null, 401);
+
+        $tenants = TenantMembership::query()
+            ->withoutGlobalScopes()
+            ->where('user_id', $user->getAuthIdentifier())
+            ->where('status', 'active')
+            ->whereHas('tenant')
+            ->with('tenant:id,slug,name')
+            ->orderBy('tenant_id')
+            ->get()
+            ->pluck('tenant')
+            ->filter()
+            ->unique('id')
+            ->values();
+
+        abort_if($tenants->isEmpty(), 409, 'An active tenant membership is required to open the dashboard.');
+
+        if ($tenants->count() === 1) {
+            return redirect()->to('/tenants/'.rawurlencode((string) $tenants->first()->slug));
+        }
+
+        return view('ai.choose-tenant', ['tenants' => $tenants]);
+    }
+
     public function billing(Request $request): RedirectResponse
     {
         $user = $request->user();
