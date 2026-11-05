@@ -62,6 +62,39 @@ function aiwmReadiness(string $root): array
     return $problems;
 }
 
+/**
+ * Bind the installed APP_VERSION to the actual extracted Setup ZIP.
+ * A version is never invented from a live GitHub branch or a default .env.
+ */
+function aiwmSetupBuildIdentity(string $root): array
+{
+    $folder = dirname($root);
+    $buildPath = $folder.'/BUILD-INFO.json';
+    $manifestPath = $folder.'/SETUP-MANIFEST.json';
+
+    if (is_link($buildPath) || is_link($manifestPath) ||
+        ! is_file($buildPath) || ! is_file($manifestPath)) {
+        aiwmFailure('Setup package build metadata is missing or unsafe.');
+    }
+
+    $build = json_decode((string) file_get_contents($buildPath), true);
+    $manifest = json_decode((string) file_get_contents($manifestPath), true);
+    if (! is_array($build) || ! is_array($manifest) ||
+        ($build['product'] ?? null) !== 'LARAVEL_AIWMWEB' ||
+        ($manifest['product'] ?? null) !== 'LARAVEL_AIWMWEB' ||
+        ($manifest['channel'] ?? null) !== 'cpanel-full-setup' ||
+        ! is_string($build['version'] ?? null) ||
+        preg_match('/^[0-9]+[.][0-9]+[.][0-9]+$/D', $build['version']) !== 1 ||
+        ! is_string($build['source_sha'] ?? null) ||
+        preg_match('/^[a-f0-9]{40}$/D', $build['source_sha']) !== 1 ||
+        ($manifest['version'] ?? null) !== $build['version'] ||
+        ($manifest['source_sha'] ?? null) !== $build['source_sha']) {
+        aiwmFailure('Setup package build identity does not match its manifest.');
+    }
+
+    return ['version' => $build['version'], 'sha' => $build['source_sha']];
+}
+
 function aiwmEnvironment(string $text, string $key, string $value): string
 {
     if (! preg_match('/^[A-Z][A-Z0-9_]*$/D', $key) || preg_match('/[\r\n\x00]/', $value)) {
@@ -460,7 +493,9 @@ try {
                 ? (string) file_get_contents($envPath)
                 : (string) file_get_contents($appRoot.'/.env.example');
 
+            $setupBuild = aiwmSetupBuildIdentity($appRoot);
             $updates = [
+                'APP_VERSION' => $setupBuild['version'],
                 'APP_NAME' => $name,
                 'APP_ENV' => 'production',
                 'APP_DEBUG' => 'false',
