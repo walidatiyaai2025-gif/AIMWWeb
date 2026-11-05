@@ -64,6 +64,50 @@ describe('AIMW-BILL-94755B17E4 Site Details SynchronizeAsync', () => {
         expect(await screen.findByRole('status')).toHaveTextContent('authoritative Site Details');
     });
 
+    it('shows the real redacted WordPress sync failure with its run ID', async () => {
+        const fetchMock = vi.fn()
+            .mockResolvedValueOnce(new Response(JSON.stringify({ id: 41, status: 'queued' }), { status: 202, headers: { 'content-type': 'application/json' } }))
+            .mockResolvedValueOnce(new Response(JSON.stringify({
+                id: 41, status: 'failed', diagnostic_code: 'WORDPRESS_SYNC_FAILED',
+                failure: 'RuntimeException: Connector is revoked.',
+            }), { status: 200, headers: { 'content-type': 'application/json' } }))
+            .mockResolvedValueOnce(new Response(JSON.stringify({ id: 17, name: 'Alpha Site' }), { status: 200, headers: { 'content-type': 'application/json' } }));
+        vi.stubGlobal('fetch', fetchMock);
+        vi.stubGlobal('crypto', { randomUUID: () => '11111111-1111-4111-8111-111111111111' });
+
+        renderControl();
+        fireEvent.click(screen.getByRole('button', { name: 'Sync now' }));
+
+        const error = await screen.findByRole('alert');
+        expect(error).toHaveTextContent('RuntimeException: Connector is revoked.');
+        expect(error).toHaveTextContent('WORDPRESS_SYNC_FAILED');
+        expect(error).toHaveTextContent('HTTP 409');
+        expect(error).toHaveTextContent('Sync Run: 41');
+        expect(screen.queryByText('Synchronization completed and authoritative Site Details were reread from the server.')).not.toBeInTheDocument();
+    });
+
+    it('shows an HTTP 500 cause and request ID instead of generic Server Error', async () => {
+        const fetchMock = vi.fn()
+            .mockResolvedValueOnce(new Response(JSON.stringify({
+                code: 'WORDPRESS_SYNC_START_FAILED',
+                message: 'QueryException: Table sync_runs missing',
+                exception_type: 'QueryException',
+                request_id: 'req-456-trace',
+            }), { status: 500, headers: { 'content-type': 'application/json' } }))
+            .mockResolvedValueOnce(new Response(JSON.stringify({ id: 17, name: 'Alpha Site' }), { status: 200, headers: { 'content-type': 'application/json' } }));
+        vi.stubGlobal('fetch', fetchMock);
+        vi.stubGlobal('crypto', { randomUUID: () => '11111111-1111-4111-8111-111111111111' });
+
+        renderControl();
+        fireEvent.click(screen.getByRole('button', { name: 'Sync now' }));
+
+        const error = await screen.findByRole('alert');
+        expect(error).toHaveTextContent('QueryException: Table sync_runs missing');
+        expect(error).toHaveTextContent('HTTP 500');
+        expect(error).toHaveTextContent('WORDPRESS_SYNC_START_FAILED');
+        expect(error).toHaveTextContent('Request ID: req-456-trace');
+    });
+
     it('fails closed when sites.manage or an exact single Site Details binding is absent', () => {
         const fetchMock = vi.fn();
         vi.stubGlobal('fetch', fetchMock);
