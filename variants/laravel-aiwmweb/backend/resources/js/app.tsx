@@ -76,6 +76,8 @@ import { MediaBatchClearSelectionControl } from './media-batch-clear-selection-c
 import { NotFoundPage, SiteDetailsRoute, WorkspacePage } from './pages';
 import { PostsExecutionLinkControl } from './posts-execution-link-control';
 import { RuntimeErrorBoundary } from './runtime-error-boundary';
+import { RuntimeInspectorPanel } from './runtime-inspector-panel';
+import { installRuntimeInspectorCapture } from './runtime-inspector-capture';
 import { SettingsAiPromptsLinkControl } from './settings-ai-prompts-link-control';
 import { SettingsBillingSupportLinkControl } from './settings-billing-support-link-control';
 import { SettingsSystemUpdatesLinkControl } from './settings-system-updates-link-control';
@@ -112,6 +114,8 @@ import { SitesDeleteControl } from './sites-delete-control';
 import { SitesSaveControl } from './sites-save-control';
 import { SitesRetestSelectedControl } from './sites-retest-selected-control';
 import { SystemHealthWorkspace } from './system-health-workspace';
+
+installRuntimeInspectorCapture();
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -263,6 +267,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     if (route.key === 'admin-billing-support') return <><AdminBillingSupportSettingsLink context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'ai-center') return <><AiCenterApprovalStatusControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'ai-usage') return <><AiUsageAiCenterLinkControl context={context} /><AiUsageLoadWorkspace context={context} route={route} /></>;
+    if (route.key === 'runtime-inspector') return <RuntimeInspectorPanel context={context} />;
     if (route.key === 'system-health') return <SystemHealthWorkspace context={context} route={route} />;
     return <WorkspacePage context={context} route={route} />;
 }
