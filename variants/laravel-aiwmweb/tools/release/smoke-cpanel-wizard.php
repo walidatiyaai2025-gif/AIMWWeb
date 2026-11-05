@@ -208,6 +208,24 @@ try {
     flock($lease, LOCK_UN);
     fclose($lease);
 }
+// A forged or mismatched build identity must not be installed, even if the
+// hosting owner has already completed every previous wizard stage.
+$buildMetadataPath = $root.'/BUILD-INFO.json';
+$originalBuildMetadata = file_get_contents($buildMetadataPath);
+$forgedBuild = json_decode($originalBuildMetadata, true, flags: JSON_THROW_ON_ERROR);
+$forgedBuild['version'] = '9.9.9';
+file_put_contents($buildMetadataPath, json_encode($forgedBuild, JSON_THROW_ON_ERROR));
+try {
+    $rejected = executeStep($installer, $sessionId, [
+        'csrf' => $csrf, 'action' => 'install',
+    ]);
+    requireOutput($rejected, 'Setup package build identity does not match its manifest.');
+    if (is_file($private.'/installed.lock')) {
+        throw new RuntimeException('Mismatched Setup metadata unexpectedly installed the site.');
+    }
+} finally {
+    file_put_contents($buildMetadataPath, $originalBuildMetadata);
+}
 // The legitimate owner may finish after the competing worker has exited.
 $finished = executeStep($installer, $sessionId, [
     'csrf' => $csrf, 'action' => 'install',
@@ -225,8 +243,19 @@ if (is_file($installer)) {
     throw new RuntimeException('The one-time installer was not removed.');
 }
 
+$buildIdentity = json_decode(file_get_contents($root.'/BUILD-INFO.json'), true, flags: JSON_THROW_ON_ERROR);
+$initialReceipt = json_decode(
+    file_get_contents($root.'/app/storage/app/system-updates/installed.json'),
+    true, flags: JSON_THROW_ON_ERROR,
+);
+if (($initialReceipt['version'] ?? null) !== $buildIdentity['version'] ||
+    ($initialReceipt['sha'] ?? null) !== $buildIdentity['source_sha'] ||
+    ($initialReceipt['source'] ?? null) !== 'verified-setup-package') {
+    throw new RuntimeException('Initial installed release receipt must match the extracted Setup ZIP.');
+}
 $env = file_get_contents($root.'/app/.env');
-if (! str_contains($env, 'AIWM_UPDATES_ENABLED="false"') ||
+if (! str_contains($env, 'APP_VERSION="'.$buildIdentity['version'].'"') ||
+    ! str_contains($env, 'AIWM_UPDATES_ENABLED="false"') ||
     ! str_contains($env, 'APP_ENV="production"') ||
     ! str_contains($env, 'APP_KEY="'.$resumeKey.'"') ||
     ! str_contains($env, 'DB_PORT="3306"') ||
