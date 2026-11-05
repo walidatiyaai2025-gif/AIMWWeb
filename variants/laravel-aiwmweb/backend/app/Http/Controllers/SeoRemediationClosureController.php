@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 
 final class SeoRemediationClosureController extends Controller
 {
-    public function proposals(int $site, TenantAuthorizer $auth, SeoRemediationClosureService $remediation): JsonResponse
+    public function proposals(string $tenant, int $site, TenantAuthorizer $auth, SeoRemediationClosureService $remediation): JsonResponse
     {
         $auth->authorize('tenant.view');
         Site::query()->findOrFail($site);
@@ -19,7 +19,7 @@ final class SeoRemediationClosureController extends Controller
         return response()->json(['data' => $remediation->proposals($site)]);
     }
 
-    public function history(int $site, TenantAuthorizer $auth, SeoRemediationClosureService $remediation): JsonResponse
+    public function history(string $tenant, int $site, TenantAuthorizer $auth, SeoRemediationClosureService $remediation): JsonResponse
     {
         $auth->authorize('tenant.view');
         Site::query()->findOrFail($site);
@@ -41,6 +41,7 @@ final class SeoRemediationClosureController extends Controller
     }
 
     public function undo(
+        string $tenant,
         int $site,
         int $execution,
         Request $request,
