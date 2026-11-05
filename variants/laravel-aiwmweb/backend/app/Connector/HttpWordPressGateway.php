@@ -7,7 +7,7 @@ use App\Models\Site;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
-final class HttpWordPressGateway implements AdvancedWordPressGateway
+final class HttpWordPressGateway implements AdvancedWordPressGateway, ConnectorResourceReader
 {
     public function __construct(private readonly ConnectorProtocol $protocol, private readonly ConnectorScopePolicy $scopes) {}
 
@@ -26,6 +26,47 @@ final class HttpWordPressGateway implements AdvancedWordPressGateway
         $path = '/wp-json/aimw/v1/content'.($modifiedAfter ? '?modified_after='.rawurlencode($modifiedAfter) : '');
 
         return $this->request($site, 'GET', $path, 'content.read');
+    }
+
+    private const READ_RESOURCES = ['posts', 'pages', 'media', 'categories', 'tags', 'comments'];
+
+    public function listResource(Site $site, string $resource, array $query = []): array
+    {
+        $this->assertReadResource($resource);
+        $page = (int) ($query['page'] ?? 1);
+        $perPage = (int) ($query['per_page'] ?? 100);
+        abort_unless($page >= 1 && $page <= 1000 && $perPage >= 1 && $perPage <= 100, 422, 'Invalid WordPress content pagination.');
+
+        $parameters = ['page' => $page, 'per_page' => $perPage];
+        if (! empty($query['modified_after'])) {
+            $parameters['modified_after'] = (string) $query['modified_after'];
+        }
+
+        $path = '/wp-json/aimw/v1/content/resources/'.$resource.'?'.http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
+        $payload = $this->request($site, 'GET', $path, 'content.read');
+        if (! isset($payload['items']) || ! is_array($payload['items']) || ! array_is_list($payload['items'])) {
+            throw new RuntimeException('Connector resource read returned an invalid items contract.');
+        }
+
+        return $payload['items'];
+    }
+
+    public function getResource(Site $site, string $resource, int $remoteId): array
+    {
+        $this->assertReadResource($resource);
+        abort_unless($remoteId > 0, 422, 'Invalid WordPress resource ID.');
+
+        $payload = $this->request($site, 'GET', "/wp-json/aimw/v1/content/resources/{$resource}/{$remoteId}", 'content.read');
+        if ((int) ($payload['id'] ?? 0) !== $remoteId) {
+            throw new RuntimeException('Connector resource read returned an incorrect resource ID.');
+        }
+
+        return $payload;
+    }
+
+    private function assertReadResource(string $resource): void
+    {
+        abort_unless(in_array($resource, self::READ_RESOURCES, true), 422, 'Unsupported WordPress resource.');
     }
 
     public function execute(Site $site, string $operationId, array $change): array
