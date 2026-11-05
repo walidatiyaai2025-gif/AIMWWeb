@@ -75,8 +75,9 @@ final class PairedConnectorWorkspacePermissionTest extends TestCase
         $this->actingAs($outsider)->get('/tenants/foreign/module/sync')->assertForbidden();
     }
 
-    /** @param list<string> $permissions
-     *  @return array{Tenant, User, Site}
+    /**
+     * @param  list<string>  $permissions
+     * @return array{Tenant, User, Site}
      */
     private function seedMembership(
         string $slug, array $permissions, string $roleName = 'Reader', bool $platformAdmin = false,
