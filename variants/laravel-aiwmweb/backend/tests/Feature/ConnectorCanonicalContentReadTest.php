@@ -11,6 +11,7 @@ use App\Models\ContentItem;
 use App\Models\Site;
 use App\Models\Tenant;
 use App\Tenancy\TenantContext;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
@@ -97,7 +98,7 @@ final class ConnectorCanonicalContentReadTest extends TestCase
         $site = $this->connectedSite();
         $tenant = Tenant::query()->create(['slug' => 'foreign', 'name' => 'Foreign']);
         app(TenantContext::class)->activate($tenant);
-        $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        $this->expectException(ModelNotFoundException::class);
         app(ConnectorSemanticPath::class)->list($site->id, 'posts', ['page' => 1]);
     }
 
