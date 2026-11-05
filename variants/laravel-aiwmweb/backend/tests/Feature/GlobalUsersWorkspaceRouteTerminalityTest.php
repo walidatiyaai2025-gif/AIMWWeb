@@ -94,7 +94,7 @@ final class GlobalUsersWorkspaceRouteTerminalityTest extends TestCase
         $pages = (string) file_get_contents(resource_path('js/pages.tsx'));
 
         $this->assertStringContainsString("r('wp-users', '/module/users'", $core);
-        $this->assertStringContainsString("connectorScope: 'users.read'", $core);
+        $this->assertStringNotContainsString("connectorScope: 'users.read'", $core);
         $this->assertStringContainsString("if (route.key === 'wp-users')", $pages);
         $this->assertStringContainsString('<ResourceContent context={context} route={route} />', $pages);
     }
