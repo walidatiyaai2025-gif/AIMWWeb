@@ -823,7 +823,17 @@ final class SystemUpdateService
                     }
                 }
             } else {
-                @unlink($target);
+                // A new file introduced by a failed update must be absent
+                // before automatic recovery can be considered successful.
+                // Silencing unlink errors can otherwise leave mixed-version
+                // executable code while maintenance mode is released.
+                if ((file_exists($target) || is_link($target)) && ! @unlink($target)) {
+                    throw new RuntimeException('Automatic rollback could not remove a new file; manual recovery is required.');
+                }
+
+                if (file_exists($target) || is_link($target)) {
+                    throw new RuntimeException('Automatic rollback left a new file behind; manual recovery is required.');
+                }
             }
         }
     }
