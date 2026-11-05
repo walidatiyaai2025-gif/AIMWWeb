@@ -11,8 +11,10 @@ use App\Models\SiteDiagnostic;
 use App\Models\SyncRun;
 use App\Models\SyncedContent;
 use App\Platform\SystemUpdateService;
+use App\Sites\SiteDiagnosticsService;
 use App\Tenancy\TenantContext;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -34,13 +36,18 @@ final class RuntimeInspectorController extends Controller
         TenantAuthorizer $authorizer,
         TenantContext $context,
         SystemUpdateService $updates,
+        SiteDiagnosticsService $diagnostics,
+        Request $request,
     ): JsonResponse {
         $authorizer->authorize('diagnostics.view');
         abort_unless(hash_equals((string) $context->tenant()->slug, $tenant), 404);
 
+        // An explicit user-triggered run may probe at most three remote sites.
+        // These are signed, read-only capability requests; never use site.health mutations.
+        $probe = $request->boolean('probe');
         $sites = Site::query()->orderBy('id')->limit(51)->get();
         $truncated = $sites->count() > 50;
-        $rows = $sites->take(50)->map(function (Site $site): array {
+        $rows = $sites->take(50)->map(function (Site $site, int $index) use ($probe, $diagnostics): array {
             $connector = Connector::query()->where('site_id', $site->id)->first();
             $scopes = $connector
                 ? array_values(array_intersect(self::SAFE_SCOPES, (array) $connector->enabled_scopes))
@@ -56,11 +63,26 @@ final class RuntimeInspectorController extends Controller
             $read = in_array('content.read', $scopes, true);
             $status = (string) ($site->connection_status ?? 'unknown');
             $syncState = $lastRun ? (string) $lastRun->state : null;
+            $remoteProbe = ['attempted' => false, 'state' => $probe && $index >= 3 ? 'limited' : 'not_run'];
+            if ($probe && $index < 3 && $hasConnector && $revoked === false) {
+                try {
+                    $remote = $diagnostics->capabilities($site);
+                    $remoteProbe = [
+                        'attempted' => true,
+                        'state' => $this->safeState((string) ($remote['state'] ?? 'unknown')),
+                    ];
+                } catch (Throwable) {
+                    $remoteProbe = ['attempted' => true, 'state' => 'TEMPORARILY_UNAVAILABLE'];
+                }
+            }
             $finding = match (true) {
                 $hasConnector === false => 'CONNECTOR_NOT_PAIRED',
                 $revoked => 'CONNECTOR_REVOKED',
                 $read === false => 'CONTENT_READ_SCOPE_DISABLED',
                 in_array($status, ['paired', 'verified', 'connected'], true) === false => 'SITE_CONNECTION_NOT_READY',
+                $remoteProbe['state'] === 'AUTH_FAILED' => 'REMOTE_AUTH_FAILED',
+                $remoteProbe['state'] === 'UNSUPPORTED' => 'REMOTE_PROTOCOL_UNSUPPORTED',
+                in_array($remoteProbe['state'], ['DEGRADED', 'DISCONNECTED', 'TEMPORARILY_UNAVAILABLE', 'CONNECTOR_DISABLED'], true) => 'REMOTE_NOT_READY',
                 $lastRun === null => 'CANONICAL_SYNC_NOT_STARTED',
                 in_array($syncState, ['failed', 'partial', 'cancelled'], true) => 'LAST_SYNC_NOT_COMPLETED',
                 $syncState !== 'completed' && $syncState !== 'succeeded' => 'SYNC_RUNNING_OR_QUEUED',
@@ -82,6 +104,7 @@ final class RuntimeInspectorController extends Controller
                     'enabled_scopes' => $scopes,
                 ],
                 'last_diagnostic' => $this->safeState((string) ($lastDiagnostic?->classification ?? 'not_run')),
+                'remote_probe' => $remoteProbe,
                 'last_sync' => [
                     'present' => $lastRun !== null,
                     'state' => $syncState === null ? 'not_run' : $this->safeState($syncState),
@@ -136,6 +159,7 @@ final class RuntimeInspectorController extends Controller
                 ],
             ],
             'site_count' => Site::query()->count(),
+            'remote_probe_limit' => 3,
             'sites_truncated' => $truncated,
             'sites' => $rows,
         ];
@@ -150,6 +174,8 @@ final class RuntimeInspectorController extends Controller
         return in_array($state, [
             'active', 'disabled', 'connected', 'paired', 'verified', 'disconnected',
             'degraded', 'unknown', 'temporarily_unavailable', 'capability_disabled',
+            'CONNECTED', 'DEGRADED', 'DISCONNECTED', 'AUTH_FAILED',
+            'CONNECTOR_DISABLED', 'CAPABILITY_DISABLED', 'UNSUPPORTED', 'TEMPORARILY_UNAVAILABLE',
             'failed', 'partial', 'cancelled', 'cancel_requested', 'queued', 'running',
             'completed', 'succeeded', 'pending', 'not_run', 'unhealthy',
         ], true) ? $state : 'other';
