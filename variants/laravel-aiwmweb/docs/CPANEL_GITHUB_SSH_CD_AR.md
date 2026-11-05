@@ -93,6 +93,7 @@ php artisan optimize:clear
 | `AIWM_DEPLOY_SITE_ROOT` | `/home/walidatiya/public_html/aiwm.walidatiya.com` |
 | `AIWM_DEPLOY_PHP_BIN` | `php` أو المسار المطلق لـPHP 8.4 المستخدم في cPanel |
 | `AIWM_MIN_SUPPORTED_VERSION` | `0.0.0` فقط إذا تحققت الترقية من الإصدار المثبت؛ حد أدنى أعلى عند تغيير الاعتمادات أو العقد |
+| `AIWM_SSH_CD_ENABLED` | `true` **بعد** اكتمال المفاتيح والتأكد من SSH + اختبار cPanel/Backup؛ اتركها غير محددة قبل ذلك |
 
 ## 4 — أول تشغيل ومراقبة لاحقة
 
