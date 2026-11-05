@@ -8,9 +8,7 @@ use RuntimeException;
 
 final class ConnectorSemanticPath
 {
-    public function __construct(private readonly ConnectorResourceReader $resources)
-    {
-    }
+    public function __construct(private readonly ConnectorResourceReader $resources) {}
 
     public function list(int $siteId, string $resource, array $query = []): array
     {
@@ -42,7 +40,7 @@ final class ConnectorSemanticPath
     private function gateway(): object
     {
         $contract = 'App\\Connector\\WordPressGateway';
-        if (! interface_exists($contract)) {
+        if (!interface_exists($contract)) {
             throw new RuntimeException('Connector semantic gateway is not integrated yet.');
         }
 
@@ -52,7 +50,7 @@ final class ConnectorSemanticPath
     private function site(int $siteId): object
     {
         $class = 'App\\Models\\Site';
-        if (! class_exists($class)) {
+        if (!class_exists($class)) {
             throw new RuntimeException('Site model is not integrated yet.');
         }
 
