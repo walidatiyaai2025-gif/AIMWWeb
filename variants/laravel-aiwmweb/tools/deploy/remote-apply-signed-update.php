@@ -63,6 +63,19 @@ try {
     }
     $service = app(SystemUpdateService::class);
     $before = $service->state();
+    // An earlier run might have installed successfully but failed only during
+    // GitHub Release publication. Re-check the durable private receipt and
+    // permit exact-identity idempotent retries, never an older/different SHA.
+    if (($before['version'] ?? null) === $expectedVersion &&
+        ($before['sha'] ?? null) === $expectedSha) {
+        echo json_encode([
+            'status' => 'ALREADY_DEPLOYED',
+            'version' => $expectedVersion,
+            'sha' => $expectedSha,
+            'installed_at' => $before['installed_at'] ?? null,
+        ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES), "\n";
+        exit(0);
+    }
     $bundle = new UploadedFile($bundlePath, basename($bundlePath), 'application/zip', null, true);
 
     // Dry-run signed manifest and exact file-by-file hash verification before
