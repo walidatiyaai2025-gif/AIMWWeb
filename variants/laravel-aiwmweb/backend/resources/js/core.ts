@@ -53,6 +53,7 @@ export interface FrontendContext {
     capabilities: Record<string, CapabilityContract>;
     api: Record<string, string>;
     actions: Record<string, ActionContract>;
+    release?: { version: string; sha: string };
     locale?: Locale;
 }
 
