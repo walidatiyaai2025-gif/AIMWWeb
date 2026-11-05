@@ -12,6 +12,8 @@ declare(strict_types=1);
 
 use App\Platform\SystemUpdateService;
 use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 if (PHP_SAPI !== 'cli' || isset($_SERVER['REQUEST_METHOD']) || $argc !== 1) {
     exit(2);
@@ -37,6 +39,7 @@ try {
     // deployment root must never trigger an automatic production mutation.
     $publicRoot = realpath((string) config('system_updates.public_root', ''));
     $domainRoot = realpath(dirname($root).'/public');
+    $autoPullEnabled = (bool) config('system_updates.auto_pull_enabled', env('AIWM_AUTO_UPDATES_ENABLED', false));
     if (base_path() !== $root ||
         parse_url((string) config('app.url'), PHP_URL_HOST) !== 'aiwm.walidatiya.com' ||
         (bool) config('app.debug') ||
@@ -44,7 +47,7 @@ try {
         ! (bool) config('system_updates.enabled') ||
         // Bootstrap compatibility: the site's installed 0.0.0 config may
         // predate this config key. A one-time .env opt-in remains mandatory.
-        ! ((bool) config('system_updates.auto_pull_enabled', env('AIWM_AUTO_UPDATES_ENABLED', false))) ||
+        ! $autoPullEnabled ||
         ! is_string($publicRoot) || $publicRoot !== $domainRoot ||
         ! is_file($root.'/storage/app/aiwm-install/installed.lock')) {
         throw new RuntimeException('Unapproved hosting environment or automatic update configuration.');
@@ -94,14 +97,14 @@ try {
         // Requiring Redis/scheduler ready() would falsely fail a valid shared
         // hosting deployment. Check MySQL, compiled Vite and the real HTTP
         // Laravel front controller instead (fresh FPM request, not stale CLI).
-        $dbHealth = \Illuminate\Support\Facades\DB::selectOne('SELECT 1 AS ok');
+        $dbHealth = DB::selectOne('SELECT 1 AS ok');
         $assetManifest = $publicRoot.'/build/manifest.json';
         if ((int) ($dbHealth->ok ?? 0) !== 1 ||
             ! is_file($assetManifest) ||
             ! is_array(json_decode((string) file_get_contents($assetManifest), true))) {
             throw new RuntimeException('Database or compiled frontend is unavailable after update.');
         }
-        $httpHealth = \Illuminate\Support\Facades\Http::acceptJson()
+        $httpHealth = Http::acceptJson()
             ->timeout(15)->get('https://aiwm.walidatiya.com/health/live');
         if (! $httpHealth->successful() || $httpHealth->json('status') !== 'live') {
             throw new RuntimeException('Fresh HTTP front controller did not pass health/live.');
