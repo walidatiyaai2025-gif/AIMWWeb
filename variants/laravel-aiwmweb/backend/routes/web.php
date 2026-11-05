@@ -208,7 +208,11 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
             ->map(fn ($tenant) => ['id' => (int) $tenant->id, 'slug' => $tenant->slug, 'name' => $tenant->name]);
         $connectors = Connector::query()->get()->map(fn (Connector $connector) => [
             'key' => (string) $connector->identity,
-            'state' => $connector->revoked_at ? 'disconnected' : ($connector->verified_at ? 'connected' : 'unknown'),
+            // Pairing establishes a real signed identity; remote health verification remains separate.
+            'state' => $connector->revoked_at ? 'disconnected' : (
+                in_array(Site::query()->whereKey($connector->site_id)->value('connection_status'), ['paired', 'verified'], true)
+                    ? 'connected' : 'unknown'
+            ),
             'scopes' => $connector->enabled_scopes ?? [],
             'protocol' => $connector->protocol_version,
             'reason' => $connector->revoked_at ? 'revoked' : null,
