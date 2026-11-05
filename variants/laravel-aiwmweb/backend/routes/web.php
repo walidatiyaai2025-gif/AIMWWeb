@@ -42,7 +42,6 @@ Route::get('/health/live', [HealthController::class, 'live'])->name('health.live
 Route::get('/health/ready', [HealthController::class, 'ready'])->name('health.ready');
 
 Route::post('/api/login', [DemoController::class, 'login']);
-Route::post('/api/connector/pair', [DemoController::class, 'completePairing'])->middleware('throttle:20,1');
 Route::post('/api/logout', [DemoController::class, 'logout'])->middleware('auth');
 
 Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->group(function () {
