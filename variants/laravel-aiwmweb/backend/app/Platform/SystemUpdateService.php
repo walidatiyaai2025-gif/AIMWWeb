@@ -634,7 +634,7 @@ final class SystemUpdateService
 
         $allowed = ['app/', 'config/', 'resources/', 'routes/', 'vendor/', 'public/build/', 'database/migrations/', 'database/seeders/'];
 
-        if (! in_array($path, ['composer.json', 'composer.lock', 'artisan', 'bootstrap/app.php', 'bootstrap/providers.php', 'public/downloads/aimw-connector.zip'], true) &&
+        if (! in_array($path, ['composer.json', 'composer.lock', 'artisan', 'bootstrap/app.php', 'bootstrap/providers.php', 'public/downloads/aimw-connector.zip', 'aiwm-cpanel-https-pull.php'], true) &&
             ! $this->hasAllowedPrefix($allowed, $path)) {
             throw new RuntimeException('File is outside the allowed update directories.');
         }
