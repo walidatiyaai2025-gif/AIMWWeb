@@ -8,15 +8,14 @@ import re
 import sys
 from pathlib import Path
 
+# Following the owner-approved retirement of legacy ASP.NET CI in PR #1418,
+# production release gates are exactly the two still-active Laravel push CI
+# workflows. Never treat retired workflow checks from old SHAs as required.
 REQUIRED_WORKFLOWS = {
     "Laravel AIWMWeb Acceptance": ".github/workflows/laravel-aiwmweb.yml",
     "Laravel AIWMWeb cPanel Setup ZIP": ".github/workflows/laravel-aiwmweb-cpanel-package.yml",
-    "Build": ".github/workflows/build.yml",
-    ".NET Build Verification": ".github/workflows/dotnet-build.yml",
-    "Package AIMWWeb Update": ".github/workflows/package-update.yml",
-    "Final Historical Acceptance": ".github/workflows/final-historical-acceptance.yml",
-    "UX Regression Gate": ".github/workflows/ux-regression.yml",
 }
+
 REQUIRED = tuple(REQUIRED_WORKFLOWS)
 
 

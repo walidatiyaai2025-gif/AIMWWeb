@@ -145,6 +145,38 @@ final class SystemUpdateCenterTest extends TestCase
         }
     }
 
+    public function test_atomic_signed_update_keeps_public_assets_web_readable_under_restrictive_umask(): void
+    {
+        $service = new SystemUpdateService;
+        $method = new \ReflectionMethod($service, 'applyStagedFile');
+        $name = 'public/build/ci-ssh-permission-'.bin2hex(random_bytes(5)).'.js';
+        $path = public_path(substr($name, strlen('public/')));
+        $directory = dirname($path);
+        $createdDirectory = ! is_dir($directory);
+        if ($createdDirectory) {
+            $this->assertTrue(mkdir($directory, 0755, true));
+        }
+        $source = tempnam(sys_get_temp_dir(), 'aiwm-signed-');
+        $this->assertNotFalse($source);
+        $contents = 'console.info("Signed cPanel asset permission acceptance");';
+        file_put_contents($source, $contents);
+        $previous = umask(0077);
+        try {
+            $method->invoke($service, $name, $source, hash('sha256', $contents), bin2hex(random_bytes(8)));
+            clearstatcache(true, $path);
+            $this->assertFileExists($path);
+            $this->assertSame(0644, fileperms($path) & 0777);
+            $this->assertSame($contents, file_get_contents($path));
+        } finally {
+            umask($previous);
+            @unlink($source);
+            @unlink($path);
+            if ($createdDirectory) {
+                @rmdir($directory);
+            }
+        }
+    }
+
     public function test_uploaded_signed_bundle_verifies_manifest_and_exact_inner_package_hash(): void
     {
         $keys = sodium_crypto_sign_keypair();
