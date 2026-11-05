@@ -577,7 +577,18 @@ final class SystemUpdateService
             throw new RuntimeException('Cannot read verified staged update file.');
         }
 
-        $output = @fopen($temp, 'xb');
+        // Give only public release assets web-readable permissions at
+        // exclusive file creation. This avoids a pathname-based chmod race
+        // after writing the verified asset and restores the original umask
+        // immediately for all private Laravel storage/backup operations.
+        $priorUmask = str_starts_with($name, 'public/') ? umask(0022) : null;
+        try {
+            $output = @fopen($temp, 'xb');
+        } finally {
+            if ($priorUmask !== null) {
+                umask($priorUmask);
+            }
+        }
 
         if ($output === false) {
             fclose($input);
@@ -595,16 +606,6 @@ final class SystemUpdateService
             } finally {
                 fclose($input);
                 fclose($output);
-            }
-
-            // cPanel PHP/web users may run with umask 0077. Executable
-            // frontend JS/CSS, manifests and the downloadable WordPress ZIP
-            // MUST be web-readable after an atomic replacement. Never inherit
-            // mode 0600 from the temporary file for public release assets.
-            // All writable user data, .env and storage remain outside the
-            // update allowlist and keep their private permissions.
-            if (str_starts_with($name, 'public/') && ! chmod($temp, 0644)) {
-                throw new RuntimeException('Unable to set public release asset permissions.');
             }
 
             // Recheck both paths after the exclusive write and before rename.
