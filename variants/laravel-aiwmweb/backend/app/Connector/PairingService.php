@@ -39,7 +39,7 @@ final class PairingService
             abort(410, 'Pairing token expired or already used.');
         }
         if ($version !== ConnectorProtocol::VERSION) {
-            throw new RuntimeException('Unsupported connector protocol version.');
+            abort(422, 'Unsupported connector protocol version.');
         }
         $context = app(TenantContext::class);
         $tenant = Tenant::query()->findOrFail($pairing->tenant_id);
