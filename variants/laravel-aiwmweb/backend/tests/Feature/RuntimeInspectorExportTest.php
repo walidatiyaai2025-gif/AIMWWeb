@@ -139,6 +139,45 @@ final class RuntimeInspectorExportTest extends TestCase
             ->assertJsonPath('sites.1.finding', 'CONTENT_READ_SCOPE_DISABLED');
     }
 
+    public function test_optional_live_probe_uses_one_signed_read_without_exposing_remote_payload(): void
+    {
+        $user = User::factory()->create();
+        $membership = $this->membership($user, 'wordpress', ['tenant.view', 'diagnostics.view']);
+        app(TenantContext::class)->activate($membership->tenant, $membership);
+        $site = Site::query()->create([
+            'name' => 'Sensitive remote',
+            'url' => 'https://wp.test',
+            'status' => 'active',
+            'connection_status' => 'paired',
+        ]);
+        Connector::query()->create([
+            'site_id' => $site->id,
+            'identity' => '12345678-1234-4123-8123-abcd12345678',
+            'encrypted_secret' => 'SECRET_REMOTE_CANARY',
+            'enabled_scopes' => ['health', 'content.read'],
+            'capabilities' => ['health', 'content.read'],
+        ]);
+        app(TenantContext::class)->forget();
+
+        Http::fake([
+            'https://wp.test/wp-json/aimw/v1/capabilities' => Http::response([
+                'state' => 'CONNECTED',
+                'secret' => 'REMOTE_RESPONSE_CANARY',
+                'runtime' => ['states' => ['content.read' => ['state' => 'SUPPORTED_ENABLED']]],
+            ]),
+        ]);
+        $response = $this->actingAs($user)
+            ->getJson('/tenants/wordpress/runtime-inspector/report?probe=1')
+            ->assertOk()
+            ->assertJsonPath('sites.0.remote_probe.attempted', true);
+
+        $this->assertStringNotContainsString('REMOTE_RESPONSE_CANARY', $response->getContent());
+        $this->assertStringNotContainsString('SECRET_REMOTE_CANARY', $response->getContent());
+        Http::assertSent(fn ($request): bool => $request->method() === 'GET'
+            && str_contains($request->url(), '/wp-json/aimw/v1/capabilities'));
+        Http::assertSentCount(1);
+    }
+
     /** @param list<string> $permissions */
     private function membership(User $user, string $slug, array $permissions): TenantMembership
     {
