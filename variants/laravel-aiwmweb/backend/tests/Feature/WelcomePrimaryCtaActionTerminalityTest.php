@@ -33,7 +33,7 @@ final class WelcomePrimaryCtaActionTerminalityTest extends TestCase
 
         $this->assertStringContainsString(self::OPERATION_ID, $view);
         $this->assertStringContainsString(
-            'href="{{ $isAuthenticated ? \'/\' : route(\'register\', [], false) }}"',
+            'href="{{ $isAuthenticated ? route(\'public.dashboard.bridge\', [], false) : route(\'register\', [], false) }}"',
             $view,
         );
         $this->assertStringContainsString(
@@ -65,7 +65,7 @@ final class WelcomePrimaryCtaActionTerminalityTest extends TestCase
             ->get('/welcome?lang=en')
             ->assertOk()
             ->assertSee('data-canonical-operation="'.self::OPERATION_ID.'"', false)
-            ->assertSee('href="/"', false)
+            ->assertSee('href="/dashboard"', false)
             ->assertSee('+ Action');
     }
 

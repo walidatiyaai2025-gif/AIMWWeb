@@ -32,7 +32,7 @@ function renderControl(value: FrontendContext) {
 
 describe('AIMW-IDEN-A1064E5A5E current-user Settings control', () => {
     beforeEach(() => {
-        document.body.innerHTML = '<div class="topbar-actions"></div>';
+        document.body.innerHTML = '<div class="page-heading-actions"></div>';
     });
 
     afterEach(() => {

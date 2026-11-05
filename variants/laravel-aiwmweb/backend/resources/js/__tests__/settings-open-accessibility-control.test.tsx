@@ -74,6 +74,10 @@ describe(`${SETTINGS_OPEN_ACCESSIBILITY_OPERATION_ID} Settings OpenAccessibility
         expect(window.localStorage.getItem('aiwm-accessibility-contrast')).toBe('high');
         expect(window.localStorage.getItem('aiwm-accessibility-motion')).toBe('reduced');
         expect(document.getElementById('aiwm-laravel-accessibility-runtime')).not.toBeNull();
+        const scaleRules = document.getElementById('aiwm-laravel-accessibility-runtime')?.textContent ?? '';
+        expect(scaleRules).toContain('font-size: 70.3125%');
+        expect(scaleRules).toContain('font-size: 78.125%');
+        expect(scaleRules).toContain('font-size: 87.890625%');
     });
 
     it('resets the persisted display state to the source defaults', () => {

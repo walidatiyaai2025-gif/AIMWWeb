@@ -36,6 +36,12 @@ final class AiGenerationService implements AiGenerator
     public function generate(array $request): array
     {
         if (config('cpanel.enabled') && ! app(ExecutionPermit::class)->active()) {
+            $batches = app(BatchService::class);
+            $savedBatch = request()->header('X-AIMW-AI-BATCH');
+            if (is_string($savedBatch) && $savedBatch !== '') {
+                return $batches->replayCompleted($savedBatch, $request);
+            }
+            $request['_replay_hash'] = $batches->fingerprint($request);
             $resolved = $this->resolvePrompt($request);
             $request['system_prompt'] = $resolved['system'];
             $request['user_prompt'] = $resolved['user'];
@@ -85,6 +91,8 @@ final class AiGenerationService implements AiGenerator
             'started_at' => $startedAt,
             'created_at' => $startedAt,
         ]);
+
+        app(ExecutionPermit::class)->recordReceipt(['generation_record_id' => $generation->id, 'correlation_id' => $correlationId]);
 
         $quota = $this->quota->check($tenantId, $userId, $workflow, 1);
         if (! ($quota['allowed'] ?? false)) {

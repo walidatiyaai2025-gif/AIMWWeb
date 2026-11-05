@@ -8,6 +8,7 @@ use App\AI\Durable\ExecutionPermit;
 use App\AI\Platform\Contracts\AiGenerator;
 use App\AI\Platform\Enums\AiFailureKind;
 use App\AI\Platform\Exceptions\AiPlatformException;
+use App\AI\Platform\Services\AiGenerationService;
 use App\Jobs\GenerateSuggestionJob;
 use App\Jobs\SyncSiteJob;
 use App\Models\AiModelProfile;
@@ -46,6 +47,8 @@ class DurableAiBatchTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        config(['app.url' => 'https://localhost']);
+        $this->withServerVariables(['HTTPS' => 'on']);
         config(['app.key' => 'base64:'.base64_encode(str_repeat('x', 32)), 'cpanel.enabled' => true, 'cpanel.ai_enabled' => true, 'cpanel.cron_enabled' => true, 'cpanel.preflight_passed' => true, 'cpanel.min_interval' => 0, 'cpanel.daily_calls' => 1000, 'cpanel.daily_tokens' => 10000000, 'cpanel.batch_budget_usd' => 100, 'cpanel.daily_budget_usd' => 100]);
         $this->tenant = Tenant::query()->create(['name' => 'Alpha', 'slug' => 'alpha']);
         $user = User::factory()->create();
@@ -219,9 +222,9 @@ class DurableAiBatchTest extends TestCase
     public function test_http_submission_is_202_and_polling_never_generates(): void
     {
         $fake = $this->provider();
-        $response = $this->postJson('/api/tenants/alpha/ai-batches', ['submission_key' => 'http', 'site_id' => $this->site->id, 'actions' => $this->actions(3)]);
+        $response = $this->postJson('https://localhost/api/tenants/alpha/ai-batches', ['submission_key' => 'http', 'site_id' => $this->site->id, 'actions' => $this->actions(3)]);
         $response->assertStatus(202)->assertJsonPath('data.total', 3);
-        $this->getJson($response->json('status_url'))->assertOk()->assertJsonPath('data.completed', 0);
+        $this->getJson('https://localhost'.$response->json('status_url'))->assertOk()->assertJsonPath('data.completed', 0);
         $this->assertCount(0, $fake->calls);
     }
 
@@ -254,10 +257,19 @@ class DurableAiBatchTest extends TestCase
         $this->assertSame(1, DB::table('durable_ai_gate')->count());
     }
 
-    public function test_cpanel_setup_routes_are_inaccessible(): void
+    public function test_legacy_setup_alias_redirects_without_creating_users_or_tenants(): void
     {
-        $this->get('/setup')->assertNotFound();
-        $this->post('/setup')->assertNotFound();
+        // The FOODEX installer intentionally retains a safe legacy alias.
+        // Both methods redirect to the guarded installer; neither can bypass
+        // hosting-owner proof to mutate the production identity registry.
+        $usersBefore = DB::table('users')->count();
+        $tenantsBefore = DB::table('tenants')->count();
+
+        $this->get('https://localhost/setup')->assertRedirect();
+        $this->post('https://localhost/setup')->assertRedirect();
+
+        $this->assertSame($usersBefore, DB::table('users')->count());
+        $this->assertSame($tenantsBefore, DB::table('tenants')->count());
     }
 
     public function test_php83_job_round_trip_preserves_readonly_tenant_provenance(): void
@@ -316,6 +328,26 @@ class DurableAiBatchTest extends TestCase
         $this->assertSame('mock-receipt', json_decode(DB::table('durable_ai_items')->value('usage'), true)['provider_request_id']);
         app()->call([$job, 'handle']);
         Http::assertSentCount(1);
+        $this->assertSame(1, DB::table('durable_ai_batches')->count());
+    }
+
+    public function test_domain_result_replay_cannot_enqueue_again_when_context_changes(): void
+    {
+        $request = ['workflow' => 'test', 'site_id' => $this->site->id, 'user_prompt' => 'Original'];
+        $batches = app(BatchService::class);
+        $batch = $batches->submit([['key' => 'generation', 'request' => [...$request, '_replay_hash' => $batches->fingerprint($request)]]], $this->site->id);
+        $fake = $this->provider();
+        $this->assertSame('completed', $batches->runOne());
+        app('request')->headers->set('X-AIMW-AI-BATCH', $batch['id']);
+        $generator = app(AiGenerationService::class);
+        $this->assertSame('Original', $generator->generate($request)['content']);
+        try {
+            $generator->generate([...$request, 'user_prompt' => 'Changed while waiting']);
+            $this->fail('Changed context must not create a second chargeable task.');
+        } catch (HttpException $error) {
+            $this->assertSame(409, $error->getStatusCode());
+        }
+        $this->assertCount(1, $fake->calls);
         $this->assertSame(1, DB::table('durable_ai_batches')->count());
     }
 }

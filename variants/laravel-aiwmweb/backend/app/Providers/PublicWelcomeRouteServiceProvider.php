@@ -17,6 +17,10 @@ final class PublicWelcomeRouteServiceProvider extends ServiceProvider
             ->name('public.welcome');
 
         Route::middleware(['web', 'auth'])
+            ->get('/dashboard', [PublicWelcomeReadController::class, 'dashboard'])
+            ->name('public.dashboard.bridge');
+
+        Route::middleware(['web', 'auth'])
             ->get('/account/billing', [PublicWelcomeReadController::class, 'billing'])
             ->name('public.account-billing.bridge');
     }

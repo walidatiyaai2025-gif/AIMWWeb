@@ -35,7 +35,7 @@ function renderControl(value: FrontendContext) {
 
 describe('AIMW-IDEN-9B043B1FAE current-user My account control', () => {
     beforeEach(() => {
-        document.body.innerHTML = '<div class="topbar-actions"></div>';
+        document.body.innerHTML = '<div class="page-heading-actions"></div>';
     });
 
     afterEach(() => {

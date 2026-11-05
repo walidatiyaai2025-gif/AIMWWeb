@@ -104,6 +104,63 @@ function nextIdempotencyKey(): string {
     return `site-onboarding-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+
+type PairingTokenResponse = { pairing_token: string; expires_in: number };
+
+function ConnectorPairingGuide({ context, siteId }: { context: FrontendContext; siteId: number }) {
+    const { locale } = useLocale();
+    const canPair = context.permissions.includes('*') || context.permissions.includes('connector.manage');
+    const [token, setToken] = useState('');
+    const [error, setError] = useState('');
+    const [busy, setBusy] = useState(false);
+    if (!canPair) return null;
+
+    const platformUrl = window.location.origin;
+    const requestToken = async () => {
+        if (busy) return;
+        setBusy(true);
+        setError('');
+        setToken('');
+        try {
+            const tenant = encodeURIComponent(context.tenant.slug);
+            const response = await apiRequest<PairingTokenResponse>(
+                '/api/tenants/' + tenant + '/sites/' + siteId + '/pairing',
+                { method: 'POST' },
+            );
+            if (!response.pairing_token || response.expires_in <= 0) throw new Error('No usable pairing token returned.');
+            setToken(response.pairing_token);
+        } catch (caught) {
+            setError(caught instanceof Error ? caught.message : 'Could not generate a pairing token.');
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    return (
+        <section className="toolbar-panel" aria-label={locale === 'ar' ? 'إقران AIMW Connector' : 'Pair AIMW Connector'}>
+            <h3>{locale === 'ar' ? 'الخطوة الإضافية: إقران Connector' : 'Optional next step: pair the Connector'}</h3>
+            <p className="settings-note">{locale === 'ar'
+                ? 'تثبيت الإضافة داخل WordPress وحده لا ينشئ اتصالاً. بعد نجاح اتصال REST، أنشئ رمز الإقران ثم افتح WordPress ← أدوات ← AIMW Connector والصق الرابط والرمز.'
+                : 'Installing the WordPress plugin alone does not connect it. After the REST connection succeeds, generate a pairing token, then open WordPress → Tools → AIMW Connector and paste the platform URL and token.'}</p>
+            <p><strong>{locale === 'ar' ? 'رابط المنصة:' : 'Platform URL:'}</strong> <code>{platformUrl}</code></p>
+            <button className="btn" type="button" disabled={busy} onClick={() => void requestToken()}>
+                {busy ? (locale === 'ar' ? 'جارٍ إنشاء الرمز…' : 'Generating token…')
+                    : (locale === 'ar' ? 'إنشاء رمز إقران لمرة واحدة' : 'Generate one-time pairing token')}
+            </button>
+            {error ? <p role="alert">{error}</p> : null}
+            {token ? (
+                <div role="status" className="panel">
+                    <label htmlFor="aimw-pairing-token">{locale === 'ar' ? 'رمز الإقران — صالح لمدة 10 دقائق' : 'Pairing token — valid for 10 minutes'}</label>
+                    <input id="aimw-pairing-token" readOnly value={token} autoComplete="off" />
+                    <p className="settings-note">{locale === 'ar'
+                        ? 'هذا الرمز حساس ومؤقت. استخدمه في لوحة WordPress فقط ولا تشاركه أو تحفظه.'
+                        : 'This token is sensitive and temporary. Use it in WordPress admin only; do not share or save it.'}</p>
+                </div>
+            ) : null}
+        </section>
+    );
+}
+
 export function SiteOnboardingSaveTestSyncControl({ context }: { context: FrontendContext }) {
     const { locale } = useLocale();
     const endpoint = canonicalSiteOnboardingEndpoint(context.api.sites);
@@ -318,6 +375,15 @@ export function SiteOnboardingSaveTestSyncControl({ context }: { context: Fronte
 
                 {step === 2 ? (
                     <>
+                        <div className="panel" role="note">
+                            <strong>{locale === 'ar' ? 'قبل إدخال بيانات WordPress' : 'Before entering WordPress credentials'}</strong>
+                            <p>{locale === 'ar'
+                                ? 'افتح لوحة WordPress ← المستخدمون ← ملفك الشخصي ← Application Passwords. أنشئ كلمة مرور تطبيق خاصة بـ AIWMWeb واستخدم اسم مستخدم WordPress معها. لا تستخدم كلمة مرور حسابك العادية.'
+                                : 'In WordPress open Users → Profile → Application Passwords. Generate a dedicated AIWMWeb application password and enter it with your WordPress username. Do not enter your normal sign-in password.'}</p>
+                            <p>{locale === 'ar'
+                                ? 'إضافة AIMW Connector منفصلة عن هذا الاتصال الأولي؛ يمكن إقرانها بعد نجاح الاختبار لتفعيل الوظائف المتقدمة.'
+                                : 'AIMW Connector pairing is separate from this first REST connection and is available after a successful test.'}</p>
+                        </div>
                         <label>
                             <span>{locale === 'ar' ? 'اسم مستخدم WordPress' : 'WordPress username'}</span>
                             <input
@@ -405,6 +471,8 @@ export function SiteOnboardingSaveTestSyncControl({ context }: { context: Fronte
             </form>
 
             {result ? (
+                <>
+                <ConnectorPairingGuide context={context} siteId={result.site.id} />
                 <section className="toolbar-panel" aria-live="polite">
                     <strong>{result.site.name}</strong>
                     <span>{result.site.connection_status} / {result.site.health_state}</span>
@@ -436,6 +504,7 @@ export function SiteOnboardingSaveTestSyncControl({ context }: { context: Fronte
                         {locale === 'ar' ? 'عرض كل المواقع' : 'View all sites'}
                     </a>
                 </section>
+                </>
             ) : null}
         </section>
     );

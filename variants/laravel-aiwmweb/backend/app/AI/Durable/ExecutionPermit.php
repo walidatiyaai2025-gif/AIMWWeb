@@ -72,7 +72,7 @@ final class ExecutionPermit
                 throw new RuntimeException('Provider receipt fencing failed.');
             }
             DB::table('durable_ai_items')->where('id', $claim['item_id'])->where('state', 'running')
-                ->update(['usage' => json_encode($metadata, JSON_THROW_ON_ERROR)]);
+                ->update(['usage' => json_encode(array_merge(json_decode(DB::table('durable_ai_items')->where('id', $claim['item_id'])->value('usage') ?? '{}', true), $metadata), JSON_THROW_ON_ERROR)]);
         });
     }
 }

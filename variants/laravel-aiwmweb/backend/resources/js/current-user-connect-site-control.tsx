@@ -61,10 +61,10 @@ export function CurrentUserConnectSiteControl({ context }: { context: FrontendCo
             href={tenantUrl(context.tenant.slug, '/sites/connect')}
             className="workspace-empty current-user-connect-site-link"
             data-canonical-operation={CURRENT_USER_CONNECT_SITE_OPERATION_ID}
-            aria-label={locale === 'ar' ? 'ربط موقعك الأول' : 'Connect your first site'}
+            aria-label={locale === 'ar' ? 'ربط موقعك' : 'Connect your site'}
         >
             <span aria-hidden="true">＋</span>
-            <span>{locale === 'ar' ? 'ربط موقعك الأول' : 'Connect your first site'}</span>
+            <span>{locale === 'ar' ? 'ربط موقعك' : 'Connect your site'}</span>
         </a>,
         target,
     );

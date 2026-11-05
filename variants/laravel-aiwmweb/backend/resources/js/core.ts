@@ -121,7 +121,7 @@ export async function apiRequest<T>(url: string, init: RequestInit = {}): Promis
         );
     }
 
-    if (response.status === 202 && typeof payload?.status_url === 'string') {
+    if (response.status === 202 && typeof payload?.status_url === 'string' && /^\/api\/tenants\/[^/]+\/ai-batches\/[^/?#]+$/.test(payload.status_url)) {
         const statusUrl = payload.status_url as string;
         if (!statusUrl.startsWith('/api/tenants/') || statusUrl.startsWith('//')) {
             throw new ApiError('Invalid AI task status URL.', 502, 'invalid_status_url');
@@ -134,7 +134,10 @@ export async function apiRequest<T>(url: string, init: RequestInit = {}): Promis
             if (status.data.state === 'completed') {
                 // Re-read the original domain response using its immutable persisted
                 // generation. This never makes a second provider call.
-                const finalResponse = await fetch(url, { credentials: 'same-origin', ...init, headers });
+                if (/\/ai-batches\/?(?:\?.*)?$/.test(url)) return status as T;
+                const replayHeaders = new Headers(headers);
+                replayHeaders.set('X-AIMW-AI-BATCH', status.data.id);
+                const finalResponse = await fetch(url, { credentials: 'same-origin', ...init, headers: replayHeaders });
                 if (!finalResponse.ok || finalResponse.status === 202) throw new ApiError('AI result needs review.', 409, 'ai_result_pending');
                 return await finalResponse.json() as T;
             }

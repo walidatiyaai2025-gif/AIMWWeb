@@ -82,7 +82,7 @@ class QuickActionsToggleTerminalityTest extends TestCase
         $this->assertStringContainsString(self::OPERATION_ID, $control);
         $this->assertStringContainsString('resolveCapability(context, route).state === \'enabled\'', $control);
         $this->assertStringContainsString('tenantUrl(context.tenant.slug, route.path)', $control);
-        $this->assertStringContainsString("document.querySelector<HTMLElement>('.topbar-actions')", $control);
+        $this->assertStringContainsString("document.querySelector<HTMLElement>('.page-heading-actions')", $control);
         $this->assertStringContainsString("'/content-planner'", $control);
         $this->assertStringContainsString("'/module/posts'", $control);
         $this->assertStringNotContainsString('tenant=', $control);

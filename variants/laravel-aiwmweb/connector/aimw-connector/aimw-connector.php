@@ -2,7 +2,7 @@
 /**
  * Plugin Name: AIMW Connector
  * Description: Signed, scoped semantic operations for Laravel AIWMWeb.
- * Version: 0.2.0
+ * Version: 0.2.1
  * Requires PHP: 8.0
  */
 
@@ -15,7 +15,7 @@ require_once __DIR__.'/includes/class-aimw-connector-admin.php';
 
 final class AIMW_Connector_V1
 {
-    public const PLUGIN_VERSION = '0.2.0';
+    public const PLUGIN_VERSION = '0.2.1';
     public const PROTOCOL_VERSION = '1';
     public const CLOCK_SKEW_SECONDS = 300;
     private const NS = 'aimw/v1';
@@ -72,11 +72,15 @@ final class AIMW_Connector_V1
     {
         $platform = rtrim(esc_url_raw((string) $request['platform_url']), '/');
         $token = sanitize_text_field((string) $request['pairing_token']);
-        if (! $platform || ! $token) {
-            return new WP_Error('invalid_pairing', 'Platform URL and pairing token are required.', ['status' => 422]);
+        $parts = $platform !== '' ? wp_parse_url($platform) : false;
+        if (! is_array($parts) || strtolower((string) ($parts['scheme'] ?? '')) !== 'https'
+            || empty($parts['host']) || isset($parts['user']) || isset($parts['pass'])
+            || isset($parts['query']) || isset($parts['fragment'])
+            || strlen($platform) > 1024 || $token === '' || strlen($token) > 512) {
+            return new WP_Error('invalid_pairing', 'A valid HTTPS platform URL and pairing token are required.', ['status' => 422]);
         }
         $identity = wp_generate_uuid4();
-        $response = wp_remote_post($platform.'/api/connector/pair', [
+        $response = wp_safe_remote_post($platform.'/api/connector/pair', [
             'timeout' => 20,
             'headers' => ['Content-Type' => 'application/json'],
             'body' => wp_json_encode([

@@ -51,6 +51,7 @@ import { DashboardSitesNavigationControl } from './dashboard-sites-navigation-co
 import { DashboardSystemHealthNavigationControl } from './dashboard-system-health-navigation-control';
 import { DashboardSitesQuickAccessControl } from './dashboard-sites-quick-access-control';
 import { DashboardMediaNavigationControl } from './dashboard-media-navigation-control';
+import { DashboardConnectorDownloadControl } from './dashboard-connector-download-control';
 import { LiveSystemStatusRefreshControl } from './live-system-status-refresh-control';
 import { EMAIL_HISTORY_CLEAR_FILTERS_OPERATION_ID, EmailHistoryFiltersControl, type EmailHistoryFilterState } from './email-history-filters-control';
 import { GlobalUsersFullManagementControl } from './global-users-full-management-control';
@@ -263,23 +264,29 @@ function DashboardContent({ context, route }: { context: FrontendContext; route:
     const metrics = explicitMetrics.length ? explicitMetrics : canonicalMetrics;
 
     return (
-        <div className="workspace-stack">
-            <section className="hero-panel">
-                <div><span className="workspace-kicker">LIVE TENANT DATA</span><h2>{locale === 'ar' ? 'ملخص التشغيل' : 'Operational summary'}</h2><p>{locale === 'ar' ? 'تُعرض المؤشرات فقط عندما يعيدها خادم Laravel للحساب الحالي.' : 'Metrics render only when the Laravel backend returns them for the active tenant.'}</p></div>
-                <DashboardRefreshClickedControl context={context} endpoint={endpoint} busy={query.isFetching} onRefresh={() => query.refetch()} />
+        <div className="workspace-stack dashboard-overview">
+            <section className="hero-panel dashboard-summary">
+                <div className="dashboard-summary-copy"><span className="dashboard-summary-mark" aria-hidden="true">▱</span><span className="workspace-kicker">LIVE TENANT DATA</span><h2>{locale === 'ar' ? 'ملخص التشغيل' : 'Operational summary'}</h2><p>{locale === 'ar' ? 'تُعرض المؤشرات فقط عندما يعيدها خادم Laravel للحساب الحالي.' : 'Metrics render only when the Laravel backend returns them for the active tenant.'}</p></div>
+                <div className="dashboard-summary-actions">
+                    <DashboardRefreshClickedControl context={context} endpoint={endpoint} busy={query.isFetching} onRefresh={() => query.refetch()} />
                 <LiveSystemStatusRefreshControl busy={query.isFetching} onClick={() => query.refetch()} />
                 <DashboardSitesNavigationControl context={context} />
                 <DashboardSystemHealthNavigationControl context={context} />
                 <DashboardSitesQuickAccessControl context={context} />
                 <DashboardMediaNavigationControl context={context} />
+                <DashboardConnectorDownloadControl />
+                </div>
             </section>
             {metrics.length ? (
                 <section className="metric-grid" aria-label={locale === 'ar' ? 'مؤشرات الحساب' : 'Tenant metrics'}>
                     {metrics.map((metric, index) => (
-                        <article className="metric-card" key={String(metric.key ?? index)}>
-                            <small>{String(metric.label ?? metric.key ?? '')}</small>
-                            <strong>{String(metric.value ?? '—')}</strong>
-                            {metric.detail ? <span>{String(metric.detail)}</span> : null}
+                        <article className={`metric-card metric-${['sites', 'content', 'media', 'active_jobs', 'health', 'last_sync'].includes(String(metric.key)) ? String(metric.key) : 'other'}`} key={String(metric.key ?? index)}>
+                            <span className="metric-card-icon" aria-hidden="true">{({ sites: '◎', content: '▤', media: '▧', active_jobs: '▣', health: '♢', last_sync: '↻' } as Record<string, string>)[String(metric.key)] ?? '◈'}</span>
+                            <div className="metric-card-copy">
+                                <small>{String(metric.label ?? metric.key ?? '')}</small>
+                                <strong>{String(metric.value ?? '—')}</strong>
+                                {metric.detail ? <span>{String(metric.detail)}</span> : null}
+                            </div>
                         </article>
                     ))}
                 </section>
@@ -777,7 +784,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                     : (route.key === 'sites' ? SITES_RELOAD_OPERATION_ID : undefined)));
 
     return (
-        <div className="workspace-stack">
+        <div className={route.key === 'ai-center' ? 'workspace-stack ai-center-resource-grid' : 'workspace-stack'}>
             <section className="toolbar-panel" aria-label={locale === 'ar' ? 'أدوات مساحة العمل' : 'Workspace tools'}>
                 {route.key === 'email-history' ? (
                     <EmailHistoryFiltersControl
@@ -1208,6 +1215,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                 {visibleRows.length ? (
                     <DataTable
                         rows={visibleRows}
+                        layout={route.key === 'sites' ? 'cards' : 'table'}
                         renderActions={route.key === 'site-operations' ? (row) => (
                             <SiteOperationsDetailsLinkControl context={context} row={row} />
                         ) : route.key === 'site-reliability' ? (row) => (

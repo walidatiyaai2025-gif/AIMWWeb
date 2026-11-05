@@ -26,6 +26,10 @@ final class RuntimeHealthService
     /** @return array{status:string,checks:array<string,array{status:string}>} */
     public function ready(): array
     {
+        if (config('cpanel.enabled')) {
+            return $this->cpanelReady();
+        }
+
         $checks = [
             'app' => ['status' => 'ok'],
             'database' => $this->probe('database', function (): void {
@@ -66,6 +70,69 @@ final class RuntimeHealthService
 
         return [
             'status' => $ready ? 'ready' : 'not_ready',
+            'checks' => $checks,
+        ];
+    }
+
+    private function cpanelReady(): array
+    {
+        $checks = [
+            'database' => $this->probe('database', fn () => DB::select('SELECT 1')),
+            'storage' => $this->probe('storage', function (): void {
+                if (! is_writable(storage_path()) || ! is_writable(base_path('bootstrap/cache'))) {
+                    throw new RuntimeException('Runtime storage is not writable.');
+                }
+            }),
+            'cache' => $this->probe('cache', function (): void {
+                if (config('cache.default') !== 'database') {
+                    throw new RuntimeException('cPanel cache must use the validated database driver.');
+                }
+                $key = 'runtime:cpanel:'.bin2hex(random_bytes(12));
+                try {
+                    Cache::store('database')->put($key, 'probe', 30);
+                    if (Cache::store('database')->get($key) !== 'probe') {
+                        throw new RuntimeException('Database cache round trip failed.');
+                    }
+                } finally {
+                    Cache::store('database')->forget($key);
+                }
+            }),
+            'sessions' => $this->probe('sessions', function (): void {
+                if (config('session.driver') !== 'database') {
+                    throw new RuntimeException('cPanel sessions must use the validated database driver.');
+                }
+                $handler = clone app('session')->driver('database')->getHandler();
+                $handler->setExists(false);
+                $id = 'runtime-cpanel-'.bin2hex(random_bytes(12));
+                try {
+                    if (! $handler->write($id, 'probe') || $handler->read($id) !== 'probe') {
+                        throw new RuntimeException('Database session round trip failed.');
+                    }
+                } finally {
+                    $handler->destroy($id);
+                }
+            }),
+            'queue' => $this->probe('queue', function (): void {
+                if (config('queue.default') !== 'database') {
+                    throw new RuntimeException('cPanel queue must use the bounded database driver.');
+                }
+                Queue::connection('database')->size();
+            }),
+            'queue_processing' => ['status' => config('cpanel.cron_enabled') ? 'ok' : 'disabled'],
+            'redis' => ['status' => 'not_required'],
+            'ai' => ['status' => config('cpanel.ai_enabled') ? (config('cpanel.preflight_passed') && config('cpanel.cron_enabled') ? 'ok' : 'unavailable') : 'disabled'],
+            'scheduler' => ! config('cpanel.cron_enabled') ? ['status' => 'disabled'] : $this->probe('scheduler', function (): void {
+                $tick = Cache::store('database')->get(self::SCHEDULER_HEARTBEAT_KEY);
+                if (! config('cpanel.preflight_passed') || ! is_numeric($tick) || time() - (int) $tick > 180) {
+                    throw new RuntimeException('Validated cPanel scheduler heartbeat is missing or stale.');
+                }
+            }),
+        ];
+
+        return [
+            'status' => collect($checks)->every(fn ($check) => in_array($check['status'], ['ok', 'disabled', 'not_required'], true)) ? 'ready' : 'not_ready',
+            'profile' => 'cpanel',
+            'hosting_preflight' => config('cpanel.preflight_passed') ? 'operator_validated' : 'pending',
             'checks' => $checks,
         ];
     }

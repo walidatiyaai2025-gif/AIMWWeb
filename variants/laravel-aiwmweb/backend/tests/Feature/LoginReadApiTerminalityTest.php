@@ -54,7 +54,7 @@ class LoginReadApiTerminalityTest extends TestCase
 
         $response->assertOk()
             ->assertSee('AI WordPress Manager')
-            ->assertSee('action="/api/login"', false)
+            ->assertSee('action="'.route('login.store').'"', false)
             ->assertSee('name="email"', false)
             ->assertSee('name="password"', false)
             ->assertSee('name="returnUrl" value="/tenants/alpha/workspace?tab=ops"', false)

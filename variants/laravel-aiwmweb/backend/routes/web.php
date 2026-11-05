@@ -19,6 +19,7 @@ use App\Http\Controllers\ContentPlannerController;
 use App\Http\Controllers\DemoController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\PayPalWebhookController;
+use App\Http\Controllers\PublicWelcomeReadController;
 use App\Http\Controllers\RouteApiAdapterController;
 use App\Http\Controllers\SeoController;
 use App\Http\Controllers\SiteDataSnapshotController;
@@ -33,13 +34,14 @@ use App\Models\TenantMembership;
 use App\Tenancy\TenantContext;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn () => view('welcome'));
+// Use the canonical AIWMWeb public landing, not Laravel's starter template.
+// Keep a 200 response at / for return-home and unauthenticated entry flows.
+Route::middleware('web')->get('/', PublicWelcomeReadController::class)->name('public.home');
 Route::get('/access-denied', AccessDeniedReadController::class)->name('canonical.access-denied');
 Route::get('/health/live', [HealthController::class, 'live'])->name('health.live');
 Route::get('/health/ready', [HealthController::class, 'ready'])->name('health.ready');
 
 Route::post('/api/login', [DemoController::class, 'login']);
-Route::post('/api/connector/pair', [DemoController::class, 'completePairing'])->middleware('throttle:20,1');
 Route::post('/api/logout', [DemoController::class, 'logout'])->middleware('auth');
 
 Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->group(function () {

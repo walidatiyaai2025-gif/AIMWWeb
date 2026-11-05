@@ -1,5 +1,16 @@
-# AIMW Connector v0.1.0
+# AIMW Connector v0.2.1
 
 Install the `aimw-connector` directory as a WordPress plugin. An administrator pairs it by POSTing `platform_url` and the one-time `pairing_token` to `/wp-json/aimw/v1/pair` while authenticated to WordPress.
 
 The connector accepts only versioned semantic REST operations. It uses HMAC-SHA256, timestamp/nonce replay protection, request/correlation/operation IDs, explicit scopes, WordPress capability checks for pairing, WordPress APIs for reads/writes, idempotent execution receipts, and a bounded local audit. It provides no raw SQL, arbitrary PHP, filesystem, or command execution surface.
+
+
+## Connect from the WordPress dashboard
+
+1. Install the released `aimw-connector.zip` from WordPress → Plugins → Add New → Upload Plugin and activate it.
+2. Open WordPress → Tools → AIMW Connector.
+3. Enter the AIWMWeb Manager HTTPS URL (for example `https://aiwm.walidatiya.com`), and a one-time pairing token generated in the corresponding AIWMWeb WordPress site workflow.
+4. Click **Connect & Verify**. A successful pairing stores the server-issued connector identity and secret locally, never the one-time token. Configure the permitted scopes after pairing.
+5. If pairing fails, check HTTPS, host reachability and that the token is valid for the correct site. No secret should be pasted into tickets or logs.
+
+The pairing handler is administrator-only and CSRF-protected; outbound calls use WordPress safe HTTP validation to avoid requests to internal/private targets.

@@ -142,6 +142,41 @@ A demo is accepted only when a real tenant can complete:
 
 The same candidate must also prove cross-tenant isolation using at least Tenant A and Tenant B and show that direct IDs, list endpoints, jobs, evidence and connector operations cannot cross the tenant boundary.
 
+
+## Remaining parity closure execution constitution
+
+This section is an explicit owner amendment governing the remaining canonical Laravel parity closure work until the canonical operation ledger reaches 100% terminality.
+
+### One task, one canonical branch
+
+1. Every remaining canonical Task/operation receives exactly one canonical Task ID and exactly one canonical implementation branch for its entire lifecycle.
+2. The Manager/Lead creates or reconciles that canonical branch once before implementation starts. Implementation Workers are **not allowed to create a replacement, alternate, recovery, temporary, duplicate, or second implementation branch** for the same Task.
+3. Before any write, the Manager/Lead and Worker must race-check the canonical operation ID/Task ID against live issues, open and recently merged PRs, active Worker leases, existing branches, and pushed commits. If equivalent work already exists, the Worker must continue that exact lineage rather than reimplement it.
+4. A replacement Worker inherits the same Task ID, canonical branch, latest pushed SHA, PR, evidence chain, and unresolved gaps. Worker replacement never creates a new branch identity.
+5. If a Worker receives a Task without an already reconciled canonical branch, it must return `BRANCH_REQUIRED` to the Manager/Lead rather than create a branch itself.
+
+### Ten-worker closure pool
+
+1. The closure program operates with a maximum of **10 concurrent implementation Workers** for this variant.
+2. The Manager/Lead maintains up to 10 active non-overlapping Task leases whenever at least 10 READY dependency-safe canonical Tasks exist.
+3. Each Worker owns one Task scope at a time. No two active Workers may own the same operation ID, Task ID, branch, PR, or materially overlapping implementation surface.
+4. When one Task is integrated and its branch is retired, the freed Worker slot may be assigned the next READY Task after a fresh race/ownership check.
+5. Parallelism must never be increased by duplicating a Task or opening another branch for already-owned work.
+
+### Mandatory branch retirement after merge
+
+1. A Task is not eligible for branch deletion until its PR is merged into the approved integration lineage and the merge is verified against the exact branch head.
+2. Before deletion, the Integration Lead must prove that the canonical Task branch contains no unique unmerged commits and that all required evidence/CI is preserved by the merged lineage.
+3. Once those checks pass, the canonical Task branch **must be deleted promptly as part of Task closure**.
+4. Closed or merged Task branches must not remain as reusable implementation lanes. A later defect or new scope receives a new canonical Task identity only when it is genuinely new work, not a continuation of the closed Task.
+5. Blind bulk deletion, deletion of unmerged unique work, force-push cleanup, and deletion based only on branch naming remain prohibited.
+
+### No duplicate work
+
+Duplicate implementation is a constitutional violation for this closure program. A Task may have only one active canonical implementation lineage. The source of truth for remaining work is the latest full canonical parity reconciliation and live GitHub state, not issue count, stale chat state, branch count, or a historical task list.
+
+The Manager/Lead owns the live ownership map for the 10-worker pool and must reconcile Task ID -> operation ID -> Worker lease -> canonical branch -> PR -> exact head SHA before dispatch and again before integration.
+
 ## Current governance state
 
 The Laravel variant is intentionally registered as `UNMATERIALIZED / BLOCKED_UNMATERIALIZED` during the governance normalization step. Product implementation must not begin until the physical implementation boundary is deliberately materialized, recorded as `MAPPED`, and a PCC routing packet for Issue #257 is valid.
