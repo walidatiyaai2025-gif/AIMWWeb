@@ -71,6 +71,10 @@ jobs:
         run: |
           php -l variants/laravel-aiwmweb/tools/release/cpanel-one-time-install.php
           python3 -m py_compile variants/laravel-aiwmweb/tools/release/build-cpanel-setup.py
+          php -l variants/laravel-aiwmweb/tools/deploy/remote-apply-signed-update.php
+          bash -n variants/laravel-aiwmweb/tools/deploy/ssh-deploy.sh
+          python3 -m py_compile variants/laravel-aiwmweb/tools/deploy/prepare_signed_deploy.py
+          python3 -m unittest discover -s variants/laravel-aiwmweb/tools/deploy -p 'test_*.py'
 
       - name: Produce full installable Laravel Setup ZIP
         shell: bash
