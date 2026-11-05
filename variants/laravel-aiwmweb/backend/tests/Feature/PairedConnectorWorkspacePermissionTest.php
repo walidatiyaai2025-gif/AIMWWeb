@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Connector\PairingService;
 use App\Models\Connector;
+use App\Models\Permission;
 use App\Models\Role;
 use App\Models\Site;
 use App\Models\Tenant;
@@ -88,7 +89,7 @@ final class PairedConnectorWorkspacePermissionTest extends TestCase
         $membership = TenantMembership::query()->create(['user_id' => $user->id, 'status' => 'active']);
         $role = Role::query()->create(['name' => $roleName]);
         foreach ($permissions as $name) {
-            $permission = \App\Models\Permission::query()->firstOrCreate(['name' => $name]);
+            $permission = Permission::query()->firstOrCreate(['name' => $name]);
             $role->permissions()->attach($permission, ['tenant_id' => $tenant->id]);
         }
         $membership->roles()->attach($role, ['tenant_id' => $tenant->id]);
