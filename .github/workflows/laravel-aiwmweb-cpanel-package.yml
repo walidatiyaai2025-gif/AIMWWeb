@@ -27,7 +27,7 @@ jobs:
     timeout-minutes: 35
     env:
       SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-      BUILD_VERSION: ${{ github.event_name == 'workflow_dispatch' && format('1.0.{0}', github.run_number) || '0.0.0' }}
+      BUILD_VERSION: ${{ github.event_name == 'pull_request' && '0.0.0' || format('1.0.{0}', github.run_number) }}
     services:
       mysql:
         image: mysql:8.4
@@ -141,7 +141,8 @@ jobs:
           echo "AIWM_CI_SIGNED_DIR=$tmp" >> "$GITHUB_ENV"
           # The CI test key is random, never provisioned to any deployment and never uploaded.
           CI_ONLY_SIGN_KEY="$(php -r '$p=sodium_crypto_sign_keypair(); file_put_contents($argv[1], base64_encode(sodium_crypto_sign_publickey($p))); echo base64_encode(sodium_crypto_sign_secretkey($p));' "$tmp/public-key")"
-          AIWM_UPDATES_SECRET_KEY="$CI_ONLY_SIGN_KEY" php variants/laravel-aiwmweb/tools/release/build-signed-update.php "0.0.$GITHUB_RUN_NUMBER" "$SOURCE_SHA" "$tmp"
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then CI_UPGRADE_VERSION="0.0.$GITHUB_RUN_NUMBER"; else CI_UPGRADE_VERSION="1.1.$GITHUB_RUN_NUMBER"; fi
+          AIWM_UPDATES_SECRET_KEY="$CI_ONLY_SIGN_KEY" php variants/laravel-aiwmweb/tools/release/build-signed-update.php "$CI_UPGRADE_VERSION" "$SOURCE_SHA" "$tmp"
           unset CI_ONLY_SIGN_KEY
           unzip -t "$tmp/AIWMWeb-Laravel-signed-bundle.zip" >/dev/null
           php -r '
