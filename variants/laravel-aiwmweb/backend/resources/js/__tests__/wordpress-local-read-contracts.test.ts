@@ -17,13 +17,20 @@ function context(): FrontendContext {
 }
 
 describe('local WordPress read workspace routes', () => {
-    it('does not require read scopes outside the Connector protocol', () => {
+    it('accepts the real content.read scope for tenant-bound local read-only workspaces', () => {
         const ctx = context();
         for (const key of keys) {
             const route = workspaceRoutes.find((value) => value.key === key)!;
-            expect(route.connectorScope).toBeUndefined();
+            expect(route.connectorScope).toBeTruthy();
             expect(resolveCapability(ctx, route).state).toBe('enabled');
         }
+    });
+
+    it('does not bypass connection checks when the signed Connector is absent', () => {
+        const ctx = context();
+        ctx.connectors = [];
+        const route = workspaceRoutes.find((value) => value.key === 'posts')!;
+        expect(resolveCapability(ctx, route).state).toBe('connector_unavailable');
     });
 
     it('keeps the tenant permission and live API contract guards', () => {
