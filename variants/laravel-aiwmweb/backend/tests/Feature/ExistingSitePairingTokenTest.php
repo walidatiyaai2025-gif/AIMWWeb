@@ -74,8 +74,9 @@ final class ExistingSitePairingTokenTest extends TestCase
         $this->assertSame(0, ConnectorPairing::withoutGlobalScopes()->count());
     }
 
-    /** @param list<string> $permissions
-     *  @return array{Tenant, User, Site}
+    /**
+     * @param  list<string>  $permissions
+     * @return array{Tenant, User, Site}
      */
     private function seedSite(string $slug, array $permissions): array
     {
