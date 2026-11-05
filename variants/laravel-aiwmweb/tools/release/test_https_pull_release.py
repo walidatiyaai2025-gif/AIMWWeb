@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """Release and private-Cron transport boundaries for no-SSH cPanel delivery."""
 from pathlib import Path
+import importlib.util
+import json
+import hashlib
+import tempfile
+import zipfile
 import unittest
 
 VARIANT = Path(__file__).resolve().parents[2]
@@ -13,6 +18,8 @@ PACKAGER = VARIANT / "tools/release/build-signed-update.php"
 SETUP = VARIANT / "tools/release/build-cpanel-setup.py"
 UPDATER = VARIANT / "backend/app/Platform/SystemUpdateService.php"
 CONFIG = VARIANT / "backend/config/system_updates.php"
+COMPAT = VARIANT / "tools/release/verify-signed-update-compat.py"
+PRODUCTION_WORKFLOW = WORKFLOW
 
 
 class HttpsPullReleaseTests(unittest.TestCase):
@@ -78,6 +85,49 @@ class HttpsPullReleaseTests(unittest.TestCase):
             "StrictHostKeyChecking=no", "AIWM_DEPLOY_SSH_PRIVATE_KEY",
         ):
             self.assertNotIn(forbidden, workflow)
+
+    def test_signed_update_build_excludes_compile_only_private_named_sources(self):
+        package = PACKAGER.read_text(encoding="utf8")
+        self.assertIn("str_starts_with($name, 'resources/js/') && str_contains($name, 'private')", package)
+        self.assertIn("unset($files[$name]);", package)
+        self.assertIn("Private Laravel resource cannot be safely updated", package)
+        for workflow in (WORKFLOW, STAGING_WORKFLOW):
+            contents = workflow.read_text(encoding="utf8")
+            self.assertIn("verify-signed-update-compat.py", contents)
+
+    def test_signed_update_legacy_compat_gate_accepts_valid_zip_and_rejects_private_paths(self):
+        spec = importlib.util.spec_from_file_location("aiwm_signed_compat", COMPAT)
+        self.assertIsNotNone(spec)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        with tempfile.TemporaryDirectory() as directory:
+            parent = Path(directory)
+            update = parent / "update.zip"
+            manifest_file = parent / "release.json"
+            safe = "public/build/assets/site.js"
+            data = b"console.log('compiled');"
+            with zipfile.ZipFile(update, "w") as package:
+                package.writestr(safe, data)
+            manifest = {
+                "product": "LARAVEL_AIWMWEB",
+                "minimum_supported_version": "0.0.0",
+                "files": {safe: hashlib.sha256(data).hexdigest()},
+                "schema_migrations": [],
+                "migration_policy": "none",
+                "sha256": hashlib.sha256(update.read_bytes()).hexdigest(),
+            }
+            manifest_file.write_text(json.dumps(manifest), encoding="utf8")
+            self.assertEqual(module.check(manifest_file, update)[0], 1)
+            for path in (
+                "resources/js/global-pages-private-selected-control.ts",
+                "resources/js/__tests__/global-posts-private-selected-control.test.ts",
+                "app/.env", "storage/logs/secret.log",
+                "public/downloads/aimw-connector.zip", "aiwm-cpanel-https-pull.php",
+            ):
+                with self.subTest(path=path):
+                    with self.assertRaises(ValueError):
+                        module.validate_path(path, legacy=True)
+            module.validate_path("public/build/assets/site.js", legacy=True)
 
     def test_every_release_contains_same_private_cron_script_and_blocks_public_install(self):
         self.assertIn('"aiwm-cpanel-https-pull.php"', SETUP.read_text(encoding="utf8"))
