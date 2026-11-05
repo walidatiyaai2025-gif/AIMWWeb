@@ -84,6 +84,14 @@ jobs:
           echo "package_run=$id" >> "$GITHUB_OUTPUT"
           echo "version=1.0.$number" >> "$GITHUB_OUTPUT"
 
+      - name: Configure PHP sodium and zip for trusted signing
+        if: steps.gate.outputs.ready == 'true'
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: sodium, zip
+          coverage: none
+
       - name: Validate production signer, key rotation and SSH configuration
         if: steps.gate.outputs.ready == 'true'
         env:
