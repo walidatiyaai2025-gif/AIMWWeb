@@ -139,7 +139,7 @@ final class SystemUpdateCenterTest extends TestCase
                 // Expected rejection.
             }
         }
-        foreach (['app/Http/Controllers/Safe.php', 'public/build/assets/app.js', 'public/downloads/aimw-connector.zip', 'vendor/composer/installed.json', 'vendor/symfony/http-foundation/Session/Storage/Handler/AbstractSessionHandler.php'] as $path) {
+        foreach (['app/Http/Controllers/Safe.php', 'public/build/assets/app.js', 'public/downloads/aimw-connector.zip', 'aiwm-cpanel-https-pull.php', 'vendor/composer/installed.json', 'vendor/symfony/http-foundation/Session/Storage/Handler/AbstractSessionHandler.php'] as $path) {
             $method->invoke($service, $path);
             $this->assertTrue(true);
         }
