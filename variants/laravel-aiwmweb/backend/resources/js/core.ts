@@ -273,11 +273,24 @@ export function resolveCapability(
     }
 
     if (route.connectorScope) {
+        // The current WordPress plugin advertises content.read, not legacy
+        // per-resource *.read scopes. Alias only read-only local workspaces
+        // backed by an advertised site-scoped API; never authorize mutations.
+        const localContentReadScopes = new Set([
+            'posts.read', 'pages.read', 'media.read', 'comments.read',
+            'taxonomy.read', 'users.read',
+        ]);
+        const supportsRead = (connector: ConnectorContract): boolean =>
+            connector.scopes.includes(route.connectorScope!) || (
+                operation === 'view' &&
+                localContentReadScopes.has(route.connectorScope!) &&
+                connector.scopes.includes('content.read')
+            );
         const supportingConnector = context.connectors.find(
-            (connector) => connector.state === 'connected' && connector.scopes.includes(route.connectorScope!),
+            (connector) => connector.state === 'connected' && supportsRead(connector),
         );
         if (!supportingConnector) {
-            const ownerDisabled = context.connectors.find((connector) => connector.scopes.includes(route.connectorScope!));
+            const ownerDisabled = context.connectors.find(supportsRead);
             return {
                 state: ownerDisabled?.reason === 'disabled_by_owner' ? 'disabled_by_owner' : 'connector_unavailable',
                 reason: ownerDisabled?.reason ?? `Connector scope ${route.connectorScope} is not currently advertised.`,
