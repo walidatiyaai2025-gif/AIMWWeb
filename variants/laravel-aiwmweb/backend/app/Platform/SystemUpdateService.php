@@ -597,6 +597,16 @@ final class SystemUpdateService
                 fclose($output);
             }
 
+            // cPanel PHP/web users may run with umask 0077. Executable
+            // frontend JS/CSS, manifests and the downloadable WordPress ZIP
+            // MUST be web-readable after an atomic replacement. Never inherit
+            // mode 0600 from the temporary file for public release assets.
+            // All writable user data, .env and storage remain outside the
+            // update allowlist and keep their private permissions.
+            if (str_starts_with($name, 'public/') && ! chmod($temp, 0644)) {
+                throw new RuntimeException('Unable to set public release asset permissions.');
+            }
+
             // Recheck both paths after the exclusive write and before rename.
             $this->assertSafeDestination($target);
             $this->assertSafeDestination($temp);
