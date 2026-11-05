@@ -56,6 +56,15 @@ try {
     if (base_path() !== $appRoot) {
         throw new RuntimeException('Incorrect Laravel application bootstrap path.');
     }
+    // This release channel is bound to the one expected production domain and
+    // the public/ sibling of the installed cPanel app/, never a guessed root.
+    $siteHost = parse_url((string) config('app.url'), PHP_URL_HOST);
+    $configuredPublic = realpath((string) config('system_updates.public_root', ''));
+    $expectedPublic = realpath(dirname($appRoot).'/public');
+    if ($siteHost !== 'aiwm.walidatiya.com' || (bool) config('app.debug') ||
+        $expectedPublic === false || $configuredPublic !== $expectedPublic) {
+        throw new RuntimeException('Deployment domain, debug state, or cPanel public root is not approved.');
+    }
     if (! (bool) config('system_updates.enabled') ||
         ! is_string(config('system_updates.public_key')) ||
         config('system_updates.public_key') === '') {
