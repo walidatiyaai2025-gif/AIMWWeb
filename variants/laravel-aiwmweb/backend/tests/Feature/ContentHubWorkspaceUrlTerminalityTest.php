@@ -3,12 +3,14 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\CanonicalWorkspaceRouteController;
+use App\Models\Connector;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\Site;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
+use App\Platform\SystemUpdateService;
 use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
@@ -116,6 +118,61 @@ final class ContentHubWorkspaceUrlTerminalityTest extends TestCase
         $this->assertStringContainsString('isContentHubWorkspacePath', $pages);
         $this->assertStringContainsString('CONTENT_HUB_WORKSPACE_URL_OPERATION_ID', $pages);
         $this->assertStringContainsString("route.key === 'content-hub'", $pages);
+    }
+
+    public function test_header_release_receipt_and_connected_connector_state_are_authoritative(): void
+    {
+        $user = User::factory()->create();
+        $membership = $this->membership($user, 'alpha', ['tenant.view', 'content.view', 'sites.view']);
+        $site = $this->site($membership, 'Real WordPress');
+
+        app(TenantContext::class)->activate($membership->tenant, $membership);
+        $site->update(['connection_status' => 'connected', 'status' => 'active']);
+        $connector = Connector::query()->create([
+            'site_id' => $site->id,
+            'identity' => '11111111-1111-4111-8111-111111111111',
+            'encrypted_secret' => 'test-only-never-exposed',
+            'capabilities' => ['health', 'content.read'],
+            'enabled_scopes' => ['health', 'content.read'],
+        ]);
+        $release = app(SystemUpdateService::class)->state();
+        app(TenantContext::class)->forget();
+
+        $response = $this->actingAs($user)
+            ->getJson('/tenants/alpha/context?site='.$site->id)
+            ->assertOk()
+            ->assertJsonPath('connectors.0.key', $connector->identity)
+            ->assertJsonPath('connectors.0.state', 'connected')
+            ->assertJsonPath('connectors.0.scopes.1', 'content.read')
+            ->assertJsonPath('release.version', (string) $release['version'])
+            ->assertJsonPath('release.sha', (string) $release['sha']);
+
+        $this->assertStringNotContainsString('test-only-never-exposed', $response->getContent());
+    }
+
+    public function test_revoked_connector_never_claims_to_be_connected(): void
+    {
+        $user = User::factory()->create();
+        $membership = $this->membership($user, 'alpha', ['tenant.view', 'content.view', 'sites.view']);
+        $site = $this->site($membership, 'Revoked WordPress');
+
+        app(TenantContext::class)->activate($membership->tenant, $membership);
+        $site->update(['connection_status' => 'connected']);
+        Connector::query()->create([
+            'site_id' => $site->id,
+            'identity' => '11111111-1111-4111-8111-222222222222',
+            'encrypted_secret' => 'test-only-secret',
+            'capabilities' => ['content.read'],
+            'enabled_scopes' => [],
+            'revoked_at' => now(),
+        ]);
+        app(TenantContext::class)->forget();
+
+        $this->actingAs($user)
+            ->getJson('/tenants/alpha/context?site='.$site->id)
+            ->assertOk()
+            ->assertJsonPath('connectors.0.state', 'disconnected')
+            ->assertJsonPath('connectors.0.scopes', []);
     }
 
     /** @param list<string> $permissions */
