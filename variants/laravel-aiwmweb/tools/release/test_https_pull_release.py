@@ -24,7 +24,7 @@ class HttpsPullReleaseTests(unittest.TestCase):
             "LOCK_EX | LOCK_NB", "aiwm.walidatiya.com",
             "system_updates.public_root", "SystemUpdateService::class",
             "$updates->latest()", "$updates->install(0)",
-            "runtime:health", "--ready",
+            "health/live", "SELECT 1 AS ok", "build/manifest.json",
         ):
             self.assertIn(anchor, text)
         self.assertNotIn("shell_exec(", text)
