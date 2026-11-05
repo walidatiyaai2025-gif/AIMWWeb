@@ -7,7 +7,9 @@ updates:
       day: monday
       time: "03:20"
       timezone: Asia/Kuwait
-    open-pull-requests-limit: 5
+    # Main-only release freeze: preserve alerts and dependency visibility; workers
+    # re-evaluate version upgrades from issue #1462 against current main.
+    open-pull-requests-limit: 0
     versioning-strategy: increase-if-necessary
     groups:
       laravel-runtime:
@@ -26,7 +28,9 @@ updates:
       day: monday
       time: "03:40"
       timezone: Asia/Kuwait
-    open-pull-requests-limit: 5
+    # Main-only release freeze: preserve alerts and dependency visibility; workers
+    # re-evaluate version upgrades from issue #1462 against current main.
+    open-pull-requests-limit: 0
     versioning-strategy: increase-if-necessary
     groups:
       frontend-runtime:
@@ -47,7 +51,9 @@ updates:
       day: monday
       time: "04:00"
       timezone: Asia/Kuwait
-    open-pull-requests-limit: 5
+    # Main-only release freeze: preserve alerts and dependency visibility; workers
+    # re-evaluate version upgrades from issue #1462 against current main.
+    open-pull-requests-limit: 0
     groups:
       github-actions:
         patterns:
