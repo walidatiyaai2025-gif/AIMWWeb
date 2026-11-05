@@ -90,16 +90,21 @@ try {
             throw new RuntimeException('Installed receipt does not match signed Release.');
         }
 
-        // Start a NEW PHP process to load the newly installed app classes,
-        // not the pre-update code still resident in this Cron invocation.
-        $check = new \Symfony\Component\Process\Process(
-            [PHP_BINARY, $root.'/artisan', 'runtime:health', '--ready'],
-            $root,
-        );
-        $check->setTimeout(45);
-        $check->run();
-        if (! $check->isSuccessful()) {
-            throw new RuntimeException('Fresh-process runtime readiness failed after promotion.');
+        // cPanel installs default to file sessions/cache and sync queue.
+        // Requiring Redis/scheduler ready() would falsely fail a valid shared
+        // hosting deployment. Check MySQL, compiled Vite and the real HTTP
+        // Laravel front controller instead (fresh FPM request, not stale CLI).
+        $dbHealth = \Illuminate\Support\Facades\DB::selectOne('SELECT 1 AS ok');
+        $assetManifest = $publicRoot.'/build/manifest.json';
+        if ((int) ($dbHealth->ok ?? 0) !== 1 ||
+            ! is_file($assetManifest) ||
+            ! is_array(json_decode((string) file_get_contents($assetManifest), true))) {
+            throw new RuntimeException('Database or compiled frontend is unavailable after update.');
+        }
+        $httpHealth = \Illuminate\Support\Facades\Http::acceptJson()
+            ->timeout(15)->get('https://aiwm.walidatiya.com/health/live');
+        if (! $httpHealth->successful() || $httpHealth->json('status') !== 'live') {
+            throw new RuntimeException('Fresh HTTP front controller did not pass health/live.');
         }
         echo 'DEPLOYED '.(string) $installed['version'].' '.(string) $installed['sha']."\n";
     } finally {
