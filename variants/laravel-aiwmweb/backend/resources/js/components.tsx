@@ -759,6 +759,13 @@ export function AppShell({ context, children }: { context: FrontendContext; chil
                         <span className="brand-copy"><strong>AI WordPress Manager</strong><small>Laravel AIWMWeb</small></span>
                     </Link>
                     <div className="topbar-actions">
+                        {(context.permissions.includes('*') || context.permissions.includes('diagnostics.view')) ? (
+                            <Link className="btn" to={tenantUrl(context.tenant.slug, '/runtime-inspector')}
+                                data-testid="runtime-inspector-shortcut"
+                                title={locale === 'ar' ? 'مفتش التشغيل والتصدير' : 'Runtime Inspector export'}>
+                                {locale === 'ar' ? 'الفحص' : 'Inspector'}
+                            </Link>
+                        ) : null}
                         {installedVersion ? (
                             <span
                                 className="topbar-installed-version"
