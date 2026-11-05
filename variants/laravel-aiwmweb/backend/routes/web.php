@@ -31,6 +31,7 @@ use App\Http\Controllers\SitesBulkOperationalStateController;
 use App\Models\Connector;
 use App\Models\Site;
 use App\Models\TenantMembership;
+use App\Platform\SystemUpdateService;
 use App\Tenancy\TenantContext;
 use Illuminate\Support\Facades\Route;
 
@@ -210,7 +211,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
             'key' => (string) $connector->identity,
             // Pairing establishes a real signed identity; remote health verification remains separate.
             'state' => $connector->revoked_at ? 'disconnected' : (
-                in_array(Site::query()->whereKey($connector->site_id)->value('connection_status'), ['paired', 'verified'], true)
+                in_array(Site::query()->whereKey($connector->site_id)->value('connection_status'), ['paired', 'verified', 'connected'], true)
                     ? 'connected' : 'unknown'
             ),
             'scopes' => $connector->enabled_scopes ?? [],
@@ -232,6 +233,8 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
             }
         }
         $actions = $actionRegistry->contracts($tenantModel, $permissions, $site);
+        // Read the installed signed update receipt, not a hard-coded build tag.
+        $installedRelease = app(SystemUpdateService::class)->state();
 
         $api = [
             'dashboard' => "/api/dashboard?tenant={$tenant}",
@@ -285,6 +288,10 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
             'tenants' => $tenants,
             'permissions' => $permissions,
             'connectors' => $connectors,
+            'release' => [
+                'version' => (string) $installedRelease['version'],
+                'sha' => (string) $installedRelease['sha'],
+            ],
             'capabilities' => $actionRegistry->capabilityStates($actions),
             'api' => $api,
             'active_site' => $site ? ['id' => (int) $site->getKey(), 'name' => $site->name, 'status' => $site->status] : null,
