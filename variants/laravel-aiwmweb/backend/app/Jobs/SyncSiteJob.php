@@ -6,6 +6,7 @@ use App\Connector\WordPressGateway;
 use App\Models\Site;
 use App\Models\SyncedContent;
 use App\Models\SyncRun;
+use App\Sync\SyncDiagnosticFormatter;
 use App\Services\SeoManagerService;
 use App\Sites\SiteOperationHistoryService;
 use Throwable;
@@ -75,7 +76,7 @@ final class SyncSiteJob extends TenantAwareJob
                 $startedAt,
             );
         } catch (Throwable $e) {
-            $run->update(['status' => 'failed', 'failure' => $e->getMessage(), 'completed_at' => now()]);
+            $run->update(['status' => 'failed', 'failure' => SyncDiagnosticFormatter::exception($e), 'completed_at' => now()]);
             $history->record(
                 $site->id,
                 'synchronization',
