@@ -37,8 +37,6 @@ jobs:
       SOURCE_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
       AIWM_SIGNER_ROTATED: ${{ secrets.AIWM_UPDATES_SIGNER_ROTATED }}
       AIWM_CPANEL_ACCEPTANCE_VERIFIED: ${{ secrets.AIWM_CPANEL_ACCEPTANCE_VERIFIED }}
-      AIWM_TRUSTED_KEY: ${{ secrets.AIWM_UPDATES_TRUSTED_PUBLIC_KEY }}
-      AIWM_UPDATES_SECRET_KEY: ${{ secrets.AIWM_UPDATES_SECRET_KEY }}
       AIWM_MIN_SUPPORTED_VERSION: ${{ vars.AIWM_MIN_SUPPORTED_VERSION }}
     steps:
       - name: Checkout immutable candidate only
@@ -98,6 +96,8 @@ jobs:
           AIWM_DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.AIWM_DEPLOY_SSH_PRIVATE_KEY }}
           AIWM_DEPLOY_KNOWN_HOSTS: ${{ secrets.AIWM_DEPLOY_KNOWN_HOSTS }}
           AIWM_DEPLOY_HOST: ${{ secrets.AIWM_DEPLOY_HOST }}
+          AIWM_TRUSTED_KEY: ${{ secrets.AIWM_UPDATES_TRUSTED_PUBLIC_KEY }}
+          AIWM_UPDATES_SECRET_KEY: ${{ secrets.AIWM_UPDATES_SECRET_KEY }}
         run: |
           set -euo pipefail
           [[ "$AIWM_SIGNER_ROTATED" == 'yes' ]] || { echo 'BLOCKED: compromised signer must be rotated'; exit 1; }
@@ -136,6 +136,8 @@ jobs:
         env:
           VERSION: ${{ steps.gate.outputs.version }}
           AIWM_MIN_SUPPORTED_VERSION: ${{ env.AIWM_MIN_SUPPORTED_VERSION }}
+          AIWM_TRUSTED_KEY: ${{ secrets.AIWM_UPDATES_TRUSTED_PUBLIC_KEY }}
+          AIWM_UPDATES_SECRET_KEY: ${{ secrets.AIWM_UPDATES_SECRET_KEY }}
         run: |
           set -euo pipefail
           php variants/laravel-aiwmweb/tools/release/build-signed-update.php \
