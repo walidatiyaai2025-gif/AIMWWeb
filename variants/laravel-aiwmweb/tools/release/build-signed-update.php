@@ -65,6 +65,23 @@ $minimumSupportedVersion = (string) (getenv('AIWM_MIN_SUPPORTED_VERSION') ?: '0.
 if (version_compare($minimumSupportedVersion, '1.0.0', '<')) {
     unset($files['public/downloads/aimw-connector.zip'], $files['aiwm-cpanel-https-pull.php']);
 }
+// The deployed 0.0.0 SystemUpdateService::validatePath rejects any resources/
+// path containing the word "private". These files are frontend TS source/tests,
+// not deployable runtime assets: Vite already compiled their behavior into
+// public/build/manifest.json and its hashed assets. Never weaken the live
+// allowlist or ask an owner to edit production PHP to bypass this protection.
+foreach (array_keys($files) as $name) {
+    if (str_starts_with($name, 'resources/js/') && str_contains($name, 'private')) {
+        unset($files[$name]);
+    }
+}
+// Treat future private server-side views/resources as a release blocker rather
+// than silently dropping functionality from an apparently complete update.
+foreach (array_keys($files) as $name) {
+    if (str_starts_with($name, 'resources/') && str_contains($name, 'private')) {
+        throw new RuntimeException('Private Laravel resource cannot be safely updated: '.$name);
+    }
+}
 ksort($files, SORT_STRING);
 if (count($files) > 25000) {
     throw new RuntimeException('Too many files for the shared-host release channel.');
