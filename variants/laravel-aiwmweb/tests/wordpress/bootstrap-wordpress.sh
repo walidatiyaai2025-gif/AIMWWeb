@@ -167,5 +167,9 @@ assert 'aimw/v1' in payload.get('namespaces', []), 'AIMW Connector REST namespac
 print('CONNECTOR_REST_NAMESPACE=PASS')
 PY
 
+# Run signed REST authentication against WordPress's real header canonicalization.
+# Namespace-only tests previously missed the invalid_protocol regression.
+wp eval-file "$variant_dir/tests/wordpress/connector-protocol-headers-e2e.php"
+
 echo "CONNECTOR_E2E=PASS"
 echo "WORDPRESS_NATIVE_REST_E2E=PASS"
