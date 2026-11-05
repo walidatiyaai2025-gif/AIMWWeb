@@ -196,8 +196,23 @@ jobs:
           actual="$(gh api "repos/$GITHUB_REPOSITORY/git/refs/heads/main" --jq '.object.sha')"
           [[ "$actual" == "$SOURCE_SHA" ]] || { echo 'BLOCKED: main moved before release publication'; exit 1; }
           if gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo 'BLOCKED: immutable release tag already exists; do not overwrite'
-            exit 1
+            # A retry is safe only if an immutable release for this exact
+            # source already exists with all required signed assets.
+            gh api "repos/$GITHUB_REPOSITORY/releases/tags/v$VERSION"               > "$RUNNER_TEMP/existing-release.json"
+            jq -e --arg sha "$SOURCE_SHA" '
+              .target_commitish == $sha
+              and (.draft == false) and (.prerelease == false)
+              and (["AIWMWeb-Laravel-signed-bundle.zip",
+                    "AIWMWeb-Laravel-release.json",
+                    "AIWMWeb-Laravel-release.sig",
+                    "AIWMWeb-Laravel-update.zip"] -
+                    [.assets[].name] | length == 0)
+            ' "$RUNNER_TEMP/existing-release.json" >/dev/null || {
+              echo 'BLOCKED: release tag occupied by another source or incomplete assets'
+              exit 1
+            }
+            echo "Release v$VERSION already published from this exact SHA" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
           fi
           cp "$RUNNER_TEMP/cpanel-build/AIWMWeb-Setup-v$VERSION.zip" "$RUNNER_TEMP/deploy/"
           unzip -p "$RUNNER_TEMP/deploy/AIWMWeb-Setup-v$VERSION.zip" BUILD-INFO.json > "$RUNNER_TEMP/deploy/BUILD-INFO.json"
