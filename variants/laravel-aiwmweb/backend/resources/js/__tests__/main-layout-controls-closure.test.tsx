@@ -40,6 +40,24 @@ beforeEach(() => {
 });
 
 describe('MainLayout canonical local controls', () => {
+    it('shows the actual signed installed Laravel version and short release SHA in the header', () => {
+        const context = contextForAlpha();
+        context.release = {
+            version: '1.0.262',
+            sha: 'a7b7e156ff6243ada2cb568514107a1ff486e63b',
+        };
+        render(
+            <LocaleProvider>
+                <MemoryRouter initialEntries={['/tenants/alpha/sites']}>
+                    <AppShell context={context}><p>Tenant content</p></AppShell>
+                </MemoryRouter>
+            </LocaleProvider>,
+        );
+        const badge = screen.getByTestId('installed-version');
+        expect(badge).toHaveTextContent('v1.0.262');
+        expect(badge).toHaveAttribute('title', 'Installed release · a7b7e156ff62');
+    });
+
     it('marks existing skip/home/sidebar/command/appearance/language controls and publishes a tenant-qualified About Build link', async () => {
         renderControls();
 
