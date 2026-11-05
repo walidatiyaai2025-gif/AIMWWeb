@@ -49,6 +49,7 @@ import { ContentExplorerMediaTabControl } from './content-explorer-media-tab-con
 import { ContentEditorSaveControl } from './content-editor-save-control';
 import { ContentHubAllSitesControl } from './content-hub-all-sites-control';
 import { ContentHubSiteLinksControl } from './content-hub-site-links-control';
+import { ContentHubLiveContentPanel } from './content-hub-live-content-panel';
 import { ContentPlannerAiCenterLinkControl } from './content-planner-ai-center-link-control';
 import { ContentPlannerExecutionLinkControl } from './content-planner-execution-link-control';
 import { ContentPlannerNewItemControl } from './content-planner-new-item-control';
@@ -239,7 +240,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     if (route.key === 'dashboard') return <><DashboardExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'sites') return <><div className="sites-management-grid" data-testid="sites-management-grid"><SitesSaveControl context={context} /><SitesRetestSelectedControl context={context} /><SitesBulkOperationalStateControl context={context} /><SitesDeleteControl context={context} /><SitesBulkDeleteControl context={context} /><SitesDisableSelectedControl context={context} /></div><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'explorer') return <><ContentExplorerContentTabControl context={context} /><ContentExplorerTagsTabControl context={context} /><ContentExplorerCategoriesTabControl context={context} /><ContentExplorerDynamicLinksControl context={context} /><ContentExplorerMediaTabControl context={context} /><ContentExplorerExecutionLinkControl context={context} /><ContentExplorerSynchronizeControl context={context} /><ContentExplorerApplyFiltersControl context={context} /><ContentExplorerBulkTrashControl context={context} /><WorkspacePage context={context} route={route} /></>;
-    if (route.key === 'content-hub') return <><ContentHubAllSitesControl context={context} /><ContentHubSiteLinksControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'content-hub') return <><ContentHubAllSitesControl context={context} /><ContentHubLiveContentPanel context={context} /><ContentHubSiteLinksControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'content-planner') return <><ContentPlannerAiCenterLinkControl context={context} /><ContentPlannerExecutionLinkControl context={context} /><ContentPlannerNewItemControl context={context} /><ContentPlannerReloadControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'media') return <><MediaPagesLinkControl context={context} /><MediaBatchClearSelectionControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'pages') return <><GlobalPagesConfirmTrashControl context={context} /><GlobalPagesOpenSynchronizationLinkControl context={context} /><PagesPostsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
