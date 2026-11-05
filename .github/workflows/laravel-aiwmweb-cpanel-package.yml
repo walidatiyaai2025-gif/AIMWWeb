@@ -71,6 +71,7 @@ jobs:
         run: |
           php -l variants/laravel-aiwmweb/tools/release/cpanel-one-time-install.php
           python3 -m py_compile variants/laravel-aiwmweb/tools/release/build-cpanel-setup.py
+          python3 -m py_compile variants/laravel-aiwmweb/tools/release/verify-signed-update-compat.py
           php -l variants/laravel-aiwmweb/backend/aiwm-cpanel-https-pull.php
           python3 -m unittest discover -s variants/laravel-aiwmweb/tools/release -p 'test_https_pull_release.py'
           php -l variants/laravel-aiwmweb/tools/deploy/remote-apply-signed-update.php
@@ -155,6 +156,8 @@ jobs:
           if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then CI_UPGRADE_VERSION="0.0.$GITHUB_RUN_NUMBER"; else CI_UPGRADE_VERSION="1.1.$GITHUB_RUN_NUMBER"; fi
           AIWM_UPDATES_SECRET_KEY="$CI_ONLY_SIGN_KEY" php variants/laravel-aiwmweb/tools/release/build-signed-update.php "$CI_UPGRADE_VERSION" "$SOURCE_SHA" "$tmp"
           unset CI_ONLY_SIGN_KEY
+          python3 variants/laravel-aiwmweb/tools/release/verify-signed-update-compat.py \
+            "$tmp/AIWMWeb-Laravel-release.json" "$tmp/AIWMWeb-Laravel-update.zip"
           unzip -t "$tmp/AIWMWeb-Laravel-signed-bundle.zip" >/dev/null
           php -r '
             $m=file_get_contents($argv[1]."/AIWMWeb-Laravel-release.json");
@@ -244,6 +247,8 @@ jobs:
 
           php variants/laravel-aiwmweb/tools/release/build-signed-update.php \
             "$BUILD_VERSION" "$SOURCE_SHA" artifacts/cpanel
+          python3 variants/laravel-aiwmweb/tools/release/verify-signed-update-compat.py \
+            artifacts/cpanel/AIWMWeb-Laravel-release.json artifacts/cpanel/AIWMWeb-Laravel-update.zip
           cp artifacts/cpanel/AIWMWeb-Laravel-signed-bundle.zip "artifacts/cpanel/AIWMWeb-Update-v${BUILD_VERSION}.zip"
           test -s artifacts/cpanel/AIWMWeb-Laravel-signed-bundle.zip
 
