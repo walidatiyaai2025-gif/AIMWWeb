@@ -105,10 +105,20 @@ final class DemoController extends Controller
         return response()->json([], 204);
     }
 
-    public function pairing(int $site, PairingService $pairing, TenantAuthorizer $auth): JsonResponse
-    {
+    public function pairing(
+        string $tenant,
+        int|string $site,
+        PairingService $pairing,
+        TenantAuthorizer $auth,
+        TenantContext $context,
+    ): JsonResponse {
         $auth->authorize('connector.manage');
-        $model = Site::query()->findOrFail($site);
+        abort_unless($tenant === $context->tenant()->slug, 404);
+        abort_unless(is_int($site) || ctype_digit($site), 404);
+
+        $siteId = (int) $site;
+        abort_if($siteId < 1, 404);
+        $model = Site::query()->findOrFail($siteId);
 
         return response()->json(['pairing_token' => $pairing->create($model), 'expires_in' => 600]);
     }
