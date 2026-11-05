@@ -283,7 +283,6 @@ export function resolveCapability(
         const supportsRead = (connector: ConnectorContract): boolean =>
             connector.scopes.includes(route.connectorScope!) || (
                 operation === 'view' &&
-                !!route.apiKey && !!context.api[route.apiKey] &&
                 localContentReadScopes.has(route.connectorScope!) &&
                 connector.scopes.includes('content.read')
             );
