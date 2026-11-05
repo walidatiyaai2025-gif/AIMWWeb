@@ -457,6 +457,55 @@ final class SystemUpdateCenterTest extends TestCase
         }
     }
 
+    public function test_rollback_removes_file_created_only_during_failed_update(): void
+    {
+        $filename = 'app/AIWMRollbackCreated-'.bin2hex(random_bytes(5)).'.php';
+        $target = base_path($filename);
+        $backup = storage_path('framework/testing/aiwm-rollback-created-'.bin2hex(random_bytes(5)));
+        $service = app(SystemUpdateService::class);
+
+        try {
+            $this->assertFileDoesNotExist($target);
+            (new \\ReflectionMethod($service, 'backupFiles'))
+                ->invoke($service, [$filename => hash('sha256', 'new-update-file')], $backup);
+            file_put_contents($target, 'new-update-file');
+
+            (new \\ReflectionMethod($service, 'restoreBackup'))->invoke($service, $backup);
+
+            $this->assertFileDoesNotExist($target);
+        } finally {
+            @unlink($target);
+            File::deleteDirectory($backup);
+        }
+    }
+
+    public function test_rollback_rejects_undeletable_new_path_instead_of_reporting_success(): void
+    {
+        $filename = 'app/AIWMRollbackBlocked-'.bin2hex(random_bytes(5)).'.php';
+        $target = base_path($filename);
+        $backup = storage_path('framework/testing/aiwm-rollback-blocked-'.bin2hex(random_bytes(5)));
+        $service = app(SystemUpdateService::class);
+
+        try {
+            $this->assertFileDoesNotExist($target);
+            (new \\ReflectionMethod($service, 'backupFiles'))
+                ->invoke($service, [$filename => hash('sha256', 'new-update-file')], $backup);
+            $this->assertTrue(mkdir($target));
+
+            try {
+                (new \\ReflectionMethod($service, 'restoreBackup'))->invoke($service, $backup);
+                $this->fail('Rollback silently accepted a path it could not remove.');
+            } catch (RuntimeException $e) {
+                $this->assertStringContainsString('could not remove a new file', $e->getMessage());
+            }
+
+            $this->assertDirectoryExists($target);
+        } finally {
+            @rmdir($target);
+            File::deleteDirectory($backup);
+        }
+    }
+
     public function test_rollback_restores_original_from_verified_staged_file(): void
     {
         $filename = 'app/AIWMRollbackAtomic-'.bin2hex(random_bytes(5)).'.php';
