@@ -207,14 +207,14 @@ export const workspaceRoutes: WorkspaceRoute[] = [
 
     r('content-hub', '/content', 'content', '▦', 'Content Hub', 'مركز المحتوى', 'Central content workspace.', 'مساحة العمل المركزية للمحتوى.', { permission: 'content.view', kind: 'workspace' }),
     r('content-workspace', '/content-workspace', 'content', '▦', 'WordPress Content Management', 'إدارة محتوى WordPress', 'Open the real posts, pages, media, taxonomy, comments, and users workspaces.', 'افتح مساحات المقالات والصفحات والوسائط والتصنيفات والتعليقات والمستخدمين المتصلة بالخدمات الفعلية.', { permission: 'content.view', kind: 'workspace' }),
-    r('posts', '/module/posts', 'content', '▤', 'Posts', 'المقالات', 'Create, edit, filter and publish posts.', 'إنشاء وتحرير وتصفية ونشر المقالات.', { permission: 'content.view', controls: ['posts.create', 'posts.bulk', 'posts.publish'] }),
-    r('pages', '/module/pages', 'content', '▧', 'Pages', 'الصفحات', 'Create and manage WordPress pages.', 'إنشاء وإدارة صفحات WordPress.', { permission: 'content.view', controls: ['pages.create', 'pages.bulk', 'pages.publish'] }),
-    r('media', '/module/media', 'content', '▣', 'Media', 'الوسائط', 'Manage the WordPress media library.', 'إدارة مكتبة وسائط WordPress.', { permission: 'content.view', controls: ['media.upload', 'media.bulk'] }),
-    r('comments', '/module/comments', 'content', '◌', 'Comments', 'التعليقات', 'Review and moderate comments.', 'مراجعة وإدارة التعليقات.', { permission: 'content.view', controls: ['comments.moderate', 'comments.bulk'] }),
-    r('taxonomy', '/module/taxonomy', 'content', '#', 'Categories & Tags', 'التصنيفات والوسوم', 'Manage content taxonomy.', 'إدارة تصنيفات ووسوم المحتوى.', { permission: 'content.view', controls: ['taxonomy.manage'] }),
-    r('categories', '/module/categories', 'content', '#', 'Categories', 'التصنيفات', 'Manage WordPress categories.', 'إدارة تصنيفات WordPress.', { permission: 'content.view', controls: ['categories.create'] }),
-    r('tags', '/module/tags', 'content', '#', 'Tags', 'الوسوم', 'Manage WordPress tags.', 'إدارة وسوم WordPress.', { permission: 'content.view', controls: ['tags.create'] }),
-    r('wp-users', '/module/users', 'content', '◎', 'WordPress Users', 'مستخدمو WordPress', 'Manage users exposed by connected WordPress sites.', 'إدارة مستخدمي مواقع WordPress المتصلة.', { permission: 'sites.view', controls: ['wordpress-users.save'] }),
+    r('posts', '/module/posts', 'content', '▤', 'Posts', 'المقالات', 'Create, edit, filter and publish posts.', 'إنشاء وتحرير وتصفية ونشر المقالات.', { permission: 'content.view', connectorScope: 'posts.read', controls: ['posts.create', 'posts.bulk', 'posts.publish'] }),
+    r('pages', '/module/pages', 'content', '▧', 'Pages', 'الصفحات', 'Create and manage WordPress pages.', 'إنشاء وإدارة صفحات WordPress.', { permission: 'content.view', connectorScope: 'pages.read', controls: ['pages.create', 'pages.bulk', 'pages.publish'] }),
+    r('media', '/module/media', 'content', '▣', 'Media', 'الوسائط', 'Manage the WordPress media library.', 'إدارة مكتبة وسائط WordPress.', { permission: 'content.view', connectorScope: 'media.read', controls: ['media.upload', 'media.bulk'] }),
+    r('comments', '/module/comments', 'content', '◌', 'Comments', 'التعليقات', 'Review and moderate comments.', 'مراجعة وإدارة التعليقات.', { permission: 'content.view', connectorScope: 'comments.read', controls: ['comments.moderate', 'comments.bulk'] }),
+    r('taxonomy', '/module/taxonomy', 'content', '#', 'Categories & Tags', 'التصنيفات والوسوم', 'Manage content taxonomy.', 'إدارة تصنيفات ووسوم المحتوى.', { permission: 'content.view', connectorScope: 'taxonomy.read', controls: ['taxonomy.manage'] }),
+    r('categories', '/module/categories', 'content', '#', 'Categories', 'التصنيفات', 'Manage WordPress categories.', 'إدارة تصنيفات WordPress.', { permission: 'content.view', connectorScope: 'taxonomy.read', controls: ['categories.create'] }),
+    r('tags', '/module/tags', 'content', '#', 'Tags', 'الوسوم', 'Manage WordPress tags.', 'إدارة وسوم WordPress.', { permission: 'content.view', connectorScope: 'taxonomy.read', controls: ['tags.create'] }),
+    r('wp-users', '/module/users', 'content', '◎', 'WordPress Users', 'مستخدمو WordPress', 'Manage users exposed by connected WordPress sites.', 'إدارة مستخدمي مواقع WordPress المتصلة.', { permission: 'sites.view', connectorScope: 'users.read', controls: ['wordpress-users.save'] }),
 
     r('seo-audit', '/module/seo-audit', 'seo', '◈', 'SEO Audit', 'تدقيق SEO', 'Run and inspect real SEO audits.', 'تشغيل ومراجعة تدقيقات SEO الحقيقية.', { permission: 'seo.view', controls: ['seo.audit.run'] }),
     r('seo-findings', '/module/seo-findings', 'seo', '!', 'SEO Findings', 'نتائج SEO', 'Inspect persisted audit findings.', 'مراجعة نتائج التدقيق المحفوظة.', { permission: 'seo.view' }),
@@ -273,11 +273,25 @@ export function resolveCapability(
     }
 
     if (route.connectorScope) {
+        // The current WordPress plugin advertises content.read, not legacy
+        // per-resource *.read scopes. Alias only read-only local workspaces
+        // backed by an advertised site-scoped API; never authorize mutations.
+        const localContentReadScopes = new Set([
+            'posts.read', 'pages.read', 'media.read', 'comments.read',
+            'taxonomy.read', 'users.read',
+        ]);
+        const supportsRead = (connector: ConnectorContract): boolean =>
+            connector.scopes.includes(route.connectorScope!) || (
+                operation === 'view' &&
+                !!route.apiKey && !!context.api[route.apiKey] &&
+                localContentReadScopes.has(route.connectorScope!) &&
+                connector.scopes.includes('content.read')
+            );
         const supportingConnector = context.connectors.find(
-            (connector) => connector.state === 'connected' && connector.scopes.includes(route.connectorScope!),
+            (connector) => connector.state === 'connected' && supportsRead(connector),
         );
         if (!supportingConnector) {
-            const ownerDisabled = context.connectors.find((connector) => connector.scopes.includes(route.connectorScope!));
+            const ownerDisabled = context.connectors.find(supportsRead);
             return {
                 state: ownerDisabled?.reason === 'disabled_by_owner' ? 'disabled_by_owner' : 'connector_unavailable',
                 reason: ownerDisabled?.reason ?? `Connector scope ${route.connectorScope} is not currently advertised.`,
