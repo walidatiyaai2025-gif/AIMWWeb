@@ -50,11 +50,20 @@ foreach (['app', 'config', 'resources', 'routes', 'vendor', 'public/build', 'dat
         $files[$relative] = $entry->getPathname();
     }
 }
-foreach (['artisan', 'composer.json', 'composer.lock', 'bootstrap/app.php', 'bootstrap/providers.php', 'public/downloads/aimw-connector.zip'] as $name) {
+foreach (['artisan', 'composer.json', 'composer.lock', 'bootstrap/app.php', 'bootstrap/providers.php', 'public/downloads/aimw-connector.zip', 'aiwm-cpanel-https-pull.php'] as $name) {
     if (! is_file($base.'/'.$name) || is_link($base.'/'.$name)) {
         throw new RuntimeException('Missing release file or unsafe symlink: '.$name);
     }
     $files[$name] = $base.'/'.$name;
+}
+// The originally installed cPanel 0.0.0 updater predates the exact
+// allowed paths for the WordPress connector ZIP and this private Cron file.
+// A signed release claiming compatibility with 0.0.0 must NEVER include
+// targets rejected by that older verifier: first upgrade the updater itself,
+// then permit these extra paths in later releases with minimum >=1.0.0.
+$minimumSupportedVersion = (string) (getenv('AIWM_MIN_SUPPORTED_VERSION') ?: '0.0.0');
+if (version_compare($minimumSupportedVersion, '1.0.0', '<')) {
+    unset($files['public/downloads/aimw-connector.zip'], $files['aiwm-cpanel-https-pull.php']);
 }
 ksort($files, SORT_STRING);
 if (count($files) > 25000) {

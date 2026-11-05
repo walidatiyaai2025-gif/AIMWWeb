@@ -71,6 +71,8 @@ jobs:
         run: |
           php -l variants/laravel-aiwmweb/tools/release/cpanel-one-time-install.php
           python3 -m py_compile variants/laravel-aiwmweb/tools/release/build-cpanel-setup.py
+          php -l variants/laravel-aiwmweb/backend/aiwm-cpanel-https-pull.php
+          python3 -m unittest discover -s variants/laravel-aiwmweb/tools/release -p 'test_https_pull_release.py'
           php -l variants/laravel-aiwmweb/tools/deploy/remote-apply-signed-update.php
           bash -n variants/laravel-aiwmweb/tools/deploy/ssh-deploy.sh
           python3 -m py_compile variants/laravel-aiwmweb/tools/deploy/prepare_signed_deploy.py
@@ -120,6 +122,11 @@ jobs:
               for path, expected in manifest["files"].items():
                   assert hashlib.sha256(archive.read(path)).hexdigest() == expected, path
               print("Verified one-ZIP cPanel setup from exact SHA", manifest["source_sha"])
+
+      - name: Confirm private Cron puller is packaged in the actual Setup ZIP
+        run: |
+          set -euo pipefail
+          unzip -p artifacts/cpanel/AIWMWeb-Laravel-Setup.zip app/aiwm-cpanel-https-pull.php | grep -q 'PRIVATE CLI ONLY'
 
       - name: Smoke-test all wizard steps from the actual ZIP against empty MySQL
         shell: bash
