@@ -1,12 +1,16 @@
 # Laravel AIWMWeb Agent Extension
 
-This file applies only inside `variants/laravel-aiwmweb/**`. It extends, and never replaces, the repository-root `AGENTS.md` and PCC governance.
+This file applies to the sole active AIMWWeb Laravel implementation at `variants/laravel-aiwmweb/**`. It extends the repository-root `AGENTS.md` and PCC standalone PROJECT governance; the archived .NET product is not a work target.
+
+## Standalone Laravel-only rule (owner 2026-11-05)
+
+All product code, UX, testing, packaging, deployment and Issue work is Laravel-only. PCC now routes `AIMWWEB` as `PROJECT_MODEL=STANDALONE` with a verified source boundary here. Old `LARAVEL_AIWMWEB` VARIANT IDs in historical issues/charters are provenance only, not active route requirements. `AIMWWEB_CURRENT`/ASP.NET is archival and not a CI parity target. Historical .NET source remains untouched pending tested cleanup. Use #1408 for cPanel Setup/Update ZIP gates, #1440 for UI behavior, #1399 for visual QA and #3 for the Laravel roadmap.
 
 ## Authority order
 
 1. Current owner instruction.
 2. Live PCC `main`, PCC constitution, and authoritative routing packet.
-3. Repository-root `AGENTS.md` and `.pcc/project-family.json`.
+3. Repository-root `AGENTS.md` and `.pcc/managed-repository-control.json` (standalone Laravel-only).
 4. Issue #257 and `docs/REPO_OPERATING_SYSTEM.md`.
 5. This variant extension.
 6. `.ai/**` project knowledge and skills.
@@ -17,8 +21,8 @@ If any lower layer conflicts with a higher layer, stop the conflicting action an
 
 Before implementation:
 1. reconstruct live GitHub state;
-2. verify the PCC route is `VARIANT -> LARAVEL_AIWMWEB -> variants/laravel-aiwmweb`;
-3. read `.pcc/LARAVEL_AIWMWEB_VARIANT_CHARTER.md`, including the Remaining parity closure execution constitution;
+2. verify the PCC route is `PROJECT -> AIMWWEB -> variants/laravel-aiwmweb`, with no archived legacy target;
+3. read the Laravel engineering charter for reusable safe practices; its historical VARIANT routing and legacy parity gates are superseded by the owner Laravel-only decision;
 4. read `.ai/PROJECT.md`;
 5. read `.ai/CURRENT_STATE.md`, then verify dynamic facts against live GitHub and the canonical reconciliation;
 6. read `.ai/SKILL_ROUTER.md`;

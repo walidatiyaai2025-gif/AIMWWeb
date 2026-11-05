@@ -1,23 +1,35 @@
 # AIMWWeb Agent Instructions
 
+## Owner architecture decision — 2026-11-05 (current authority)
+
+**AIMWWeb is now a Laravel-only product.** The only active/routable/releasable implementation is `LARAVEL_AIWMWEB` in `variants/laravel-aiwmweb/**`, using Laravel/PHP, React/Blade, MySQL/MariaDB, WordPress REST and AIMW Connector. PCC routes all project-name requests to the single standalone Laravel implementation.
+
+`AIMWWEB_CURRENT` (legacy ASP.NET/Windows/.NET) is **ARCHIVED** and **not a feature, CI, issue, release, deployment, or product parity target**. Its historical source and Git history may physically remain in the repository pending a separately tested, reversible repository/workflow retirement; archived files must not be represented as an active product or deleted casually. No new Issues, branches, PRs, workflows, dependency updates, or output artifacts are authorized for that archived edition. Migrate still-valid product requirements to Laravel-only issues; close obsolete implementation-specific tasks as `not_planned`, with cross-links instead of claiming implementation success.
+
+**Precedence:** Any legacy requirement below for ASP.NET/Razor/Windows/.NET/IIS, PowerShell patches, `#183` old-source closure, or dual-variant CI/parity is historical **only**, superseded by this owner decision and PCC. The old content remains for audit and must not gate or direct future work. The active product roadmap is #3, UX gate #1399, anti-mock gate #1440, AI SEO remediation #253 and installer/release blocker #1408, as updated to Laravel-only.
+
+**Mandatory Laravel delivery:** ONE ZIP → browser Web Setup → live site → signed Dashboard ZIP Updates, including production Composer dependencies, compiled assets, backup/recovery, tenant security, migration/upgrade tests, release manifest and exact-head CI; do not claim live deployment from a ZIP build or a merge. Production changes must preserve `.env`, MySQL data, storage/uploads and credentials and pass tested signed-upgrade verification.
+
+**PCC route:** `PROJECT_ID=AIMWWEB; PROJECT_MODEL=STANDALONE; TARGET_SCOPE=PROJECT; ACTIVE_IMPLEMENTATION_LOCATION=variants/laravel-aiwmweb`. This is the only active product, with no remaining active variants. Retiring remaining source and legacy workflows physically requires an audited Laravel-only cleanup PR with passing cPanel and app CI.
+
 ## PCC authority and routing contract
 - This repository is managed through `walidatiyaai2025-gif/project-control-center` (PCC) as project `AIMWWEB`.
-- Project model: `PRODUCT_FAMILY`; there is no repository-wide default implementation scope. Every write must resolve to `CORE` or exactly one routed `VARIANT`.
-- Family manifest: `.pcc/project-family.json`.
-- Active variants are `AIMWWEB_CURRENT` (primary/current ASP.NET product) and `LARAVEL_AIWMWEB` (Laravel AIWMWeb product variant).
-- `LARAVEL_AIWMWEB` implementation is isolated to `variants/laravel-aiwmweb`. Variant-specific source, configuration, branding, dependencies, deployment behavior, database schema and runtime code must not leak into `AIMWWEB_CURRENT`.
-- Shared `CORE` writes are blocked unless current PCC and `.pcc/project-family.json` both report `CORE_ROUTING_STATE=READY`. A branch name never establishes variant identity.
+- Canonical project model: `STANDALONE` with `TARGET_SCOPE=PROJECT` and source boundary `variants/laravel-aiwmweb/**`. No active family variants.
+- Canonical control file: `.pcc/managed-repository-control.json`; the obsolete family manifest has been retired from active governance.
+- Sole active product: `LARAVEL_AIWMWEB`. Former `AIMWWEB_CURRENT` is archived/non-routable.
+- All active implementation is isolated to `variants/laravel-aiwmweb`; do not modify archived .NET code or ship it in Laravel artifacts.
+- Work on archived legacy source, shared .NET workflows or non-Laravel changes is outside the active project boundary. A branch name never authorizes changes outside the Laravel implementation.
 - Every Manager/Lead/Worker/QA/Integration/Release role must fetch current PCC `main`, read the PCC root `AGENTS.md` and applicable policies, resolve `AIMWWEB` through `portfolio/project-routing.json`, and obtain/reconcile a current PCC routing packet before implementation writes.
 - Live GitHub state remains authoritative for repository SHAs, PRs, CI, production lineage, and implementation evidence. Stale prompts and historical SHAs are non-authoritative until revalidated.
 - If PCC routing and this repository conflict, stop non-emergency writes and reconcile governance first. A verified production emergency may use only the minimum safe stabilization path allowed by the PCC emergency-production policy.
-- Existing AIMWWeb production-closure, Patch, package, security, QA, release, and delivery contracts below remain authoritative for `AIMWWEB_CURRENT` and are not automatically inherited as Laravel packaging/deployment rules unless Issue #257 or later routed Laravel governance explicitly adopts them.
+- Legacy ASP.NET/Windows build and Patch delivery contracts are historical only. The active Laravel release standard is #1408 and the FOODEX cPanel installation/update contract.
 - Durable governance changes must be persisted in PCC and repository control files; chat memory is not canonical.
 
 ## Laravel AIWMWeb constitutional invariants
 
-Issue #257 is the product authority for the initial `LARAVEL_AIWMWEB` port. Any Worker routed to that variant must preserve these invariants:
+Issue #257 is historical origin evidence for the Laravel port. Current workers are routed to standalone `AIMWWEB/PROJECT` with the Laravel implementation boundary and must preserve these invariants:
 
-- Functional parity target is **100%** relative to the current AIMWWeb capability/action inventory. No existing capability may be silently dropped because the technology changes.
+- Required Laravel product behavior must meet its current owner-approved acceptance inventory. Historical ASP.NET feature parity is no longer a release gate; preserve valid user-visible capabilities without duplicating legacy services.
 - Establish and maintain a canonical Capability Parity Ledger with stable capability/operation IDs. Terminal migration states are `PORTED`, `ADAPTED`, `VERIFIED_UNAVAILABLE_EXTERNAL`, or `BLOCKED`; missing rows are not allowed to count as progress.
 - Multi-tenancy is architectural from first production code, not a later feature. Every tenant-owned record and runtime path must carry explicit tenant context and authorization.
 - Tenant isolation covers at least memberships/RBAC, sites, connector pairings, credentials/secrets, provider configuration, AI usage, jobs, schedules, cache keys, locks, rate limits, approvals, executions, evidence, reports, audit logs, quotas, entitlements and idempotency keys.
