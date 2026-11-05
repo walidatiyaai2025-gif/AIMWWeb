@@ -131,7 +131,7 @@ describe('runtime inspector safe diagnostics', () => {
     });
 
     it('runs an explicit safe GET and permits export only after a successful report', async () => {
-        const fetchMock = vi.fn(async () => new Response(JSON.stringify(server), {
+        const fetchMock = vi.fn(async (_input: RequestInfo | URL) => new Response(JSON.stringify(server), {
             status: 200, headers: { 'content-type': 'application/json' },
         }));
         vi.stubGlobal('fetch', fetchMock);
