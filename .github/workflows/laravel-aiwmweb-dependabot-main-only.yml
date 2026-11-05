@@ -1,0 +1,81 @@
+name: Laravel AIWMWeb Main-only Archived Branch Cleanup
+
+# Trusted default-branch issue edit only; never check out PR content.
+# Owner-requested one-shot archive tracked in canonical Issue #1462.
+on:
+  issues:
+    types: [edited]
+
+permissions:
+  contents: write
+  issues: read
+  pull-requests: read
+
+jobs:
+  archive-superseded-dependabot-refs:
+    if: >-
+      github.event.issue.number == 1462 &&
+      contains(github.event.issue.body, 'ARCHIVE_EXECUTE_APPROVED')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Remove only six exact, already-closed and verified Dependabot refs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const inventory = new Map([
+              [1389, ['dependabot/composer/variants/laravel-aiwmweb/backend/laravel-runtime-149cc5e48c', '83ea3faed9d68509824e8feb6a4f756beb64222a']],
+              [1390, ['dependabot/composer/variants/laravel-aiwmweb/backend/phpunit/phpunit-13.4.5', 'ebbac1ceb11760cbbc9e913fad7b2cfad6df874a']],
+              [1391, ['dependabot/composer/variants/laravel-aiwmweb/backend/php-dev-tools-115e540ba3', 'f075c92a1e490680b49d94829a6e7c0ce27ce68b']],
+              [1393, ['dependabot/npm_and_yarn/variants/laravel-aiwmweb/backend/types/node-26.6.6', '0d69614390a2efd737e999f668ab6457becbc59c']],
+              [1394, ['dependabot/npm_and_yarn/variants/laravel-aiwmweb/backend/typescript-7.0.2', '4b4e00c7dad0519feeef4f99b5ee04898ae0a141']],
+              [1419, ['dependabot/github_actions/github-actions-2a2b0b1a1f', '9c5c2fc65c628e1e4ddf7baf31a948769f50a4a5']],
+            ]);
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const { data: issue } = await github.rest.issues.get({owner, repo, issue_number: 1462});
+            if (issue.state !== 'open' || !issue.body?.includes('ARCHIVE_EXECUTE_APPROVED')) {
+              core.setFailed('Issue #1462 is not explicitly marked for archive execution.');
+              return;
+            }
+            const openPRs = await github.paginate(github.rest.pulls.list, {owner, repo, state: 'open', per_page: 100});
+            const deleted = [];
+            for (const [number, [name, expectedSha]] of inventory) {
+              if (!issue.body.includes(name) || !issue.body.includes(expectedSha)) {
+                core.setFailed(`Issue #1462 missing source inventory for PR #${number}.`);
+                return;
+              }
+              const { data: pr } = await github.rest.pulls.get({owner, repo, pull_number: number});
+              if (pr.state !== 'closed' || pr.merged_at
+                  || pr.base.ref !== 'main'
+                  || pr.head.ref !== name || pr.head.sha !== expectedSha
+                  || pr.head.repo?.full_name !== `${owner}/${repo}`) {
+                core.warning(`PR #${number} is not a closed unmerged exact-match archived source; keeping ref.`);
+                continue;
+              }
+              if (openPRs.some(other => other.head.repo?.full_name === `${owner}/${repo}`
+                    && other.head.ref === name)) {
+                core.warning(`Another open PR references ${name}; keeping ref.`);
+                continue;
+              }
+              let branch;
+              try {
+                ({data: branch} = await github.rest.repos.getBranch({owner, repo, branch: name}));
+              } catch (error) {
+                if (error.status === 404) {
+                  core.info(`Already absent: ${name}`);
+                  continue;
+                }
+                throw error;
+              }
+              if (branch.protected || branch.commit.sha !== expectedSha) {
+                core.warning(`Protected or changed head SHA for ${name}; keeping ref.`);
+                continue;
+              }
+              await github.rest.git.deleteRef({owner, repo, ref: `heads/${name}`});
+              deleted.push(name);
+              core.notice(`Archived obsolete branch ${name}; original PR #${number} diff remains available.`);
+            }
+            core.summary.addHeading('AIMWWeb archived Dependabot refs')
+              .addTable([['Deleted', 'Count'], ['Closed, audited, exact-match', String(deleted.length)]])
+              .addList(deleted.length ? deleted : ['None deleted; review guards and PR states'])
+              .write();
