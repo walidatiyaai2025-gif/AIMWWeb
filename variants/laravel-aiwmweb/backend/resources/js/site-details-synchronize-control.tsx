@@ -9,6 +9,7 @@ type SyncRun = {
     status: string;
     processed?: number;
     failure?: string | null;
+    diagnostic_code?: string | null;
 };
 
 type SiteDetailsPayload = {
@@ -34,6 +35,19 @@ export function siteDetailsSyncOutcome(status: string): 'pending' | 'success' | 
     if (normalized === 'succeeded') return 'success';
     if (['failed', 'cancelled', 'cancel_requested'].includes(normalized)) return 'failure';
     return 'pending';
+}
+
+export function formatSiteSyncDiagnostic(error: unknown): string {
+    if (!(error instanceof ApiError)) return error instanceof Error ? error.message : 'Synchronization failed.';
+
+    const details = [`HTTP ${error.status}`, `Code: ${error.code}`];
+    const type = error.payload.exception_type;
+    const requestId = error.payload.request_id;
+    const runId = error.payload.run_id;
+    if (typeof type === 'string' && type) details.push(`Exception: ${type}`);
+    if (typeof requestId === 'string' && requestId) details.push(`Request ID: ${requestId}`);
+    if (typeof runId === 'number' && Number.isSafeInteger(runId)) details.push(`Sync Run: ${runId}`);
+    return `${error.message} | ${details.join(' | ')}`;
 }
 
 const delay = (milliseconds: number) => new Promise((resolve) => window.setTimeout(resolve, milliseconds));
@@ -79,7 +93,9 @@ export function SiteDetailsSynchronizeControl({ context }: { context: FrontendCo
                 throw new ApiError(
                     run.failure || 'Synchronization did not complete successfully.',
                     409,
-                    'sync_not_successful',
+                    run.diagnostic_code || 'sync_not_successful',
+                    {},
+                    { run_id: run.id },
                 );
             }
 
@@ -97,7 +113,7 @@ export function SiteDetailsSynchronizeControl({ context }: { context: FrontendCo
                 // Preserve the synchronization failure as the primary visible error.
             }
             setMessage('');
-            setError(cause instanceof Error ? cause.message : 'Synchronization failed.');
+            setError(formatSiteSyncDiagnostic(cause));
         } finally {
             setBusy(false);
         }
