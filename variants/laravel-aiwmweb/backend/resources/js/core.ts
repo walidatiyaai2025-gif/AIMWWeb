@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { recordApiObservation } from './runtime-inspector-capture';
 
 export type Locale = 'en' | 'ar';
 export type CapabilityState =
@@ -96,11 +97,21 @@ export async function apiRequest<T>(url: string, init: RequestInit = {}): Promis
     if (csrf) headers.set('X-CSRF-TOKEN', csrf);
     if (init.body && !(init.body instanceof FormData)) headers.set('Content-Type', 'application/json');
 
-    const response = await fetch(url, {
-        credentials: 'same-origin',
-        ...init,
-        headers,
-    });
+    // Only structural route, HTTP code and duration are retained in local memory.
+    // No headers, query strings, request body, response payload or token is recorded.
+    const started = Date.now();
+    let response: Response;
+    try {
+        response = await fetch(url, {
+            credentials: 'same-origin',
+            ...init,
+            headers,
+        });
+    } catch (error) {
+        recordApiObservation(url, init.method ?? 'GET', null, Date.now() - started);
+        throw error;
+    }
+    recordApiObservation(url, init.method ?? 'GET', response.status, Date.now() - started);
 
     const contentType = response.headers.get('content-type') ?? '';
     const payload = contentType.includes('application/json')
@@ -244,6 +255,7 @@ export const workspaceRoutes: WorkspaceRoute[] = [
     r('reports', '/module/reports', 'reports', '▥', 'Reports & Exports', 'التقارير والتصدير', 'Build reports from real tenant data.', 'إنشاء تقارير من بيانات الحساب الحقيقية.', { permission: 'reports.view', controls: ['reports.export'] }),
     r('import-export', '/module/import-export', 'reports', '⇄', 'Import / Export', 'الاستيراد والتصدير', 'Run governed import and export workflows.', 'تشغيل عمليات الاستيراد والتصدير المحكومة.', { permission: 'content.manage', controls: ['import.run', 'export.run'] }),
 
+    r('runtime-inspector', '/runtime-inspector', 'system', '◎', 'Runtime Inspector', 'مفتش التشغيل', 'Export redacted Laravel, Connector, Sync and API diagnostics.', 'تصدير تقرير منقّح لتشخيص Laravel والموصل والمزامنة وأخطاء API.', { permission: 'diagnostics.view', kind: 'workspace' }),
     r('system-health', '/system-health', 'system', '♥', 'System Health', 'صحة النظام', 'Check application, database, WordPress and provider health.', 'فحص صحة التطبيق وقاعدة البيانات وWordPress والمزودين.', { permission: 'diagnostics.view' }),
     r('logs', '/module/logs', 'system', '≡', 'Logs & Errors', 'السجلات والأخطاء', 'Inspect actionable diagnostics and failures.', 'مراجعة التشخيصات والأخطاء القابلة للتنفيذ.', { permission: 'diagnostics.view' }),
     r('diagnostics', '/module/diagnostics', 'system', '⌁', 'Diagnostics', 'التشخيصات', 'Inspect connector, runtime and protocol diagnostics.', 'مراجعة تشخيصات الموصل والتشغيل والبروتوكول.', { permission: 'diagnostics.view' }),
