@@ -4,6 +4,7 @@ import { tenantUrl, type FrontendContext } from './core';
 import { useLocale } from './i18n';
 import { SiteDetailsSaveTestControl } from './site-details-save-test-control';
 import { SiteDetailsRetestControl } from './site-details-retest-control';
+import { SiteDetailsPairingControl } from './site-details-pairing-control';
 
 export const SITE_DETAILS_BACK_OPERATION_ID = 'AIMW-AI-1C0C5D3B7B';
 
@@ -24,6 +25,7 @@ export function SiteDetailsBackControl({ context }: { context: FrontendContext }
             </nav>
             <SiteDetailsSaveTestControl context={context} />
             <SiteDetailsRetestControl context={context} />
+            <SiteDetailsPairingControl context={context} />
         </>
     );
 }
