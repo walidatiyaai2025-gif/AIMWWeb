@@ -7,6 +7,8 @@ use App\Jobs\SyncSiteJob;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\Site;
+use App\Models\SyncRun;
+use App\Sync\SyncDiagnosticFormatter;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
@@ -80,6 +82,49 @@ final class SiteDetailsSynchronizeTerminalityTest extends TestCase
             ->assertJsonPath('status', 'queued');
 
         Queue::assertPushed(SyncSiteJob::class, 1);
+    }
+
+    public function test_authorized_site_manager_sees_sanitized_sync_failure_while_reader_sees_generic_error(): void
+    {
+        $manager = User::factory()->create();
+        $tenant = $this->membership($manager, 'alpha', ['tenant.view', 'sites.view', 'sites.manage']);
+        $this->activate($tenant);
+        $site = Site::query()->create(['name' => 'Alpha', 'url' => 'https://alpha.test', 'status' => 'active']);
+        $run = SyncRun::query()->create([
+            'site_id' => $site->id,
+            'status' => 'failed',
+            'failure' => 'RuntimeException: Connector is revoked. password=hidden-value Bearer secret-bearer-123',
+            'completed_at' => now(),
+        ]);
+        app(TenantContext::class)->forget();
+
+        $this->actingAs($manager)->getJson("/api/tenants/alpha/sync-runs/{$run->id}")
+            ->assertOk()
+            ->assertJsonPath('diagnostic_code', 'WORDPRESS_SYNC_FAILED')
+            ->assertJsonPath('failure', 'RuntimeException: Connector is revoked. password=[REDACTED] Bearer [REDACTED]')
+            ->assertDontSee('hidden-value')
+            ->assertDontSee('secret-bearer-123');
+
+        $reader = User::factory()->create();
+        $this->membershipExisting($reader, $tenant, ['tenant.view', 'sites.view'], 'reader');
+        $this->actingAs($reader)->getJson("/api/tenants/alpha/sync-runs/{$run->id}")
+            ->assertOk()
+            ->assertJsonPath('failure', 'Synchronization failed.')
+            ->assertDontSee('Connector is revoked')
+            ->assertDontSee('hidden-value');
+    }
+
+    public function test_failure_diagnostics_redact_urls_credentials_and_sql_payloads(): void
+    {
+        $diagnostic = SyncDiagnosticFormatter::exception(new \RuntimeException(
+            'Connection failed https://user:secret@wp.test/path?token=abc password=abc (SQL: select * from users where password="abc")'
+        ));
+
+        $this->assertStringContainsString('RuntimeException: Connection failed', $diagnostic);
+        $this->assertStringContainsString('[URL REDACTED]', $diagnostic);
+        $this->assertStringNotContainsString('user:secret', $diagnostic);
+        $this->assertStringNotContainsString('password=abc', $diagnostic);
+        $this->assertStringNotContainsString('select * from users', $diagnostic);
     }
 
     private function membership(User $user, string $slug, array $permissions): Tenant
