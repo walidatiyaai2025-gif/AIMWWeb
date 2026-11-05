@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Http\Controllers\SetupReadController;
 use App\Services\DatabaseSetupReadService;
+use App\Services\SetupOwnerProof;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
@@ -13,6 +14,15 @@ use Tests\TestCase;
 class PlatformSetupReadTerminalityTest extends TestCase
 {
     use RefreshDatabase;
+
+    private function ownerActivation(): string
+    {
+        $file = storage_path('framework/testing/activation-'.bin2hex(random_bytes(8)).'.secret');
+        config()->set('setup.owner_proof_file', $file);
+        app(SetupOwnerProof::class)->ensureIssued();
+
+        return trim((string) file_get_contents($file));
+    }
 
     private const OPERATION_ID = 'AIMW-PLAT-18A8EE0324';
 
@@ -70,7 +80,7 @@ class PlatformSetupReadTerminalityTest extends TestCase
 
         $this->get('/setup')
             ->assertOk()
-            ->assertSee('Database setup required')
+            ->assertSee('Hosting owner activation required')
             ->assertSee('Configured driver:')
             ->assertSee('sqlite')
             ->assertSee('Database reachable:')
@@ -84,6 +94,7 @@ class PlatformSetupReadTerminalityTest extends TestCase
 
         $this->post('/setup', [
             'tenant_name' => 'Setup proof tenant',
+            'owner_activation_secret' => $this->ownerActivation(),
             'admin_name' => 'Setup proof user',
             'admin_email' => 'setup-proof@example.test',
             'admin_password' => $password,

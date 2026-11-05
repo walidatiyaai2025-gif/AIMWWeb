@@ -8,6 +8,7 @@ use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
 use App\Tenancy\TenantContext;
+use Database\Seeders\ProductionWorkspaceSeeder;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -30,6 +31,15 @@ final class DatabaseSetupMutationService
             DB::connection()->getPdo();
         } catch (Throwable) {
             throw new RuntimeException('The configured database is not reachable. Check the deployment environment and try again.');
+        }
+
+        // Reject pre-existing identities BEFORE running migrations. Migrations
+        // may alter an occupied database even if setup later refuses ownership;
+        // the first-run installer must never mutate an existing installation.
+        foreach (['users', 'tenants', 'tenant_memberships'] as $table) {
+            if (Schema::hasTable($table) && DB::table($table)->exists()) {
+                throw new RuntimeException('Existing identity state was detected. First-run setup cannot claim or overwrite an existing installation.');
+            }
         }
 
         Artisan::call('migrate', ['--force' => true]);
@@ -59,6 +69,12 @@ final class DatabaseSetupMutationService
                 'password' => $input['admin_password'],
             ]);
 
+            // This is the first and only identity in a fresh install.
+            // Give the bootstrap owner platform control-plane authority
+            // explicitly; tenant Owner RBAC alone does not pass platform.admin.
+            // The preflight above denies all attempts if any identity exists.
+            $user->forceFill(['platform_admin' => true])->save();
+
             $this->tenantContext->activate($tenant);
             try {
                 $membership = TenantMembership::query()->create([
@@ -71,6 +87,9 @@ final class DatabaseSetupMutationService
 
                 $role->permissions()->attach($permissions->pluck('id')->all(), ['tenant_id' => $tenant->id]);
                 $membership->roles()->attach($role->id, ['tenant_id' => $tenant->id]);
+                // Initialize non-secret editable defaults atomically with the first
+                // owner identity. A failure rolls back tenant, user, RBAC and seed.
+                app(ProductionWorkspaceSeeder::class)->seedTenant((int) $tenant->id);
             } finally {
                 $this->tenantContext->forget();
             }

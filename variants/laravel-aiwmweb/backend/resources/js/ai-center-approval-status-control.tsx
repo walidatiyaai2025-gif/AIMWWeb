@@ -357,5 +357,5 @@ export function AiCenterApprovalStatusControl({
         </section>
     ) : null;
 
-    return <><AiCenterAiUsageLinkControl context={context} /><AiCenterApprovalQueueLink context={context} />{sessionControls}{outputControls}{submitControls}{historyControls}{approvalControls}</>;
+    return <div className="ai-center-controls-grid" data-testid="ai-center-controls-grid"><div className="ai-center-navigation-row"><AiCenterAiUsageLinkControl context={context} /><AiCenterApprovalQueueLink context={context} /></div>{sessionControls}{outputControls}{submitControls}{historyControls}{approvalControls}</div>;
 }

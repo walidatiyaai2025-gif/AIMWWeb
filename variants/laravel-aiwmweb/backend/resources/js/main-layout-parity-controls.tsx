@@ -83,6 +83,7 @@ function MainLayoutRuntimeMarkers() {
         const markers: Array<[string, string]> = [
             ['.skip-link', MAIN_LAYOUT_OPERATION_IDS.skipToContent],
             ['.brand', MAIN_LAYOUT_OPERATION_IDS.home],
+            ['.topbar-brand', MAIN_LAYOUT_OPERATION_IDS.home],
             ['.sidebar-toggle', MAIN_LAYOUT_OPERATION_IDS.toggleSidebar],
             ['#command-palette-trigger', MAIN_LAYOUT_OPERATION_IDS.openCommandPalette],
             ['.language-switch', MAIN_LAYOUT_OPERATION_IDS.switchLanguage],
@@ -257,7 +258,7 @@ export function MainLayoutParityControls({ context }: { context: FrontendContext
     const availablePaths = useMemo(() => new Set(availableRoutes.map((route) => route.path)), [availableRoutes]);
 
     useEffect(() => {
-        setTopbarTarget(document.querySelector<HTMLElement>('.topbar-actions'));
+        setTopbarTarget(document.querySelector<HTMLElement>('.page-heading-actions'));
         setFooterTarget(document.querySelector<HTMLElement>('.sidebar-footer'));
 
         const syncCommandDialog = () => setCommandDialogTarget(document.querySelector<HTMLElement>('#command-palette-dialog'));

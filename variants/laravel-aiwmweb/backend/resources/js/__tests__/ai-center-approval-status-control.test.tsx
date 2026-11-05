@@ -47,7 +47,12 @@ describe(`${AI_CENTER_REFRESH_APPROVAL_STATUS_OPERATION_ID} AI Center Refresh st
             }));
         vi.stubGlobal('fetch', fetchMock);
 
-        renderControl();
+        const { container } = renderControl();
+        const controlGrid = container.querySelector('.ai-center-controls-grid');
+        expect(controlGrid).not.toBeNull();
+        expect(controlGrid?.querySelector('.ai-center-navigation-row')).not.toBeNull();
+        expect(controlGrid?.querySelector('.ai-session-controls')).not.toBeNull();
+        expect(controlGrid?.querySelector('.ai-session-history')).not.toBeNull();
 
         const refresh = await screen.findByRole('button', { name: 'Refresh state' });
         expect(refresh).toHaveAttribute('data-canonical-operation', AI_CENTER_REFRESH_APPROVAL_STATUS_OPERATION_ID);

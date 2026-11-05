@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AiBatchController;
 use App\Http\Controllers\AiUsageReadController;
 use App\Http\Controllers\ContentApiController;
 use App\Http\Controllers\ContentExplorerReadController;
@@ -203,3 +204,9 @@ Route::prefix('v1/tenants/{tenant}')
         Route::put('/email/templates/{stableId}/{locale}', [EmailNotificationController::class, 'saveTemplate']);
         Route::get('/email/deliveries', [EmailNotificationController::class, 'deliveries']);
     });
+
+Route::prefix('tenants/{tenant}/ai-batches')->middleware(['web', 'auth', 'tenant.context'])->group(function (): void {
+    Route::post('/', [AiBatchController::class, 'store']);
+    Route::get('/{batch}', [AiBatchController::class, 'show'])->whereUuid('batch');
+    Route::post('/{batch}/{action}', [AiBatchController::class, 'control'])->whereUuid('batch')->whereIn('action', ['pause', 'resume', 'cancel']);
+});

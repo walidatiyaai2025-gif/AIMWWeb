@@ -98,7 +98,7 @@ class CurrentUserSettingsControlTerminalityTest extends TestCase
         $this->assertStringContainsString("settingsRoute?.path === '/settings'", $control);
         $this->assertStringContainsString("settingsRoute.permission === 'tenant.view'", $control);
         $this->assertStringContainsString("tenantUrl(context.tenant.slug, '/settings')", $control);
-        $this->assertStringContainsString("document.querySelector<HTMLElement>('.topbar-actions')", $control);
+        $this->assertStringContainsString("document.querySelector<HTMLElement>('.page-heading-actions')", $control);
         $this->assertStringNotContainsString('tenant=', $control);
     }
 

@@ -10,8 +10,11 @@ final class LoginReadRouteServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
-        Route::middleware('web')
-            ->get('/login', LoginReadController::class)
-            ->name('login');
+        Route::middleware('web')->group(function (): void {
+            Route::get('/login', LoginReadController::class)->name('login');
+            Route::post('/login', [LoginReadController::class, 'store'])
+                ->middleware('throttle:10,1')
+                ->name('login.store');
+        });
     }
 }

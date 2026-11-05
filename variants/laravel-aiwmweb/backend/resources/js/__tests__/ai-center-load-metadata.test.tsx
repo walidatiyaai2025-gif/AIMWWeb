@@ -76,9 +76,13 @@ describe(`${AI_CENTER_METADATA_REFRESH_OPERATION_ID} AI Center LoadMetadataClick
             }));
         vi.stubGlobal('fetch', fetchMock);
 
-        renderAiCenter();
-
+        const { container } = renderAiCenter();
         const refresh = await screen.findByRole('button', { name: 'Refresh data' });
+        const grid = container.querySelector('.ai-center-resource-grid');
+        expect(grid).not.toBeNull();
+        expect(grid?.querySelector('[data-ai-center-metadata]')).not.toBeNull();
+        expect(grid?.querySelector('[data-testid="ai-center-generate"]')).not.toBeNull();
+        expect(grid?.querySelector('.data-panel')).not.toBeNull();
         expect(refresh).toHaveAttribute('data-canonical-operation', AI_CENTER_METADATA_REFRESH_OPERATION_ID);
         expect(screen.getByRole('region', { name: 'Data table' })).toBeInTheDocument();
         expect(screen.getByText('PENDING')).toBeInTheDocument();
