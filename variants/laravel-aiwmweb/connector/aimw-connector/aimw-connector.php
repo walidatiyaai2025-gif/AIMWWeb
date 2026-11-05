@@ -200,7 +200,9 @@ final class AIMW_Connector_V1
             return new WP_Error('invalid_signature', 'Invalid request signature.', ['status' => 401]);
         }
         set_transient('aimw_nonce_'.hash('sha256', $values['nonce']), 1, self::CLOCK_SKEW_SECONDS);
-        $request->set_attribute('aimw_protocol', $values);
+        // Preserve the route handler attributes while attaching verified protocol
+        // context. WP_REST_Request has set_attributes(), not set_attribute().
+        $request->set_attributes(array_merge($request->get_attributes(), ['aimw_protocol' => $values]));
 
         return true;
     }
@@ -255,7 +257,7 @@ final class AIMW_Connector_V1
 
     public static function execute(WP_REST_Request $request): array|WP_Error
     {
-        $protocol = (array) $request->get_attribute('aimw_protocol');
+        $protocol = (array) ($request->get_attributes()['aimw_protocol'] ?? []);
         $operation = (string) $protocol['operation'];
         $cacheKey = 'aimw_operation_'.hash('sha256', $operation);
         $prior = get_transient($cacheKey);
@@ -305,7 +307,7 @@ final class AIMW_Connector_V1
 
     public static function operate(WP_REST_Request $request): array|WP_Error
     {
-        $protocol = (array) $request->get_attribute('aimw_protocol');
+        $protocol = (array) ($request->get_attributes()['aimw_protocol'] ?? []);
         $payload = (array) $request->get_json_params();
         $operation = sanitize_text_field((string) ($payload['operation'] ?? ''));
         $arguments = (array) ($payload['arguments'] ?? []);
@@ -348,14 +350,14 @@ final class AIMW_Connector_V1
         }
         $config['secret'] = $secret;
         update_option('aimw_connector', $config, false);
-        AIMW_Connector_Store::record('secret_rotated', 'succeeded', (array) $request->get_attribute('aimw_protocol'), ['rotated' => true]);
+        AIMW_Connector_Store::record('secret_rotated', 'succeeded', (array) ($request->get_attributes()['aimw_protocol'] ?? []), ['rotated' => true]);
 
         return ['rotated' => true];
     }
 
     public static function disconnect(WP_REST_Request $request): array
     {
-        self::emergency_disconnect(null, (array) $request->get_attribute('aimw_protocol'));
+        self::emergency_disconnect(null, (array) ($request->get_attributes()['aimw_protocol'] ?? []));
 
         return ['disconnected' => true];
     }
