@@ -116,7 +116,7 @@
                 aria-label="{{ $welcomeLocale === 'ar' ? 'Switch to English' : 'التبديل إلى العربية' }}">{{ $welcomeLocale === 'ar' ? 'EN' : 'AR' }}</a>
             <a
                 class="signin"
-                href="{{ $isAuthenticated ? '/' : '/login' }}"
+                href="{{ $isAuthenticated ? route('public.dashboard.bridge', [], false) : '/login' }}"
                 data-canonical-operation="AIMW-CONT-9EDE4C1141"
             >{{ $isAuthenticated
                 ? ($welcomeLocale === 'ar' ? 'لوحة التحكم' : 'Dashboard')
@@ -135,7 +135,7 @@
                 <div class="hero-actions">
                     <a
                         class="hero-primary"
-                        href="{{ $isAuthenticated ? '/' : route('register', [], false) }}"
+                        href="{{ $isAuthenticated ? route('public.dashboard.bridge', [], false) : route('register', [], false) }}"
                         data-canonical-operation="AIMW-CONT-DD56664FDA"
                     >{{ $isAuthenticated
                         ? ($welcomeLocale === 'ar' ? 'فتح مساحة العمل' : 'Open workspace')
@@ -163,7 +163,7 @@
                 <h2>{{ $welcomeLocale === 'ar' ? 'طبقة إدارة واحدة' : 'One operating layer' }}</h2>
                 <a
                     class="panel-action"
-                    href="{{ $isAuthenticated ? '/' : route('register', [], false) }}"
+                    href="{{ $isAuthenticated ? route('public.dashboard.bridge', [], false) : route('register', [], false) }}"
                     data-canonical-operation="AIMW-CONT-1456BE001F"
                     aria-label="{{ $welcomeLocale === 'ar' ? 'فتح مساحة العمل' : 'Open workspace' }}"
                 >+ {{ $welcomeLocale === 'ar' ? 'إجراء' : 'Action' }}</a>
@@ -281,7 +281,7 @@
                             $isFreeTrial = strcasecmp((string) $plan->code, 'free-trial') === 0 || $plan->price_minor === 0;
                             $ctaHref = ! $isAuthenticated
                                 ? route('register', [], false)
-                                : ($isFreeTrial ? '/' : route('public.account-billing.bridge', [], false));
+                                : ($isFreeTrial ? route('public.dashboard.bridge', [], false) : route('public.account-billing.bridge', [], false));
                             $planName = $plan->localized_name[$welcomeLocale] ?? $plan->name;
                             $planDescription = $plan->localized_description[$welcomeLocale] ?? $plan->description ?? '';
                         @endphp
