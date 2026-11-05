@@ -1,0 +1,69 @@
+name: Laravel AIWMWeb Main-only Dependabot Archive
+
+# Runs trusted default-branch code only. Never checks out or executes PR content.
+# The six immutable, superseded PRs were audited and preserved in issue #1462.
+on:
+  pull_request_target:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: read
+  issues: read
+
+jobs:
+  archive-superseded-dependabot-ref:
+    if: >-
+      github.event.pull_request.merged == false &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      startsWith(github.event.pull_request.head.ref, 'dependabot/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete only documented, exact-match and now-closed Dependabot refs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const inventory = new Map([
+              [1389, ['dependabot/composer/variants/laravel-aiwmweb/backend/laravel-runtime-149cc5e48c', '83ea3faed9d68509824e8feb6a4f756beb64222a']],
+              [1390, ['dependabot/composer/variants/laravel-aiwmweb/backend/phpunit/phpunit-13.4.5', 'ebbac1ceb11760cbbc9e913fad7b2cfad6df874a']],
+              [1391, ['dependabot/composer/variants/laravel-aiwmweb/backend/php-dev-tools-115e540ba3', 'f075c92a1e490680b49d94829a6e7c0ce27ce68b']],
+              [1393, ['dependabot/npm_and_yarn/variants/laravel-aiwmweb/backend/types/node-26.6.6', '0d69614390a2efd737e999f668ab6457becbc59c']],
+              [1394, ['dependabot/npm_and_yarn/variants/laravel-aiwmweb/backend/typescript-7.0.2', '4b4e00c7dad0519feeef4f99b5ee04898ae0a141']],
+              [1419, ['dependabot/github_actions/github-actions-2a2b0b1a1f', '9c5c2fc65c628e1e4ddf7baf31a948769f50a4a5']],
+            ]);
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const number = context.issue.number;
+            const entry = inventory.get(number);
+            if (!entry) {
+              core.notice(`PR #${number} is not on the immutable archived-branch allowlist; keeping ref.`);
+              return;
+            }
+            const [name, expectedSha] = entry;
+            const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: number });
+            if (pr.state !== 'closed' || pr.merged_at || pr.base.ref !== 'main'
+                || pr.head.ref !== name || pr.head.sha !== expectedSha
+                || pr.head.repo?.full_name !== `${owner}/${repo}`) {
+              core.warning(`Ref/PR did not satisfy the audited closed-PR identity for #${number}.`);
+              return;
+            }
+            const { data: archive } = await github.rest.issues.get({ owner, repo, issue_number: 1462 });
+            if (archive.state !== 'open' || !archive.body?.includes(name)
+                || !archive.body?.includes(expectedSha)) {
+              core.warning('Issue #1462 immutable source inventory is missing; refusing ref deletion.');
+              return;
+            }
+            const active = await github.paginate(github.rest.pulls.list, { owner, repo, state: 'open', per_page: 100 });
+            if (active.some(other => other.head.repo?.full_name === `${owner}/${repo}`
+                && other.head.ref === name)) {
+              core.warning(`Another open PR still references ${name}; keeping ref.`);
+              return;
+            }
+            const { data: branch } = await github.rest.repos.getBranch({ owner, repo, branch: name });
+            if (branch.protected || branch.commit.sha !== expectedSha) {
+              core.warning(`Ref ${name} is protected or no longer matches the recorded exact SHA.`);
+              return;
+            }
+            await github.rest.git.deleteRef({ owner, repo, ref: `heads/${name}` });
+            core.notice(`Deleted safely archived branch ${name}; PR #${number} source and issue #1462 preserve the original diff.`);
