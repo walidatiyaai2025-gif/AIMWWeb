@@ -22,11 +22,15 @@ use App\Models\Site;
 use App\Models\Suggestion;
 use App\Models\SyncedContent;
 use App\Models\SyncRun;
+use App\Sync\SyncDiagnosticFormatter;
 use App\Tenancy\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Throwable;
 
 final class DemoController extends Controller
@@ -213,7 +217,8 @@ final class DemoController extends Controller
             'operation' => 'site.sync',
         ], JSON_THROW_ON_ERROR));
 
-        $result = DB::transaction(function () use ($siteId, $idempotencyKey, $requestHash): array {
+        try {
+            $result = DB::transaction(function () use ($siteId, $idempotencyKey, $requestHash): array {
             // Serialize sync starts for this site before checking active runs. Uniqueness
             // is per run so a failed run cannot suppress dispatch of its explicit retry.
             Site::query()->whereKey($siteId)->lockForUpdate()->firstOrFail();
@@ -281,10 +286,33 @@ final class DemoController extends Controller
             }
         }
 
-        $authoritative = SyncRun::query()->findOrFail($result['run']->id);
+            $authoritative = SyncRun::query()->findOrFail($result['run']->id);
+        } catch (Throwable $exception) {
+            if ($exception instanceof HttpExceptionInterface || $exception instanceof ModelNotFoundException) {
+                throw $exception;
+            }
+
+            // The manager has passed tenant and sites.manage authorization.
+            // Expose the redacted exception, never a stack trace or raw credentials.
+            $diagnostic = SyncDiagnosticFormatter::exception($exception);
+            $requestId = (string) $request->attributes->get('request_id', '');
+            Log::error('wordpress.sync.start_failed', [
+                'site_id' => $siteId,
+                'request_id' => $requestId,
+                'exception_type' => class_basename($exception),
+                'diagnostic' => $diagnostic,
+            ]);
+
+            return response()->json([
+                'code' => 'WORDPRESS_SYNC_START_FAILED',
+                'message' => $diagnostic,
+                'exception_type' => class_basename($exception),
+                'request_id' => $requestId,
+            ], 500);
+        }
 
         return response()->json(
-            $this->syncRunResource($authoritative, (bool) $result['replay']),
+            $this->syncRunResource($authoritative, (bool) $result['replay'], true),
             $result['created'] ? 202 : 200,
         );
     }
@@ -298,18 +326,21 @@ final class DemoController extends Controller
         abort_if($runId < 1, 404);
         $model = SyncRun::query()->findOrFail($runId);
 
-        return response()->json($this->syncRunResource($model));
+        return response()->json($this->syncRunResource($model, false, $context->membership()->hasPermission('sites.manage')));
     }
 
     /** @return array<string, mixed> */
-    private function syncRunResource(SyncRun $run, bool $replay = false): array
+    private function syncRunResource(SyncRun $run, bool $replay = false, bool $showDiagnostics = false): array
     {
         return [
             'id' => (int) $run->getKey(),
             'site_id' => (int) $run->site_id,
             'status' => (string) $run->status,
             'processed' => (int) ($run->processed ?? 0),
-            'failure' => filled($run->failure) ? 'Synchronization failed.' : null,
+            'failure' => filled($run->failure) || $run->status === 'failed'
+                ? ($showDiagnostics ? SyncDiagnosticFormatter::sanitize($run->failure) : 'Synchronization failed.')
+                : null,
+            'diagnostic_code' => $run->status === 'failed' ? 'WORDPRESS_SYNC_FAILED' : null,
             'started_at' => $run->started_at?->utc()->toIso8601String(),
             'completed_at' => $run->completed_at?->utc()->toIso8601String(),
             'idempotent_replay' => $replay,
