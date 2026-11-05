@@ -8,7 +8,6 @@ use App\Models\Site;
 use App\Models\Tenant;
 use App\Tenancy\TenantContext;
 use Illuminate\Support\Str;
-use RuntimeException;
 
 final class PairingService
 {
@@ -37,7 +36,7 @@ final class PairingService
     {
         $pairing = ConnectorPairing::withoutGlobalScopes()->where('token_hash', hash('sha256', $token))->firstOrFail();
         if ($pairing->used_at || $pairing->expires_at->isPast()) {
-            throw new RuntimeException('Pairing token expired or already used.');
+            abort(410, 'Pairing token expired or already used.');
         }
         if ($version !== ConnectorProtocol::VERSION) {
             throw new RuntimeException('Unsupported connector protocol version.');
