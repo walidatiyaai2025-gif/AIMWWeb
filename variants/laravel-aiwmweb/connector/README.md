@@ -1,4 +1,4 @@
-# AIMW Connector v0.2.2
+# AIMW Connector v0.2.3
 
 Install the `aimw-connector` directory as a WordPress plugin. An administrator pairs it by POSTing `platform_url` and the one-time `pairing_token` to `/wp-json/aimw/v1/pair` while authenticated to WordPress.
 
@@ -14,6 +14,12 @@ The connector accepts only versioned semantic REST operations. It uses HMAC-SHA2
 5. If pairing fails, check HTTPS, host reachability and that the token is valid for the correct site. No secret should be pasted into tickets or logs.
 
 The pairing handler is administrator-only and CSRF-protected; outbound calls use WordPress safe HTTP validation to avoid requests to internal/private targets.
+
+## v0.2.3 — Authoritative signed content resource reads
+
+For sites paired with AIMW Connector but without a native WordPress Application Password, the Laravel canonical content synchronizer now uses signed `GET /wp-json/aimw/v1/content/resources/{resource}` with `page`, `per_page` (1–100), and bounded `modified_after` support. A matching `/{id}` GET provides read-after-write and conflict verification. Supported resources: posts, pages, media, categories, tags and comments. Results come from real WordPress records, not fabricated success or an unsupported `content.list` mutation envelope. Every call requires `content.read`, HMAC verification, tenant/site/connector binding and nonce replay protection.
+
+**Upgrade:** Install the v0.2.3 Connector ZIP via WordPress Plugins → Add New → Upload Plugin → Replace Existing. Preserve the existing pairing and back up WordPress first. Update Laravel to the signed release built from the same SHA, then open Content Hub → **Sync WordPress content now**. The hub reports real Laravel post/page counts and shows errors when content cannot be read. Do not infer synchronized data from green ENABLED navigation badges. An older plugin lacking the signed resource endpoint will return an explicit error instead of an invented zero-result sync.
 
 ## v0.2.2 — WordPress signed-header normalization fix
 

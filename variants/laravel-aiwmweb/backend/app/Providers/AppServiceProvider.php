@@ -17,6 +17,7 @@ use App\AI\Platform\Services\AiGenerationService;
 use App\Billing\Providers\BillingProvider;
 use App\Billing\Providers\PayPalProvider;
 use App\Connector\AdvancedWordPressGateway;
+use App\Connector\ConnectorResourceReader;
 use App\Connector\HttpWordPressGateway;
 use App\Connector\WordPressGateway;
 use App\Content\Remote\ContentRemoteDriver;
@@ -51,6 +52,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->scoped(BackgroundExecutionIdentity::class, fn () => new BackgroundExecutionIdentity);
         $this->app->bind(WordPressGateway::class, HttpWordPressGateway::class);
         $this->app->bind(AdvancedWordPressGateway::class, HttpWordPressGateway::class);
+        $this->app->bind(ConnectorResourceReader::class, HttpWordPressGateway::class);
         $this->app->bind(AiProvider::class, HttpAiProvider::class);
         $this->app->bind(ContentRemoteDriver::class, DualPathContentDriver::class);
         $this->app->bind(SyncSiteGuard::class, CanonicalSyncSiteGuard::class);

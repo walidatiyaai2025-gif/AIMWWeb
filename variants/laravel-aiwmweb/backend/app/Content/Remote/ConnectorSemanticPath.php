@@ -2,29 +2,25 @@
 
 namespace App\Content\Remote;
 
+use App\Connector\ConnectorResourceReader;
+use App\Connector\WordPressGateway;
+use App\Models\Site;
 use Illuminate\Support\Str;
-use RuntimeException;
 
 final class ConnectorSemanticPath
 {
+    public function __construct(private readonly ConnectorResourceReader $resources) {}
+
     public function list(int $siteId, string $resource, array $query = []): array
     {
-        if (in_array($resource, ['posts', 'pages', 'media', 'categories', 'tags'], true) && empty($query)) {
-            $all = $this->gateway()->content($this->site($siteId));
-
-            return data_get($all, $resource, data_get($all, 'data.'.$resource, [])) ?: [];
-        }
-
-        return data_get($this->execute($siteId, 'content.list', compact('resource', 'query')), 'items', []);
+        // Never route a read through /execute: the WordPress Connector only
+        // authorizes approved mutations there, not a synthetic content.list.
+        return $this->resources->listResource($this->site($siteId), $resource, $query);
     }
 
     public function get(int $siteId, string $resource, int $remoteId): array
     {
-        $type = match ($resource) {
-            'posts' => 'post','pages' => 'page', default => $resource
-        };
-
-        return $this->gateway()->read($this->site($siteId), $type, $remoteId);
+        return $this->resources->getResource($this->site($siteId), $resource, $remoteId);
     }
 
     public function mutate(int $siteId, string $resource, ?int $remoteId, string $action, array $payload = []): array
@@ -42,23 +38,13 @@ final class ConnectorSemanticPath
         return $this->gateway()->execute($this->site($siteId), (string) Str::uuid(), ['operation' => $operation, 'payload' => $payload]);
     }
 
-    private function gateway(): object
+    private function gateway(): WordPressGateway
     {
-        $contract = 'App\\Connector\\WordPressGateway';
-        if (! interface_exists($contract)) {
-            throw new RuntimeException('Connector semantic gateway is not integrated yet.');
-        }
-
-        return app($contract);
+        return app(WordPressGateway::class);
     }
 
-    private function site(int $siteId): object
+    private function site(int $siteId): Site
     {
-        $class = 'App\\Models\\Site';
-        if (! class_exists($class)) {
-            throw new RuntimeException('Site model is not integrated yet.');
-        }
-
-        return $class::query()->findOrFail($siteId);
+        return Site::query()->findOrFail($siteId);
     }
 }

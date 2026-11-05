@@ -2,7 +2,7 @@
 /**
  * Plugin Name: AIMW Connector
  * Description: Signed, scoped semantic operations for Laravel AIWMWeb.
- * Version: 0.2.2
+ * Version: 0.2.3
  * Requires PHP: 8.0
  */
 
@@ -11,11 +11,12 @@ defined('ABSPATH') || exit;
 require_once __DIR__.'/includes/class-aimw-connector-security.php';
 require_once __DIR__.'/includes/class-aimw-connector-store.php';
 require_once __DIR__.'/includes/class-aimw-connector-runtime.php';
+require_once __DIR__.'/includes/class-aimw-connector-resource-reader.php';
 require_once __DIR__.'/includes/class-aimw-connector-admin.php';
 
 final class AIMW_Connector_V1
 {
-    public const PLUGIN_VERSION = '0.2.2';
+    public const PLUGIN_VERSION = '0.2.3';
     public const PROTOCOL_VERSION = '1';
     public const CLOCK_SKEW_SECONDS = 300;
     private const NS = 'aimw/v1';
@@ -61,6 +62,8 @@ final class AIMW_Connector_V1
         register_rest_route(self::NS, '/capabilities', ['methods' => 'GET', 'callback' => [self::class, 'capabilities'], 'permission_callback' => [self::class, 'authorize']]);
         register_rest_route(self::NS, '/history', ['methods' => 'GET', 'callback' => [self::class, 'history'], 'permission_callback' => [self::class, 'authorize']]);
         register_rest_route(self::NS, '/content', ['methods' => 'GET', 'callback' => [self::class, 'content'], 'permission_callback' => [self::class, 'authorize']]);
+        register_rest_route(self::NS, '/content/resources/(?P<resource>posts|pages|media|categories|tags|comments)', ['methods' => 'GET', 'callback' => [AIMW_Connector_Resource_Reader::class, 'listing'], 'permission_callback' => [self::class, 'authorize']]);
+        register_rest_route(self::NS, '/content/resources/(?P<resource>posts|pages|media|categories|tags|comments)/(?P<id>\\d+)', ['methods' => 'GET', 'callback' => [AIMW_Connector_Resource_Reader::class, 'item'], 'permission_callback' => [self::class, 'authorize']]);
         register_rest_route(self::NS, '/content/(?P<type>post|page)/(?P<id>\d+)', ['methods' => 'GET', 'callback' => [self::class, 'read'], 'permission_callback' => [self::class, 'authorize']]);
         register_rest_route(self::NS, '/execute', ['methods' => 'POST', 'callback' => [self::class, 'execute'], 'permission_callback' => [self::class, 'authorize']]);
         register_rest_route(self::NS, '/operate', ['methods' => 'POST', 'callback' => [self::class, 'operate'], 'permission_callback' => [self::class, 'authorize']]);
@@ -576,7 +579,9 @@ final class AIMW_Connector_V1
         if ($route === '/'.self::NS.'/history') {
             return ['audit.local'];
         }
-        if ($route === '/'.self::NS.'/content' || preg_match('#^/'.self::NS.'/content/(post|page)/\d+$#', $route)) {
+        if ($route === '/'.self::NS.'/content'
+            || preg_match('#^/'.self::NS.'/content/(post|page)/\\d+$#', $route)
+            || preg_match('#^/'.self::NS.'/content/resources/(posts|pages|media|categories|tags|comments)(?:/\\d+)?$#', $route)) {
             return ['content.read'];
         }
         if ($route === '/'.self::NS.'/rotate' || $route === '/'.self::NS.'/disconnect') {
