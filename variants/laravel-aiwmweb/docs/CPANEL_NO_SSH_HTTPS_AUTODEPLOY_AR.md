@@ -130,3 +130,26 @@ php /home/walidatiya/public_html/aiwm.walidatiya.com/app/aiwm-cpanel-https-pull.
 `cd /home/walidatiya && /usr/local/bin/php /home/walidatiya/public_html/aiwm.walidatiya.com/app/aiwm-cpanel-https-pull.php >> /home/walidatiya/public_html/aiwm.walidatiya.com/app/storage/logs/aiwm-release-cron.log 2>&1`
 
 لا تضف Cron إلا بعد الاختبار والقبول. نسخة Restore Test تحتوي بيانات إنتاج منسوخة؛ يجب تقييد وصول MySQL لها وحذفها بأمان عند انتهاء اختبار الترقية، بعد التأكد من عدم احتياجها.
+
+## إصلاح توافق أول تحديث 0.0.0 مع ملفات الواجهة المسماة private
+
+في فحص الإنتاج الأول لحزمة `v1.0.207` (2026-11-05)، أظهر **Verify Package**:
+`Private runtime paths cannot be updated.` ولم تُطبَّق الحزمة. السبب أربع ملفات مصدر
+TypeScript داخل `resources/js/` تحتوي أسماءها على `private`،
+بينما مُحدِّث الإصدار المثبت `0.0.0` يرفض أي مسار `resources/` يتضمن هذا النص.
+لا علاقة لذلك بسرّية البيانات؛ هذه ملفات الواجهة المصدرية التي أصبحت مجمّعة بالفعل داخل `public/build/`.
+
+أداة التغليف تستبعد مصادر `resources/js/*private*` غير المطلوبة في PHP الإنتاجي،
+ولا تغيّر قواعد سلامة ملفات `.env` أو `storage`.
+إذا ظهر ملف `resources/` آخر باسم `private` ليس من مصادر JavaScript، يُوقَف
+البناء بدل إسقاط ملف مطلوب في التشغيل. يُفحص **كل ملف** من ZIP الناتجة
+بواسطة `verify-signed-update-compat.py` في كلٍّ من Candidate وProduction Release
+قبل النشر: المسار المسموح، التوافق مع `0.0.0`، كلّ Hash، Manifest،
+Migrations، منع الملفات الرمزية، والحد الأقصى للحجم.
+
+**لا تُعد استخدام v1.0.207**؛ تحتاج إلى Candidate جديدة موقّعة من SHA النهائي الذي
+اجتاز Acceptance وSetup CI. على الإنتاج: خُذ Backup خاص للملفات وMySQL،
+اترك `AIWM_AUTO_UPDATES_ENABLED=false`، ارفع حزمة `AIWMWeb-Laravel-signed-bundle.zip`
+الجديدة عبر صفحة `/admin/system-updates` واضغط **Verify Package** أولًا.
+لا تبدأ Install قبل نجاح التحقق، ولا تعتبر النجاح مضمونًا قبل فحص
+الترحيلات، Version Receipt، الواجهة، البيانات، وHealth.
