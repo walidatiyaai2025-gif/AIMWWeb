@@ -1,19 +1,21 @@
 # Laravel AIWMWeb — cPanel deployment & DeluxHost Ollama support resume runbook
 
-> **Checkpoint recorded: 2026-10-30 (Asia/Kuwait).** This is a **continuation snapshot**, not a production-ready certification or a substitute for live GitHub/host evidence. Read this first when work resumes; then refresh every dynamic fact.
+> **Historical checkpoint: 2026-10-30 (Asia/Kuwait).** This preserves a dated continuation snapshot, not production certification; all dynamic release/host facts require revalidation.
+>
+> **Current project decision (2026-11-05):** AIMWWeb is now a **standalone Laravel-only product** in `variants/laravel-aiwmweb/**` (see [#1441](https://github.com/walidatiyaai2025-gif/AIMWWeb/issues/1441), root `AGENTS.md`, and current PCC routing). Legacy .NET/ASP.NET is archived and **not** a parity, deployment or release target. The former composition branch was deleted; merge this documentation into `main` with exact-head CI. This document alone does **not** constitute a deployable software change or approval to enable AI.
 >
 > **Owner decision:** prepare the Laravel application/package while DeluxHost investigates the AI VPS disk I/O issue. Do **not** deploy blindly, restart/benchmark the affected VPS, or enable remote AI until its storage health is established.
 
 ## 1. Scope and traceability
 
-- Project: `AIMWWEB`; product family: `PRODUCT_FAMILY`; **variant** `LARAVEL_AIWMWEB`.
+- Project: `AIMWWEB`; **model: `STANDALONE`**; sole active product `LARAVEL_AIWMWEB`, implementation `variants/laravel-aiwmweb/**`.
 - Repository: [walidatiyaai2025-gif/AIMWWeb](https://github.com/walidatiyaai2025-gif/AIMWWeb).
-- Allowed variant boundary: `variants/laravel-aiwmweb/**`; **do not modify ASP.NET or shared CORE**.
+- Allowed project implementation boundary: `variants/laravel-aiwmweb/**`. Historical .NET files are archived, outside active product scope; do not modify them as part of this task.
 - PCC source of this snapshot: `walidatiyaai2025-gif/project-control-center@076eeb0ed3fe75200d907b111803a210e5c054c5` (refresh PCC `main` at resumption); authority [#257](https://github.com/walidatiyaai2025-gif/AIMWWeb/issues/257).
 - cPanel/AI implementation and acceptance gate: [#1384](https://github.com/walidatiyaai2025-gif/AIMWWeb/issues/1384). Implementation [PR #1385](https://github.com/walidatiyaai2025-gif/AIMWWeb/pull/1385).
 - This documentation-only continuation task: [#1386](https://github.com/walidatiyaai2025-gif/AIMWWeb/issues/1386).
-- Integration target `worker/laravel-aiwmweb-closure-composition` checked at `0d35b4b44a09aaef0f4b1701b8f2336f5e2cf1e8` after PR #1385 merged.
-- **Important lineage:** repo `main` was separately observed at `9aee452bcf1d0f766da7b1718b79c73cc0020eec`; **do not assume the Laravel composition changes are already merged to main**. Release source must be the explicitly accepted, verified final integration SHA.
+- **Historical (2026-10-30):** former integration branch `worker/laravel-aiwmweb-closure-composition` at `0d35b4b44a09aaef0f4b1701b8f2336f5e2cf1e8` after PR #1385. That branch was deleted on 2026-11-05; `main` is now the sole integration target.
+- **Historical (2026-10-30):** `main` was then observed at `9aee452bcf1d0f766da7b1718b79c73cc0020eec`. **Current (2026-11-05 11:16 UTC):** `main` observed at `249a37d75b8944b1ce26477d7c339aacd4dfeb9c` with Laravel-only governance in place. Refresh `main` again before merging or publishing; the release source must be an exact accepted, green SHA.
 - This runbook describes operational follow-up. It must not amend PCC constitutional rules or supersede repository `AGENTS.md`.
 
 ## 2. Verified status at this checkpoint
@@ -61,8 +63,8 @@ Observed (do not publish host IP, login details, customer identifier, ticket cre
 ## 4. Work that can be completed while waiting
 
 ### Gate A — Reconcile repository and artifact provenance
-- Refresh PCC routing, `AGENTS.md`, composition HEAD, PRs, Issue #1384 and ownership/leases. Continue existing canonical work; no duplicate #1384 implementation branch.
-- Verify required workflow conclusions on the **actual merged/accepted SHA**, and parity/tenant/security checks relevant to this Laravel release.
+- Refresh PCC routing, `AGENTS.md`, `main` HEAD, PRs, Issue #1384 and ownership/leases. Do not treat the deleted composition branch as an active integration target; continue existing canonical work without duplicating #1384.
+- Verify required workflow conclusions on the **actual merged/accepted SHA**, and Laravel tenant/security checks relevant to the current standalone product. Historical ASP.NET parity is not a release gate.
 - Retrieve CI-generated cPanel ZIP from the accepted SHA; verify filename, source SHA, SHA-256 and every manifest file hash; ensure no `.env`, hardcoded provider secrets or private runtime data.
 - Never ship the older forbidden kit source `6753e857404aab5636751d592062715da5ff9510` for live AI.
 
@@ -96,7 +98,7 @@ Observed (do not publish host IP, login details, customer identifier, ticket cre
 
 ## 6. Resume checklist for the next session
 
-- [ ] Read this file; fetch **live** PCC `main`, repository `main`, Laravel composition HEAD and open PRs. Historical SHAs above are snapshots.
+- [ ] Read this file; fetch **live** PCC `main`, repository `main` and open PRs. The former composition branch was deleted; historical SHAs above are snapshots.
 - [ ] Read latest comments/closure status of [#1384](https://github.com/walidatiyaai2025-gif/AIMWWeb/issues/1384); confirm [#1385](https://github.com/walidatiyaai2025-gif/AIMWWeb/pull/1385) is still part of accepted lineage.
 - [ ] Verify post-merge exact-head CI and retrieve/source-check the approved ZIP rather than reusing arbitrary unmerged artifacts.
 - [ ] Ask owner for **DeluxHost support response** and for the **cPanel provider's PHP/DB/document-root/Cron capabilities**. Do not request passwords or keys in chat.
