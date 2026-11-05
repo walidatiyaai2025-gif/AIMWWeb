@@ -466,11 +466,11 @@ final class SystemUpdateCenterTest extends TestCase
 
         try {
             $this->assertFileDoesNotExist($target);
-            (new \\ReflectionMethod($service, 'backupFiles'))
+            (new \ReflectionMethod($service, 'backupFiles'))
                 ->invoke($service, [$filename => hash('sha256', 'new-update-file')], $backup);
             file_put_contents($target, 'new-update-file');
 
-            (new \\ReflectionMethod($service, 'restoreBackup'))->invoke($service, $backup);
+            (new \ReflectionMethod($service, 'restoreBackup'))->invoke($service, $backup);
 
             $this->assertFileDoesNotExist($target);
         } finally {
@@ -488,12 +488,12 @@ final class SystemUpdateCenterTest extends TestCase
 
         try {
             $this->assertFileDoesNotExist($target);
-            (new \\ReflectionMethod($service, 'backupFiles'))
+            (new \ReflectionMethod($service, 'backupFiles'))
                 ->invoke($service, [$filename => hash('sha256', 'new-update-file')], $backup);
             $this->assertTrue(mkdir($target));
 
             try {
-                (new \\ReflectionMethod($service, 'restoreBackup'))->invoke($service, $backup);
+                (new \ReflectionMethod($service, 'restoreBackup'))->invoke($service, $backup);
                 $this->fail('Rollback silently accepted a path it could not remove.');
             } catch (RuntimeException $e) {
                 $this->assertStringContainsString('could not remove a new file', $e->getMessage());
