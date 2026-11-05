@@ -109,7 +109,7 @@ final class WordPressUsersBackToExplorerControlTerminalityTest extends TestCase
         $this->assertStringContainsString('hasExplorerPermission', $component);
         $this->assertStringContainsString("tenantUrl(context.tenant.slug, '/explorer')", $component);
         $this->assertStringContainsString("r('wp-users', '/module/users'", $core);
-        $this->assertStringNotContainsString("connectorScope: 'users.read'", $core);
+        $this->assertStringContainsString("connectorScope: 'users.read'", $core);
         $this->assertStringContainsString('WordPressUsersBackToExplorerControl', $app);
         $this->assertStringContainsString("route.key === 'wp-users'", $app);
         $this->assertStringNotContainsString('apiRequest', $component);
