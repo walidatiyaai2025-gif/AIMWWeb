@@ -564,6 +564,22 @@ try {
 
             $console->call('view:cache');
             $console->call('optimize:clear');
+
+            // Initial deployment provenance must be present before the installer
+            // locks. The dashboard can then report both exact version and SHA
+            // without guessing from a moving branch or a default 0.0.0 value.
+            $updatesDir = $appRoot.'/storage/app/system-updates';
+            if (! is_dir($updatesDir) && ! mkdir($updatesDir, 0700, true) && ! is_dir($updatesDir)) {
+                aiwmFailure('Cannot initialize private installed release history.');
+            }
+            aiwmSave($updatesDir.'/installed.json', json_encode([
+                'version' => $setupBuild['version'],
+                'sha' => $setupBuild['sha'],
+                'installed_at' => gmdate('c'),
+                'source' => 'verified-setup-package',
+                'previous' => null,
+            ], JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT)."\n");
+
             aiwmSave($lockPath, gmdate('c')."\n");
             @unlink($ownerPath);
             @unlink($pendingPath);
