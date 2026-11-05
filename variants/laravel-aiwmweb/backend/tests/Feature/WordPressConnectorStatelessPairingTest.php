@@ -77,7 +77,7 @@ final class WordPressConnectorStatelessPairingTest extends TestCase
             ->assertNotFound();
         $this->postJson('/api/connector/pair', array_replace(
             $this->payload($token, (string) Str::uuid()), ['protocol_version' => '999'],
-        ))->assertStatus(500);
+        ))->assertUnprocessable();
         $this->assertSame(0, Connector::withoutGlobalScopes()->count());
     }
 
