@@ -28,6 +28,7 @@ final class PairedConnectorWorkspacePermissionTest extends TestCase
         $context->activate($tenant);
         $token = app(PairingService::class)->create($site);
         app(PairingService::class)->complete($token, (string) Str::uuid(), ['health', 'content.read'], '1');
+        $context->activate($tenant);
 
         $connector = Connector::query()->where('site_id', $site->id)->sole();
         $this->assertNull($connector->verified_at);
@@ -49,6 +50,7 @@ final class PairedConnectorWorkspacePermissionTest extends TestCase
 
     public function test_bootstrap_owner_permission_backfill_is_tenant_scoped_and_never_grants_other_users(): void
     {
+        $this->withoutVite();
         [$tenant, $owner] = $this->seedMembership('wordpress', ['tenant.view'], 'Owner', true);
         [, $reader] = $this->seedMembership('other', ['tenant.view'], 'Owner', false);
         [$third, $outsider] = $this->seedMembership('foreign', ['tenant.view'], 'Visitor', true);
