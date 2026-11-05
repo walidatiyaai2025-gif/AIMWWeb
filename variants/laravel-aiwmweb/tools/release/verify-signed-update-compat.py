@@ -64,7 +64,7 @@ def check(manifest_path: Path, zip_path: Path) -> tuple[int, int]:
         raise ValueError("Invalid signed manifest or unsupported version")
     parts = tuple(int(n) for n in min_version.split("."))
     legacy = parts < (1, 0, 0)
-    if any(not isinstance(key, str) or not HASH.fullmatch(value) if isinstance(value, str) else True
+    if any(not isinstance(key, str) or not isinstance(value, str) or not HASH.fullmatch(value)
            for key, value in files.items()):
         raise ValueError("Malformed signed file SHA256 inventory")
     for path in files:
@@ -75,7 +75,9 @@ def check(manifest_path: Path, zip_path: Path) -> tuple[int, int]:
     policy = "forward_only" if migrations else "none"
     if manifest.get("migration_policy", policy) != policy:
         raise ValueError("Signed migration policy mismatch")
-    if manifest.get("sha256") != hashlib.file_digest(zip_path.open("rb"), "sha256").hexdigest():
+    with zip_path.open("rb") as payload:
+        payload_hash = hashlib.file_digest(payload, "sha256").hexdigest()
+    if manifest.get("sha256") != payload_hash:
         raise ValueError("Signed inner ZIP checksum mismatch")
 
     total_uncompressed = 0
