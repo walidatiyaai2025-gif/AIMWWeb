@@ -11,7 +11,6 @@
 declare(strict_types=1);
 
 use App\Platform\SystemUpdateService;
-use App\Services\RuntimeHealthService;
 use Illuminate\Contracts\Console\Kernel;
 
 if (PHP_SAPI !== 'cli' || isset($_SERVER['REQUEST_METHOD']) || $argc !== 1) {
@@ -43,7 +42,9 @@ try {
         (bool) config('app.debug') ||
         ! $app->environment('production') ||
         ! (bool) config('system_updates.enabled') ||
-        ! (bool) config('system_updates.auto_pull_enabled') ||
+        // Bootstrap compatibility: the site's installed 0.0.0 config may
+        // predate this config key. A one-time .env opt-in remains mandatory.
+        ! ((bool) config('system_updates.auto_pull_enabled', env('AIWM_AUTO_UPDATES_ENABLED', false))) ||
         ! is_string($publicRoot) || $publicRoot !== $domainRoot ||
         ! is_file($root.'/storage/app/aiwm-install/installed.lock')) {
         throw new RuntimeException('Unapproved hosting environment or automatic update configuration.');
@@ -89,9 +90,16 @@ try {
             throw new RuntimeException('Installed receipt does not match signed Release.');
         }
 
-        $health = $app->make(RuntimeHealthService::class)->ready();
-        if (($health['status'] ?? null) !== 'ready') {
-            throw new RuntimeException('Live runtime readiness failed after promotion.');
+        // Start a NEW PHP process to load the newly installed app classes,
+        // not the pre-update code still resident in this Cron invocation.
+        $check = new \Symfony\Component\Process\Process(
+            [PHP_BINARY, $root.'/artisan', 'runtime:health', '--ready'],
+            $root,
+        );
+        $check->setTimeout(45);
+        $check->run();
+        if (! $check->isSuccessful()) {
+            throw new RuntimeException('Fresh-process runtime readiness failed after promotion.');
         }
         echo 'DEPLOYED '.(string) $installed['version'].' '.(string) $installed['sha']."\n";
     } finally {
