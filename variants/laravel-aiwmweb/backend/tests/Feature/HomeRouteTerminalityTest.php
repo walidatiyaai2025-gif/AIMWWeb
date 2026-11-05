@@ -158,6 +158,27 @@ final class HomeRouteTerminalityTest extends TestCase
         $this->assertSame($before['executions'], DB::table('executions')->count());
     }
 
+    public function test_dashboard_counts_verified_sites_but_not_unverified_pairing_as_connected(): void
+    {
+        $user = User::factory()->create();
+        $membership = $this->membership($user, 'alpha', ['tenant.view', 'execution.view']);
+        app(TenantContext::class)->activate($membership->tenant, $membership);
+        foreach (['connected', 'verified', 'paired'] as $status) {
+            Site::query()->create([
+                'name' => ucfirst($status).' site',
+                'url' => 'https://'.$status.'.example.test',
+                'status' => 'active',
+                'connection_status' => $status,
+            ]);
+        }
+        app(TenantContext::class)->forget();
+
+        $this->actingAs($user)->getJson('/api/dashboard?tenant=alpha')
+            ->assertOk()
+            ->assertJsonPath('sites.totalSites', 3)
+            ->assertJsonPath('sites.connectedSites', 2);
+    }
+
     private function seedDashboardData(TenantMembership $membership, string $prefix, int $siteCount): void
     {
         $context = app(TenantContext::class);
