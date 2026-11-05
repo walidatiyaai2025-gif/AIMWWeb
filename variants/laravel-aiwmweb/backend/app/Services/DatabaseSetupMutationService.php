@@ -130,6 +130,12 @@ final class DatabaseSetupMutationService
             }
         }
 
+        // Route/React workspace permissions are not always referenced by app/ PHP.
+        // The first bootstrap platform owner must be able to access real tenant workspaces.
+        foreach (['sync.view', 'backups.view', 'content.view', 'content.edit'] as $workspacePermission) {
+            $permissions[$workspacePermission] = true;
+        }
+
         $names = array_keys($permissions);
         sort($names);
         if ($names === []) {
