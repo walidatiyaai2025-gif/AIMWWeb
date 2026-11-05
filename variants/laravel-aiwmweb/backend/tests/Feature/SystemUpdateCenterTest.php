@@ -434,11 +434,11 @@ final class SystemUpdateCenterTest extends TestCase
 
         try {
             file_put_contents($target, 'original-verified-content');
-            (new \\ReflectionMethod($service, 'backupFiles'))
+            (new \ReflectionMethod($service, 'backupFiles'))
                 ->invoke($service, [$filename => hash('sha256', 'updated-content')], $backup);
             file_put_contents($target, 'updated-content');
 
-            (new \\ReflectionMethod($service, 'restoreBackup'))->invoke($service, $backup);
+            (new \ReflectionMethod($service, 'restoreBackup'))->invoke($service, $backup);
 
             $this->assertSame('original-verified-content', file_get_contents($target));
             $this->assertSame([], glob(dirname($target).'/.aiwm-rollback-*') ?: []);
@@ -457,13 +457,13 @@ final class SystemUpdateCenterTest extends TestCase
 
         try {
             file_put_contents($target, 'original');
-            (new \\ReflectionMethod($service, 'backupFiles'))
+            (new \ReflectionMethod($service, 'backupFiles'))
                 ->invoke($service, [$filename => hash('sha256', 'updated')], $backup);
             file_put_contents($target, 'updated-must-remain');
             file_put_contents($backup.'/original/'.$filename, 'tampered');
 
             try {
-                (new \\ReflectionMethod($service, 'restoreBackup'))->invoke($service, $backup);
+                (new \ReflectionMethod($service, 'restoreBackup'))->invoke($service, $backup);
                 $this->fail('A tampered rollback backup was accepted.');
             } catch (RuntimeException $e) {
                 $this->assertStringContainsString('Backup integrity verification failed', $e->getMessage());
