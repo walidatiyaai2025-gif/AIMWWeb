@@ -41,7 +41,9 @@ final class PlatformReadController extends Controller
                 'id', 'name', 'connection_status', 'health_state', 'last_verified_at', 'last_sync_at',
             ]);
             $totalSites = $sites->count();
-            $connectedSites = $sites->where('connection_status', 'connected')->count();
+            // A verified WordPress health handshake is also a connected site.
+            // Pairing alone is not: it has not yet confirmed remote reachability.
+            $connectedSites = $sites->whereIn('connection_status', ['connected', 'verified'])->count();
             $problemSites = $sites->whereIn('connection_status', [
                 'unreachable', 'authentication_failed', 'limited_permissions', 'degraded', 'error',
             ])->count();
