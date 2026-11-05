@@ -23,6 +23,7 @@ export type InspectorSite = {
         enabled_scopes: string[];
     };
     last_diagnostic: string;
+    remote_probe?: { attempted: boolean; state: string };
     last_sync: { present: boolean; state: string; finished: boolean };
     record_counts: { posts: number; pages: number; media: number; legacy_synced_contents: number };
     finding: string;
@@ -58,6 +59,9 @@ const findings: Record<string, { en: string; ar: string }> = {
     LEGACY_ROWS_NOT_CANONICAL: { en: 'Legacy rows present but canonical content missing', ar: 'بيانات قديمة موجودة ولم تنتقل إلى المحتوى المعتمد' },
     NO_CANONICAL_ROWS: { en: 'Sync reports complete but content is still empty', ar: 'المزامنة مكتملة لكن المحتوى لا يزال فارغًا' },
     CANONICAL_ROWS_PRESENT: { en: 'Canonical content records exist', ar: 'المحتوى الفعلي موجود' },
+    REMOTE_AUTH_FAILED: { en: 'Remote connector authentication failed', ar: 'فشل توثيق الاتصال بالموصل' },
+    REMOTE_PROTOCOL_UNSUPPORTED: { en: 'Remote connector protocol is unsupported', ar: 'بروتوكول الموصل البعيد غير مدعوم' },
+    REMOTE_NOT_READY: { en: 'Remote connector is not responding reliably', ar: 'الموصل البعيد غير جاهز أو لا يستجيب' },
 };
 
 function boundedText(input: unknown, fallback = 'unknown'): string {
@@ -111,6 +115,10 @@ export function safeInspectorBundle(server: InspectorServer, events: RuntimeObse
                         .filter((scope) => ['health', 'content.read', 'content.update', 'seo.read', 'diagnostics.read', 'connector.manage'].includes(scope)),
                 },
                 last_diagnostic: boundedText(site.last_diagnostic),
+                remote_probe: {
+                    attempted: site.remote_probe?.attempted === true,
+                    state: boundedText(site.remote_probe?.state ?? 'not_run'),
+                },
                 last_sync: {
                     present: site.last_sync.present === true,
                     state: boundedText(site.last_sync.state),
@@ -152,7 +160,7 @@ export function RuntimeInspectorPanel({ context }: { context: FrontendContext })
     const endpoint = `/tenants/${encodeURIComponent(context.tenant.slug)}/runtime-inspector/report`;
     const report = useQuery({
         queryKey: ['runtime-inspector', context.tenant.slug],
-        queryFn: () => apiRequest<InspectorServer>(endpoint),
+        queryFn: () => apiRequest<InspectorServer>(endpoint + '?probe=1'),
         enabled: false,
         retry: false,
         staleTime: 0,
@@ -215,6 +223,7 @@ export function RuntimeInspectorPanel({ context }: { context: FrontendContext })
                             <h4>{isArabic ? 'الموقع' : 'Site'} #{site.site_id} — {boundedText(site.connection_state)}</h4>
                             <p>Connector: {site.connector.present ? (site.connector.revoked ? 'revoked' : 'paired') : 'not paired'} · verified: {String(site.connector.verified)} · {site.connector.enabled_scopes.join(', ') || 'no scopes'}</p>
                             <p>Sync: {site.last_sync.state} · Posts: {site.record_counts.posts} · Pages: {site.record_counts.pages} · Media: {site.record_counts.media} · Legacy: {site.record_counts.legacy_synced_contents}</p>
+                            <p>Remote Connector: {site.remote_probe?.state ?? 'not_run'} {site.remote_probe?.attempted ? '(signed GET)' : ''}</p>
                             <p><strong>{findings[site.finding]?.[locale] ?? boundedText(site.finding)}</strong></p>
                         </article>
                     ))}
