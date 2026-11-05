@@ -237,7 +237,7 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
         onError: (error) => notify(
             error instanceof Error
                 ? error.message
-                : (locale === 'ar' ? 'فشل نقل الصفحات إلى سلة المهملات.' : 'Moving pages to trash failed.'),
+                : (locale === 'ar' ? 'فشل نقل المقالات إلى سلة المهملات.' : 'Moving posts to trash failed.'),
             'error',
         ),
     });
@@ -378,7 +378,7 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
                         </button>
                     </div>
 
-                    <div className="table-scroll" role="region" aria-label={locale === 'ar' ? 'اختيار الصفحات' : 'Post selection'}>
+                    <div className="table-scroll" role="region" aria-label={locale === 'ar' ? 'اختيار المقالات' : 'Post selection'}>
                         <table className="data-table">
                             <thead>
                                 <tr>
