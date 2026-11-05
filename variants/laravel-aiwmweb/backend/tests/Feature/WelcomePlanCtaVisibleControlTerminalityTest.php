@@ -88,7 +88,7 @@ final class WelcomePlanCtaVisibleControlTerminalityTest extends TestCase
         $content = $this->actingAs($user)
             ->get('/welcome?tenant=attacker-tenant')
             ->assertOk()
-            ->assertSee('href="/"', false)
+            ->assertSee('href="/dashboard"', false)
             ->assertSee('href="/account/billing"', false)
             ->assertDontSee('href="/register"', false)
             ->getContent();
