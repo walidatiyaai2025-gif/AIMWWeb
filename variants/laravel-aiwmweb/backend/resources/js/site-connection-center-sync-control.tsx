@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { ApiError, apiRequest, tenantUrl, type FrontendContext } from './core';
 import { useLocale } from './i18n';
 import { safeExternalSiteUrl } from './site-details-site-url-control';
+import { formatSiteSyncDiagnostic } from './site-details-synchronize-control';
 
 export const SITE_CONNECTION_CENTER_SYNC_OPERATION_ID = 'AIMW-BILL-3762C05261';
 export const SITE_CONNECTION_CENTER_COPY_DIAGNOSTICS_OPERATION_ID = 'AIMW-BILL-D4E1DA62D9';
@@ -33,7 +34,7 @@ type OperationHistoryItem = {
 };
 
 type OperationHistoryPayload = { items: OperationHistoryItem[] };
-type SyncRun = { id: number; status: string; processed?: number; failure?: string | null };
+type SyncRun = { id: number; status: string; processed?: number; failure?: string | null; diagnostic_code?: string | null };
 
 export type SiteConnectionCenterDynamicLinks = {
     dashboard: string;
@@ -235,7 +236,9 @@ export function SiteConnectionCenterSyncControl({ context }: { context: Frontend
                 throw new ApiError(
                     run.failure || 'Synchronization did not complete successfully.',
                     409,
-                    'sync_not_successful',
+                    run.diagnostic_code || 'sync_not_successful',
+                    {},
+                    { run_id: run.id },
                 );
             }
 
@@ -251,7 +254,7 @@ export function SiteConnectionCenterSyncControl({ context }: { context: Frontend
             }
 
             setMessage('');
-            setError(cause instanceof Error ? cause.message : 'Synchronization failed.');
+            setError(formatSiteSyncDiagnostic(cause));
         } finally {
             setBusy(false);
         }
