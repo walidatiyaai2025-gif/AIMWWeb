@@ -51,6 +51,8 @@ export function workspaceCapabilityCensus(context: FrontendContext): WorkspaceCe
         const explicit = context.capabilities[`${route.key}.view`] ?? context.capabilities[route.key];
         const backend = explicit?.state ?? 'not_reported';
 
+        const apiContract = !route.apiKey ? 'not_required'
+            : context.api[route.apiKey] ? 'advertised' : 'not_advertised';
         let connectorRead: WorkspaceCensusEntry['connector_read'] = 'not_required';
         if (route.connectorScope) {
             if (connectors.some(connector => connector.scopes.includes(route.connectorScope!))) {
@@ -58,20 +60,22 @@ export function workspaceCapabilityCensus(context: FrontendContext): WorkspaceCe
             } else if (legacyReadScopes.has(route.connectorScope) &&
                 connectors.some(connector => connector.scopes.includes('content.read'))) {
                 connectorRead = 'content_read_alias';
+            } else if (legacyReadScopes.has(route.connectorScope) && apiContract === 'advertised') {
+                // The exact Laravel GET is authoritative; no WordPress
+                // Connector capability is required to enter the read view.
+                connectorRead = 'not_required';
             } else {
                 connectorRead = 'not_advertised';
             }
         }
-        const apiContract = !route.apiKey ? 'not_required'
-            : context.api[route.apiKey] ? 'advertised' : 'not_advertised';
         const controls = route.controls ?? [];
         const advertised = controls.filter(operation => Boolean(context.actions[operation])).length;
 
         let state: WorkspaceCensusState;
         if (!permissionPresent) state = 'missing_permission';
         else if (explicit && explicit.state !== 'enabled') state = 'backend_restricted';
-        else if (connectorRead === 'not_advertised') state = 'connector_read_missing';
         else if (apiContract === 'not_advertised') state = 'contract_not_advertised';
+        else if (connectorRead === 'not_advertised') state = 'connector_read_missing';
         else state = 'declared_accessible';
 
         return {
