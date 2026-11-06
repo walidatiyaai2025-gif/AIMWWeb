@@ -13,6 +13,8 @@ use App\Jobs\SyncSiteJob;
 use App\Models\AiProviderConfig;
 use App\Models\Approval;
 use App\Models\Connector;
+use App\Models\ContentItem;
+use App\Models\MediaItem;
 use App\Models\EvidenceReceipt;
 use App\Models\Execution;
 use App\Models\IdempotencyKey;
@@ -23,6 +25,7 @@ use App\Models\Suggestion;
 use App\Models\SyncedContent;
 use App\Models\SyncRun;
 use App\Sync\SyncDiagnosticFormatter;
+use App\Sync\SyncRuntimeService;
 use App\Tenancy\TenantContext;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
@@ -196,7 +199,7 @@ final class DemoController extends Controller
         return response()->json($health);
     }
 
-    public function sync(string $tenant, int|string $site, Request $request, TenantContext $context, TenantAuthorizer $auth): JsonResponse
+    public function sync(string $tenant, int|string $site, Request $request, TenantContext $context, TenantAuthorizer $auth, SyncRuntimeService $runtime): JsonResponse
     {
         $auth->authorize('sites.manage');
         abort_unless($tenant === $context->tenant()->slug, 404);
@@ -217,8 +220,16 @@ final class DemoController extends Controller
             'operation' => 'site.sync',
         ], JSON_THROW_ON_ERROR));
 
+        // The connected, verified AIMW Connector supports signed, paged resource
+        // reads. Use the canonical projector for content workspaces; the older
+        // SEO-only SyncedContent job remains for application-password sites.
+        $connector = Connector::query()->where('site_id', $siteId)->first();
+        $canonical = $connector !== null && $connector->revoked_at === null
+            && $connector->verified_at !== null
+            && in_array('content.read', (array) $connector->enabled_scopes, true);
+
         try {
-            $result = DB::transaction(function () use ($siteId, $idempotencyKey, $requestHash): array {
+            $result = DB::transaction(function () use ($siteId, $idempotencyKey, $requestHash, $canonical, $runtime, $context, $request): array {
                 // Serialize sync starts for this site before checking active runs. Uniqueness
                 // is per run so a failed run cannot suppress dispatch of its explicit retry.
                 Site::query()->whereKey($siteId)->lockForUpdate()->firstOrFail();
@@ -248,14 +259,29 @@ final class DemoController extends Controller
 
                 $run = SyncRun::query()
                     ->where('site_id', $siteId)
-                    ->whereIn('status', ['queued', 'running'])
+                    ->whereIn($canonical ? 'state' : 'status', ['queued', 'running'])
+                    ->whereNull('completed_at')
                     ->lockForUpdate()
                     ->latest('id')
                     ->first();
                 $created = false;
 
                 if (! $run) {
-                    $run = SyncRun::query()->create(['site_id' => $siteId]);
+                    if ($canonical) {
+                        $hasCanonicalRows = ContentItem::query()->where('site_id', $siteId)->exists()
+                            || MediaItem::query()->where('site_id', $siteId)->exists();
+                        $run = $runtime->start(
+                            $context->id(),
+                            $siteId,
+                            ! $hasCanonicalRows,
+                            SyncRuntimeService::RESOURCES,
+                            'site-sync-button',
+                            [],
+                            (int) $request->user()->getAuthIdentifier(),
+                        );
+                    } else {
+                        $run = SyncRun::query()->create(['site_id' => $siteId]);
+                    }
                     $created = true;
                 }
 
@@ -273,7 +299,7 @@ final class DemoController extends Controller
                 return ['run' => $run, 'created' => $created, 'replay' => false];
             }, 3);
 
-            if ($result['created']) {
+            if ($result['created'] && ! $canonical) {
                 try {
                     SyncSiteJob::dispatch($context->id(), $siteId, $result['run']->id);
                 } catch (Throwable $exception) {
@@ -332,15 +358,22 @@ final class DemoController extends Controller
     /** @return array<string, mixed> */
     private function syncRunResource(SyncRun $run, bool $replay = false, bool $showDiagnostics = false): array
     {
+        $canonical = is_array($run->resources) && $run->resources !== [];
+        $status = $canonical ? ($run->state === 'completed' ? 'succeeded' : (string) $run->state) : (string) $run->status;
+        $processed = $canonical
+            ? (int) $run->created_count + (int) $run->updated_count + (int) $run->unchanged_count + (int) $run->conflicted_count
+            : (int) ($run->processed ?? 0);
+        $failure = $canonical ? $run->last_error : $run->failure;
+
         return [
             'id' => (int) $run->getKey(),
             'site_id' => (int) $run->site_id,
-            'status' => (string) $run->status,
-            'processed' => (int) ($run->processed ?? 0),
-            'failure' => filled($run->failure) || $run->status === 'failed'
-                ? ($showDiagnostics ? SyncDiagnosticFormatter::sanitize($run->failure) : 'Synchronization failed.')
+            'status' => $status,
+            'processed' => $processed,
+            'failure' => filled($failure) || in_array($status, ['failed', 'partial'], true)
+                ? ($showDiagnostics ? SyncDiagnosticFormatter::sanitize($failure) : 'Synchronization failed.')
                 : null,
-            'diagnostic_code' => $run->status === 'failed' ? 'WORDPRESS_SYNC_FAILED' : null,
+            'diagnostic_code' => in_array($status, ['failed', 'partial'], true) ? 'WORDPRESS_SYNC_FAILED' : null,
             'started_at' => $run->started_at?->utc()->toIso8601String(),
             'completed_at' => $run->completed_at?->utc()->toIso8601String(),
             'idempotent_replay' => $replay,
