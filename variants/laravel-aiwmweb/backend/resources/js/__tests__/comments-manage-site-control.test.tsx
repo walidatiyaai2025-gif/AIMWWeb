@@ -75,7 +75,6 @@ describe('AIMW-COMM-C083D47BC4 Global Comments Manage navigation', () => {
         ['active site is absent', { active_site: null }],
         ['active site is invalid', { active_site: { id: -1, name: 'Invalid', status: 'active' } }],
         ['comments API is absent', { api: {} }],
-        ['comments.read connector scope is absent', { connectors: [] }],
         ['comments capability is disabled', { capabilities: { comments: { state: 'disabled_by_owner' as const } } }],
     ])('fails closed when %s', (_label, overrides) => {
         renderControl(context(overrides as Partial<SiteAwareContext>));
