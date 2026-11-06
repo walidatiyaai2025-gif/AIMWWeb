@@ -115,7 +115,7 @@ Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->
         ->defaults('canonical_operation_id', CanonicalEmailScheduleController::CREATE_OPERATION_ID)
         ->name('canonical.api.email-schedules.create');
     Route::get('/content-planner/items', [ContentPlannerController::class, 'index'])->name('canonical.api.content-planner');
-    Route::get('/evidence', EvidenceReceiptReadController::class)->name('canonical.api.evidence.index');
+    Route::get('/evidence', [EvidenceReceiptReadController::class, 'index'])->name('canonical.api.evidence.index');
     Route::post('/content-planner/items/save', [ContentPlannerController::class, 'save'])
         ->defaults('canonical_operation_id', ContentPlannerController::SAVE_OPERATION_ID)
         ->name('canonical.api.content-planner.save');
