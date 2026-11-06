@@ -138,6 +138,12 @@ export async function apiRequest<T>(url: string, init: RequestInit = {}): Promis
         if (!statusUrl.startsWith('/api/tenants/') || statusUrl.startsWith('//')) {
             throw new ApiError('Invalid AI task status URL.', 502, 'invalid_status_url');
         }
+        // Show the persisted submission immediately; status GET is read-only.
+        if (payload.data && typeof payload.data === 'object') {
+            window.dispatchEvent(new CustomEvent('aimw:ai-progress', {
+                detail: { ...payload.data, status_url: statusUrl },
+            }));
+        }
         for (let poll = 0; poll < 120; poll++) {
             if (init.signal?.aborted) throw new DOMException('Aborted', 'AbortError');
             await new Promise((resolve) => setTimeout(resolve, 5000));
