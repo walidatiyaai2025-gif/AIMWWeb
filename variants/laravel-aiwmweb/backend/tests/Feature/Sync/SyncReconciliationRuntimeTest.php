@@ -158,6 +158,55 @@ class SyncReconciliationRuntimeTest extends TestCase
         $this->assertNotNull(SyncTombstone::query()->firstOrFail()->confirmed_deleted_at);
     }
 
+    public function test_malformed_remote_item_never_counts_as_successful_full_scan_or_marks_content_missing(): void
+    {
+        $tenant = $this->tenant('a');
+        $this->guard->allow(1, $tenant->id);
+        $this->activate($tenant);
+        $this->driver->set('posts', 1, [$this->remotePost(10, 'Preserved', '2026-08-27T10:00:00Z')]);
+        $this->syncRunRecord(1, true, ['posts']);
+        $existing = ContentItem::query()->where('site_id', 1)->firstOrFail();
+
+        $this->driver->set('posts', 1, ['unexpected scalar instead of a WordPress object']);
+        $runtime = app(SyncRuntimeService::class);
+        $run = $runtime->start($tenant->id, 1, true, ['posts']);
+        $runtime->processRun($tenant->id, $run->id);
+        $batch = SyncBatch::query()->where('sync_run_id', $run->id)->firstOrFail();
+
+        try {
+            $runtime->processBatch($tenant->id, $batch->id);
+            $this->fail('Malformed remote item should fail before reconciliation.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('malformed item', $exception->getMessage());
+            $runtime->recordBatchFailure($batch->id, $exception, true);
+        }
+
+        $this->assertSame('failed', $run->fresh()->state);
+        $this->assertSame(0, (int) $run->fresh()->discovered_count);
+        $this->assertSame(0, SyncItem::query()->where('sync_run_id', $run->id)->count());
+        $this->assertSame(0, SyncTombstone::query()->where('site_id', 1)->count());
+        $this->assertFalse((bool) $existing->fresh()->stale);
+        $this->assertSame('Preserved', $existing->fresh()->title);
+        $this->assertFalse(SyncSiteLease::query()->where('site_id', 1)->exists());
+    }
+
+    public function test_non_list_remote_page_is_not_interpreted_as_an_empty_wordpress_scan(): void
+    {
+        $tenant = $this->tenant('a');
+        $this->guard->allow(1, $tenant->id);
+        $this->activate($tenant);
+        $this->driver->set('posts', 1, ['items' => []]);
+
+        $runtime = app(SyncRuntimeService::class);
+        $run = $runtime->start($tenant->id, 1, true, ['posts']);
+        $runtime->processRun($tenant->id, $run->id);
+        $batch = SyncBatch::query()->where('sync_run_id', $run->id)->firstOrFail();
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('ordered list');
+        $runtime->processBatch($tenant->id, $batch->id);
+    }
+
     public function test_large_sync_is_batched_and_resumable_without_unbounded_loading(): void
     {
         $tenant = $this->tenant('a');
