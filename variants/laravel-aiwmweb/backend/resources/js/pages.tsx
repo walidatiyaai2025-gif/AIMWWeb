@@ -157,12 +157,12 @@ function normalizeCollection(payload: unknown) {
 
 function isSiteConnectedRow(row: Record<string, unknown>): boolean {
     const normalized = String(row.connection_status ?? 'unknown').trim().toLowerCase() || 'unknown';
-    return normalized === 'connected';
+    return normalized === 'connected' || normalized === 'verified';
 }
 
 function isSiteReviewRow(row: Record<string, unknown>): boolean {
     const normalized = String(row.connection_status ?? 'unknown').trim().toLowerCase() || 'unknown';
-    return normalized !== 'connected' && normalized !== 'unknown';
+    return normalized !== 'connected' && normalized !== 'verified' && normalized !== 'unknown';
 }
 
 function endpointWithQuery(endpoint: string, page: number, search: string, filters: Record<string, string> = {}) {
