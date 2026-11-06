@@ -87,6 +87,16 @@ final class EvidenceReceiptReadTest extends TestCase
             ->assertJsonPath('data.0.id', $unverified->id);
     }
 
+    public function test_tenant_context_advertises_the_real_evidence_endpoint(): void
+    {
+        $user = User::factory()->create();
+        $this->membership($user, 'evidence-context', ['tenant.view', 'execution.view']);
+
+        $this->actingAs($user)->getJson('/api/tenants/evidence-context/context')
+            ->assertOk()
+            ->assertJsonPath('api.evidence', '/api/tenants/evidence-context/evidence');
+    }
+
     public function test_empty_tenant_returns_a_real_empty_collection(): void
     {
         $user = User::factory()->create();
