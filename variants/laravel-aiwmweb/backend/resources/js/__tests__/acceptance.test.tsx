@@ -49,6 +49,15 @@ describe('frontend parity route map', () => {
         expect(workspaceRoutes.find((item) => item.key === 'settings')?.kind).toBe('workspace');
     });
 
+    it('routes Import / Export through the real tenant transfer workspace, not a fictitious collection endpoint', () => {
+        const transfers = workspaceRoutes.find((item) => item.key === 'import-export')!;
+        const context = baseContext();
+        expect(transfers.kind).toBe('workspace');
+        expect(transfers.apiKey).toBeUndefined();
+        expect(transfers.permission).toBe('tenant.view');
+        expect(resolveCapability(context, transfers).state).toBe('enabled');
+    });
+
     it('routes SEO Findings through the authorized site-bound SEO workspace, not an invented generic API', () => {
         const findings = workspaceRoutes.find((item) => item.key === 'seo-findings')!;
         const context = baseContext();
