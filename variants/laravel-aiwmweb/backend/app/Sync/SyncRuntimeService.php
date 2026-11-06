@@ -47,7 +47,7 @@ final class SyncRuntimeService
         $this->sites->assertAccessible($siteId);
         $resources = $this->normalizeResources($resources);
 
-        if (SyncRun::query()->where('site_id', $siteId)->whereIn('state', ['queued', 'running'])->exists()) {
+        if (SyncRun::query()->where('site_id', $siteId)->whereIn('state', ['queued', 'running'])->whereNull('completed_at')->exists()) {
             throw new RuntimeException('A sync is already active for this site.');
         }
 
@@ -63,7 +63,9 @@ final class SyncRuntimeService
             'lease_token' => (string) Str::uuid(),
         ]);
 
-        ProcessSyncRunJob::dispatch($tenantId, $run->id);
+        // A sync-queue driver must not execute remote reads inside the caller's
+        // idempotency transaction, where the new run is still uncommitted.
+        ProcessSyncRunJob::dispatch($tenantId, $run->id)->afterCommit();
 
         return $run;
     }
