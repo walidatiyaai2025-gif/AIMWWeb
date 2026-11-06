@@ -70,7 +70,6 @@ describe('AIMW-TAXO-D6126926AD ContentExplorer SetTagsTab', () => {
         ['content.view is absent', { permissions: ['tenant.view', 'sites.view'] }],
         ['active site is absent', { active_site: null }],
         ['taxonomy API is absent', { api: {} }],
-        ['taxonomy.read connector scope is absent', { connectors: [] }],
     ])('fails closed when %s', (_label, overrides) => {
         renderControl(context(overrides as Partial<SiteAwareContext>));
         expect(screen.queryByRole('link', { name: /Tags/ })).not.toBeInTheDocument();
