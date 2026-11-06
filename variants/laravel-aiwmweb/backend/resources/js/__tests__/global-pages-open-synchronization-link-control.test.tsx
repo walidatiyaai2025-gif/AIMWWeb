@@ -67,9 +67,10 @@ describe('AIMW-SYNC-80B81C07B8 Global Pages open synchronization navigation', ()
         expect(screen.queryByRole('link')).not.toBeInTheDocument();
     });
 
-    it('fails closed for missing WordPress pages read capability', () => {
+    it('keeps the authorized read-only synchronization navigation available with no WordPress Connector', () => {
         renderControl(context('alpha', undefined, []));
-        expect(screen.queryByRole('link')).not.toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Open synchronization' }))
+            .toHaveAttribute('href', '/tenants/alpha/module/sync');
     });
 
     it('honors server capability disablement and never presents a fictitious action', () => {
