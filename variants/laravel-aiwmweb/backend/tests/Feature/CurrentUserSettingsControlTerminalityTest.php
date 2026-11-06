@@ -64,7 +64,7 @@ class CurrentUserSettingsControlTerminalityTest extends TestCase
         $routes = (string) file_get_contents(resource_path('js/core.ts'));
         $app = (string) file_get_contents(resource_path('js/app.tsx'));
         $this->assertStringContainsString("r('settings', '/settings', 'system'", $routes);
-        $this->assertStringContainsString("{ permission: 'tenant.view', kind: 'settings' }", $routes);
+        $this->assertStringContainsString("{ permission: 'tenant.view', kind: 'workspace', apiKey: undefined }", $routes);
         $this->assertStringContainsString("if (route.key === 'settings')", $app);
     }
 
