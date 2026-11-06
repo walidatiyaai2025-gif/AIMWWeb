@@ -18,7 +18,6 @@ use Illuminate\Validation\ValidationException;
 
 final class RegistrationService
 {
-
     public function __construct(
         private readonly TenantContext $context,
         private readonly SubscriptionService $subscriptions,
