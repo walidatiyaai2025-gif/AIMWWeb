@@ -159,7 +159,7 @@ export async function apiRequest<T>(url: string, init: RequestInit = {}): Promis
                 if (!finalResponse.ok || finalResponse.status === 202) throw new ApiError('AI result needs review.', 409, 'ai_result_pending');
                 return await finalResponse.json() as T;
             }
-            if (status.data.state !== 'pending') {
+            if (!['pending', 'queued', 'running'].includes(status.data.state)) {
                 throw new ApiError(`AI batch ${status.data.state}: ${status.data.completed}/${status.data.total}. Results are saved.`, 409, 'ai_batch_paused', {}, { status_url: statusUrl });
             }
         }
