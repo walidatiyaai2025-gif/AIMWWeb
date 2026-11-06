@@ -43,6 +43,7 @@ final class SyncRuntimeService
         array $metadata = [],
         ?int $actorUserId = null,
         ?int $resumeOf = null,
+        bool $dispatch = true,
     ): SyncRun {
         $this->sites->assertAccessible($siteId);
         $resources = $this->normalizeResources($resources);
@@ -63,9 +64,11 @@ final class SyncRuntimeService
             'lease_token' => (string) Str::uuid(),
         ]);
 
-        // A sync-queue driver must not execute remote reads inside the caller's
-        // idempotency transaction, where the new run is still uncommitted.
-        ProcessSyncRunJob::dispatch($tenantId, $run->id)->afterCommit();
+        // Callers that create an idempotency receipt within a transaction can
+        // explicitly defer dispatch until the transaction has committed.
+        if ($dispatch) {
+            ProcessSyncRunJob::dispatch($tenantId, $run->id);
+        }
 
         return $run;
     }
