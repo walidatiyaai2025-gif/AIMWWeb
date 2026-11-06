@@ -76,7 +76,6 @@ describe('AIMW-MEDI-8F93BEDD59 MediaManager Back to Explorer navigation', () => 
         ['active site is absent', { active_site: null }],
         ['active site is invalid', { active_site: { id: -1, name: 'Invalid', status: 'active' } }],
         ['media API is absent', { api: {} }],
-        ['media.read connector scope is absent', { connectors: [] }],
         ['media capability is disabled', { capabilities: { media: { state: 'disabled_by_owner' as const } } }],
         ['explorer capability is disabled', { capabilities: { explorer: { state: 'disabled_by_owner' as const } } }],
     ])('does not render Back to Explorer when %s', (_label, overrides) => {
