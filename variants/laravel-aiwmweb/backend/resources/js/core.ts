@@ -235,7 +235,7 @@ export const workspaceRoutes: WorkspaceRoute[] = [
     r('wp-users', '/module/users', 'content', '◎', 'WordPress Users', 'مستخدمو WordPress', 'Manage users exposed by connected WordPress sites.', 'إدارة مستخدمي مواقع WordPress المتصلة.', { permission: 'sites.view', connectorScope: 'users.read', controls: ['wordpress-users.save'] }),
 
     r('seo-audit', '/module/seo-audit', 'seo', '◈', 'SEO Audit', 'تدقيق SEO', 'Run and inspect real SEO audits.', 'تشغيل ومراجعة تدقيقات SEO الحقيقية.', { permission: 'seo.view', controls: ['seo.audit.run'] }),
-    r('seo-findings', '/module/seo-findings', 'seo', '!', 'SEO Findings', 'نتائج SEO', 'Inspect persisted audit findings.', 'مراجعة نتائج التدقيق المحفوظة.', { permission: 'seo.view' }),
+    r('seo-findings', '/module/seo-findings', 'seo', '!', 'SEO Findings', 'نتائج SEO', 'Open persisted findings for a selected WordPress site.', 'فتح نتائج SEO المحفوظة لموقع WordPress محدد.', { permission: 'seo.view', apiKey: undefined, kind: 'workspace' }),
     r('seo-suggestions', '/module/seo-suggestions', 'seo', '✦', 'SEO Recommendations', 'توصيات SEO', 'Review prioritized optimization recommendations.', 'مراجعة توصيات التحسين حسب الأولوية.', { permission: 'seo.view', controls: ['seo.recommend.approve'], apiKey: undefined }),
     r('approvals', '/module/approvals', 'seo', '✓', 'Approval Queue', 'قائمة الموافقات', 'Review governed changes before execution.', 'مراجعة التغييرات المحكومة قبل التنفيذ.', { permission: 'approvals.view', controls: ['approvals.approve', 'approvals.reject'] }),
     r('evidence', '/module/evidence', 'seo', '▥', 'Evidence & Receipts', 'الأدلة والإيصالات', 'Inspect execution evidence and receipts.', 'مراجعة أدلة وإيصالات التنفيذ.', { permission: 'execution.view' }),
