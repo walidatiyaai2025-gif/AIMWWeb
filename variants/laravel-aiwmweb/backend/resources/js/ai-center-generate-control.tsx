@@ -81,6 +81,7 @@ export function AiCenterGenerateControl({
 
     return (
         <section className="panel workspace-stack" data-testid="ai-center-generate" data-canonical-operation={AI_CENTER_GENERATE_OPERATION_ID}>
+            <AiOperationsLiveReport tenant={context.tenant.slug} />
             <AiBatchProgress />
             <header className="panel-header">
                 <div>
