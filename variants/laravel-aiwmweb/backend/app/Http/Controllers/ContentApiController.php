@@ -713,28 +713,67 @@ final class ContentApiController extends Controller
     public function export(TenantAuthorizer $auth, string $tenant, int $site): JsonResponse
     {
         $auth->authorize('content.view');
+        abort_unless($tenant === $this->tenant->tenant()->slug, 404);
+        Site::query()->findOrFail($site);
         $transfer = ContentTransfer::query()->create(['site_id' => $site, 'kind' => 'export', 'state' => 'queued', 'progress' => 0, 'options' => []]);
         ContentTransferJob::dispatch($this->tenant->id(), $transfer->id);
 
-        return response()->json($transfer, 202);
+        return response()->json($this->transferPayload($transfer), 202);
     }
 
     public function import(Request $request, TenantAuthorizer $auth, string $tenant, int $site): JsonResponse
     {
         $auth->authorize('content.edit');
+        abort_unless($tenant === $this->tenant->tenant()->slug, 404);
+        Site::query()->findOrFail($site);
         $data = $request->validate(['file' => 'required|file|mimes:json,txt|max:102400']);
         $path = $data['file']->store("content-imports/{$this->tenant->id()}/{$site}", 'local');
         $transfer = ContentTransfer::query()->create(['site_id' => $site, 'kind' => 'import', 'state' => 'queued', 'progress' => 0, 'storage_path' => $path, 'options' => []]);
         ContentTransferJob::dispatch($this->tenant->id(), $transfer->id);
 
-        return response()->json($transfer, 202);
+        return response()->json($this->transferPayload($transfer), 202);
     }
 
     public function transfer(TenantAuthorizer $auth, string $tenant, int $site, int $transfer): JsonResponse
     {
         $auth->authorize('content.view');
+        abort_unless($tenant === $this->tenant->tenant()->slug, 404);
+        Site::query()->findOrFail($site);
+        $model = ContentTransfer::query()->where('site_id', $site)->findOrFail($transfer);
 
-        return response()->json(ContentTransfer::query()->where('site_id', $site)->findOrFail($transfer));
+        return response()->json($this->transferPayload($model));
+    }
+
+    public function download(TenantAuthorizer $auth, string $tenant, int $site, int $transfer): StreamedResponse
+    {
+        $auth->authorize('content.view');
+        abort_unless($tenant === $this->tenant->tenant()->slug, 404);
+        Site::query()->findOrFail($site);
+        $model = ContentTransfer::query()->where('site_id', $site)->findOrFail($transfer);
+        abort_unless($model->kind === 'export' && $model->state === 'completed' && $model->storage_path, 409);
+        abort_unless(Storage::disk('local')->exists($model->storage_path), 404);
+
+        return Storage::disk('local')->download(
+            $model->storage_path,
+            "aiwm-content-export-site-{$site}-transfer-{$model->id}.json",
+            ['Content-Type' => 'application/json'],
+        );
+    }
+
+    private function transferPayload(ContentTransfer $transfer): array
+    {
+        return [
+            'id' => (int) $transfer->id,
+            'site_id' => (int) $transfer->site_id,
+            'kind' => (string) $transfer->kind,
+            'state' => (string) $transfer->state,
+            'progress' => (int) $transfer->progress,
+            'result' => is_array($transfer->result) ? $transfer->result : null,
+            'failure_present' => $transfer->last_error !== null,
+            'created_at' => $transfer->created_at?->toIso8601String(),
+            'started_at' => $transfer->started_at?->toIso8601String(),
+            'completed_at' => $transfer->completed_at?->toIso8601String(),
+        ];
     }
 
     private function editorSnapshot(ContentItem $item): array
