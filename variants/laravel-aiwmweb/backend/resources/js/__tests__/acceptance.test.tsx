@@ -38,6 +38,17 @@ const route = (overrides: Partial<WorkspaceRoute> = {}): WorkspaceRoute => ({
 });
 
 describe('frontend parity route map', () => {
+    it('routes navigation-only and dedicated-server workspaces without invented generic JSON contracts', () => {
+        for (const key of [
+            'welcome', 'system-overview', 'content-hub', 'content-workspace',
+            'operations-workspace', 'workspace', 'settings', 'runtime-inspector',
+            'system-health', 'seo-suggestions', 'ai-providers', 'prompts',
+        ]) {
+            expect(workspaceRoutes.find((item) => item.key === key)?.apiKey, key).toBeUndefined();
+        }
+        expect(workspaceRoutes.find((item) => item.key === 'settings')?.kind).toBe('workspace');
+    });
+
     it('renders System Overview as an authorized module hub, not a fictitious read API', () => {
         const overview = workspaceRoutes.find((item) => item.key === 'system-overview')!;
         expect(overview.kind).toBe('workspace');
