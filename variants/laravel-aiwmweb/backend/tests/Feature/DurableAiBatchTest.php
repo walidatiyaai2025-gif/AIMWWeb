@@ -350,6 +350,7 @@ class DurableAiBatchTest extends TestCase
         $this->assertCount(1, $fake->calls);
         $this->assertSame(1, DB::table('durable_ai_batches')->count());
     }
+
     public function test_live_ai_report_lists_durable_counts_only_without_private_prompts_or_results(): void
     {
         $batch = app(BatchService::class)->submit($this->actions(3), $this->site->id, 'report-visible');
