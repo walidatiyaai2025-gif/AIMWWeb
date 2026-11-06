@@ -410,9 +410,18 @@ final class BatchService
             $item = DB::table('durable_ai_items')->where('id', $claim['item_id'])->first();
             $batch = DB::table('durable_ai_batches')->where('id', $claim['batch_id'])->first();
 
-            // An operator can pause/cancel after claim but before the outbound
-            // provider call. No billable call was sent: release the global gate
-            // so unrelated tenant batches are not stranded behind this action.
+            // Never demote a previously ambiguous attempt to a retryable
+            // pause, even if a concurrent operator also paused this batch.
+            if ($item->state === 'needs_reconciliation') {
+                DB::table('durable_ai_batches')->where('id', $claim['batch_id'])
+                    ->update(['state' => 'paused', 'updated_at' => now()]);
+                $this->releaseGate('needs_reconciliation');
+
+                return;
+            }
+
+            // A pause/cancel after claim but before a billable call must not
+            // block unrelated batches behind the global cPanel admission gate.
             if ($item->sent_at === null && ($batch->cancelled_at !== null || $batch->state === 'paused')) {
                 DB::table('durable_ai_items')->where('id', $item->id)->where('state', 'running')
                     ->update([
@@ -421,16 +430,6 @@ final class BatchService
                         'updated_at' => now(),
                     ]);
                 $this->releaseGate();
-
-                return;
-            }
-
-            // Never demote a previously reconciled/ambiguous attempt to an
-            // ordinary retryable pause when its old worker encounters a fence.
-            if ($item->state === 'needs_reconciliation') {
-                DB::table('durable_ai_batches')->where('id', $claim['batch_id'])
-                    ->update(['state' => 'paused', 'updated_at' => now()]);
-                $this->releaseGate('needs_reconciliation');
 
                 return;
             }
