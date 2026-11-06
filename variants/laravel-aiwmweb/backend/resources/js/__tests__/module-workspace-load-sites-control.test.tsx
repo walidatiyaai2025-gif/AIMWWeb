@@ -22,6 +22,18 @@ const seoRoute: WorkspaceRoute = {
     permission: 'seo.view',
 };
 
+const seoFindingsRoute: WorkspaceRoute = {
+    key: 'seo-findings',
+    path: '/module/seo-findings',
+    group: 'seo',
+    icon: '!',
+    label: { en: 'SEO Findings', ar: 'نتائج SEO' },
+    description: { en: 'SEO findings', ar: 'نتائج SEO' },
+    apiKey: undefined,
+    kind: 'workspace',
+    permission: 'seo.view',
+};
+
 function context(overrides: Partial<FrontendContext> = {}): FrontendContext {
     return {
         user: { id: 1, name: 'Alpha User', email: 'alpha@example.test' },
@@ -43,10 +55,10 @@ function jsonResponse(payload: unknown, status = 200) {
     });
 }
 
-function renderControl(value = context()) {
+function renderControl(value = context(), route: WorkspaceRoute = seoRoute) {
     return render(
         <LocaleProvider>
-            <ModuleWorkspaceLoadSitesControl context={value} route={seoRoute} />
+            <ModuleWorkspaceLoadSitesControl context={value} route={route} />
         </LocaleProvider>,
     );
 }
@@ -73,6 +85,22 @@ describe(`${MODULE_WORKSPACE_LOAD_SITES_OPERATION_ID} ModuleWorkspace LoadSitesA
         expect(seoLink).toHaveAttribute('data-canonical-operation', MODULE_WORKSPACE_DYNAMIC_SITE_LINKS_OPERATION_ID);
         expect(explorerLink).toHaveAttribute('href', '/tenants/alpha/explorer?site=7');
         expect(explorerLink).toHaveAttribute('data-canonical-operation', MODULE_WORKSPACE_DYNAMIC_SITE_LINKS_OPERATION_ID);
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/tenants/alpha/sites');
+    });
+
+    it('opens persisted SEO findings through the real site-bound SEO manager, without inventing a findings API', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(jsonResponse([
+            { id: 7, name: 'Alpha WordPress', url: 'https://alpha.test', status: 'active' },
+        ]));
+        vi.stubGlobal('fetch', fetchMock);
+
+        renderControl(context(), seoFindingsRoute);
+
+        expect(await screen.findByRole('heading', { name: 'SEO Findings' })).toBeInTheDocument();
+        const seoLink = await screen.findByTestId('seo-site-link');
+        expect(seoLink).toHaveTextContent('Open SEO findings');
+        expect(seoLink).toHaveAttribute('href', '/tenants/alpha/sites/7/seo');
         expect(fetchMock).toHaveBeenCalledTimes(1);
         expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/tenants/alpha/sites');
     });
