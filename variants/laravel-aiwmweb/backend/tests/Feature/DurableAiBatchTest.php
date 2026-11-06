@@ -312,6 +312,44 @@ class DurableAiBatchTest extends TestCase
         }
     }
 
+    public function test_cancel_before_provider_call_does_not_block_an_unrelated_batch(): void
+    {
+        $cancelled = app(BatchService::class)->submit($this->actions(1), $this->site->id);
+        $next = app(BatchService::class)->submit([
+            ['key' => 'other', 'request' => ['workflow' => 'test', 'user_prompt' => 'Another batch']],
+        ], $this->site->id);
+        $fake = new class($cancelled['id']) implements AiGenerator
+        {
+            public int $calls = 0;
+
+            public function __construct(private readonly string $cancelId) {}
+
+            public function generate(array $request): array
+            {
+                $this->calls++;
+                if ($this->calls === 1) {
+                    app(BatchService::class)->control($this->cancelId, 'cancel');
+                }
+                app(ExecutionPermit::class)->beforeProviderCall();
+
+                return [
+                    'provider' => 'mock', 'model' => 'mock',
+                    'correlation_id' => (string) Str::uuid(),
+                    'content' => $request['user_prompt'],
+                    'structured' => ['text' => $request['user_prompt']],
+                ];
+            }
+        };
+        $this->app->instance(AiGenerator::class, $fake);
+
+        $this->assertSame('paused', app(BatchService::class)->runOne());
+        $this->assertNull(DB::table('durable_ai_gate')->where('id', 1)->value('owner'));
+        $this->assertSame('closed', DB::table('durable_ai_gate')->where('id', 1)->value('circuit'));
+        $this->assertSame('paused', app(BatchService::class)->status($cancelled['id'])['items'][0]['state']);
+        $this->assertSame('completed', app(BatchService::class)->runOne());
+        $this->assertSame(1, app(BatchService::class)->status($next['id'])['completed']);
+    }
+
     public function test_direct_provider_calls_require_a_worker_permit(): void
     {
         $this->expectException(\RuntimeException::class);
