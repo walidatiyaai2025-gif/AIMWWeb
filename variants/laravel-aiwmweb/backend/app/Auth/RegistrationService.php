@@ -18,31 +18,6 @@ use Illuminate\Validation\ValidationException;
 
 final class RegistrationService
 {
-    /** @var list<string> */
-    private const OWNER_PERMISSIONS = [
-        'tenant.view',
-        'sites.view',
-        'sites.manage',
-        'sync.view',
-        'backups.view',
-        'content.view',
-        'content.edit',
-        'connector.manage',
-        'ai.use',
-        'ai.manage',
-        'seo.manage',
-        'approvals.manage',
-        'executions.manage',
-        'execution.view',
-        'operations.manage',
-        'settings.manage',
-        'billing.view',
-        'billing.manage',
-        'automation.manage',
-        'notifications.manage',
-        'email.manage',
-        'reports.view',
-    ];
 
     public function __construct(
         private readonly TenantContext $context,
@@ -91,7 +66,7 @@ final class RegistrationService
                     $this->context->activate($tenant, $membership);
                     $role = Role::query()->create(['name' => 'owner']);
 
-                    foreach (self::OWNER_PERMISSIONS as $permissionName) {
+                    foreach (app(OwnerPermissionCatalog::class)->all() as $permissionName) {
                         $permission = Permission::query()->firstOrCreate(['name' => $permissionName]);
                         $role->permissions()->attach($permission, ['tenant_id' => $tenant->id]);
                     }
