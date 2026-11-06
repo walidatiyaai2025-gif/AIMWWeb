@@ -221,7 +221,7 @@ export const workspaceRoutes: WorkspaceRoute[] = [
     r('site-connection-center', '/sites/:siteId/connection', 'operations', '↻', 'Site Connection Center', 'مركز اتصال الموقع', 'Run synchronization and inspect authoritative connection history.', 'تشغيل المزامنة ومراجعة سجل الاتصال الفعلي.', { permission: 'sites.view', hidden: true }),
     r('site-connection-operations', '/sites/:siteId/operations', 'operations', '≣', 'Site Operations', 'عمليات الموقع', 'Alias for the site connection operation history.', 'مسار بديل لسجل عمليات اتصال الموقع.', { permission: 'sites.view', hidden: true }),
     r('explorer', '/explorer', 'overview', '▦', 'Explorer', 'المستكشف', 'Explore tenant-scoped WordPress resources.', 'استكشاف موارد WordPress الخاصة بالحساب.', { permission: 'sites.view' }),
-    r('system-overview', '/module/overview', 'overview', '▦', 'System Overview', 'مركز النظام', 'High-level platform modules and runtime state.', 'نظرة عامة على وحدات المنصة وحالة التشغيل.'),
+    r('system-overview', '/module/overview', 'overview', '▦', 'System Overview', 'مركز النظام', 'High-level platform modules and runtime state.', 'نظرة عامة على وحدات المنصة وحالة التشغيل.', { permission: 'tenant.view', apiKey: undefined, kind: 'workspace' }),
 
     r('content-hub', '/content', 'content', '▦', 'Content Hub', 'مركز المحتوى', 'Central content workspace.', 'مساحة العمل المركزية للمحتوى.', { permission: 'content.view', kind: 'workspace' }),
     r('content-workspace', '/content-workspace', 'content', '▦', 'WordPress Content Management', 'إدارة محتوى WordPress', 'Open the real posts, pages, media, taxonomy, comments, and users workspaces.', 'افتح مساحات المقالات والصفحات والوسائط والتصنيفات والتعليقات والمستخدمين المتصلة بالخدمات الفعلية.', { permission: 'content.view', kind: 'workspace' }),
@@ -291,46 +291,51 @@ export function resolveCapability(
         return { state: 'permission_denied', reason: `Missing tenant permission: ${route.permission}` };
     }
 
-    if (route.connectorScope) {
-        // The current WordPress plugin advertises content.read, not legacy
-        // per-resource *.read scopes. Alias only read-only local workspaces
-        // backed by an advertised site-scoped API; never authorize mutations.
-        const localContentReadScopes = new Set([
-            'posts.read', 'pages.read', 'media.read', 'comments.read',
-            'taxonomy.read', 'users.read',
-        ]);
-        const supportsRead = (connector: ConnectorContract): boolean =>
-            connector.scopes.includes(route.connectorScope!) || (
-                operation === 'view' &&
-                localContentReadScopes.has(route.connectorScope!) &&
-                connector.scopes.includes('content.read')
-            );
-        const supportingConnector = context.connectors.find(
-            (connector) => connector.state === 'connected' && supportsRead(connector),
-        );
-        if (!supportingConnector) {
-            const ownerDisabled = context.connectors.find(supportsRead);
-            // A paired Connector's content.read permits lists, not create,
-            // publish, bulk mutation or delete. Never grant write access via
-            // the legacy per-resource read scope alias.
-            const readOnlyConnector = operation !== 'view'
-                && localContentReadScopes.has(route.connectorScope!)
-                && context.connectors.some((connector) =>
-                    connector.state === 'connected' && connector.scopes.includes('content.read'));
-            return {
-                state: ownerDisabled?.reason === 'disabled_by_owner' ? 'disabled_by_owner' : 'connector_unavailable',
-                reason: ownerDisabled?.reason ?? (readOnlyConnector
-                    ? `Action '${operation}' requires a separately authorized write capability; content.read is read-only.`
-                    : `Connector scope ${route.connectorScope} is not currently advertised.`),
-            };
-        }
-    }
-
+    // Check the server's actual advertised read endpoint first. Never
+    // interpret an unintegrated local API as a missing WordPress permission.
     if (operation === 'view' && route.apiKey && !context.api[route.apiKey]) {
         return {
             state: 'pending_integration',
             reason: `Backend API contract '${route.apiKey}' has not been integrated on this Laravel head.`,
         };
+    }
+
+    if (route.connectorScope) {
+        // Local content collection GETs read tenant/site-scoped Laravel
+        // persistence and are protected by the backend's own RBAC/IDOR checks.
+        // They remain usable offline when that exact API is advertised; an
+        // unpaired/disconnected WordPress Connector must not hide cached rows.
+        const localContentReadScopes = new Set([
+            'posts.read', 'pages.read', 'media.read', 'comments.read',
+            'taxonomy.read', 'users.read',
+        ]);
+        const localRead = operation === 'view'
+            && localContentReadScopes.has(route.connectorScope)
+            && Boolean(route.apiKey && context.api[route.apiKey]);
+
+        // Non-local operations still require an independently advertised
+        // remote scope. The canonical content.read is read-only; it never
+        // authorizes publishing, uploads, deletion, or other mutations.
+        if (!localRead) {
+            const supportsScope = (connector: ConnectorContract): boolean =>
+                connector.scopes.includes(route.connectorScope!);
+            const supportingConnector = context.connectors.find(
+                (connector) => connector.state === 'connected' && supportsScope(connector),
+            );
+            if (!supportingConnector) {
+                const ownerDisabled = context.connectors.find(supportsScope);
+                const readOnlyConnector = operation !== 'view'
+                    && localContentReadScopes.has(route.connectorScope)
+                    && context.connectors.some((connector) =>
+                        connector.state === 'connected' && connector.scopes.includes('content.read'));
+                return {
+                    state: ownerDisabled?.reason === 'disabled_by_owner' ? 'disabled_by_owner' : 'connector_unavailable',
+                    reason: ownerDisabled?.reason ?? (readOnlyConnector
+                        ? `Action '${operation}' requires a separately authorized write capability; content.read is read-only.`
+                        : `Connector scope ${route.connectorScope} is not currently advertised.`),
+                };
+            }
+        }
     }
 
     if (operation !== 'view' && !context.actions[operation]) {
