@@ -74,6 +74,7 @@
         <section id="runtime" aria-labelledby="runtime-behavior">
             <h2 id="runtime-behavior">Runtime behavior</h2>
             <p>Review the active tenant's persisted provider enablement, fallback capability, and readiness before changing separate governed AI settings.</p>
+            <p>This section is read-only: it reports runtime status; edit provider settings in the separate form below.</p>
             <p>يمكن حفظ المزود واختبار الاتصال بالأسفل. تشغيل مزود لا يتجاوز شروط Cron أو Preflight على الاستضافة.</p>
             <p><strong>AI enabled:</strong> {{ $runtime['ai_enabled'] ? 'Yes' : 'No' }} · <strong>Cron:</strong> {{ $runtime['cron_enabled'] ? 'Yes' : 'No' }} · <strong>Preflight:</strong> {{ $runtime['preflight_passed'] ? 'Passed' : 'Not approved' }} · <strong>Queue:</strong> {{ $runtime['queue_driver'] }}</p>
             @if ($runtime['queue_driver'] === 'sync' || ! $runtime['ai_enabled'] || ! $runtime['cron_enabled'] || ! $runtime['preflight_passed'])
