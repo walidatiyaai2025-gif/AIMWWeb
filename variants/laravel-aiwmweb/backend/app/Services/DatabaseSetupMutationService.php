@@ -114,6 +114,6 @@ final class DatabaseSetupMutationService
     /** @return list<string> */
     private function discoverPermissions(): array
     {
-        return app(\App\Auth\OwnerPermissionCatalog::class)->all();
+        return app(OwnerPermissionCatalog::class)->all();
     }
 }
