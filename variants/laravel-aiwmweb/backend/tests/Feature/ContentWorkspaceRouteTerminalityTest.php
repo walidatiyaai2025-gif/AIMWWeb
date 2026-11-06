@@ -77,7 +77,7 @@ final class ContentWorkspaceRouteTerminalityTest extends TestCase
         $pages = (string) file_get_contents(resource_path('js/pages.tsx'));
 
         $this->assertStringContainsString("r('content-workspace', '/content-workspace'", $core);
-        $this->assertStringContainsString("{ permission: 'content.view', kind: 'workspace' }", $core);
+        $this->assertStringContainsString("{ permission: 'content.view', kind: 'workspace', apiKey: undefined }", $core);
         $this->assertStringContainsString("r('posts', '/module/posts'", $core);
         $this->assertStringContainsString("r('pages', '/module/pages'", $core);
         $this->assertStringContainsString("r('media', '/module/media'", $core);
