@@ -237,6 +237,81 @@ class DurableAiBatchTest extends TestCase
         $this->assertCount(0, $fake->calls);
     }
 
+    public function test_provider_call_rejects_a_stale_item_without_marking_it_sent(): void
+    {
+        $batch = app(BatchService::class)->submit($this->actions(1), $this->site->id);
+        $item = DB::table('durable_ai_items')->where('batch_id', $batch['id'])->first();
+        $owner = (string) Str::uuid();
+        DB::table('durable_ai_gate')->where('id', 1)->update([
+            'owner' => $owner, 'item_id' => $item->id, 'fence' => 1,
+            'circuit' => 'closed', 'expires_at' => now()->addMinutes(5),
+        ]);
+        DB::table('durable_ai_items')->where('id', $item->id)->update([
+            'state' => 'needs_reconciliation', 'attempt_id' => $owner,
+        ]);
+        $permit = app(ExecutionPermit::class);
+        $permit->enter(['owner' => $owner, 'fence' => 1, 'item_id' => $item->id, 'batch_id' => $batch['id']]);
+
+        try {
+            $this->expectException(\\RuntimeException::class);
+            $this->expectExceptionMessage('AI item attempt is no longer running.');
+            $permit->beforeProviderCall();
+        } finally {
+            $permit->leave();
+        }
+    }
+
+    public function test_provider_call_respects_a_cancelled_batch_before_sending(): void
+    {
+        $batch = app(BatchService::class)->submit($this->actions(1), $this->site->id);
+        $item = DB::table('durable_ai_items')->where('batch_id', $batch['id'])->first();
+        $owner = (string) Str::uuid();
+        DB::table('durable_ai_gate')->where('id', 1)->update([
+            'owner' => $owner, 'item_id' => $item->id, 'fence' => 1,
+            'circuit' => 'closed', 'expires_at' => now()->addMinutes(5),
+        ]);
+        DB::table('durable_ai_items')->where('id', $item->id)->update([
+            'state' => 'running', 'attempt_id' => $owner,
+        ]);
+        DB::table('durable_ai_batches')->where('id', $batch['id'])->update([
+            'state' => 'paused', 'cancelled_at' => now(),
+        ]);
+        $permit = app(ExecutionPermit::class);
+        $permit->enter(['owner' => $owner, 'fence' => 1, 'item_id' => $item->id, 'batch_id' => $batch['id']]);
+
+        try {
+            $this->expectException(\\RuntimeException::class);
+            $this->expectExceptionMessage('AI batch is no longer eligible for provider execution.');
+            $permit->beforeProviderCall();
+        } finally {
+            $permit->leave();
+        }
+    }
+
+    public function test_provider_receipt_rejects_a_different_attempt_on_the_same_item(): void
+    {
+        $batch = app(BatchService::class)->submit($this->actions(1), $this->site->id);
+        $item = DB::table('durable_ai_items')->where('batch_id', $batch['id'])->first();
+        $owner = (string) Str::uuid();
+        DB::table('durable_ai_gate')->where('id', 1)->update([
+            'owner' => $owner, 'item_id' => $item->id, 'fence' => 1,
+            'circuit' => 'closed', 'expires_at' => now()->addMinutes(5),
+        ]);
+        DB::table('durable_ai_items')->where('id', $item->id)->update([
+            'state' => 'running', 'attempt_id' => (string) Str::uuid(),
+        ]);
+        $permit = app(ExecutionPermit::class);
+        $permit->enter(['owner' => $owner, 'fence' => 1, 'item_id' => $item->id, 'batch_id' => $batch['id']]);
+
+        try {
+            $this->expectException(\\RuntimeException::class);
+            $this->expectExceptionMessage('Provider receipt item attempt is no longer running.');
+            $permit->recordReceipt(['correlation_id' => 'stale-attempt']);
+        } finally {
+            $permit->leave();
+        }
+    }
+
     public function test_direct_provider_calls_require_a_worker_permit(): void
     {
         $this->expectException(\RuntimeException::class);
