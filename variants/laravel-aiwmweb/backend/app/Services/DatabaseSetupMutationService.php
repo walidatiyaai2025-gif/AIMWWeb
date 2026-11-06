@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Auth\OwnerPermissionCatalog;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\Tenant;
