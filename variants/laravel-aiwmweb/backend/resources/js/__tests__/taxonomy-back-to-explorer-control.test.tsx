@@ -76,7 +76,6 @@ describe('AIMW-TAXO-ECDD00F787 Taxonomy Back to Explorer navigation', () => {
         ['active site is absent', { active_site: null }],
         ['active site is invalid', { active_site: { id: -1, name: 'Invalid', status: 'active' } }],
         ['taxonomy API is absent', { api: {} }],
-        ['taxonomy.read connector scope is absent', { connectors: [] }],
         ['taxonomy capability is disabled', { capabilities: { taxonomy: { state: 'disabled_by_owner' as const } } }],
         ['explorer capability is disabled', { capabilities: { explorer: { state: 'disabled_by_owner' as const } } }],
     ])('fails closed when %s', (_label, overrides) => {

@@ -26,11 +26,30 @@ describe('local WordPress read workspace routes', () => {
         }
     });
 
-    it('does not bypass connection checks when the signed Connector is absent', () => {
+    it('allows only advertised tenant/site local collection GETs without a paired Connector', () => {
         const ctx = context();
         ctx.connectors = [];
-        const route = workspaceRoutes.find((value) => value.key === 'posts')!;
-        expect(resolveCapability(ctx, route).state).toBe('connector_unavailable');
+        for (const key of keys) {
+            const route = workspaceRoutes.find((value) => value.key === key)!;
+            expect(resolveCapability(ctx, route).state).toBe('enabled');
+            expect(resolveCapability(ctx, route, `${key}.create`).state).toBe('connector_unavailable');
+        }
+    });
+
+    it('keeps cached reads available when a remote Connector is disconnected or owner-disabled', () => {
+        const ctx = context();
+        ctx.connectors = [{ key: 'wp', state: 'disconnected', scopes: ['content.read'], reason: 'disabled_by_owner' }];
+        const media = workspaceRoutes.find((value) => value.key === 'media')!;
+        expect(resolveCapability(ctx, media).state).toBe('enabled');
+        expect(resolveCapability(ctx, media, 'media.upload').state).toBe('connector_unavailable');
+    });
+
+    it('does not bypass explicit backend disabled capabilities for local reads', () => {
+        const ctx = context();
+        ctx.connectors = [];
+        ctx.capabilities.media = { state: 'disabled_by_owner', reason: 'Media access disabled.' };
+        const media = workspaceRoutes.find((value) => value.key === 'media')!;
+        expect(resolveCapability(ctx, media).state).toBe('disabled_by_owner');
     });
 
     it('keeps the tenant permission and live API contract guards', () => {

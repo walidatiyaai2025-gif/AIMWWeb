@@ -104,7 +104,7 @@ describe(`${GLOBAL_USERS_FULL_MANAGEMENT_OPERATION_ID} Global Users full-managem
         }
     });
 
-    it('fails closed when the WordPress users capability is unavailable', () => {
+    it('retains tenant-authorized navigation when the remote WordPress Connector is disconnected', () => {
         const disconnected = context({
             connectors: [{ key: 'wordpress-alpha', state: 'disconnected', scopes: ['users.read'] }],
         });
@@ -115,7 +115,8 @@ describe(`${GLOBAL_USERS_FULL_MANAGEMENT_OPERATION_ID} Global Users full-managem
             </LocaleProvider>,
         );
 
-        expect(screen.queryByRole('link', { name: 'Full user management' })).not.toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Full user management' }))
+            .toHaveAttribute('href', '/tenants/alpha/sites/42/users');
     });
 
     it('derives the destination only from the active tenant slug and positive authoritative site id', () => {

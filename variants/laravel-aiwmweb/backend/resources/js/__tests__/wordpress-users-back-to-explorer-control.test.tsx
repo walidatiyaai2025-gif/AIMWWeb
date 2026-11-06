@@ -75,7 +75,6 @@ describe('AIMW-CONT-D5FFC84EC2 WordPress Users Back to Explorer navigation', () 
         ['active site is absent', { active_site: null }],
         ['active site is invalid', { active_site: { id: -1, name: 'Invalid', status: 'active' } }],
         ['users API is absent', { api: {} }],
-        ['users.read connector scope is absent', { connectors: [] }],
         ['users capability is disabled', { capabilities: { 'wp-users': { state: 'disabled_by_owner' as const } } }],
         ['explorer capability is disabled', { capabilities: { explorer: { state: 'disabled_by_owner' as const } } }],
     ])('fails closed when %s', (_label, overrides) => {

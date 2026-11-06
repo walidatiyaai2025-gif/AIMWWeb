@@ -75,7 +75,6 @@ describe('AIMW-TAXO-A96714F338 ContentExplorer SetCategoriesTab', () => {
         ['active site is absent', { active_site: null }],
         ['active site is invalid', { active_site: { id: -1, name: 'Invalid', status: 'active' } }],
         ['taxonomy API is absent', { api: {} }],
-        ['taxonomy.read connector scope is absent', { connectors: [] }],
         ['taxonomy capability is disabled', { capabilities: { taxonomy: { state: 'disabled_by_owner' as const } } }],
     ])('fails closed when %s', (_label, overrides) => {
         renderControl(context(overrides as Partial<SiteAwareContext>));

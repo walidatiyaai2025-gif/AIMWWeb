@@ -75,7 +75,6 @@ describe('AIMW-MEDI-73C0DA6B3D ContentExplorer SetMediaTab', () => {
         ['active site is absent', { active_site: null }],
         ['active site is invalid', { active_site: { id: -1, name: 'Invalid', status: 'active' } }],
         ['media API is absent', { api: {} }],
-        ['media.read connector scope is absent', { connectors: [] }],
         ['media capability is disabled', { capabilities: { media: { state: 'disabled_by_owner' as const } } }],
     ])('fails closed when %s', (_label, overrides) => {
         renderControl(context(overrides as Partial<SiteAwareContext>));

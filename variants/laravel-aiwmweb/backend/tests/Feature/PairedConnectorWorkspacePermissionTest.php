@@ -48,6 +48,25 @@ final class PairedConnectorWorkspacePermissionTest extends TestCase
             ->assertJsonPath('connectors.0.state', 'disconnected');
     }
 
+    public function test_authorized_cached_media_get_does_not_require_a_remote_connector(): void
+    {
+        [$tenant, $user, $site] = $this->seedMembership('wordpress', ['tenant.view', 'content.view', 'sites.view']);
+        // This site is deliberately not paired with WordPress. The collection
+        // is already tenant/site-scoped by the server and must remain readable.
+        $this->assertSame(0, Connector::query()->withoutGlobalScopes()->count());
+
+        $this->actingAs($user)->getJson("/api/v1/tenants/wordpress/sites/{$site->id}/media")
+            ->assertOk()
+            ->assertJsonPath('total', 0);
+
+        $this->actingAs($user)->getJson('/api/v1/tenants/wordpress/sites/999999/media')
+            ->assertNotFound();
+
+        [, $foreignUser] = $this->seedMembership('foreign', ['tenant.view', 'content.view']);
+        $this->actingAs($foreignUser)->getJson("/api/v1/tenants/wordpress/sites/{$site->id}/media")
+            ->assertNotFound();
+    }
+
     public function test_bootstrap_owner_permission_backfill_is_tenant_scoped_and_never_grants_other_users(): void
     {
         $this->withoutVite();

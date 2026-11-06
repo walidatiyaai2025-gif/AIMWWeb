@@ -58,10 +58,12 @@ describe('AIMW-SYNC-2A256826D2 GlobalMediaExplorer Open synchronization link', (
         expect(screen.queryByRole('link', { name: 'Open synchronization' })).not.toBeInTheDocument();
     });
 
-    it('fails closed if media endpoint, connected media scope, or sync capability is missing', () => {
+    it('checks real media and sync contracts; an offline Connector does not block navigation', () => {
         const noMedia = context();
         expect(canOpenGlobalMediaSync(noMedia, false)).toBe(false);
-        expect(canOpenGlobalMediaSync(context({ connectors: [] }), true)).toBe(false);
+        expect(canOpenGlobalMediaSync(context({ api: { sync: '/api/v1/tenants/alpha/sync' } }), true)).toBe(false);
+        // Navigation to the sync workspace is read-only; a remote write remains guarded server-side.
+        expect(canOpenGlobalMediaSync(context({ connectors: [] }), true)).toBe(true);
         expect(canOpenGlobalMediaSync(context({ capabilities: { sync: { state: 'disabled_by_owner' } } }), true)).toBe(false);
 
         renderControl(context({ capabilities: { sync: { state: 'disabled_by_owner' } } }));

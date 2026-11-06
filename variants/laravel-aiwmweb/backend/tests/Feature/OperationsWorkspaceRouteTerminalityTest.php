@@ -77,7 +77,7 @@ final class OperationsWorkspaceRouteTerminalityTest extends TestCase
         $pages = (string) file_get_contents(resource_path('js/pages.tsx'));
 
         $this->assertStringContainsString("r('operations-workspace', '/operations-workspace'", $core);
-        $this->assertStringContainsString("{ permission: 'tenant.view', kind: 'workspace' }", $core);
+        $this->assertStringContainsString("{ permission: 'tenant.view', kind: 'workspace', apiKey: undefined }", $core);
         $this->assertStringContainsString("r('execution', '/module/execution'", $core);
         $this->assertStringContainsString("r('sync', '/module/sync'", $core);
         $this->assertStringContainsString("r('schedules', '/module/schedules'", $core);
