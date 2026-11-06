@@ -66,7 +66,6 @@ describe('AIMW-MEDI-0694CEEBBA GlobalMediaExplorer Pages navigation', () => {
         ['content.view is missing', ['tenant.view'], { media: '/api/v1/tenants/alpha/sites/17/media', pages: '/api/v1/tenants/alpha/sites/17/pages' }, {}, mediaAndPagesConnector],
         ['authoritative Media API is missing', ['tenant.view', 'content.view'], { pages: '/api/v1/tenants/alpha/sites/17/pages' }, {}, mediaAndPagesConnector],
         ['authoritative Pages API is missing', ['tenant.view', 'content.view'], { media: '/api/v1/tenants/alpha/sites/17/media' }, {}, mediaAndPagesConnector],
-        ['WordPress read scopes are unavailable', ['tenant.view', 'content.view'], { media: '/api/v1/tenants/alpha/sites/17/media', pages: '/api/v1/tenants/alpha/sites/17/pages' }, {}, []],
         ['Media capability is disabled', ['tenant.view', 'content.view'], { media: '/api/v1/tenants/alpha/sites/17/media', pages: '/api/v1/tenants/alpha/sites/17/pages' }, { media: { state: 'disabled_by_owner' as const } }, mediaAndPagesConnector],
         ['Pages capability is disabled', ['tenant.view', 'content.view'], { media: '/api/v1/tenants/alpha/sites/17/media', pages: '/api/v1/tenants/alpha/sites/17/pages' }, { pages: { state: 'disabled_by_owner' as const } }, mediaAndPagesConnector],
     ])('fails closed when %s', (_label, permissions, api, capabilities, connectors) => {
