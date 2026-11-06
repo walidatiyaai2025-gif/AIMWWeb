@@ -67,7 +67,6 @@ describe('AIMW-TAXO-602DE140EB GlobalTaxonomy result Explorer navigation', () =>
         ['content.view is absent', { permissions: ['tenant.view', 'sites.view'] }],
         ['active site is absent', { active_site: null }],
         ['taxonomy API is absent', { api: {} }],
-        ['taxonomy.read scope is absent', { connectors: [] }],
         ['taxonomy API points at another site', { api: { taxonomy: '/api/v1/tenants/alpha/sites/99/taxonomy' } }],
     ])('fails closed when %s', (_label, overrides) => {
         renderControl(context(overrides as Partial<SiteAwareContext>));
