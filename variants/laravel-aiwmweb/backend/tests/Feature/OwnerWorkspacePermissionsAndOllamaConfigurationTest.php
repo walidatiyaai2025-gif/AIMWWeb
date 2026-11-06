@@ -128,7 +128,7 @@ final class OwnerWorkspacePermissionsAndOllamaConfigurationTest extends TestCase
     }
 
     /**
-     * @param list<string> $permissions
+     * @param  list<string>  $permissions
      * @return array{Tenant, User}
      */
     private function member(
