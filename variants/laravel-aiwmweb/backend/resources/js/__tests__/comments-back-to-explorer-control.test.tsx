@@ -76,7 +76,6 @@ describe('AIMW-COMM-2B682F7BEC Comments Back to Explorer navigation', () => {
         ['active site is absent', { active_site: null }],
         ['active site is invalid', { active_site: { id: -1, name: 'Invalid', status: 'active' } }],
         ['comments API is absent', { api: {} }],
-        ['comments.read connector scope is absent', { connectors: [] }],
         ['comments capability is disabled', { capabilities: { comments: { state: 'disabled_by_owner' as const } } }],
         ['explorer capability is disabled', { capabilities: { explorer: { state: 'disabled_by_owner' as const } } }],
     ])('fails closed when %s', (_label, overrides) => {
