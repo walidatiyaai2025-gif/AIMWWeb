@@ -51,7 +51,7 @@ export function ModuleWorkspaceLoadSitesControl({
 
     const endpoint = context.api.sites;
     const expectedEndpoint = `/api/tenants/${context.tenant.slug}/sites`;
-    const isSeoGateway = route.key === 'seo-audit' || route.key === 'seo-suggestions';
+    const isSeoGateway = route.key === 'seo-audit' || route.key === 'seo-findings' || route.key === 'seo-suggestions';
     const canRead = (context.permissions.includes('tenant.view') || context.permissions.includes('*'))
         && (context.permissions.includes('seo.view') || context.permissions.includes('*'));
     const trusted = isSeoGateway && canRead && endpoint === expectedEndpoint;
@@ -95,10 +95,12 @@ export function ModuleWorkspaceLoadSitesControl({
                         <span className="workspace-kicker">SEO</span>
                         <h1>{route.key === 'seo-audit'
                             ? (locale === 'ar' ? 'تدقيق SEO' : 'SEO Audit')
-                            : (locale === 'ar' ? 'اقتراحات SEO' : 'SEO Suggestions')}</h1>
+                            : route.key === 'seo-findings'
+                                ? (locale === 'ar' ? 'نتائج SEO' : 'SEO Findings')
+                                : (locale === 'ar' ? 'اقتراحات SEO' : 'SEO Suggestions')}</h1>
                         <p>{locale === 'ar'
-                            ? 'اختر موقعًا للوصول إلى بيانات SEO الحقيقية الخاصة به.'
-                            : 'Choose a site to access its real SEO workspace and persisted data.'}</p>
+                            ? (route.key === 'seo-findings' ? 'اختر موقعًا لمراجعة نتائج تدقيق SEO المحفوظة.' : 'اختر موقعًا للوصول إلى بيانات SEO الحقيقية الخاصة به.')
+                            : (route.key === 'seo-findings' ? 'Choose a site to review its persisted SEO audit findings.' : 'Choose a site to access its real SEO workspace and persisted data.')}</p>
                     </div>
                     <button
                         type="button"
@@ -157,7 +159,9 @@ export function ModuleWorkspaceLoadSitesControl({
                                             data-canonical-operation={MODULE_WORKSPACE_DYNAMIC_SITE_LINKS_OPERATION_ID}
                                             href={tenantUrl(context.tenant.slug, `/sites/${site.id}/seo`)}
                                         >
-                                            {locale === 'ar' ? 'فتح تدقيق SEO' : 'Open SEO audit'}
+                                            {route.key === 'seo-findings'
+                                                ? (locale === 'ar' ? 'فتح نتائج SEO' : 'Open SEO findings')
+                                                : (locale === 'ar' ? 'فتح تدقيق SEO' : 'Open SEO audit')}
                                         </a>
                                         <a
                                             className="btn"
