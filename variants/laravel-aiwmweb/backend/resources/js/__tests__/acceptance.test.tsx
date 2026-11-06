@@ -38,6 +38,16 @@ const route = (overrides: Partial<WorkspaceRoute> = {}): WorkspaceRoute => ({
 });
 
 describe('frontend parity route map', () => {
+    it('renders System Overview as an authorized module hub, not a fictitious read API', () => {
+        const overview = workspaceRoutes.find((item) => item.key === 'system-overview')!;
+        expect(overview.kind).toBe('workspace');
+        expect(overview.apiKey).toBeUndefined();
+        expect(resolveCapability(baseContext(), overview).state).toBe('enabled');
+        const unauthorised = baseContext();
+        unauthorised.permissions = [];
+        expect(resolveCapability(unauthorised, overview).state).toBe('permission_denied');
+    });
+
     it('covers the broad AIMWWeb workspaces without dead hash routes', () => {
         const keys = new Set(workspaceRoutes.map((item) => item.key));
         for (const required of [
@@ -61,11 +71,12 @@ describe('capability awareness', () => {
         expect(state.reason).toContain('content.view');
     });
 
-    it('shows connector-disabled state instead of pretending the feature disappeared', () => {
+    it('preserves owner-disabled connector restrictions for remote mutations', () => {
         const context = baseContext();
         context.permissions.push('content.view');
+        context.api.posts = '/api/tenants/alpha/posts';
         context.connectors.push({ key: 'wordpress', state: 'disconnected', scopes: ['posts.read'], reason: 'disabled_by_owner' });
-        const state = resolveCapability(context, route());
+        const state = resolveCapability(context, route(), 'posts.create');
         expect(state.state).toBe('disabled_by_owner');
     });
 
@@ -78,12 +89,12 @@ describe('capability awareness', () => {
         expect(state.reason).toContain('posts');
     });
 
-    it('enables a view only after permission, connector scope, and API contract are all present', () => {
+    it('enables a local read only after its backend API and tenant permission are present', () => {
         const context = baseContext();
         context.permissions.push('content.view');
-        context.connectors.push({ key: 'wordpress', state: 'connected', scopes: ['posts.read'] });
         context.api.posts = '/api/tenants/alpha/posts';
         expect(resolveCapability(context, route()).state).toBe('enabled');
+        expect(resolveCapability(context, route(), 'posts.create').state).toBe('connector_unavailable');
     });
 
     it('renders unavailable action controls disabled with an explicit reason', () => {
