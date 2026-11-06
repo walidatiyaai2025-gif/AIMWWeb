@@ -43,11 +43,12 @@ final class SyncRuntimeService
         array $metadata = [],
         ?int $actorUserId = null,
         ?int $resumeOf = null,
+        bool $dispatch = true,
     ): SyncRun {
         $this->sites->assertAccessible($siteId);
         $resources = $this->normalizeResources($resources);
 
-        if (SyncRun::query()->where('site_id', $siteId)->whereIn('state', ['queued', 'running'])->exists()) {
+        if (SyncRun::query()->where('site_id', $siteId)->whereIn('state', ['queued', 'running'])->whereNull('completed_at')->exists()) {
             throw new RuntimeException('A sync is already active for this site.');
         }
 
@@ -63,7 +64,11 @@ final class SyncRuntimeService
             'lease_token' => (string) Str::uuid(),
         ]);
 
-        ProcessSyncRunJob::dispatch($tenantId, $run->id);
+        // Callers that create an idempotency receipt within a transaction can
+        // explicitly defer dispatch until the transaction has committed.
+        if ($dispatch) {
+            ProcessSyncRunJob::dispatch($tenantId, $run->id);
+        }
 
         return $run;
     }

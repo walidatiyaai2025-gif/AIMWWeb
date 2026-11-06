@@ -47,6 +47,11 @@ final class SiteDataSnapshotController extends Controller
             ->latest('id')
             ->first();
 
+        $canonical = $latestRun !== null && is_array($latestRun->resources) && $latestRun->resources !== [];
+        $syncState = $latestRun === null ? null : ($canonical
+            ? ($latestRun->state === 'completed' ? 'succeeded' : (string) $latestRun->state)
+            : (string) $latestRun->status);
+
         return response()->json([
             'operation_id' => self::OPERATION_ID,
             'site' => [
@@ -61,9 +66,12 @@ final class SiteDataSnapshotController extends Controller
             ],
             'latest_run' => $latestRun ? [
                 'id' => (int) $latestRun->getKey(),
-                'status' => (string) $latestRun->status,
-                'processed' => (int) ($latestRun->processed ?? 0),
-                'failure' => filled($latestRun->failure) ? 'Synchronization failed.' : null,
+                'status' => $syncState,
+                'processed' => $canonical
+                    ? (int) $latestRun->created_count + (int) $latestRun->updated_count + (int) $latestRun->unchanged_count + (int) $latestRun->conflicted_count
+                    : (int) ($latestRun->processed ?? 0),
+                'failure' => filled($canonical ? $latestRun->last_error : $latestRun->failure) || in_array($syncState, ['failed', 'partial'], true)
+                    ? 'Synchronization failed.' : null,
                 'completed_at' => $latestRun->completed_at?->utc()->toIso8601String(),
             ] : null,
         ]);
