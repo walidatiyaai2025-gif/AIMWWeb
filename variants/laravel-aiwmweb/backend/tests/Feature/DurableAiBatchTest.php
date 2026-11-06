@@ -382,5 +382,4 @@ class DurableAiBatchTest extends TestCase
         $this->getJson('https://localhost/api/tenants/alpha/ai-batches')
             ->assertOk()->assertJsonCount(0, 'data.batches');
     }
-
 }
