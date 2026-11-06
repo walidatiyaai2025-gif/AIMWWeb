@@ -253,7 +253,7 @@ class DurableAiBatchTest extends TestCase
         $permit->enter(['owner' => $owner, 'fence' => 1, 'item_id' => $item->id, 'batch_id' => $batch['id']]);
 
         try {
-            $this->expectException(\\RuntimeException::class);
+            $this->expectException(\RuntimeException::class);
             $this->expectExceptionMessage('AI item attempt is no longer running.');
             $permit->beforeProviderCall();
         } finally {
@@ -280,7 +280,7 @@ class DurableAiBatchTest extends TestCase
         $permit->enter(['owner' => $owner, 'fence' => 1, 'item_id' => $item->id, 'batch_id' => $batch['id']]);
 
         try {
-            $this->expectException(\\RuntimeException::class);
+            $this->expectException(\RuntimeException::class);
             $this->expectExceptionMessage('AI batch is no longer eligible for provider execution.');
             $permit->beforeProviderCall();
         } finally {
@@ -304,7 +304,7 @@ class DurableAiBatchTest extends TestCase
         $permit->enter(['owner' => $owner, 'fence' => 1, 'item_id' => $item->id, 'batch_id' => $batch['id']]);
 
         try {
-            $this->expectException(\\RuntimeException::class);
+            $this->expectException(\RuntimeException::class);
             $this->expectExceptionMessage('Provider receipt item attempt is no longer running.');
             $permit->recordReceipt(['correlation_id' => 'stale-attempt']);
         } finally {
