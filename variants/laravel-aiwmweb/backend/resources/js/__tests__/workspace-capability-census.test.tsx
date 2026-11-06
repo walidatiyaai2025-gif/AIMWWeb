@@ -57,6 +57,22 @@ describe('complete declarative workspace census', () => {
             .reduce((total, n) => total + n, 0));
     });
 
+    it('reports local read availability without inventing absent Connector scopes', () => {
+        const context = ctx();
+        context.connectors = [];
+        context.api.media = '/api/v1/tenants/PRIVATE-TENANT/sites/1/media';
+        const census = workspaceCapabilityCensus(context);
+        const media = census.workspaces.find(item => item.key === 'media')!;
+        expect(media).toMatchObject({
+            permission_present: true,
+            connector_read: 'not_required',
+            api_contract: 'advertised',
+            view_state: 'declared_accessible',
+        });
+        const posts = census.workspaces.find(item => item.key === 'posts')!;
+        expect(posts.view_state).toBe('contract_not_advertised');
+    });
+
     it('never treats a connected content.read scope as permission to publish or mutate', () => {
         const context = ctx();
         context.actions = {
