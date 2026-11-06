@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AiBatchProgress } from './ai-batch-progress';
+import { AiOperationsLiveReport } from './ai-operations-live-report';
 import { apiRequest, type FrontendContext } from './core';
 import { useLocale } from './i18n';
 
