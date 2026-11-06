@@ -62,7 +62,12 @@ final class RuntimeInspectorController extends Controller
             $revoked = $connector !== null && $connector->revoked_at !== null;
             $read = in_array('content.read', $scopes, true);
             $status = (string) ($site->connection_status ?? 'unknown');
-            $syncState = $lastRun ? (string) $lastRun->state : null;
+            $normalizedStatus = strtolower(trim($status));
+            // Legacy SEO sync writes `status`, while canonical resource sync writes `state`.
+            // Legacy records leave `state=queued` even when status=succeeded and completed_at is set.
+            $legacyRun = $lastRun !== null && empty($lastRun->resources)
+                && in_array((string) $lastRun->status, ['queued', 'running', 'succeeded', 'failed'], true);
+            $syncState = $lastRun === null ? null : (string) ($legacyRun ? $lastRun->status : $lastRun->state);
             $remoteProbe = ['attempted' => false, 'state' => $probe && $index >= 3 ? 'limited' : 'not_run'];
             if ($probe && $index < 3 && $hasConnector && $revoked === false) {
                 try {
@@ -79,7 +84,7 @@ final class RuntimeInspectorController extends Controller
                 $hasConnector === false => 'CONNECTOR_NOT_PAIRED',
                 $revoked => 'CONNECTOR_REVOKED',
                 $read === false => 'CONTENT_READ_SCOPE_DISABLED',
-                in_array($status, ['paired', 'verified', 'connected'], true) === false => 'SITE_CONNECTION_NOT_READY',
+                in_array($normalizedStatus, ['paired', 'verified', 'connected'], true) === false => 'SITE_CONNECTION_NOT_READY',
                 $remoteProbe['state'] === 'AUTH_FAILED' => 'REMOTE_AUTH_FAILED',
                 $remoteProbe['state'] === 'UNSUPPORTED' => 'REMOTE_PROTOCOL_UNSUPPORTED',
                 in_array($remoteProbe['state'], ['DEGRADED', 'DISCONNECTED', 'TEMPORARILY_UNAVAILABLE', 'CONNECTOR_DISABLED'], true) => 'REMOTE_NOT_READY',
@@ -108,6 +113,7 @@ final class RuntimeInspectorController extends Controller
                 'last_sync' => [
                     'present' => $lastRun !== null,
                     'state' => $syncState === null ? 'not_run' : $this->safeState($syncState),
+                    'source' => $lastRun === null ? 'none' : ($legacyRun ? 'legacy' : 'canonical'),
                     'finished' => $lastRun?->completed_at !== null,
                 ],
                 'record_counts' => [
@@ -177,7 +183,7 @@ final class RuntimeInspectorController extends Controller
             'CONNECTED', 'DEGRADED', 'DISCONNECTED', 'AUTH_FAILED',
             'CONNECTOR_DISABLED', 'CAPABILITY_DISABLED', 'UNSUPPORTED', 'TEMPORARILY_UNAVAILABLE',
             'failed', 'partial', 'cancelled', 'cancel_requested', 'queued', 'running',
-            'completed', 'succeeded', 'pending', 'not_run', 'unhealthy',
+            'completed', 'succeeded', 'pending', 'not_run', 'unhealthy', 'healthy', 'limited', 'HEALTHY', 'LIMITED',
         ], true) ? $state : 'other';
     }
 
