@@ -178,14 +178,25 @@ final class SyncRuntimeService
 
         $cursor = $batch->cursor ?? [];
         $rows = $this->pullRows($run, $batch, $cursor);
+
+        // Do not treat a broken remote JSON envelope or non-object entries as
+        // a successful short/empty page. Full scans use the final page to
+        // observe missing records and may eventually tombstone real content.
+        // Fail before touching records, checkpoints or missing observations.
+        if (! array_is_list($rows)) {
+            throw new RuntimeException('Remote resource page must be an ordered list.');
+        }
+        foreach ($rows as $row) {
+            if (! is_array($row)) {
+                throw new RuntimeException('Remote resource page contains a malformed item.');
+            }
+        }
+
         $batch->forceFill(['received_count' => count($rows)])->save();
         $run->increment('discovered_count', count($rows));
 
         $maxModified = null;
         foreach ($rows as $row) {
-            if (! is_array($row)) {
-                continue;
-            }
             $remoteId = $this->projector->remoteId($row);
             $item = SyncItem::query()->create([
                 'site_id' => $run->site_id,

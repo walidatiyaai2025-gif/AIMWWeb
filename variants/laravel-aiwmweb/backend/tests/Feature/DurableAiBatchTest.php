@@ -315,9 +315,6 @@ class DurableAiBatchTest extends TestCase
     public function test_cancel_before_provider_call_does_not_block_an_unrelated_batch(): void
     {
         $cancelled = app(BatchService::class)->submit($this->actions(1), $this->site->id);
-        $next = app(BatchService::class)->submit([
-            ['key' => 'other', 'request' => ['workflow' => 'test', 'user_prompt' => 'Another batch']],
-        ], $this->site->id);
         $fake = new class($cancelled['id']) implements AiGenerator
         {
             public int $calls = 0;
@@ -346,6 +343,12 @@ class DurableAiBatchTest extends TestCase
         $this->assertNull(DB::table('durable_ai_gate')->where('id', 1)->value('owner'));
         $this->assertSame('closed', DB::table('durable_ai_gate')->where('id', 1)->value('circuit'));
         $this->assertSame('paused', app(BatchService::class)->status($cancelled['id'])['items'][0]['state']);
+
+        // Submit the unrelated batch after the first attempt: MySQL timestamp
+        // precision must not decide which of two same-second batches runs first.
+        $next = app(BatchService::class)->submit([
+            ['key' => 'other', 'request' => ['workflow' => 'test', 'user_prompt' => 'Another batch']],
+        ], $this->site->id);
         $this->assertSame('completed', app(BatchService::class)->runOne());
         $this->assertSame(1, app(BatchService::class)->status($next['id'])['completed']);
     }
