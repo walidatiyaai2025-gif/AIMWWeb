@@ -265,6 +265,16 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     if (route.key === 'settings') return <><SettingsMySessionsLinkControl context={context} /><SettingsAdminSessionsLinkControl context={context} /><SettingsAppearanceAnchorControl context={context} /><SettingsAccessibilityAnchorControl context={context} /><SettingsOpenAccessibilityControl context={context} /><SettingsLanguageAnchorControl context={context} /><SettingsAccentThemeVioletControl context={context} /><SettingsAccentThemeGoldControl context={context} /><SettingsAccentThemeCyanControl context={context} /><SettingsAppearanceLightControl context={context} /><SettingsAccentThemeEmeraldControl context={context} /><SettingsSetAmberControl context={context} /><SettingsSetOceanControl context={context} /><SettingsSetSlateControl context={context} /><SettingsSetRoseControl context={context} /><SettingsSecurityAuditLinkControl context={context} /><SettingsDatabaseAnchorControl context={context} /><SettingsBillingSupportLinkControl context={context} /><SettingsSystemUpdatesLinkControl context={context} /><SettingsAiProvidersLinkControl context={context} /><SettingsAiPromptsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'account-billing') return <><BillingProfileLink context={context} /><BillingStartCheckoutControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'admin-billing-support') return <><AdminBillingSupportSettingsLink context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'ai-providers' || route.key === 'prompts') {
+        const allowed = context.permissions.includes('*') || context.permissions.includes('settings.manage');
+        const target = route.key === 'ai-providers' ? '/settings/ai-providers' : '/settings/ai-prompts';
+        return <section className="panel workspace-stack">
+            <h2>{route.label.ar} / {route.label.en}</h2>
+            {allowed ? <a className="btn primary" href={tenantUrl(context.tenant.slug, target)}>
+                {route.key === 'ai-providers' ? 'فتح إعدادات وربط Ollama / Configure AI providers' : 'فتح إدارة قوالب AI / Manage AI prompts'}
+            </a> : <p role="alert">Missing tenant permission: settings.manage</p>}
+        </section>;
+    }
     if (route.key === 'ai-center') return <><AiCenterApprovalStatusControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'ai-usage') return <><AiUsageAiCenterLinkControl context={context} /><AiUsageLoadWorkspace context={context} route={route} /></>;
     if (route.key === 'runtime-inspector') return <RuntimeInspectorPanel context={context} />;
