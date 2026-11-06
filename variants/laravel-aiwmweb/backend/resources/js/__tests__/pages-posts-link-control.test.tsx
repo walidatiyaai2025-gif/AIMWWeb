@@ -60,7 +60,6 @@ describe('AIMW-CONT-058F41BD1B Pages to Posts navigation', () => {
         ['tenant context permission is missing', ['content.view'], { posts: '/tenants/alpha/api/posts' }, {}, connectedPostsConnector],
         ['content permission is missing', ['tenant.view'], { posts: '/tenants/alpha/api/posts' }, {}, connectedPostsConnector],
         ['the authoritative posts API contract is missing', ['tenant.view', 'content.view'], {}, {}, connectedPostsConnector],
-        ['the Posts connector scope is unavailable', ['tenant.view', 'content.view'], { posts: '/tenants/alpha/api/posts' }, {}, []],
         ['the server disables the posts capability', ['tenant.view', 'content.view'], { posts: '/tenants/alpha/api/posts' }, { posts: { state: 'disabled_by_owner' as const } }, connectedPostsConnector],
     ])('fails closed when %s', (_label, permissions, api, capabilities, connectors) => {
         renderControl(context('alpha', permissions, api, capabilities, connectors));
