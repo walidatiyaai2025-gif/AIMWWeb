@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -31,6 +31,21 @@
         @media (max-width: 700px) { main .grid, main form:has(> label ~ label ~ label), main section:has(> article ~ article), main section:has(> .record ~ .record) { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; } }
         main form:has(> label ~ label ~ label) > :not(label), main section:has(> article ~ article) > :not(article), main section:has(> .record ~ .record) > :not(.record) { grid-column: 1 / -1; }
         main :is(.grid, .cards, .record-grid) > * { min-width: 0; }
+        body { background: #0d192d; color: #f1f5fb; margin: 0; padding: 16px; }
+        main { max-width: 1150px; margin: auto; }
+        main > header, main > section { background: #13243c; border: 1px solid #30425b; border-radius: 18px; padding: 20px; margin-bottom: 16px; }
+        a { color: #65dce5; margin-inline-end: 16px; }
+        .provider-fields { display: grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); gap: 14px; }
+        .provider-fields label { display: flex; flex-direction: column; gap: 7px; }
+        .provider-fields input { min-height: 42px; border-radius: 9px; border: 1px solid #51637a; background: #0e1929; color: white; padding: 8px; max-width: 100%; box-sizing: border-box; }
+        .provider-fields input[type=checkbox] { min-height: 20px; }
+        .provider-fields .provider-toggle { flex-direction: row; align-items: center; }
+        .provider-save, button { cursor: pointer; border: 0; border-radius: 10px; background: #e7b74b; color: #101827; font-weight: 800; padding: 12px 22px; margin: 8px 0; }
+        .provider-editor, main article { padding: 16px; border: 1px solid #2d4360; border-radius: 12px; margin: 12px 0; }
+        .validation-errors { color: #ffaaaa; }
+        .runtime-warning { color: #ffd27a; font-weight: 700; }
+        dl { display: grid; grid-template-columns: minmax(120px,1fr) minmax(150px,2fr); gap: 6px; }
+        dl dt, dl dd { min-width: 0; overflow-wrap: anywhere; margin: 0; }
 </style>
 </head>
 <body>
@@ -39,7 +54,7 @@
             <p>AI PROVIDER REGISTRY</p>
             <h1>AI Provider Settings</h1>
             <p>Review persisted provider configuration and runtime readiness for {{ $tenant->name }}.</p>
-            <p>Settings managers only. API credentials are never rendered; only credential presence is exposed.</p>
+            <p>إدارة آمنة لمزودات الذكاء عبر حساب الـOwner. المفاتيح لا تظهر مطلقًا بعد حفظها.</p>
             <nav aria-label="AI provider settings sections">
                 {{-- AIMW-AI-3B59F172AB: canonical Back to Settings navigation --}}
                 <a
@@ -59,7 +74,17 @@
         <section id="runtime" aria-labelledby="runtime-behavior">
             <h2 id="runtime-behavior">Runtime behavior</h2>
             <p>Review the active tenant's persisted provider enablement, fallback capability, and readiness before changing separate governed AI settings.</p>
-            <p>This section is read-only: it does not change provider enablement, ordering, fallback, credentials, or models.</p>
+            <p>يمكن حفظ المزود واختبار الاتصال بالأسفل. تشغيل مزود لا يتجاوز شروط Cron أو Preflight على الاستضافة.</p>
+            <p><strong>AI enabled:</strong> {{ $runtime['ai_enabled'] ? 'Yes' : 'No' }} · <strong>Cron:</strong> {{ $runtime['cron_enabled'] ? 'Yes' : 'No' }} · <strong>Preflight:</strong> {{ $runtime['preflight_passed'] ? 'Passed' : 'Not approved' }} · <strong>Queue:</strong> {{ $runtime['queue_driver'] }}</p>
+            @if ($runtime['queue_driver'] === 'sync' || ! $runtime['ai_enabled'] || ! $runtime['cron_enabled'] || ! $runtime['preflight_passed'])
+                <p class="runtime-warning">مزود AI يمكن حفظه واختبار الاتصال به الآن، لكن تنفيذ AI المؤجل في cPanel غير متاح لحين تفعيل Worker محدود وإتمام فحص الاستضافة. لا يتم فتح طوابير غير محدودة.</p>
+            @endif
+        </section>
+
+        <section id="provider-editor" aria-label="إعدادات Ollama">
+            <h2>ربط Ollama / Configure AI provider</h2>
+            <p>اكتب الرابط والمفتاح والنموذج الموجود على سيرفر AI واضغط حفظ. المفتاح لا يُرسل مرة أخرى إلى المتصفح.</p>
+            @include('ai.provider-form', ['provider' => null])
         </section>
 
         <section id="providers" aria-labelledby="provider-registry">
@@ -85,6 +110,17 @@
                         <dt>Readiness error</dt><dd>{{ $provider['readiness_error'] ?: 'None' }}</dd>
                         <dt>API credential</dt><dd>{{ $provider['has_api_key'] ? 'Configured' : 'Not configured' }}</dd>
                     </dl>
+
+                    @if ($provider['adapter_key'] === 'openai-compatible')
+                        <details>
+                            <summary>تعديل المزود / Edit connection</summary>
+                            @include('ai.provider-form', ['provider' => $provider])
+                        </details>
+                        <form method="post" action="{{ route('tenant.settings.ai-providers.check', ['tenant' => $tenant->slug, 'provider' => $provider['provider_key']]) }}">
+                            @csrf
+                            <button type="submit">فحص الاتصال والنموذج / Check connection</button>
+                        </form>
+                    @endif
 
                     @if ($provider['has_api_key'])
                         {{-- AIMW-AI-6701FB22AE: Confirm API key removal [ConfirmRemovalAndSaveAsync] --}}
