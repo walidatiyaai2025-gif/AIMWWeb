@@ -60,13 +60,13 @@ describe('ImportExportWorkspace', () => {
 
     it('uploads a validated version 1 JSON file through multipart and reports the persisted import result', async () => {
         const fetchMock = vi.fn()
-            .mockResolvedValueOnce(jsonResponse([{ id: 7, name: 'Alpha WordPress' }]))
+            .mockResolvedValueOnce(jsonResponse([{ id: 7, name: 'Alpha WordPress', url: 'https://alpha.test' }]))
             .mockResolvedValueOnce(jsonResponse({ id: 23, site_id: 7, kind: 'import', state: 'queued', progress: 5 }, 202))
             .mockResolvedValueOnce(jsonResponse({ id: 23, site_id: 7, kind: 'import', state: 'completed', progress: 100, result: { imported: 2 } }));
         vi.stubGlobal('fetch', fetchMock);
 
         renderWorkspace();
-        expect(await screen.findByText('Alpha WordPress —')).toBeInTheDocument();
+        expect(await screen.findByText('Alpha WordPress — https://alpha.test')).toBeInTheDocument();
 
         const payload = JSON.stringify({ version: 1, content: [{ type: 'post', title: 'A' }, { type: 'page', title: 'B' }] });
         const file = new File([payload], 'content-export.json', { type: 'application/json' });
@@ -78,7 +78,8 @@ describe('ImportExportWorkspace', () => {
         const importCall = fetchMock.mock.calls.find(([url]) => url === '/api/v1/tenants/alpha/sites/7/transfers/import');
         expect(importCall?.[1]?.method).toBe('POST');
         expect(importCall?.[1]?.body).toBeInstanceOf(FormData);
-        expect((importCall?.[1]?.body as FormData).get('file')).toBe(file);
+        expect((importCall?.[1]?.body as FormData).get('file')).toBeInstanceOf(File);
+        expect(((importCall?.[1]?.body as FormData).get('file') as File).name).toBe('content-export.json');
     });
 
     it('keeps import disabled without content.edit and fails closed for a foreign site endpoint', async () => {
