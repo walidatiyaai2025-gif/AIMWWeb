@@ -1,12 +1,12 @@
 <?php
 
-namespace App\\Http\\Controllers;
+namespace App\Http\Controllers;
 
-use App\\Authorization\\TenantAuthorizer;
-use App\\Models\\EvidenceReceipt;
-use App\\Models\\Site;
-use Illuminate\\Http\\JsonResponse;
-use Illuminate\\Http\\Request;
+use App\Authorization\TenantAuthorizer;
+use App\Models\EvidenceReceipt;
+use App\Models\Site;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 final class EvidenceReceiptReadController extends Controller
 {
