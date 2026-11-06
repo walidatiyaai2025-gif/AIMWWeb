@@ -1,27 +1,27 @@
 <?php
 
-namespace Tests\\Feature;
+namespace Tests\Feature;
 
-use App\\Http\\Controllers\\EvidenceReceiptReadController;
-use App\\Models\\Approval;
-use App\\Models\\EvidenceReceipt;
-use App\\Models\\Execution;
-use App\\Models\\Permission;
-use App\\Models\\Role;
-use App\\Models\\SeoAudit;
-use App\\Models\\SeoFinding;
-use App\\Models\\Site;
-use App\\Models\\Suggestion;
-use App\\Models\\SyncedContent;
-use App\\Models\\Tenant;
-use App\\Models\\TenantMembership;
-use App\\Models\\User;
-use App\\Tenancy\\TenantContext;
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Illuminate\\Http\\Request;
-use Illuminate\\Support\\Facades\\Route;
-use Illuminate\\Support\\Str;
-use Tests\\TestCase;
+use App\Http\Controllers\EvidenceReceiptReadController;
+use App\Models\Approval;
+use App\Models\EvidenceReceipt;
+use App\Models\Execution;
+use App\Models\Permission;
+use App\Models\Role;
+use App\Models\SeoAudit;
+use App\Models\SeoFinding;
+use App\Models\Site;
+use App\Models\Suggestion;
+use App\Models\SyncedContent;
+use App\Models\Tenant;
+use App\Models\TenantMembership;
+use App\Models\User;
+use App\Tenancy\TenantContext;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
+use Tests\TestCase;
 
 final class EvidenceReceiptReadTest extends TestCase
 {
@@ -31,7 +31,7 @@ final class EvidenceReceiptReadTest extends TestCase
     {
         $route = Route::getRoutes()->match(Request::create('/api/tenants/alpha/evidence', 'GET'));
 
-        $this->assertSame(EvidenceReceiptReadController::class.'@index', ltrim($route->getActionName(), '\\\\'));
+        $this->assertSame(EvidenceReceiptReadController::class.'@index', ltrim($route->getActionName(), '\\'));
         $this->assertContains('web', $route->gatherMiddleware());
         $this->assertContains('auth', $route->gatherMiddleware());
         $this->assertContains('tenant.context', $route->gatherMiddleware());
