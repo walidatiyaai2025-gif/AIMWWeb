@@ -97,6 +97,57 @@ final class BatchService
         return $this->status($id);
     }
 
+    /**
+     * Lightweight, read-only operator view. No prompt, result, credentials, or
+     * provider calls. Only the authenticated member's batches are returned.
+     */
+    public function recentSummary(): array
+    {
+        app(TenantAuthorizer::class)->authorize('ai.use');
+        $tenantId = $this->context->id();
+        $userId = $this->context->membership()->user_id;
+        $batches = DB::table('durable_ai_batches')
+            ->where('tenant_id', $tenantId)->where('user_id', $userId)
+            ->orderByDesc('created_at')->orderByDesc('id')->limit(20)
+            ->get(['id', 'site_id', 'state', 'resume_after', 'cancelled_at', 'created_at', 'updated_at']);
+        $ids = $batches->pluck('id')->all();
+        $counts = [];
+        if ($ids !== []) {
+            foreach (DB::table('durable_ai_items')->where('tenant_id', $tenantId)
+                ->whereIn('batch_id', $ids)->get(['batch_id', 'state']) as $item) {
+                $counts[$item->batch_id][$item->state] = ($counts[$item->batch_id][$item->state] ?? 0) + 1;
+            }
+        }
+        return [
+            'runtime' => [
+                'ai_enabled' => (bool) config('cpanel.ai_enabled'),
+                'cron_enabled' => (bool) config('cpanel.cron_enabled'),
+                'preflight_passed' => (bool) config('cpanel.preflight_passed'),
+                'queue_driver' => in_array(config('queue.default'), ['sync', 'database', 'redis'], true)
+                    ? config('queue.default') : 'other',
+            ],
+            'batches' => $batches->map(function ($batch) use ($counts, $tenantId): array {
+                $states = $counts[$batch->id] ?? [];
+                return [
+                    'id' => $batch->id,
+                    'site_id' => $batch->site_id === null ? null : (int) $batch->site_id,
+                    'state' => $batch->cancelled_at !== null ? 'cancelled' : $batch->state,
+                    'completed' => $states['completed'] ?? 0,
+                    'total' => array_sum($states),
+                    'pending' => ($states['pending'] ?? 0) + ($states['queued'] ?? 0),
+                    'running' => $states['running'] ?? 0,
+                    'paused' => $states['paused'] ?? 0,
+                    'failed' => $states['failed'] ?? 0,
+                    'needs_reconciliation' => $states['needs_reconciliation'] ?? 0,
+                    'resume_after' => $batch->resume_after,
+                    'created_at' => $batch->created_at,
+                    'updated_at' => $batch->updated_at,
+                    'status_url' => '/api/tenants/'.$this->context->tenant()->slug.'/ai-batches/'.$batch->id,
+                ];
+            })->all(),
+        ];
+    }
+
     public function fingerprint(array $request): string
     {
         return $this->hash($request);
