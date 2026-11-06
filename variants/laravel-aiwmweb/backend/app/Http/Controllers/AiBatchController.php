@@ -26,6 +26,12 @@ final class AiBatchController extends Controller
         return response()->json(['data' => $batch, 'status_url' => $batch['status_url']], 202);
     }
 
+    public function index(string $tenant, BatchService $batches): JsonResponse
+    {
+        return response()->json(['data' => $batches->recentSummary()])
+            ->header('Cache-Control', 'no-store, private');
+    }
+
     public function show(string $tenant, string $batch, BatchService $batches): JsonResponse
     {
         return response()->json(['data' => $batches->status($batch)]);
