@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest, tenantUrl, type FrontendContext } from './core';
 import { useLocale } from './i18n';
+import { WorkspaceCapabilityCensusPanel } from './workspace-capability-census-panel';
+import { workspaceCapabilityCensus } from './workspace-capability-census';
 import {
     clearRuntimeInspectorEvents,
     diagnosticRouteShape,
@@ -75,7 +77,7 @@ function count(input: unknown): number {
 }
 
 /** Explicit allowlist; future backend response additions cannot enter the user export. */
-export function safeInspectorBundle(server: InspectorServer, events: RuntimeObservation[]) {
+export function safeInspectorBundle(server: InspectorServer, events: RuntimeObservation[], context?: FrontendContext) {
     return {
         schema: 'aiwm.support-export.v1',
         exported_at: new Date().toISOString(),
@@ -133,6 +135,27 @@ export function safeInspectorBundle(server: InspectorServer, events: RuntimeObse
                 finding: boundedText(site.finding),
             })),
         },
+        ...(context ? {
+            workspace_census: (() => {
+                const census = workspaceCapabilityCensus(context);
+                return {
+                    schema: census.schema,
+                    safety: census.safety,
+                    totals: census.totals,
+                    workspaces: census.workspaces.map(entry => ({
+                        key: entry.key,
+                        required_permission: entry.required_permission,
+                        permission_present: entry.permission_present,
+                        connector_read: entry.connector_read,
+                        view_state: entry.view_state,
+                        backend_capability: entry.backend_capability,
+                        api_contract: entry.api_contract,
+                        write_controls_declared: entry.write_controls_declared,
+                        write_controls_advertised: entry.write_controls_advertised,
+                    })),
+                };
+            })(),
+        } : {}),
         browser: {
             family: typeof navigator !== 'undefined' && /Firefox\//.test(navigator.userAgent)
                 ? 'Firefox' : typeof navigator !== 'undefined' && /Edg\//.test(navigator.userAgent)
@@ -177,7 +200,7 @@ export function RuntimeInspectorPanel({ context }: { context: FrontendContext })
 
     const exportReport = () => {
         if (!report.data || report.data.schema !== 'aiwm.runtime-inspector.v1') return;
-        const bundle = safeInspectorBundle(report.data, runtimeInspectorEvents());
+        const bundle = safeInspectorBundle(report.data, runtimeInspectorEvents(), context);
         const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const anchor = document.createElement('a');
@@ -212,6 +235,7 @@ export function RuntimeInspectorPanel({ context }: { context: FrontendContext })
                 {message ? <p role="status">{message}</p> : null}
                 {report.error ? <p role="alert">{isArabic ? 'فشل جمع التشخيص:' : 'Diagnostic failed:'} {report.error instanceof Error ? report.error.message : 'Request failed'}</p> : null}
             </section>
+            <WorkspaceCapabilityCensusPanel context={context} />
             {report.data ? (
                 <section className="panel">
                     <h3>{isArabic ? 'نتيجة الخادم' : 'Server snapshot'}</h3>
