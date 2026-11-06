@@ -408,6 +408,33 @@ final class BatchService
                 return;
             }
             $item = DB::table('durable_ai_items')->where('id', $claim['item_id'])->first();
+            $batch = DB::table('durable_ai_batches')->where('id', $claim['batch_id'])->first();
+
+            // An operator can pause/cancel after claim but before the outbound
+            // provider call. No billable call was sent: release the global gate
+            // so unrelated tenant batches are not stranded behind this action.
+            if ($item->sent_at === null && ($batch->cancelled_at !== null || $batch->state === 'paused')) {
+                DB::table('durable_ai_items')->where('id', $item->id)->where('state', 'running')
+                    ->update([
+                        'state' => 'paused',
+                        'error_code' => $batch->cancelled_at !== null ? 'operator_cancelled' : 'operator_paused',
+                        'updated_at' => now(),
+                    ]);
+                $this->releaseGate();
+
+                return;
+            }
+
+            // Never demote a previously reconciled/ambiguous attempt to an
+            // ordinary retryable pause when its old worker encounters a fence.
+            if ($item->state === 'needs_reconciliation') {
+                DB::table('durable_ai_batches')->where('id', $claim['batch_id'])
+                    ->update(['state' => 'paused', 'updated_at' => now()]);
+                $this->releaseGate('needs_reconciliation');
+
+                return;
+            }
+
             $safeRejection = $error instanceof AiPlatformException && in_array($error->kind, [AiFailureKind::RateLimit, AiFailureKind::QuotaExceeded, AiFailureKind::InvalidCredentials, AiFailureKind::ModelUnavailable, AiFailureKind::QuotaBackendUnavailable, AiFailureKind::PolicyRejection], true);
             $ambiguous = $item->sent_at !== null && ! $safeRejection;
             $permanent = ! $ambiguous && ($error instanceof ValidationException || $error instanceof AuthorizationException || ($error instanceof AiPlatformException && $error->kind === AiFailureKind::PolicyRejection));
