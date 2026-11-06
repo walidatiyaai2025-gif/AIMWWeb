@@ -408,6 +408,32 @@ final class BatchService
                 return;
             }
             $item = DB::table('durable_ai_items')->where('id', $claim['item_id'])->first();
+            $batch = DB::table('durable_ai_batches')->where('id', $claim['batch_id'])->first();
+
+            // Never demote a previously ambiguous attempt to a retryable
+            // pause, even if a concurrent operator also paused this batch.
+            if ($item->state === 'needs_reconciliation') {
+                DB::table('durable_ai_batches')->where('id', $claim['batch_id'])
+                    ->update(['state' => 'paused', 'updated_at' => now()]);
+                $this->releaseGate('needs_reconciliation');
+
+                return;
+            }
+
+            // A pause/cancel after claim but before a billable call must not
+            // block unrelated batches behind the global cPanel admission gate.
+            if ($item->sent_at === null && ($batch->cancelled_at !== null || $batch->state === 'paused')) {
+                DB::table('durable_ai_items')->where('id', $item->id)->where('state', 'running')
+                    ->update([
+                        'state' => 'paused',
+                        'error_code' => $batch->cancelled_at !== null ? 'operator_cancelled' : 'operator_paused',
+                        'updated_at' => now(),
+                    ]);
+                $this->releaseGate();
+
+                return;
+            }
+
             $safeRejection = $error instanceof AiPlatformException && in_array($error->kind, [AiFailureKind::RateLimit, AiFailureKind::QuotaExceeded, AiFailureKind::InvalidCredentials, AiFailureKind::ModelUnavailable, AiFailureKind::QuotaBackendUnavailable, AiFailureKind::PolicyRejection], true);
             $ambiguous = $item->sent_at !== null && ! $safeRejection;
             $permanent = ! $ambiguous && ($error instanceof ValidationException || $error instanceof AuthorizationException || ($error instanceof AiPlatformException && $error->kind === AiFailureKind::PolicyRejection));
