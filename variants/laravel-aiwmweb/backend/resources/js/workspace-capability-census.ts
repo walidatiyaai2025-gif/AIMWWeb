@@ -69,7 +69,7 @@ export function workspaceCapabilityCensus(context: FrontendContext): WorkspaceCe
 
         let state: WorkspaceCensusState;
         if (!permissionPresent) state = 'missing_permission';
-        else if (backend !== 'not_reported' && backend !== 'enabled') state = 'backend_restricted';
+        else if (explicit && explicit.state !== 'enabled') state = 'backend_restricted';
         else if (connectorRead === 'not_advertised') state = 'connector_read_missing';
         else if (apiContract === 'not_advertised') state = 'contract_not_advertised';
         else state = 'declared_accessible';
