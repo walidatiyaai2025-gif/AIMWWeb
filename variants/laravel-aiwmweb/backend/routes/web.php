@@ -8,6 +8,7 @@ use App\Http\Controllers\AdminBillingSupportController;
 use App\Http\Controllers\AdminOperationsController;
 use App\Http\Controllers\AiPromptTemplateSaveController;
 use App\Http\Controllers\AiPromptTemplatesReadController;
+use App\Http\Controllers\AiProviderManagementController;
 use App\Http\Controllers\AiProviderSettingsReadController;
 use App\Http\Controllers\BackupCreateController;
 use App\Http\Controllers\BillingController;
@@ -200,6 +201,12 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
     Route::get('/tenants/{tenant}/settings/ai-providers', AiProviderSettingsReadController::class)
         ->defaults('canonical_operation_id', 'AIMW-AI-58FABCCEDB')
         ->name('tenant.settings.ai-providers');
+    Route::post('/tenants/{tenant}/settings/ai-providers', [AiProviderManagementController::class, 'save'])
+        ->middleware('throttle:6,1')
+        ->name('tenant.settings.ai-providers.save');
+    Route::post('/tenants/{tenant}/settings/ai-providers/{provider}/check', [AiProviderManagementController::class, 'check'])
+        ->middleware('throttle:3,1')
+        ->name('tenant.settings.ai-providers.check');
 
     Route::get('/tenants/{tenant}/context', function (ActionContractRegistry $actionRegistry) {
         $context = app(TenantContext::class);
