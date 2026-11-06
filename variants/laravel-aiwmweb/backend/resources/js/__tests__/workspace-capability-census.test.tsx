@@ -37,6 +37,7 @@ const server: InspectorServer = {
 afterEach(() => {
     cleanup();
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
 });
 
 describe('complete declarative workspace census', () => {
@@ -94,7 +95,7 @@ describe('complete declarative workspace census', () => {
         expect(screen.getByText('All-workspace capability census')).toBeInTheDocument();
         expect(fetch).not.toHaveBeenCalled();
         fireEvent.click(screen.getByText('Detailed workspace findings'));
-        expect(screen.getByText('Tenant permission missing')).toBeInTheDocument();
+        expect(screen.getAllByText('Tenant permission missing').length).toBeGreaterThan(0);
         fireEvent.click(screen.getByRole('button', { name: 'All workspaces' }));
         expect(screen.getAllByRole('row').length).toBeGreaterThan(50);
         expect(fetch).not.toHaveBeenCalled();
