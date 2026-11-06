@@ -31,7 +31,7 @@ final class EvidenceReceiptReadTest extends TestCase
     {
         $route = Route::getRoutes()->match(Request::create('/api/tenants/alpha/evidence', 'GET'));
 
-        $this->assertSame(EvidenceReceiptReadController::class, ltrim($route->getActionName(), '\\\\'));
+        $this->assertSame(EvidenceReceiptReadController::class.'@index', ltrim($route->getActionName(), '\\\\'));
         $this->assertContains('web', $route->gatherMiddleware());
         $this->assertContains('auth', $route->gatherMiddleware());
         $this->assertContains('tenant.context', $route->gatherMiddleware());
