@@ -215,6 +215,7 @@ Route::prefix('v1/tenants/{tenant}')
     });
 
 Route::prefix('tenants/{tenant}/ai-batches')->middleware(['web', 'auth', 'tenant.context'])->group(function (): void {
+    Route::get('/', [AiBatchController::class, 'index']);
     Route::post('/', [AiBatchController::class, 'store']);
     Route::get('/{batch}', [AiBatchController::class, 'show'])->whereUuid('batch');
     Route::post('/{batch}/{action}', [AiBatchController::class, 'control'])->whereUuid('batch')->whereIn('action', ['pause', 'resume', 'cancel']);

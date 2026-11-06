@@ -350,4 +350,36 @@ class DurableAiBatchTest extends TestCase
         $this->assertCount(1, $fake->calls);
         $this->assertSame(1, DB::table('durable_ai_batches')->count());
     }
+
+    public function test_live_ai_report_lists_durable_counts_only_without_private_prompts_or_results(): void
+    {
+        $batch = app(BatchService::class)->submit($this->actions(3), $this->site->id, 'report-visible');
+        $this->provider();
+        $this->assertSame('completed', app(BatchService::class)->runOne());
+
+        $response = $this->getJson('https://localhost/api/tenants/alpha/ai-batches');
+        $response->assertOk()->assertJsonPath('data.batches.0.id', $batch['id'])
+            ->assertJsonPath('data.batches.0.completed', 1)
+            ->assertJsonPath('data.batches.0.pending', 2)
+            ->assertJsonPath('data.batches.0.total', 3)
+            ->assertJsonPath('data.runtime.ai_enabled', true);
+        $this->assertStringNotContainsString('Action 1', $response->getContent());
+        $this->assertStringNotContainsString('request_hash', $response->getContent());
+        $this->assertStringNotContainsString('result', $response->getContent());
+        $this->assertSame('no-store, private', $response->headers->get('Cache-Control'));
+        $this->assertSame(1, DB::table('durable_ai_batches')->count());
+    }
+
+    public function test_live_ai_report_is_restricted_to_current_member_even_inside_same_tenant(): void
+    {
+        app(BatchService::class)->submit($this->actions(2), $this->site->id);
+        $secondUser = User::factory()->create();
+        $secondMembership = TenantMembership::query()->create(['user_id' => $secondUser->id, 'status' => 'active']);
+        $secondMembership->roles()->attach(Role::query()->where('name', 'Owner')->firstOrFail(), ['tenant_id' => $this->tenant->id]);
+        app(TenantContext::class)->activate($this->tenant, $secondMembership);
+        $this->actingAs($secondUser);
+
+        $this->getJson('https://localhost/api/tenants/alpha/ai-batches')
+            ->assertOk()->assertJsonCount(0, 'data.batches');
+    }
 }

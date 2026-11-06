@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ApiError, apiRequest, resolveCapability, workspaceRoutes, type FrontendContext } from './core';
 import { useLocale } from './i18n';
@@ -15,7 +15,7 @@ type SiteSnapshot = {
         totals?: Record<string, number>;
     };
 };
-type SyncRun = { id: number; site_id: number; state: string; mode: string; completed_at?: string | null; created_at?: string | null };
+type SyncRun = { id: number; site_id: number; state: string; mode: string; completed_at?: string | null; created_at?: string | null; discovered_count?: number; created_count?: number; updated_count?: number; unchanged_count?: number; failed_count?: number; };
 type SyncHistory = { data: SyncRun[]; total: number };
 export type GlobalSyncStatus = {
     siteName: string;
@@ -67,10 +67,13 @@ export function validateGlobalSynchronizationRefresh(siteId: number, snapshot: S
 
 export function GlobalSynchronizationRefreshStatusControl({ context }: { context: FrontendContext }) {
     const { locale } = useLocale();
+    const [live, setLive] = useState(false);
     const endpoints = globalSynchronizationRefreshEndpoints(context);
     const query = useQuery({
         queryKey: ['global-sync-authoritative-status', context.tenant.slug, endpoints?.siteId],
-        enabled: false,
+        enabled: live && Boolean(endpoints),
+        refetchInterval: live ? 10000 : false,
+        refetchIntervalInBackground: false,
         retry: false,
         queryFn: async () => {
             if (!endpoints) throw new ApiError('No authorized site is selected.', 403, 'sync_site_unavailable');
@@ -94,6 +97,10 @@ export function GlobalSynchronizationRefreshStatusControl({ context }: { context
                     {query.isFetching ? (locale === 'ar' ? 'جارٍ تحديث الحالة…' : 'Refreshing status…') :
                         (locale === 'ar' ? 'تحديث الحالة' : 'Refresh status')}
                 </button>
+                <button type="button" className="btn" aria-pressed={live} onClick={() => setLive((value) => !value)}>
+                    {live ? (locale === 'ar' ? 'إيقاف المتابعة المباشرة' : 'Stop live tracking') :
+                        (locale === 'ar' ? 'متابعة المزامنة المباشرة' : 'Track sync live')}
+                </button>
             </div>
             {query.error ? <p role="alert" className="alert error">
                 {query.error instanceof Error ? query.error.message :
@@ -105,6 +112,11 @@ export function GlobalSynchronizationRefreshStatusControl({ context }: { context
                 <span>{locale === 'ar' ? 'عناصر محلية' : 'Cached items'}: {data.cachedItems}</span>
                 <span>{locale === 'ar' ? 'آخر مزامنة' : 'Last synchronized'}: {data.lastSynchronizedAt ?? '—'}</span>
                 <span>{locale === 'ar' ? 'آخر تشغيل' : 'Latest run'}: {data.latestRun?.state ?? '—'}</span>
+                <span>{locale === 'ar' ? 'تم اكتشافها' : 'Discovered'}: {data.latestRun?.discovered_count ?? '—'}</span>
+                <span>{locale === 'ar' ? 'أضيفت' : 'Created'}: {data.latestRun?.created_count ?? '—'}</span>
+                <span>{locale === 'ar' ? 'تحدثت' : 'Updated'}: {data.latestRun?.updated_count ?? '—'}</span>
+                <span>{locale === 'ar' ? 'دون تغيير' : 'Unchanged'}: {data.latestRun?.unchanged_count ?? '—'}</span>
+                <span>{locale === 'ar' ? 'فشلت' : 'Failed'}: {data.latestRun?.failed_count ?? '—'}</span>
                 <span>{locale === 'ar' ? 'سجل التشغيل' : 'Recorded runs'}: {data.totalRuns}</span>
             </div> : null}
         </section>
