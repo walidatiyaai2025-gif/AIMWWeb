@@ -51,11 +51,26 @@ final class ExecutionPermit
         $claim = $this->claim;
         DB::transaction(function () use ($claim, $provider, $model): void {
             $gate = DB::table('durable_ai_gate')->where('id', 1)->lockForUpdate()->first();
-            if ($gate->owner !== $claim['owner'] || (int) $gate->fence !== $claim['fence'] || now()->gte($gate->expires_at)) {
+            if ($gate === null || $gate->owner !== $claim['owner'] || (int) $gate->fence !== $claim['fence']
+                || $gate->item_id !== $claim['item_id'] || $gate->circuit !== 'closed'
+                || $gate->expires_at === null || now()->gte($gate->expires_at)) {
                 throw new RuntimeException('AI execution lease lost.');
             }
-            DB::table('durable_ai_items')->where('id', $claim['item_id'])->where('attempt_id', $claim['owner'])
-                ->where('state', 'running')->update(['sent_at' => now(), 'provider' => $provider?->provider_key, 'model' => $model?->model_key]);
+            // A pause/cancel committed while preparing the request must stop an
+            // unbilled provider call, even if the worker still holds its lease.
+            $batchEligible = DB::table('durable_ai_batches')->where('id', $claim['batch_id'])
+                ->where('state', 'pending')->whereNull('cancelled_at')->exists();
+            if (! $batchEligible) {
+                throw new RuntimeException('AI batch is no longer eligible for provider execution.');
+            }
+            $updated = DB::table('durable_ai_items')->where('id', $claim['item_id'])
+                ->where('batch_id', $claim['batch_id'])->where('attempt_id', $claim['owner'])
+                ->where('state', 'running')->update([
+                    'sent_at' => now(), 'provider' => $provider?->provider_key, 'model' => $model?->model_key,
+                ]);
+            if ($updated !== 1) {
+                throw new RuntimeException('AI item attempt is no longer running.');
+            }
         });
         $this->used = true;
     }
@@ -68,11 +83,23 @@ final class ExecutionPermit
         $claim = $this->claim;
         DB::transaction(function () use ($claim, $metadata): void {
             $gate = DB::table('durable_ai_gate')->where('id', 1)->lockForUpdate()->first();
-            if ($gate->owner !== $claim['owner'] || (int) $gate->fence !== $claim['fence']) {
+            if ($gate === null || $gate->owner !== $claim['owner'] || (int) $gate->fence !== $claim['fence']
+                || $gate->item_id !== $claim['item_id'] || $gate->circuit !== 'closed'
+                || $gate->expires_at === null || now()->gte($gate->expires_at)) {
                 throw new RuntimeException('Provider receipt fencing failed.');
             }
-            DB::table('durable_ai_items')->where('id', $claim['item_id'])->where('state', 'running')
-                ->update(['usage' => json_encode(array_merge(json_decode(DB::table('durable_ai_items')->where('id', $claim['item_id'])->value('usage') ?? '{}', true), $metadata), JSON_THROW_ON_ERROR)]);
+            $item = DB::table('durable_ai_items')->where('id', $claim['item_id'])
+                ->where('batch_id', $claim['batch_id'])->where('attempt_id', $claim['owner'])
+                ->where('state', 'running')->first();
+            if ($item === null) {
+                throw new RuntimeException('Provider receipt item attempt is no longer running.');
+            }
+            $updated = DB::table('durable_ai_items')->where('id', $item->id)
+                ->where('attempt_id', $claim['owner'])->where('state', 'running')
+                ->update(['usage' => json_encode(array_merge(json_decode($item->usage ?? '{}', true, 512, JSON_THROW_ON_ERROR), $metadata), JSON_THROW_ON_ERROR)]);
+            if ($updated !== 1) {
+                throw new RuntimeException('Provider receipt item was not updated.');
+            }
         });
     }
 }
