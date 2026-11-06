@@ -30,7 +30,7 @@ final class OpenAiCompatibleProviderClient implements AiProviderClient
     public function check(AiProviderProfile $provider, ?string $apiKey, AiModelProfile $model): array
     {
         try {
-            $request = Http::acceptJson()->connectTimeout(5)->timeout(config('cpanel.enabled') ? min((int) $provider->timeout_seconds, (int) config('cpanel.provider_timeout')) : $provider->timeout_seconds);
+            $request = Http::acceptJson()->withoutRedirecting()->connectTimeout(5)->timeout(config('cpanel.enabled') ? min((int) $provider->timeout_seconds, (int) config('cpanel.provider_timeout')) : $provider->timeout_seconds);
             if (filled($apiKey)) {
                 $request = $request->withToken($apiKey);
             }
@@ -83,7 +83,7 @@ final class OpenAiCompatibleProviderClient implements AiProviderClient
         }
 
         try {
-            $http = Http::acceptJson()->connectTimeout(5)->timeout(config('cpanel.enabled') ? min((int) $provider->timeout_seconds, (int) config('cpanel.provider_timeout')) : $provider->timeout_seconds);
+            $http = Http::acceptJson()->withoutRedirecting()->connectTimeout(5)->timeout(config('cpanel.enabled') ? min((int) $provider->timeout_seconds, (int) config('cpanel.provider_timeout')) : $provider->timeout_seconds);
             if (filled($apiKey)) {
                 $http = $http->withToken($apiKey);
             }

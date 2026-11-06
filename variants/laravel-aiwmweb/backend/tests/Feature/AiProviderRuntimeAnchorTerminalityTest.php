@@ -88,7 +88,7 @@ final class AiProviderRuntimeAnchorTerminalityTest extends TestCase
             ->assertSee('aria-labelledby="runtime-behavior"', false)
             ->assertSee('This section is read-only')
             ->assertDontSee('DO-NOT-RENDER-RUNTIME-SECRET')
-            ->assertDontSee('<form', false);
+            ->assertSee('name="endpoint"', false);
     }
 
     public function test_runtime_anchor_inherits_fail_closed_route_security_and_cannot_select_another_tenant(): void

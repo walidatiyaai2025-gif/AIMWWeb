@@ -25,6 +25,12 @@ final class AiProviderSettingsReadController extends Controller
         return view('ai.provider-settings', [
             'tenant' => $this->context->tenant(),
             'providers' => $settings['providers'] ?? [],
+            'runtime' => [
+                'ai_enabled' => (bool) config('cpanel.ai_enabled'),
+                'cron_enabled' => (bool) config('cpanel.cron_enabled'),
+                'preflight_passed' => (bool) config('cpanel.preflight_passed'),
+                'queue_driver' => config('queue.default'),
+            ],
         ]);
     }
 }

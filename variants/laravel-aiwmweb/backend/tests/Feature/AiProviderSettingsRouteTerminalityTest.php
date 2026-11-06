@@ -108,7 +108,8 @@ class AiProviderSettingsRouteTerminalityTest extends TestCase
             ->assertSee('Not configured')
             ->assertSee('data-canonical-operation="'.self::OPERATION_ID.'"', false)
             ->assertDontSee('DO-NOT-RENDER-SECRET-MATERIAL')
-            ->assertDontSee('<form', false);
+            ->assertSee('name="endpoint"', false)
+            ->assertSee('name="api_key"', false);
 
         $this->assertSame('text/html; charset=utf-8', $response->headers->get('content-type'));
     }
@@ -129,14 +130,14 @@ class AiProviderSettingsRouteTerminalityTest extends TestCase
         $this->actingAs($alpha)->get('/tenants/beta/settings/ai-providers')->assertNotFound();
     }
 
-    public function test_route_is_read_only_and_exposes_no_provider_mutation_surface(): void
+    public function test_provider_mutation_requires_validated_fields_and_tenant_permission(): void
     {
         $user = User::factory()->create();
         $this->membership($user, 'alpha', ['settings.manage'], 'Settings Manager');
 
         $this->actingAs($user)
             ->post('/tenants/alpha/settings/ai-providers', ['provider_key' => 'openai'])
-            ->assertMethodNotAllowed();
+            ->assertSessionHasErrors(['display_name', 'endpoint', 'model_key']);
     }
 
     private function membership(User $user, string $slug, array $permissions, string $roleName): TenantMembership

@@ -88,7 +88,8 @@ final class AiProviderProvidersAnchorTerminalityTest extends TestCase
             ->assertSee('id="providers"', false)
             ->assertSee('aria-labelledby="provider-registry"', false)
             ->assertDontSee('DO-NOT-RENDER-API-KEY')
-            ->assertDontSee('<form', false);
+            ->assertSee('name="endpoint"', false)
+            ->assertSee('name="api_key"', false);
     }
 
     public function test_anchor_inherits_fail_closed_route_security_and_cannot_select_another_tenant(): void

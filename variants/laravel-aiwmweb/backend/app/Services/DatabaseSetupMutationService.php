@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Auth\OwnerPermissionCatalog;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\Tenant;
@@ -11,7 +12,6 @@ use App\Tenancy\TenantContext;
 use Database\Seeders\ProductionWorkspaceSeeder;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -115,33 +115,6 @@ final class DatabaseSetupMutationService
     /** @return list<string> */
     private function discoverPermissions(): array
     {
-        $permissions = [];
-        foreach (File::allFiles(app_path()) as $file) {
-            if ($file->getExtension() !== 'php') {
-                continue;
-            }
-            $source = File::get($file->getPathname());
-            preg_match_all("/(?:authorize|hasPermission)\\(\\s*['\"]([^'\"]+)['\"]|permission:([A-Za-z0-9._-]+)/", $source, $matches, PREG_SET_ORDER);
-            foreach ($matches as $match) {
-                $permission = $match[1] !== '' ? $match[1] : ($match[2] ?? '');
-                if ($permission !== '') {
-                    $permissions[$permission] = true;
-                }
-            }
-        }
-
-        // Route/React workspace permissions are not always referenced by app/ PHP.
-        // The first bootstrap platform owner must be able to access real tenant workspaces.
-        foreach (['sync.view', 'backups.view', 'content.view', 'content.edit'] as $workspacePermission) {
-            $permissions[$workspacePermission] = true;
-        }
-
-        $names = array_keys($permissions);
-        sort($names);
-        if ($names === []) {
-            throw new RuntimeException('No application permission catalog could be derived; owner bootstrap is denied.');
-        }
-
-        return $names;
+        return app(OwnerPermissionCatalog::class)->all();
     }
 }
