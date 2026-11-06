@@ -49,6 +49,17 @@ describe('frontend parity route map', () => {
         expect(workspaceRoutes.find((item) => item.key === 'settings')?.kind).toBe('workspace');
     });
 
+    it('routes SEO Findings through the authorized site-bound SEO workspace, not an invented generic API', () => {
+        const findings = workspaceRoutes.find((item) => item.key === 'seo-findings')!;
+        const context = baseContext();
+        context.permissions.push('seo.view');
+        expect(findings.kind).toBe('workspace');
+        expect(findings.apiKey).toBeUndefined();
+        expect(resolveCapability(context, findings).state).toBe('enabled');
+        context.permissions = ['tenant.view'];
+        expect(resolveCapability(context, findings).state).toBe('permission_denied');
+    });
+
     it('renders System Overview as an authorized module hub, not a fictitious read API', () => {
         const overview = workspaceRoutes.find((item) => item.key === 'system-overview')!;
         expect(overview.kind).toBe('workspace');
