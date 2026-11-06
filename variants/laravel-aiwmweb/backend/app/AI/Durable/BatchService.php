@@ -126,7 +126,7 @@ final class BatchService
                 'queue_driver' => in_array(config('queue.default'), ['sync', 'database', 'redis'], true)
                     ? config('queue.default') : 'other',
             ],
-            'batches' => $batches->map(function ($batch) use ($counts, $tenantId): array {
+            'batches' => $batches->map(function ($batch) use ($counts): array {
                 $states = $counts[$batch->id] ?? [];
                 return [
                     'id' => $batch->id,
