@@ -104,7 +104,7 @@ final class AiProviderManagementController extends Controller
             || ! str_contains($host, '.')
             || filter_var($host, FILTER_VALIDATE_IP)
             || preg_match('/(^|\\.)(localhost|local|internal|invalid|test)$/i', $host)
-            || isset($parts['user'], $parts['pass'])
+            || array_key_exists('user', $parts) || array_key_exists('pass', $parts)
             || isset($parts['fragment'])
             || (isset($parts['port']) && (int) $parts['port'] !== 443)) {
             throw ValidationException::withMessages([
