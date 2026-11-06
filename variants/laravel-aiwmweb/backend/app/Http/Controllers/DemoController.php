@@ -8,6 +8,7 @@ use App\Connector\WordPressGateway;
 use App\Execution\ExecutionCreator;
 use App\Jobs\ExecuteApprovedSuggestionJob;
 use App\Jobs\GenerateSuggestionJob;
+use App\Jobs\ProcessSyncRunJob;
 use App\Jobs\RunSeoAuditJob;
 use App\Jobs\SyncSiteJob;
 use App\Models\AiProviderConfig;
@@ -278,6 +279,8 @@ final class DemoController extends Controller
                             'site-sync-button',
                             [],
                             (int) $request->user()->getAuthIdentifier(),
+                            null,
+                            false, // Dispatch after the idempotency transaction commits.
                         );
                     } else {
                         $run = SyncRun::query()->create(['site_id' => $siteId]);
@@ -299,15 +302,17 @@ final class DemoController extends Controller
                 return ['run' => $run, 'created' => $created, 'replay' => false];
             }, 3);
 
-            if ($result['created'] && ! $canonical) {
+            if ($result['created']) {
                 try {
-                    SyncSiteJob::dispatch($context->id(), $siteId, $result['run']->id);
+                    if ($canonical) {
+                        ProcessSyncRunJob::dispatch($context->id(), $result['run']->id);
+                    } else {
+                        SyncSiteJob::dispatch($context->id(), $siteId, $result['run']->id);
+                    }
                 } catch (Throwable $exception) {
-                    SyncRun::query()->whereKey($result['run']->id)->update([
-                        'status' => 'failed',
-                        'failure' => 'Queue dispatch failed before synchronization could start.',
-                        'completed_at' => now(),
-                    ]);
+                    SyncRun::query()->whereKey($result['run']->id)->update($canonical
+                        ? ['state' => 'failed', 'last_error' => 'Queue dispatch failed before synchronization could start.', 'completed_at' => now()]
+                        : ['status' => 'failed', 'failure' => 'Queue dispatch failed before synchronization could start.', 'completed_at' => now()]);
                     throw $exception;
                 }
             }
