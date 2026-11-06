@@ -1,23 +1,24 @@
 <?php
 
-namespace Tests\\Feature;
+namespace Tests\Feature;
 
-use App\\Jobs\\ContentTransferJob;
-use App\\Models\\ContentTransfer;
-use App\\Models\\Permission;
-use App\\Models\\Role;
-use App\\Models\\Site;
-use App\\Models\\Tenant;
-use App\\Models\\TenantMembership;
-use App\\Models\\User;
-use App\\Tenancy\\TenantContext;
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Illuminate\\Http\\Request;
-use Illuminate\\Http\\UploadedFile;
-use Illuminate\\Support\\Facades\\Queue;
-use Illuminate\\Support\\Facades\\Route;
-use Illuminate\\Support\\Facades\\Storage;
-use Tests\\TestCase;
+use App\Http\Controllers\ContentApiController;
+use App\Jobs\ContentTransferJob;
+use App\Models\ContentTransfer;
+use App\Models\Permission;
+use App\Models\Role;
+use App\Models\Site;
+use App\Models\Tenant;
+use App\Models\TenantMembership;
+use App\Models\User;
+use App\Tenancy\TenantContext;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
+use Tests\TestCase;
 
 final class ContentTransferWorkspaceTest extends TestCase
 {
@@ -27,8 +28,7 @@ final class ContentTransferWorkspaceTest extends TestCase
     {
         $route = Route::getRoutes()->match(Request::create('/api/v1/tenants/alpha/sites/7/transfers/22/download', 'GET'));
 
-        $this->assertSame(ContentTransferJob::class, ContentTransferJob::class);
-        $this->assertSame('App\\Http\\Controllers\\ContentApiController@download', ltrim($route->getActionName(), '\\\\'));
+        $this->assertSame(ContentApiController::class.'@download', ltrim($route->getActionName(), '\\'));
         $this->assertContains('web', $route->gatherMiddleware());
         $this->assertContains('tenant.context', $route->gatherMiddleware());
     }
@@ -60,14 +60,14 @@ final class ContentTransferWorkspaceTest extends TestCase
         $file = UploadedFile::fake()->createWithContent('content.json', '{"version":1,"content":[]}');
 
         $this->actingAs($user)
-            ->postJson("/api/v1/tenants/transfer-import/sites/{$site->id}/transfers/import", ['file' => $file])
+            ->post("/api/v1/tenants/transfer-import/sites/{$site->id}/transfers/import", ['file' => $file])
             ->assertForbidden();
 
         $editor = User::factory()->create();
         $editorMembership = $this->membership($editor, 'transfer-import-editor', ['tenant.view', 'content.view', 'content.edit']);
         $editorSite = $this->site($editorMembership);
         $response = $this->actingAs($editor)
-            ->postJson("/api/v1/tenants/transfer-import-editor/sites/{$editorSite->id}/transfers/import", [
+            ->post("/api/v1/tenants/transfer-import-editor/sites/{$editorSite->id}/transfers/import", [
                 'file' => UploadedFile::fake()->createWithContent('content.json', '{"version":1,"content":[]}'),
             ]);
 
