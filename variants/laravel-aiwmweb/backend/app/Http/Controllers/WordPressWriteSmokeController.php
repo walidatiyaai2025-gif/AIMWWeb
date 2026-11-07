@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Cache;
 
 final class WordPressWriteSmokeController extends Controller
 {
+    public const SITE_LOCK_SECONDS = 300;
+
     /**
      * High-risk live WordPress write probe, never invoked by a GET/Inspector scan.
      * The browser cannot choose a remote object ID or write payload.
@@ -66,7 +68,7 @@ final class WordPressWriteSmokeController extends Controller
         // verification/cleanup loop finishes and let another write probe in.
         // Allow generous headroom for PHP/DB overhead while retaining a finite
         // stale-lock recovery bound if the worker is terminated unexpectedly.
-        $lock = Cache::lock('wp-smoke:tenant:'.$context->id().':site:'.$site->id, 300);
+        $lock = Cache::lock('wp-smoke:tenant:'.$context->id().':site:'.$site->id, self::SITE_LOCK_SECONDS);
         if (! $lock->get()) {
             return response()->json([
                 'schema' => 'aiwm.wordpress-write-smoke.v1',
