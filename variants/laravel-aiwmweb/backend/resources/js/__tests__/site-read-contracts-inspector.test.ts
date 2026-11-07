@@ -42,7 +42,17 @@ describe('site-scoped inspector contracts use authoritative existing JSON GETs',
             'site-connection-center', 'site-connection-operations']) {
             const entry = liveAuditPlan(context).find(item => item.key === key)!;
             expect(entry.state, key).toBe('skipped');
-            expect(entry.reason, key).toBe('missing_contract');
+            // This is a missing site selection, not an absent backend GET.
+            expect(entry.reason, key).toBe('site_selection_required');
+        }
+    });
+
+    it('still reports missing contracts if a selected-site context omits its GET routes', () => {
+        const selected = { ...base(), active_site: { id: 7, name: 'Selected' } };
+        for (const key of ['site-details', 'site-snapshot', 'site-offline-data',
+            'site-connection-center', 'site-connection-operations']) {
+            expect(liveAuditPlan(selected).find(item => item.key === key)?.reason)
+                .toBe('missing_contract');
         }
     });
 

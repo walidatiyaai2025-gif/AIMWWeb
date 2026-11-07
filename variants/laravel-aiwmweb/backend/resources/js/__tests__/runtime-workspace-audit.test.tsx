@@ -115,7 +115,9 @@ describe('explicit all-workspace read-only live audit', () => {
         const api = { dashboard: '/api/dashboard?tenant=wordpress' };
         const noSite = liveAuditPlan({ ...context(), api, active_site: null });
         for (const key of ['explorer', 'posts', 'pages', 'media', 'comments', 'taxonomy',
-            'categories', 'tags', 'wp-users', 'sync', 'seo-audit']) {
+            'categories', 'tags', 'wp-users', 'sync', 'seo-audit',
+            'site-details', 'site-snapshot', 'site-offline-data',
+            'site-connection-center', 'site-connection-operations']) {
             expect(noSite.find(entry => entry.key === key)?.reason, key)
                 .toBe('site_selection_required');
         }
@@ -198,6 +200,46 @@ describe('explicit all-workspace read-only live audit', () => {
             status: 403, headers: { 'content-type': 'application/json' },
         }));
         await expect(loadSiteScopedAuditContext(base, 5, [5], denied as typeof fetch)).rejects.toThrow();
+    });
+
+    it('accepts exactly the five real selected-site GET aliases and rejects substituted paths', async () => {
+        const base = { ...context(), api: {} };
+        const exact = {
+            'site-details': '/api/tenants/wordpress/sites/7',
+            'site-snapshot': '/api/tenants/wordpress/sites/7/snapshot',
+            'site-offline-data': '/api/tenants/wordpress/sites/7/snapshot',
+            'site-connection-center': '/api/tenants/wordpress/sites/7/connection',
+            'site-connection-operations': '/api/tenants/wordpress/sites/7/operations',
+        };
+        const scoped: FrontendContext = {
+            ...base, active_site: { id: 7, name: 'PRIVATE_SITE_CANARY' }, api: exact,
+        };
+        const request = vi.fn(async () => new Response(JSON.stringify(scoped), {
+            status: 200, headers: { 'content-type': 'application/json' },
+        }));
+        const selected = await loadSiteScopedAuditContext(base, 7, [7], request as typeof fetch);
+        for (const key of Object.keys(exact)) {
+            expect(liveAuditPlan(selected).find(item => item.key === key)?.reason).toBe('read_ok');
+            expect(liveAuditPlan(base).find(item => item.key === key)?.reason).toBe('site_selection_required');
+        }
+        expect(request).toHaveBeenCalledTimes(1);
+        expect(liveAuditPlan(selected).every(item => item.tested_write_actions === 0)).toBe(true);
+
+        for (const unsafe of [
+            '/api/tenants/wordpress/sites/8',
+            '/api/tenants/wordpress/sites/7/other',
+            '/api/tenants/wordpress/sites/7?secret=CANARY',
+        ]) {
+            const swapped = vi.fn(async () => new Response(JSON.stringify({
+                ...scoped, api: { ...exact, 'site-details': unsafe },
+            }), { status: 200, headers: { 'content-type': 'application/json' } }));
+            await expect(loadSiteScopedAuditContext(base, 7, [7], swapped as typeof fetch)).rejects.toThrow();
+        }
+        const fakeSnapshot = vi.fn(async () => new Response(JSON.stringify({
+            ...scoped, api: { ...exact, 'site-snapshot': '/api/tenants/wordpress/sites/7/delete' },
+        }), { status: 200, headers: { 'content-type': 'application/json' } }));
+        await expect(loadSiteScopedAuditContext(base, 7, [7], fakeSnapshot as typeof fetch)).rejects.toThrow();
+        expect(JSON.stringify(safeInspectorBundle(server, [], selected))).not.toContain('PRIVATE_SITE_CANARY');
     });
 
     it('probes documented production context paths without executing writes', async () => {
