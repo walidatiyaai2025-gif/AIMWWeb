@@ -120,4 +120,83 @@ final class PairedConnectorCanonicalSyncRegressionTest extends TestCase
             ->assertJsonPath('latest_run.processed', 2)
             ->assertJsonPath('cached.total', 1);
     }
+
+    public function test_unready_paired_connector_never_falls_back_to_a_successful_legacy_seo_only_sync(): void
+    {
+        Queue::fake();
+
+        $user = User::factory()->create();
+        $tenant = Tenant::query()->create(['name' => 'WordPress Tenant', 'slug' => 'wordpress']);
+        $context = app(TenantContext::class);
+        $context->activate($tenant);
+        $membership = TenantMembership::query()->create(['user_id' => $user->id, 'status' => 'active']);
+        $role = Role::query()->create(['name' => 'blocked-connector-sync']);
+        foreach (['tenant.view', 'sites.view', 'sites.manage'] as $permission) {
+            $model = Permission::query()->firstOrCreate(['name' => $permission]);
+            $role->permissions()->attach($model, ['tenant_id' => $tenant->id]);
+        }
+        $membership->roles()->attach($role, ['tenant_id' => $tenant->id]);
+
+        $site = Site::query()->create([
+            'name' => 'Partially configured connector site',
+            'url' => 'https://wordpress.example.test',
+            'status' => 'active',
+            'connection_status' => 'paired',
+        ]);
+        $connector = Connector::query()->create([
+            'site_id' => $site->id,
+            'identity' => '12345678-1234-4123-8123-aabbccddeeff',
+            'encrypted_secret' => 'protected-fixture',
+            'verified_at' => null,
+            'revoked_at' => null,
+            'capabilities' => ['health', 'content.read'],
+            'enabled_scopes' => ['health', 'content.read'],
+        ]);
+        $context->forget();
+
+        $url = "/api/tenants/wordpress/sites/{$site->id}/sync";
+        $cases = [
+            ['verified_at' => null, 'revoked_at' => null,
+                'capabilities' => ['health', 'content.read'],
+                'enabled_scopes' => ['health', 'content.read'],
+                'expected' => 'CONNECTOR_NOT_VERIFIED'],
+            ['verified_at' => now(), 'revoked_at' => now(),
+                'capabilities' => ['health', 'content.read'],
+                'enabled_scopes' => ['health', 'content.read'],
+                'expected' => 'CONNECTOR_REVOKED'],
+            ['verified_at' => now(), 'revoked_at' => null,
+                'capabilities' => ['health'],
+                'enabled_scopes' => ['health', 'content.read'],
+                'expected' => 'CONNECTOR_CONTENT_READ_UNSUPPORTED'],
+            ['verified_at' => now(), 'revoked_at' => null,
+                'capabilities' => ['health', 'content.read'],
+                'enabled_scopes' => ['health'],
+                'expected' => 'CONNECTOR_CONTENT_READ_DISABLED'],
+        ];
+
+        foreach ($cases as $index => $case) {
+            $expectedCode = $case['expected'];
+            unset($case['expected']);
+
+            $context->activate($tenant, $membership);
+            $connector->forceFill($case)->save();
+            $context->forget();
+
+            $this->actingAs($user)
+                ->withHeader('Idempotency-Key', 'connector-blocked-'.$index)
+                ->postJson($url)
+                ->assertStatus(409)
+                ->assertJsonPath('code', $expectedCode)
+                ->assertJsonMissingPath('id')
+                ->assertJsonMissingPath('status');
+        }
+
+        Queue::assertNotPushed(SyncSiteJob::class);
+        Queue::assertNotPushed(ProcessSyncRunJob::class);
+        $context->activate($tenant, $membership);
+        $this->assertSame(0, SyncRun::query()->where('site_id', $site->id)->count());
+        $this->assertSame(0, SyncedContent::query()->where('site_id', $site->id)->count());
+        $context->forget();
+    }
+
 }
