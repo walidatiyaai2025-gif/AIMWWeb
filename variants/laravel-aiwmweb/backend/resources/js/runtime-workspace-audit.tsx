@@ -49,7 +49,7 @@ export function liveAuditPlan(context: FrontendContext): LiveAuditEntry[] {
         const reason: LiveAuditEntry['reason'] = denied ?? (!route.apiKey
             ? 'navigation_only'
             : !endpoint ? 'missing_contract'
-                : /[:{}]/.test(endpoint) ? 'parameterized_endpoint'
+                : /(?:\/:|[{}])/.test(endpoint) ? 'parameterized_endpoint'
                     : !safeAuditEndpoint(endpoint, context.tenant.slug)
                         ? 'unsafe_endpoint' : 'read_ok');
         return {
