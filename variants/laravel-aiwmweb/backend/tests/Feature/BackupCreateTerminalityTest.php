@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Backup\TenantBackupCreateService;
 use App\Http\Controllers\BackupCreateController;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
@@ -118,6 +119,77 @@ final class BackupCreateTerminalityTest extends TestCase
         ])->assertUnprocessable();
 
         $this->assertDatabaseCount('backup_archives', 0);
+    }
+
+    public function test_preexisting_backup_and_tenant_path_symlinks_reject_archive_writes(): void
+    {
+        Storage::fake('local');
+        [$admin, $tenant] = $this->member('alpha', true);
+
+        if (! function_exists('symlink')) {
+            $this->markTestSkipped('This filesystem does not support symbolic links.');
+        }
+
+        foreach (['backups', 'backups/tenant-'.$tenant->id] as $segment) {
+            Storage::disk('local')->deleteDirectory('backups');
+            if ($segment !== 'backups') {
+                Storage::disk('local')->makeDirectory('backups');
+            }
+
+            $outside = sys_get_temp_dir().'/aiwm-backup-symlink-'.bin2hex(random_bytes(6));
+            $this->assertTrue(mkdir($outside, 0700));
+            $link = Storage::disk('local')->path($segment);
+            if (! @symlink($outside, $link)) {
+                @rmdir($outside);
+                $this->markTestSkipped('Cannot create isolated filesystem symlink for this test.');
+            }
+
+            try {
+                $this->assertBackupTargetRejected($admin, $tenant);
+                $this->assertSame(['.', '..'], scandir($outside));
+                $this->assertDatabaseCount('backup_archives', 0);
+            } finally {
+                @unlink($link);
+                @rmdir($outside);
+            }
+        }
+    }
+
+    public function test_existing_file_at_backup_or_tenant_folder_rejects_writes(): void
+    {
+        Storage::fake('local');
+        [$admin, $tenant] = $this->member('alpha', true);
+
+        foreach (['backups', 'backups/tenant-'.$tenant->id] as $segment) {
+            Storage::disk('local')->deleteDirectory('backups');
+            if ($segment !== 'backups') {
+                Storage::disk('local')->makeDirectory('backups');
+            }
+
+            Storage::disk('local')->put($segment, 'occupied by a file');
+            try {
+                $this->assertBackupTargetRejected($admin, $tenant);
+                $this->assertSame('occupied by a file', Storage::disk('local')->get($segment));
+                $this->assertDatabaseCount('backup_archives', 0);
+            } finally {
+                Storage::disk('local')->delete($segment);
+            }
+        }
+    }
+
+    private function assertBackupTargetRejected(User $admin, Tenant $tenant): void
+    {
+        app(TenantContext::class)->activate($tenant);
+        try {
+            try {
+                app(TenantBackupCreateService::class)->create($admin->id, 'Safe backup smoke', null);
+                $this->fail('A backup must never be created into an unsafe existing path.');
+            } catch (\\RuntimeException $exception) {
+                $this->assertSame('Private backup storage target is unsafe.', $exception->getMessage());
+            }
+        } finally {
+            app(TenantContext::class)->forget();
+        }
     }
 
     private function member(string $slug, bool $platformAdmin): array
