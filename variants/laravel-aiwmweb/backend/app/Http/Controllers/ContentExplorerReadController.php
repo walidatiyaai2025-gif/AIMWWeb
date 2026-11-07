@@ -19,12 +19,20 @@ final class ContentExplorerReadController extends Controller
         $auth->authorize('sites.view');
 
         $ownedSite = Site::query()->findOrFail($site);
-        $search = trim((string) $request->query('search', ''));
-        $status = trim((string) $request->query('status', ''));
-        $type = strtolower(trim((string) $request->query('type', 'all')));
+        // Reject array-shaped or oversized query input before casting it to a
+        // string or passing it to SQL. An invalid filter is not an empty result.
+        $filters = $request->validate([
+            'search' => ['sometimes', 'nullable', 'string', 'max:200'],
+            'status' => ['sometimes', 'nullable', 'string', 'max:64'],
+            'type' => ['sometimes', 'nullable', 'string', 'max:16'],
+            'per_page' => ['sometimes', 'nullable', 'integer', 'min:1'],
+        ]);
+        $search = trim((string) ($filters['search'] ?? ''));
+        $status = trim((string) ($filters['status'] ?? ''));
+        $type = strtolower(trim((string) ($filters['type'] ?? 'all')));
         abort_unless(in_array($type, ['all', 'post', 'page'], true), 422, 'Explorer type must be all, post, or page.');
 
-        $perPage = max(1, min(100, $request->integer('per_page', 20)));
+        $perPage = min(100, (int) ($filters['per_page'] ?? 20));
         $query = ContentItem::query()->where('site_id', $site);
 
         if ($type !== 'all') {
@@ -34,9 +42,13 @@ final class ContentExplorerReadController extends Controller
             $query->where('status', $status);
         }
         if ($search !== '') {
-            $query->where(function ($builder) use ($search): void {
-                $builder->where('title', 'like', '%'.$search.'%')
-                    ->orWhere('slug', 'like', '%'.$search.'%');
+            // A user searches literal WordPress titles/slugs, not SQL LIKE
+            // patterns. Parameter binding alone does not escape % or _.
+            $needle = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $search);
+            $pattern = '%'.$needle.'%';
+            $query->where(function ($builder) use ($pattern): void {
+                $builder->whereRaw("title LIKE ? ESCAPE '!'", [$pattern])
+                    ->orWhereRaw("slug LIKE ? ESCAPE '!'", [$pattern]);
             });
         }
 
