@@ -78,6 +78,54 @@ final class OperationalLogsLiteralSearchTest extends TestCase
             ->assertJsonPath('data.0.id', $alphaId);
     }
 
+    public function test_invalid_logs_get_filters_return_422_without_reading_foreign_rows_or_writing_logs(): void
+    {
+        [$alpha, $actor] = $this->member('alpha');
+        [$beta] = $this->member('beta');
+        $this->log($alpha, 'tenant alpha search marker');
+        $this->log($beta, 'tenant beta private marker');
+
+        $before = DB::table('operation_logs')->count();
+        foreach ([
+            'q%5B%5D=marker',
+            'search%5B%5D=marker',
+            'level%5B%5D=info',
+            'correlation_id%5B%5D=not-a-uuid',
+            'q='.str_repeat('x', 161),
+            'search='.str_repeat('y', 161),
+            'level='.str_repeat('z', 33),
+            'correlation_id='.str_repeat('w', 101),
+        ] as $query) {
+            $response = $this->actingAs($actor)
+                ->getJson('/tenants/alpha/admin/logs?'.$query)
+                ->assertUnprocessable()
+                ->assertJsonStructure(['message', 'errors']);
+
+            $this->assertStringNotContainsString('tenant beta private marker', $response->getContent());
+            $this->assertSame($before, DB::table('operation_logs')->count());
+        }
+    }
+
+    public function test_logs_get_filter_precedence_keeps_bounded_literal_search_and_authorization(): void
+    {
+        [$alpha, $actor] = $this->member('alpha');
+        $expected = $this->log($alpha, 'queue_worker finished');
+        $this->log($alpha, 'other task finished');
+
+        $this->actingAs($actor)
+            ->getJson('/tenants/alpha/admin/logs?search='.rawurlencode('queue_'))
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $expected);
+
+        // The explicit q filter takes precedence over the legacy search alias.
+        $this->actingAs($actor)
+            ->getJson('/tenants/alpha/admin/logs?q='.rawurlencode('queue_').'&search=other')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $expected);
+    }
+
     /** @return array{Tenant,User} */
     private function member(string $slug): array
     {
