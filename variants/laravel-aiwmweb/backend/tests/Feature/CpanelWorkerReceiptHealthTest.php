@@ -38,6 +38,40 @@ class CpanelWorkerReceiptHealthTest extends TestCase
         $this->assertSame('not_ready', $report['status']);
     }
 
+    public function test_enabled_ai_never_claims_ready_until_worker_and_scheduler_evidence_is_valid(): void
+    {
+        config(['cpanel.ai_enabled' => true]);
+        $store = Cache::store('database');
+        $store->forget(RuntimeHealthService::CPANEL_QUEUE_TICK_RECEIPT_KEY);
+        $store->forget(RuntimeHealthService::SCHEDULER_HEARTBEAT_KEY);
+        $health = app(RuntimeHealthService::class);
+
+        // Config flags alone never establish a completed worker cycle.
+        $this->assertSame('unavailable', $health->ready()['checks']['ai']['status']);
+
+        $store->put(RuntimeHealthService::CPANEL_QUEUE_TICK_RECEIPT_KEY, time() - 10, now()->addMinutes(10));
+        $this->assertSame('unavailable', $health->ready()['checks']['ai']['status']);
+
+        $store->put(RuntimeHealthService::SCHEDULER_HEARTBEAT_KEY, time() - 10, now()->addMinutes(10));
+        $this->assertSame('ok', $health->ready()['checks']['ai']['status']);
+
+        $store->put(RuntimeHealthService::CPANEL_QUEUE_TICK_RECEIPT_KEY, time() - 301, now()->addMinutes(10));
+        $this->assertSame('unavailable', $health->ready()['checks']['ai']['status']);
+
+        $store->put(RuntimeHealthService::CPANEL_QUEUE_TICK_RECEIPT_KEY, time() - 10, now()->addMinutes(10));
+        config(['queue.default' => 'sync']);
+        $this->assertSame('unavailable', $health->ready()['checks']['ai']['status']);
+
+        config(['queue.default' => 'database', 'cpanel.preflight_passed' => false]);
+        $this->assertSame('unavailable', $health->ready()['checks']['ai']['status']);
+
+        config(['cpanel.preflight_passed' => true, 'cpanel.cron_enabled' => false]);
+        $this->assertSame('unavailable', $health->ready()['checks']['ai']['status']);
+
+        config(['cpanel.ai_enabled' => false]);
+        $this->assertSame('disabled', $health->ready()['checks']['ai']['status']);
+    }
+
     public function test_recent_successful_worker_cycle_receipt_is_allowlisted_and_bounded(): void
     {
         Cache::store('database')->put(RuntimeHealthService::CPANEL_QUEUE_TICK_RECEIPT_KEY, time() - 15, now()->addMinutes(10));
