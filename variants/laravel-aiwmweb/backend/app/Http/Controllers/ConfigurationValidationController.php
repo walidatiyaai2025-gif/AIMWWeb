@@ -74,6 +74,15 @@ final class ConfigurationValidationController extends Controller
     {
         $title = 'Managed backup storage';
         $disk = Storage::disk('local');
+        // A symlinked root can make an external writable directory look like
+        // protected application storage. A trailing slash would dereference
+        // the link during is_link(), so normalize it before checking.
+        $root = rtrim($disk->path(''), '/\\') ?: DIRECTORY_SEPARATOR;
+        if (is_link($root)) {
+            return $this->item('backups', $title, 'error', $title,
+                'The configured backup storage root is a symbolic link and cannot be verified as safe. Server paths and exception details were withheld.');
+        }
+
         $directory = $disk->path('backups');
 
         if (is_link($directory) || (file_exists($directory) && ! is_dir($directory))) {
