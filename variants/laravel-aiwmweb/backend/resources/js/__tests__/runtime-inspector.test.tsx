@@ -218,7 +218,7 @@ describe('runtime inspector safe diagnostics', () => {
     });
 
     it('audits the only listed site with a separate GET context without changing the dashboard selection', async () => {
-        const context = ctx();
+        const context = ctx(['tenant.view', 'diagnostics.view', 'content.view']);
         const scoped: FrontendContext = {
             ...context,
             active_site: { id: 1, name: 'PRIVATE-SITE', status: 'connected' },
