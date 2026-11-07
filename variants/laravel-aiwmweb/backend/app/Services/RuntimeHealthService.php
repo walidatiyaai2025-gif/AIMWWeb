@@ -14,6 +14,9 @@ final class RuntimeHealthService
 {
     public const SCHEDULER_HEARTBEAT_KEY = 'runtime:scheduler:last_tick';
 
+    // Set only after the actual bounded cPanel Cron worker cycle completes.
+    public const CPANEL_QUEUE_TICK_RECEIPT_KEY = 'runtime:cpanel:queue:last_successful_tick';
+
     /** @return array{status:string,service:string} */
     public function live(): array
     {
@@ -118,7 +121,9 @@ final class RuntimeHealthService
                 }
                 Queue::connection('database')->size();
             }),
-            'queue_processing' => ['status' => config('cpanel.cron_enabled') ? 'ok' : 'disabled'],
+            'queue_processing' => config('cpanel.cron_enabled')
+                ? $this->cpanelQueueProcessing()
+                : ['status' => 'disabled', 'reason_code' => 'cron_disabled'],
             'redis' => ['status' => 'not_required'],
             'ai' => ['status' => config('cpanel.ai_enabled') ? (config('cpanel.preflight_passed') && config('cpanel.cron_enabled') ? 'ok' : 'unavailable') : 'disabled'],
             'scheduler' => ! config('cpanel.cron_enabled') ? ['status' => 'disabled'] : $this->probe('scheduler', function (): void {
@@ -135,6 +140,42 @@ final class RuntimeHealthService
             'hosting_preflight' => config('cpanel.preflight_passed') ? 'operator_validated' : 'pending',
             'checks' => $checks,
         ];
+    }
+
+    /** @return array{status:string,reason_code?:string,age_seconds?:int,evidence?:string} */
+    private function cpanelQueueProcessing(): array
+    {
+        try {
+            $receipt = Cache::store('database')->get(self::CPANEL_QUEUE_TICK_RECEIPT_KEY);
+            if (! is_numeric($receipt)) {
+                return ['status' => 'unavailable', 'reason_code' => 'worker_receipt_missing'];
+            }
+
+            $age = time() - (int) $receipt;
+            if ($age < -30) {
+                return ['status' => 'unavailable', 'reason_code' => 'worker_receipt_invalid'];
+            }
+            if ($age > 180) {
+                return [
+                    'status' => 'unavailable',
+                    'reason_code' => 'worker_receipt_stale',
+                    'age_seconds' => min($age, 86400),
+                ];
+            }
+
+            return [
+                'status' => 'ok',
+                'evidence' => 'bounded_worker_cycle_completed',
+                'age_seconds' => max(0, $age),
+            ];
+        } catch (Throwable $exception) {
+            Log::warning('runtime.health.failed', [
+                'check' => 'queue_processing',
+                'exception_class' => $exception::class,
+            ]);
+
+            return ['status' => 'unavailable', 'reason_code' => 'worker_receipt_unreadable'];
+        }
     }
 
     /** @return array{status:string} */
