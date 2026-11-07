@@ -428,11 +428,14 @@ final class RuntimeInspectorExportTest extends TestCase
     {
         config([
             'cpanel.enabled' => true,
+            'app.url' => 'https://aiwm.test',
             'cpanel.cron_enabled' => true,
             'cpanel.preflight_passed' => true,
             'queue.default' => 'database',
             'cache.default' => 'database',
         ]);
+        // cPanel correctly requires HTTPS; exercise the secured host transport.
+        $this->withServerVariables(['HTTPS' => 'on']);
 
         $user = User::factory()->create();
         $this->membership($user, 'wordpress', ['tenant.view', 'diagnostics.view']);
@@ -470,11 +473,14 @@ final class RuntimeInspectorExportTest extends TestCase
     {
         config([
             'cpanel.enabled' => true,
+            'app.url' => 'https://aiwm.test',
             'cpanel.cron_enabled' => true,
             'cpanel.preflight_passed' => true,
             'queue.default' => 'database',
             'cache.default' => 'database',
         ]);
+        // cPanel correctly requires HTTPS; exercise the secured host transport.
+        $this->withServerVariables(['HTTPS' => 'on']);
         $user = User::factory()->create();
         $this->membership($user, 'wordpress', ['tenant.view', 'diagnostics.view']);
         $url = '/tenants/wordpress/runtime-inspector/report';
