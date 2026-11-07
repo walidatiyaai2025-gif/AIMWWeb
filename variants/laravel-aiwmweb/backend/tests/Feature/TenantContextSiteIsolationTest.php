@@ -110,6 +110,30 @@ class TenantContextSiteIsolationTest extends TestCase
         );
     }
 
+    public function test_explicit_read_only_inspector_site_context_does_not_change_dashboard_session_site(): void
+    {
+        $user = User::factory()->create();
+        $membership = $this->membership($user, 'alpha', ['tenant.view', 'sites.view', 'diagnostics.view']);
+        $dashboardSite = $this->site($membership, 'Dashboard Selection');
+        $auditSite = $this->site($membership, 'Inspector Audit Target');
+
+        $this->withSession(['canonical_site_id' => $dashboardSite->id])
+            ->actingAs($user)
+            ->getJson('/tenants/alpha/context?site='.$auditSite->id)
+            ->assertOk()
+            ->assertJsonPath('tenant.slug', 'alpha')
+            ->assertJsonPath('active_site.id', $auditSite->id)
+            ->assertSessionHas('canonical_site_id', $dashboardSite->id);
+
+        // Subsequent ordinary context reads must retain the original site.
+        $this->actingAs($user)
+            ->getJson('/tenants/alpha/context')
+            ->assertOk()
+            ->assertJsonPath('active_site.id', $dashboardSite->id)
+            ->assertSessionHas('canonical_site_id', $dashboardSite->id);
+        $this->assertFalse(app(TenantContext::class)->active());
+    }
+
     private function membership(User $user, string $slug, array $permissions): TenantMembership
     {
         $tenant = Tenant::query()->create(['name' => ucfirst($slug), 'slug' => $slug]);
