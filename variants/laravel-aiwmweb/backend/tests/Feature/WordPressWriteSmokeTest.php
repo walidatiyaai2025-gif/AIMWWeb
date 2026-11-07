@@ -14,6 +14,7 @@ use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request as RemoteRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
@@ -104,6 +105,34 @@ final class WordPressWriteSmokeTest extends TestCase
             ->assertJsonPath('reason', 'application_password_not_configured')
             ->assertJsonPath('save_verified', false);
         Http::assertNothingSent();
+    }
+
+    public function test_active_per_tenant_site_lock_blocks_another_disposable_write_without_remote_request(): void
+    {
+        $user = User::factory()->create();
+        $membership = $this->membership($user, 'alpha', ['diagnostics.view', 'content.edit', 'content.manage']);
+        $site = $this->site($membership);
+        $this->credential($membership, $site);
+        Http::fake();
+
+        // Hold the same cache lease from another hypothetical worker. The
+        // second request must never create any WordPress canaries.
+        $lock = Cache::lock(
+            'wp-smoke:tenant:'.$membership->tenant_id.':site:'.$site->id,
+            300,
+        );
+        $this->assertTrue($lock->get());
+        try {
+            $this->actingAs($user)
+                ->postJson(self::ENDPOINT, $this->body('comments') + ['site_id' => $site->id])
+                ->assertStatus(409)
+                ->assertJsonPath('state', 'not_tested')
+                ->assertJsonPath('reason', 'another_write_probe_is_active')
+                ->assertJsonPath('cleanup_required', false);
+            Http::assertNothingSent();
+        } finally {
+            $lock->release();
+        }
     }
 
     public function test_real_http_post_get_save_get_delete_get_is_required_for_pass(): void
