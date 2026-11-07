@@ -333,7 +333,6 @@ final class WordPressWriteSmokeTest extends TestCase
         $this->assertSame(7, count(array_filter($sequence, fn (string $entry): bool => str_starts_with($entry, 'DELETE:'))));
     }
 
-
     public function test_corrupt_created_post_identity_never_permanently_deletes_an_existing_post(): void
     {
         $user = User::factory()->create();
@@ -431,15 +430,18 @@ final class WordPressWriteSmokeTest extends TestCase
             $path = (string) parse_url($request->url(), PHP_URL_PATH);
             if ($request->method() === 'POST' && str_ends_with($path, '/media')) {
                 $exists = true;
+
                 return Http::response(['id' => 919], 201);
             }
             if ($request->method() === 'POST' && str_ends_with($path, '/media/919')) {
                 $alt = (string) ($request->data()['alt_text'] ?? '');
+
                 return Http::response(['id' => 919], 200);
             }
             if ($request->method() === 'DELETE') {
                 $this->assertTrue($exists);
                 $exists = false;
+
                 return Http::response(['deleted' => true], 200);
             }
             if ($request->method() === 'GET') {
