@@ -32,7 +32,7 @@ final class ModuleWorkspaceManageSitesLinkTerminalityTest extends TestCase
         $this->assertStringContainsString("tenantUrl(context.tenant.slug, '/sites')", $frontend);
         $this->assertStringContainsString('data-testid="seo-manage-sites-link"', $frontend);
         $this->assertStringContainsString('ModuleWorkspaceLoadSitesControl', $app);
-        $this->assertStringContainsString("route.key === 'seo-audit' || route.key === 'seo-suggestions'", $app);
+        $this->assertStringContainsString("route.key === 'seo-audit' || route.key === 'seo-findings' || route.key === 'seo-suggestions'", $app);
     }
 
     public function test_manage_sites_destination_is_backed_by_the_authenticated_tenant_site_authority(): void
