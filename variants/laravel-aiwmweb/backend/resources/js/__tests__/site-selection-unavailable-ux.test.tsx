@@ -22,7 +22,7 @@ const ctx = (changes: Partial<FrontendContext> = {}): FrontendContext => ({
     user: { id: 1, name: 'Tester', email: 'test@example.test' },
     tenant: { slug: 'alpha', name: 'Alpha' },
     tenants: [{ slug: 'alpha', name: 'Alpha' }],
-    permissions: ['tenant.view', 'sites.view', 'content.view', 'sync.view', 'seo.view'],
+    permissions: ['tenant.view', 'sites.view', 'content.view', 'sync.view', 'seo.view', 'ai.viewUsage'],
     connectors: [],
     capabilities: {},
     active_site: null,
