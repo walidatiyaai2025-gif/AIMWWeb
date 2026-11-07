@@ -1,4 +1,6 @@
-@php($ar = $locale === 'ar')
+@php
+    $ar = $locale === 'ar';
+@endphp
 <!doctype html>
 <html lang="{{ $ar ? 'ar' : 'en' }}" dir="{{ $ar ? 'rtl' : 'ltr' }}" data-mode="dark">
 <head>
@@ -140,7 +142,9 @@
             </section>
         @endif
 
-        @php($newFailed = old('_prompt_key') === '__new__')
+        @php
+            $newFailed = old('_prompt_key') === '__new__';
+        @endphp
         <section
             class="panel"
             id="new-template-editor"
