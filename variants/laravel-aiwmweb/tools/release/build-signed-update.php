@@ -29,6 +29,23 @@ if ($base === false || ! is_file($base.'/composer.lock') || ! is_dir($base.'/ven
     fwrite(STDERR, "Production backend dependencies and Vite build are required.\n");
     exit(2);
 }
+// Production signatures must never bless an un-audited Composer lockfile,
+// even when the prior Setup ZIP and two required push workflows were green.
+$securityProcess = @proc_open(
+    ['composer', 'audit', '--locked', '--no-interaction'],
+    [0 => STDIN, 1 => STDOUT, 2 => STDERR],
+    $securityPipes,
+    $base
+);
+if (! is_resource($securityProcess)) {
+    fwrite(STDERR, "BLOCKED: Composer locked-security audit could not start.\n");
+    exit(2);
+}
+if (proc_close($securityProcess) !== 0) {
+    fwrite(STDERR, "BLOCKED: Composer locked-security audit failed; refusing production signing.\n");
+    exit(2);
+}
+
 $output = $argv[3];
 if (! is_dir($output) && ! mkdir($output, 0700, true)) {
     throw new RuntimeException('Unable to create output directory.');
