@@ -34,7 +34,11 @@ final class CommentsSearchClickedTerminalityTest extends TestCase
         $this->assertStringContainsString('COMMENTS_SEARCH_OPERATION_ID', $frontend);
         $this->assertStringContainsString('route.key === \'comments\' ? COMMENTS_SEARCH_OPERATION_ID : undefined', $frontend);
         $this->assertStringContainsString('setPage(1); setSearch(searchInput);', $frontend);
-        $this->assertStringContainsString('queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, { ...taxonomyAppliedQuery, ...wordpressUsersFilters }))', $frontend);
+        $this->assertStringContainsString('queryFn: () => readWorkspaceCollection(endpointWithQuery(endpoint!, page, search, { ...taxonomyAppliedQuery, ...wordpressUsersFilters }))', $frontend);
+        $this->assertStringContainsString('readWorkspaceCollectionResponse(route.key, url, (target) => apiRequest<unknown>(target))', $frontend);
+        $validator = (string) file_get_contents(resource_path('js/wordpress-collection-contract.ts'));
+        $this->assertStringContainsString("'comments'", $validator);
+        $this->assertStringContainsString('assertValidWordPressCollection(routeKey, payload);', $validator);
     }
 
     public function test_search_reads_only_matching_authoritative_comments_for_the_current_site(): void
