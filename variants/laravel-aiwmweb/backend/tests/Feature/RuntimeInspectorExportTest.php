@@ -60,6 +60,7 @@ final class RuntimeInspectorExportTest extends TestCase
             'site_id' => $site->id,
             'identity' => '12345678-1234-4123-8123-123456789abc',
             'encrypted_secret' => 'CANARY_CONNECTOR_SECRET_NEVER_EXPORT',
+            'verified_at' => now(),
             'capabilities' => ['health', 'content.read'],
             'enabled_scopes' => ['health', 'content.read'],
         ]);
@@ -139,6 +140,78 @@ final class RuntimeInspectorExportTest extends TestCase
             ->assertJsonPath('sites.1.finding', 'CONTENT_READ_SCOPE_DISABLED');
     }
 
+    public function test_inspector_reports_unverified_and_unsupported_connector_even_with_existing_content(): void
+    {
+        $user = User::factory()->create();
+        $membership = $this->membership($user, 'wordpress', ['tenant.view', 'diagnostics.view']);
+        app(TenantContext::class)->activate($membership->tenant, $membership);
+
+        $unverified = Site::query()->create([
+            'name' => 'Unverified WordPress site',
+            'url' => 'https://unverified.example.test',
+            'connection_status' => 'paired',
+            'status' => 'active',
+        ]);
+        Connector::query()->create([
+            'site_id' => $unverified->id,
+            'identity' => '12345678-1234-4123-8123-aabbccddee01',
+            'encrypted_secret' => 'UNVERIFIED_SECRET_CANARY',
+            'verified_at' => null,
+            'enabled_scopes' => ['health', 'content.read'],
+            'capabilities' => ['health', 'content.read'],
+        ]);
+        ContentItem::query()->create([
+            'site_id' => $unverified->id,
+            'type' => 'post',
+            'remote_id' => 17,
+            'title' => 'UNVERIFIED_CONTENT_CANARY',
+            'slug' => 'unverified-content',
+            'status' => 'publish',
+        ]);
+        SyncRun::query()->create([
+            'site_id' => $unverified->id,
+            'state' => 'completed',
+            'resources' => ['posts'],
+            'completed_at' => now(),
+        ]);
+
+        $unsupported = Site::query()->create([
+            'name' => 'Read capability not negotiated',
+            'url' => 'https://unsupported.example.test',
+            'connection_status' => 'verified',
+            'status' => 'active',
+        ]);
+        Connector::query()->create([
+            'site_id' => $unsupported->id,
+            'identity' => '12345678-1234-4123-8123-aabbccddee02',
+            'encrypted_secret' => 'UNSUPPORTED_SECRET_CANARY',
+            'verified_at' => now(),
+            'enabled_scopes' => ['health', 'content.read'],
+            'capabilities' => ['health'],
+        ]);
+        app(TenantContext::class)->forget();
+
+        Http::fake();
+        $response = $this->actingAs($user)
+            ->getJson('/tenants/wordpress/runtime-inspector/report?probe=1')
+            ->assertOk()
+            ->assertJsonPath('sites.0.site_id', $unverified->id)
+            ->assertJsonPath('sites.0.finding', 'CONNECTOR_NOT_VERIFIED')
+            ->assertJsonPath('sites.0.connector.verified', false)
+            ->assertJsonPath('sites.0.record_counts.posts', 1)
+            ->assertJsonPath('sites.0.last_sync.state', 'completed')
+            ->assertJsonPath('sites.0.remote_probe.attempted', false)
+            ->assertJsonPath('sites.1.site_id', $unsupported->id)
+            ->assertJsonPath('sites.1.finding', 'CONTENT_READ_UNSUPPORTED')
+            ->assertJsonPath('sites.1.connector.verified', true)
+            ->assertJsonPath('sites.1.remote_probe.attempted', false);
+
+        foreach (['UNVERIFIED_SECRET_CANARY', 'UNSUPPORTED_SECRET_CANARY', 'UNVERIFIED_CONTENT_CANARY'] as $secret) {
+            $this->assertStringNotContainsString($secret, $response->getContent());
+        }
+        Http::assertNothingSent();
+    }
+
     public function test_optional_live_probe_uses_one_signed_read_without_exposing_remote_payload(): void
     {
         $user = User::factory()->create();
@@ -154,6 +227,7 @@ final class RuntimeInspectorExportTest extends TestCase
             'site_id' => $site->id,
             'identity' => '12345678-1234-4123-8123-abcd12345678',
             'encrypted_secret' => 'SECRET_REMOTE_CANARY',
+            'verified_at' => now(),
             'enabled_scopes' => ['health', 'content.read'],
             'capabilities' => ['health', 'content.read'],
         ]);
