@@ -31,6 +31,7 @@ use App\Http\Controllers\SiteManagementController;
 use App\Http\Controllers\SiteOnboardingController;
 use App\Http\Controllers\SitesBulkDisableSelectedController;
 use App\Http\Controllers\SitesBulkOperationalStateController;
+use App\Http\Controllers\WordPressWriteSmokeController;
 use App\Models\Connector;
 use App\Models\Site;
 use App\Models\TenantMembership;
@@ -190,6 +191,10 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
     Route::get('/tenants/{tenant}/runtime-inspector/report', RuntimeInspectorController::class)
         ->name('tenant.runtime-inspector.report');
 
+    // Explicit owner-confirmed disposable WordPress REST writes; GET diagnostics stay read-only.
+    Route::post('/tenants/{tenant}/runtime-inspector/wordpress-write-check', WordPressWriteSmokeController::class)
+        ->middleware('throttle:12,1')->name('tenant.runtime-inspector.wordpress-write-check');
+
     Route::get('/tenants/{tenant}/configuration-validation/report', [ConfigurationValidationController::class, 'show'])
         ->defaults('canonical_operation_id', ConfigurationValidationController::COPY_REPORT_OPERATION_ID)
         ->name('tenant.configuration-validation.report');
@@ -241,7 +246,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
             $activeSiteId = request()->session()->get('canonical_site_id');
             if ($activeSiteId !== null) {
                 $site = Site::query()->find((int) $activeSiteId);
-                if (! $site) {
+                if ($site === null) {
                     request()->session()->forget('canonical_site_id');
                 }
             }

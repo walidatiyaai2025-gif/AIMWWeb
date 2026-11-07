@@ -5,6 +5,7 @@ import { useLocale } from './i18n';
 import { WorkspaceCapabilityCensusPanel } from './workspace-capability-census-panel';
 import { DashboardConnectorDownloadControl } from './dashboard-connector-download-control';
 import { RuntimeWorkspaceAuditPanel, type LiveAuditResult } from './runtime-workspace-audit';
+import { WordPressWriteAuditPanel, WP_SMOKE_RESOURCES, type WpSmokeRun } from './wordpress-write-audit-panel';
 import { workspaceCapabilityCensus } from './workspace-capability-census';
 import {
     clearRuntimeInspectorEvents,
@@ -106,11 +107,11 @@ const allowedEventMethods = new Set<NonNullable<RuntimeObservation['method']>>([
 ]);
 
 /** Explicit allowlist; future backend response additions cannot enter the user export. */
-export function safeInspectorBundle(server: InspectorServer, events: RuntimeObservation[], context?: FrontendContext, liveAudit?: LiveAuditResult | null) {
+export function safeInspectorBundle(server: InspectorServer, events: RuntimeObservation[], context?: FrontendContext, liveAudit?: LiveAuditResult | null, writeAudit?: WpSmokeRun | null) {
     return {
         schema: 'aiwm.support-export.v1',
         exported_at: new Date().toISOString(),
-        privacy: 'Read-only. No credentials, raw URLs, request or response bodies, content, stack traces, cookies or server logs.',
+        privacy: 'GET diagnostics are read-only. A separate user-confirmed temporary WordPress write test may be included. No credentials, raw URLs, request or response bodies, content, recovery IDs, stack traces, cookies or logs.',
         server: {
             schema: boundedText(server.schema),
             generated_at: safeIsoTimestamp(server.generated_at),
@@ -220,6 +221,31 @@ export function safeInspectorBundle(server: InspectorServer, events: RuntimeObse
                     })),
             },
         } : {}),
+        ...(writeAudit ? {
+            wordpress_write_smoke: {
+                schema: 'aiwm.wordpress-write-smoke.summary.v1',
+                transport: 'native_wordpress_rest',
+                site_id: count(writeAudit.site_id),
+                completed: writeAudit.completed === true,
+                // No recovery IDs, markers, remote WordPress URLs, request bodies or content.
+                results: writeAudit.results.slice(0, 6)
+                    .filter(entry => WP_SMOKE_RESOURCES.includes(entry.resource))
+                    .map(entry => ({
+                        resource: entry.resource,
+                        state: ['passed', 'failed', 'needs_reconciliation', 'not_tested'].includes(entry.state)
+                            ? entry.state : 'not_tested',
+                        create_verified: entry.create_verified === true,
+                        save_verified: entry.save_verified === true,
+                        delete_verified: entry.delete_verified === true,
+                        cleanup_required: entry.cleanup_required === true,
+                        reason: ['none', 'remote_create_not_confirmed', 'created_record_not_verified',
+                            'remote_save_not_confirmed', 'saved_record_not_verified', 'cleanup_not_verified',
+                            'create_result_ambiguous', 'application_password_not_configured',
+                            'another_write_probe_is_active', 'request_not_confirmed', 'unsupported_resource']
+                            .includes(entry.reason) ? entry.reason : 'unknown',
+                    })),
+            },
+        } : {}),
         browser: {
             family: typeof navigator !== 'undefined' && /Firefox\//.test(navigator.userAgent)
                 ? 'Firefox' : typeof navigator !== 'undefined' && /Edg\//.test(navigator.userAgent)
@@ -246,6 +272,7 @@ export function RuntimeInspectorPanel({ context }: { context: FrontendContext })
     const [message, setMessage] = useState('');
     const [localCount, setLocalCount] = useState(() => runtimeInspectorEvents().length);
     const [liveAudit, setLiveAudit] = useState<LiveAuditResult | null>(null);
+    const [writeAudit, setWriteAudit] = useState<WpSmokeRun | null>(null);
     const [auditedContext, setAuditedContext] = useState<FrontendContext | null>(null);
     const allowed = context.permissions.includes('*') || context.permissions.includes('diagnostics.view');
     const endpoint = `/tenants/${encodeURIComponent(context.tenant.slug)}/runtime-inspector/report`;
@@ -263,6 +290,7 @@ export function RuntimeInspectorPanel({ context }: { context: FrontendContext })
     const run = async () => {
         setMessage('');
         setLiveAudit(null);
+        setWriteAudit(null);
         setAuditedContext(null);
         await report.refetch();
         setLocalCount(runtimeInspectorEvents().length);
@@ -270,7 +298,7 @@ export function RuntimeInspectorPanel({ context }: { context: FrontendContext })
 
     const exportReport = () => {
         if (!report.data || report.data.schema !== 'aiwm.runtime-inspector.v1') return;
-        const bundle = safeInspectorBundle(report.data, runtimeInspectorEvents(), auditedContext ?? context, liveAudit);
+        const bundle = safeInspectorBundle(report.data, runtimeInspectorEvents(), auditedContext ?? context, liveAudit, writeAudit);
         const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const anchor = document.createElement('a');
@@ -311,6 +339,9 @@ export function RuntimeInspectorPanel({ context }: { context: FrontendContext })
                     setLiveAudit(result);
                     setAuditedContext(selectedContext);
                 }} />
+            <WordPressWriteAuditPanel context={context}
+                siteIds={report.data?.sites.map(site => site.site_id) ?? []}
+                onComplete={setWriteAudit} />
             {report.data ? (
                 <section className="panel">
                     <h3>{isArabic ? 'نتيجة الخادم' : 'Server snapshot'}</h3>
