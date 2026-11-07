@@ -92,7 +92,7 @@ final class EvidenceReceiptReadTest extends TestCase
         $user = User::factory()->create();
         $this->membership($user, 'evidence-context', ['tenant.view', 'execution.view']);
 
-        $this->actingAs($user)->getJson('/api/tenants/evidence-context/context')
+        $this->actingAs($user)->getJson('/tenants/evidence-context/context')
             ->assertOk()
             ->assertJsonPath('api.evidence', '/api/tenants/evidence-context/evidence');
     }
@@ -133,7 +133,7 @@ final class EvidenceReceiptReadTest extends TestCase
 
         $site = Site::query()->create([
             'name' => $membership->tenant->name.' Evidence Site',
-            'url' => 'https://'.$membership->tenant->slug.'.test',
+            'url' => 'https://'.$membership->tenant->slug.'-'.Str::uuid().'.test',
         ]);
         $content = SyncedContent::query()->create([
             'site_id' => $site->id,
