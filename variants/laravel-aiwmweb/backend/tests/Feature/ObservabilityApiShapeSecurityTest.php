@@ -73,8 +73,8 @@ final class ObservabilityApiShapeSecurityTest extends TestCase
 
         $operation = $response->json('failed_operations.0');
         $audit = $response->json('recent_audit.0');
-        $this->assertSameCanonicalizing(['id', 'type', 'status', 'created_at'], array_keys($operation));
-        $this->assertSameCanonicalizing(['id', 'event', 'occurred_at'], array_keys($audit));
+        $this->assertEqualsCanonicalizing(['id', 'type', 'status', 'created_at'], array_keys($operation));
+        $this->assertEqualsCanonicalizing(['id', 'event', 'occurred_at'], array_keys($audit));
 
         foreach ([
             'OPERATION_PAYLOAD_SECRET', 'OPERATION_RESULT_SECRET',
