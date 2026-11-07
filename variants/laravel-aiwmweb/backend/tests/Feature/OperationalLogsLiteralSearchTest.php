@@ -241,7 +241,12 @@ final class OperationalLogsLiteralSearchTest extends TestCase
             ->assertJsonPath('meta.matching_records', 501)
             ->assertJsonPath('meta.returned_records', 500)
             ->assertJsonPath('meta.truncated', true)
-            ->assertJsonPath('meta.empty_reason', 'not_empty');
+            ->assertJsonPath('meta.empty_reason', 'not_empty')
+            // All 501 records share a timestamp: the cap must preserve
+            // newest IDs, not arbitrarily return the oldest 500.
+            ->assertJsonPath('data.0.message', 'alpha-row-500')
+            ->assertJsonPath('data.499.message', 'alpha-row-1');
+        $this->assertStringNotContainsString('alpha-row-0', json_encode($response->json('data'), JSON_THROW_ON_ERROR));
         $this->assertStringNotContainsString('private beta record', $response->getContent());
     }
 
