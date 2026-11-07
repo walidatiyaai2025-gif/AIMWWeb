@@ -296,6 +296,123 @@ final class RuntimeInspectorExportTest extends TestCase
         Http::assertSentCount(1);
     }
 
+    public function test_explicit_probe_skips_three_ineligible_sites_and_reaches_later_verified_connector(): void
+    {
+        $user = User::factory()->create();
+        $membership = $this->membership($user, 'wordpress', ['tenant.view', 'diagnostics.view']);
+        app(TenantContext::class)->activate($membership->tenant, $membership);
+
+        // The first three rows are genuinely ineligible and must not exhaust the probe budget.
+        Site::query()->create([
+            'name' => 'Unpaired first', 'url' => 'https://unpaired-first.example.test',
+            'connection_status' => 'paired',
+        ]);
+        $unverified = Site::query()->create([
+            'name' => 'Unverified second', 'url' => 'https://unverified-second.example.test',
+            'connection_status' => 'paired',
+        ]);
+        Connector::query()->create([
+            'site_id' => $unverified->id,
+            'identity' => '12345678-1234-4123-8123-000000000002',
+            'encrypted_secret' => 'UNVERIFIED_SECRET_CANARY',
+            'verified_at' => null,
+            'capabilities' => ['health', 'content.read'],
+            'enabled_scopes' => ['health', 'content.read'],
+        ]);
+        $revoked = Site::query()->create([
+            'name' => 'Revoked third', 'url' => 'https://revoked-third.example.test',
+            'connection_status' => 'paired',
+        ]);
+        Connector::query()->create([
+            'site_id' => $revoked->id,
+            'identity' => '12345678-1234-4123-8123-000000000003',
+            'encrypted_secret' => 'REVOKED_SECRET_CANARY',
+            'verified_at' => now(),
+            'revoked_at' => now(),
+            'capabilities' => ['health', 'content.read'],
+            'enabled_scopes' => ['health', 'content.read'],
+        ]);
+        $eligible = Site::query()->create([
+            'name' => 'Eligible fourth', 'url' => 'https://eligible-fourth.example.test',
+            'connection_status' => 'paired',
+        ]);
+        Connector::query()->create([
+            'site_id' => $eligible->id,
+            'identity' => '12345678-1234-4123-8123-000000000004',
+            'encrypted_secret' => 'ELIGIBLE_SECRET_CANARY',
+            'verified_at' => now(),
+            'capabilities' => ['health', 'content.read'],
+            'enabled_scopes' => ['health', 'content.read'],
+        ]);
+        app(TenantContext::class)->forget();
+
+        Http::fake([
+            'https://eligible-fourth.example.test/wp-json/aimw/v1/capabilities' => Http::response([
+                'state' => 'CONNECTED',
+                'plugin_version' => '0.2.3',
+            ]),
+        ]);
+
+        $response = $this->actingAs($user)
+            ->getJson('/tenants/wordpress/runtime-inspector/report?probe=1')
+            ->assertOk()
+            ->assertJsonPath('sites.0.remote_probe.state', 'not_run')
+            ->assertJsonPath('sites.1.remote_probe.state', 'not_run')
+            ->assertJsonPath('sites.2.remote_probe.state', 'not_run')
+            ->assertJsonPath('sites.3.site_id', $eligible->id)
+            ->assertJsonPath('sites.3.remote_probe.attempted', true)
+            ->assertJsonPath('sites.3.connector.installed_version', '0.2.3');
+        $this->assertStringNotContainsString('ELIGIBLE_SECRET_CANARY', $response->getContent());
+        $this->assertStringNotContainsString('UNVERIFIED_SECRET_CANARY', $response->getContent());
+        $this->assertStringNotContainsString('REVOKED_SECRET_CANARY', $response->getContent());
+        Http::assertSentCount(1);
+        Http::assertSent(fn ($request): bool => $request->method() === 'GET'
+            && str_contains($request->url(), 'eligible-fourth.example.test/wp-json/aimw/v1/capabilities'));
+    }
+
+    public function test_explicit_probe_limits_to_three_eligible_connectors(): void
+    {
+        $user = User::factory()->create();
+        $membership = $this->membership($user, 'wordpress', ['tenant.view', 'diagnostics.view']);
+        app(TenantContext::class)->activate($membership->tenant, $membership);
+
+        foreach (range(1, 4) as $index) {
+            $site = Site::query()->create([
+                'name' => 'Eligible '.$index,
+                'url' => 'https://eligible-'.$index.'.example.test',
+                'connection_status' => 'paired',
+            ]);
+            Connector::query()->create([
+                'site_id' => $site->id,
+                'identity' => sprintf('12345678-1234-4123-8123-%012d', $index),
+                'encrypted_secret' => 'PRIVATE_CONNECTOR_CANARY',
+                'verified_at' => now(),
+                'capabilities' => ['health', 'content.read'],
+                'enabled_scopes' => ['health', 'content.read'],
+            ]);
+        }
+        app(TenantContext::class)->forget();
+
+        Http::fake([
+            'https://eligible-*.example.test/wp-json/aimw/v1/capabilities' => Http::response([
+                'state' => 'CONNECTED', 'plugin_version' => '0.2.3',
+            ]),
+        ]);
+
+        $response = $this->actingAs($user)
+            ->getJson('/tenants/wordpress/runtime-inspector/report?probe=1')
+            ->assertOk();
+        foreach (range(0, 2) as $index) {
+            $response->assertJsonPath('sites.'.$index.'.remote_probe.attempted', true);
+            $response->assertJsonPath('sites.'.$index.'.connector.installed_version', '0.2.3');
+        }
+        $response->assertJsonPath('sites.3.remote_probe.attempted', false)
+            ->assertJsonPath('sites.3.remote_probe.state', 'limited')
+            ->assertJsonPath('sites.3.connector.installed_version', 'unknown');
+        Http::assertSentCount(3);
+        Http::assertNotSent(fn ($request): bool => str_contains($request->url(), 'eligible-4.example.test'));
+    }
+
     public function test_bundle_version_matches_canonical_wordpress_plugin_header_and_constant(): void
     {
         $plugin = file_get_contents(base_path('../connector/aimw-connector/aimw-connector.php'));
