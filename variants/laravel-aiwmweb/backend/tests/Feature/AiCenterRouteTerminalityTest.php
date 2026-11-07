@@ -54,6 +54,30 @@ class AiCenterRouteTerminalityTest extends TestCase
         $this->assertSame(['GET', 'HEAD'], $read->methods());
     }
 
+    public function test_tenant_context_advertises_the_real_ai_center_read_without_escalating_permissions(): void
+    {
+        $tenant = Tenant::query()->create(['name' => 'Alpha', 'slug' => 'alpha']);
+        $user = User::factory()->create();
+        $this->membership($user, $tenant, ['tenant.view', 'ai.use']);
+
+        $this->actingAs($user)->getJson('/tenants/alpha/context')
+            ->assertOk()
+            ->assertJsonPath('api.ai-center', '/api/tenants/alpha/ai-center');
+
+        $this->actingAs($user)->getJson('/api/tenants/alpha/ai-center')
+            ->assertOk()
+            ->assertJsonPath('total', 0)
+            ->assertJsonCount(0, 'data');
+
+        $limited = User::factory()->create();
+        $this->membership($limited, $tenant, ['tenant.view']);
+        $this->actingAs($limited)->getJson('/api/tenants/alpha/ai-center')->assertForbidden();
+
+        $foreign = Tenant::query()->create(['name' => 'Foreign', 'slug' => 'foreign']);
+        $this->actingAs($user)->getJson('/tenants/foreign/context')->assertNotFound();
+        $this->actingAs($user)->getJson('/api/tenants/foreign/ai-center')->assertNotFound();
+    }
+
     public function test_route_reads_only_real_active_tenant_prompt_and_current_user_usage_state(): void
     {
         $this->withoutVite();

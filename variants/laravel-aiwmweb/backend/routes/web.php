@@ -271,6 +271,8 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
             'backups' => "/tenants/{$tenant}/admin/backups",
             'configuration-validation' => "/tenants/{$tenant}/configuration-validation/report",
             'configuration-validation-run' => "/tenants/{$tenant}/configuration-validation/run",
+            // Actual ai.use-authorized read route from AiCenterRouteServiceProvider.
+            'ai-center' => "/api/tenants/{$tenant}/ai-center",
             'ai-usage' => "/api/v1/tenants/{$tenant}/ai/usage",
             'account.billing' => "/tenants/{$tenant}/route-api/billing-overview",
             'admin-billing-support' => "/api/tenants/{$tenant}/billing/admin/subscriptions",
