@@ -168,6 +168,49 @@ final class ConfigurationValidationCopyReportTerminalityTest extends TestCase
         }
     }
 
+    public function test_symlinked_parent_of_backup_disk_root_is_rejected_without_side_effects(): void
+    {
+        Storage::fake('local');
+        $user = User::factory()->create();
+        $this->membership($user, 'alpha', ['settings.manage', 'tenant.view']);
+
+        $fakeRoot = rtrim(Storage::disk('local')->path(''), '/\\\\');
+        $actualParent = $fakeRoot.'/disposable-backup-parent';
+        $actualRoot = $actualParent.'/private';
+        $link = $fakeRoot.'/disposable-parent-link';
+        $originalRoot = config('filesystems.disks.local.root');
+
+        mkdir($actualParent);
+        mkdir($actualRoot);
+        if (! function_exists('symlink') || ! @symlink($actualParent, $link)) {
+            rmdir($actualRoot);
+            rmdir($actualParent);
+            $this->markTestSkipped('Creating a disposable symlink requires filesystem support.');
+        }
+
+        try {
+            config()->set('filesystems.disks.local.root', $link.'/private');
+            Storage::forgetDisk('local');
+            $response = $this->actingAs($user)
+                ->getJson('/tenants/alpha/configuration-validation/report')
+                ->assertOk();
+
+            $this->assertSame('error', collect($response->json('items'))->firstWhere('key', 'backups')['status']);
+            $this->assertGreaterThanOrEqual(1, $response->json('critical_count'));
+            $this->assertStringNotContainsString($link, $response->getContent());
+            $this->assertStringNotContainsString($actualRoot, $response->getContent());
+            $this->assertStringNotContainsString((string) config('app.key'), $response->getContent());
+            $this->assertFalse(file_exists($actualRoot.'/backups'));
+            $this->assertDatabaseCount('backup_archives', 0);
+        } finally {
+            config()->set('filesystems.disks.local.root', $originalRoot);
+            Storage::forgetDisk('local');
+            @unlink($link);
+            rmdir($actualRoot);
+            rmdir($actualParent);
+        }
+    }
+
     public function test_real_backup_post_provisions_the_same_verified_storage_target_reported_by_validation(): void
     {
         Storage::fake('local');
