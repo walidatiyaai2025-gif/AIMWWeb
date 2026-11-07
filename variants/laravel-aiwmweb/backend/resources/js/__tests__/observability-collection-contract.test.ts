@@ -1,0 +1,94 @@
+import { describe, expect, it, vi } from 'vitest';
+import { normalizeObservabilityCollection } from '../observability-collection-contract';
+import { readWorkspaceCollectionResponse } from '../wordpress-collection-contract';
+
+describe('tenant observability read contracts (#1514)', () => {
+    it('projects both authoritative diagnostics arrays, rather than masking audit rows as empty', async () => {
+        const response = {
+            failed_operations: [{
+                id: 17, type: 'sync.run', status: 'failed',
+                created_at: '2026-11-07T10:15:00Z',
+                payload: { secret: 'NEVER_SHOW_PAYLOAD' },
+                result: { token: 'NEVER_SHOW_RESULT' },
+            }],
+            recent_audit: [{
+                id: 19, event: 'site.updated', occurred_at: '2026-11-07T10:25:00Z',
+                actor_user_id: 123, metadata: { password: 'NEVER_SHOW_METADATA' },
+            }],
+        };
+        const result = await readWorkspaceCollectionResponse(
+            'diagnostics', '/tenants/alpha/admin/diagnostics', vi.fn().mockResolvedValue(response),
+        );
+        expect(result).toEqual({
+            data: [
+                { source: 'failed_operation', record_id: 17, event_type: 'sync.run', status: 'failed', occurred_at: '2026-11-07T10:15:00Z' },
+                { source: 'audit_event', record_id: 19, event_type: 'site.updated', status: 'recorded', occurred_at: '2026-11-07T10:25:00Z' },
+            ],
+            total: 2,
+            current_page: 1,
+            last_page: 1,
+            meta: { failed_operations_count: 1, recent_audit_count: 1 },
+        });
+        expect(JSON.stringify(result)).not.toMatch(/NEVER_SHOW|actor_user_id|payload|result|metadata/i);
+    });
+
+    it('accepts genuinely empty diagnostics, without inventing sample events', () => {
+        expect(normalizeObservabilityCollection('diagnostics', {
+            failed_operations: [], recent_audit: [],
+        })).toEqual({
+            data: [], total: 0, current_page: 1, last_page: 1,
+            meta: { failed_operations_count: 0, recent_audit_count: 0 },
+        });
+    });
+
+    it('treats malformed HTTP 200 diagnostics as errors, never zero', async () => {
+        const malformed = [
+            null, [], {}, { data: [] }, { failed_operations: [] },
+            { failed_operations: {}, recent_audit: [] },
+            { failed_operations: [], recent_audit: {} },
+            { failed_operations: [null], recent_audit: [] },
+            { failed_operations: [], recent_audit: ['wrong'] },
+            { failed_operations: [], recent_audit: [], error: 'failed' },
+            { failed_operations: [], recent_audit: [], success: false },
+            { failed_operations: Array.from({ length: 101 }, () => ({})), recent_audit: [] },
+        ];
+        for (const payload of malformed) {
+            await expect(readWorkspaceCollectionResponse(
+                'diagnostics', '/tenant/alpha/diagnostics', vi.fn().mockResolvedValue(payload),
+            )).rejects.toThrow('Operational observability response was invalid');
+        }
+    });
+
+    it('accepts logs only from the real data array and retains search results', async () => {
+        const valid = { data: [{ id: 3, message: 'tenant-safe entry', level: 'warning' }] };
+        const transport = vi.fn().mockResolvedValue(valid);
+        expect(await readWorkspaceCollectionResponse('logs', '/tenants/alpha/admin/logs?search=q', transport)).toBe(valid);
+        expect(transport).toHaveBeenCalledWith('/tenants/alpha/admin/logs?search=q');
+        expect(normalizeObservabilityCollection('logs', { data: [] })).toEqual({ data: [] });
+        for (const payload of [null, {}, { items: [] }, { data: {} }, { data: [null] }, { data: [], success: false }]) {
+            expect(() => normalizeObservabilityCollection('logs', payload)).toThrow('Operational observability response was invalid');
+        }
+    });
+
+    it('sanitizes unexpected diagnostic identifiers, free text and timestamps', () => {
+        const rows = normalizeObservabilityCollection('diagnostics', {
+            failed_operations: [{
+                id: -2, type: 'private key: abc', failed_at: 'invalid timestamp',
+                payload: { secret: 'never' },
+            }],
+            recent_audit: [{ id: 2.5, event: '<script>alert(1)</script>', occurred_at: 23 }],
+        }) as { data: Array<Record<string, unknown>> };
+        expect(rows.data[0]).toMatchObject({ record_id: null, event_type: 'unclassified', occurred_at: null });
+        expect(rows.data[1]).toMatchObject({ record_id: null, event_type: 'unclassified', occurred_at: null });
+        expect(JSON.stringify(rows)).not.toContain('<script>');
+    });
+
+    it('does not change unrelated resource contracts or swallow transport failures', async () => {
+        const other = { ok: true, status: 'ready' };
+        expect(normalizeObservabilityCollection('system-health', other)).toBe(other);
+        await expect(readWorkspaceCollectionResponse(
+            'diagnostics', '/tenants/alpha/admin/diagnostics',
+            vi.fn().mockRejectedValue(new Error('HTTP 503')),
+        )).rejects.toThrow('HTTP 503');
+    });
+});
