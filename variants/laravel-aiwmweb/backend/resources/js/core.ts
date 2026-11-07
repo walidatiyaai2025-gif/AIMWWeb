@@ -55,7 +55,7 @@ export interface FrontendContext {
     api: Record<string, string>;
     actions: Record<string, ActionContract>;
     /** Server-selected tenant-owned WordPress site, or null when none is selected. */
-    active_site?: { id: number; name: string; status: string } | null;
+    active_site?: { id: number; name?: string; status?: string | null } | null;
     release?: { version: string; sha: string };
     locale?: Locale;
 }
