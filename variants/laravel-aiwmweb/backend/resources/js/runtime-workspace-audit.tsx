@@ -185,6 +185,18 @@ export async function loadSiteScopedAuditContext(
             typeof selected.capabilities !== 'object') {
             throw new Error('Site context does not match the requested tenant, user or site.');
         }
+        // The selected-site API contracts must refer to the exact site that the
+        // server authenticated for this audit, never a different site ID.
+        // No advertised site endpoint may quietly redirect the audit to another site.
+        const selectedPrefix = `/api/v1/tenants/${slug}/sites/${siteId}/`;
+        const selectedLegacyPrefix = `/api/tenants/${slug}/sites/${siteId}/`;
+        for (const key of selectedSiteReads) {
+            const endpoint = selected.api[key];
+            if (endpoint !== undefined && !endpoint.startsWith(selectedPrefix) &&
+                !endpoint.startsWith(selectedLegacyPrefix)) {
+                throw new Error('Site-scoped GET contract does not match the selected site.');
+            }
+        }
         return selected as FrontendContext;
     } finally {
         clearTimeout(timeout);
@@ -279,7 +291,9 @@ export function RuntimeWorkspaceAuditPanel({ context, availableSiteIds = [], onC
     const [error, setError] = useState(false);
     const [chosenSite, setChosenSite] = useState(0);
     const siteIds = [...new Set(availableSiteIds.filter(id => Number.isSafeInteger(id) && id > 0))].slice(0, 50);
-    const siteChoiceRequired = !context.active_site && siteIds.length > 0;
+    // Choosing a site for this audit must be possible even if the dashboard
+    // already has a different active site; this never changes that selection.
+    const siteChoiceRequired = siteIds.length > 0;
     const selectedSiteId = siteIds.includes(chosenSite) ? chosenSite : (siteIds.length === 1 ? siteIds[0] : 0);
     const start = async () => {
         if (working) return;
