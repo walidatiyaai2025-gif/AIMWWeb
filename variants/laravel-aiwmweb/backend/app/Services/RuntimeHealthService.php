@@ -135,7 +135,7 @@ final class RuntimeHealthService
             }),
             'scheduler' => $this->probe('scheduler', function (): void {
                 $tick = Cache::get(self::SCHEDULER_HEARTBEAT_KEY);
-                if (! is_numeric($tick)) {
+                if (! $this->isReceiptTimestamp($tick)) {
                     throw new RuntimeException('Scheduler heartbeat is missing.');
                 }
 
@@ -208,7 +208,7 @@ final class RuntimeHealthService
                 ? ['status' => 'disabled', 'reason_code' => 'cron_disabled']
                 : $this->probe('scheduler', function (): void {
                     $tick = Cache::store('database')->get(self::SCHEDULER_HEARTBEAT_KEY);
-                    if (! config('cpanel.preflight_passed') || ! is_numeric($tick)) {
+                    if (! config('cpanel.preflight_passed') || ! $this->isReceiptTimestamp($tick)) {
                         throw new RuntimeException('Validated cPanel scheduler heartbeat is missing.');
                     }
                     $age = time() - (int) $tick;
@@ -238,7 +238,7 @@ final class RuntimeHealthService
     {
         try {
             $receipt = Cache::store('database')->get(self::CPANEL_QUEUE_TICK_RECEIPT_KEY);
-            if (! is_numeric($receipt)) {
+            if (! $this->isReceiptTimestamp($receipt)) {
                 return ['status' => 'unavailable', 'reason_code' => 'worker_receipt_missing'];
             }
 
@@ -269,6 +269,16 @@ final class RuntimeHealthService
 
             return ['status' => 'unavailable', 'reason_code' => 'worker_receipt_unreadable'];
         }
+    }
+
+    /**
+     * Cache timestamps must be whole Unix seconds, not a PHP-coercible
+     * numeric value (float, exponent, signed string, or boolean).
+     * Readiness and Inspector evidence must enforce the same contract.
+     */
+    private function isReceiptTimestamp(mixed $receipt): bool
+    {
+        return is_int($receipt) || (is_string($receipt) && ctype_digit($receipt));
     }
 
     /** @return array{status:string} */
