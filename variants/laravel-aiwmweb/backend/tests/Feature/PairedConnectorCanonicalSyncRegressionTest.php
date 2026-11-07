@@ -198,5 +198,4 @@ final class PairedConnectorCanonicalSyncRegressionTest extends TestCase
         $this->assertSame(0, SyncedContent::query()->where('site_id', $site->id)->count());
         $context->forget();
     }
-
 }
