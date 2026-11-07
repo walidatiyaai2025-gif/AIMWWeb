@@ -380,12 +380,15 @@ final class AdminOperationsController extends Controller
             'q' => ['nullable', 'string', 'max:160'],
             'search' => ['nullable', 'string', 'max:160'],
         ]);
-        if (empty($filters['q']) && ! empty($filters['search'])) {
+        // A literal '0' is a valid search term, not an empty value. Preserve
+        // explicit q precedence over the legacy search alias.
+        if ((! isset($filters['q']) || (string) $filters['q'] === '')
+            && isset($filters['search']) && (string) $filters['search'] !== '') {
             $filters['q'] = $filters['search'];
         }
         unset($filters['search']);
 
-        return response()->json(['data' => $this->operations->logs($filters)]);
+        return response()->json($this->operations->logsWithEvidence($filters));
     }
 
     public function diagnostics(string $tenant): JsonResponse

@@ -777,6 +777,12 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const observabilityMeta = route.key === 'diagnostics' && query.data && typeof query.data === 'object' && !Array.isArray(query.data)
         ? (query.data as { meta?: { failed_operations_count?: number; recent_audit_count?: number } }).meta
         : undefined;
+    const logsMeta = route.key === 'logs' && query.data && typeof query.data === 'object' && !Array.isArray(query.data)
+        ? (query.data as { meta?: {
+            scope: string; tenant_records: number; matching_records: number; returned_records: number;
+            truncated: boolean; empty_reason: string;
+        } }).meta
+        : undefined;
     const visibleRows = route.key === 'sites'
         ? (sitesFilter === 'connected'
             ? collection.rows.filter(isSiteConnectedRow)
@@ -1214,6 +1220,16 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             {' · '}{locale === 'ar' ? 'أحداث التدقيق' : 'Audit events'}: {observabilityMeta.recent_audit_count ?? 0}
                         </p>
                     ) : null}
+                    {route.key === 'logs' && logsMeta?.scope === 'tenant_operation_logs' ? (
+                        <p data-observability-logs-evidence>
+                            {locale === 'ar' ? 'سجلات عمليات الحساب' : 'Tenant operation logs'}: {logsMeta.tenant_records}
+                            {' · '}{locale === 'ar' ? 'المطابقة للفلاتر' : 'Matching filters'}: {logsMeta.matching_records}
+                            {' · '}{locale === 'ar' ? 'المعروضة' : 'Returned'}: {logsMeta.returned_records}
+                            {logsMeta.truncated
+                                ? (locale === 'ar' ? ' · تم عرض أحدث 500 سجل فقط' : ' · Only the latest 500 records are displayed')
+                                : null}
+                        </p>
+                    ) : null}
                     <div className="toolbar-actions">
                         <Link to={tenantUrl(context.tenant.slug, '/system-health')}>{locale === 'ar' ? 'صحة النظام' : 'System Health'}</Link>
                         <Link to={tenantUrl(context.tenant.slug, '/runtime-inspector')}>{locale === 'ar' ? 'مفتش التشغيل' : 'Runtime Inspector'}</Link>
@@ -1351,8 +1367,8 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                 ) : <div className="empty-state"><strong>{text(commonText.empty)}</strong><p>{route.key === 'diagnostics'
                     ? (locale === 'ar' ? 'لم تُرجع واجهة Laravel عمليات فاشلة أو أحداث تدقيق لهذا الحساب. تحقق من صحة النظام ومفتش التشغيل لمشكلات الاستضافة.' : 'Laravel returned no failed operations or audit events for this tenant. Check System Health and Runtime Inspector for host incidents.')
                     : route.key === 'logs'
-                        ? search.trim()
-                            ? (locale === 'ar' ? 'لا توجد سجلات عمليات تطابق عامل البحث الحالي.' : 'No operation logs matched the current search filter.')
+                        ? logsMeta?.empty_reason === 'filter_matched_none' || (!logsMeta && search.trim())
+                            ? (locale === 'ar' ? 'توجد سجلات عمليات لهذا الحساب، لكن الفلاتر الحالية لم تُطابق أي سجل.' : 'Tenant operation logs exist, but the current filters matched none.')
                             : (locale === 'ar' ? 'لا توجد سجلات عمليات محفوظة لهذا الحساب. لا يعني ذلك خلو الخادم من الأخطاء.' : 'No tenant operation logs are persisted. This does not prove the server has no errors.')
                         : (locale === 'ar' ? 'لا يتم إنشاء صفوف تجريبية عندما يعيد الخادم نتيجة فارغة.' : 'No sample rows are synthesized when the server returns an empty result.')}</p></div>}
                 {route.key === 'explorer'

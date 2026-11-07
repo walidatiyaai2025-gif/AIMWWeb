@@ -352,22 +352,50 @@ final class OperationsControlPlaneService
 
     public function logs(array $filters = []): array
     {
-        $query = DB::table('operation_logs')->where('tenant_id', $this->context->id());
-        if (! empty($filters['level'])) {
-            $query->where('level', $filters['level']);
+        // Preserve the data-only service interface for existing callers.
+        return $this->logsWithEvidence($filters)['data'];
+    }
+
+    public function logsWithEvidence(array $filters = []): array
+    {
+        // These counts are scoped to the current tenant and are never inferred
+        // from an empty response array (which can simply mean "no match").
+        $scope = DB::table('operation_logs')->where('tenant_id', $this->context->id());
+        $tenantCount = (clone $scope)->count();
+        $query = clone $scope;
+        $hasFilters = false;
+
+        foreach (['level', 'correlation_id'] as $key) {
+            if (isset($filters[$key]) && (string) $filters[$key] !== '') {
+                $query->where($key, $filters[$key]);
+                $hasFilters = true;
+            }
         }
-        if (! empty($filters['correlation_id'])) {
-            $query->where('correlation_id', $filters['correlation_id']);
-        }
-        if (! empty($filters['q'])) {
-            // The Logs search box accepts literal text, not SQL LIKE patterns.
-            // Escape user-supplied %, _ and our escape marker consistently on
-            // SQLite and MySQL, while keeping substring search available.
+        if (isset($filters['q']) && (string) $filters['q'] !== '') {
+            $hasFilters = true;
+            // Keep literal search, including the valid query "0". Escaped
+            // LIKE operators work consistently on SQLite and MySQL.
             $needle = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], (string) $filters['q']);
             $query->whereRaw("message LIKE ? ESCAPE '!'", ['%'.$needle.'%']);
         }
 
-        return $query->orderByDesc('occurred_at')->limit(500)->get()->map(fn ($row) => $this->decodeColumns($this->objectToArray($row), ['context']))->all();
+        $matchingCount = $hasFilters ? (clone $query)->count() : $tenantCount;
+        $rows = $query->orderByDesc('occurred_at')->limit(500)->get()
+            ->map(fn ($row) => $this->decodeColumns($this->objectToArray($row), ['context']))->all();
+
+        return [
+            'data' => $rows,
+            'meta' => [
+                'scope' => 'tenant_operation_logs',
+                'tenant_records' => $tenantCount,
+                'matching_records' => $matchingCount,
+                'returned_records' => count($rows),
+                'limit' => 500,
+                'truncated' => $matchingCount > count($rows),
+                'empty_reason' => $rows !== [] ? 'not_empty'
+                    : ($tenantCount === 0 ? 'no_tenant_events' : 'filter_matched_none'),
+            ],
+        ];
     }
 
     public function diagnostics(): array

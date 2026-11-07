@@ -126,6 +126,85 @@ final class OperationalLogsLiteralSearchTest extends TestCase
             ->assertJsonPath('data.0.id', $expected);
     }
 
+    public function test_zero_search_filters_correctly_and_exposes_only_tenant_bounded_counts(): void
+    {
+        [$alpha, $actor] = $this->member('alpha');
+        [$beta] = $this->member('beta');
+        $expected = $this->log($alpha, 'Job 0 completed');
+        $this->log($alpha, 'Job 7 completed');
+        $this->log($alpha, 'other operation completed');
+        $this->log($beta, 'Job 0 completed for another tenant');
+
+        foreach (['q=0', 'search=0', 'q=0&search=other'] as $query) {
+            $this->actingAs($actor)
+                ->getJson('/tenants/alpha/admin/logs?'.$query)
+                ->assertOk()
+                ->assertJsonCount(1, 'data')
+                ->assertJsonPath('data.0.id', $expected)
+                ->assertJsonPath('meta.scope', 'tenant_operation_logs')
+                ->assertJsonPath('meta.tenant_records', 3)
+                ->assertJsonPath('meta.matching_records', 1)
+                ->assertJsonPath('meta.returned_records', 1)
+                ->assertJsonPath('meta.limit', 500)
+                ->assertJsonPath('meta.truncated', false)
+                ->assertJsonPath('meta.empty_reason', 'not_empty');
+        }
+
+        $response = $this->actingAs($actor)
+            ->getJson('/tenants/alpha/admin/logs?q=does-not-match')
+            ->assertOk()
+            ->assertJsonCount(0, 'data')
+            ->assertJsonPath('meta.tenant_records', 3)
+            ->assertJsonPath('meta.matching_records', 0)
+            ->assertJsonPath('meta.returned_records', 0)
+            ->assertJsonPath('meta.empty_reason', 'filter_matched_none');
+        $this->assertStringNotContainsString('another tenant', $response->getContent());
+
+        [$emptyTenant, $emptyActor] = $this->member('gamma');
+        $this->actingAs($emptyActor)
+            ->getJson('/tenants/gamma/admin/logs?q=0')
+            ->assertOk()
+            ->assertJsonCount(0, 'data')
+            ->assertJsonPath('meta.tenant_records', 0)
+            ->assertJsonPath('meta.empty_reason', 'no_tenant_events');
+        $this->assertSame(4, DB::table('operation_logs')->count());
+    }
+
+    public function test_log_evidence_preserves_the_500_row_limit_without_leaking_other_tenants(): void
+    {
+        [$alpha, $actor] = $this->member('alpha');
+        [$beta] = $this->member('beta');
+        $this->log($beta, 'private beta record');
+
+        // Bulk insert disposable tenant-owned rows with a stable timestamp;
+        // the read must bound the response while reporting that it was capped.
+        $rows = [];
+        for ($i = 0; $i < 501; $i++) {
+            $rows[] = [
+                'tenant_id' => $alpha->id,
+                'correlation_id' => (string) Str::uuid(),
+                'level' => 'info',
+                'message' => 'alpha-row-'.$i,
+                'context' => '{}',
+                'occurred_at' => now(),
+            ];
+        }
+        foreach (array_chunk($rows, 100) as $chunk) {
+            DB::table('operation_logs')->insert($chunk);
+        }
+
+        $response = $this->actingAs($actor)
+            ->getJson('/tenants/alpha/admin/logs')
+            ->assertOk()
+            ->assertJsonCount(500, 'data')
+            ->assertJsonPath('meta.tenant_records', 501)
+            ->assertJsonPath('meta.matching_records', 501)
+            ->assertJsonPath('meta.returned_records', 500)
+            ->assertJsonPath('meta.truncated', true)
+            ->assertJsonPath('meta.empty_reason', 'not_empty');
+        $this->assertStringNotContainsString('private beta record', $response->getContent());
+    }
+
     /** @return array{Tenant,User} */
     private function member(string $slug): array
     {
