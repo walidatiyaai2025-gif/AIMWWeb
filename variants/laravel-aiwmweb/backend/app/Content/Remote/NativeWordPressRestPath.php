@@ -3,9 +3,12 @@
 namespace App\Content\Remote;
 
 use App\Models\SiteCredential;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
+use Throwable;
 
 final class NativeWordPressRestPath
 {
@@ -21,7 +24,14 @@ final class NativeWordPressRestPath
 
     public function list(int $siteId, string $resource, array $query = []): array
     {
-        $response = $this->request($siteId)->get($this->url($siteId, $this->endpoint($resource)), ['context' => 'edit'] + $query);
+        // Never retry WordPress 4xx responses: an out-of-range page is an
+        // expected terminal response, not a transient provider failure.
+        $response = $this->requestWithoutRetry($siteId)
+            ->retry(2, 250, static function (Throwable $exception): bool {
+                return $exception instanceof ConnectionException
+                    || ($exception instanceof RequestException && $exception->response->status() >= 500);
+            }, false)
+            ->get($this->url($siteId, $this->endpoint($resource)), ['context' => 'edit'] + $query);
 
         // WordPress native REST rejects a page beyond the final full page
         // with a specific 400 code; that one documented condition is an
