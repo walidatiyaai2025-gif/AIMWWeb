@@ -360,7 +360,11 @@ final class OperationsControlPlaneService
             $query->where('correlation_id', $filters['correlation_id']);
         }
         if (! empty($filters['q'])) {
-            $query->where('message', 'like', '%'.$filters['q'].'%');
+            // The Logs search box accepts literal text, not SQL LIKE patterns.
+            // Escape user-supplied %, _ and our escape marker consistently on
+            // SQLite and MySQL, while keeping substring search available.
+            $needle = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], (string) $filters['q']);
+            $query->whereRaw("message LIKE ? ESCAPE '!'", ['%'.$needle.'%']);
         }
 
         return $query->orderByDesc('occurred_at')->limit(500)->get()->map(fn ($row) => $this->decodeColumns($this->objectToArray($row), ['context']))->all();
