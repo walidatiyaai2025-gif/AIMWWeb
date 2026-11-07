@@ -154,7 +154,22 @@ final class TenantBackupCreateService
         $disk = Storage::disk('local');
         $root = rtrim($disk->path(''), '/\\') ?: DIRECTORY_SEPARATOR;
 
-        if (is_link($root) || ! is_dir($root)) {
+        // A configured root can itself be a real directory while one of its
+        // parents is a symlink to a location outside managed application
+        // storage. Match the read-only configuration probe's ancestor guard
+        // before creating archives. Never resolve or reveal link targets.
+        for ($segment = $root; ; $segment = dirname($segment)) {
+            if (is_link($segment)) {
+                throw new RuntimeException('Private backup storage root is unavailable or unsafe.');
+            }
+
+            $parent = dirname($segment);
+            if ($parent === $segment) {
+                break;
+            }
+        }
+
+        if (! is_dir($root)) {
             throw new RuntimeException('Private backup storage root is unavailable or unsafe.');
         }
 
