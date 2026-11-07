@@ -23,7 +23,7 @@ final class WordPressWriteSmokeService
 
     public function run(Site $site, SiteCredential $credential, string $resource): array
     {
-        if (!in_array($resource, self::RESOURCES, true)) {
+        if (in_array($resource, self::RESOURCES, true) === false) {
             return ['state' => 'not_tested', 'reason' => 'unsupported_resource'];
         }
 
@@ -82,7 +82,7 @@ final class WordPressWriteSmokeService
                 'media' => ['alt_text' => $marker.'-saved'],
             };
             $saved = $this->write($site, $credential, $resource, $remoteId, $changes);
-            if (!is_array($saved) || (int) ($saved['id'] ?? 0) !== $remoteId) {
+            if (is_array($saved) === false || (int) ($saved['id'] ?? 0) !== $remoteId) {
                 throw new RuntimeException('save_response_invalid');
             }
 
@@ -122,7 +122,7 @@ final class WordPressWriteSmokeService
             } catch (Throwable) {
                 // No blind retry of DELETE; a lost reply requires operator reconciliation.
             }
-            if (!$cleaned) {
+            if ($cleaned === false) {
                 $cleanupFailed[] = [
                     'resource' => $object['resource'],
                     'remote_id' => $object['id'],
@@ -137,7 +137,7 @@ final class WordPressWriteSmokeService
             'state' => $cleanupFailed !== [] || $uncertain ? 'needs_reconciliation' : ($passed ? 'passed' : 'failed'),
             'create_verified' => $passed,
             'save_verified' => $passed,
-            'delete_verified' => $objects !== [] && $cleanupFailed === [] && !$uncertain,
+            'delete_verified' => $objects !== [] && $cleanupFailed === [] && $uncertain === false,
             'reason' => $cleanupFailed !== [] ? 'cleanup_not_verified' : ($uncertain ? 'create_result_ambiguous' : $failure),
             'cleanup_required' => $cleanupFailed !== [] || $uncertain,
             // Authorized UI only: use these hints for manual recovery. Never export them.
@@ -163,7 +163,7 @@ final class WordPressWriteSmokeService
     {
         $url = $this->url($site, $resource).($id === null ? '' : '/'.$id);
         $json = $this->http($site, $credential)->post($url, $payload)->throw()->json();
-        if (!is_array($json)) {
+        if (is_array($json) === false) {
             throw new RuntimeException('malformed_wordpress_write');
         }
 
@@ -173,7 +173,7 @@ final class WordPressWriteSmokeService
     private function createdId(mixed $row): int
     {
         $id = is_array($row) ? ($row['id'] ?? null) : null;
-        if (!is_numeric($id) || (int) $id < 1) {
+        if (is_numeric($id) === false || (int) $id < 1) {
             throw new RuntimeException('missing_created_id');
         }
         return (int) $id;
@@ -184,7 +184,7 @@ final class WordPressWriteSmokeService
         $row = $this->http($site, $credential)->get(
             $this->url($site, $resource).'/'.$id, ['context' => 'edit'],
         )->throw()->json();
-        if (!is_array($row) || (int) ($row['id'] ?? 0) !== $id) {
+        if (is_array($row) === false || (int) ($row['id'] ?? 0) !== $id) {
             throw new RuntimeException('remote_id_mismatch');
         }
         return $row;
@@ -202,7 +202,7 @@ final class WordPressWriteSmokeService
             'comments' => data_get($row, 'content.raw', data_get($row, 'content.rendered', '')),
             'media' => $row['alt_text'] ?? '',
         };
-        if (!is_string($value) || !str_contains($value, $expected)) {
+        if (is_string($value) === false || str_contains($value, $expected) === false) {
             throw new RuntimeException('remote_marker_mismatch');
         }
     }
