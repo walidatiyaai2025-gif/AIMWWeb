@@ -103,6 +103,36 @@ class CpanelWorkerReceiptHealthTest extends TestCase
         $pending = app(RuntimeHealthService::class)->ready();
         $this->assertSame('not_ready', $pending['status']);
         $this->assertSame('pending', $pending['hosting_preflight']);
+        $this->assertSame('unavailable', $pending['checks']['queue_processing']['status']);
+        $this->assertSame('preflight_pending', $pending['checks']['queue_processing']['reason_code']);
+        $this->assertSame('unavailable', $pending['checks']['scheduler']['status']);
+        $this->assertSame('not_required', $pending['checks']['redis']['status']);
+    }
+
+    public function test_preflight_pending_does_not_turn_existing_worker_receipt_into_green_health(): void
+    {
+        $store = Cache::store('database');
+        $store->put(RuntimeHealthService::CPANEL_QUEUE_TICK_RECEIPT_KEY, time() - 5, now()->addMinutes(10));
+        $store->put(RuntimeHealthService::SCHEDULER_HEARTBEAT_KEY, time() - 5, now()->addMinutes(10));
+
+        config(['cpanel.preflight_passed' => false]);
+
+        $health = app(RuntimeHealthService::class);
+        $readiness = $health->ready();
+        $inspector = $health->inspectorEvidence();
+
+        $this->assertSame('not_ready', $readiness['status']);
+        $this->assertSame('pending', $readiness['hosting_preflight']);
+        $this->assertSame('unavailable', $readiness['checks']['queue_processing']['status']);
+        $this->assertSame('preflight_pending', $readiness['checks']['queue_processing']['reason_code']);
+        $this->assertSame('unavailable', $readiness['checks']['scheduler']['status']);
+        $this->assertSame('unavailable', $inspector['worker_cycle']['status']);
+        $this->assertSame('preflight_pending', $inspector['worker_cycle']['reason_code']);
+
+        // The probe is read-only. A stale preflight gate must never delete or
+        // rewrite the underlying receipts, which may still be useful for audit.
+        $this->assertIsInt($store->get(RuntimeHealthService::CPANEL_QUEUE_TICK_RECEIPT_KEY));
+        $this->assertIsInt($store->get(RuntimeHealthService::SCHEDULER_HEARTBEAT_KEY));
     }
 
     public function test_future_dated_scheduler_and_worker_receipts_are_not_evidence_of_completed_execution(): void

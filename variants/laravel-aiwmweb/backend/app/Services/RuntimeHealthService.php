@@ -199,9 +199,11 @@ final class RuntimeHealthService
                 }
                 Queue::connection('database')->size();
             }),
-            'queue_processing' => config('cpanel.cron_enabled')
-                ? $this->cpanelQueueProcessing()
-                : ['status' => 'disabled', 'reason_code' => 'cron_disabled'],
+            'queue_processing' => ! config('cpanel.cron_enabled')
+                ? ['status' => 'disabled', 'reason_code' => 'cron_disabled']
+                : (! config('cpanel.preflight_passed')
+                    ? ['status' => 'unavailable', 'reason_code' => 'preflight_pending']
+                    : $this->cpanelQueueProcessing()),
             'redis' => ['status' => 'not_required'],
             'ai' => ['status' => config('cpanel.ai_enabled') ? (config('cpanel.preflight_passed') && config('cpanel.cron_enabled') ? 'ok' : 'unavailable') : 'disabled'],
             'scheduler' => ! config('cpanel.cron_enabled')
