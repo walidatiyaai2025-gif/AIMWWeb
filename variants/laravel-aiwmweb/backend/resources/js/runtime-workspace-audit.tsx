@@ -113,13 +113,13 @@ const MAX_AUDIT_JSON_BYTES = 1024 * 1024;
 
 async function readBoundedJsonDocument(response: Response): Promise<unknown> {
     const contentType = (response.headers.get('content-type') ?? '').toLowerCase();
-    if (!/^application\/(?:json|[a-z0-9.+-]+\+json)(?:\s*;|$)/.test(contentType)) return false;
+    if (!/^application\/(?:json|[a-z0-9.+-]+\+json)(?:\s*;|$)/.test(contentType)) return null;
 
     const declaredLength = response.headers.get('content-length');
     if (declaredLength !== null &&
-        (!/^\d+$/.test(declaredLength) || Number(declaredLength) > MAX_AUDIT_JSON_BYTES)) return false;
+        (!/^\d+$/.test(declaredLength) || Number(declaredLength) > MAX_AUDIT_JSON_BYTES)) return null;
 
-    if (!response.body) return false;
+    if (!response.body) return null;
     const reader = response.body.getReader();
     const decoder = new TextDecoder('utf-8', { fatal: true });
     let bytes = 0;
@@ -129,14 +129,14 @@ async function readBoundedJsonDocument(response: Response): Promise<unknown> {
             const chunk = await reader.read();
             if (chunk.done) break;
             bytes += chunk.value.byteLength;
-            if (bytes > MAX_AUDIT_JSON_BYTES) return false;
+            if (bytes > MAX_AUDIT_JSON_BYTES) return null;
             body += decoder.decode(chunk.value, { stream: true });
         }
         body += decoder.decode();
         const document: unknown = JSON.parse(body);
         return document !== null && typeof document === 'object' ? document : null;
     } catch {
-        return false;
+        return null;
     } finally {
         // Cancel any unread stream without preserving or exporting its contents.
         void reader.cancel().catch(() => {});
