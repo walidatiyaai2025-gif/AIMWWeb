@@ -51,6 +51,7 @@ final class WordPressWriteSmokeService
                     'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLttAAAAABJRU5ErkJggg==',
                     true,
                 );
+
                 if ($png === false) {
                     throw new RuntimeException('fixture_invalid');
                 }
@@ -82,6 +83,7 @@ final class WordPressWriteSmokeService
                 'media' => ['alt_text' => $marker.'-saved'],
             };
             $saved = $this->write($site, $credential, $resource, $remoteId, $changes);
+
             if (is_array($saved) === false || (int) ($saved['id'] ?? 0) !== $remoteId) {
                 throw new RuntimeException('save_response_invalid');
             }
@@ -103,6 +105,7 @@ final class WordPressWriteSmokeService
         }
 
         $cleanupFailed = [];
+
         foreach (array_reverse($objects) as $object) {
             // Every ID here came from this request's successful WordPress CREATE response.
             // Never delete an ID supplied by the browser or from existing app records.
@@ -113,6 +116,7 @@ final class WordPressWriteSmokeService
                     $this->url($site, $object['resource']).'/'.$object['id'],
                     ['force' => true],
                 );
+
                 if ($reply->successful() || $reply->status() === 404) {
                     $check = $this->http($site, $credential)->get(
                         $this->url($site, $object['resource']).'/'.$object['id'],
@@ -123,6 +127,7 @@ final class WordPressWriteSmokeService
             } catch (Throwable) {
                 // No blind retry of DELETE; a lost reply requires operator reconciliation.
             }
+
             if ($cleaned === false) {
                 $cleanupFailed[] = [
                     'resource' => $object['resource'],
@@ -164,6 +169,7 @@ final class WordPressWriteSmokeService
     {
         $url = $this->url($site, $resource).($id === null ? '' : '/'.$id);
         $json = $this->http($site, $credential)->post($url, $payload)->throw()->json();
+
         if (is_array($json) === false) {
             throw new RuntimeException('malformed_wordpress_write');
         }
@@ -174,6 +180,7 @@ final class WordPressWriteSmokeService
     private function createdId(mixed $row): int
     {
         $id = is_array($row) ? ($row['id'] ?? null) : null;
+
         if (is_numeric($id) === false || (int) $id < 1) {
             throw new RuntimeException('missing_created_id');
         }
@@ -186,6 +193,7 @@ final class WordPressWriteSmokeService
         $row = $this->http($site, $credential)->get(
             $this->url($site, $resource).'/'.$id, ['context' => 'edit'],
         )->throw()->json();
+
         if (is_array($row) === false || (int) ($row['id'] ?? 0) !== $id) {
             throw new RuntimeException('remote_id_mismatch');
         }
@@ -205,6 +213,7 @@ final class WordPressWriteSmokeService
             'comments' => data_get($row, 'content.raw', data_get($row, 'content.rendered', '')),
             'media' => $row['alt_text'] ?? '',
         };
+
         if (is_string($value) === false || str_contains($value, $expected) === false) {
             throw new RuntimeException('remote_marker_mismatch');
         }
