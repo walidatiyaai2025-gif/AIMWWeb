@@ -1,5 +1,5 @@
 import React from 'react';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LocaleProvider } from '../i18n';
 import type { FrontendContext } from '../core';
@@ -57,6 +57,7 @@ describe('WordPress write audit consent and redaction', () => {
         fireEvent.click(run);
         await waitFor(() => expect(apiRequest).toHaveBeenCalledTimes(6));
         expect(screen.getAllByText('passed')).toHaveLength(6);
+        await waitFor(() => expect(screen.getByRole('checkbox')).not.toBeChecked());
         for (const [url, options] of vi.mocked(apiRequest).mock.calls) {
             expect(url).toBe('/tenants/alpha/runtime-inspector/wordpress-write-check');
             expect(options?.method).toBe('POST');
@@ -85,6 +86,103 @@ describe('WordPress write audit consent and redaction', () => {
         })));
         expect(apiRequest).toHaveBeenCalledTimes(1);
         expect(screen.getByText('aiwm-probe-privatecanary')).toBeInTheDocument();
+    });
+
+    it('revokes previous consent and clears stale results when the authorized site list changes', async () => {
+        const onComplete = vi.fn();
+        const view = render(<LocaleProvider>
+            <WordPressWriteAuditPanel context={ctx} siteIds={[5]} onComplete={onComplete} />
+        </LocaleProvider>);
+        const checkbox = screen.getByRole('checkbox');
+        const run = screen.getByRole('button', { name: /Run all disposable WordPress tests/i });
+        fireEvent.click(checkbox);
+        expect(run).toBeEnabled();
+
+        // A parent/context refresh replaces the only site without select.onChange.
+        view.rerender(<LocaleProvider>
+            <WordPressWriteAuditPanel context={ctx} siteIds={[6]} onComplete={onComplete} />
+        </LocaleProvider>);
+        await waitFor(() => expect(checkbox).not.toBeChecked());
+        expect(run).toBeDisabled();
+        expect(onComplete).toHaveBeenCalledWith(null);
+        expect(apiRequest).not.toHaveBeenCalled();
+
+        fireEvent.click(checkbox);
+        expect(run).toBeEnabled();
+    });
+
+    it('does not send another remote mutation when the selected site changes mid-run', async () => {
+        const onComplete = vi.fn();
+        let releaseRequest = () => {};
+        const pending = new Promise<void>(resolve => { releaseRequest = resolve; });
+        vi.mocked(apiRequest).mockImplementation(async (_url, options) => {
+            await pending;
+            const payload = JSON.parse(String(options?.body));
+            return {
+                schema: 'aiwm.wordpress-write-smoke.v1',
+                transport: 'native_wordpress_rest',
+                resource: payload.resource,
+                state: 'passed', create_verified: true, save_verified: true,
+                delete_verified: true, cleanup_required: false, reason: 'none',
+            };
+        });
+        const view = render(<LocaleProvider>
+            <WordPressWriteAuditPanel context={ctx} siteIds={[5]} onComplete={onComplete} />
+        </LocaleProvider>);
+        fireEvent.click(screen.getByRole('checkbox'));
+        fireEvent.click(screen.getByRole('button', { name: /Run all disposable WordPress tests/i }));
+        await waitFor(() => expect(apiRequest).toHaveBeenCalledTimes(1));
+
+        view.rerender(<LocaleProvider>
+            <WordPressWriteAuditPanel context={ctx} siteIds={[6]} onComplete={onComplete} />
+        </LocaleProvider>);
+        await act(async () => { releaseRequest(); await pending; });
+        await waitFor(() => expect(screen.getByRole('button', { name: /Run all disposable WordPress tests/i })).toBeDisabled());
+        expect(apiRequest).toHaveBeenCalledTimes(1);
+        expect(onComplete).toHaveBeenLastCalledWith(null);
+    });
+
+    it('stops even when the server inconsistently reports passed with cleanup required', async () => {
+        const onComplete = mount();
+        vi.mocked(apiRequest).mockResolvedValue({
+            schema: 'aiwm.wordpress-write-smoke.v1',
+            transport: 'native_wordpress_rest',
+            resource: 'posts',
+            state: 'passed', create_verified: true, save_verified: true,
+            delete_verified: true, cleanup_required: true, reason: 'none',
+        });
+        fireEvent.click(screen.getByRole('checkbox'));
+        fireEvent.click(screen.getByRole('button', { name: /Run all disposable WordPress tests/i }));
+        await waitFor(() => expect(onComplete).toHaveBeenCalledWith(expect.objectContaining({
+            completed: false, results: [expect.objectContaining({
+                state: 'needs_reconciliation', cleanup_required: true, reason: 'cleanup_not_verified',
+            })],
+        })));
+        expect(apiRequest).toHaveBeenCalledTimes(1);
+    });
+
+    it('cannot mark an attempted six-resource run complete when the last save fails', async () => {
+        const onComplete = mount();
+        vi.mocked(apiRequest).mockImplementation(async (_url, options) => {
+            const resource = JSON.parse(String(options?.body)).resource;
+            return {
+                schema: 'aiwm.wordpress-write-smoke.v1',
+                transport: 'native_wordpress_rest',
+                resource,
+                state: resource === 'media' ? 'failed' : 'passed',
+                create_verified: true, save_verified: resource !== 'media',
+                delete_verified: true, cleanup_required: false,
+                reason: resource === 'media' ? 'remote_save_not_confirmed' : 'none',
+            };
+        });
+        fireEvent.click(screen.getByRole('checkbox'));
+        fireEvent.click(screen.getByRole('button', { name: /Run all disposable WordPress tests/i }));
+        await waitFor(() => expect(apiRequest).toHaveBeenCalledTimes(6));
+        await waitFor(() => expect(onComplete).toHaveBeenLastCalledWith(expect.objectContaining({
+            completed: false, results: expect.arrayContaining([expect.objectContaining({
+                resource: 'media', state: 'failed',
+            })]),
+        })));
     });
 
     it('does not allow selecting a foreign or missing site implicitly', () => {
