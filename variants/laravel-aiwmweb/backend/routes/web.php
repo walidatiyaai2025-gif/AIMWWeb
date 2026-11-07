@@ -18,6 +18,7 @@ use App\Http\Controllers\CanonicalWorkspaceRouteController;
 use App\Http\Controllers\ConfigurationValidationController;
 use App\Http\Controllers\ContentPlannerController;
 use App\Http\Controllers\DemoController;
+use App\Http\Controllers\EvidenceReceiptReadController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\PayPalWebhookController;
 use App\Http\Controllers\PublicWelcomeReadController;
@@ -114,6 +115,7 @@ Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->
         ->defaults('canonical_operation_id', CanonicalEmailScheduleController::CREATE_OPERATION_ID)
         ->name('canonical.api.email-schedules.create');
     Route::get('/content-planner/items', [ContentPlannerController::class, 'index'])->name('canonical.api.content-planner');
+    Route::get('/evidence', [EvidenceReceiptReadController::class, 'index'])->name('canonical.api.evidence.index');
     Route::post('/content-planner/items/save', [ContentPlannerController::class, 'save'])
         ->defaults('canonical_operation_id', ContentPlannerController::SAVE_OPERATION_ID)
         ->name('canonical.api.content-planner.save');
@@ -272,6 +274,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
             'admin-billing-support' => "/api/tenants/{$tenant}/billing/admin/subscriptions",
             'account.profile' => "/tenants/{$tenant}/route-api/account-profile",
             'content-planner' => "/api/tenants/{$tenant}/content-planner/items",
+            'evidence' => "/api/tenants/{$tenant}/evidence",
             'application-users' => "/tenants/{$tenant}/admin/members",
             'roles' => "/tenants/{$tenant}/admin/roles",
             'sessions' => "/tenants/{$tenant}/admin/sessions",

@@ -44,7 +44,7 @@ final class ModuleWorkspaceDynamicSiteLinksTerminalityTest extends TestCase
         $this->assertStringContainsString('data-testid="seo-site-link"', $frontend);
         $this->assertStringContainsString('data-testid="seo-site-explorer-link"', $frontend);
         $this->assertStringContainsString('ModuleWorkspaceLoadSitesControl', $app);
-        $this->assertStringContainsString("route.key === 'seo-audit' || route.key === 'seo-suggestions'", $app);
+        $this->assertStringContainsString("route.key === 'seo-audit' || route.key === 'seo-findings' || route.key === 'seo-suggestions'", $app);
     }
 
     public function test_dynamic_links_are_gated_by_the_authoritative_tenant_site_collection(): void

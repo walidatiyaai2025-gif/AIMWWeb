@@ -134,7 +134,8 @@ Route::prefix('v1/tenants/{tenant}/sites/{site}')->middleware(['web', 'tenant.co
 
     Route::post('transfers/export', [ContentApiController::class, 'export']);
     Route::post('transfers/import', [ContentApiController::class, 'import']);
-    Route::get('transfers/{transfer}', [ContentApiController::class, 'transfer']);
+    Route::get('transfers/{transfer}/download', [ContentApiController::class, 'download'])->whereNumber('transfer');
+    Route::get('transfers/{transfer}', [ContentApiController::class, 'transfer'])->whereNumber('transfer');
 });
 
 Route::prefix('v1/tenants/{tenant}/sites/{site}/seo/remediations')

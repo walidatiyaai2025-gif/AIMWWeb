@@ -235,7 +235,7 @@ export const workspaceRoutes: WorkspaceRoute[] = [
     r('wp-users', '/module/users', 'content', '◎', 'WordPress Users', 'مستخدمو WordPress', 'Manage users exposed by connected WordPress sites.', 'إدارة مستخدمي مواقع WordPress المتصلة.', { permission: 'sites.view', connectorScope: 'users.read', controls: ['wordpress-users.save'] }),
 
     r('seo-audit', '/module/seo-audit', 'seo', '◈', 'SEO Audit', 'تدقيق SEO', 'Run and inspect real SEO audits.', 'تشغيل ومراجعة تدقيقات SEO الحقيقية.', { permission: 'seo.view', controls: ['seo.audit.run'] }),
-    r('seo-findings', '/module/seo-findings', 'seo', '!', 'SEO Findings', 'نتائج SEO', 'Inspect persisted audit findings.', 'مراجعة نتائج التدقيق المحفوظة.', { permission: 'seo.view' }),
+    r('seo-findings', '/module/seo-findings', 'seo', '!', 'SEO Findings', 'نتائج SEO', 'Open persisted findings for a selected WordPress site.', 'فتح نتائج SEO المحفوظة لموقع WordPress محدد.', { permission: 'seo.view', apiKey: undefined, kind: 'workspace' }),
     r('seo-suggestions', '/module/seo-suggestions', 'seo', '✦', 'SEO Recommendations', 'توصيات SEO', 'Review prioritized optimization recommendations.', 'مراجعة توصيات التحسين حسب الأولوية.', { permission: 'seo.view', controls: ['seo.recommend.approve'], apiKey: undefined }),
     r('approvals', '/module/approvals', 'seo', '✓', 'Approval Queue', 'قائمة الموافقات', 'Review governed changes before execution.', 'مراجعة التغييرات المحكومة قبل التنفيذ.', { permission: 'approvals.view', controls: ['approvals.approve', 'approvals.reject'] }),
     r('evidence', '/module/evidence', 'seo', '▥', 'Evidence & Receipts', 'الأدلة والإيصالات', 'Inspect execution evidence and receipts.', 'مراجعة أدلة وإيصالات التنفيذ.', { permission: 'execution.view' }),
@@ -259,7 +259,7 @@ export const workspaceRoutes: WorkspaceRoute[] = [
     r('email-history', '/email/history', 'operations', '✉', 'Email Delivery History', 'سجل إرسال البريد', 'Inspect application email delivery history.', 'مراجعة سجل إرسال البريد من التطبيق.', { permission: 'diagnostics.view' }),
 
     r('reports', '/module/reports', 'reports', '▥', 'Reports & Exports', 'التقارير والتصدير', 'Build reports from real tenant data.', 'إنشاء تقارير من بيانات الحساب الحقيقية.', { permission: 'reports.view', controls: ['reports.export'] }),
-    r('import-export', '/module/import-export', 'reports', '⇄', 'Import / Export', 'الاستيراد والتصدير', 'Run governed import and export workflows.', 'تشغيل عمليات الاستيراد والتصدير المحكومة.', { permission: 'content.manage', controls: ['import.run', 'export.run'] }),
+    r('import-export', '/module/import-export', 'reports', '⇄', 'Import / Export', 'الاستيراد والتصدير', 'Import and export tenant-owned WordPress content through real transfer jobs.', 'استيراد وتصدير محتوى WordPress الخاص بالحساب عبر مهام نقل فعلية.', { permission: 'tenant.view', apiKey: undefined, kind: 'workspace' }),
 
     r('runtime-inspector', '/runtime-inspector', 'system', '◎', 'Runtime Inspector', 'مفتش التشغيل', 'Export redacted Laravel, Connector, Sync and API diagnostics.', 'تصدير تقرير منقّح لتشخيص Laravel والموصل والمزامنة وأخطاء API.', { permission: 'diagnostics.view', kind: 'workspace', apiKey: undefined }),
     r('system-health', '/system-health', 'system', '♥', 'System Health', 'صحة النظام', 'Check application, database, WordPress and provider health.', 'فحص صحة التطبيق وقاعدة البيانات وWordPress والمزودين.', { permission: 'diagnostics.view', apiKey: undefined }),

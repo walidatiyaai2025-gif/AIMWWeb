@@ -32,7 +32,7 @@ final class ModuleWorkspaceLoadSitesTerminalityTest extends TestCase
         $this->assertStringContainsString(self::OPERATION_ID, $frontend);
         $this->assertStringContainsString('/api/tenants/${context.tenant.slug}/sites', $frontend);
         $this->assertStringContainsString('ModuleWorkspaceLoadSitesControl', $app);
-        $this->assertStringContainsString("route.key === 'seo-audit' || route.key === 'seo-suggestions'", $app);
+        $this->assertStringContainsString("route.key === 'seo-audit' || route.key === 'seo-findings' || route.key === 'seo-suggestions'", $app);
     }
 
     public function test_site_collection_authority_is_authenticated_and_tenant_scoped(): void

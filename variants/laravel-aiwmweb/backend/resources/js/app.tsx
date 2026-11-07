@@ -65,6 +65,7 @@ import { LogsCloseDetailsControl } from './logs-close-details-control';
 import { MainLayoutParityControls } from './main-layout-parity-controls';
 import { NotificationCenterToggleControl } from './notification-center-toggle-control';
 import { ModuleWorkspaceLoadSitesControl } from './module-workspace-load-sites-control';
+import { ImportExportWorkspace } from './import-export-workspace';
 import { ModuleWorkspaceBackToHomeControl } from './module-workspace-back-to-home-control';
 import { ModuleWorkspaceRouteFallback } from './module-workspace-route-fallback';
 import { MySessionsAdminLinkControl } from './my-sessions-admin-link-control';
@@ -250,7 +251,8 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     if (route.key === 'pages') return <><GlobalPagesConfirmTrashControl context={context} /><GlobalPagesOpenSynchronizationLinkControl context={context} /><PagesPostsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'posts') return <><GlobalPostsOpenSynchronizationLinkControl context={context} /><GlobalPostsConfirmTrashControl context={context} /><PostsExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'sync') return <><GlobalSynchronizationRefreshStatusControl context={context} /><GlobalSynchronizationConnectSiteLinkControl context={context} /><GlobalSynchronizationLocalContentLinkControl context={context} /><GlobalSynchronizationReviewConflictsControl context={context} /><GlobalSynchronizationAcceptRemoteControl context={context} /><WorkspacePage context={context} route={route} /></>;
-    if (route.key === 'seo-audit' || route.key === 'seo-suggestions') return <ModuleWorkspaceLoadSitesControl context={context} route={route} />;
+    if (route.key === 'seo-audit' || route.key === 'seo-findings' || route.key === 'seo-suggestions') return <ModuleWorkspaceLoadSitesControl context={context} route={route} />
+    if (route.key === 'import-export') return <ImportExportWorkspace context={context} />;
     if (route.key === 'comments') return <><CommentsBackToSitesControl context={context} /><CommentsCommentLinksControl context={context} /><CommentsContentHubLink context={context} /><CommentsManageSiteControl context={context} /><WorkspacePage context={context} route={route} /><CommentsBackToExplorerControl context={context} /></>;
     if (route.key === 'wp-users') return <><WordPressUsersBackToSitesControl context={context} /><WordPressUsersBackToExplorerControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'taxonomy') return <><TaxonomyBackToSitesControl context={context} /><GlobalTaxonomyPostsLinkControl context={context} /><GlobalTaxonomySyncLinkControl context={context} /><TaxonomyBackToExplorerControl context={context} /><WorkspacePage context={context} route={route} /></>;
