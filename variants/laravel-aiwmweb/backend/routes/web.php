@@ -24,6 +24,7 @@ use App\Http\Controllers\PayPalWebhookController;
 use App\Http\Controllers\PublicWelcomeReadController;
 use App\Http\Controllers\RouteApiAdapterController;
 use App\Http\Controllers\RuntimeInspectorController;
+use App\Http\Controllers\WordPressWriteSmokeController;
 use App\Http\Controllers\SeoController;
 use App\Http\Controllers\SiteDataSnapshotController;
 use App\Http\Controllers\SiteDiagnosticsController;
@@ -189,6 +190,10 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
     // Authenticated, strictly tenant-scoped read-only diagnostic export (no raw logs).
     Route::get('/tenants/{tenant}/runtime-inspector/report', RuntimeInspectorController::class)
         ->name('tenant.runtime-inspector.report');
+
+    // Explicit owner-confirmed disposable WordPress REST writes; GET diagnostics stay read-only.
+    Route::post('/tenants/{tenant}/runtime-inspector/wordpress-write-check', WordPressWriteSmokeController::class)
+        ->middleware('throttle:12,1')->name('tenant.runtime-inspector.wordpress-write-check');
 
     Route::get('/tenants/{tenant}/configuration-validation/report', [ConfigurationValidationController::class, 'show'])
         ->defaults('canonical_operation_id', ConfigurationValidationController::COPY_REPORT_OPERATION_ID)
