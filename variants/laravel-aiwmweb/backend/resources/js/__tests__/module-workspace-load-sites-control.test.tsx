@@ -105,6 +105,49 @@ describe(`${MODULE_WORKSPACE_LOAD_SITES_OPERATION_ID} ModuleWorkspace LoadSitesA
         expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/tenants/alpha/sites');
     });
 
+    it('rejects a malformed successful API payload instead of faking an empty site list, and recovers on retry', async () => {
+        const fetchMock = vi.fn()
+            .mockResolvedValueOnce(jsonResponse({ message: 'Upstream site inventory unavailable' }))
+            .mockResolvedValueOnce(jsonResponse([{ id: 7, name: 'Real WordPress' }]));
+        vi.stubGlobal('fetch', fetchMock);
+
+        renderControl();
+
+        expect(await screen.findByRole('alert')).toHaveTextContent('An error occurred while loading sites owned by this account.');
+        expect(screen.queryByTestId('seo-no-sites')).not.toBeInTheDocument();
+        expect(screen.queryByTestId('seo-manage-sites-link')).not.toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+        expect(await screen.findByText('Real WordPress')).toBeInTheDocument();
+        expect(screen.getByTestId('seo-site-link')).toHaveAttribute('href', '/tenants/alpha/sites/7/seo');
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    it('rejects an invalid site row rather than silently dropping records or inventing site names', async () => {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({
+            data: [
+                { id: 7, name: 'Valid WordPress' },
+                { id: 8, name: '  ' },
+            ],
+        })));
+
+        renderControl();
+
+        expect(await screen.findByRole('alert')).toHaveTextContent('An error occurred while loading sites owned by this account.');
+        expect(screen.queryByTestId('seo-no-sites')).not.toBeInTheDocument();
+        expect(screen.queryByText('Valid WordPress')).not.toBeInTheDocument();
+        expect(screen.queryByText('Site #8')).not.toBeInTheDocument();
+    });
+
+    it('treats a real empty paginated site collection as an empty state', async () => {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ data: [] })));
+
+        renderControl();
+
+        expect(await screen.findByTestId('seo-no-sites')).toHaveTextContent('No sites available');
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
+
     it('refreshes by rereading the same authoritative site collection', async () => {
         const fetchMock = vi.fn()
             .mockResolvedValueOnce(jsonResponse([{ id: 7, name: 'First' }]))
