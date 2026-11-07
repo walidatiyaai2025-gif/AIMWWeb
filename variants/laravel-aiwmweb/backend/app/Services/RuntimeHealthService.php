@@ -80,7 +80,7 @@ final class RuntimeHealthService
             return ['status' => 'unavailable', 'reason_code' => 'receipt_unreadable'];
         }
 
-        if (! is_int($receipt) && (! is_string($receipt) || ! ctype_digit($receipt))) {
+        if (! $this->isReceiptTimestamp($receipt)) {
             return ['status' => 'unavailable', 'reason_code' => 'receipt_missing'];
         }
 
@@ -280,7 +280,18 @@ final class RuntimeHealthService
      */
     private function isReceiptTimestamp(mixed $receipt): bool
     {
-        return is_int($receipt) || (is_string($receipt) && ctype_digit($receipt));
+        // Reject digit strings outside PHP's integer range before casting. An
+        // overflowing cache value must never be interpreted as a real Unix
+        // timestamp (or as evidence of a completed worker cycle).
+        if (is_int($receipt)) {
+            return $receipt >= 0;
+        }
+
+        return is_string($receipt)
+            && ctype_digit($receipt)
+            && strlen(ltrim($receipt, '0')) <= strlen((string) PHP_INT_MAX)
+            && (strlen(ltrim($receipt, '0')) < strlen((string) PHP_INT_MAX)
+                || strcmp(ltrim($receipt, '0'), (string) PHP_INT_MAX) <= 0);
     }
 
     /** @return array{status:string} */
