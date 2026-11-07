@@ -422,7 +422,7 @@ final class OperationsControlPlaneService
         // Report the most recently updated failures, breaking equal-time
         // ties by ID so the bounded collection is deterministic.
         $failedRows = $failures->orderByDesc('updated_at')->orderByDesc('id')->limit(100)
-            ->get(['id', 'type', 'status', 'created_at'])
+            ->get(['id', 'type', 'status', 'created_at', 'updated_at'])
             ->map(fn ($row) => $this->objectToArray($row))->all();
         // Audit events created in the same second need a deterministic newest-
         // first tie break, otherwise the 100-event cap can hide newer items.
