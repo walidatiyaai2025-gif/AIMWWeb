@@ -738,7 +738,13 @@ final class ContentApiController extends Controller
 
     public function transfer(TenantAuthorizer $auth, string $tenant, int $site, int $transfer): JsonResponse
     {
-        $auth->authorize('content.view');
+        $membership = $this->tenant->membership();
+        abort_unless(
+            $membership->hasPermission('content.view')
+                || $membership->hasPermission('content.edit')
+                || $membership->hasPermission('*'),
+            403,
+        );
         abort_unless($tenant === $this->tenant->tenant()->slug, 404);
         Site::query()->findOrFail($site);
         $model = ContentTransfer::query()->where('site_id', $site)->findOrFail($transfer);
