@@ -177,7 +177,9 @@ final class WordPressWriteSmokeTest extends TestCase
             if ($method === 'POST' && str_ends_with($url, '/posts/777')) {
                 return Http::response(['code' => 'rest_forbidden'], 403);
             }
-            if ($method === 'DELETE') return Http::response(['deleted' => true], 200);
+            if ($method === 'DELETE') {
+                return Http::response(['deleted' => true], 200);
+            }
             if ($method === 'GET' && str_contains($url, '/posts/777')) {
                 return count($sent) >= 5
                     ? Http::response(['code' => 'not_found'], 404)
@@ -212,7 +214,9 @@ final class WordPressWriteSmokeTest extends TestCase
                 $title = $request->data()['title'];
                 return Http::response(['id' => 952], 200);
             }
-            if ($request->method() === 'DELETE') return Http::response([], 500);
+            if ($request->method() === 'DELETE') {
+                return Http::response([], 500);
+            }
             return Http::response(['id' => 952, 'title' => ['raw' => $title]], 200);
         });
         $response = $this->actingAs($user)->postJson(
