@@ -757,6 +757,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     );
 
     const collection = normalizeCollection(query.data);
+    const observabilityMeta = route.key === 'diagnostics' && query.data && typeof query.data === 'object' && !Array.isArray(query.data)
+        ? (query.data as { meta?: { failed_operations_count?: number; recent_audit_count?: number } }).meta
+        : undefined;
     const visibleRows = route.key === 'sites'
         ? (sitesFilter === 'connected'
             ? collection.rows.filter(isSiteConnectedRow)
@@ -842,7 +845,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         }); }}
                     />
                 ) : null}
-                <form className="search-form" onSubmit={(event) => {
+                {route.key !== 'diagnostics' ? (<form className="search-form" onSubmit={(event) => {
                     event.preventDefault();
                     if (route.key === 'application-users') {
                         void searchApplicationUsers().catch(() => undefined);
@@ -982,7 +985,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             onClearRequested={clearAdminBillingSupportSearch}
                         />
                     ) : null}
-                </form>
+                </form>) : null}
                 <div className="toolbar-actions">
                     {route.key === 'site-operations' ? (
                         <SiteOperationsSitesLinkControl context={context} />
@@ -1183,6 +1186,23 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                     sites={aiCenterSites}
                 />
             ) : null}
+            {(route.key === 'logs' || route.key === 'diagnostics') ? (
+                <section className="panel" data-observability-scope="tenant-only" aria-label={locale === 'ar' ? 'نطاق السجلات والتشخيصات' : 'Observability scope'}>
+                    <p>{route.key === 'logs'
+                        ? (locale === 'ar' ? 'هذه سجلات عمليات الحساب المحفوظة في قاعدة البيانات، وليست ملفات سجلات Laravel أو أخطاء الخادم بالكامل.' : 'These are persisted tenant operation logs, not Laravel file logs or all infrastructure errors.')
+                        : (locale === 'ar' ? 'تُعرض العمليات الفاشلة وأحداث التدقيق الخاصة بالحساب فقط؛ لا تتضمن هذه القائمة جميع مشكلات الخادم أو WordPress.' : 'Only tenant failed operations and audit events are shown; this is not a complete server or WordPress error log.')}</p>
+                    {route.key === 'diagnostics' && observabilityMeta ? (
+                        <p data-observability-counts>
+                            {locale === 'ar' ? 'العمليات الفاشلة' : 'Failed operations'}: {observabilityMeta.failed_operations_count ?? 0}
+                            {' · '}{locale === 'ar' ? 'أحداث التدقيق' : 'Audit events'}: {observabilityMeta.recent_audit_count ?? 0}
+                        </p>
+                    ) : null}
+                    <div className="toolbar-actions">
+                        <Link to={tenantUrl(context.tenant.slug, '/system-health')}>{locale === 'ar' ? 'صحة النظام' : 'System Health'}</Link>
+                        <Link to={tenantUrl(context.tenant.slug, '/runtime-inspector')}>{locale === 'ar' ? 'مفتش التشغيل' : 'Runtime Inspector'}</Link>
+                    </div>
+                </section>
+            ) : null}
             <section className="panel data-panel">
                 <header className="panel-header">
                     <div><span className="workspace-kicker">LIVE DATA</span><h2>{route.label[locale]}</h2></div>
@@ -1311,7 +1331,13 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             <NotificationOpenControl context={context} row={row} />
                         ) : undefined}
                     />
-                ) : <div className="empty-state"><strong>{text(commonText.empty)}</strong><p>{locale === 'ar' ? 'لا يتم إنشاء صفوف تجريبية عندما يعيد الخادم نتيجة فارغة.' : 'No sample rows are synthesized when the server returns an empty result.'}</p></div>}
+                ) : <div className="empty-state"><strong>{text(commonText.empty)}</strong><p>{route.key === 'diagnostics'
+                    ? (locale === 'ar' ? 'لم تُرجع واجهة Laravel عمليات فاشلة أو أحداث تدقيق لهذا الحساب. تحقق من صحة النظام ومفتش التشغيل لمشكلات الاستضافة.' : 'Laravel returned no failed operations or audit events for this tenant. Check System Health and Runtime Inspector for host incidents.')
+                    : route.key === 'logs'
+                        ? search.trim()
+                            ? (locale === 'ar' ? 'لا توجد سجلات عمليات تطابق عامل البحث الحالي.' : 'No operation logs matched the current search filter.')
+                            : (locale === 'ar' ? 'لا توجد سجلات عمليات محفوظة لهذا الحساب. لا يعني ذلك خلو الخادم من الأخطاء.' : 'No tenant operation logs are persisted. This does not prove the server has no errors.')
+                        : (locale === 'ar' ? 'لا يتم إنشاء صفوف تجريبية عندما يعيد الخادم نتيجة فارغة.' : 'No sample rows are synthesized when the server returns an empty result.')}</p></div>}
                 {route.key === 'explorer'
                     ? <ContentExplorerPagination page={collection.page} lastPage={collection.lastPage} onPage={setPage} />
                     : <Pagination page={collection.page} lastPage={collection.lastPage} onPage={setPage} previousOperationAliasId={route.key === 'comments' ? COMMENTS_PREVIOUS_PAGE_OPERATION_ID : route.key === 'wp-users' ? WORDPRESS_USERS_PREVIOUS_OPERATION_ID : undefined} previousOperationId={readOperations?.previous ?? (route.key === 'email-history' ? APP_DATA_GRID_PREVIOUS_PAGE_OPERATION_ID : undefined)} />}
