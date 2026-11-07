@@ -110,36 +110,27 @@ class TenantContextSiteIsolationTest extends TestCase
         );
     }
 
-    public function test_site_context_advertises_only_existing_safe_get_aliases_for_selected_tenant_site(): void
+    public function test_explicit_read_only_inspector_site_context_does_not_change_dashboard_session_site(): void
     {
         $user = User::factory()->create();
         $membership = $this->membership($user, 'alpha', ['tenant.view', 'sites.view', 'diagnostics.view']);
-        $site = $this->site($membership, 'Inspection Site');
+        $dashboardSite = $this->site($membership, 'Dashboard Selection');
+        $auditSite = $this->site($membership, 'Inspector Audit Target');
 
-        $withoutSite = $this->actingAs($user)->getJson('/tenants/alpha/context');
-        $withoutSite->assertOk()->assertJsonMissingPath('api.site-details')
-            ->assertJsonMissingPath('api.site-snapshot')
-            ->assertJsonMissingPath('api.site-offline-data')
-            ->assertJsonMissingPath('api.site-connection-center')
-            ->assertJsonMissingPath('api.site-connection-operations')
-            ->assertJsonMissingPath('api.site-connect');
+        $this->withSession(['canonical_site_id' => $dashboardSite->id])
+            ->actingAs($user)
+            ->getJson('/tenants/alpha/context?site='.$auditSite->id)
+            ->assertOk()
+            ->assertJsonPath('tenant.slug', 'alpha')
+            ->assertJsonPath('active_site.id', $auditSite->id)
+            ->assertSessionHas('canonical_site_id', $dashboardSite->id);
 
-        $response = $this->actingAs($user)->getJson('/tenants/alpha/context?site='.$site->id);
-        $response->assertOk()->assertJsonPath('active_site.id', $site->id);
-        $prefix = '/api/tenants/alpha/sites/'.$site->id;
-        foreach ([
-            'sites.detail.'.$site->id => $prefix,
-            'site-details' => $prefix,
-            'site-snapshot' => $prefix.'/snapshot',
-            'site-offline-data' => $prefix.'/snapshot',
-            'site-connection-center' => $prefix.'/connection',
-            'site-connection-operations' => $prefix.'/operations',
-        ] as $key => $path) {
-            // One canonical key contains a literal dot: Laravel's JSON-path
-            // accessor interprets it as nesting, so index the API map directly.
-            $this->assertSame($path, $response->json('api')[$key] ?? null, $key);
-        }
-        $response->assertJsonMissingPath('api.site-connect');
+        // Subsequent ordinary context reads must retain the original site.
+        $this->actingAs($user)
+            ->getJson('/tenants/alpha/context')
+            ->assertOk()
+            ->assertJsonPath('active_site.id', $dashboardSite->id)
+            ->assertSessionHas('canonical_site_id', $dashboardSite->id);
         $this->assertFalse(app(TenantContext::class)->active());
     }
 

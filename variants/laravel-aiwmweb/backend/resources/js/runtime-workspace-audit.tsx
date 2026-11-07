@@ -75,6 +75,9 @@ export function safeAuditEndpoint(endpoint: unknown, slug: string): endpoint is 
 const selectedSiteReads = new Set([
     'explorer', 'posts', 'pages', 'media', 'comments', 'taxonomy',
     'categories', 'tags', 'wp-users', 'sync', 'seo-audit',
+    // These existing JSON GETs are only advertised after an authorized site is selected.
+    'site-details', 'site-snapshot', 'site-offline-data',
+    'site-connection-center', 'site-connection-operations',
 ]);
 
 export function liveAuditPlan(context: FrontendContext): LiveAuditEntry[] {
@@ -190,10 +193,21 @@ export async function loadSiteScopedAuditContext(
         // No advertised site endpoint may quietly redirect the audit to another site.
         const selectedPrefix = `/api/v1/tenants/${slug}/sites/${siteId}/`;
         const selectedLegacyPrefix = `/api/tenants/${slug}/sites/${siteId}/`;
+        // Do not accept a same-site but fictitious endpoint for the five
+        // authoritative site views; the details endpoint has no trailing slash.
+        const exactSiteReads: Record<string, string> = {
+            'site-details': `/api/tenants/${slug}/sites/${siteId}`,
+            'site-snapshot': `${selectedLegacyPrefix}snapshot`,
+            'site-offline-data': `${selectedLegacyPrefix}snapshot`,
+            'site-connection-center': `${selectedLegacyPrefix}connection`,
+            'site-connection-operations': `${selectedLegacyPrefix}operations`,
+        };
         for (const key of selectedSiteReads) {
             const endpoint = selected.api[key];
-            if (endpoint !== undefined && !endpoint.startsWith(selectedPrefix) &&
-                !endpoint.startsWith(selectedLegacyPrefix)) {
+            if (endpoint === undefined) continue;
+            const exact = exactSiteReads[key];
+            if (exact !== undefined ? endpoint !== exact :
+                !endpoint.startsWith(selectedPrefix) && !endpoint.startsWith(selectedLegacyPrefix)) {
                 throw new Error('Site-scoped GET contract does not match the selected site.');
             }
         }

@@ -287,8 +287,8 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
             $siteId = (int) $site->getKey();
             $api += [
                 'sites.detail.'.$siteId => "/api/tenants/{$tenant}/sites/{$siteId}",
-                // Hidden site views have real tenant-authorized GET sources. These
-                // aliases are read-only; they grant no pairing/sync/write action.
+                // Existing authenticated JSON GETs for per-site workspaces.
+                // Advertise only after the selected site passed tenant scoping.
                 'site-details' => "/api/tenants/{$tenant}/sites/{$siteId}",
                 'site-snapshot' => "/api/tenants/{$tenant}/sites/{$siteId}/snapshot",
                 'site-offline-data' => "/api/tenants/{$tenant}/sites/{$siteId}/snapshot",
