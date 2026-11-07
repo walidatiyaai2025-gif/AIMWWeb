@@ -60,6 +60,8 @@ final class RuntimeInspectorController extends Controller
             $legacy = SyncedContent::query()->where('site_id', $site->id)->count();
             $hasConnector = $connector !== null;
             $revoked = $connector !== null && $connector->revoked_at !== null;
+            $verified = $connector !== null && $connector->verified_at !== null;
+            $readSupported = $connector !== null && in_array('content.read', (array) $connector->capabilities, true);
             $read = in_array('content.read', $scopes, true);
             $status = (string) ($site->connection_status ?? 'unknown');
             $normalizedStatus = strtolower(trim($status));
@@ -69,7 +71,8 @@ final class RuntimeInspectorController extends Controller
                 && in_array((string) $lastRun->status, ['queued', 'running', 'succeeded', 'failed'], true);
             $syncState = $lastRun === null ? null : (string) ($legacyRun ? $lastRun->status : $lastRun->state);
             $remoteProbe = ['attempted' => false, 'state' => $probe && $index >= 3 ? 'limited' : 'not_run'];
-            if ($probe && $index < 3 && $hasConnector && $revoked === false) {
+            // Do not send signed probes from an unverified or incompatible pairing.
+            if ($probe && $index < 3 && $hasConnector && ! $revoked && $verified && $readSupported) {
                 try {
                     $remote = $diagnostics->capabilities($site);
                     $remoteProbe = [
@@ -83,7 +86,9 @@ final class RuntimeInspectorController extends Controller
             $finding = match (true) {
                 $hasConnector === false => 'CONNECTOR_NOT_PAIRED',
                 $revoked => 'CONNECTOR_REVOKED',
-                $read === false => 'CONTENT_READ_SCOPE_DISABLED',
+                ! $readSupported => 'CONTENT_READ_UNSUPPORTED',
+                ! $read => 'CONTENT_READ_SCOPE_DISABLED',
+                ! $verified => 'CONNECTOR_NOT_VERIFIED',
                 in_array($normalizedStatus, ['paired', 'verified', 'connected'], true) === false => 'SITE_CONNECTION_NOT_READY',
                 $remoteProbe['state'] === 'AUTH_FAILED' => 'REMOTE_AUTH_FAILED',
                 $remoteProbe['state'] === 'UNSUPPORTED' => 'REMOTE_PROTOCOL_UNSUPPORTED',
@@ -103,7 +108,7 @@ final class RuntimeInspectorController extends Controller
                 'connector' => [
                     'present' => $hasConnector,
                     'revoked' => $revoked,
-                    'verified' => $hasConnector && $connector->verified_at !== null,
+                    'verified' => $verified,
                     'protocol' => $hasConnector && preg_match('/^\d+(?:\.\d+){0,2}$/', (string) $connector->protocol_version)
                         ? (string) $connector->protocol_version : 'unknown',
                     'enabled_scopes' => $scopes,

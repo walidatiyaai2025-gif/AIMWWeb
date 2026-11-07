@@ -53,6 +53,8 @@ export type InspectorServer = {
 const findings: Record<string, { en: string; ar: string }> = {
     CONNECTOR_NOT_PAIRED: { en: 'Connector is not paired', ar: 'البلجن غير مقترن' },
     CONNECTOR_REVOKED: { en: 'Connector pairing revoked', ar: 'اقتران البلجن ملغى' },
+    CONNECTOR_NOT_VERIFIED: { en: 'Connector pairing has not been verified', ar: 'لم يتم التحقق من اتصال البلجن بعد' },
+    CONTENT_READ_UNSUPPORTED: { en: 'Connector does not advertise content.read', ar: 'البلجن لا يعلن دعم صلاحية content.read' },
     CONTENT_READ_SCOPE_DISABLED: { en: 'content.read permission missing', ar: 'صلاحية content.read غير مفعلة' },
     SITE_CONNECTION_NOT_READY: { en: 'Site connection not ready', ar: 'اتصال الموقع غير جاهز' },
     CANONICAL_SYNC_NOT_STARTED: { en: 'Canonical content sync not started', ar: 'مزامنة المحتوى لم تبدأ' },

@@ -47,7 +47,7 @@ const server: InspectorServer = {
         connector: {
             present: true,
             revoked: false,
-            verified: false,
+            verified: true,
             protocol: '1',
             enabled_scopes: ['health', 'content.read'],
         },
@@ -128,6 +128,35 @@ describe('runtime inspector safe diagnostics', () => {
         mounted(ctx(['tenant.view']));
         expect(screen.getByRole('alert')).toHaveTextContent('diagnostics.view permission is required');
         await waitFor(() => expect(fetchMock).not.toHaveBeenCalled());
+    });
+
+    it('shows separate unverified and unsupported Connector readiness findings without claiming sync success', async () => {
+        const response = {
+            ...server,
+            sites: [
+                {
+                    ...server.sites[0],
+                    connector: { ...server.sites[0].connector, verified: false },
+                    finding: 'CONNECTOR_NOT_VERIFIED',
+                },
+                {
+                    ...server.sites[0],
+                    site_id: 2,
+                    connector: { ...server.sites[0].connector, verified: true },
+                    finding: 'CONTENT_READ_UNSUPPORTED',
+                },
+            ],
+        };
+        vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(response), {
+            status: 200, headers: { 'content-type': 'application/json' },
+        })));
+
+        mounted();
+        fireEvent.click(screen.getByRole('button', { name: 'Run Inspector' }));
+
+        expect(await screen.findByText('Connector pairing has not been verified')).toBeInTheDocument();
+        expect(screen.getByText('Connector does not advertise content.read')).toBeInTheDocument();
+        expect(screen.queryByText('Canonical content records exist')).not.toBeInTheDocument();
     });
 
     it('runs an explicit safe GET and permits export only after a successful report', async () => {
