@@ -91,6 +91,35 @@ export function normalizeObservabilityCollection(routeKey: string, payload: unkn
         })),
     ];
 
+    // Older deployed Laravel versions returned no meta. On newer versions,
+    // validate server-side source totals before explaining a genuinely empty
+    // tenant or a bounded sample. Never mistake an incomplete sample for zero.
+    let evidence: Record<string, unknown> = {};
+    if (payload.meta !== undefined) {
+        const meta = payload.meta;
+        const count = (value: unknown): value is number =>
+            typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
+        if (!record(meta) || meta.scope !== 'tenant_operations_and_audit' ||
+            !count(meta.failed_operations_total) || !count(meta.audit_events_total) ||
+            meta.failed_operations_total < failures.length ||
+            meta.audit_events_total < audits.length ||
+            meta.limit_per_source !== 100 ||
+            meta.failed_operations_truncated !== (meta.failed_operations_total > failures.length) ||
+            meta.recent_audit_truncated !== (meta.audit_events_total > audits.length) ||
+            meta.empty_reason !== (meta.failed_operations_total === 0 && meta.audit_events_total === 0
+                ? 'no_tenant_events' : 'not_empty') ||
+            meta.system_health_included !== false) throw invalid();
+        evidence = {
+            scope: 'tenant_operations_and_audit',
+            failed_operations_total: meta.failed_operations_total,
+            audit_events_total: meta.audit_events_total,
+            failed_operations_truncated: meta.failed_operations_truncated,
+            recent_audit_truncated: meta.recent_audit_truncated,
+            empty_reason: meta.empty_reason,
+            system_health_included: false,
+        };
+    }
+
     return {
         data: rows,
         total: rows.length,
@@ -99,6 +128,7 @@ export function normalizeObservabilityCollection(routeKey: string, payload: unkn
         meta: {
             failed_operations_count: failures.length,
             recent_audit_count: audits.length,
+            ...evidence,
         },
     };
 }
