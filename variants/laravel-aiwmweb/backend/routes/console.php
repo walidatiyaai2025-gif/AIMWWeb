@@ -234,6 +234,11 @@ Artisan::command('cpanel:tick', function (): int {
 
         return self::SUCCESS;
     }
+    // An enabled Cron flag is not execution evidence. Clear any prior success
+    // before running subprocesses so a failing or interrupted cycle cannot look healthy.
+    $tickCache = Cache::store('database');
+    $tickCache->put(RuntimeHealthService::CPANEL_QUEUE_TICK_RECEIPT_KEY, 'running', now()->addMinutes(10));
+
     // No schedule:work or permanent worker. Scheduled dispatch remains opt-in;
     // the AI path has its own durable global gate and never relies on queues.
     foreach ([
@@ -249,6 +254,12 @@ Artisan::command('cpanel:tick', function (): int {
         if (! $process->isSuccessful()) {
             return self::FAILURE;
         }
+    }
+
+    // This receipt proves successful invocation of the bounded queue worker,
+    // not successful processing of any particular queued tenant job.
+    if (! $tickCache->put(RuntimeHealthService::CPANEL_QUEUE_TICK_RECEIPT_KEY, time(), now()->addMinutes(10))) {
+        return self::FAILURE;
     }
 
     return self::SUCCESS;
