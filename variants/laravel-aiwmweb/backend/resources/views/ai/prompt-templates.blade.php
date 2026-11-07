@@ -58,7 +58,7 @@
                     <div class="prompt-workspace">
         <header>
             <p>AI PROMPT REGISTRY</p>
-            <h1>AI Prompt Templates</h1>
+            <h2 data-prompt-ar="قوالب أوامر الذكاء الاصطناعي">AI Prompt Templates</h2>
             <p>Read and update persisted prompt templates and append-only revision history for {{ $tenant->name }}.</p>
             <p>Settings managers only. Saving an existing template creates a new revision only when persisted prompt state actually changes.</p>
             <nav aria-label="AI prompt template navigation">
@@ -66,14 +66,14 @@
                     href="/tenants/{{ rawurlencode($tenant->slug) }}/settings"
                     data-canonical-operation="AIMW-AI-E1A964346F"
                     aria-label="Back to Settings"
-                >← Settings</a>
+                ><span data-prompt-ar="← الإعدادات">← Settings</span></a>
                 <button
                     type="button"
                     data-ai-prompt-new-template
                     data-canonical-operation="AIMW-AI-825B2F5A38"
                     aria-controls="new-template-editor"
                     aria-expanded="false"
-                >＋ New template</button>
+                ><span data-prompt-ar="＋ قالب جديد">＋ New template</span></button>
             </nav>
         </header>
 
@@ -83,7 +83,7 @@
 
         @if ($errors->any())
             <section role="alert" aria-label="Save failed" data-ai-prompt-transient>
-                <h2>Prompt save failed</h2>
+                <h2 data-prompt-ar="فشل حفظ القالب">Prompt save failed</h2>
                 <ul>
                     @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
@@ -95,43 +95,49 @@
         <section
             id="new-template-editor"
             data-ai-prompt-new-editor
-            data-state="idle"
-            hidden
+            data-state="{{ old('_prompt_form') === 'create' ? 'new' : 'idle' }}"
+            @if(old('_prompt_form') !== 'create') hidden @endif
             aria-labelledby="new-template-heading"
         >
-            <h2 id="new-template-heading">New template</h2>
+            <h2 id="new-template-heading" data-prompt-ar="قالب جديد">New template</h2>
             <p data-ai-prompt-new-status role="status" hidden></p>
-            <p>Start a new prompt template draft. No data is persisted until the separate Save operation runs.</p>
+            <p data-prompt-ar="ابدأ قالبًا جديدًا؛ لن يتم حفظ شيء إلا بعد الضغط على حفظ.">Start a new prompt template draft. No data is persisted until the separate Save operation runs.</p>
+            <form method="POST" id="new-prompt-form" data-ai-prompt-create-form action="{{ route('tenant.settings.ai-prompts.create', ['tenant' => $tenant->slug]) }}">
+                @csrf
+                <input type="hidden" name="_prompt_form" value="create">
+                <input type="hidden" name="enabled" value="0">
             <p>
-                <label for="new-template-key">Template key</label>
-                <input id="new-template-key" data-ai-prompt-new-key name="new_stable_key" type="text" autocomplete="off" placeholder="content.rewrite">
+                <label for="new-template-key" data-prompt-ar="مفتاح القالب">Template key</label>
+                <input id="new-template-key" data-ai-prompt-new-key name="stable_key" type="text" autocomplete="off" required pattern="[a-z0-9][a-z0-9._-]{0,79}" maxlength="80" placeholder="content.example" value="{{ old('stable_key') }}">
             </p>
             <p>
-                <label for="new-template-title">Title</label>
-                <input id="new-template-title" data-ai-prompt-new-title name="new_title" type="text" maxlength="120" autocomplete="off">
+                <label for="new-template-title" data-prompt-ar="العنوان">Title</label>
+                <input id="new-template-title" data-ai-prompt-new-title name="title" type="text" maxlength="120" autocomplete="off" required value="{{ old('title') }}">
             </p>
             <p>
-                <label for="new-template-system">System prompt</label>
-                <textarea id="new-template-system" data-ai-prompt-new-system name="new_system_template" maxlength="20000"></textarea>
+                <label for="new-template-system" data-prompt-ar="أمر النظام">System prompt</label>
+                <textarea id="new-template-system" data-ai-prompt-new-system name="system_template" maxlength="20000">{{ old('system_template') }}</textarea>
             </p>
             <p>
-                <label for="new-template-user">User prompt</label>
-                <textarea id="new-template-user" data-ai-prompt-new-user name="new_user_template" maxlength="20000"></textarea>
+                <label for="new-template-user" data-prompt-ar="أمر المستخدم">User prompt</label>
+                <textarea id="new-template-user" data-ai-prompt-new-user name="user_template" maxlength="20000" required>{{ old('user_template') }}</textarea>
             </p>
             <p>
                 <label>
-                    <input data-ai-prompt-new-enabled name="new_enabled" type="checkbox" checked>
-                    Enabled
+                    <input data-ai-prompt-new-enabled name="enabled" type="checkbox" value="1" @checked(old('enabled', '1') === '1')>
+                    <span data-prompt-ar="مفعّل">Enabled</span>
                 </label>
             </p>
+                <button type="submit" class="btn prompt-submit" data-ai-prompt-create-save data-prompt-ar="حفظ القالب الجديد">Save new template</button>
+            </form>
         </section>
 
         <section aria-labelledby="template-library">
-            <h2 id="template-library">Template library</h2>
-            <p>{{ $templates->count() }} persisted {{ $templates->count() === 1 ? 'template' : 'templates' }}</p>
+            <h2 id="template-library" data-prompt-ar="مكتبة القوالب">Template library</h2>
+            <p data-prompt-template-count="{{ $templates->count() }}">{{ $templates->count() }} persisted {{ $templates->count() === 1 ? 'template' : 'templates' }}</p>
 
             @if ($templates->isEmpty())
-                <p role="status">No AI prompt templates have been persisted for this tenant.</p>
+                <p role="status" data-prompt-ar="لم يتم حفظ أي قوالب لهذا الحساب حتى الآن.">No AI prompt templates have been persisted for this tenant.</p>
             @else
                 @foreach ($templates as $template)
                     @php
@@ -155,7 +161,7 @@
                         </dl>
 
                         <section aria-label="Edit prompt content for {{ $template->stable_key }}">
-                            <h4>Prompt content</h4>
+                            <h4 data-prompt-ar="محتوى الأمر">Prompt content</h4>
                             <form method="POST" action="{{ route('tenant.settings.ai-prompts.save', ['tenant' => $tenant->slug, 'template' => $template->stable_key]) }}">
                                 @csrf
                                 @method('PATCH')
@@ -189,10 +195,10 @@
                                     </label>
                                 </p>
 
-                                <button type="submit" data-canonical-operation="AIMW-AI-79AE29D6B3">Save</button>
+                                <button type="submit" class="btn prompt-submit" data-canonical-operation="AIMW-AI-79AE29D6B3" data-prompt-ar="حفظ">Save</button>
                             </form>
 
-                            <h5>Output schema</h5>
+                            <h5 data-prompt-ar="مخطط المخرجات">Output schema</h5>
                             @if (! empty($template->output_schema))
                                 <pre>{{ json_encode($template->output_schema, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) }}</pre>
                             @else
@@ -201,7 +207,7 @@
                         </section>
 
                         <section aria-label="Revision history for {{ $template->stable_key }}">
-                            <h4>Revision history</h4>
+                            <h4 data-prompt-ar="سجل الإصدارات">Revision history</h4>
                             <p>Restoring never rewrites history; it creates a new revision from the selected historical content.</p>
                             @if ($template->revisions->isEmpty())
                                 <p>No revision history has been persisted for this template.</p>
