@@ -255,8 +255,11 @@ describe('runtime inspector safe diagnostics', () => {
         expect(requested.some(endpoint => /\\b(?:publish|delete|sync)\\b/.test(endpoint))).toBe(false);
     });
 
-    it('requires explicit choice when the Inspector lists multiple tenant sites', async () => {
-        const context = ctx();
+    it('requires explicit audit-site choice even when a different dashboard site is active', async () => {
+        const context: FrontendContext = {
+            ...ctx(),
+            active_site: { id: 1, name: 'DASHBOARD-SITE', status: 'connected' },
+        };
         const twoSites = {
             ...server, site_count: 2,
             sites: [...server.sites, { ...server.sites[0], site_id: 2 }],
@@ -269,6 +272,7 @@ describe('runtime inspector safe diagnostics', () => {
         vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
             const endpoint = String(input);
             calls.push(endpoint);
+            expect(init?.method ?? 'GET').toBe('GET');
             return new Response(JSON.stringify(endpoint.includes('/runtime-inspector/report')
                 ? twoSites : endpoint.includes('/context?site=2') ? scoped : { items: [] }), {
                 status: 200, headers: { 'content-type': 'application/json' },
@@ -284,6 +288,7 @@ describe('runtime inspector safe diagnostics', () => {
         fireEvent.click(scan);
         await waitFor(() => expect(calls).toContain('/tenants/wordpress/context?site=2'));
         expect(calls).not.toContain('/tenants/wordpress/context?site=1');
+        expect(context.active_site?.id).toBe(1);
     });
 
     it('runs an explicit safe GET and permits export only after a successful report', async () => {
