@@ -122,6 +122,64 @@ describe('runtime inspector safe diagnostics', () => {
         expect(raw).toContain('8cdccdc45cd64e0358d0098ed47128b4e2989599');
     });
 
+    it('rejects malformed exported timestamps and never leaks unexpected event fields', () => {
+        const injected = {
+            ...server,
+            generated_at: '2026-11-07TSECRET_SERVER_TIMESTAMP_CANARY',
+        };
+        const maliciousEvents = [
+            {
+                at: '2026-11-07TSECRET_EVENT_TIMESTAMP_CANARY',
+                kind: 'api', method: 'GET', route: '/api/v1/tenants/wordpress/sites/1?token=SECRET',
+            },
+            {
+                at: '2026-11-07T12:15:00+03:00',
+                kind: 'CANARY_KIND_SECRET', method: 'POST',
+            },
+            {
+                at: '2026-11-07T12:15:00+03:00',
+                kind: 'api', method: 'CANARY_METHOD_SECRET',
+            },
+            {
+                at: '2026-11-07T09:15:00.123Z',
+                kind: 'resource_error', method: 'OTHER',
+            },
+        ] as unknown as Parameters<typeof safeInspectorBundle>[1];
+
+        const result = safeInspectorBundle(injected, maliciousEvents);
+        const exported = JSON.stringify(result);
+        expect(result.server.generated_at).toBe('unknown');
+        expect(result.browser.captured_events).toHaveLength(3);
+        expect(result.browser.captured_events[0]).toMatchObject({
+            at: 'unknown', kind: 'api', method: 'GET',
+            route: '/api/v1/tenants/:id/sites/:id',
+        });
+        expect(result.browser.captured_events[1]).toMatchObject({
+            at: '2026-11-07T09:15:00.000Z', kind: 'api',
+        });
+        expect(result.browser.captured_events[1]).not.toHaveProperty('method');
+        expect(result.browser.captured_events[2]).toMatchObject({
+            at: '2026-11-07T09:15:00.123Z', kind: 'resource_error', method: 'OTHER',
+        });
+        for (const secret of ['SECRET_SERVER_TIMESTAMP_CANARY', 'SECRET_EVENT_TIMESTAMP_CANARY',
+            'CANARY_KIND_SECRET', 'CANARY_METHOD_SECRET', 'token=SECRET']) {
+            expect(exported).not.toContain(secret);
+        }
+    });
+
+    it('normalizes valid timezone timestamps rather than copying untrusted raw text', () => {
+        const report = safeInspectorBundle({
+            ...server,
+            generated_at: '2026-11-07T13:45:00+03:00',
+        }, []);
+        expect(report.server.generated_at).toBe('2026-11-07T10:45:00.000Z');
+        for (const invalid of ['2026-11-07TAPI_KEY', '2026-13-07T00:00:00Z',
+            '2026-11-07T25:00:00Z', '2026-11-07T12:00:00']) {
+            const result = safeInspectorBundle({ ...server, generated_at: invalid }, []);
+            expect(result.server.generated_at).toBe('unknown');
+        }
+    });
+
     it('does not fetch diagnostics for unauthorized tenant members', async () => {
         const fetchMock = vi.fn();
         vi.stubGlobal('fetch', fetchMock);
