@@ -65,6 +65,45 @@ export function liveAuditPlan(context: FrontendContext): LiveAuditEntry[] {
     });
 }
 
+/**
+ * Verify the response, not just its Content-Type. Keep bodies in memory only for
+ * this bounded check; never attach them to audit observations or support exports.
+ */
+const MAX_AUDIT_JSON_BYTES = 1024 * 1024;
+
+async function containsBoundedJsonDocument(response: Response): Promise<boolean> {
+    const contentType = (response.headers.get('content-type') ?? '').toLowerCase();
+    if (!/^application\/(?:json|[a-z0-9.+-]+\+json)(?:\s*;|$)/.test(contentType)) return false;
+
+    const declaredLength = response.headers.get('content-length');
+    if (declaredLength !== null &&
+        (!/^\d+$/.test(declaredLength) || Number(declaredLength) > MAX_AUDIT_JSON_BYTES)) return false;
+
+    if (!response.body) return false;
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8', { fatal: true });
+    let bytes = 0;
+    let body = '';
+    try {
+        while (true) {
+            const chunk = await reader.read();
+            if (chunk.done) break;
+            bytes += chunk.value.byteLength;
+            if (bytes > MAX_AUDIT_JSON_BYTES) return false;
+            body += decoder.decode(chunk.value, { stream: true });
+        }
+        body += decoder.decode();
+        const document: unknown = JSON.parse(body);
+        return document !== null && typeof document === 'object';
+    } catch {
+        return false;
+    } finally {
+        // Cancel any unread stream without preserving or exporting its contents.
+        void reader.cancel().catch(() => {});
+        reader.releaseLock();
+    }
+}
+
 /** A 2xx JSON response verifies the GET contract only, not navigation or write workflows. */
 export async function runReadOnlyWorkspaceAudit(
     context: FrontendContext,
@@ -91,7 +130,7 @@ export async function runReadOnlyWorkspaceAudit(
                 headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             });
             const duration_ms = Math.min(60000, Math.max(0, Date.now() - started));
-            const json = (response.headers.get('content-type') ?? '').toLowerCase().includes('application/json');
+            const json = response.ok && await containsBoundedJsonDocument(response);
             const ok = response.ok && json;
             return {
                 state: ok ? 'passed_read' as const : 'failed_read' as const,
