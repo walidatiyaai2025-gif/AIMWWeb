@@ -188,7 +188,7 @@ final class BackupCreateTerminalityTest extends TestCase
             try {
                 app(TenantBackupCreateService::class)->create($admin->id, 'Ancestor symlink test', null);
                 $this->fail('A parent symlink must prevent an archive write.');
-            } catch (\\RuntimeException $exception) {
+            } catch (\RuntimeException $exception) {
                 $this->assertSame('Private backup storage root is unavailable or unsafe.', $exception->getMessage());
                 $this->assertStringNotContainsString($link, $exception->getMessage());
                 $this->assertStringNotContainsString($actualRoot, $exception->getMessage());
