@@ -47,7 +47,8 @@ final class RuntimeInspectorController extends Controller
         $probe = $request->boolean('probe');
         $sites = Site::query()->orderBy('id')->limit(51)->get();
         $truncated = $sites->count() > 50;
-        $rows = $sites->take(50)->map(function (Site $site, int $index) use ($probe, $diagnostics): array {
+        $probesAttempted = 0;
+        $rows = $sites->take(50)->map(function (Site $site) use ($probe, $diagnostics, &$probesAttempted): array {
             $connector = Connector::query()->where('site_id', $site->id)->first();
             $scopes = $connector
                 ? array_values(array_intersect(self::SAFE_SCOPES, (array) $connector->enabled_scopes))
@@ -70,10 +71,16 @@ final class RuntimeInspectorController extends Controller
             $legacyRun = $lastRun !== null && empty($lastRun->resources)
                 && in_array((string) $lastRun->status, ['queued', 'running', 'succeeded', 'failed'], true);
             $syncState = $lastRun === null ? null : (string) ($legacyRun ? $lastRun->status : $lastRun->state);
-            $remoteProbe = ['attempted' => false, 'state' => $probe && $index >= 3 ? 'limited' : 'not_run'];
+            // Budget remote calls by eligible Connector, not by site-row index.
+            // Unpaired or unverified sites must not starve a later valid Connector.
+            $probeEligible = $hasConnector && ! $revoked && $verified && $readSupported
+                && in_array('health', $scopes, true);
+            $probeLimited = $probe && $probeEligible && $probesAttempted >= 3;
+            $remoteProbe = ['attempted' => false, 'state' => $probeLimited ? 'limited' : 'not_run'];
             $remoteVersion = 'unknown';
             // Do not send signed probes from an unverified or incompatible pairing.
-            if ($probe && $index < 3 && $hasConnector && ! $revoked && $verified && $readSupported && in_array('health', $scopes, true)) {
+            if ($probe && $probeEligible && ! $probeLimited) {
+                $probesAttempted++;
                 try {
                     $remote = $diagnostics->capabilities($site);
                     // Only the signed, explicitly requested remote probe can prove the installed plugin version.
