@@ -17,6 +17,7 @@ final class TenantBackupCreateService
     public function create(int $actorUserId, ?string $note, ?string $recoverySecret): array
     {
         $tenantId = $this->context->id();
+        $this->assertSafeBackupTarget($tenantId);
         $recoverySecret = $recoverySecret !== null ? trim($recoverySecret) : null;
         if ($recoverySecret === '') {
             $recoverySecret = null;
@@ -85,8 +86,18 @@ final class TenantBackupCreateService
             $createdAt->format('Ymd-His'),
             bin2hex(random_bytes(6)),
         );
-        Storage::disk('local')->put($filename, $compressed);
+        // The local disk normally uses throw=false. A rejected write must
+        // not be followed by a read or a falsely verified archive record.
+        if (! Storage::disk('local')->put($filename, $compressed)) {
+            throw new RuntimeException('Backup archive could not be written.');
+        }
+
         $stored = Storage::disk('local')->get($filename);
+        if (! is_string($stored) || $stored === '') {
+            Storage::disk('local')->delete($filename);
+            throw new RuntimeException('Written backup archive could not be read for verification.');
+        }
+
         $sha256 = hash('sha256', $stored);
         $decoded = gzdecode($stored);
         $verifiedPayload = $decoded !== false ? json_decode($decoded, true) : null;
@@ -127,6 +138,32 @@ final class TenantBackupCreateService
             'verified' => true,
             'created_at' => $createdAt->toIso8601String(),
         ];
+    }
+
+    /**
+     * Check the exact local-disk path used by the archive writer, not the
+     * unrelated storage/app/backups path. The tenant component is derived
+     * from authenticated server context, never from a request path.
+     *
+     * Refuse existing symbolic links (including dangling links) or a file
+     * occupying any required directory component before writing. This is a
+     * preflight guard, not an OS-level race-free directory open primitive.
+     */
+    private function assertSafeBackupTarget(int $tenantId): void
+    {
+        $disk = Storage::disk('local');
+        $root = rtrim($disk->path(''), '/\\') ?: DIRECTORY_SEPARATOR;
+
+        if (is_link($root) || ! is_dir($root)) {
+            throw new RuntimeException('Private backup storage root is unavailable or unsafe.');
+        }
+
+        foreach (['backups', 'backups/tenant-'.$tenantId] as $segment) {
+            $path = $disk->path($segment);
+            if (is_link($path) || (file_exists($path) && ! is_dir($path))) {
+                throw new RuntimeException('Private backup storage target is unsafe.');
+            }
+        }
     }
 
     private function isProtectedColumn(string $column): bool
