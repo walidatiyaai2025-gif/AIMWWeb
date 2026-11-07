@@ -11,6 +11,7 @@ use App\Models\SiteDiagnostic;
 use App\Models\SyncedContent;
 use App\Models\SyncRun;
 use App\Platform\SystemUpdateService;
+use App\Services\RuntimeHealthService;
 use App\Sites\SiteDiagnosticsService;
 use App\Tenancy\TenantContext;
 use Illuminate\Http\JsonResponse;
@@ -37,6 +38,7 @@ final class RuntimeInspectorController extends Controller
         TenantContext $context,
         SystemUpdateService $updates,
         SiteDiagnosticsService $diagnostics,
+        RuntimeHealthService $health,
         Request $request,
     ): JsonResponse {
         $authorizer->authorize('diagnostics.view');
@@ -183,6 +185,8 @@ final class RuntimeInspectorController extends Controller
                     'zip' => extension_loaded('zip'),
                 ],
             ],
+            // Safe read-only receipts, not a readiness probe or proof of specific job execution.
+            'runtime_health' => $health->inspectorEvidence(),
             'wordpress_plugin' => [
                 'name' => 'AIMW Connector',
                 // This is the release-bundled source version, not a claim about remote WordPress.

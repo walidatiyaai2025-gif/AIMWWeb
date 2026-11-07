@@ -26,6 +26,83 @@ final class RuntimeHealthService
         ];
     }
 
+    /**
+     * Safe support evidence for the authenticated Runtime Inspector. Unlike
+     * ready(), this performs only cache reads: no probe keys, session writes,
+     * worker dispatch, or scheduler invocation. A worker-cycle receipt is
+     * never represented as proof that a specific tenant job was processed.
+     *
+     * @return array<string, mixed>
+     */
+    public function inspectorEvidence(): array
+    {
+        $cpanel = (bool) config('cpanel.enabled');
+        $cron = $cpanel && (bool) config('cpanel.cron_enabled');
+        $preflight = (bool) config('cpanel.preflight_passed');
+
+        $queueMode = (string) config('queue.default');
+        $cacheMode = (string) config('cache.default');
+
+        return [
+            'profile' => $cpanel ? 'cpanel' : 'vps',
+            'hosting_preflight' => ! $cpanel ? 'not_applicable' : ($preflight ? 'operator_validated' : 'pending'),
+            'runtime_modes' => [
+                'queue' => in_array($queueMode, ['database', 'redis', 'sync', 'sqs'], true) ? $queueMode : 'other',
+                'cache' => in_array($cacheMode, ['database', 'redis', 'file', 'array'], true) ? $cacheMode : 'other',
+                'cron' => ! $cpanel ? 'not_applicable' : ($cron ? 'expected' : 'disabled'),
+            ],
+            'scheduler_heartbeat' => $cpanel && ! $cron
+                ? ['status' => 'disabled', 'reason_code' => 'cron_disabled']
+                : ($cpanel && ! $preflight
+                    ? ['status' => 'unavailable', 'reason_code' => 'preflight_pending']
+                    : $this->inspectorReceipt(self::SCHEDULER_HEARTBEAT_KEY, $cpanel, 'scheduler_heartbeat_observed')),
+            'worker_cycle' => ! $cpanel
+                ? ['status' => 'not_advertised', 'reason_code' => 'no_cpanel_worker_receipt']
+                : (! $cron
+                    ? ['status' => 'disabled', 'reason_code' => 'cron_disabled']
+                    : (! $preflight
+                        ? ['status' => 'unavailable', 'reason_code' => 'preflight_pending']
+                        : $this->inspectorReceipt(self::CPANEL_QUEUE_TICK_RECEIPT_KEY, true, 'bounded_worker_cycle_completed'))),
+        ];
+    }
+
+    /**
+     * Read-only and fail-closed: returned fields are fixed enums and bounded
+     * ages, never cache contents, host paths, or exception details.
+     *
+     * @return array{status:string,reason_code?:string,age_seconds?:int,evidence?:string}
+     */
+    private function inspectorReceipt(string $key, bool $cpanel, string $evidence): array
+    {
+        try {
+            $receipt = $cpanel ? Cache::store('database')->get($key) : Cache::get($key);
+        } catch (Throwable) {
+            return ['status' => 'unavailable', 'reason_code' => 'receipt_unreadable'];
+        }
+
+        if (! is_int($receipt) && (! is_string($receipt) || ! ctype_digit($receipt))) {
+            return ['status' => 'unavailable', 'reason_code' => 'receipt_missing'];
+        }
+
+        $age = time() - (int) $receipt;
+        if ($age < 0) {
+            return ['status' => 'unavailable', 'reason_code' => 'receipt_invalid'];
+        }
+        if ($age > 180) {
+            return [
+                'status' => 'unavailable',
+                'reason_code' => 'receipt_stale',
+                'age_seconds' => min($age, 86400),
+            ];
+        }
+
+        return [
+            'status' => 'ok',
+            'evidence' => $evidence,
+            'age_seconds' => $age,
+        ];
+    }
+
     /** @return array{status:string,checks:array<string,array{status:string}>} */
     public function ready(): array
     {

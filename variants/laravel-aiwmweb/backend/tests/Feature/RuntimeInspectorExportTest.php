@@ -12,9 +12,11 @@ use App\Models\SyncRun;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
+use App\Services\RuntimeHealthService;
 use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
@@ -420,6 +422,122 @@ final class RuntimeInspectorExportTest extends TestCase
         $version = (string) config('aimw_connector.plugin_version');
         $this->assertMatchesRegularExpression('/^ \\* Version: '.preg_quote($version, '/').'$/m', $plugin);
         $this->assertStringContainsString("public const PLUGIN_VERSION = '".$version."';", $plugin);
+    }
+
+    public function test_read_only_inspector_exports_fresh_cpanel_cron_and_worker_cycle_evidence(): void
+    {
+        config([
+            'cpanel.enabled' => true,
+            'app.url' => 'https://aiwm.test',
+            'cpanel.cron_enabled' => true,
+            'cpanel.preflight_passed' => true,
+            'queue.default' => 'database',
+            'cache.default' => 'database',
+        ]);
+        // cPanel correctly requires HTTPS; exercise the secured host transport.
+        $this->withServerVariables(['HTTPS' => 'on']);
+
+        $user = User::factory()->create();
+        $this->membership($user, 'wordpress', ['tenant.view', 'diagnostics.view']);
+        $store = Cache::store('database');
+        $store->put(RuntimeHealthService::SCHEDULER_HEARTBEAT_KEY, time() - 10, now()->addMinutes(10));
+        $store->put(RuntimeHealthService::CPANEL_QUEUE_TICK_RECEIPT_KEY, time() - 12, now()->addMinutes(10));
+        $originalScheduler = $store->get(RuntimeHealthService::SCHEDULER_HEARTBEAT_KEY);
+        $originalWorker = $store->get(RuntimeHealthService::CPANEL_QUEUE_TICK_RECEIPT_KEY);
+
+        Http::fake();
+        $response = $this->actingAs($user)
+            ->getJson('https://aiwm.test/tenants/wordpress/runtime-inspector/report')
+            ->assertOk()
+            ->assertHeader('Cache-Control', 'no-store, private')
+            ->assertJsonPath('safety.read_only', true)
+            ->assertJsonPath('runtime_health.profile', 'cpanel')
+            ->assertJsonPath('runtime_health.hosting_preflight', 'operator_validated')
+            ->assertJsonPath('runtime_health.runtime_modes.queue', 'database')
+            ->assertJsonPath('runtime_health.runtime_modes.cache', 'database')
+            ->assertJsonPath('runtime_health.runtime_modes.cron', 'expected')
+            ->assertJsonPath('runtime_health.scheduler_heartbeat.status', 'ok')
+            ->assertJsonPath('runtime_health.scheduler_heartbeat.evidence', 'scheduler_heartbeat_observed')
+            ->assertJsonPath('runtime_health.worker_cycle.status', 'ok')
+            ->assertJsonPath('runtime_health.worker_cycle.evidence', 'bounded_worker_cycle_completed');
+
+        $this->assertGreaterThanOrEqual(0, $response->json('runtime_health.worker_cycle.age_seconds'));
+        $this->assertLessThanOrEqual(180, $response->json('runtime_health.worker_cycle.age_seconds'));
+        $this->assertSame($originalScheduler, $store->get(RuntimeHealthService::SCHEDULER_HEARTBEAT_KEY));
+        $this->assertSame($originalWorker, $store->get(RuntimeHealthService::CPANEL_QUEUE_TICK_RECEIPT_KEY));
+        $this->assertDatabaseCount('jobs', 0);
+        Http::assertNothingSent();
+    }
+
+    public function test_inspector_fails_closed_for_missing_stale_future_and_disabled_cpanel_receipts(): void
+    {
+        config([
+            'cpanel.enabled' => true,
+            'app.url' => 'https://aiwm.test',
+            'cpanel.cron_enabled' => true,
+            'cpanel.preflight_passed' => true,
+            'queue.default' => 'database',
+            'cache.default' => 'database',
+        ]);
+        // cPanel correctly requires HTTPS; exercise the secured host transport.
+        $this->withServerVariables(['HTTPS' => 'on']);
+        $user = User::factory()->create();
+        $this->membership($user, 'wordpress', ['tenant.view', 'diagnostics.view']);
+        $url = 'https://aiwm.test/tenants/wordpress/runtime-inspector/report';
+        $store = Cache::store('database');
+        $store->forget(RuntimeHealthService::SCHEDULER_HEARTBEAT_KEY);
+        $store->forget(RuntimeHealthService::CPANEL_QUEUE_TICK_RECEIPT_KEY);
+
+        $this->actingAs($user)->getJson($url)->assertOk()
+            ->assertJsonPath('runtime_health.scheduler_heartbeat.reason_code', 'receipt_missing')
+            ->assertJsonPath('runtime_health.worker_cycle.status', 'unavailable')
+            ->assertJsonPath('runtime_health.worker_cycle.reason_code', 'receipt_missing');
+
+        $store->put(RuntimeHealthService::CPANEL_QUEUE_TICK_RECEIPT_KEY, time() - 300, now()->addMinutes(10));
+        $this->actingAs($user)->getJson($url)->assertOk()
+            ->assertJsonPath('runtime_health.worker_cycle.status', 'unavailable')
+            ->assertJsonPath('runtime_health.worker_cycle.reason_code', 'receipt_stale');
+
+        $store->put(RuntimeHealthService::CPANEL_QUEUE_TICK_RECEIPT_KEY, time() + 60, now()->addMinutes(10));
+        $this->actingAs($user)->getJson($url)->assertOk()
+            ->assertJsonPath('runtime_health.worker_cycle.status', 'unavailable')
+            ->assertJsonPath('runtime_health.worker_cycle.reason_code', 'receipt_invalid');
+
+        config(['cpanel.cron_enabled' => false]);
+        $this->actingAs($user)->getJson($url)->assertOk()
+            ->assertJsonPath('runtime_health.runtime_modes.cron', 'disabled')
+            ->assertJsonPath('runtime_health.scheduler_heartbeat.status', 'disabled')
+            ->assertJsonPath('runtime_health.worker_cycle.reason_code', 'cron_disabled');
+
+        config(['cpanel.cron_enabled' => true, 'cpanel.preflight_passed' => false]);
+        $this->actingAs($user)->getJson($url)->assertOk()
+            ->assertJsonPath('runtime_health.hosting_preflight', 'pending')
+            ->assertJsonPath('runtime_health.worker_cycle.status', 'unavailable')
+            ->assertJsonPath('runtime_health.worker_cycle.reason_code', 'preflight_pending');
+    }
+
+    public function test_vps_inspector_does_not_invent_a_worker_receipt_or_export_unknown_driver_names(): void
+    {
+        config([
+            'cpanel.enabled' => false,
+            'queue.default' => 'LEAK_PRIVATE_QUEUE_URL',
+            'cache.default' => 'array',
+        ]);
+        $user = User::factory()->create();
+        $this->membership($user, 'wordpress', ['tenant.view', 'diagnostics.view']);
+        Cache::put(RuntimeHealthService::SCHEDULER_HEARTBEAT_KEY, time() - 5, now()->addMinutes(10));
+
+        $response = $this->actingAs($user)
+            ->getJson('/tenants/wordpress/runtime-inspector/report')
+            ->assertOk()
+            ->assertJsonPath('runtime_health.profile', 'vps')
+            ->assertJsonPath('runtime_health.hosting_preflight', 'not_applicable')
+            ->assertJsonPath('runtime_health.runtime_modes.queue', 'other')
+            ->assertJsonPath('runtime_health.runtime_modes.cron', 'not_applicable')
+            ->assertJsonPath('runtime_health.scheduler_heartbeat.status', 'ok')
+            ->assertJsonPath('runtime_health.worker_cycle.status', 'not_advertised')
+            ->assertJsonPath('runtime_health.worker_cycle.reason_code', 'no_cpanel_worker_receipt');
+        $this->assertStringNotContainsString('LEAK_PRIVATE_QUEUE_URL', $response->getContent());
     }
 
     /** @param list<string> $permissions */
