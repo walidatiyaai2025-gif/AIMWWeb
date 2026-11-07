@@ -325,9 +325,12 @@
                     element.textContent = arabic ? element.getAttribute('data-prompt-ar') : original.get(element);
                 });
                 const count = document.querySelector('[data-prompt-template-count]');
-                if (count && arabic) count.textContent = count.dataset.promptTemplateCount + ' قالب محفوظ';
-                if (count && !arabic && !original.has(count)) original.set(count, count.textContent);
-                if (count && !arabic) count.textContent = original.get(count);
+                if (count) {
+                    if (!original.has(count)) original.set(count, count.textContent);
+                    count.textContent = arabic
+                        ? count.dataset.promptTemplateCount + ' قالب محفوظ'
+                        : original.get(count);
+                }
                 const flash = document.querySelector('[data-ai-prompt-transient][role=status]');
                 if (flash && !original.has(flash)) original.set(flash, flash.textContent);
                 if (flash) {
