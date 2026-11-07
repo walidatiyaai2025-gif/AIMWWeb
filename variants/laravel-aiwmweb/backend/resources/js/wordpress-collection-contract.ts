@@ -21,7 +21,7 @@ function checkPageFields(container: Record<string, unknown>): void {
     for (const field of ['total', 'current_page', 'page', 'last_page', 'lastPage']) {
         const value = container[field];
         if (value === undefined || value === null) continue;
-        if (!Number.isSafeInteger(value) || (field === 'total' ? (value as number) < 0 : (value as number) < 1)) {
+        if (typeof value !== 'number' || !Number.isSafeInteger(value) || (field === 'total' ? value < 0 : value < 1)) {
             throw invalidCollection();
         }
     }
