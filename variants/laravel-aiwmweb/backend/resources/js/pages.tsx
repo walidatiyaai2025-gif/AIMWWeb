@@ -100,6 +100,7 @@ import { SitesInterpolatedLinksControl } from './sites-interpolated-links-contro
 import { SitesSystemHealthLinkControl } from './sites-system-health-link-control';
 import { runAuthoritativeSiteOperationsReload, SITE_OPERATIONS_RELOAD_OPERATION_ID } from './site-operations-reload-control';
 import { runAuthoritativeSiteReliabilityReload, SITE_RELIABILITY_RELOAD_OPERATION_ID } from './site-reliability-reload-control';
+import { readWorkspaceCollectionResponse } from './wordpress-collection-contract';
 import { SiteReliabilityOperationHistoryLinkControl } from './site-reliability-operation-history-link-control';
 
 const SITES_RELOAD_OPERATION_ID = 'AIMW-SYNC-A9E956A4DA';
@@ -432,26 +433,28 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     } : {};
     const mediaQueryFilters = route.key === 'media' ? globalMediaApplyQuery(mediaAppliedFilters) : {};
     const resourceFilters = { ...taxonomyFilter, ...emailHistoryQueryFilters, ...siteReliabilityQueryFilters, ...mediaQueryFilters };
+    const readWorkspaceCollection = (url: string): Promise<unknown> =>
+        readWorkspaceCollectionResponse(route.key, url, (target) => apiRequest<unknown>(target));
     const query = useQuery(route.key === 'email-history' ? {
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType, emailHistoryFilters.siteId, emailHistoryFilters.status, emailHistoryFilters.correlation, appDataGridSortDescending],
-        queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, resourceFilters)),
+        queryFn: () => readWorkspaceCollection(endpointWithQuery(endpoint!, page, search, resourceFilters)),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     } : route.key === 'site-reliability' ? {
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, siteReliabilityFilters.periodDays, siteReliabilityFilters.minimumOperations],
-        queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, siteReliabilityQueryFilters)),
+        queryFn: () => readWorkspaceCollection(endpointWithQuery(endpoint!, page, search, siteReliabilityQueryFilters)),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     } : route.key === 'media' ? {
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, mediaAppliedFilters.mediaType, mediaAppliedFilters.pageSize],
-        queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, mediaQueryFilters)),
+        queryFn: () => readWorkspaceCollection(endpointWithQuery(endpoint!, page, search, mediaQueryFilters)),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     } : siteUsersManagerSearch ? {
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, wordpressSiteRoleApplied],
-        queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search,
+        queryFn: () => readWorkspaceCollection(endpointWithQuery(endpoint!, page, search,
             wordpressSiteRoleApplied === 'all' ? {} : { role: wordpressSiteRoleApplied })),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     } : {
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType, taxonomyApplied.minimumUsage, taxonomyApplied.pageSize, wordpressUsersRole],
-        queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, { ...taxonomyAppliedQuery, ...wordpressUsersFilters })),
+        queryFn: () => readWorkspaceCollection(endpointWithQuery(endpoint!, page, search, { ...taxonomyAppliedQuery, ...wordpressUsersFilters })),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     });
 
