@@ -382,7 +382,10 @@ final class OperationsControlPlaneService
         // Legacy or externally imported log contexts may predate write-time
         // redaction. Sanitize both list and operation-detail read boundaries.
         $matchingCount = $hasFilters ? (clone $query)->count() : $tenantCount;
-        $rows = $query->orderByDesc('occurred_at')->limit(500)->get()
+        // Multiple events can share one timestamp (e.g. a bounded Cron
+        // batch). Break ties by insertion ID so the 500-row cap retains
+        // the newest events rather than arbitrary older rows.
+        $rows = $query->orderByDesc('occurred_at')->orderByDesc('id')->limit(500)->get()
             ->map(fn ($row) => $this->redactor->redact($this->decodeColumns($this->objectToArray($row), ['context'])))->all();
 
         return [
