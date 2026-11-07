@@ -161,6 +161,24 @@ describe('AIMW-AI-A746A1C3EB workspace card navigation', () => {
         expect(settingsLinks.map((link) => link.getAttribute('data-workspace-key'))).toEqual(['ai-providers', 'ai-prompts']);
     });
 
+    it('honors server-issued wildcard permission for all four real AI destinations', () => {
+        renderHub('alpha', ['*']);
+
+        const links = screen.getAllByTestId('workspace-link');
+        expect(links.map((link) => link.getAttribute('data-workspace-key'))).toEqual([
+            'ai-center',
+            'ai-providers',
+            'ai-prompts',
+            'approvals',
+        ]);
+        expect(links.map((link) => link.getAttribute('href'))).toEqual([
+            '/tenants/alpha/ai-center',
+            '/tenants/alpha/settings/ai-providers',
+            '/tenants/alpha/settings/ai-prompts',
+            '/tenants/alpha/approvals',
+        ]);
+    });
+
     it('renders no workspace cards for a hub-only member with no destination permission', () => {
         renderHub('alpha', ['tenant.view']);
 

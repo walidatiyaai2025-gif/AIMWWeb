@@ -54,6 +54,7 @@ const tenantPath = (tenant: string, path: string): string =>
     `/tenants/${encodeURIComponent(tenant)}${path}`;
 
 const canOpen = (context: FrontendContext, card: WorkspaceCard): boolean =>
+    context.permissions.includes('*') ||
     card.requiredPermissions.every((permission) => context.permissions.includes(permission));
 
 const isModuleWorkspaceCanonicalDestination = (card: WorkspaceCard): boolean =>
