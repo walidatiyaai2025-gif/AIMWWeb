@@ -371,7 +371,15 @@ final class AdminOperationsController extends Controller
     public function logs(Request $request, string $tenant): JsonResponse
     {
         $this->authorizer->authorize('operations.manage');
-        $filters = $request->only(['level', 'correlation_id', 'q', 'search']);
+        // Validate the GET contract before sending filter values to the query
+        // builder. PHP query arrays and unbounded LIKE terms must fail with
+        // 422 rather than triggering an unexpected server/database exception.
+        $filters = $request->validate([
+            'level' => ['nullable', 'string', 'max:32'],
+            'correlation_id' => ['nullable', 'string', 'max:100'],
+            'q' => ['nullable', 'string', 'max:160'],
+            'search' => ['nullable', 'string', 'max:160'],
+        ]);
         if (empty($filters['q']) && ! empty($filters['search'])) {
             $filters['q'] = $filters['search'];
         }
