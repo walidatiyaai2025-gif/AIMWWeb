@@ -242,6 +242,52 @@ describe('explicit all-workspace read-only live audit', () => {
         expect(JSON.stringify(safeInspectorBundle(server, [], selected))).not.toContain('PRIVATE_SITE_CANARY');
     });
 
+    it('rejects a valid same-site GET when it is advertised under the wrong workspace key', async () => {
+        const base = { ...context(), api: {} };
+        const exact: Record<string, string> = {
+            explorer: '/api/v1/tenants/wordpress/sites/7/explorer',
+            posts: '/api/v1/tenants/wordpress/sites/7/content/post',
+            pages: '/api/v1/tenants/wordpress/sites/7/content/page',
+            media: '/api/v1/tenants/wordpress/sites/7/media',
+            comments: '/api/v1/tenants/wordpress/sites/7/comments',
+            taxonomy: '/api/v1/tenants/wordpress/sites/7/taxonomy',
+            categories: '/api/v1/tenants/wordpress/sites/7/taxonomy?taxonomy=category',
+            tags: '/api/v1/tenants/wordpress/sites/7/taxonomy?taxonomy=post_tag',
+            'wp-users': '/api/v1/tenants/wordpress/sites/7/users',
+            sync: '/api/v1/tenants/wordpress/sites/7/sync',
+            'seo-audit': '/api/tenants/wordpress/sites/7/seo/audits',
+        };
+        const scoped = { ...base, active_site: { id: 7, name: 'Selected' }, api: exact };
+        const response = (api: Record<string, string>) => vi.fn(async () =>
+            new Response(JSON.stringify({ ...scoped, api }), {
+                status: 200, headers: { 'content-type': 'application/json' },
+            }));
+
+        const correct = response(exact);
+        const selected = await loadSiteScopedAuditContext(base, 7, [7], correct as typeof fetch);
+        expect(correct).toHaveBeenCalledTimes(1);
+        for (const key of Object.keys(exact)) {
+            expect(liveAuditPlan(selected).find(entry => entry.key === key)?.reason, key)
+                .toBe('read_ok');
+        }
+        expect(liveAuditPlan(selected).every(entry => entry.tested_write_actions === 0)).toBe(true);
+
+        // Every substitution is a legitimate, same-tenant/same-site URL, yet
+        // represents a different workspace. None may be marked "read_ok".
+        for (const key of Object.keys(exact)) {
+            const substituted = key === 'posts' ? exact.media : exact.posts;
+            const wrong = response({ ...exact, [key]: substituted });
+            await expect(loadSiteScopedAuditContext(base, 7, [7], wrong as typeof fetch))
+                .rejects.toThrow('Site-scoped GET contract does not match the selected site.');
+            expect(wrong).toHaveBeenCalledTimes(1);
+        }
+        const arbitrary = response({
+            ...exact, posts: '/api/v1/tenants/wordpress/sites/7/unknown-but-same-site',
+        });
+        await expect(loadSiteScopedAuditContext(base, 7, [7], arbitrary as typeof fetch))
+            .rejects.toThrow('Site-scoped GET contract does not match the selected site.');
+    });
+
     it('probes documented production context paths without executing writes', async () => {
         const realistic = {
             ...context(),
