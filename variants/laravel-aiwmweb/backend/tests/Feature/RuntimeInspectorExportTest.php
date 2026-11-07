@@ -130,6 +130,7 @@ final class RuntimeInspectorExportTest extends TestCase
             'site_id' => $disabled->id,
             'identity' => '12345678-1234-4123-8123-eeeeeeeeeeee',
             'encrypted_secret' => 'protected',
+            'verified_at' => now(),
             'enabled_scopes' => ['health'],
             'capabilities' => ['health', 'content.read'],
         ]);
@@ -142,6 +143,43 @@ final class RuntimeInspectorExportTest extends TestCase
             ->assertJsonPath('sites.0.finding', 'CONNECTOR_NOT_PAIRED')
             ->assertJsonPath('sites.1.site_id', $disabled->id)
             ->assertJsonPath('sites.1.finding', 'CONTENT_READ_SCOPE_DISABLED');
+    }
+
+    public function test_unverified_pairing_without_negotiated_capabilities_reports_verification_blocker_first(): void
+    {
+        $user = User::factory()->create();
+        $membership = $this->membership($user, 'wordpress', ['tenant.view', 'diagnostics.view']);
+        app(TenantContext::class)->activate($membership->tenant, $membership);
+
+        $site = Site::query()->create([
+            'name' => 'Pending pairing verification',
+            'url' => 'https://unverified-no-capabilities.example.test',
+            'connection_status' => 'paired',
+            'status' => 'active',
+        ]);
+        Connector::query()->create([
+            'site_id' => $site->id,
+            'identity' => '12345678-1234-4123-8123-999999999999',
+            'encrypted_secret' => 'PENDING_PAIRING_SECRET_CANARY',
+            'verified_at' => null,
+            'capabilities' => [],
+            'enabled_scopes' => [],
+        ]);
+        app(TenantContext::class)->forget();
+
+        Http::fake();
+        $response = $this->actingAs($user)
+            ->getJson('/tenants/wordpress/runtime-inspector/report?probe=1')
+            ->assertOk()
+            ->assertJsonPath('sites.0.site_id', $site->id)
+            ->assertJsonPath('sites.0.finding', 'CONNECTOR_NOT_VERIFIED')
+            ->assertJsonPath('sites.0.connector.verified', false)
+            ->assertJsonPath('sites.0.connector.enabled_scopes', [])
+            ->assertJsonPath('sites.0.remote_probe.attempted', false);
+
+        $this->assertStringNotContainsString('PENDING_PAIRING_SECRET_CANARY', $response->getContent());
+        $this->assertStringNotContainsString('unverified-no-capabilities.example.test', $response->getContent());
+        Http::assertNothingSent();
     }
 
     public function test_inspector_reports_unverified_and_unsupported_connector_even_with_existing_content(): void
