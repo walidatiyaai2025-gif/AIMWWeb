@@ -489,25 +489,31 @@ final class WordPressWriteSmokeTest extends TestCase
         Http::assertSentCount(2);
     }
 
-    public function test_fractional_create_id_is_never_coerced_to_an_existing_wordpress_id(): void
+    public function test_boolean_float_and_fractional_ids_cannot_be_coerced_to_existing_wordpress_records(): void
     {
         $user = User::factory()->create();
         $m = $this->membership($user, 'alpha', ['diagnostics.view', 'content.edit', 'content.manage']);
         $site = $this->site($m);
         $this->credential($m, $site);
-        Http::fake(function (RemoteRequest $request) {
+        $invalidIds = [true, 12.0, '12.5'];
+        $attempt = 0;
+        Http::fake(function (RemoteRequest $request) use ($invalidIds, &$attempt) {
             $this->assertSame('POST', $request->method());
+            $this->assertLessThan(count($invalidIds), $attempt);
 
-            return Http::response(['id' => '12.5'], 201);
+            return Http::response(['id' => $invalidIds[$attempt++]], 201);
         });
 
-        $this->actingAs($user)->postJson(self::ENDPOINT, $this->body() + ['site_id' => $site->id])
-            ->assertOk()->assertJsonPath('state', 'needs_reconciliation')
-            ->assertJsonPath('reason', 'create_result_ambiguous')
-            ->assertJsonPath('cleanup_required', true)
-            ->assertJsonPath('delete_verified', false)
-            ->assertJsonCount(0, 'recovery.known_objects');
-        Http::assertSentCount(1);
+        foreach ($invalidIds as $_) {
+            $this->actingAs($user)->postJson(self::ENDPOINT, $this->body() + ['site_id' => $site->id])
+                ->assertOk()->assertJsonPath('state', 'needs_reconciliation')
+                ->assertJsonPath('reason', 'create_result_ambiguous')
+                ->assertJsonPath('cleanup_required', true)
+                ->assertJsonPath('delete_verified', false)
+                ->assertJsonCount(0, 'recovery.known_objects');
+        }
+        $this->assertSame(count($invalidIds), $attempt);
+        Http::assertSentCount(count($invalidIds));
     }
 
     private function membership(User $user, string $slug, array $permissions): TenantMembership
