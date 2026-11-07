@@ -24,6 +24,64 @@ final class NativeWordPressRestPath
 
     public function list(int $siteId, string $resource, array $query = []): array
     {
+        [$rows] = $this->listRowsAndResponse($siteId, $resource, $query);
+
+        return $rows;
+    }
+
+    /**
+     * Return the native WordPress REST pagination headers with the validated rows.
+     * Without headers, report the legacy estimate explicitly as non-authoritative.
+     *
+     * @return array{data: array, total: int, current_page: int, last_page: int, pagination_authoritative: bool}
+     */
+    public function listPage(int $siteId, string $resource, array $query = []): array
+    {
+        [$rows, $response] = $this->listRowsAndResponse($siteId, $resource, $query);
+        $page = max(1, (int) ($query['page'] ?? 1));
+        $perPage = min(max((int) ($query['per_page'] ?? 50), 1), 100);
+        $rawTotal = trim((string) $response->header('X-WP-Total'));
+        $rawPages = trim((string) $response->header('X-WP-TotalPages'));
+
+        // Both headers are published together by native WordPress REST.
+        // Reject partial or corrupt metadata instead of claiming incorrect totals.
+        if ($rawTotal !== '' || $rawPages !== '') {
+            $total = filter_var($rawTotal, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
+            $pages = filter_var($rawPages, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
+            if ($total === false || $pages === false
+                || ($total > 0 && $pages !== (int) ceil($total / $perPage))
+                || ($total === 0 && $pages > 1)
+                || count($rows) > $perPage
+                || ($total === 0 && $rows !== [])
+                || ($page > max(1, $pages) && $rows !== [])) {
+                throw new RuntimeException('WordPress REST resource list returned invalid pagination metadata.');
+            }
+
+            return [
+                'data' => $rows,
+                'total' => $total,
+                'current_page' => $page,
+                'last_page' => max(1, $pages),
+                'pagination_authoritative' => true,
+            ];
+        }
+
+        // Compatibility with REST gateways that strip both headers: never
+        // present the page-local count as a verified WordPress grand total.
+        return [
+            'data' => $rows,
+            'total' => count($rows),
+            'current_page' => $page,
+            'last_page' => count($rows) < $perPage ? $page : $page + 1,
+            'pagination_authoritative' => false,
+        ];
+    }
+
+    /**
+     * @return array{0: array, 1: \Illuminate\Http\Client\Response}
+     */
+    private function listRowsAndResponse(int $siteId, string $resource, array $query): array
+    {
         // Never retry WordPress 4xx responses: an out-of-range page is an
         // expected terminal response, not a transient provider failure.
         $response = $this->requestWithoutRetry($siteId)
@@ -43,7 +101,7 @@ final class NativeWordPressRestPath
                 'rest_comment_invalid_page_number',
                 'rest_user_invalid_page_number',
             ], true)) {
-            return [];
+            return [[], $response];
         }
 
         $rows = $response->throw()->json();
@@ -58,7 +116,7 @@ final class NativeWordPressRestPath
             }
         }
 
-        return $rows;
+        return [$rows, $response];
     }
 
     public function get(int $siteId, string $resource, int $remoteId, array $query = []): array
