@@ -41,7 +41,7 @@ final class WordPressSiteUsersSearchTerminalityTest extends TestCase
 
         $this->assertStringContainsString("\$search = trim((string) \$request->query('search', ''));", $controller);
         $this->assertStringContainsString("\$query['search'] = \$search;", $controller);
-        $this->assertStringContainsString("\$items = \$this->wordpress->list(\$site, 'users', \$query);", $controller);
+        $this->assertStringContainsString("\$this->wordpress->listPage(\$site, 'users', \$query)", $controller);
         $this->assertStringContainsString("\$query['roles'] = \$role;", $controller);
     }
 
