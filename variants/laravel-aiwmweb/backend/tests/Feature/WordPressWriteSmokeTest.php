@@ -224,8 +224,7 @@ final class WordPressWriteSmokeTest extends TestCase
             ->assertJsonPath('recovery.known_objects.0.remote_id', 952);
         $this->assertStringContainsString('aiwm-probe-', $response->json('recovery.marker'));
         Http::assertSentCount(5);
-        Http::assertSent(fn (RemoteRequest $request): bool =>
-            $request->method() === 'DELETE' && str_ends_with($request->url(), '/posts/952'));
+        Http::assertSent(fn (RemoteRequest $request): bool => $request->method() === 'DELETE' && str_ends_with($request->url(), '/posts/952'));
     }
 
     private function membership(User $user, string $slug, array $permissions): TenantMembership
