@@ -775,7 +775,10 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
 
     const collection = normalizeCollection(query.data);
     const observabilityMeta = route.key === 'diagnostics' && query.data && typeof query.data === 'object' && !Array.isArray(query.data)
-        ? (query.data as { meta?: { failed_operations_count?: number; recent_audit_count?: number } }).meta
+        ? (query.data as { meta?: { failed_operations_count?: number; recent_audit_count?: number;
+            failed_operations_total?: number; audit_events_total?: number;
+            failed_operations_truncated?: boolean; recent_audit_truncated?: boolean;
+            empty_reason?: string; scope?: string } }).meta
         : undefined;
     const logsMeta = route.key === 'logs' && query.data && typeof query.data === 'object' && !Array.isArray(query.data)
         ? (query.data as { meta?: {
@@ -1218,6 +1221,18 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         <p data-observability-counts>
                             {locale === 'ar' ? 'العمليات الفاشلة' : 'Failed operations'}: {observabilityMeta.failed_operations_count ?? 0}
                             {' · '}{locale === 'ar' ? 'أحداث التدقيق' : 'Audit events'}: {observabilityMeta.recent_audit_count ?? 0}
+                            {observabilityMeta.scope === 'tenant_operations_and_audit' ? (
+                                <>
+                                    {' · '}{locale === 'ar' ? 'الإجمالي الفعلي للفشل' : 'Total failures'}: {observabilityMeta.failed_operations_total}
+                                    {' · '}{locale === 'ar' ? 'إجمالي التدقيق' : 'Total audit'}: {observabilityMeta.audit_events_total}
+                                    {observabilityMeta.failed_operations_truncated || observabilityMeta.recent_audit_truncated
+                                        ? (locale === 'ar' ? ' · تعرض الصفحة أحدث 100 سجل من كل مصدر فقط' : ' · Showing the latest 100 per source only')
+                                        : null}
+                                    {observabilityMeta.empty_reason === 'no_tenant_events'
+                                        ? (locale === 'ar' ? ' · لا توجد أحداث في هذين المصدرين؛ راجع صحة النظام للأعطال الأخرى' : ' · No events in these two sources; see System Health for other failures')
+                                        : null}
+                                </>
+                            ) : null}
                         </p>
                     ) : null}
                     {route.key === 'logs' && logsMeta?.scope === 'tenant_operation_logs' ? (
