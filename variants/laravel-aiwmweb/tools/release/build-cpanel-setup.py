@@ -16,6 +16,7 @@ import os
 from pathlib import Path, PurePosixPath
 import re
 import stat
+import subprocess
 import sys
 import zipfile
 
@@ -166,12 +167,34 @@ def package_wordpress_connector(commit: str) -> Path:
     return target
 
 
+def require_secure_composer_lock() -> None:
+    """Fail closed before packaging a production runtime from locked dependencies."""
+    if not (BACKEND / "composer.lock").is_file():
+        raise FileNotFoundError("BLOCKED: Composer production lockfile is missing.")
+    try:
+        result = subprocess.run(
+            ["composer", "audit", "--locked", "--no-interaction"],
+            cwd=BACKEND,
+            capture_output=True,
+            text=True,
+            timeout=180,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise RuntimeError("BLOCKED: Composer locked-security audit was not completed.") from exc
+    if result.returncode != 0:
+        # No ignored advisories and no fallback to a stale success marker.
+        report = (result.stderr or result.stdout or "").strip()[-1500:]
+        raise RuntimeError("BLOCKED: Composer locked-security audit failed. " + report)
+
+
 def write_zip(target: Path, commit: str, version: str) -> None:
     if not re.fullmatch(r"[a-f0-9]{40}", commit):
         raise ValueError("Exact 40-char source commit is required.")
 
     if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version):
         raise ValueError("Setup version must be MAJOR.MINOR.PATCH.")
+    require_secure_composer_lock()
     if not (BACKEND / "vendor/autoload.php").is_file():
         raise FileNotFoundError("Build missing Composer vendor/autoload.php.")
     if not (BACKEND / "public/build/manifest.json").is_file():

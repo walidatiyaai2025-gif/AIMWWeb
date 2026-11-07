@@ -7,6 +7,8 @@ import hashlib
 import tempfile
 import zipfile
 import unittest
+import subprocess
+from unittest.mock import patch
 
 VARIANT = Path(__file__).resolve().parents[2]
 REPO = VARIANT.parents[1]
@@ -141,6 +143,45 @@ class HttpsPullReleaseTests(unittest.TestCase):
         self.assertIn("'auto_pull_enabled'", config)
         self.assertIn("AIWM_AUTO_UPDATES_ENABLED", config)
         self.assertIn("false", config)
+
+
+    def test_release_packagers_fail_closed_on_composer_advisories(self):
+        setup = SETUP.read_text(encoding="utf8")
+        signed = PACKAGER.read_text(encoding="utf8")
+        self.assertIn("require_secure_composer_lock()", setup)
+        self.assertLess(setup.index("    require_secure_composer_lock()"),
+                        setup.index('    if not (BACKEND / "vendor/autoload.php").is_file():'))
+        self.assertIn("proc_open(", signed)
+        self.assertIn("['composer', 'audit', '--locked', '--no-interaction']", signed)
+        self.assertLess(signed.index("$securityProcess = @proc_open("),
+                        signed.index("$output = $argv[3];"))
+
+        spec = importlib.util.spec_from_file_location("aiwm_setup_guard", SETUP)
+        self.assertIsNotNone(spec)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            backend = Path(tmp)
+            (backend / "composer.lock").write_text("{}", encoding="utf8")
+            with patch.object(module, "BACKEND", backend):
+                vulnerable = subprocess.CompletedProcess([], 1, "", "seven vulnerable advisories")
+                with patch.object(module.subprocess, "run", return_value=vulnerable) as run:
+                    with self.assertRaisesRegex(RuntimeError, "Composer locked-security audit failed"):
+                        module.require_secure_composer_lock()
+                    run.assert_called_once()
+                    args, kwargs = run.call_args
+                    self.assertEqual(args[0], ["composer", "audit", "--locked", "--no-interaction"])
+                    self.assertEqual(kwargs["cwd"], backend)
+                    self.assertFalse(kwargs["check"])
+
+                with patch.object(module.subprocess, "run", side_effect=OSError("composer missing")):
+                    with self.assertRaisesRegex(RuntimeError, "was not completed"):
+                        module.require_secure_composer_lock()
+
+                healthy = subprocess.CompletedProcess([], 0, "No advisories", "")
+                with patch.object(module.subprocess, "run", return_value=healthy):
+                    module.require_secure_composer_lock()
 
 
 if __name__ == "__main__":
