@@ -103,6 +103,8 @@ export function normalizeObservabilityCollection(routeKey: string, payload: unkn
             !count(meta.failed_operations_total) || !count(meta.audit_events_total) ||
             meta.failed_operations_total < failures.length ||
             meta.audit_events_total < audits.length ||
+            failures.length !== Math.min(meta.failed_operations_total, 100) ||
+            audits.length !== Math.min(meta.audit_events_total, 100) ||
             meta.limit_per_source !== 100 ||
             meta.failed_operations_truncated !== (meta.failed_operations_total > failures.length) ||
             meta.recent_audit_truncated !== (meta.audit_events_total > audits.length) ||
