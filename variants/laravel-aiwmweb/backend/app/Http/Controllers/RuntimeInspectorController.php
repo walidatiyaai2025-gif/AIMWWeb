@@ -90,9 +90,11 @@ final class RuntimeInspectorController extends Controller
             $finding = match (true) {
                 $hasConnector === false => 'CONNECTOR_NOT_PAIRED',
                 $revoked => 'CONNECTOR_REVOKED',
+                // Pairing must be verified before its advertised capabilities/scopes are authoritative.
+                // Match the canonical site-sync guard: verification is the first actionable blocker.
+                ! $verified => 'CONNECTOR_NOT_VERIFIED',
                 ! $readSupported => 'CONTENT_READ_UNSUPPORTED',
                 ! $read => 'CONTENT_READ_SCOPE_DISABLED',
-                ! $verified => 'CONNECTOR_NOT_VERIFIED',
                 in_array($normalizedStatus, ['paired', 'verified', 'connected'], true) === false => 'SITE_CONNECTION_NOT_READY',
                 $remoteProbe['state'] === 'AUTH_FAILED' => 'REMOTE_AUTH_FAILED',
                 $remoteProbe['state'] === 'UNSUPPORTED' => 'REMOTE_PROTOCOL_UNSUPPORTED',
