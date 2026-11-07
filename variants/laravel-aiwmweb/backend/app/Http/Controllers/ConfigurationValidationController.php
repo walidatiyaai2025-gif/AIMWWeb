@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Authorization\TenantAuthorizer;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Storage;
 
 final class ConfigurationValidationController extends Controller
 {
@@ -48,7 +49,7 @@ final class ConfigurationValidationController extends Controller
             ),
             $this->storageItem('local-data', 'Managed application-data storage', storage_path('app')),
             $this->storageItem('logs', 'Managed log storage', storage_path('logs')),
-            $this->storageItem('backups', 'Managed backup storage', storage_path('app/backups')),
+            $this->backupStorageItem(),
         ];
 
         $critical = count(array_filter($items, fn (array $item) => $item['status'] === 'error'));
@@ -61,6 +62,37 @@ final class ConfigurationValidationController extends Controller
             'warning_count' => $warnings,
             'items' => $items,
         ]);
+    }
+
+    /**
+     * Match the real backup writer's Storage::disk('local') root. A missing
+     * subdirectory is not a failed backup: Flysystem can provision it during a
+     * write, but that ability remains unverified until a real backup succeeds.
+     * Keep GET/report validation read-only and never expose server paths.
+     */
+    private function backupStorageItem(): array
+    {
+        $title = 'Managed backup storage';
+        $disk = Storage::disk('local');
+        $directory = $disk->path('backups');
+
+        if (is_link($directory) || (file_exists($directory) && ! is_dir($directory))) {
+            return $this->item('backups', $title, 'error', $title,
+                'The configured backup target is not a safe directory. Server paths and exception details were withheld.');
+        }
+
+        if (is_dir($directory)) {
+            return $this->storageItem('backups', $title, $directory);
+        }
+
+        $root = $disk->path('');
+        if (is_dir($root) && is_writable($root)) {
+            return $this->item('backups', $title, 'warning', $title,
+                'Backup directory has not been provisioned yet. Its storage root appears writable, but a verified backup is still required.');
+        }
+
+        return $this->item('backups', $title, 'error', $title,
+            'The configured backup storage root could not be verified as writable. Server paths and exception details were withheld.');
     }
 
     private function storageItem(string $key, string $title, string $path): array
