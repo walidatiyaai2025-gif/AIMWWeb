@@ -190,7 +190,10 @@ final class WordPressWriteSmokeService
     {
         $id = is_array($row) ? ($row['id'] ?? null) : null;
 
-        if (filter_var($id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
+        // filter_var coerces bool true and whole-number floats into integer IDs.
+        // A corrupted create response must never be rounded/cast into a DELETE target.
+        if ((! is_int($id) && (! is_string($id) || preg_match('/^[1-9][0-9]*$/', $id) !== 1))
+            || filter_var($id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
             throw new RuntimeException('missing_created_id');
         }
 
