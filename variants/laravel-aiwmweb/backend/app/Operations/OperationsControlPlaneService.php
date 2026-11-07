@@ -372,9 +372,26 @@ final class OperationsControlPlaneService
 
     public function diagnostics(): array
     {
+        // The browser's projection is not a security boundary. Only fetch
+        // columns needed for the diagnostics read model so operation payloads,
+        // failure messages, audit metadata and actor identifiers never cross
+        // the API response boundary in the first place.
         return [
-            'failed_operations' => DB::table('operation_executions')->where('tenant_id', $this->context->id())->where('status', 'failed')->orderByDesc('id')->limit(100)->get()->map(fn ($row) => $this->decodeColumns($this->objectToArray($row), ['payload', 'result']))->all(),
-            'recent_audit' => AuditEvent::query()->orderByDesc('occurred_at')->limit(100)->get()->toArray(),
+            'failed_operations' => DB::table('operation_executions')
+                ->where('tenant_id', $this->context->id())
+                ->where('status', 'failed')
+                ->orderByDesc('id')
+                ->limit(100)
+                ->get(['id', 'type', 'status', 'created_at'])
+                ->map(fn ($row) => $this->objectToArray($row))
+                ->all(),
+            // Keep the AuditEvent tenant global scope. Do not use a raw
+            // unscoped query or serialize full AuditEvent model attributes.
+            'recent_audit' => AuditEvent::query()
+                ->orderByDesc('occurred_at')
+                ->limit(100)
+                ->get(['id', 'event', 'occurred_at'])
+                ->toArray(),
         ];
     }
 
