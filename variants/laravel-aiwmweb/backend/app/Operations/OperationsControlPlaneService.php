@@ -421,7 +421,9 @@ final class OperationsControlPlaneService
         $failedRows = $failures->orderByDesc('id')->limit(100)
             ->get(['id', 'type', 'status', 'created_at'])
             ->map(fn ($row) => $this->objectToArray($row))->all();
-        $auditRows = $audits->orderByDesc('occurred_at')->limit(100)
+        // Audit events created in the same second need a deterministic newest-
+        // first tie break, otherwise the 100-event cap can hide newer items.
+        $auditRows = $audits->orderByDesc('occurred_at')->orderByDesc('id')->limit(100)
             ->get(['id', 'event', 'occurred_at'])->toArray();
 
         return [
