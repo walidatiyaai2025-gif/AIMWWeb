@@ -447,7 +447,7 @@ final class RuntimeInspectorExportTest extends TestCase
 
         Http::fake();
         $response = $this->actingAs($user)
-            ->getJson('/tenants/wordpress/runtime-inspector/report')
+            ->getJson('https://aiwm.test/tenants/wordpress/runtime-inspector/report')
             ->assertOk()
             ->assertHeader('Cache-Control', 'no-store, private')
             ->assertJsonPath('safety.read_only', true)
@@ -483,7 +483,7 @@ final class RuntimeInspectorExportTest extends TestCase
         $this->withServerVariables(['HTTPS' => 'on']);
         $user = User::factory()->create();
         $this->membership($user, 'wordpress', ['tenant.view', 'diagnostics.view']);
-        $url = '/tenants/wordpress/runtime-inspector/report';
+        $url = 'https://aiwm.test/tenants/wordpress/runtime-inspector/report';
         $store = Cache::store('database');
         $store->forget(RuntimeHealthService::SCHEDULER_HEARTBEAT_KEY);
         $store->forget(RuntimeHealthService::CPANEL_QUEUE_TICK_RECEIPT_KEY);
