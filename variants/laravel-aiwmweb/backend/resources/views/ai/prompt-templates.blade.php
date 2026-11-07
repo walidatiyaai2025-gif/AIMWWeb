@@ -1,11 +1,16 @@
+@php
+    // Initial markup is usable before JS, including when localStorage is
+    // unavailable. Only the two supported UI locales may set direction.
+    $promptInitialLocale = app()->getLocale() === 'ar' ? 'ar' : 'en';
+@endphp
 <!doctype html>
-<html lang="en" dir="ltr" data-mode="dark">
+<html lang="{{ $promptInitialLocale }}" dir="{{ $promptInitialLocale === 'ar' ? 'rtl' : 'ltr' }}" data-mode="dark">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="color-scheme" content="dark light">
-    <title>AI Prompt Templates — AIWMWeb</title>
+    <title>{{ $promptInitialLocale === 'ar' ? 'قوالب أوامر الذكاء الاصطناعي' : 'AI Prompt Templates' }} — AIWMWeb</title>
     @if (is_file(public_path('build/manifest.json')))
         @vite(['resources/css/app.css'])
     @endif
@@ -84,9 +89,14 @@
     </style>
     <script>
         try {
-            document.documentElement.lang = localStorage.getItem('aiwm.locale') === 'ar' ? 'ar' : 'en';
-            document.documentElement.dir = document.documentElement.lang === 'ar' ? 'rtl' : 'ltr';
-        } catch (_) {}
+            const savedLocale = localStorage.getItem('aiwm.locale');
+            // A saved, explicit choice overrides the server locale. Missing,
+            // invalid or inaccessible storage never resets Arabic to English.
+            if (savedLocale === 'ar' || savedLocale === 'en') {
+                document.documentElement.lang = savedLocale;
+                document.documentElement.dir = savedLocale === 'ar' ? 'rtl' : 'ltr';
+            }
+        } catch (_) { /* Keep the validated server-rendered locale. */ }
     </script>
 </head>
 <body>

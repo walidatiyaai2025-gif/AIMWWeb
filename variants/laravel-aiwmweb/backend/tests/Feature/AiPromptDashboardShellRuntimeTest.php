@@ -43,6 +43,40 @@ final class AiPromptDashboardShellRuntimeTest extends TestCase
         $this->assertDatabaseCount('ai_prompt_revisions', 0);
     }
 
+    public function test_prompt_shell_uses_server_locale_until_a_valid_explicit_browser_choice_is_known(): void
+    {
+        $manager = User::factory()->create();
+        $this->membership($manager, 'alpha', ['settings.manage']);
+
+        app()->setLocale('ar');
+        $arabic = $this->actingAs($manager)->get('/tenants/alpha/settings/ai-prompts')
+            ->assertOk()
+            ->assertSee('<html lang="ar" dir="rtl" data-mode="dark">', false)
+            ->assertSee('<title>قوالب أوامر الذكاء الاصطناعي — AIWMWeb</title>', false)
+            ->assertSee('data-prompt-locale-toggle', false)
+            ->assertSee('data-dashboard-shell="aiwmweb"', false);
+
+        // Verify the browser adapter may override only when it actually has
+        // an ar/en preference. Corrupt/missing/unavailable localStorage keeps
+        // the safe server-rendered document language and direction.
+        $html = $arabic->getContent();
+        $this->assertStringContainsString("const savedLocale = localStorage.getItem('aiwm.locale');", $html);
+        $this->assertStringContainsString("if (savedLocale === 'ar' || savedLocale === 'en')", $html);
+        $this->assertStringNotContainsString(
+            "document.documentElement.lang = localStorage.getItem('aiwm.locale') === 'ar' ? 'ar' : 'en';",
+            $html,
+        );
+
+        app()->setLocale('en');
+        $this->actingAs($manager)->get('/tenants/alpha/settings/ai-prompts')
+            ->assertOk()
+            ->assertSee('<html lang="en" dir="ltr" data-mode="dark">', false)
+            ->assertSee('<title>AI Prompt Templates — AIWMWeb</title>', false);
+
+        $this->assertDatabaseCount('ai_prompt_templates', 0);
+        $this->assertDatabaseCount('ai_prompt_revisions', 0);
+    }
+
     public function test_new_save_reload_edit_unchanged_save_history_and_restore_are_real(): void
     {
         $manager = User::factory()->create();
