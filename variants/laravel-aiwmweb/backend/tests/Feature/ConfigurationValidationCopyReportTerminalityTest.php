@@ -12,6 +12,7 @@ use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 final class ConfigurationValidationCopyReportTerminalityTest extends TestCase
@@ -95,6 +96,39 @@ final class ConfigurationValidationCopyReportTerminalityTest extends TestCase
         $allowed = User::factory()->create();
         $this->membership($allowed, 'alpha2', ['settings.manage', 'tenant.view']);
         $this->actingAs($allowed)->getJson('/tenants/foreign/configuration-validation/report')->assertNotFound();
+    }
+
+    public function test_backup_storage_diagnostic_uses_real_local_disk_without_creating_files(): void
+    {
+        Storage::fake('local');
+        $user = User::factory()->create();
+        $this->membership($user, 'alpha', ['settings.manage', 'tenant.view']);
+
+        $report = '/tenants/alpha/configuration-validation/report';
+        $pending = $this->actingAs($user)->getJson($report)->assertOk();
+        $backup = collect($pending->json('items'))->firstWhere('key', 'backups');
+        $this->assertSame('warning', $backup['status']);
+        $this->assertSame(0, $pending->json('critical_count'));
+        $this->assertFalse(Storage::disk('local')->exists('backups'));
+        $this->assertStringNotContainsString(storage_path(), $pending->getContent());
+
+        Storage::disk('local')->makeDirectory('backups');
+        $ready = $this->actingAs($user)->getJson($report)->assertOk();
+        $this->assertSame(
+            'valid',
+            collect($ready->json('items'))->firstWhere('key', 'backups')['status'],
+        );
+        $this->assertSame(0, $ready->json('critical_count'));
+
+        Storage::disk('local')->deleteDirectory('backups');
+        Storage::disk('local')->put('backups', 'not-a-directory');
+        $invalid = $this->actingAs($user)->getJson($report)->assertOk();
+        $this->assertSame(
+            'error',
+            collect($invalid->json('items'))->firstWhere('key', 'backups')['status'],
+        );
+        $this->assertGreaterThanOrEqual(1, $invalid->json('critical_count'));
+        $this->assertStringNotContainsString(storage_path(), $invalid->getContent());
     }
 
     private function membership(User $user, string $slug, array $permissions): TenantMembership
