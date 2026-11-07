@@ -111,15 +111,15 @@ export function liveAuditPlan(context: FrontendContext): LiveAuditEntry[] {
  */
 const MAX_AUDIT_JSON_BYTES = 1024 * 1024;
 
-async function containsBoundedJsonDocument(response: Response): Promise<boolean> {
+async function readBoundedJsonDocument(response: Response): Promise<unknown> {
     const contentType = (response.headers.get('content-type') ?? '').toLowerCase();
-    if (!/^application\/(?:json|[a-z0-9.+-]+\+json)(?:\s*;|$)/.test(contentType)) return false;
+    if (!/^application\/(?:json|[a-z0-9.+-]+\+json)(?:\s*;|$)/.test(contentType)) return null;
 
     const declaredLength = response.headers.get('content-length');
     if (declaredLength !== null &&
-        (!/^\d+$/.test(declaredLength) || Number(declaredLength) > MAX_AUDIT_JSON_BYTES)) return false;
+        (!/^\d+$/.test(declaredLength) || Number(declaredLength) > MAX_AUDIT_JSON_BYTES)) return null;
 
-    if (!response.body) return false;
+    if (!response.body) return null;
     const reader = response.body.getReader();
     const decoder = new TextDecoder('utf-8', { fatal: true });
     let bytes = 0;
@@ -129,18 +129,77 @@ async function containsBoundedJsonDocument(response: Response): Promise<boolean>
             const chunk = await reader.read();
             if (chunk.done) break;
             bytes += chunk.value.byteLength;
-            if (bytes > MAX_AUDIT_JSON_BYTES) return false;
+            if (bytes > MAX_AUDIT_JSON_BYTES) return null;
             body += decoder.decode(chunk.value, { stream: true });
         }
         body += decoder.decode();
         const document: unknown = JSON.parse(body);
-        return document !== null && typeof document === 'object';
+        return document !== null && typeof document === 'object' ? document : null;
     } catch {
-        return false;
+        return null;
     } finally {
         // Cancel any unread stream without preserving or exporting its contents.
         void reader.cancel().catch(() => {});
         reader.releaseLock();
+    }
+}
+
+/** Retrieve an explicitly requested tenant-owned site context without changing session state. */
+export async function loadSiteScopedAuditContext(
+    context: FrontendContext,
+    siteId: number,
+    knownSiteIds: readonly number[],
+    requester: typeof fetch = fetch,
+): Promise<FrontendContext> {
+    const slug = context.tenant.slug;
+    const allowed = context.permissions.includes('*') || context.permissions.includes('diagnostics.view');
+    if (!allowed || !/^[a-zA-Z0-9_-]{1,100}$/.test(slug) ||
+        !Number.isSafeInteger(siteId) || siteId < 1 || !knownSiteIds.includes(siteId)) {
+        throw new Error('Site is not available for the requested tenant audit.');
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 6000);
+    try {
+        const response = await requester(`/tenants/${encodeURIComponent(slug)}/context?site=${siteId}`, {
+            method: 'GET',
+            credentials: 'same-origin',
+            redirect: 'error',
+            cache: 'no-store',
+            signal: controller.signal,
+            headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        if (!response.ok) throw new Error('Site context was rejected by the server.');
+        const document = await readBoundedJsonDocument(response);
+        if (!document || Array.isArray(document)) throw new Error('Site context is not valid JSON.');
+        const selected = document as Partial<FrontendContext>;
+        if (selected.tenant?.slug !== slug || selected.user?.id !== context.user.id ||
+            selected.active_site?.id !== siteId || !Array.isArray(selected.permissions) ||
+            !selected.permissions.every(permission => typeof permission === 'string') ||
+            !(selected.permissions.includes('*') || selected.permissions.includes('diagnostics.view')) ||
+            !selected.api || Array.isArray(selected.api) || typeof selected.api !== 'object' ||
+            !Object.values(selected.api).every(endpoint => typeof endpoint === 'string') ||
+            !selected.actions || Array.isArray(selected.actions) || typeof selected.actions !== 'object' ||
+            !Array.isArray(selected.connectors) ||
+            !selected.capabilities || Array.isArray(selected.capabilities) ||
+            typeof selected.capabilities !== 'object') {
+            throw new Error('Site context does not match the requested tenant, user or site.');
+        }
+        // The selected-site API contracts must refer to the exact site that the
+        // server authenticated for this audit, never a different site ID.
+        // No advertised site endpoint may quietly redirect the audit to another site.
+        const selectedPrefix = `/api/v1/tenants/${slug}/sites/${siteId}/`;
+        const selectedLegacyPrefix = `/api/tenants/${slug}/sites/${siteId}/`;
+        for (const key of selectedSiteReads) {
+            const endpoint = selected.api[key];
+            if (endpoint !== undefined && !endpoint.startsWith(selectedPrefix) &&
+                !endpoint.startsWith(selectedLegacyPrefix)) {
+                throw new Error('Site-scoped GET contract does not match the selected site.');
+            }
+        }
+        return selected as FrontendContext;
+    } finally {
+        clearTimeout(timeout);
     }
 }
 
@@ -169,9 +228,9 @@ export async function runReadOnlyWorkspaceAudit(
                 signal: controller.signal,
                 headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             });
-            const json = response.ok && await containsBoundedJsonDocument(response);
+            const json = response.ok && await readBoundedJsonDocument(response);
             const duration_ms = Math.min(60000, Math.max(0, Date.now() - started));
-            const ok = response.ok && json;
+            const ok = response.ok && json !== null;
             return {
                 state: ok ? 'passed_read' as const : 'failed_read' as const,
                 reason: ok ? 'read_ok' as const : response.ok ? 'invalid_response' as const : 'http_error' as const,
@@ -219,9 +278,10 @@ const stateLabels = {
     not_tested: { en: 'Not tested / navigation only', ar: 'لم يُختبر / صفحة تنقل' },
 } as const;
 
-export function RuntimeWorkspaceAuditPanel({ context, onComplete }: {
+export function RuntimeWorkspaceAuditPanel({ context, availableSiteIds = [], onComplete }: {
     context: FrontendContext;
-    onComplete: (result: LiveAuditResult | null) => void;
+    availableSiteIds?: number[];
+    onComplete: (result: LiveAuditResult | null, auditedContext: FrontendContext | null) => void;
 }) {
     const { locale } = useLocale();
     const ar = locale === 'ar';
@@ -229,16 +289,25 @@ export function RuntimeWorkspaceAuditPanel({ context, onComplete }: {
     const [progress, setProgress] = useState('');
     const [result, setResult] = useState<LiveAuditResult | null>(null);
     const [error, setError] = useState(false);
+    const [chosenSite, setChosenSite] = useState(0);
+    const siteIds = [...new Set(availableSiteIds.filter(id => Number.isSafeInteger(id) && id > 0))].slice(0, 50);
+    // Choosing a site for this audit must be possible even if the dashboard
+    // already has a different active site; this never changes that selection.
+    const siteChoiceRequired = siteIds.length > 0;
+    const selectedSiteId = siteIds.includes(chosenSite) ? chosenSite : (siteIds.length === 1 ? siteIds[0] : 0);
     const start = async () => {
         if (working) return;
         setWorking(true);
         setError(false);
         setResult(null);
-        onComplete(null);
+        onComplete(null, null);
         try {
-            const next = await runReadOnlyWorkspaceAudit(context, (done, total) => setProgress(`${done}/${total}`));
+            const auditContext = siteChoiceRequired
+                ? await loadSiteScopedAuditContext(context, selectedSiteId, siteIds)
+                : context;
+            const next = await runReadOnlyWorkspaceAudit(auditContext, (done, total) => setProgress(`${done}/${total}`));
             setResult(next);
-            onComplete(next);
+            onComplete(next, auditContext);
         } catch {
             setError(true);
         } finally {
@@ -250,14 +319,22 @@ export function RuntimeWorkspaceAuditPanel({ context, onComplete }: {
         <p>{ar
             ? 'يمر على جميع المساحات المسجلة، ويفحص واجهات GET الآمنة فقط (بحد أقصى 3 بالتوازي، 6 ثوانٍ لكل طلب). لا يفتح صفحات المخزون أو ينفذ نشرًا أو حذفًا أو توليد AI. نجاح GET لا يعني أن كل أزرار الصفحة تعمل.'
             : 'Covers every declared workspace. Only safe same-tenant GET APIs are probed (max 3 concurrent, 6s/request). Never publishes, deletes, runs AI or executes write controls. Passing GET does not prove every button works.'}</p>
-        <button className="btn primary" type="button" onClick={() => void start()} disabled={working}>
+        {siteChoiceRequired && <label>
+            {ar ? 'موقع WordPress المطلوب فحصه (قراءة فقط)' : 'WordPress site for this read-only audit'}
+            <select aria-label={ar ? 'اختيار موقع للفحص' : 'Select audit site'} value={selectedSiteId}
+                disabled={working} onChange={event => setChosenSite(Number(event.target.value))}>
+                <option value={0}>{ar ? 'اختر موقعًا' : 'Choose a site'}</option>
+                {siteIds.map(id => <option value={id} key={id}>{ar ? 'الموقع' : 'Site'} #{id}</option>)}
+            </select>
+        </label>}
+                <button className="btn primary" type="button" onClick={() => void start()} disabled={working || (siteChoiceRequired && !selectedSiteId)}>
             {working ? (ar ? `جارٍ الفحص ${progress}` : `Scanning ${progress}`) : (ar ? 'فحص جميع الوظائف الآمنة' : 'Scan safe functions across all pages')}
         </button>
         {error && <p role="alert">{ar ? 'تعذر إكمال الفحص؛ لا تعتبر الوظائف ناجحة.' : 'Audit failed; no success is inferred.'}</p>}
         {result && <>
             {result.workspaces.some(entry => entry.reason === 'site_selection_required') && <p role="status">{ar
-                ? 'بعض فحوص المحتوى تحتاج أولًا إلى اختيار موقع WordPress نشط من صفحة المواقع ثم إعادة الفحص؛ الاتصال وحده لا يحدد الموقع النشط.'
-                : 'Some content checks require selecting an active WordPress site from Sites before rescanning. A connected site is not automatically selected.'}</p>}
+                ? 'بعض الفحوص تحتاج تحديد موقع لهذا الفحص فقط. شغّل Inspector واختر الموقع ثم أعد الفحص، دون تغيير الموقع النشط في اللوحة.'
+                : 'Some site checks need an explicit site-scoped audit. Run Inspector, choose one of the listed sites and scan again; this does not change the active site.'}</p>}
             <div role="status" className="status-grid">
                 <span>{ar ? 'الصفحات' : 'Pages'}: {result.totals.routes}</span>
                 <span>{ar ? 'GET ناجح' : 'GET passed'}: {result.totals.passed_read}</span>

@@ -246,6 +246,7 @@ export function RuntimeInspectorPanel({ context }: { context: FrontendContext })
     const [message, setMessage] = useState('');
     const [localCount, setLocalCount] = useState(() => runtimeInspectorEvents().length);
     const [liveAudit, setLiveAudit] = useState<LiveAuditResult | null>(null);
+    const [auditedContext, setAuditedContext] = useState<FrontendContext | null>(null);
     const allowed = context.permissions.includes('*') || context.permissions.includes('diagnostics.view');
     const endpoint = `/tenants/${encodeURIComponent(context.tenant.slug)}/runtime-inspector/report`;
     const report = useQuery({
@@ -261,13 +262,15 @@ export function RuntimeInspectorPanel({ context }: { context: FrontendContext })
     const isArabic = locale === 'ar';
     const run = async () => {
         setMessage('');
+        setLiveAudit(null);
+        setAuditedContext(null);
         await report.refetch();
         setLocalCount(runtimeInspectorEvents().length);
     };
 
     const exportReport = () => {
         if (!report.data || report.data.schema !== 'aiwm.runtime-inspector.v1') return;
-        const bundle = safeInspectorBundle(report.data, runtimeInspectorEvents(), context, liveAudit);
+        const bundle = safeInspectorBundle(report.data, runtimeInspectorEvents(), auditedContext ?? context, liveAudit);
         const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const anchor = document.createElement('a');
@@ -302,8 +305,12 @@ export function RuntimeInspectorPanel({ context }: { context: FrontendContext })
                 {message ? <p role="status">{message}</p> : null}
                 {report.error ? <p role="alert">{isArabic ? 'فشل جمع التشخيص:' : 'Diagnostic failed:'} {report.error instanceof Error ? report.error.message : 'Request failed'}</p> : null}
             </section>
-            <WorkspaceCapabilityCensusPanel context={context} />
-            <RuntimeWorkspaceAuditPanel context={context} onComplete={setLiveAudit} />
+            <WorkspaceCapabilityCensusPanel context={auditedContext ?? context} />
+            <RuntimeWorkspaceAuditPanel context={context} availableSiteIds={report.data?.sites.map(site => site.site_id) ?? []}
+                onComplete={(result, selectedContext) => {
+                    setLiveAudit(result);
+                    setAuditedContext(selectedContext);
+                }} />
             {report.data ? (
                 <section className="panel">
                     <h3>{isArabic ? 'نتيجة الخادم' : 'Server snapshot'}</h3>

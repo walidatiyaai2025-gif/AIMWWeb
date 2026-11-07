@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { workspaceRoutes, type FrontendContext } from '../core';
 import {
-    liveAuditPlan, runReadOnlyWorkspaceAudit, safeAuditEndpoint,
+    liveAuditPlan, loadSiteScopedAuditContext, runReadOnlyWorkspaceAudit, safeAuditEndpoint,
     type LiveAuditResult,
 } from '../runtime-workspace-audit';
 import { safeInspectorBundle, type InspectorServer } from '../runtime-inspector-panel';
@@ -127,6 +127,77 @@ describe('explicit all-workspace read-only live audit', () => {
         });
         expect(selected.find(entry => entry.key === 'posts')?.reason).toBe('missing_contract');
         expect(selected.every(entry => entry.tested_write_actions === 0)).toBe(true);
+    });
+
+    it('explicitly resolves one listed tenant-owned WordPress site using GET, no session change or write', async () => {
+        const base = { ...context(), api: { dashboard: '/api/dashboard?tenant=wordpress' } };
+        const siteContext: FrontendContext = {
+            ...base,
+            active_site: { id: 7, name: 'PRIVATE-SITE', status: 'connected' },
+            api: {
+                ...base.api,
+                posts: '/api/v1/tenants/wordpress/sites/7/content/post',
+                media: '/api/v1/tenants/wordpress/sites/7/media',
+            },
+        };
+        const requester = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+            expect(String(input)).toBe('/tenants/wordpress/context?site=7');
+            expect(init).toMatchObject({
+                method: 'GET', credentials: 'same-origin', redirect: 'error', cache: 'no-store',
+            });
+            return new Response(JSON.stringify(siteContext), {
+                status: 200, headers: { 'content-type': 'application/json' },
+            });
+        });
+        const selected = await loadSiteScopedAuditContext(base, 7, [7], requester as typeof fetch);
+        expect(selected.active_site?.id).toBe(7);
+        expect(liveAuditPlan(base).find(row => row.key === 'posts')?.reason).toBe('site_selection_required');
+        expect(liveAuditPlan(selected).find(row => row.key === 'posts')?.reason).toBe('read_ok');
+        expect(liveAuditPlan(selected).find(row => row.key === 'media')?.reason).toBe('read_ok');
+        expect(liveAuditPlan(selected).every(row => row.tested_write_actions === 0)).toBe(true);
+        expect(requester).toHaveBeenCalledTimes(1);
+        expect(JSON.stringify(safeInspectorBundle(server, [], selected))).not.toContain('PRIVATE-SITE');
+    });
+
+    it('rejects unlisted, foreign, malformed and unauthorized site contexts before running any audit', async () => {
+        const base = { ...context(), api: {} };
+        const requester = vi.fn(async () => new Response(JSON.stringify({
+            ...base, active_site: { id: 5, name: 'FOREIGN-SITE' },
+        }), { headers: { 'content-type': 'application/json' } }));
+        for (const id of [0, -1, 3, Number.NaN, 1.5]) {
+            await expect(loadSiteScopedAuditContext(base, id, [5], requester as typeof fetch)).rejects.toThrow();
+        }
+        await expect(loadSiteScopedAuditContext(
+            { ...base, permissions: ['sites.view'] }, 5, [5], requester as typeof fetch,
+        )).rejects.toThrow();
+        expect(requester).not.toHaveBeenCalled();
+
+        for (const bad of [
+            { ...base, tenant: { slug: 'foreign' }, active_site: { id: 5 } },
+            { ...base, user: { ...base.user, id: 999 }, active_site: { id: 5 } },
+            { ...base, active_site: { id: 8 } },
+            { ...base, active_site: { id: 5 }, permissions: [] },
+        ]) {
+            const wrong = vi.fn(async () => new Response(JSON.stringify(bad), {
+                status: 200, headers: { 'content-type': 'application/json' },
+            }));
+            await expect(loadSiteScopedAuditContext(base, 5, [5], wrong as typeof fetch)).rejects.toThrow();
+            expect(wrong).toHaveBeenCalledTimes(1);
+        }
+        // A successful same-user, same-tenant response must still be rejected
+        // if its advertised site-scoped GET points at some other site.
+        const swapped = vi.fn(async () => new Response(JSON.stringify({
+            ...base,
+            active_site: { id: 5, name: 'PRIVATE-SITE' },
+            api: { posts: '/api/v1/tenants/wordpress/sites/8/content/post' },
+        }), { status: 200, headers: { 'content-type': 'application/json' } }));
+        await expect(loadSiteScopedAuditContext(base, 5, [5], swapped as typeof fetch)).rejects.toThrow();
+        expect(swapped).toHaveBeenCalledTimes(1);
+
+        const denied = vi.fn(async () => new Response('{"message":"denied"}', {
+            status: 403, headers: { 'content-type': 'application/json' },
+        }));
+        await expect(loadSiteScopedAuditContext(base, 5, [5], denied as typeof fetch)).rejects.toThrow();
     });
 
     it('probes documented production context paths without executing writes', async () => {
