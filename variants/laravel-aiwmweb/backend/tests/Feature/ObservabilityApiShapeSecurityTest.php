@@ -40,6 +40,53 @@ final class ObservabilityApiShapeSecurityTest extends TestCase
         $this->assertArrayNotHasKey('data', $response->json());
     }
 
+    public function test_diagnostics_never_transmits_payload_failure_or_audit_metadata_even_to_authorized_user(): void
+    {
+        [$alpha, $actor] = $this->member('alpha', ['tenant.view', 'operations.manage', 'diagnostics.view']);
+        [$beta] = $this->member('beta', ['tenant.view', 'operations.manage', 'diagnostics.view']);
+        $this->seedFailedOperation($alpha, 'sync.failed');
+        $this->seedFailedOperation($beta, 'beta.private');
+        $this->seedAudit($alpha, 'site.updated');
+        $this->seedAudit($beta, 'beta.private');
+
+        DB::table('operation_executions')->where('tenant_id', $alpha->id)->update([
+            'payload' => json_encode(['api_key' => 'OPERATION_PAYLOAD_SECRET'], JSON_THROW_ON_ERROR),
+            'result' => json_encode(['token' => 'OPERATION_RESULT_SECRET'], JSON_THROW_ON_ERROR),
+            'failure' => 'OPERATION_FAILURE_PRIVATE_DETAIL',
+            'subject_id' => 'PRIVATE_SUBJECT_IDENTIFIER',
+        ]);
+        DB::table('audit_events')->where('tenant_id', $alpha->id)->update([
+            'actor_user_id' => $actor->id,
+            'metadata' => json_encode(['password' => 'AUDIT_METADATA_SECRET'], JSON_THROW_ON_ERROR),
+            'subject_id' => 'PRIVATE_AUDIT_SUBJECT',
+        ]);
+
+        $response = $this->actingAs($actor)
+            ->getJson('/tenants/alpha/admin/diagnostics')
+            ->assertOk()
+            ->assertHeader('Content-Type', 'application/json')
+            ->assertJsonCount(1, 'failed_operations')
+            ->assertJsonCount(1, 'recent_audit')
+            ->assertJsonPath('failed_operations.0.type', 'sync.failed')
+            ->assertJsonPath('failed_operations.0.status', 'failed')
+            ->assertJsonPath('recent_audit.0.event', 'site.updated');
+
+        $operation = $response->json('failed_operations.0');
+        $audit = $response->json('recent_audit.0');
+        $this->assertEqualsCanonicalizing(['id', 'type', 'status', 'created_at'], array_keys($operation));
+        $this->assertEqualsCanonicalizing(['id', 'event', 'occurred_at'], array_keys($audit));
+
+        foreach ([
+            'OPERATION_PAYLOAD_SECRET', 'OPERATION_RESULT_SECRET',
+            'OPERATION_FAILURE_PRIVATE_DETAIL', 'AUDIT_METADATA_SECRET',
+            'PRIVATE_SUBJECT_IDENTIFIER', 'PRIVATE_AUDIT_SUBJECT',
+            'beta.private', 'actor_user_id', 'tenant_id',
+            'metadata', 'payload', 'result', 'failure', 'correlation_id',
+        ] as $private) {
+            $this->assertStringNotContainsString($private, $response->getContent(), 'Diagnostics must omit '.$private);
+        }
+    }
+
     public function test_genuine_empty_arrays_are_returned_and_guest_or_unprivileged_user_cannot_read(): void
     {
         [$alpha, $user] = $this->member('alpha', ['tenant.view', 'operations.manage', 'diagnostics.view']);
