@@ -287,6 +287,13 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
             $siteId = (int) $site->getKey();
             $api += [
                 'sites.detail.'.$siteId => "/api/tenants/{$tenant}/sites/{$siteId}",
+                // Hidden site views have real tenant-authorized GET sources. These
+                // aliases are read-only; they grant no pairing/sync/write action.
+                'site-details' => "/api/tenants/{$tenant}/sites/{$siteId}",
+                'site-snapshot' => "/api/tenants/{$tenant}/sites/{$siteId}/snapshot",
+                'site-offline-data' => "/api/tenants/{$tenant}/sites/{$siteId}/snapshot",
+                'site-connection-center' => "/api/tenants/{$tenant}/sites/{$siteId}/connection",
+                'site-connection-operations' => "/api/tenants/{$tenant}/sites/{$siteId}/operations",
                 'explorer' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/explorer",
                 'posts' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/content/post",
                 'pages' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/content/page",
