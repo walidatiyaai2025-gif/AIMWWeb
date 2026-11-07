@@ -1,3 +1,5 @@
+import { normalizeObservabilityCollection } from './observability-collection-contract';
+
 /**
  * Validate remote WordPress collection GETs before React Query marks them
  * successful. An unexpected HTTP 200 payload is not evidence of zero rows:
@@ -65,5 +67,5 @@ export async function readWorkspaceCollectionResponse(
 ): Promise<unknown> {
     const payload = await transport(endpoint);
     assertValidWordPressCollection(routeKey, payload);
-    return payload;
+    return normalizeObservabilityCollection(routeKey, payload);
 }
