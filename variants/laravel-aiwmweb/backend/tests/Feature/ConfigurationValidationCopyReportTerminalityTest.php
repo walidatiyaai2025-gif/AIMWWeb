@@ -131,6 +131,43 @@ final class ConfigurationValidationCopyReportTerminalityTest extends TestCase
         $this->assertStringNotContainsString(storage_path(), $invalid->getContent());
     }
 
+    public function test_symlinked_backup_disk_root_is_rejected_without_mutating_storage(): void
+    {
+        Storage::fake('local');
+        $user = User::factory()->create();
+        $this->membership($user, 'alpha', ['settings.manage', 'tenant.view']);
+
+        $realRoot = rtrim(Storage::disk('local')->path(''), '/\\');
+        $link = dirname($realRoot).'/aiwm-backup-root-link-'.bin2hex(random_bytes(5));
+        $originalRoot = config('filesystems.disks.local.root');
+
+        if (! function_exists('symlink') || ! @symlink($realRoot, $link)) {
+            $this->markTestSkipped('Creating a disposable symlink requires filesystem support.');
+        }
+
+        try {
+            config()->set('filesystems.disks.local.root', $link);
+            Storage::forgetDisk('local');
+
+            $response = $this->actingAs($user)
+                ->getJson('/tenants/alpha/configuration-validation/report')
+                ->assertOk();
+
+            $backup = collect($response->json('items'))->firstWhere('key', 'backups');
+            $this->assertSame('error', $backup['status']);
+            $this->assertGreaterThanOrEqual(1, $response->json('critical_count'));
+            $this->assertStringNotContainsString($link, $response->getContent());
+            $this->assertStringNotContainsString($realRoot, $response->getContent());
+            $this->assertStringNotContainsString((string) config('app.key'), $response->getContent());
+            $this->assertFalse(file_exists($realRoot.'/backups'));
+            $this->assertDatabaseCount('backup_archives', 0);
+        } finally {
+            config()->set('filesystems.disks.local.root', $originalRoot);
+            Storage::forgetDisk('local');
+            @unlink($link);
+        }
+    }
+
     public function test_real_backup_post_provisions_the_same_verified_storage_target_reported_by_validation(): void
     {
         Storage::fake('local');
