@@ -116,7 +116,9 @@ final class SyncRuntimeService
     public function processRun(int $tenantId, int $runId): void
     {
         $run = SyncRun::query()->findOrFail($runId);
-        if (in_array($run->state, ['completed', 'cancelled'], true)) {
+        // A queued retry must not resurrect a terminal run. Explicit resume
+        // creates a new SyncRun with its own lease and checkpoints.
+        if (in_array($run->state, ['completed', 'cancelled', 'failed', 'partial'], true)) {
             return;
         }
 
@@ -162,7 +164,12 @@ final class SyncRuntimeService
     {
         $batch = SyncBatch::query()->with('run')->findOrFail($batchId);
         $run = $batch->run;
-        if (! $run || in_array($run->state, ['completed', 'cancelled', 'failed'], true)) {
+        // Queue delivery is at-least-once. Never reprocess a completed page:
+        // its items and counters have already been committed, even if the
+        // parent run is still active while a later page is pending.
+        if (! $run
+            || in_array($run->state, ['completed', 'cancelled', 'failed', 'partial'], true)
+            || in_array($batch->state, ['completed', 'cancelled', 'failed'], true)) {
             return;
         }
         if (! $this->leases->refresh($run->site_id, $run->lease_token)) {
