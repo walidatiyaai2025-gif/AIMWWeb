@@ -501,7 +501,14 @@ final class WordPressWriteSmokeTest extends TestCase
             $this->assertSame('POST', $request->method());
             $this->assertLessThan(count($invalidIds), $attempt);
 
-            return Http::response(['id' => $invalidIds[$attempt++]], 201);
+            $id = $invalidIds[$attempt++];
+            if (is_float($id)) {
+                // Preserve JSON 12.0 as a float. Http::response(array) would
+                // normalize it to JSON 12, which is a legitimate integer ID.
+                return Http::response('{"id":12.0}', 201, ['Content-Type' => 'application/json']);
+            }
+
+            return Http::response(['id' => $id], 201);
         });
 
         foreach ($invalidIds as $_) {
