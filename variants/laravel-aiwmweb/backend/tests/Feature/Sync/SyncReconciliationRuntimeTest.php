@@ -207,6 +207,105 @@ class SyncReconciliationRuntimeTest extends TestCase
         $runtime->processBatch($tenant->id, $batch->id);
     }
 
+    public function test_redelivered_completed_page_does_not_duplicate_items_or_counters_while_next_page_is_queued(): void
+    {
+        $tenant = $this->tenant('a');
+        $this->guard->allow(1, $tenant->id);
+        $this->activate($tenant);
+        $rows = [];
+        for ($id = 1; $id <= 100; $id++) {
+            $rows[] = $this->remotePost($id, 'Article '.$id, '2026-11-07T10:00:00Z');
+        }
+        $this->driver->set('posts', 1, $rows);
+        $this->driver->set('posts', 2, []);
+
+        $runtime = app(SyncRuntimeService::class);
+        $run = $runtime->start($tenant->id, 1, true, ['posts']);
+        $runtime->processRun($tenant->id, $run->id);
+        $first = SyncBatch::query()->where('sync_run_id', $run->id)->where('page', 1)->firstOrFail();
+        $runtime->processBatch($tenant->id, $first->id);
+
+        $this->assertSame('running', $run->fresh()->state);
+        $this->assertSame('completed', $first->fresh()->state);
+        $this->assertSame(100, $run->fresh()->discovered_count);
+        $this->assertSame(100, $run->fresh()->created_count);
+        $this->assertSame(100, SyncItem::query()->where('sync_batch_id', $first->id)->count());
+        $this->assertSame([100], $this->driver->perPageValues);
+
+        // Duplicate delivery of page 1 happens before page 2 completes.
+        // A second read would inflate discovered/unchanged and persist extra items.
+        $runtime->processBatch($tenant->id, $first->id);
+
+        $this->assertSame(100, $run->fresh()->discovered_count);
+        $this->assertSame(100, $run->fresh()->created_count);
+        $this->assertSame(0, $run->fresh()->unchanged_count);
+        $this->assertSame(100, SyncItem::query()->where('sync_batch_id', $first->id)->count());
+        $this->assertSame(1, $first->fresh()->attempts);
+        $this->assertSame([100], $this->driver->perPageValues);
+        $this->assertSame(2, SyncBatch::query()->where('sync_run_id', $run->id)->count());
+
+        $second = SyncBatch::query()->where('sync_run_id', $run->id)->where('page', 2)->firstOrFail();
+        $runtime->processBatch($tenant->id, $second->id);
+        $this->assertSame('completed', $run->fresh()->state);
+        $this->assertSame(100, $run->fresh()->discovered_count);
+    }
+
+    public function test_redelivered_terminal_failed_run_and_batch_do_not_restart_or_read_remote(): void
+    {
+        $tenant = $this->tenant('a');
+        $this->guard->allow(1, $tenant->id);
+        $this->activate($tenant);
+
+        $runtime = app(SyncRuntimeService::class);
+        $run = $runtime->start($tenant->id, 1, true, ['posts']);
+        $runtime->processRun($tenant->id, $run->id);
+        $batch = SyncBatch::query()->where('sync_run_id', $run->id)->firstOrFail();
+        $runtime->recordBatchFailure($batch->id, new RuntimeException('remote unavailable'), true);
+
+        $this->assertSame('failed', $run->fresh()->state);
+        $this->assertSame('failed', $batch->fresh()->state);
+        $events = SyncEvent::query()->where('sync_run_id', $run->id)->count();
+
+        $runtime->processRun($tenant->id, $run->id);
+        $runtime->processBatch($tenant->id, $batch->id);
+
+        $this->assertSame('failed', $run->fresh()->state);
+        $this->assertSame('failed', $batch->fresh()->state);
+        $this->assertSame(0, $batch->fresh()->attempts);
+        $this->assertSame($events, SyncEvent::query()->where('sync_run_id', $run->id)->count());
+        $this->assertSame([], $this->driver->perPageValues);
+        $this->assertFalse(SyncSiteLease::query()->where('site_id', 1)->exists());
+    }
+
+    public function test_redelivered_partial_run_never_reprocesses_failed_rows(): void
+    {
+        $tenant = $this->tenant('a');
+        $this->guard->allow(1, $tenant->id);
+        $this->activate($tenant);
+        $this->driver->set('posts', 1, [
+            $this->remotePost(7, 'Good', '2026-11-07T10:00:00Z'),
+            ['id' => 0, 'title' => ['rendered' => 'Invalid ID']],
+        ]);
+
+        $run = $this->syncRunRecord(1, true, ['posts']);
+        $this->assertSame('partial', $run->state);
+        $batch = SyncBatch::query()->where('sync_run_id', $run->id)->firstOrFail();
+        $events = SyncEvent::query()->where('sync_run_id', $run->id)->count();
+
+        $runtime = app(SyncRuntimeService::class);
+        $runtime->processRun($tenant->id, $run->id);
+        $runtime->processBatch($tenant->id, $batch->id);
+
+        $this->assertSame('partial', $run->fresh()->state);
+        $this->assertSame(2, $run->fresh()->discovered_count);
+        $this->assertSame(1, $run->fresh()->created_count);
+        $this->assertSame(1, $run->fresh()->failed_count);
+        $this->assertSame(2, SyncItem::query()->where('sync_run_id', $run->id)->count());
+        $this->assertSame(1, $batch->fresh()->attempts);
+        $this->assertSame([100], $this->driver->perPageValues);
+        $this->assertSame($events, SyncEvent::query()->where('sync_run_id', $run->id)->count());
+    }
+
     public function test_large_sync_is_batched_and_resumable_without_unbounded_loading(): void
     {
         $tenant = $this->tenant('a');
