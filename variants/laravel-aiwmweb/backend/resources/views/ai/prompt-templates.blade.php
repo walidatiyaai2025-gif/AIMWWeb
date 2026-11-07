@@ -16,7 +16,7 @@
         /* Blade workspace uses the same app-shell / palette / typography as React. */
         .prompt-workspace .prompt-content { display: grid; gap: 1rem; }
         .prompt-workspace .prompt-content > section { min-width: 0; }
-        .prompt-workspace .prompt-hero { min-width: 0; }
+        .prompt-workspace .prompt-hero { display: block; min-width: 0; }
         .prompt-workspace .prompt-hero nav { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; margin-top: .9rem; }
         .prompt-workspace .prompt-hero p { margin: .4rem 0; }
         .prompt-workspace .prompt-hero h1 { margin: .15rem 0 .5rem; }
@@ -28,6 +28,8 @@
         .prompt-workspace .prompt-article p, .prompt-workspace .prompt-article dd { overflow-wrap: anywhere; }
         .prompt-workspace .prompt-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .7rem; }
         .prompt-workspace .prompt-fields > p { margin: 0; min-width: 0; }
+        .prompt-workspace .prompt-edit-form > button { grid-column: 1 / -1; justify-self: start; }
+        .prompt-workspace .prompt-edit-form p:has(strong), .prompt-workspace .prompt-edit-form p:has(input[type="checkbox"]) { grid-column: 1 / -1; }
         .prompt-workspace .prompt-fields label:not(:has(input[type="checkbox"])) { display: block; margin-bottom: .35rem; font-weight: 700; }
         .prompt-workspace .prompt-fields p:has(textarea), .prompt-workspace .prompt-fields p:has(input[type="checkbox"]), .prompt-workspace .prompt-fields > .prompt-full { grid-column: 1 / -1; }
         .prompt-workspace .prompt-fields input[type="checkbox"] { width: auto; min-height: 1rem; margin-inline-end: .4rem; }
