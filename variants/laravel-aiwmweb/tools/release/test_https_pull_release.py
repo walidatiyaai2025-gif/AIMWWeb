@@ -157,8 +157,11 @@ class HttpsPullReleaseTests(unittest.TestCase):
             for filename in ("composer.json", "composer.lock"):
                 shutil.copyfile(VARIANT / "backend" / filename, sandbox / filename)
             cmd = [
-                "composer", "update", "symfony/http-foundation", "symfony/http-kernel",
-                "symfony/mime", "symfony/routing", "--with-all-dependencies",
+                "composer", "update",
+                "symfony/http-foundation:^7.4.23", "symfony/http-kernel:^7.4.23",
+                "symfony/mime:^7.4.22", "symfony/routing:^7.4.23",
+                "symfony/error-handler:^7.4", "symfony/event-dispatcher:^7.4",
+                "symfony/var-dumper:^7.4", "--with-all-dependencies",
                 "--no-install", "--no-scripts", "--no-plugins", "--no-interaction",
                 "--no-progress",
             ]
@@ -172,6 +175,19 @@ class HttpsPullReleaseTests(unittest.TestCase):
             if audit.returncode != 0:
                 self.fail("Resolved Composer lock still has advisories: " + (audit.stderr or audit.stdout)[-4500:])
             raw = (sandbox / "composer.lock").read_bytes()
+            resolved = json.loads(raw)
+            for package in resolved["packages"] + resolved.get("packages-dev", []):
+                requirement = str(package.get("require", {}).get("php", ""))
+                if ">=8.4" in requirement or "^8.4" in requirement:
+                    self.fail("Resolved Composer runtime violates PHP 8.3: "
+                              + package["name"] + " " + requirement)
+            for package in resolved["packages"]:
+                if package["name"] in (
+                    "symfony/http-foundation", "symfony/http-kernel",
+                    "symfony/mime", "symfony/routing",
+                ):
+                    self.assertTrue(package["version"].startswith("v7.4."),
+                                    "Runtime must remain Symfony 7.4 for PHP 8.3")
             encoded = base64.b64encode(raw).decode("ascii")
             print("AIWM_LOCK_CANDIDATE_BEGIN", flush=True)
             for index in range(0, len(encoded), 900):
