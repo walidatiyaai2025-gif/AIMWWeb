@@ -1,40 +1,61 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" dir="ltr" data-mode="dark">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>AI Prompt Templates</title>
-    <!-- Google Fonts: Inter (Latin) and Tajawal (Arabic); typography 25% larger than the 62.5% baseline. -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="color-scheme" content="dark light">
+    <title>AI Prompt Templates — AIWMWeb</title>
+    @if (is_file(public_path('build/manifest.json')))
+        @vite(['resources/css/app.css'])
+    @endif
+    <link rel="stylesheet" href="{{ asset('css/ai-prompt-dashboard.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=Tajawal:wght@400;500;700;800;900&amp;display=swap">
-    <style data-aiwm-global-typography>
-        :root { font-size: 78.125%; --aiwm-google-font: 'Inter', 'Tajawal', sans-serif; --font-sans: var(--aiwm-google-font); }
-        html:lang(ar) { --aiwm-google-font: 'Tajawal', 'Inter', sans-serif; }
-        body, button, input, textarea, select, option { font-family: var(--aiwm-google-font) !important; }
-
-        @media (min-width: 1140px) {
-            main :is(.cards, .record-grid, .data-cards, .details-grid, .stats-grid, .summary-grid, .info-grid, .settings-grid),
-            main dl:has(> div) { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-        }
-        @media (min-width: 701px) and (max-width: 1139px) {
-            main :is(.cards, .record-grid, .data-cards, .details-grid, .stats-grid, .summary-grid, .info-grid, .settings-grid),
-            main dl:has(> div) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-        }
-        @media (max-width: 700px) {
-            main :is(.cards, .record-grid, .data-cards, .details-grid, .stats-grid, .summary-grid, .info-grid, .settings-grid),
-            main dl:has(> div) { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
-        }
-            /* Three-column forms, plan cards and history records; full-width actions retained. */
-        @media (min-width: 1140px) { main .grid, main form:has(> label ~ label ~ label), main section:has(> article ~ article), main section:has(> .record ~ .record) { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; } }
-        @media (min-width: 701px) and (max-width: 1139px) { main .grid, main form:has(> label ~ label ~ label), main section:has(> article ~ article), main section:has(> .record ~ .record) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } }
-        @media (max-width: 700px) { main .grid, main form:has(> label ~ label ~ label), main section:has(> article ~ article), main section:has(> .record ~ .record) { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; } }
-        main form:has(> label ~ label ~ label) > :not(label), main section:has(> article ~ article) > :not(article), main section:has(> .record ~ .record) > :not(.record) { grid-column: 1 / -1; }
-        main :is(.grid, .cards, .record-grid) > * { min-width: 0; }
-</style>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=Tajawal:wght@400;500;700;800&amp;display=swap">
+    <script>
+        try {
+            document.documentElement.lang = localStorage.getItem('aiwm.locale') === 'ar' ? 'ar' : 'en';
+            document.documentElement.dir = document.documentElement.lang === 'ar' ? 'rtl' : 'ltr';
+        } catch (_) {}
+    </script>
 </head>
 <body>
-    <main>
+    <div class="app-shell prompt-shell" data-dashboard-shell="aiwmweb">
+        <a href="#main-content" class="skip-link" data-prompt-ar="انتقل إلى المحتوى الرئيسي">Skip to main content</a>
+        <aside class="sidebar prompt-sidebar" aria-label="Primary navigation">
+            <div class="brand-row"><a class="brand" href="/tenants/{{ rawurlencode($tenant->slug) }}/"><span class="brand-mark" aria-hidden="true">AI</span><span class="brand-copy"><strong>AI WordPress Manager</strong><small>{{ $tenant->name }}</small></span></a></div>
+            <nav class="main-nav" aria-label="Workspace navigation">
+                <details class="nav-section" open><summary><span data-prompt-ar="الرئيسية">Home</span><span aria-hidden="true">⌄</span></summary>
+                    <div class="nav-links">
+                        <a href="/tenants/{{ rawurlencode($tenant->slug) }}/"><span class="nav-icon" aria-hidden="true">⌂</span><span data-prompt-ar="لوحة التحكم">Dashboard</span></a>
+                        <a href="/tenants/{{ rawurlencode($tenant->slug) }}/module/overview"><span class="nav-icon" aria-hidden="true">◎</span><span data-prompt-ar="نظرة عامة">Overview</span></a>
+                    </div>
+                </details>
+                <details class="nav-section" open><summary><span data-prompt-ar="النظام والحساب">System &amp; Account</span><span aria-hidden="true">⌄</span></summary>
+                    <div class="nav-links">
+                        <a href="/tenants/{{ rawurlencode($tenant->slug) }}/settings"><span class="nav-icon" aria-hidden="true">⚙</span><span data-prompt-ar="الإعدادات">Settings</span></a>
+                        <a class="active" aria-current="page" href="{{ route('tenant.settings.ai-prompts', ['tenant' => $tenant->slug]) }}"><span class="nav-icon" aria-hidden="true">✦</span><span data-prompt-ar="قوالب الذكاء الاصطناعي">AI Prompt Templates</span></a>
+                        <a href="/tenants/{{ rawurlencode($tenant->slug) }}/settings/ai-providers"><span class="nav-icon" aria-hidden="true">◈</span><span data-prompt-ar="مزودو الذكاء الاصطناعي">AI Providers</span></a>
+                    </div>
+                </details>
+            </nav>
+            <div class="sidebar-footer"><strong>{{ $tenant->name }}</strong><small data-prompt-ar="مساحة عمل محمية">Protected tenant workspace</small></div>
+        </aside>
+        <div class="main-area">
+            <header class="topbar">
+                <div class="topbar-title"><div class="heading-block">
+                    <nav class="breadcrumb" aria-label="Breadcrumb"><a href="/tenants/{{ rawurlencode($tenant->slug) }}/settings" data-prompt-ar="الإعدادات">Settings</a><b aria-hidden="true">›</b><strong data-prompt-ar="قوالب الذكاء الاصطناعي">AI Prompt Templates</strong></nav>
+                    <h1 data-prompt-ar="قوالب الذكاء الاصطناعي">AI Prompt Templates</h1><small>{{ $tenant->name }}</small>
+                </div></div>
+                <div class="topbar-actions">
+                    <button type="button" class="language-switch" data-prompt-locale-toggle aria-label="Switch language">🌐 <span data-prompt-locale-target>العربية</span></button>
+                    <a class="btn" href="/tenants/{{ rawurlencode($tenant->slug) }}/settings" data-prompt-ar="رجوع للإعدادات">Back to Settings</a>
+                </div>
+            </header>
+            <main id="main-content" class="content prompt-content" tabindex="-1">
+                <div class="workspace-stack">
+                    <div class="prompt-workspace">
         <header>
             <p>AI PROMPT REGISTRY</p>
             <h1>AI Prompt Templates</h1>
@@ -210,7 +231,11 @@
                 @endforeach
             @endif
         </section>
-    </main>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
     <script type="module" src="/js/ai-prompt-new-template.js"></script>
 </body>
 </html>
