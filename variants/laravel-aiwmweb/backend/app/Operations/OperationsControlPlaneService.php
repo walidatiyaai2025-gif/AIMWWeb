@@ -418,7 +418,10 @@ final class OperationsControlPlaneService
 
         // Project only allowlisted columns. Payloads, failures, actor IDs,
         // audit metadata and foreign-tenant records must never be serialized.
-        $failedRows = $failures->orderByDesc('id')->limit(100)
+        // A queued operation may fail much later than it was created.
+        // Report the most recently updated failures, breaking equal-time
+        // ties by ID so the bounded collection is deterministic.
+        $failedRows = $failures->orderByDesc('updated_at')->orderByDesc('id')->limit(100)
             ->get(['id', 'type', 'status', 'created_at'])
             ->map(fn ($row) => $this->objectToArray($row))->all();
         // Audit events created in the same second need a deterministic newest-
