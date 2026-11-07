@@ -279,6 +279,26 @@ export const workspaceRoutes: WorkspaceRoute[] = [
     r('sessions', '/account/sessions', 'system', '◉', 'Sessions', 'الجلسات', 'Inspect and revoke authenticated sessions.', 'مراجعة وإلغاء جلسات تسجيل الدخول.', { permission: 'sessions.view', controls: ['sessions.revoke'] }),
 ];
 
+// These read URLs are advertised by Laravel's authorized tenant context only
+// after a tenant-owned WordPress site is explicitly selected. This is NOT a
+// fallback endpoint list: no URL, remote scope, or site is inferred here.
+const siteBoundReadWorkspaces = new Set([
+    'site-details', 'site-snapshot', 'site-offline-data',
+    'site-connection-center', 'site-connection-operations',
+    'explorer', 'posts', 'pages', 'media', 'comments',
+    'taxonomy', 'categories', 'tags', 'wp-users',
+    'sync', 'seo-audit',
+]);
+
+export function needsWordPressSiteSelection(context: FrontendContext, route: WorkspaceRoute): boolean {
+    return Boolean(
+        siteBoundReadWorkspaces.has(route.key)
+        && route.apiKey
+        && !context.active_site
+        && !context.api[route.apiKey],
+    );
+}
+
 export const actionSchema = z.record(z.string(), z.union([z.string(), z.number()]));
 
 export function resolveCapability(
@@ -298,7 +318,9 @@ export function resolveCapability(
     if (operation === 'view' && route.apiKey && !context.api[route.apiKey]) {
         return {
             state: 'pending_integration',
-            reason: `Backend API contract '${route.apiKey}' has not been integrated on this Laravel head.`,
+            reason: needsWordPressSiteSelection(context, route)
+                ? `Select a tenant-owned WordPress site to load '${route.apiKey}' from the server's site-scoped API.`
+                : `Backend API contract '${route.apiKey}' has not been integrated on this Laravel head.`,
         };
     }
 
