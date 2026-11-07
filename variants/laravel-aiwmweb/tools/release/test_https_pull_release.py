@@ -178,7 +178,12 @@ class HttpsPullReleaseTests(unittest.TestCase):
             resolved = json.loads(raw)
             for package in resolved["packages"] + resolved.get("packages-dev", []):
                 requirement = str(package.get("require", {}).get("php", ""))
-                if ">=8.4" in requirement or "^8.4" in requirement:
+                requires_new_php = ">=8.4" in requirement or "^8.4" in requirement
+                supports_php83 = any(token in requirement for token in (
+                    "^8.3", "^8.2", "^8.1", "^8.0",
+                    ">=8.3", ">=8.2", ">=8.1", ">=8.0",
+                ))
+                if requires_new_php and not supports_php83:
                     self.fail("Resolved Composer runtime violates PHP 8.3: "
                               + package["name"] + " " + requirement)
             for package in resolved["packages"]:
