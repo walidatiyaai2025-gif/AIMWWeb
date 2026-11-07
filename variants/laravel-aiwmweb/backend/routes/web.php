@@ -6,6 +6,7 @@ use App\Frontend\ActionContractRegistry;
 use App\Http\Controllers\AccessDeniedReadController;
 use App\Http\Controllers\AdminBillingSupportController;
 use App\Http\Controllers\AdminOperationsController;
+use App\Http\Controllers\AiPromptTemplateCreateController;
 use App\Http\Controllers\AiPromptTemplateSaveController;
 use App\Http\Controllers\AiPromptTemplatesReadController;
 use App\Http\Controllers\AiProviderManagementController;
@@ -203,6 +204,9 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
         ->name('tenant.configuration-validation.run');
     Route::get('/tenants/{tenant}/settings/ai-prompts', AiPromptTemplatesReadController::class)
         ->name('tenant.settings.ai-prompts');
+    Route::post('/tenants/{tenant}/settings/ai-prompts', AiPromptTemplateCreateController::class)
+        ->middleware('throttle:10,1')
+        ->name('tenant.settings.ai-prompts.create');
     Route::patch('/tenants/{tenant}/settings/ai-prompts/{template}', AiPromptTemplateSaveController::class)
         ->name('tenant.settings.ai-prompts.save');
     Route::get('/tenants/{tenant}/settings/ai-providers', AiProviderSettingsReadController::class)
