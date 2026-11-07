@@ -221,13 +221,32 @@ final class DemoController extends Controller
             'operation' => 'site.sync',
         ], JSON_THROW_ON_ERROR));
 
-        // The connected, verified AIMW Connector supports signed, paged resource
-        // reads. Use the canonical projector for content workspaces; the older
-        // SEO-only SyncedContent job remains for application-password sites.
+        // A paired Connector must use the signed canonical resource projector.
+        // Never silently downgrade it to the legacy SEO-only job: that job can
+        // succeed while the tenant's posts/pages/media read models stay empty.
+        // Sites without a Connector retain their application-password legacy path.
         $connector = Connector::query()->where('site_id', $siteId)->first();
-        $canonical = $connector !== null && $connector->revoked_at === null
-            && $connector->verified_at !== null
-            && in_array('content.read', (array) $connector->enabled_scopes, true);
+        if ($connector !== null) {
+            $blocker = match (true) {
+                $connector->revoked_at !== null => [
+                    'CONNECTOR_REVOKED', 'The WordPress Connector pairing was revoked. Pair the site again before syncing.',
+                ],
+                $connector->verified_at === null => [
+                    'CONNECTOR_NOT_VERIFIED', 'Verify the WordPress Connector connection before syncing.',
+                ],
+                ! in_array('content.read', (array) $connector->capabilities, true) => [
+                    'CONNECTOR_CONTENT_READ_UNSUPPORTED', 'The paired Connector does not advertise content.read; update and verify the Connector.',
+                ],
+                ! in_array('content.read', (array) $connector->enabled_scopes, true) => [
+                    'CONNECTOR_CONTENT_READ_DISABLED', 'Enable content.read for this WordPress Connector before syncing.',
+                ],
+                default => null,
+            };
+            if ($blocker !== null) {
+                return response()->json(['code' => $blocker[0], 'message' => $blocker[1]], 409);
+            }
+        }
+        $canonical = $connector !== null;
 
         try {
             $result = DB::transaction(function () use ($siteId, $idempotencyKey, $requestHash, $canonical, $runtime, $context, $request): array {
