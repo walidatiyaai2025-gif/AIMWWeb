@@ -186,7 +186,7 @@
 
         <section class="panel" aria-labelledby="template-library">
             <h2 id="template-library">{{ $ar ? 'مكتبة القوالب' : 'Template library' }}</h2>
-            <p>{{ $templates->count() }} {{ $ar ? 'قالب محفوظ' : 'persisted' }} @unless($ar){{ $templates->count() === 1 ? 'template' : 'templates' }}@endunless</p>
+            <p>{{ $templates->count() }} {{ $ar ? 'قالب محفوظ' : ('persisted '.($templates->count() === 1 ? 'template' : 'templates')) }}</p>
 
             @if ($templates->isEmpty())
                 <p role="status">{{ $ar ? 'لا توجد قوالب محفوظة لهذا الحساب.' : 'No AI prompt templates have been persisted for this tenant.' }}</p>
