@@ -8,9 +8,6 @@ import tempfile
 import zipfile
 import unittest
 import subprocess
-import os
-import shutil
-import base64
 from unittest.mock import patch
 
 VARIANT = Path(__file__).resolve().parents[2]
@@ -147,57 +144,6 @@ class HttpsPullReleaseTests(unittest.TestCase):
         self.assertIn("AIWM_AUTO_UPDATES_ENABLED", config)
         self.assertIn("false", config)
 
-
-    def test_temporary_composer_lock_resolution_capture(self):
-        """Temporary CI-only resolver; remove before merging #1508."""
-        if os.environ.get("GITHUB_HEAD_REF") != "fix/1508-composer-audit-release-block":
-            self.skipTest("Isolated lockfile resolver runs on the canonical draft PR only")
-        with tempfile.TemporaryDirectory(prefix="aiwm-composer-security-") as directory:
-            sandbox = Path(directory)
-            for filename in ("composer.json", "composer.lock"):
-                shutil.copyfile(VARIANT / "backend" / filename, sandbox / filename)
-            cmd = [
-                "composer", "update",
-                "symfony/http-foundation:^7.4.23", "symfony/http-kernel:^7.4.23",
-                "symfony/mime:^7.4.22", "symfony/routing:^7.4.23",
-                "symfony/error-handler:^7.4", "symfony/event-dispatcher:^7.4",
-                "symfony/var-dumper:^7.4", "--with-all-dependencies",
-                "--no-install", "--no-scripts", "--no-plugins", "--no-interaction",
-                "--no-progress",
-            ]
-            result = subprocess.run(cmd, cwd=sandbox, text=True, capture_output=True, timeout=240)
-            if result.returncode != 0:
-                self.fail("Composer dependency resolution failed: " + (result.stderr or result.stdout)[-4500:])
-            audit = subprocess.run(
-                ["composer", "audit", "--locked", "--no-interaction"],
-                cwd=sandbox, text=True, capture_output=True, timeout=180,
-            )
-            if audit.returncode != 0:
-                self.fail("Resolved Composer lock still has advisories: " + (audit.stderr or audit.stdout)[-4500:])
-            raw = (sandbox / "composer.lock").read_bytes()
-            resolved = json.loads(raw)
-            for package in resolved["packages"] + resolved.get("packages-dev", []):
-                requirement = str(package.get("require", {}).get("php", ""))
-                requires_new_php = ">=8.4" in requirement or "^8.4" in requirement
-                supports_php83 = any(token in requirement for token in (
-                    "^8.3", "^8.2", "^8.1", "^8.0",
-                    ">=8.3", ">=8.2", ">=8.1", ">=8.0",
-                ))
-                if requires_new_php and not supports_php83:
-                    self.fail("Resolved Composer runtime violates PHP 8.3: "
-                              + package["name"] + " " + requirement)
-            for package in resolved["packages"]:
-                if package["name"] in (
-                    "symfony/http-foundation", "symfony/http-kernel",
-                    "symfony/mime", "symfony/routing",
-                ):
-                    self.assertTrue(package["version"].startswith("v7.4."),
-                                    "Runtime must remain Symfony 7.4 for PHP 8.3")
-            encoded = base64.b64encode(raw).decode("ascii")
-            print("AIWM_LOCK_CANDIDATE_BEGIN", flush=True)
-            for index in range(0, len(encoded), 900):
-                print("AIWM_LOCK_CHUNK:" + encoded[index:index + 900], flush=True)
-            print("AIWM_LOCK_CANDIDATE_END", flush=True)
 
     def test_release_packagers_fail_closed_on_composer_advisories(self):
         setup = SETUP.read_text(encoding="utf8")
