@@ -123,7 +123,7 @@ final class NativeWordPressRestPath
             if ($response->status() !== 404) {
                 $response->throw();
             }
-        } catch (\Throwable $error) {
+        } catch (Throwable $error) {
             if ($this->exists($siteId, 'media', $remoteId)) {
                 throw $error;
             }
