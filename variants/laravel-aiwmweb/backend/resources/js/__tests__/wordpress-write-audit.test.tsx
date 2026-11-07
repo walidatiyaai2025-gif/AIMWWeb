@@ -112,6 +112,7 @@ describe('WordPress write audit consent and redaction', () => {
         const server = {
             schema: 'aiwm.runtime-inspector.v1',
             generated_at: '2026-11-07T10:00:00Z',
+            safety: { redacted: true, read_only: true },
             release: { version: '1.0.418', sha: 'c0ed67c336d528706c57a0b862b573e13d1ac6b6' },
             runtime: { php_version: '8.3', laravel_version: '13.37.0', database: 'reachable',
                 database_driver: 'mysql', queue_driver: 'sync', cache_driver: 'file', extensions: {} },
@@ -119,7 +120,7 @@ describe('WordPress write audit consent and redaction', () => {
         } as InspectorServer;
         const exportObject = safeInspectorBundle(server, [], ctx, null, run);
         const json = JSON.stringify(exportObject);
-        expect(exportObject.wordpress_write_smoke.results[0]).toMatchObject({
+        expect(exportObject.wordpress_write_smoke!.results[0]).toMatchObject({
             resource: 'posts', state: 'needs_reconciliation', cleanup_required: true,
             delete_verified: false,
         });
