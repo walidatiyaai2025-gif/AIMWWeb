@@ -78,6 +78,46 @@ final class OperationalLogsLiteralSearchTest extends TestCase
             ->assertJsonPath('data.0.id', $alphaId);
     }
 
+    public function test_legacy_persisted_context_secrets_are_masked_at_read_time(): void
+    {
+        [$alpha, $actor] = $this->member('alpha');
+        [$beta] = $this->member('beta');
+        $logId = $this->log($alpha, 'legacy operation completed');
+        $this->log($beta, 'foreign tenant private event');
+
+        // Simulate historical/imported data that bypassed the modern writer.
+        // Reads must never trust the persisted JSON as already sanitized.
+        DB::table('operation_logs')->where('id', $logId)->update([
+            'context' => json_encode([
+                'status' => 'completed',
+                'api_key' => 'LEGACY_API_SECRET_MARKER',
+                'nested' => [
+                    'authorization' => 'Bearer LEGACY_BEARER_MARKER',
+                    'safe' => 'keep-this-value',
+                    'refresh_token' => 'LEGACY_REFRESH_MARKER',
+                ],
+            ], JSON_THROW_ON_ERROR),
+        ]);
+
+        $response = $this->actingAs($actor)
+            ->getJson('/tenants/alpha/admin/logs?q=legacy')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $logId)
+            ->assertJsonPath('data.0.context.status', 'completed')
+            ->assertJsonPath('data.0.context.api_key', '[REDACTED]')
+            ->assertJsonPath('data.0.context.nested.authorization', '[REDACTED]')
+            ->assertJsonPath('data.0.context.nested.refresh_token', '[REDACTED]')
+            ->assertJsonPath('data.0.context.nested.safe', 'keep-this-value');
+
+        foreach (['LEGACY_API_SECRET_MARKER', 'LEGACY_BEARER_MARKER', 'LEGACY_REFRESH_MARKER', 'foreign tenant private event'] as $secret) {
+            $this->assertStringNotContainsString($secret, $response->getContent());
+        }
+
+        // Read-time redaction is non-destructive and does not rewrite logs.
+        $this->assertStringContainsString('LEGACY_API_SECRET_MARKER', (string) DB::table('operation_logs')->where('id', $logId)->value('context'));
+    }
+
     public function test_invalid_logs_get_filters_return_422_without_reading_foreign_rows_or_writing_logs(): void
     {
         [$alpha, $actor] = $this->member('alpha');
