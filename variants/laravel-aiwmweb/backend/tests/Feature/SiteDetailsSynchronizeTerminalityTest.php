@@ -127,6 +127,71 @@ final class SiteDetailsSynchronizeTerminalityTest extends TestCase
         $this->assertStringNotContainsString('select * from users', $diagnostic);
     }
 
+    public function test_quoted_json_and_php_credentials_never_leak_into_support_diagnostics(): void
+    {
+        $cases = [
+            [
+                'Connector invalid_protocol {"code":"invalid_protocol","api_key":"JSON_API_CANARY","debug":"AFTER_JSON_CANARY"}',
+                ['JSON_API_CANARY', 'AFTER_JSON_CANARY'],
+            ],
+            [
+                "WordPress response ['secret' => 'PHP_SECRET_CANARY', 'context' => 'AFTER_PHP_CANARY']",
+                ['PHP_SECRET_CANARY', 'AFTER_PHP_CANARY'],
+            ],
+            [
+                'Unexpected payload {"password":"before\\\"ESCAPED_SECRET_CANARY","next":"AFTER_ESCAPED_CANARY"}',
+                ['ESCAPED_SECRET_CANARY', 'AFTER_ESCAPED_CANARY'],
+            ],
+            [
+                'Provider failure refresh_token=REFRESH_TOKEN_CANARY and access_token=ACCESS_TOKEN_CANARY',
+                ['REFRESH_TOKEN_CANARY', 'ACCESS_TOKEN_CANARY'],
+            ],
+        ];
+
+        foreach ($cases as [$raw, $secrets]) {
+            $sanitized = SyncDiagnosticFormatter::sanitize($raw);
+            $this->assertStringContainsString('[REDACTED]', $sanitized);
+            foreach ($secrets as $secret) {
+                $this->assertStringNotContainsString($secret, $sanitized);
+            }
+        }
+
+        $this->assertStringContainsString(
+            'invalid_protocol',
+            SyncDiagnosticFormatter::sanitize($cases[0][0]),
+        );
+    }
+
+    public function test_manager_sync_status_redacts_embedded_json_credentials_and_reader_gets_generic_failure(): void
+    {
+        $manager = User::factory()->create();
+        $tenant = $this->membership($manager, 'alpha', ['tenant.view', 'sites.view', 'sites.manage']);
+        $this->activate($tenant);
+        $site = Site::query()->create(['name' => 'Alpha', 'url' => 'https://alpha.test', 'status' => 'active']);
+        $run = SyncRun::query()->create([
+            'site_id' => $site->id,
+            'status' => 'failed',
+            'failure' => 'RuntimeException: invalid_protocol {"token":"ROUTE_TOKEN_CANARY","trace":"ROUTE_TRACE_CANARY"}',
+            'completed_at' => now(),
+        ]);
+        app(TenantContext::class)->forget();
+
+        $this->actingAs($manager)->getJson("/api/tenants/alpha/sync-runs/{$run->id}")
+            ->assertOk()
+            ->assertJsonPath('diagnostic_code', 'WORDPRESS_SYNC_FAILED')
+            ->assertJsonPath('failure', 'RuntimeException: invalid_protocol {token=[REDACTED]')
+            ->assertDontSee('ROUTE_TOKEN_CANARY')
+            ->assertDontSee('ROUTE_TRACE_CANARY');
+
+        $reader = User::factory()->create();
+        $this->membershipExisting($reader, $tenant, ['tenant.view', 'sites.view'], 'reader');
+        $this->actingAs($reader)->getJson("/api/tenants/alpha/sync-runs/{$run->id}")
+            ->assertOk()
+            ->assertJsonPath('failure', 'Synchronization failed.')
+            ->assertDontSee('invalid_protocol')
+            ->assertDontSee('ROUTE_TOKEN_CANARY');
+    }
+
     private function membership(User $user, string $slug, array $permissions): Tenant
     {
         $tenant = Tenant::query()->create(['name' => ucfirst($slug), 'slug' => $slug]);
