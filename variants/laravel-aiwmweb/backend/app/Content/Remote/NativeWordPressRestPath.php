@@ -6,6 +6,7 @@ use App\Models\SiteCredential;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 use Throwable;
@@ -78,7 +79,7 @@ final class NativeWordPressRestPath
     }
 
     /**
-     * @return array{0: array, 1: \Illuminate\Http\Client\Response}
+     * @return array{0: array, 1: Response}
      */
     private function listRowsAndResponse(int $siteId, string $resource, array $query): array
     {
