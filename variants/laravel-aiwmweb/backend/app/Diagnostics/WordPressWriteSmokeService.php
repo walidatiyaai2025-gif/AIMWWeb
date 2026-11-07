@@ -107,6 +107,7 @@ final class WordPressWriteSmokeService
             // Every ID here came from this request's successful WordPress CREATE response.
             // Never delete an ID supplied by the browser or from existing app records.
             $cleaned = false;
+
             try {
                 $reply = $this->http($site, $credential)->delete(
                     $this->url($site, $object['resource']).'/'.$object['id'],
@@ -176,6 +177,7 @@ final class WordPressWriteSmokeService
         if (is_numeric($id) === false || (int) $id < 1) {
             throw new RuntimeException('missing_created_id');
         }
+
         return (int) $id;
     }
 
@@ -187,6 +189,7 @@ final class WordPressWriteSmokeService
         if (is_array($row) === false || (int) ($row['id'] ?? 0) !== $id) {
             throw new RuntimeException('remote_id_mismatch');
         }
+
         return $row;
     }
 
