@@ -88,6 +88,23 @@ function count(input: unknown): number {
         ? Math.min(input, 1000000000) : 0;
 }
 
+/** Never echo unchecked timestamp text into a shareable support export. */
+function safeIsoTimestamp(input: unknown): string {
+    if (typeof input !== 'string' ||
+        !/^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d{1,6})?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/.test(input)) {
+        return 'unknown';
+    }
+    const parsed = new Date(input);
+    return Number.isNaN(parsed.getTime()) ? 'unknown' : parsed.toISOString();
+}
+
+const allowedEventKinds = new Set<RuntimeObservation['kind']>([
+    'api', 'network_failure', 'script_error', 'unhandled_rejection', 'resource_error',
+]);
+const allowedEventMethods = new Set<NonNullable<RuntimeObservation['method']>>([
+    'GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OTHER',
+]);
+
 /** Explicit allowlist; future backend response additions cannot enter the user export. */
 export function safeInspectorBundle(server: InspectorServer, events: RuntimeObservation[], context?: FrontendContext, liveAudit?: LiveAuditResult | null) {
     return {
@@ -96,8 +113,7 @@ export function safeInspectorBundle(server: InspectorServer, events: RuntimeObse
         privacy: 'Read-only. No credentials, raw URLs, request or response bodies, content, stack traces, cookies or server logs.',
         server: {
             schema: boundedText(server.schema),
-            generated_at: typeof server.generated_at === 'string' && /^\d{4}-\d\d-\d\dT/.test(server.generated_at)
-                ? server.generated_at.slice(0, 32) : 'unknown',
+            generated_at: safeIsoTimestamp(server.generated_at),
             release: {
                 version: boundedText(server.release.version),
                 sha: /^[a-f0-9]{40}$/i.test(server.release.sha) ? server.release.sha : 'unknown',
@@ -211,14 +227,16 @@ export function safeInspectorBundle(server: InspectorServer, events: RuntimeObse
                         ? 'Chrome' : typeof navigator !== 'undefined' && /Safari\//.test(navigator.userAgent)
                             ? 'Safari' : 'other',
             route_shape: typeof window !== 'undefined' ? diagnosticRouteShape(window.location.pathname) : '/:unknown',
-            captured_events: events.slice(-120).map((event) => ({
-                at: /^\d{4}-\d\d-\d\dT/.test(event.at) ? event.at.slice(0, 32) : 'unknown',
-                kind: event.kind,
-                ...(event.route ? { route: diagnosticRouteShape(event.route) } : {}),
-                ...(event.method ? { method: event.method } : {}),
-                ...(typeof event.status === 'number' ? { status: count(event.status) } : {}),
-                ...(typeof event.duration_ms === 'number' ? { duration_ms: count(event.duration_ms) } : {}),
-            })),
+            captured_events: events.slice(-120)
+                .filter((event) => allowedEventKinds.has(event.kind))
+                .map((event) => ({
+                    at: safeIsoTimestamp(event.at),
+                    kind: event.kind,
+                    ...(event.route ? { route: diagnosticRouteShape(event.route) } : {}),
+                    ...(event.method && allowedEventMethods.has(event.method) ? { method: event.method } : {}),
+                    ...(typeof event.status === 'number' ? { status: count(event.status) } : {}),
+                    ...(typeof event.duration_ms === 'number' ? { duration_ms: count(event.duration_ms) } : {}),
+                })),
         },
     };
 }
