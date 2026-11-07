@@ -197,6 +197,30 @@ class CpanelWorkerReceiptHealthTest extends TestCase
         }
     }
 
+    public function test_overflowing_digit_receipts_are_rejected_consistently_by_health_and_inspector(): void
+    {
+        $store = Cache::store('database');
+        $overflow = '99999999999999999999999999999999999999999999999999';
+        $health = app(RuntimeHealthService::class);
+
+        $store->put(RuntimeHealthService::SCHEDULER_HEARTBEAT_KEY, time() - 10, now()->addMinutes(10));
+        $store->put(RuntimeHealthService::CPANEL_QUEUE_TICK_RECEIPT_KEY, $overflow, now()->addMinutes(10));
+
+        $report = $health->ready();
+        $inspector = $health->inspectorEvidence();
+        $this->assertSame('not_ready', $report['status']);
+        $this->assertSame('worker_receipt_missing', $report['checks']['queue_processing']['reason_code']);
+        $this->assertSame('receipt_missing', $inspector['worker_cycle']['reason_code']);
+
+        $store->put(RuntimeHealthService::CPANEL_QUEUE_TICK_RECEIPT_KEY, time() - 10, now()->addMinutes(10));
+        $store->put(RuntimeHealthService::SCHEDULER_HEARTBEAT_KEY, $overflow, now()->addMinutes(10));
+        $this->assertSame('unavailable', $health->ready()['checks']['scheduler']['status']);
+        $this->assertSame('receipt_missing', $health->inspectorEvidence()['scheduler_heartbeat']['reason_code']);
+
+        config(['cpanel.enabled' => false]);
+        $this->assertSame('unavailable', $health->ready()['checks']['scheduler']['status']);
+    }
+
     public function test_vps_scheduler_rejects_future_heartbeat_instead_of_green(): void
     {
         config(['cpanel.enabled' => false]);
