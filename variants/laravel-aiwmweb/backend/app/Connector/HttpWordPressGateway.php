@@ -44,8 +44,20 @@ final class HttpWordPressGateway implements AdvancedWordPressGateway, ConnectorR
 
         $path = '/wp-json/aimw/v1/content/resources/'.$resource.'?'.http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
         $payload = $this->request($site, 'GET', $path, 'content.read');
-        if (! isset($payload['items']) || ! is_array($payload['items']) || ! array_is_list($payload['items'])) {
+        $this->assertSuccessfulResourcePayload($payload);
+        if (! isset($payload['items']) || ! is_array($payload['items']) || ! array_is_list($payload['items'])
+            || count($payload['items']) > $perPage) {
             throw new RuntimeException('Connector resource read returned an invalid items contract.');
+        }
+
+        // A malformed HTTP 200 resource page must fail before any full-sync
+        // missing-record reconciliation observes it as an empty/short page.
+        foreach ($payload['items'] as $row) {
+            if (! is_array($row) || array_is_list($row)
+                || ! isset($row['id'])
+                || filter_var($row['id'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
+                throw new RuntimeException('Connector resource read returned a malformed resource record.');
+            }
         }
 
         return $payload['items'];
@@ -57,11 +69,27 @@ final class HttpWordPressGateway implements AdvancedWordPressGateway, ConnectorR
         abort_unless($remoteId > 0, 422, 'Invalid WordPress resource ID.');
 
         $payload = $this->request($site, 'GET', "/wp-json/aimw/v1/content/resources/{$resource}/{$remoteId}", 'content.read');
-        if ((int) ($payload['id'] ?? 0) !== $remoteId) {
+        $this->assertSuccessfulResourcePayload($payload);
+        if (filter_var($payload['id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) !== $remoteId) {
             throw new RuntimeException('Connector resource read returned an incorrect resource ID.');
         }
 
         return $payload;
+    }
+
+    /**
+     * WordPress REST errors use non-2xx statuses. Reverse proxies can turn an
+     * upstream error into HTTP 200 while leaving an error-shaped JSON body.
+     * Never let such a response become an authoritative empty sync page.
+     */
+    private function assertSuccessfulResourcePayload(array $payload): void
+    {
+        if (($payload['success'] ?? true) === false
+            || (array_key_exists('error', $payload) && $payload['error'] !== null
+                && $payload['error'] !== false && $payload['error'] !== '')
+            || in_array(strtolower((string) ($payload['status'] ?? '')), ['failed', 'failure', 'error'], true)) {
+            throw new RuntimeException('Connector resource read returned an error-marked response.');
+        }
     }
 
     private function assertReadResource(string $resource): void
