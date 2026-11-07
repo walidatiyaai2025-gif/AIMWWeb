@@ -8,6 +8,7 @@ use App\Content\ContentPlatformService;
 use App\Content\Remote\ConnectorSemanticPath;
 use App\Models\Connector;
 use App\Models\ContentItem;
+use App\Models\ContentSyncState;
 use App\Models\Site;
 use App\Models\Tenant;
 use App\Tenancy\TenantContext;
@@ -91,6 +92,106 @@ final class ConnectorCanonicalContentReadTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('invalid items contract');
         app(HttpWordPressGateway::class)->listResource($site, 'posts');
+    }
+
+    public function test_legitimate_empty_signed_resource_pages_remain_valid(): void
+    {
+        $site = $this->connectedSite();
+        Http::fake([
+            'https://wp.test/wp-json/aimw/v1/content/resources/posts*' => Http::response(['items' => []], 200),
+        ]);
+
+        $this->assertSame([], app(HttpWordPressGateway::class)->listResource($site, 'posts'));
+        Http::assertSentCount(1);
+        Http::assertSent(fn ($request): bool => $request->method() === 'GET'
+            && $request->hasHeader('X-AIMW-Scope', 'content.read')
+            && $request->hasHeader('X-AIMW-Signature'));
+    }
+
+    public function test_error_marked_http_200_signed_pages_are_never_empty_sync_evidence(): void
+    {
+        $site = $this->connectedSite();
+
+        foreach ([
+            ['items' => [], 'success' => false],
+            ['items' => [], 'error' => 'upstream_unavailable'],
+            ['items' => [], 'status' => 'failed'],
+            ['items' => [['id' => 5]], 'error' => ['code' => 'partial_failure']],
+        ] as $case) {
+            Http::fake(['https://wp.test/*' => Http::response($case, 200)]);
+
+            try {
+                app(HttpWordPressGateway::class)->listResource($site, 'posts');
+                $this->fail('Error-marked HTTP 200 must not be treated as a genuine WordPress resource page.');
+            } catch (RuntimeException $exception) {
+                $this->assertStringContainsString('error-marked response', $exception->getMessage());
+            }
+        }
+    }
+
+    public function test_signed_list_validates_all_remote_identities_and_page_bounds_before_projection(): void
+    {
+        $site = $this->connectedSite();
+        $malformed = [
+            ['items' => [['title' => 'Missing ID']]],
+            ['items' => [['id' => 0, 'title' => 'Invalid']]],
+            ['items' => [['id' => 'not-an-id', 'title' => 'Invalid']]],
+            ['items' => [null]],
+            ['items' => ['scalar']],
+            ['items' => [['id' => 3], ['id' => []]]],
+        ];
+
+        foreach ($malformed as $payload) {
+            Http::fake(['https://wp.test/*' => Http::response($payload, 200)]);
+            try {
+                app(HttpWordPressGateway::class)->listResource($site, 'posts');
+                $this->fail('Signed WordPress resource listing must validate every row before returning.');
+            } catch (RuntimeException $exception) {
+                $this->assertStringContainsString('malformed resource record', $exception->getMessage());
+            }
+        }
+
+        Http::fake(['https://wp.test/*' => Http::response(['items' => array_fill(0, 101, ['id' => 1])], 200)]);
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('invalid items contract');
+        app(HttpWordPressGateway::class)->listResource($site, 'posts', ['per_page' => 100]);
+    }
+
+    public function test_signed_list_error_preserves_existing_canonical_content_and_fails_sync_closed(): void
+    {
+        $site = $this->connectedSite();
+        ContentItem::query()->create([
+            'site_id' => $site->id,
+            'remote_id' => 51,
+            'type' => 'post',
+            'title' => 'Previously verified article',
+        ]);
+
+        // This was previously accepted as a successful zero-item remote page.
+        Http::fake(['https://wp.test/*' => Http::response(['items' => [], 'success' => false], 200)]);
+        try {
+            app(ContentPlatformService::class)->sync($site->id, true);
+            $this->fail('An upstream error must abort canonical sync rather than look like zero posts.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('error-marked response', $exception->getMessage());
+        }
+
+        $this->assertSame('Previously verified article',
+            ContentItem::query()->where('site_id', $site->id)->where('remote_id', 51)->firstOrFail()->title);
+        $state = ContentSyncState::query()->where('site_id', $site->id)->where('resource', 'posts')->firstOrFail();
+        $this->assertSame('failed', $state->state);
+        $this->assertNotSame(100, (int) $state->progress);
+        Http::assertSentCount(1);
+    }
+
+    public function test_signed_single_item_read_rejects_error_envelope_even_with_matching_id(): void
+    {
+        $site = $this->connectedSite();
+        Http::fake(['https://wp.test/*' => Http::response(['id' => 37, 'success' => false], 200)]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('error-marked response');
+        app(HttpWordPressGateway::class)->getResource($site, 'posts', 37);
     }
 
     public function test_connector_only_resource_read_rejects_foreign_tenant_site(): void
