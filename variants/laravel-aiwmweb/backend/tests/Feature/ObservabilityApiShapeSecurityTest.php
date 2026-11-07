@@ -144,6 +144,39 @@ final class ObservabilityApiShapeSecurityTest extends TestCase
         $this->assertStringNotContainsString('tenant_id', $response->getContent());
     }
 
+    public function test_diagnostics_keeps_most_recent_failures_even_when_they_have_older_ids(): void
+    {
+        [$alpha, $actor] = $this->member('alpha', ['tenant.view', 'operations.manage', 'diagnostics.view']);
+        [$beta] = $this->member('beta', ['tenant.view', 'operations.manage', 'diagnostics.view']);
+
+        // All 102 failure records have an old last-update timestamp. Later a
+        // previously queued operation (the oldest ID) fails recently.
+        for ($index = 0; $index < 102; $index++) {
+            $this->seedFailedOperation($alpha, 'alpha.failure');
+        }
+        DB::table('operation_executions')->where('tenant_id', $alpha->id)
+            ->update(['updated_at' => now()->subDays(2)]);
+        $oldestId = DB::table('operation_executions')->where('tenant_id', $alpha->id)->min('id');
+        $newestId = DB::table('operation_executions')->where('tenant_id', $alpha->id)->max('id');
+        DB::table('operation_executions')->where('id', $oldestId)
+            ->update(['updated_at' => now()->subMinute()]);
+        $this->seedFailedOperation($beta, 'foreign.failure');
+
+        $response = $this->actingAs($actor)
+            ->getJson('/tenants/alpha/admin/diagnostics')
+            ->assertOk()
+            ->assertJsonCount(100, 'failed_operations')
+            ->assertJsonPath('failed_operations.0.id', $oldestId)
+            ->assertJsonPath('failed_operations.1.id', $newestId)
+            ->assertJsonPath('failed_operations.99.id', $newestId - 98)
+            ->assertJsonPath('meta.failed_operations_total', 102)
+            ->assertJsonPath('meta.failed_operations_truncated', true)
+            ->assertJsonPath('meta.limit_per_source', 100);
+
+        $this->assertStringNotContainsString('foreign.failure', $response->getContent());
+        $this->assertStringNotContainsString('tenant_id', $response->getContent());
+    }
+
     public function test_direct_foreign_tenant_access_is_rejected(): void
     {
         [, $actor] = $this->member('alpha', ['tenant.view', 'operations.manage', 'diagnostics.view']);
