@@ -77,7 +77,7 @@ final class ObservabilityApiShapeSecurityTest extends TestCase
 
         $operation = $response->json('failed_operations.0');
         $audit = $response->json('recent_audit.0');
-        $this->assertEqualsCanonicalizing(['id', 'type', 'status', 'created_at'], array_keys($operation));
+        $this->assertEqualsCanonicalizing(['id', 'type', 'status', 'created_at', 'updated_at'], array_keys($operation));
         $this->assertEqualsCanonicalizing(['id', 'event', 'occurred_at'], array_keys($audit));
 
         foreach ([
@@ -159,7 +159,9 @@ final class ObservabilityApiShapeSecurityTest extends TestCase
         $oldestId = DB::table('operation_executions')->where('tenant_id', $alpha->id)->min('id');
         $newestId = DB::table('operation_executions')->where('tenant_id', $alpha->id)->max('id');
         DB::table('operation_executions')->where('id', $oldestId)
-            ->update(['updated_at' => now()->subMinute()]);
+            ->update(['created_at' => now()->subDays(9), 'updated_at' => now()->subMinute()]);
+        $recentlyFailed = DB::table('operation_executions')->where('id', $oldestId)
+            ->first(['created_at', 'updated_at']);
         $this->seedFailedOperation($beta, 'foreign.failure');
 
         $response = $this->actingAs($actor)
@@ -167,12 +169,15 @@ final class ObservabilityApiShapeSecurityTest extends TestCase
             ->assertOk()
             ->assertJsonCount(100, 'failed_operations')
             ->assertJsonPath('failed_operations.0.id', $oldestId)
+            ->assertJsonPath('failed_operations.0.created_at', $recentlyFailed->created_at)
+            ->assertJsonPath('failed_operations.0.updated_at', $recentlyFailed->updated_at)
             ->assertJsonPath('failed_operations.1.id', $newestId)
             ->assertJsonPath('failed_operations.99.id', $newestId - 98)
             ->assertJsonPath('meta.failed_operations_total', 102)
             ->assertJsonPath('meta.failed_operations_truncated', true)
             ->assertJsonPath('meta.limit_per_source', 100);
 
+        $this->assertNotSame($response->json('failed_operations.0.created_at'), $response->json('failed_operations.0.updated_at'));
         $this->assertStringNotContainsString('foreign.failure', $response->getContent());
         $this->assertStringNotContainsString('tenant_id', $response->getContent());
     }
