@@ -205,7 +205,7 @@ final class RuntimeHealthService
                     ? ['status' => 'unavailable', 'reason_code' => 'preflight_pending']
                     : $this->cpanelQueueProcessing()),
             'redis' => ['status' => 'not_required'],
-            'ai' => ['status' => config('cpanel.ai_enabled') ? (config('cpanel.preflight_passed') && config('cpanel.cron_enabled') ? 'ok' : 'unavailable') : 'disabled'],
+            'ai' => ['status' => config('cpanel.ai_enabled') ? 'unavailable' : 'disabled'],
             'scheduler' => ! config('cpanel.cron_enabled')
                 ? ['status' => 'disabled', 'reason_code' => 'cron_disabled']
                 : $this->probe('scheduler', function (): void {
@@ -219,6 +219,17 @@ final class RuntimeHealthService
                     }
                 }),
         ];
+
+        // AI infrastructure is not healthy merely because Cron is enabled.
+        // Require real validated queue-worker and scheduler receipts as well
+        // as a working database queue. This is infrastructure readiness, not
+        // proof that any particular AI task completed successfully.
+        if (config('cpanel.ai_enabled')
+            && $checks['queue']['status'] === 'ok'
+            && $checks['queue_processing']['status'] === 'ok'
+            && $checks['scheduler']['status'] === 'ok') {
+            $checks['ai'] = ['status' => 'ok'];
+        }
 
         return [
             // Optional AI and Redis may be disabled/not_required, but the
