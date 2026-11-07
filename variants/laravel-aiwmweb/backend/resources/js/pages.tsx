@@ -5,6 +5,7 @@ import {
     ApiError,
     apiRequest,
     capabilityReason,
+    needsWordPressSiteSelection,
     resolveCapability,
     tenantUrl,
     workspaceRoutes,
@@ -331,6 +332,8 @@ function QueryError({ error, retry, retryAction }: { error: unknown; retry: () =
 
 function Unavailable({ route, context, state = resolveCapability(context, route) }: { route: WorkspaceRoute; context: FrontendContext; state?: ReturnType<typeof resolveCapability> }) {
     const { locale } = useLocale();
+    const selectionRequired = state.state === 'pending_integration' && needsWordPressSiteSelection(context, route);
+    const mayBrowseSites = context.permissions.includes('sites.view') || context.permissions.includes('*');
     const titleByState: Record<string, { en: string; ar: string }> = {
         permission_denied: { en: 'Permission required', ar: 'الصلاحية مطلوبة' },
         disabled_by_owner: { en: 'Disabled by site owner', ar: 'معطل بواسطة مالك الموقع' },
@@ -339,10 +342,24 @@ function Unavailable({ route, context, state = resolveCapability(context, route)
         site_disconnected: { en: 'Site disconnected', ar: 'الموقع غير متصل' },
         pending_integration: { en: 'Backend integration pending', ar: 'تكامل الخادم قيد الانتظار' },
     };
-    const title = titleByState[state.state]?.[locale] ?? (locale === 'ar' ? 'القدرة غير متاحة' : 'Capability unavailable');
+    const title = selectionRequired
+        ? (locale === 'ar' ? 'اختر موقع WordPress أولًا' : 'Select a WordPress site first')
+        : titleByState[state.state]?.[locale] ?? (locale === 'ar' ? 'القدرة غير متاحة' : 'Capability unavailable');
     return (
         <StatePanel tone={state.state === 'permission_denied' ? 'danger' : 'warning'} title={title}>
-            <p>{capabilityReason(state, locale)}</p>
+            <p>{selectionRequired
+                ? (locale === 'ar'
+                    ? 'لم يتم اختيار موقع تابع لهذا الحساب بعد. افتح صفحة المواقع واختر الموقع المطلوب لعرض بياناته الفعلية. لن يُنفَّذ أي تعديل على WordPress.'
+                    : 'No tenant-owned site is selected. Open Sites and select the site to view its real stored data. No WordPress changes will be made.')
+                : capabilityReason(state, locale)}</p>
+            {selectionRequired && mayBrowseSites ? (
+                <Link className="btn primary" to={tenantUrl(context.tenant.slug, '/sites')} data-site-selection-action="true">
+                    {locale === 'ar' ? 'اختيار موقع من المواقع' : 'Choose a site'}
+                </Link>
+            ) : null}
+            {selectionRequired && !mayBrowseSites ? (
+                <p>{locale === 'ar' ? 'تحتاج صلاحية عرض المواقع لاختيار الموقع.' : 'You need Sites view permission to select a site.'}</p>
+            ) : null}
             <dl className="contract-details">
                 <div><dt>{locale === 'ar' ? 'المساحة' : 'Workspace'}</dt><dd>{route.key}</dd></div>
                 {route.permission ? <div><dt>{locale === 'ar' ? 'الصلاحية' : 'Permission'}</dt><dd>{route.permission}</dd></div> : null}
