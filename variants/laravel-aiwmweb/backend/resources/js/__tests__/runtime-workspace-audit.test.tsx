@@ -184,6 +184,16 @@ describe('explicit all-workspace read-only live audit', () => {
             await expect(loadSiteScopedAuditContext(base, 5, [5], wrong as typeof fetch)).rejects.toThrow();
             expect(wrong).toHaveBeenCalledTimes(1);
         }
+        // A successful same-user, same-tenant response must still be rejected
+        // if its advertised site-scoped GET points at some other site.
+        const swapped = vi.fn(async () => new Response(JSON.stringify({
+            ...base,
+            active_site: { id: 5, name: 'PRIVATE-SITE' },
+            api: { posts: '/api/v1/tenants/wordpress/sites/8/content/post' },
+        }), { status: 200, headers: { 'content-type': 'application/json' } }));
+        await expect(loadSiteScopedAuditContext(base, 5, [5], swapped as typeof fetch)).rejects.toThrow();
+        expect(swapped).toHaveBeenCalledTimes(1);
+
         const denied = vi.fn(async () => new Response('{"message":"denied"}', {
             status: 403, headers: { 'content-type': 'application/json' },
         }));
