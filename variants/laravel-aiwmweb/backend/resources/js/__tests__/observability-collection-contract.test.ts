@@ -70,6 +70,46 @@ describe('tenant observability read contracts (#1514)', () => {
         }
     });
 
+    it('validates tenant-only log counts and strips unexpected evidence metadata', () => {
+        const safe = {
+            data: [],
+            meta: {
+                scope: 'tenant_operation_logs',
+                tenant_records: 2,
+                matching_records: 0,
+                returned_records: 0,
+                limit: 500,
+                truncated: false,
+                empty_reason: 'filter_matched_none',
+            },
+        };
+        const dirty = { ...safe, meta: { ...safe.meta, api_key: 'DO_NOT_EXPORT' } };
+        expect(normalizeObservabilityCollection('logs', dirty)).toEqual(safe);
+        expect(JSON.stringify(normalizeObservabilityCollection('logs', dirty))).not.toContain('DO_NOT_EXPORT');
+
+        const cases = [
+            { ...safe, meta: { ...safe.meta, scope: 'laravel_raw_logs' } },
+            { ...safe, meta: { ...safe.meta, returned_records: 8 } },
+            { ...safe, meta: { ...safe.meta, tenant_records: -1 } },
+            { ...safe, meta: { ...safe.meta, matching_records: 'many' } },
+            { ...safe, meta: { ...safe.meta, empty_reason: '<script>' } },
+            { ...safe, meta: null },
+        ];
+        for (const invalid of cases) {
+            expect(() => normalizeObservabilityCollection('logs', invalid)).toThrow('Operational observability response was invalid');
+        }
+
+        expect(normalizeObservabilityCollection('logs', {
+            data: [{ id: 7, level: 'info', message: 'operation entry' }],
+            meta: {
+                ...safe.meta, tenant_records: 1, matching_records: 1,
+                returned_records: 1, empty_reason: 'not_empty',
+            },
+        })).toMatchObject({
+            data: [{ id: 7 }], meta: { scope: 'tenant_operation_logs', matching_records: 1 },
+        });
+    });
+
     it('sanitizes unexpected diagnostic identifiers, free text and timestamps', () => {
         const rows = normalizeObservabilityCollection('diagnostics', {
             failed_operations: [{
