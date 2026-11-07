@@ -55,6 +55,20 @@ class CpanelWorkerReceiptHealthTest extends TestCase
         $store->put(RuntimeHealthService::SCHEDULER_HEARTBEAT_KEY, time() - 10, now()->addMinutes(10));
         $this->assertSame('ok', $health->ready()['checks']['ai']['status']);
 
+        // Database receipts can still be fresh after the configured cache
+        // is accidentally switched to a per-request array driver. Neither
+        // the AI card nor global readiness may claim success in that state.
+        config(['cache.default' => 'array']);
+        $cacheBroken = $health->ready();
+        $this->assertSame('unavailable', $cacheBroken['checks']['cache']['status']);
+        $this->assertSame('ok', $cacheBroken['checks']['queue_processing']['status']);
+        $this->assertSame('ok', $cacheBroken['checks']['scheduler']['status']);
+        $this->assertSame('unavailable', $cacheBroken['checks']['ai']['status']);
+        $this->assertSame('not_ready', $cacheBroken['status']);
+
+        config(['cache.default' => 'database']);
+        $this->assertSame('ok', $health->ready()['checks']['ai']['status']);
+
         $store->put(RuntimeHealthService::CPANEL_QUEUE_TICK_RECEIPT_KEY, time() - 301, now()->addMinutes(10));
         $this->assertSame('unavailable', $health->ready()['checks']['ai']['status']);
 
