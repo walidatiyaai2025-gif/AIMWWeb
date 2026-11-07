@@ -110,6 +110,37 @@ class TenantContextSiteIsolationTest extends TestCase
         );
     }
 
+    public function test_site_context_advertises_only_existing_safe_get_aliases_for_selected_tenant_site(): void
+    {
+        $user = User::factory()->create();
+        $membership = $this->membership($user, 'alpha', ['tenant.view', 'sites.view', 'diagnostics.view']);
+        $site = $this->site($membership, 'Inspection Site');
+
+        $withoutSite = $this->actingAs($user)->getJson('/tenants/alpha/context');
+        $withoutSite->assertOk()->assertJsonMissingPath('api.site-details')
+            ->assertJsonMissingPath('api.site-snapshot')
+            ->assertJsonMissingPath('api.site-offline-data')
+            ->assertJsonMissingPath('api.site-connection-center')
+            ->assertJsonMissingPath('api.site-connection-operations')
+            ->assertJsonMissingPath('api.site-connect');
+
+        $response = $this->actingAs($user)->getJson('/tenants/alpha/context?site='.$site->id);
+        $response->assertOk()->assertJsonPath('active_site.id', $site->id);
+        $prefix = '/api/tenants/alpha/sites/'.$site->id;
+        foreach ([
+            'sites.detail.'.$site->id => $prefix,
+            'site-details' => $prefix,
+            'site-snapshot' => $prefix.'/snapshot',
+            'site-offline-data' => $prefix.'/snapshot',
+            'site-connection-center' => $prefix.'/connection',
+            'site-connection-operations' => $prefix.'/operations',
+        ] as $key => $path) {
+            $response->assertJsonPath('api.'.$key, $path);
+        }
+        $response->assertJsonMissingPath('api.site-connect');
+        $this->assertFalse(app(TenantContext::class)->active());
+    }
+
     private function membership(User $user, string $slug, array $permissions): TenantMembership
     {
         $tenant = Tenant::query()->create(['name' => ucfirst($slug), 'slug' => $slug]);
