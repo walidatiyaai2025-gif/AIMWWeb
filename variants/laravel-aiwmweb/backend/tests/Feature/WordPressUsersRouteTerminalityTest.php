@@ -145,6 +145,106 @@ final class WordPressUsersRouteTerminalityTest extends TestCase
         });
     }
 
+    public function test_native_wordpress_headers_drive_totals_across_users_pages(): void
+    {
+        $user = User::factory()->create();
+        $membership = $this->membership($user, 'alpha', ['tenant.view', 'sites.view']);
+        $site = $this->site($membership, 'https://alpha.example.test');
+        $this->credential($membership, $site);
+
+        $firstPage = array_map(
+            static fn (int $id): array => ['id' => $id, 'name' => "Editor {$id}"],
+            range(1, 50),
+        );
+
+        Http::fake(function ($request) use ($firstPage) {
+            parse_str((string) parse_url($request->url(), PHP_URL_QUERY), $query);
+
+            return Http::response(
+                ($query['page'] ?? '1') === '2' ? [['id' => 51, 'name' => 'Last editor']] : $firstPage,
+                200,
+                ['X-WP-Total' => '51', 'X-WP-TotalPages' => '2'],
+            );
+        });
+
+        $uri = "/api/v1/tenants/alpha/sites/{$site->id}/users";
+        $this->actingAs($user)->getJson("{$uri}?page=1&per_page=50")
+            ->assertOk()
+            ->assertJsonCount(50, 'data')
+            ->assertJsonPath('total', 51)
+            ->assertJsonPath('current_page', 1)
+            ->assertJsonPath('last_page', 2)
+            ->assertJsonPath('pagination_authoritative', true);
+
+        $this->actingAs($user)->getJson("{$uri}?page=2&per_page=50")
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('total', 51)
+            ->assertJsonPath('current_page', 2)
+            ->assertJsonPath('last_page', 2)
+            ->assertJsonPath('pagination_authoritative', true);
+
+        Http::assertSentCount(2);
+    }
+
+    public function test_full_last_users_page_does_not_offer_a_phantom_next_page(): void
+    {
+        $user = User::factory()->create();
+        $membership = $this->membership($user, 'alpha', ['tenant.view', 'sites.view']);
+        $site = $this->site($membership, 'https://alpha.example.test');
+        $this->credential($membership, $site);
+
+        $rows = array_map(static fn (int $id): array => ['id' => $id], range(1, 50));
+        Http::fake([
+            'https://alpha.example.test/wp-json/wp/v2/users*' => Http::response(
+                $rows, 200, ['X-WP-Total' => '50', 'X-WP-TotalPages' => '1'],
+            ),
+        ]);
+
+        $this->actingAs($user)
+            ->getJson("/api/v1/tenants/alpha/sites/{$site->id}/users?page=1&per_page=50")
+            ->assertOk()
+            ->assertJsonPath('total', 50)
+            ->assertJsonPath('last_page', 1)
+            ->assertJsonPath('pagination_authoritative', true);
+    }
+
+    public function test_missing_pagination_headers_are_explicitly_not_authoritative(): void
+    {
+        $user = User::factory()->create();
+        $membership = $this->membership($user, 'alpha', ['tenant.view', 'sites.view']);
+        $site = $this->site($membership, 'https://alpha.example.test');
+        $this->credential($membership, $site);
+
+        Http::fake([
+            'https://alpha.example.test/wp-json/wp/v2/users*' => Http::response([['id' => 71]], 200),
+        ]);
+
+        $this->actingAs($user)
+            ->getJson("/api/v1/tenants/alpha/sites/{$site->id}/users")
+            ->assertOk()
+            ->assertJsonPath('total', 1)
+            ->assertJsonPath('pagination_authoritative', false);
+    }
+
+    public function test_corrupt_or_partial_wordpress_pagination_headers_fail_closed(): void
+    {
+        $user = User::factory()->create();
+        $membership = $this->membership($user, 'alpha', ['tenant.view', 'sites.view']);
+        $site = $this->site($membership, 'https://alpha.example.test');
+        $this->credential($membership, $site);
+
+        Http::fake([
+            'https://alpha.example.test/wp-json/wp/v2/users*' => Http::response(
+                [['id' => 71]], 200, ['X-WP-Total' => 'invalid', 'X-WP-TotalPages' => '1'],
+            ),
+        ]);
+
+        $this->actingAs($user)
+            ->getJson("/api/v1/tenants/alpha/sites/{$site->id}/users")
+            ->assertStatus(500);
+    }
+
     public function test_empty_and_failure_states_are_truthful_and_not_synthesized(): void
     {
         $source = (string) file_get_contents(
