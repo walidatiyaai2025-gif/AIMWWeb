@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { apiRequest, type FrontendContext } from './core';
 import { useLocale } from './i18n';
 
@@ -43,31 +43,48 @@ export function WordPressWriteAuditPanel({ context, siteIds, onComplete }: {
     const { locale } = useLocale();
     const ar = locale === 'ar';
     const [chosen, setChosen] = useState(0);
-    const [consent, setConsent] = useState(false);
+    // Consent authorizes exactly one run against one tenant-owned site.
+    const [consentedSiteId, setConsentedSiteId] = useState<number | null>(null);
     const [working, setWorking] = useState(false);
     const [results, setResults] = useState<WpSmokeEntry[]>([]);
     const [progress, setProgress] = useState('');
     const ids = [...new Set(siteIds.filter(id => Number.isSafeInteger(id) && id > 0))].slice(0, 50);
     const siteId = ids.includes(chosen) ? chosen : ids.length === 1 ? ids[0] : 0;
+    const consent = siteId > 0 && consentedSiteId === siteId;
+    // The parent may replace the authorized site list without firing <select> onChange.
+    // In-flight operations must not silently proceed to the next remote write.
+    const activeSiteId = useRef(siteId);
+    activeSiteId.current = siteId;
+    const previousSiteId = useRef(siteId);
+    useEffect(() => {
+        if (previousSiteId.current === siteId) return;
+        previousSiteId.current = siteId;
+        setConsentedSiteId(null);
+        setResults([]);
+        setProgress('');
+        onComplete(null);
+    }, [siteId, onComplete]);
     const permitted = ['diagnostics.view', 'content.edit', 'content.manage'].every(permission =>
         context.permissions.includes('*') || context.permissions.includes(permission));
     const validTenant = /^[a-zA-Z0-9_-]{1,100}$/.test(context.tenant.slug);
 
     const start = async () => {
         if (working || !permitted || !siteId || !validTenant || !consent) return;
+        const approvedSiteId = siteId;
         setWorking(true);
         setResults([]);
         onComplete(null);
         const next: WpSmokeEntry[] = [];
         try {
             for (const resource of WP_SMOKE_RESOURCES) {
+                if (activeSiteId.current !== approvedSiteId) break;
                 setProgress((ar ? 'اختبار ' : 'Testing ') + resource);
                 let entry: WpSmokeEntry;
                 try {
                     const response = await apiRequest<WpSmokeEntry>(
                         '/tenants/' + encodeURIComponent(context.tenant.slug) + '/runtime-inspector/wordpress-write-check',
                         { method: 'POST', body: JSON.stringify({
-                            site_id: siteId,
+                            site_id: approvedSiteId,
                             resource,
                             confirmation: 'RUN_DISPOSABLE_WORDPRESS_TEST',
                         }) },
@@ -79,17 +96,32 @@ export function WordPressWriteAuditPanel({ context, siteIds, onComplete }: {
                 } catch {
                     entry = unknownResult(resource);
                 }
+                // A site switch invalidates the receipt for this screen; never
+                // attribute old-site results to a newly selected WordPress site.
+                if (activeSiteId.current !== approvedSiteId) break;
+                if (entry.cleanup_required) {
+                    entry = { ...entry, state: 'needs_reconciliation', reason: 'cleanup_not_verified' };
+                } else if (entry.state === 'passed' &&
+                    !(entry.create_verified && entry.save_verified && entry.delete_verified)) {
+                    entry = { ...entry, state: 'not_tested', reason: 'request_not_confirmed' };
+                }
                 next.push(entry);
                 setResults([...next]);
-                onComplete({ site_id: siteId, completed: false, results: [...next] });
+                onComplete({ site_id: approvedSiteId, completed: false, results: [...next] });
                 // A failed cleanup or ambiguous create must be reconciled by the owner
                 // before issuing any more remote WordPress write probes.
-                if (entry.state === 'needs_reconciliation' || entry.reason === 'request_not_confirmed') break;
+                if (entry.cleanup_required || entry.state === 'needs_reconciliation' || entry.reason === 'request_not_confirmed') break;
             }
         } finally {
             setWorking(false);
             setProgress('');
-            onComplete({ site_id: siteId, completed: next.length === WP_SMOKE_RESOURCES.length, results: [...next] });
+            setConsentedSiteId(null);
+            if (activeSiteId.current === approvedSiteId) {
+                const verified = next.length === WP_SMOKE_RESOURCES.length &&
+                    next.every(entry => entry.state === 'passed' && entry.create_verified &&
+                        entry.save_verified && entry.delete_verified && !entry.cleanup_required);
+                onComplete({ site_id: approvedSiteId, completed: verified, results: [...next] });
+            }
         }
     };
 
@@ -107,7 +139,7 @@ export function WordPressWriteAuditPanel({ context, siteIds, onComplete }: {
             <select aria-label={ar ? 'موقع فحص الكتابة' : 'Write-test site'} value={siteId || ''} disabled={working}
                 onChange={event => {
                     setChosen(Number(event.target.value) || 0);
-                    setConsent(false);
+                    setConsentedSiteId(null);
                     setResults([]);
                     onComplete(null);
                 }}>
@@ -117,7 +149,7 @@ export function WordPressWriteAuditPanel({ context, siteIds, onComplete }: {
         </label>
         <label>
             <input type="checkbox" checked={consent} disabled={working || !permitted || !siteId}
-                onChange={event => setConsent(event.target.checked)} />
+                onChange={event => setConsentedSiteId(event.target.checked ? siteId : null)} />
             {' '}{ar ? 'أوافق على إنشاء وتعديل وحذف عناصر تجريبية مؤقتة في هذا الموقع، وأفهم أن فشل الحذف قد يتطلب تنظيفًا يدويًا.' :
                 'I approve creating, updating and deleting disposable items on this site and understand failed cleanup may require manual recovery.'}
         </label>
