@@ -400,26 +400,39 @@ final class OperationsControlPlaneService
 
     public function diagnostics(): array
     {
-        // The browser's projection is not a security boundary. Only fetch
-        // columns needed for the diagnostics read model so operation payloads,
-        // failure messages, audit metadata and actor identifiers never cross
-        // the API response boundary in the first place.
+        // Observability is scoped to tenant operation failures and audit events,
+        // not a universal Laravel/system-health error stream. Count the same
+        // authorized sources before applying the 100-row display limits.
+        $failures = DB::table('operation_executions')
+            ->where('tenant_id', $this->context->id())
+            ->where('status', 'failed');
+        $audits = AuditEvent::query();
+
+        $failureCount = (clone $failures)->count();
+        $auditCount = (clone $audits)->count();
+
+        // Project only allowlisted columns. Payloads, failures, actor IDs,
+        // audit metadata and foreign-tenant records must never be serialized.
+        $failedRows = $failures->orderByDesc('id')->limit(100)
+            ->get(['id', 'type', 'status', 'created_at'])
+            ->map(fn ($row) => $this->objectToArray($row))->all();
+        $auditRows = $audits->orderByDesc('occurred_at')->limit(100)
+            ->get(['id', 'event', 'occurred_at'])->toArray();
+
         return [
-            'failed_operations' => DB::table('operation_executions')
-                ->where('tenant_id', $this->context->id())
-                ->where('status', 'failed')
-                ->orderByDesc('id')
-                ->limit(100)
-                ->get(['id', 'type', 'status', 'created_at'])
-                ->map(fn ($row) => $this->objectToArray($row))
-                ->all(),
-            // Keep the AuditEvent tenant global scope. Do not use a raw
-            // unscoped query or serialize full AuditEvent model attributes.
-            'recent_audit' => AuditEvent::query()
-                ->orderByDesc('occurred_at')
-                ->limit(100)
-                ->get(['id', 'event', 'occurred_at'])
-                ->toArray(),
+            'failed_operations' => $failedRows,
+            'recent_audit' => $auditRows,
+            'meta' => [
+                'scope' => 'tenant_operations_and_audit',
+                'failed_operations_total' => $failureCount,
+                'audit_events_total' => $auditCount,
+                'failed_operations_truncated' => $failureCount > count($failedRows),
+                'recent_audit_truncated' => $auditCount > count($auditRows),
+                'limit_per_source' => 100,
+                'empty_reason' => $failureCount === 0 && $auditCount === 0
+                    ? 'no_tenant_events' : 'not_empty',
+                'system_health_included' => false,
+            ],
         ];
     }
 
