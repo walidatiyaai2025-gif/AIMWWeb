@@ -27,7 +27,7 @@ export type LiveAuditResult = {
 /** Fail closed: only exact same-tenant relative GET APIs, never arbitrary URLs. */
 export function safeAuditEndpoint(endpoint: unknown, slug: string): endpoint is string {
     if (typeof endpoint !== 'string' || endpoint.length > 500 ||
-        !/^\\/[a-zA-Z0-9/_%.-]+$/.test(endpoint) ||
+        !/^\/[a-zA-Z0-9/_%.-]+$/.test(endpoint) ||
         endpoint.includes('//') || /%2f|%5c/i.test(endpoint)) return false;
     let path: string;
     try { path = decodeURIComponent(endpoint); } catch { return false; }
