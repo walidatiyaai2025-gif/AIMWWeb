@@ -1,40 +1,107 @@
+@php($ar = $locale === 'ar')
 <!doctype html>
-<html lang="en">
+<html lang="{{ $ar ? 'ar' : 'en' }}" dir="{{ $ar ? 'rtl' : 'ltr' }}" data-mode="dark">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>AI Prompt Templates</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="color-scheme" content="dark light">
+    <title>{{ $ar ? 'قوالب أوامر الذكاء الاصطناعي' : 'AI Prompt Templates' }} — AI WordPress Manager</title>
+    @vite(['resources/css/app.css'])
     <!-- Google Fonts: Inter (Latin) and Tajawal (Arabic); typography 25% larger than the 62.5% baseline. -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=Tajawal:wght@400;500;700;800;900&amp;display=swap">
-    <style data-aiwm-global-typography>
-        :root { font-size: 78.125%; --aiwm-google-font: 'Inter', 'Tajawal', sans-serif; --font-sans: var(--aiwm-google-font); }
-        html:lang(ar) { --aiwm-google-font: 'Tajawal', 'Inter', sans-serif; }
-        body, button, input, textarea, select, option { font-family: var(--aiwm-google-font) !important; }
-
-        @media (min-width: 1140px) {
-            main :is(.cards, .record-grid, .data-cards, .details-grid, .stats-grid, .summary-grid, .info-grid, .settings-grid),
-            main dl:has(> div) { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    <style data-aiwm-prompt-dashboard>
+        /* Blade workspace uses the same app-shell / palette / typography as React. */
+        .prompt-workspace .prompt-content { display: grid; gap: 1rem; }
+        .prompt-workspace .prompt-content > section { min-width: 0; }
+        .prompt-workspace .prompt-hero { min-width: 0; }
+        .prompt-workspace .prompt-hero nav { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; margin-top: .9rem; }
+        .prompt-workspace .prompt-hero p { margin: .4rem 0; }
+        .prompt-workspace .prompt-hero h1 { margin: .15rem 0 .5rem; }
+        .prompt-workspace .prompt-content .panel { padding: clamp(1rem,2vw,1.35rem); }
+        .prompt-workspace .prompt-article { padding: 1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); margin: 1rem 0; }
+        .prompt-workspace .prompt-article > header { display: flex; align-items: center; justify-content: space-between; gap: .6rem; flex-wrap: wrap; border-bottom: 1px solid var(--border); padding-bottom: .6rem; }
+        .prompt-workspace .prompt-article > section { padding: .8rem 0; border-bottom: 1px solid var(--border); }
+        .prompt-workspace .prompt-article > section:last-child { border-bottom: 0; }
+        .prompt-workspace .prompt-article p, .prompt-workspace .prompt-article dd { overflow-wrap: anywhere; }
+        .prompt-workspace .prompt-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .7rem; }
+        .prompt-workspace .prompt-fields > p { margin: 0; min-width: 0; }
+        .prompt-workspace .prompt-fields label:not(:has(input[type="checkbox"])) { display: block; margin-bottom: .35rem; font-weight: 700; }
+        .prompt-workspace .prompt-fields p:has(textarea), .prompt-workspace .prompt-fields p:has(input[type="checkbox"]), .prompt-workspace .prompt-fields > .prompt-full { grid-column: 1 / -1; }
+        .prompt-workspace .prompt-fields input[type="checkbox"] { width: auto; min-height: 1rem; margin-inline-end: .4rem; }
+        .prompt-workspace .prompt-content dl { display: grid; grid-template-columns: minmax(6rem,1fr) minmax(0,2fr); gap: .5rem; }
+        .prompt-workspace .prompt-content dt { color: var(--muted); }
+        .prompt-workspace .prompt-content dd { margin: 0; }
+        .prompt-workspace .prompt-content pre { padding: .8rem; overflow-x: auto; background: var(--bg); border: 1px solid var(--border); border-radius: .6rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+        .prompt-workspace .prompt-status { padding: .9rem 1rem; border: 1px solid var(--success); border-radius: .7rem; background: var(--success-soft); }
+        .prompt-workspace .prompt-alert { padding: .9rem 1rem; border: 1px solid var(--danger); border-radius: .7rem; background: var(--danger-soft); }
+        .prompt-workspace .prompt-revision { border: 1px solid var(--border); background: var(--surface); border-radius: .7rem; padding: .8rem; margin: .75rem 0; }
+        .prompt-workspace .prompt-subtle { color: var(--muted); }
+        .prompt-workspace .prompt-nav-open { display: none; }
+        .prompt-workspace .prompt-brand { display: inline-flex; align-items: center; gap: .6rem; font-weight: 800; }
+        .prompt-workspace .prompt-actions { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: .6rem; }
+        .prompt-workspace .prompt-status[hidden], .prompt-workspace section[hidden] { display: none !important; }
+        @media (max-width:700px) {
+            .prompt-workspace .prompt-fields { grid-template-columns: minmax(0,1fr); }
+            .prompt-workspace .prompt-nav-open { display: inline-flex; }
+            .prompt-workspace .topbar .prompt-brand { display: none; }
+            .prompt-workspace .topbar-actions { flex-wrap: wrap; }
         }
-        @media (min-width: 701px) and (max-width: 1139px) {
-            main :is(.cards, .record-grid, .data-cards, .details-grid, .stats-grid, .summary-grid, .info-grid, .settings-grid),
-            main dl:has(> div) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-        }
-        @media (max-width: 700px) {
-            main :is(.cards, .record-grid, .data-cards, .details-grid, .stats-grid, .summary-grid, .info-grid, .settings-grid),
-            main dl:has(> div) { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
-        }
-            /* Three-column forms, plan cards and history records; full-width actions retained. */
-        @media (min-width: 1140px) { main .grid, main form:has(> label ~ label ~ label), main section:has(> article ~ article), main section:has(> .record ~ .record) { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; } }
-        @media (min-width: 701px) and (max-width: 1139px) { main .grid, main form:has(> label ~ label ~ label), main section:has(> article ~ article), main section:has(> .record ~ .record) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } }
-        @media (max-width: 700px) { main .grid, main form:has(> label ~ label ~ label), main section:has(> article ~ article), main section:has(> .record ~ .record) { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; } }
-        main form:has(> label ~ label ~ label) > :not(label), main section:has(> article ~ article) > :not(article), main section:has(> .record ~ .record) > :not(.record) { grid-column: 1 / -1; }
-        main :is(.grid, .cards, .record-grid) > * { min-width: 0; }
-</style>
+    </style>
 </head>
-<body>
-    <main>
+<body class="prompt-workspace">
+    <a class="skip-link" href="#main-content">{{ $ar ? 'تجاوز إلى المحتوى' : 'Skip to content' }}</a>
+    <div class="app-shell" data-ai-prompt-dashboard-shell="true">
+        <aside class="sidebar" id="ai-prompt-sidebar" aria-label="{{ $ar ? 'قائمة لوحة التحكم' : 'Dashboard navigation' }}">
+            <div class="brand-row">
+                <a class="brand" href="/tenants/{{ rawurlencode($tenant->slug) }}/module/overview">
+                    <span class="brand-mark" aria-hidden="true">AI</span>
+                    <span class="brand-copy"><strong>AI WordPress Manager</strong><small>{{ $tenant->name }}</small></span>
+                </a>
+                <button class="mobile-close" type="button" data-ai-prompt-nav-close aria-label="{{ $ar ? 'إغلاق القائمة' : 'Close navigation' }}">×</button>
+            </div>
+            <nav class="main-nav" aria-label="{{ $ar ? 'مساحات العمل' : 'Workspaces' }}">
+                <details class="nav-section" open>
+                    <summary>{{ $ar ? 'الرئيسية' : 'Overview' }}</summary>
+                    <div class="nav-links">
+                        <a href="/tenants/{{ rawurlencode($tenant->slug) }}/module/overview"><span class="nav-icon" aria-hidden="true">⌂</span><span>{{ $ar ? 'لوحة التحكم' : 'Dashboard' }}</span></a>
+                    </div>
+                </details>
+                <details class="nav-section" open>
+                    <summary>{{ $ar ? 'الذكاء الاصطناعي' : 'AI' }}</summary>
+                    <div class="nav-links">
+                        <a class="active" aria-current="page" href="{{ route('tenant.settings.ai-prompts', ['tenant' => $tenant->slug]) }}"><span class="nav-icon" aria-hidden="true">✦</span><span>{{ $ar ? 'قوالب الأوامر' : 'Prompt templates' }}</span></a>
+                        <a href="{{ route('tenant.settings.ai-providers', ['tenant' => $tenant->slug]) }}"><span class="nav-icon" aria-hidden="true">◎</span><span>{{ $ar ? 'مزودو الذكاء الاصطناعي' : 'AI providers' }}</span></a>
+                    </div>
+                </details>
+                <details class="nav-section" open>
+                    <summary>{{ $ar ? 'النظام والحساب' : 'System & account' }}</summary>
+                    <div class="nav-links">
+                        <a href="/tenants/{{ rawurlencode($tenant->slug) }}/settings"><span class="nav-icon" aria-hidden="true">⚙</span><span>{{ $ar ? 'الإعدادات' : 'Settings' }}</span></a>
+                    </div>
+                </details>
+            </nav>
+            <footer class="sidebar-footer"><strong>{{ $tenant->name }}</strong><small>{{ $ar ? 'مساحة عمل آمنة لهذا الحساب' : 'Tenant-scoped workspace' }}</small></footer>
+        </aside>
+        <button class="nav-backdrop" type="button" data-ai-prompt-nav-close aria-label="{{ $ar ? 'إغلاق القائمة' : 'Close navigation' }}"></button>
+        <div class="main-area">
+            <header class="topbar">
+                <button class="icon-button prompt-nav-open" type="button" data-ai-prompt-nav-open aria-controls="ai-prompt-sidebar" aria-expanded="false" aria-label="{{ $ar ? 'فتح القائمة' : 'Open navigation' }}">☰</button>
+                <div class="topbar-title">
+                    <div class="heading-block">
+                        <div class="breadcrumb"><span>{{ $ar ? 'الذكاء الاصطناعي' : 'AI' }}</span><b> / </b><strong>{{ $ar ? 'قوالب الأوامر' : 'Prompt templates' }}</strong></div>
+                        <h1>{{ $ar ? 'قوالب أوامر الذكاء الاصطناعي' : 'AI Prompt Templates' }}</h1>
+                    </div>
+                </div>
+                <div class="topbar-actions">
+                    <a class="btn" href="{{ route('tenant.settings.ai-prompts', ['tenant' => $tenant->slug, 'lang' => $ar ? 'en' : 'ar']) }}" data-ai-prompt-locale="{{ $ar ? 'en' : 'ar' }}" aria-label="{{ $ar ? 'Switch to English' : 'التبديل إلى العربية' }}">{{ $ar ? 'EN' : 'عربي' }}</a>
+                    <a class="btn" href="/tenants/{{ rawurlencode($tenant->slug) }}/settings">{{ $ar ? 'الإعدادات' : 'Settings' }}</a>
+                </div>
+            </header>
+            <main class="content prompt-content" id="main-content">
+
         <header>
             <p>AI PROMPT REGISTRY</p>
             <h1>AI Prompt Templates</h1>
@@ -210,7 +277,10 @@
                 @endforeach
             @endif
         </section>
-    </main>
+            </main>
+        </div>
+    </div>
     <script type="module" src="/js/ai-prompt-new-template.js"></script>
+    <script type="module" src="/js/ai-prompt-shell.js"></script>
 </body>
 </html>
