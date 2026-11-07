@@ -40,7 +40,7 @@ final class WordPressUsersPreviousTerminalityTest extends TestCase
 
         $this->assertStringContainsString("\$search = trim((string) \$request->query('search', ''));", $controller);
         $this->assertStringContainsString("\$query['search'] = \$search;", $controller);
-        $this->assertStringContainsString("\$items = \$this->wordpress->list(\$site, 'users', \$query);", $controller);
+        $this->assertStringContainsString("\$this->wordpress->listPage(\$site, 'users', \$query)", $controller);
     }
 
     public function test_previous_page_reads_wordpress_users_for_only_the_current_tenant_owned_site(): void
