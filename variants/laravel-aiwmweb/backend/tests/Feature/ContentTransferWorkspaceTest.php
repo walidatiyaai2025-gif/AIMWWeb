@@ -64,7 +64,7 @@ final class ContentTransferWorkspaceTest extends TestCase
             ->assertForbidden();
 
         $editor = User::factory()->create();
-        $editorMembership = $this->membership($editor, 'transfer-import-editor', ['tenant.view', 'content.view', 'content.edit']);
+        $editorMembership = $this->membership($editor, 'transfer-import-editor', ['tenant.view', 'content.edit']);
         $editorSite = $this->site($editorMembership);
         $response = $this->actingAs($editor)
             ->post("/api/v1/tenants/transfer-import-editor/sites/{$editorSite->id}/transfers/import", [
@@ -76,6 +76,11 @@ final class ContentTransferWorkspaceTest extends TestCase
             ->assertJsonPath('state', 'queued')
             ->assertJsonMissingPath('storage_path')
             ->assertJsonMissingPath('last_error');
+
+        $this->actingAs($editor)
+            ->getJson("/api/v1/tenants/transfer-import-editor/sites/{$editorSite->id}/transfers/{$response->json('id')}")
+            ->assertOk()
+            ->assertJsonPath('state', 'queued');
         Queue::assertPushed(ContentTransferJob::class);
     }
 
