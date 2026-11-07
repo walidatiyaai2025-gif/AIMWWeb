@@ -221,10 +221,11 @@ final class RuntimeHealthService
         ];
 
         // AI infrastructure is not healthy merely because Cron is enabled.
-        // Require real validated queue-worker and scheduler receipts as well
-        // as a working database queue. This is infrastructure readiness, not
+        // Require validated cache, database queue, worker cycle and scheduler
+        // receipts. An unvalidated configured cache cannot coordinate AI work. This is infrastructure readiness, not
         // proof that any particular AI task completed successfully.
         if (config('cpanel.ai_enabled')
+            && $checks['cache']['status'] === 'ok'
             && $checks['queue']['status'] === 'ok'
             && $checks['queue_processing']['status'] === 'ok'
             && $checks['scheduler']['status'] === 'ok') {
