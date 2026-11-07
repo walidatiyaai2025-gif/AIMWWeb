@@ -41,6 +41,53 @@ describe('tenant observability read contracts (#1514)', () => {
         });
     });
 
+    it('validates bounded diagnostic source evidence and drops unexpected fields', () => {
+        const raw = {
+            failed_operations: [{ id: 1, type: 'sync.run', created_at: '2026-11-07T10:15:00Z' }],
+            recent_audit: [],
+            meta: {
+                scope: 'tenant_operations_and_audit',
+                failed_operations_total: 105,
+                audit_events_total: 0,
+                failed_operations_truncated: true,
+                recent_audit_truncated: false,
+                limit_per_source: 100,
+                empty_reason: 'not_empty',
+                system_health_included: false,
+                secret: 'LEAK_ME',
+            },
+        };
+        // A 105-total response must actually contain the bounded 100 rows.
+        const full = {
+            ...raw,
+            failed_operations: Array.from({ length: 100 }, (_, index) => ({
+                id: index + 1, type: 'sync.run', created_at: '2026-11-07T10:15:00Z',
+            })),
+        };
+        const response = normalizeObservabilityCollection('diagnostics', full) as {
+            meta: Record<string, unknown>; data: unknown[];
+        };
+        expect(response.meta).toMatchObject({
+            failed_operations_total: 105,
+            failed_operations_truncated: true,
+            audit_events_total: 0,
+            system_health_included: false,
+        });
+        expect(response.data).toHaveLength(100);
+        expect(JSON.stringify(response)).not.toContain('LEAK_ME');
+
+        for (const invalid of [
+            raw,
+            { ...full, meta: { ...full.meta, failed_operations_total: 4 } },
+            { ...full, meta: { ...full.meta, system_health_included: true } },
+            { ...full, meta: { ...full.meta, empty_reason: 'no_tenant_events' } },
+            { ...full, meta: { ...full.meta, secret: 'ok', audit_events_total: -1 } },
+        ]) {
+            expect(() => normalizeObservabilityCollection('diagnostics', invalid))
+                .toThrow('Operational observability response was invalid');
+        }
+    });
+
     it('treats malformed HTTP 200 diagnostics as errors, never zero', async () => {
         const malformed = [
             null, [], {}, { data: [] }, { failed_operations: [] },
