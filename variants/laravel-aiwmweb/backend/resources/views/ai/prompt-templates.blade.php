@@ -9,10 +9,79 @@
     @if (is_file(public_path('build/manifest.json')))
         @vite(['resources/css/app.css'])
     @endif
-    <link rel="stylesheet" href="{{ asset('css/ai-prompt-dashboard.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=Tajawal:wght@400;500;700;800&amp;display=swap">
+    <style data-aiwm-prompt-dashboard-styles>
+        :root { color-scheme: dark; --bg: #0b0f17; --surface: #151923; --surface2: #1b2130; --border: #30394c; --text: #f4f6fa; --muted: #9aa5b5; --accent: #c5a45d; --accent-soft: rgba(197,164,93,.16); --accent-strong: #e0bf73; --radius: 16px; --sidebar-width: 284px; --gutter: clamp(1rem,2vw,2rem); --font-sans: 'Inter','Tajawal',sans-serif; }
+        html:lang(ar) { --font-sans: 'Tajawal','Inter',sans-serif; }
+        html, body { min-height: 100%; margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-sans); }
+        .prompt-shell, .prompt-shell * { box-sizing: border-box; }
+        .prompt-shell { display: grid; grid-template-columns: var(--sidebar-width) minmax(0,1fr); min-height: 100vh; background: var(--bg); }
+        .prompt-shell a { color: var(--accent-strong); }
+        .prompt-shell .sidebar { position: sticky; top: 0; min-width: 0; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; padding: 1rem; background: var(--surface); border-inline-end: 1px solid var(--border); }
+        .prompt-shell .brand-row { padding: .6rem 0 1rem; border-bottom: 1px solid var(--border); margin-bottom: 1rem; }
+        .prompt-shell .brand { display: flex; align-items: center; gap: .8rem; color: var(--text); text-decoration: none; }
+        .prompt-shell .brand-mark { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: var(--accent); color: #15120b; font-weight: 800; }
+        .prompt-shell .brand-copy { display: grid; min-width: 0; gap: .2rem; }
+        .prompt-shell .brand-copy small { color: var(--muted); }
+        .prompt-shell .main-nav { display: grid; gap: .7rem; }
+        .prompt-shell .nav-section { border: 1px solid var(--border); border-radius: 12px; padding: .35rem; }
+        .prompt-shell .nav-section summary { color: var(--muted); font-size: .82rem; font-weight: 800; padding: .5rem; cursor: pointer; display: flex; justify-content: space-between; }
+        .prompt-shell .nav-links { display: grid; gap: .25rem; }
+        .prompt-shell .nav-links a { min-height: 44px; display: flex; align-items: center; gap: .6rem; padding: .65rem; border-radius: 10px; color: var(--text); text-decoration: none; }
+        .prompt-shell .nav-links a.active, .prompt-shell .nav-links a:hover { background: var(--accent-soft); color: var(--accent-strong); }
+        .prompt-shell .sidebar-footer { margin-top: auto; border-top: 1px solid var(--border); padding-top: 1rem; display: grid; gap: .25rem; }
+        .prompt-shell .sidebar-footer small { color: var(--muted); }
+        .prompt-shell .main-area { min-width: 0; }
+        .prompt-shell .topbar { position: sticky; top: 0; z-index: 3; min-height: 76px; background: var(--bg); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: .8rem var(--gutter); }
+        .prompt-shell .topbar h1 { font-size: 1.15rem; margin: .3rem 0; }
+        .prompt-shell .topbar small, .prompt-shell .breadcrumb { color: var(--muted); }
+        .prompt-shell .breadcrumb { display: flex; gap: .5rem; align-items: center; font-size: .76rem; }
+        .prompt-shell .topbar-actions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+        .prompt-shell .content { width: min(100%,1560px); padding: 1.5rem var(--gutter) 3rem; margin: 0 auto; }
+        .prompt-shell .prompt-workspace { display: grid; gap: 1rem; }
+        .prompt-shell .prompt-workspace > header, .prompt-shell .prompt-workspace > section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: clamp(1rem,2vw,1.5rem); }
+        .prompt-shell .prompt-workspace header h2, .prompt-shell .prompt-workspace h2 { margin: 0 0 .6rem; font-size: 1.28rem; }
+        .prompt-shell .prompt-workspace p { line-height: 1.55; }
+        .prompt-shell .prompt-workspace nav { display: flex; flex-wrap: wrap; gap: .65rem; align-items: center; }
+        .prompt-shell .prompt-workspace article, .prompt-shell .prompt-workspace section[id=new-template-editor] { background: var(--surface2); border: 1px solid var(--border); border-radius: 14px; padding: 1rem; margin-top: 1rem; }
+        .prompt-shell .prompt-workspace article section { border-top: 1px solid var(--border); margin-top: 1rem; padding-top: 1rem; }
+        .prompt-shell .prompt-workspace form { display: grid; gap: .55rem; width: 100%; }
+        .prompt-shell .prompt-workspace form p { margin: .35rem 0; }
+        .prompt-shell .prompt-workspace label { display: block; margin-bottom: .35rem; color: var(--text); font-weight: 600; }
+        .prompt-shell .prompt-workspace input:not([type=checkbox]), .prompt-shell .prompt-workspace textarea { width: 100%; max-width: 100%; padding: .8rem; min-height: 44px; border-radius: 10px; border: 1px solid #526079; background: var(--bg); color: var(--text); font: inherit; }
+        .prompt-shell .prompt-workspace textarea { min-height: 110px; resize: vertical; }
+        .prompt-shell .prompt-workspace input[type=checkbox] { margin-inline-end: .45rem; accent-color: var(--accent); }
+        .prompt-shell .prompt-workspace dl { display: grid; grid-template-columns: minmax(100px,1fr) minmax(160px,2fr); gap: .4rem 1rem; }
+        .prompt-shell .prompt-workspace dd { margin: 0; overflow-wrap: anywhere; }
+        .prompt-shell .prompt-workspace dt { color: var(--muted); }
+        .prompt-shell .prompt-workspace pre { max-width: 100%; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+        .prompt-shell button, .prompt-shell .btn { min-height: 44px; display: inline-flex; justify-content: center; align-items: center; padding: .65rem 1rem; background: var(--accent); color: #15120b; border: 1px solid transparent; border-radius: 10px; font: inherit; font-weight: 700; cursor: pointer; }
+        .prompt-shell button:disabled { cursor: not-allowed; opacity: .5; }
+        .prompt-shell button:focus-visible, .prompt-shell a:focus-visible, .prompt-shell input:focus-visible, .prompt-shell textarea:focus-visible { outline: 3px solid var(--accent-strong); outline-offset: 2px; }
+        .prompt-shell [role=alert] { border-color: #f87171 !important; color: #fecaca; }
+        .prompt-shell [role=status] { color: var(--accent-strong); }
+        .prompt-shell [hidden] { display: none !important; }
+        .prompt-shell .skip-link { position: absolute; inset-block-start: -100px; }
+        .prompt-shell .skip-link:focus { inset-block-start: .5rem; z-index: 20; }
+        @media (min-width:1140px) {
+            .prompt-shell .prompt-workspace article dl { grid-template-columns: 110px minmax(0,1fr) 110px minmax(0,1fr); }
+        }
+        @media (max-width:850px) {
+            .prompt-shell { grid-template-columns: minmax(0,1fr); }
+            .prompt-shell .sidebar { position: static; width: 100%; height: auto; padding: .65rem var(--gutter); border-inline-end: 0; border-bottom: 1px solid var(--border); }
+            .prompt-shell .main-nav { display: flex; flex-wrap: wrap; }
+            .prompt-shell .nav-section { flex: 1 1 200px; }
+            .prompt-shell .sidebar-footer { display: none; }
+            .prompt-shell .topbar { position: static; flex-wrap: wrap; }
+            .prompt-shell .prompt-workspace dl, .prompt-shell .prompt-workspace article dl { grid-template-columns: minmax(0,1fr) minmax(0,2fr); }
+        }
+        @media (max-width:460px) {
+            .prompt-shell .topbar-actions { width: 100%; }
+            .prompt-shell .topbar-actions > * { flex: 1 1 auto; }
+        }
+    </style>
     <script>
         try {
             document.documentElement.lang = localStorage.getItem('aiwm.locale') === 'ar' ? 'ar' : 'en';
@@ -242,6 +311,37 @@
             </main>
         </div>
     </div>
+    <script>
+        // Keep Laravel's server-rendered forms while reusing the SPA locale preference.
+        (() => {
+            const original = new WeakMap();
+            const apply = (locale) => {
+                const arabic = locale === 'ar';
+                document.documentElement.lang = arabic ? 'ar' : 'en';
+                document.documentElement.dir = arabic ? 'rtl' : 'ltr';
+                document.querySelectorAll('[data-prompt-ar]').forEach((element) => {
+                    if (!original.has(element)) original.set(element, element.textContent);
+                    element.textContent = arabic ? element.getAttribute('data-prompt-ar') : original.get(element);
+                });
+                const count = document.querySelector('[data-prompt-template-count]');
+                if (count && arabic) count.textContent = count.dataset.promptTemplateCount + ' قالب محفوظ';
+                if (count && !arabic && !original.has(count)) original.set(count, count.textContent);
+                if (count && !arabic) count.textContent = original.get(count);
+                const target = document.querySelector('[data-prompt-locale-target]');
+                if (target) target.textContent = arabic ? 'EN' : 'العربية';
+                const control = document.querySelector('[data-prompt-locale-toggle]');
+                if (control) control.setAttribute('aria-label', arabic ? 'Switch to English' : 'التبديل إلى العربية');
+            };
+            apply(document.documentElement.lang === 'ar' ? 'ar' : 'en');
+            document.querySelector('[data-prompt-locale-toggle]')?.addEventListener('click', () => {
+                const next = document.documentElement.lang === 'ar' ? 'en' : 'ar';
+                try { localStorage.setItem('aiwm.locale', next); } catch (_) {}
+                apply(next);
+            });
+            const failedCreate = document.querySelector('[data-ai-prompt-new-editor][data-state="new"]');
+            if (failedCreate) document.querySelector('[data-ai-prompt-new-template]')?.setAttribute('aria-expanded', 'true');
+        })();
+    </script>
     <script type="module" src="/js/ai-prompt-new-template.js"></script>
 </body>
 </html>
