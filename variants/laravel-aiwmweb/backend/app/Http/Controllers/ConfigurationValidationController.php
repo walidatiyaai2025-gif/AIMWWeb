@@ -78,9 +78,19 @@ final class ConfigurationValidationController extends Controller
         // protected application storage. A trailing slash would dereference
         // the link during is_link(), so normalize it before checking.
         $root = rtrim($disk->path(''), '/\\') ?: DIRECTORY_SEPARATOR;
-        if (is_link($root)) {
-            return $this->item('backups', $title, 'error', $title,
-                'The configured backup storage root is a symbolic link and cannot be verified as safe. Server paths and exception details were withheld.');
+        // Check the full parent chain as well: a real-looking final directory
+        // may still escape the managed disk through an intermediate symlink.
+        // This probe remains read-only and never resolves or exposes targets.
+        for ($segment = $root; ; $segment = dirname($segment)) {
+            if (is_link($segment)) {
+                return $this->item('backups', $title, 'error', $title,
+                    'The configured backup storage path contains a symbolic link and cannot be verified as safe. Server paths and exception details were withheld.');
+            }
+
+            $parent = dirname($segment);
+            if ($parent === $segment) {
+                break;
+            }
         }
 
         $directory = $disk->path('backups');
