@@ -120,15 +120,18 @@ final class WordPressWriteSmokeTest extends TestCase
                 $title = $request->data()['title'];
                 $this->assertStringStartsWith('aiwm-probe-', $title);
                 $existing = true;
+
                 return Http::response(['id' => 321, 'title' => ['raw' => $title]], 201);
             }
             if ($method === 'POST' && str_ends_with($url, '/posts/321')) {
                 $title = $request->data()['title'];
+
                 return Http::response(['id' => 321], 200);
             }
             if ($method === 'DELETE' && str_ends_with($url, '/posts/321')) {
                 $this->assertSame(true, $request->data()['force'] ?? false);
                 $existing = false;
+
                 return Http::response(['deleted' => true], 200);
             }
             if ($method === 'GET' && str_contains($url, '/posts/321')) {
@@ -172,6 +175,7 @@ final class WordPressWriteSmokeTest extends TestCase
             $sent[] = $method;
             if ($method === 'POST' && str_ends_with($url, '/posts')) {
                 $title = $request->data()['title'];
+
                 return Http::response(['id' => 777], 201);
             }
             if ($method === 'POST' && str_ends_with($url, '/posts/777')) {
@@ -208,10 +212,12 @@ final class WordPressWriteSmokeTest extends TestCase
         Http::fake(function (RemoteRequest $request) use (&$title) {
             if ($request->method() === 'POST' && str_ends_with($request->url(), '/posts')) {
                 $title = $request->data()['title'];
+
                 return Http::response(['id' => 952], 201);
             }
             if ($request->method() === 'POST') {
                 $title = $request->data()['title'];
+
                 return Http::response(['id' => 952], 200);
             }
             if ($request->method() === 'DELETE') {
@@ -326,6 +332,7 @@ final class WordPressWriteSmokeTest extends TestCase
         }
         $membership->roles()->attach($role, ['tenant_id' => $tenant->id]);
         app(TenantContext::class)->forget();
+
         return $membership->fresh('tenant');
     }
 
@@ -337,6 +344,7 @@ final class WordPressWriteSmokeTest extends TestCase
             'connection_status' => 'connected',
         ]);
         app(TenantContext::class)->forget();
+
         return $site;
     }
 
