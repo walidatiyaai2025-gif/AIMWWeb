@@ -44,14 +44,9 @@ final class WordPressUsersController extends Controller
             $query['roles'] = $role;
         }
 
-        $items = $this->wordpress->list($site, 'users', $query);
-
-        return response()->json([
-            'data' => array_values($items),
-            'total' => count($items),
-            'current_page' => (int) $query['page'],
-            'last_page' => count($items) < (int) $query['per_page'] ? (int) $query['page'] : (int) $query['page'] + 1,
-        ]);
+        // The current page size is not a WordPress grand total. Respect
+        // the verified X-WP-Total and X-WP-TotalPages headers when provided.
+        return response()->json($this->wordpress->listPage($site, 'users', $query));
     }
 
     public function save(Request $request, TenantAuthorizer $auth, string $tenant, int $site): JsonResponse
