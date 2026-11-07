@@ -71,10 +71,14 @@ final class RuntimeInspectorController extends Controller
                 && in_array((string) $lastRun->status, ['queued', 'running', 'succeeded', 'failed'], true);
             $syncState = $lastRun === null ? null : (string) ($legacyRun ? $lastRun->status : $lastRun->state);
             $remoteProbe = ['attempted' => false, 'state' => $probe && $index >= 3 ? 'limited' : 'not_run'];
+            $remoteVersion = 'unknown';
             // Do not send signed probes from an unverified or incompatible pairing.
-            if ($probe && $index < 3 && $hasConnector && ! $revoked && $verified && $readSupported) {
+            if ($probe && $index < 3 && $hasConnector && ! $revoked && $verified && $readSupported && in_array('health', $scopes, true)) {
                 try {
                     $remote = $diagnostics->capabilities($site);
+                    // Only the signed, explicitly requested remote probe can prove the installed plugin version.
+                    // A stored protocol_version never proves the installed plugin release.
+                    $remoteVersion = $this->safePluginVersion(data_get($remote, 'remote.plugin_version'));
                     $remoteProbe = [
                         'attempted' => true,
                         'state' => $this->safeState((string) ($remote['state'] ?? 'unknown')),
@@ -112,6 +116,7 @@ final class RuntimeInspectorController extends Controller
                     'protocol' => $hasConnector && preg_match('/^\d+(?:\.\d+){0,2}$/', (string) $connector->protocol_version)
                         ? (string) $connector->protocol_version : 'unknown',
                     'enabled_scopes' => $scopes,
+                    'installed_version' => $remoteVersion,
                 ],
                 'last_diagnostic' => $this->safeState((string) ($lastDiagnostic?->classification ?? 'not_run')),
                 'remote_probe' => $remoteProbe,
@@ -169,6 +174,14 @@ final class RuntimeInspectorController extends Controller
                     'zip' => extension_loaded('zip'),
                 ],
             ],
+            'wordpress_plugin' => [
+                'name' => 'AIMW Connector',
+                // This is the release-bundled source version, not a claim about remote WordPress.
+                'bundle_version' => $this->safePluginVersion(config('aimw_connector.plugin_version')),
+                'download_path' => '/downloads/aimw-connector.zip',
+                'download_available' => is_file(public_path('downloads/aimw-connector.zip')),
+                'install_target' => 'wordpress_plugin',
+            ],
             'site_count' => Site::query()->count(),
             'remote_probe_limit' => 3,
             'sites_truncated' => $truncated,
@@ -190,6 +203,12 @@ final class RuntimeInspectorController extends Controller
             'failed', 'partial', 'cancelled', 'cancel_requested', 'queued', 'running',
             'completed', 'succeeded', 'pending', 'not_run', 'unhealthy', 'healthy', 'limited', 'HEALTHY', 'LIMITED',
         ], true) ? $state : 'other';
+    }
+
+    private function safePluginVersion(mixed $version): string
+    {
+        return is_string($version) && preg_match('/^\\d+\\.\\d+\\.\\d+$/D', $version)
+            ? $version : 'unknown';
     }
 
     private function safeDriver(string $value): string

@@ -3,6 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { apiRequest, tenantUrl, type FrontendContext } from './core';
 import { useLocale } from './i18n';
 import { WorkspaceCapabilityCensusPanel } from './workspace-capability-census-panel';
+import { DashboardConnectorDownloadControl } from './dashboard-connector-download-control';
+import { RuntimeWorkspaceAuditPanel, type LiveAuditResult } from './runtime-workspace-audit';
 import { workspaceCapabilityCensus } from './workspace-capability-census';
 import {
     clearRuntimeInspectorEvents,
@@ -23,6 +25,7 @@ export type InspectorSite = {
         verified: boolean;
         protocol: string;
         enabled_scopes: string[];
+        installed_version?: string;
     };
     last_diagnostic: string;
     remote_probe?: { attempted: boolean; state: string };
@@ -44,6 +47,13 @@ export type InspectorServer = {
         queue_driver: string;
         cache_driver: string;
         extensions: Record<string, boolean>;
+    };
+    wordpress_plugin?: {
+        name: string;
+        bundle_version: string;
+        download_path: string;
+        download_available: boolean;
+        install_target: string;
     };
     site_count: number;
     sites_truncated: boolean;
@@ -79,7 +89,7 @@ function count(input: unknown): number {
 }
 
 /** Explicit allowlist; future backend response additions cannot enter the user export. */
-export function safeInspectorBundle(server: InspectorServer, events: RuntimeObservation[], context?: FrontendContext) {
+export function safeInspectorBundle(server: InspectorServer, events: RuntimeObservation[], context?: FrontendContext, liveAudit?: LiveAuditResult | null) {
     return {
         schema: 'aiwm.support-export.v1',
         exported_at: new Date().toISOString(),
@@ -104,6 +114,12 @@ export function safeInspectorBundle(server: InspectorServer, events: RuntimeObse
                         ['pdo_mysql', 'openssl', 'sodium', 'mbstring', 'zip'].includes(name)
                         && typeof value === 'boolean')),
             },
+            wordpress_plugin: {
+                name: 'AIMW Connector',
+                bundle_version: boundedText(server.wordpress_plugin?.bundle_version),
+                download_available: server.wordpress_plugin?.download_available === true,
+                install_target: 'wordpress_plugin',
+            },
             site_count: count(server.site_count),
             sites_truncated: server.sites_truncated === true,
             sites: server.sites.slice(0, 50).map((site) => ({
@@ -115,6 +131,7 @@ export function safeInspectorBundle(server: InspectorServer, events: RuntimeObse
                     revoked: site.connector.revoked === true,
                     verified: site.connector.verified === true,
                     protocol: boundedText(site.connector.protocol),
+                    installed_version: boundedText(site.connector.installed_version),
                     enabled_scopes: site.connector.enabled_scopes
                         .filter((scope) => ['health', 'content.read', 'content.update', 'seo.read', 'diagnostics.read', 'connector.manage'].includes(scope)),
                 },
@@ -158,6 +175,35 @@ export function safeInspectorBundle(server: InspectorServer, events: RuntimeObse
                 };
             })(),
         } : {}),
+        ...(liveAudit?.schema === 'aiwm.workspace-live-audit.v1' ? {
+            workspace_live_audit: {
+                schema: 'aiwm.workspace-live-audit.v1',
+                safety: { read_only: true, request_methods: ['GET'], write_actions_executed: false },
+                totals: {
+                    routes: count(liveAudit.totals.routes),
+                    passed_read: count(liveAudit.totals.passed_read),
+                    failed_read: count(liveAudit.totals.failed_read),
+                    skipped: count(liveAudit.totals.skipped),
+                    not_tested: count(liveAudit.totals.not_tested),
+                    write_actions_untested: count(liveAudit.totals.write_actions_untested),
+                },
+                workspaces: liveAudit.workspaces.slice(0, 80)
+                    .filter(entry => /^[a-z0-9-]{1,50}$/.test(entry.key))
+                    .map(entry => ({
+                        key: entry.key,
+                        state: ['passed_read', 'failed_read', 'skipped', 'not_tested'].includes(entry.state) ? entry.state : 'not_tested',
+                        reason: ['read_ok', 'http_error', 'invalid_response', 'network_error',
+                            'missing_permission', 'restricted', 'missing_contract', 'unsafe_endpoint',
+                            'navigation_only', 'parameterized_endpoint'].includes(entry.reason) ? entry.reason : 'unsafe_endpoint',
+                        http_status: entry.http_status === null || !Number.isInteger(entry.http_status)
+                            ? null : Math.min(599, Math.max(100, entry.http_status)),
+                        duration_ms: entry.duration_ms === null ? null : Math.min(60000, count(entry.duration_ms)),
+                        declared_write_actions: count(entry.declared_write_actions),
+                        advertised_write_actions: count(entry.advertised_write_actions),
+                        tested_write_actions: 0,
+                    })),
+            },
+        } : {}),
         browser: {
             family: typeof navigator !== 'undefined' && /Firefox\//.test(navigator.userAgent)
                 ? 'Firefox' : typeof navigator !== 'undefined' && /Edg\//.test(navigator.userAgent)
@@ -181,6 +227,7 @@ export function RuntimeInspectorPanel({ context }: { context: FrontendContext })
     const { locale } = useLocale();
     const [message, setMessage] = useState('');
     const [localCount, setLocalCount] = useState(() => runtimeInspectorEvents().length);
+    const [liveAudit, setLiveAudit] = useState<LiveAuditResult | null>(null);
     const allowed = context.permissions.includes('*') || context.permissions.includes('diagnostics.view');
     const endpoint = `/tenants/${encodeURIComponent(context.tenant.slug)}/runtime-inspector/report`;
     const report = useQuery({
@@ -202,7 +249,7 @@ export function RuntimeInspectorPanel({ context }: { context: FrontendContext })
 
     const exportReport = () => {
         if (!report.data || report.data.schema !== 'aiwm.runtime-inspector.v1') return;
-        const bundle = safeInspectorBundle(report.data, runtimeInspectorEvents(), context);
+        const bundle = safeInspectorBundle(report.data, runtimeInspectorEvents(), context, liveAudit);
         const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const anchor = document.createElement('a');
@@ -238,16 +285,32 @@ export function RuntimeInspectorPanel({ context }: { context: FrontendContext })
                 {report.error ? <p role="alert">{isArabic ? 'فشل جمع التشخيص:' : 'Diagnostic failed:'} {report.error instanceof Error ? report.error.message : 'Request failed'}</p> : null}
             </section>
             <WorkspaceCapabilityCensusPanel context={context} />
+            <RuntimeWorkspaceAuditPanel context={context} onComplete={setLiveAudit} />
             {report.data ? (
                 <section className="panel">
                     <h3>{isArabic ? 'نتيجة الخادم' : 'Server snapshot'}</h3>
                     <p>{isArabic ? 'الإصدار' : 'Release'}: <strong>{boundedText(report.data.release.version)}</strong> · SHA: <code>{boundedText(report.data.release.sha)}</code></p>
                     <p>PHP {boundedText(report.data.runtime.php_version)} · Laravel {boundedText(report.data.runtime.laravel_version)} · DB {boundedText(report.data.runtime.database)} · Queue {boundedText(report.data.runtime.queue_driver)}</p>
+                    <h4>{isArabic ? 'إضافة WordPress المعتمدة' : 'WordPress plugin to install'}</h4>
+                    <p><strong>AIMW Connector</strong> · {isArabic ? 'نسخة الحزمة' : 'Bundled version'}: {boundedText(report.data.wordpress_plugin?.bundle_version)}
+                        · {isArabic ? 'مكان التثبيت: لوحة إضافات WordPress' : 'Install target: WordPress Plugins dashboard'}</p>
+                    <p>{isArabic
+                        ? 'نسخة الحزمة لا تثبت أن نفس الإصدار مثبت على الموقع. يظهر إصدار الإضافة الفعلي فقط عندما ينجح فحص الإمكانات الموقّع.'
+                        : 'Bundled version is not evidence of the version installed on WordPress. The installed version is shown only after a successful signed capabilities probe.'}</p>
+                    {report.data.wordpress_plugin?.download_available ? <DashboardConnectorDownloadControl /> :
+                        <p role="status">{isArabic ? 'حزمة ZIP غير موجودة في هذا النشر؛ لا يمكن عرض رابط تنزيل فعال.' : 'WordPress ZIP is unavailable in this deployment; download is not offered.'}</p>}
                     <p>{isArabic ? 'إجمالي المواقع' : 'Sites'}: {count(report.data.site_count)} {report.data.sites_truncated ? (isArabic ? '(أول 50 فقط)' : '(first 50 only)') : ''}</p>
                     {report.data.sites.map((site) => (
                         <article className="panel" key={site.site_id}>
                             <h4>{isArabic ? 'الموقع' : 'Site'} #{site.site_id} — {boundedText(site.connection_state)}</h4>
-                            <p>Connector: {site.connector.present ? (site.connector.revoked ? 'revoked' : 'paired') : 'not paired'} · verified: {String(site.connector.verified)} · {site.connector.enabled_scopes.join(', ') || 'no scopes'}</p>
+                            <p>Connector: {site.connector.present ? (site.connector.revoked ? 'revoked' : 'paired') : 'not paired'} · verified: {String(site.connector.verified)} · protocol: {boundedText(site.connector.protocol)} · {site.connector.enabled_scopes.join(', ') || 'no scopes'}</p>
+                            <p>{isArabic ? 'إصدار الإضافة المثبتة' : 'Installed plugin version'}: <strong>{boundedText(site.connector.installed_version, isArabic ? 'غير متحقق منه' : 'not verified')}</strong>
+                                {' · '}{isArabic ? 'الإصدار المتوفر' : 'Available bundle'}: {boundedText(report.data.wordpress_plugin?.bundle_version)}
+                                {' · '}{site.connector.installed_version && site.connector.installed_version !== 'unknown' && report.data.wordpress_plugin?.bundle_version !== 'unknown'
+                                    ? site.connector.installed_version === report.data.wordpress_plugin?.bundle_version
+                                        ? (isArabic ? 'الإصداران متطابقان' : 'Versions match')
+                                        : (isArabic ? 'الإصداران مختلفان؛ راجع التحديث والتوافق' : 'Version differs; review update compatibility')
+                                    : (isArabic ? 'التوافق غير مؤكد' : 'Compatibility unverified')}</p>
                             <p>Sync: {site.last_sync.state} · Posts: {site.record_counts.posts} · Pages: {site.record_counts.pages} · Media: {site.record_counts.media} · Legacy: {site.record_counts.legacy_synced_contents}</p>
                             <p>Remote Connector: {site.remote_probe?.state ?? 'not_run'} {site.remote_probe?.attempted ? '(signed GET)' : ''}</p>
                             <p><strong>{findings[site.finding]?.[locale] ?? boundedText(site.finding)}</strong></p>
