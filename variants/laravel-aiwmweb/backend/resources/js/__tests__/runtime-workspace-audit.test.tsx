@@ -113,6 +113,53 @@ describe('explicit all-workspace read-only live audit', () => {
         expect(JSON.stringify(audit)).not.toContain('PRIVATE USER NAME');
     });
 
+    it('never passes a 200 JSON-header response whose bounded body is invalid', async () => {
+        const cases = [
+            { label: 'malformed', body: '{invalid', contentType: 'application/json' },
+            { label: 'empty', body: '', contentType: 'application/json' },
+            { label: 'primitive', body: '"not-a-document"', contentType: 'application/json' },
+            { label: 'null', body: 'null', contentType: 'application/json' },
+            { label: 'oversized', body: JSON.stringify({ private: 'CANARY_SECRET'.repeat(105000) }), contentType: 'application/json' },
+            { label: 'bad content type', body: '{"ok":true}', contentType: 'text/html' },
+        ];
+        for (const testCase of cases) {
+            const requester = vi.fn(async () => new Response(testCase.body, {
+                status: 200, headers: { 'content-type': testCase.contentType },
+            }));
+            const audit = await runReadOnlyWorkspaceAudit(
+                { ...context(), api: { dashboard: '/api/dashboard' } }, undefined, requester as typeof fetch);
+            const dashboard = audit.workspaces.find(entry => entry.key === 'dashboard');
+            expect(dashboard, testCase.label).toMatchObject({
+                state: 'failed_read', reason: 'invalid_response', http_status: 200,
+            });
+            expect(audit.totals.passed_read, testCase.label).toBe(0);
+            expect(requester, testCase.label).toHaveBeenCalledTimes(1);
+            expect(JSON.stringify(audit), testCase.label).not.toContain('CANARY_SECRET');
+        }
+    });
+
+    it('accepts a bounded JSON object or array and rejects false Content-Length hints', async () => {
+        for (const body of ['{"ok":true}', '[]']) {
+            const result = await runReadOnlyWorkspaceAudit(
+                { ...context(), api: { dashboard: '/api/dashboard' } }, undefined,
+                (async () => new Response(body, {
+                    status: 200, headers: { 'content-type': 'application/json; charset=utf-8' },
+                })) as typeof fetch);
+            expect(result.workspaces.find(entry => entry.key === 'dashboard')).toMatchObject({
+                state: 'passed_read', reason: 'read_ok', http_status: 200,
+            });
+        }
+        const result = await runReadOnlyWorkspaceAudit(
+            { ...context(), api: { dashboard: '/api/dashboard' } }, undefined,
+            (async () => new Response('{"ok":true}', {
+                status: 200,
+                headers: { 'content-type': 'application/json', 'content-length': '2000000' },
+            })) as typeof fetch);
+        expect(result.workspaces.find(entry => entry.key === 'dashboard')).toMatchObject({
+            state: 'failed_read', reason: 'invalid_response', http_status: 200,
+        });
+    });
+
     it('sanitized export includes status-only audit and never a URL or supplied secret', async () => {
         const audit = await runReadOnlyWorkspaceAudit(context(), undefined,
             (async () => new Response('{"ok":true}', {
