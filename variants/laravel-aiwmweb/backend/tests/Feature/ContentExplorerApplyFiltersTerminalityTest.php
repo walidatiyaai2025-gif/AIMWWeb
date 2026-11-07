@@ -43,10 +43,13 @@ final class ContentExplorerApplyFiltersTerminalityTest extends TestCase
         $this->assertStringContainsString("params.set('per_page', String(filters.perPage))", $frontend);
 
         $this->assertStringContainsString("\$auth->authorize('sites.view')", $controller);
-        $this->assertStringContainsString("\$request->query('search', '')", $controller);
-        $this->assertStringContainsString("\$request->query('status', '')", $controller);
-        $this->assertStringContainsString("\$request->query('type', 'all')", $controller);
-        $this->assertStringContainsString("\$request->integer('per_page', 20)", $controller);
+        // Input must be validated before being interpreted as a scalar filter.
+        $this->assertStringContainsString('$filters = $request->validate([', $controller);
+        $this->assertStringContainsString("'search' => ['sometimes', 'nullable', 'string', 'max:200']", $controller);
+        $this->assertStringContainsString("'status' => ['sometimes', 'nullable', 'string', 'max:64']", $controller);
+        $this->assertStringContainsString("'type' => ['sometimes', 'nullable', 'string', 'max:16']", $controller);
+        $this->assertStringContainsString("'per_page' => ['sometimes', 'nullable', 'integer', 'min:1']", $controller);
+        $this->assertStringContainsString("whereRaw(\"title LIKE ? ESCAPE '!'\"", $controller);
     }
 
     public function test_authoritative_filters_work_and_foreign_tenant_site_is_a_404(): void

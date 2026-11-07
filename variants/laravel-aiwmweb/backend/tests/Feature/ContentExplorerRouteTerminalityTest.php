@@ -164,6 +164,103 @@ final class ContentExplorerRouteTerminalityTest extends TestCase
             ->assertUnprocessable();
     }
 
+    public function test_explorer_search_treats_sql_wildcards_as_literal_content_and_keeps_site_scope(): void
+    {
+        $reader = User::factory()->create();
+        $alpha = $this->membership($reader, 'alpha', ['tenant.view', 'sites.view']);
+        $site = $this->site($alpha, 'Alpha Explorer');
+        $percent = $this->content($alpha, $site, 501, 'post', 'Revenue 90% gain');
+        $this->content($alpha, $site, 502, 'post', 'Revenue 90X gain');
+        $underscore = $this->content($alpha, $site, 503, 'post', 'queue_worker');
+        $this->content($alpha, $site, 504, 'post', 'queueXworker');
+        $exclamation = $this->content($alpha, $site, 505, 'post', 'auth!failed');
+        $this->content($alpha, $site, 506, 'post', 'authXfailed');
+        $page = $this->content($alpha, $site, 507, 'page', 'Revenue 90% page');
+
+        $otherUser = User::factory()->create();
+        $beta = $this->membership($otherUser, 'beta', ['tenant.view', 'sites.view']);
+        $otherSite = $this->site($beta, 'Beta Explorer');
+        $this->content($beta, $otherSite, 601, 'post', 'Revenue 90% private');
+
+        $endpoint = "/api/v1/tenants/alpha/sites/{$site->id}/explorer";
+
+        $this->actingAs($reader)->getJson($endpoint.'?search='.rawurlencode('90%').'&type=post')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $percent->id)
+            ->assertJsonPath('total', 1);
+
+        $this->actingAs($reader)->getJson($endpoint.'?search='.rawurlencode('90%').'&type=page')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $page->id);
+
+        $this->actingAs($reader)->getJson($endpoint.'?search='.rawurlencode('queue_'))
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $underscore->id);
+
+        $this->actingAs($reader)->getJson($endpoint.'?search='.rawurlencode('auth!'))
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $exclamation->id);
+
+        $this->actingAs($reader)->getJson($endpoint.'?search='.rawurlencode('90%'))
+            ->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('total', 2);
+
+        $this->actingAs($reader)->getJson($endpoint.'?search='.rawurlencode('absent%'))
+            ->assertOk()
+            ->assertJsonCount(0, 'data')
+            ->assertJsonPath('total', 0);
+
+        $this->actingAs($reader)->getJson($endpoint.'?search='.rawurlencode('Revenue').'&per_page=500')
+            ->assertOk()
+            ->assertJsonCount(3, 'data')
+            ->assertJsonPath('total', 3);
+
+        $this->actingAs($reader)->getJson("/api/v1/tenants/alpha/sites/{$otherSite->id}/explorer?search=90%25")
+            ->assertNotFound();
+        $this->actingAs($reader)->getJson("/api/v1/tenants/beta/sites/{$otherSite->id}/explorer?search=90%25")
+            ->assertNotFound();
+
+        $this->assertSame(
+            'Revenue 90% gain',
+            ContentItem::withoutGlobalScopes()->findOrFail($percent->id)->title,
+            'GET filtering must never mutate cached WordPress data.',
+        );
+    }
+
+    public function test_explorer_rejects_array_shaped_and_unbounded_filters_without_server_errors(): void
+    {
+        $reader = User::factory()->create();
+        $alpha = $this->membership($reader, 'alpha', ['tenant.view', 'sites.view']);
+        $site = $this->site($alpha, 'Alpha Explorer');
+        $endpoint = "/api/v1/tenants/alpha/sites/{$site->id}/explorer";
+
+        $this->getJson($endpoint.'?search=read')->assertUnauthorized();
+
+        foreach ([
+            'search%5B%5D=word',
+            'type%5B%5D=post',
+            'status%5B%5D=draft',
+            'per_page%5B%5D=20',
+            'per_page=abc',
+            'per_page=0',
+            'type=unknown',
+            'search='.rawurlencode(str_repeat('a', 201)),
+            'status='.rawurlencode(str_repeat('b', 65)),
+        ] as $query) {
+            $this->actingAs($reader)->getJson($endpoint.'?'.$query)
+                ->assertUnprocessable();
+        }
+
+        $this->actingAs($reader)->getJson($endpoint.'?type=post&per_page=20')
+            ->assertOk()
+            ->assertJsonPath('total', 0);
+    }
+
     public function test_source_and_laravel_rendering_keep_loading_empty_error_and_real_data_semantics(): void
     {
         $source = (string) file_get_contents(
