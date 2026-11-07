@@ -111,7 +111,7 @@ export function safeInspectorBundle(server: InspectorServer, events: RuntimeObse
     return {
         schema: 'aiwm.support-export.v1',
         exported_at: new Date().toISOString(),
-        privacy: 'Read-only. No credentials, raw URLs, request or response bodies, content, stack traces, cookies or server logs.',
+        privacy: 'GET diagnostics are read-only. A separate user-confirmed temporary WordPress write test may be included. No credentials, raw URLs, request or response bodies, content, recovery IDs, stack traces, cookies or logs.',
         server: {
             schema: boundedText(server.schema),
             generated_at: safeIsoTimestamp(server.generated_at),
