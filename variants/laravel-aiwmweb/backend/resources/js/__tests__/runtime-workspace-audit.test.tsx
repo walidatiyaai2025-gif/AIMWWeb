@@ -64,6 +64,109 @@ describe('explicit all-workspace read-only live audit', () => {
         expect(safeAuditEndpoint('/api/v1/tenants/wordpress/sites/1/content/post', 'wordpress')).toBe(true);
     });
 
+    it('allows only authoritative tenant-local GET paths and fixed read query strings', () => {
+        const valid = [
+            '/api/dashboard?tenant=wordpress',
+            '/tenants/wordpress/admin/operations',
+            '/tenants/wordpress/admin/operations-hub',
+            '/tenants/wordpress/admin/automations',
+            '/tenants/wordpress/admin/schedules',
+            '/tenants/wordpress/admin/logs',
+            '/tenants/wordpress/admin/diagnostics',
+            '/tenants/wordpress/admin/backups',
+            '/tenants/wordpress/admin/members',
+            '/tenants/wordpress/admin/roles',
+            '/tenants/wordpress/admin/sessions',
+            '/tenants/wordpress/route-api/report-exports',
+            '/tenants/wordpress/route-api/site-operations',
+            '/tenants/wordpress/route-api/site-reliability',
+            '/tenants/wordpress/route-api/billing-overview',
+            '/tenants/wordpress/route-api/account-profile',
+            '/tenants/wordpress/configuration-validation/report',
+            '/api/v1/tenants/wordpress/sites/1/taxonomy?taxonomy=category',
+            '/api/v1/tenants/wordpress/sites/123/taxonomy?taxonomy=post_tag',
+        ];
+        for (const endpoint of valid) {
+            expect(safeAuditEndpoint(endpoint, 'wordpress'), endpoint).toBe(true);
+        }
+        const invalid = [
+            '/api/dashboard?tenant=other',
+            '/api/dashboard?tenant=wordpress&delete=true',
+            '/api/v1/tenants/wordpress/sites/0/taxonomy?taxonomy=category',
+            '/api/v1/tenants/wordpress/sites/1/taxonomy?taxonomy=private',
+            '/api/v1/tenants/wordpress/sites/1/taxonomy?taxonomy=post_tag&limit=100',
+            '/tenants/other/admin/backups',
+            '/tenants/wordpress/admin/backups/1/restore',
+            '/tenants/wordpress/admin/automations/1/trigger',
+            '/tenants/wordpress/configuration-validation/run',
+            '/tenants/wordpress/admin/backups?force=1',
+            '/tenants/wordpress/admin/../admin/members',
+            '/tenants/wordpress/admin/%2e%2e/diagnostics',
+            '/tenants/wordpress/admin/logs#secret',
+            '//tenants/wordpress/admin/backups',
+            'https://attacker.example/tenants/wordpress/admin/operations',
+        ];
+        for (const endpoint of invalid) {
+            expect(safeAuditEndpoint(endpoint, 'wordpress'), endpoint).toBe(false);
+        }
+    });
+
+    it('distinguishes missing site selection from an actual missing API contract', () => {
+        const api = { dashboard: '/api/dashboard?tenant=wordpress' };
+        const noSite = liveAuditPlan({ ...context(), api, active_site: null });
+        for (const key of ['explorer', 'posts', 'pages', 'media', 'comments', 'taxonomy',
+            'categories', 'tags', 'wp-users', 'sync', 'seo-audit']) {
+            expect(noSite.find(entry => entry.key === key)?.reason, key)
+                .toBe('site_selection_required');
+        }
+        expect(noSite.find(entry => entry.key === 'site-connect')?.reason)
+            .toBe('missing_contract');
+
+        const selected = liveAuditPlan({
+            ...context(), api, active_site: { id: 1, name: 'site', status: 'connected' },
+        });
+        expect(selected.find(entry => entry.key === 'posts')?.reason).toBe('missing_contract');
+        expect(selected.every(entry => entry.tested_write_actions === 0)).toBe(true);
+    });
+
+    it('probes documented production context paths without executing writes', async () => {
+        const realistic = {
+            ...context(),
+            api: {
+                dashboard: '/api/dashboard?tenant=wordpress',
+                sites: '/api/tenants/wordpress/sites',
+                automation: '/tenants/wordpress/admin/automations',
+                operations: '/tenants/wordpress/admin/operations',
+                backups: '/tenants/wordpress/admin/backups',
+                roles: '/tenants/wordpress/admin/roles',
+                'configuration-validation': '/tenants/wordpress/configuration-validation/report',
+                categories: '/api/v1/tenants/wordpress/sites/1/taxonomy?taxonomy=category',
+                tags: '/api/v1/tenants/wordpress/sites/1/taxonomy?taxonomy=post_tag',
+            },
+        };
+        const plan = liveAuditPlan(realistic);
+        for (const key of ['dashboard', 'automation', 'operations', 'backups',
+            'roles', 'configuration-validation', 'categories', 'tags']) {
+            expect(plan.find(row => row.key === key)?.reason, key).toBe('read_ok');
+        }
+        const calls: string[] = [];
+        const requester = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+            calls.push(String(input));
+            expect(init?.method).toBe('GET');
+            return new Response('{"items":[]}', {
+                status: 200, headers: { 'content-type': 'application/json' },
+            });
+        });
+        const report = await runReadOnlyWorkspaceAudit(realistic, undefined, requester as typeof fetch);
+        expect(report.safety.write_actions_executed).toBe(false);
+        expect(report.totals.failed_read).toBe(0);
+        expect(report.totals.passed_read).toBeGreaterThanOrEqual(8);
+        expect(calls).toContain('/tenants/wordpress/admin/backups');
+        expect(calls).toContain('/api/dashboard?tenant=wordpress');
+        expect(calls.every(endpoint => safeAuditEndpoint(endpoint, 'wordpress'))).toBe(true);
+        expect(report.totals.write_actions_untested).toBe(46);
+    });
+
     it('classifies every route and preserves untested mutations without starting requests', () => {
         const plan = liveAuditPlan(context());
         expect(plan).toHaveLength(workspaceRoutes.length);

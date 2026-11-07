@@ -8,8 +8,8 @@ export type LiveAuditEntry = {
     key: string;
     state: LiveAuditState;
     reason: 'read_ok' | 'http_error' | 'invalid_response' | 'network_error'
-        | 'missing_permission' | 'restricted' | 'missing_contract' | 'unsafe_endpoint'
-        | 'navigation_only' | 'parameterized_endpoint';
+        | 'missing_permission' | 'restricted' | 'missing_contract' | 'site_selection_required'
+        | 'unsafe_endpoint' | 'navigation_only' | 'parameterized_endpoint';
     http_status: number | null;
     duration_ms: number | null;
     declared_write_actions: number;
@@ -24,19 +24,58 @@ export type LiveAuditResult = {
     workspaces: LiveAuditEntry[];
 };
 
-/** Fail closed: only exact same-tenant relative GET APIs, never arbitrary URLs. */
+/**
+ * Only GETs for server-advertised, same-tenant read resources may be inspected.
+ * The Laravel context has both /api/... routes and /tenants/... JSON routes;
+ * do not mark valid documented GETs unsafe just because they lack /api/.
+ *
+ * Query strings remain forbidden except two exact documented read patterns.
+ * Never accept generic admin paths, action suffixes, foreign tenants, encoded
+ * separators, traversal, fragments or attacker-defined query parameters.
+ */
 export function safeAuditEndpoint(endpoint: unknown, slug: string): endpoint is string {
     if (typeof endpoint !== 'string' || endpoint.length > 500 ||
-        !/^\/[a-zA-Z0-9/_%.-]+$/.test(endpoint) ||
-        endpoint.includes('//') || /%2f|%5c/i.test(endpoint)) return false;
+        typeof slug !== 'string' || !/^[a-zA-Z0-9_-]{1,100}$/.test(slug) ||
+        !/^\/[a-zA-Z0-9/_%.-]+(?:\?[a-zA-Z0-9=&._%-]+)?$/.test(endpoint) ||
+        endpoint.includes('//') || /%2f|%5c|%3f|%23/i.test(endpoint)) return false;
+
+    const tenant = encodeURIComponent(slug);
+    // The documented query-bearing APIs use only these exact parameters.
+    if (endpoint.includes('?')) {
+        if (endpoint === `/api/dashboard?tenant=${tenant}`) return true;
+        const prefix = `/api/v1/tenants/${tenant}/sites/`;
+        return endpoint.startsWith(prefix)
+            && /^[1-9][0-9]*\/taxonomy\?taxonomy=(?:category|post_tag)$/.test(endpoint.slice(prefix.length));
+    }
+
     let path: string;
     try { path = decodeURIComponent(endpoint); } catch { return false; }
     if (path.split('/').some(segment => segment === '..' || segment === '.')) return false;
-    const tenant = encodeURIComponent(slug);
-    return endpoint === '/api/dashboard'
-        || endpoint.startsWith(`/api/tenants/${tenant}/`)
-        || endpoint.startsWith(`/api/v1/tenants/${tenant}/`);
+
+    if (endpoint === '/api/dashboard' ||
+        endpoint.startsWith(`/api/tenants/${tenant}/`) ||
+        endpoint.startsWith(`/api/v1/tenants/${tenant}/`)) return true;
+
+    // These specific Laravel web routes return authenticated JSON on GET.
+    // No unrestricted /tenants/:slug/admin/* acceptance.
+    const allowedTenantReads = new Set([
+        'admin/operations', 'admin/operations-hub', 'admin/automations',
+        'admin/schedules', 'admin/logs', 'admin/diagnostics',
+        'admin/backups', 'admin/members', 'admin/roles', 'admin/sessions',
+        'route-api/site-operations', 'route-api/site-reliability',
+        'route-api/report-exports', 'route-api/billing-overview',
+        'route-api/account-profile', 'configuration-validation/report',
+    ]);
+    const prefix = `/tenants/${tenant}/`;
+    return endpoint.startsWith(prefix) &&
+        allowedTenantReads.has(endpoint.slice(prefix.length));
 }
+
+/** These reads are advertised only after the user selects a tenant-owned site. */
+const selectedSiteReads = new Set([
+    'explorer', 'posts', 'pages', 'media', 'comments', 'taxonomy',
+    'categories', 'tags', 'wp-users', 'sync', 'seo-audit',
+]);
 
 export function liveAuditPlan(context: FrontendContext): LiveAuditEntry[] {
     const census = workspaceCapabilityCensus(context);
@@ -48,7 +87,8 @@ export function liveAuditPlan(context: FrontendContext): LiveAuditEntry[] {
                 ? 'restricted' : null;
         const reason: LiveAuditEntry['reason'] = denied ?? (!route.apiKey
             ? 'navigation_only'
-            : !endpoint ? 'missing_contract'
+            : !endpoint ? (selectedSiteReads.has(route.key) && !context.active_site
+                    ? 'site_selection_required' : 'missing_contract')
                 : /(?:\/:|[{}])/.test(endpoint) ? 'parameterized_endpoint'
                     : !safeAuditEndpoint(endpoint, context.tenant.slug)
                         ? 'unsafe_endpoint' : 'read_ok');
@@ -215,6 +255,9 @@ export function RuntimeWorkspaceAuditPanel({ context, onComplete }: {
         </button>
         {error && <p role="alert">{ar ? 'تعذر إكمال الفحص؛ لا تعتبر الوظائف ناجحة.' : 'Audit failed; no success is inferred.'}</p>}
         {result && <>
+            {result.workspaces.some(entry => entry.reason === 'site_selection_required') && <p role="status">{ar
+                ? 'بعض فحوص المحتوى تحتاج أولًا إلى اختيار موقع WordPress نشط من صفحة المواقع ثم إعادة الفحص؛ الاتصال وحده لا يحدد الموقع النشط.'
+                : 'Some content checks require selecting an active WordPress site from Sites before rescanning. A connected site is not automatically selected.'}</p>}
             <div role="status" className="status-grid">
                 <span>{ar ? 'الصفحات' : 'Pages'}: {result.totals.routes}</span>
                 <span>{ar ? 'GET ناجح' : 'GET passed'}: {result.totals.passed_read}</span>
