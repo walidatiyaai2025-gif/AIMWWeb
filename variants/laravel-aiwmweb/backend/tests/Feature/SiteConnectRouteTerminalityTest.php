@@ -109,7 +109,13 @@ final class SiteConnectRouteTerminalityTest extends TestCase
         $this->assertStringContainsString('@page "/sites/connect"', $source);
         $this->assertStringContainsString('SaveTestAndSyncAsync', $source);
         $this->assertStringContainsString("r('site-connect', '/sites/connect'", $core);
-        $this->assertStringContainsString("connectorScope: 'pairing'", $core);
+        // The onboarding page is a protected navigation form, not a Connector
+        // read endpoint. No paired Connector can be required before pairing.
+        $this->assertStringContainsString(
+            "permission: 'sites.manage', apiKey: undefined, controls: ['sites.connect'], hidden: true, kind: 'settings'",
+            $core,
+        );
+        $this->assertStringNotContainsString("connectorScope: 'pairing'", $core);
         $this->assertStringContainsString("canonical_route_operation_id', 'AIMW-CONT-BF5F72F4F9", $provider);
         $this->assertStringContainsString("->get('/tenants/{tenant}/sites/connect'", $provider);
         $this->assertStringContainsString("Route::get('/sites', [SiteManagementController::class, 'index'])", $routes);
