@@ -40,8 +40,9 @@ final class WordPressWriteSmokeService
                     'status' => 'draft', 'title' => $marker.'-parent',
                 ]);
                 $parentId = $this->createdId($parent);
-                $objects[] = ['resource' => 'posts', 'id' => $parentId];
-                $this->read($site, $credential, 'posts', $parentId);
+                $objects[] = ['resource' => 'posts', 'id' => $parentId, 'owned' => false];
+                $this->assertMarker($this->read($site, $credential, 'posts', $parentId), 'posts', $marker.'-parent');
+                $objects[array_key_last($objects)]['owned'] = true;
                 $created = $this->write($site, $credential, 'comments', null, [
                     'post' => $parentId, 'content' => $marker.'-create', 'status' => 'hold',
                 ]);
@@ -69,11 +70,12 @@ final class WordPressWriteSmokeService
             }
 
             $remoteId = $this->createdId($created);
-            $objects[] = ['resource' => $resource, 'id' => $remoteId];
+            $objects[] = ['resource' => $resource, 'id' => $remoteId, 'owned' => false];
 
             $stage = 'read_create';
             $initial = $this->read($site, $credential, $resource, $remoteId);
-            $this->assertMarker($initial, $resource, $marker.'-create', $resource === 'media');
+            $this->assertMarker($initial, $resource, $resource === 'media' ? $marker : $marker.'-create', $resource === 'media');
+            $objects[array_key_last($objects)]['owned'] = true;
 
             $stage = 'save';
             $changes = match ($resource) {
@@ -107,8 +109,15 @@ final class WordPressWriteSmokeService
         $cleanupFailed = [];
 
         foreach (array_reverse($objects) as $object) {
-            // Every ID here came from this request's successful WordPress CREATE response.
-            // Never delete an ID supplied by the browser or from existing app records.
+            // A WordPress create reply only supplies an ID, not proof of its ownership.
+            // An unexpected/misbound ID may refer to PRE-EXISTING content.
+            // Never permanently delete it unless the independent signed-in
+            // REST GET confirmed this run's marker on that exact resource ID.
+            if ($object['owned'] !== true) {
+                $cleanupFailed[] = ['resource' => $object['resource'], 'remote_id' => $object['id']];
+
+                continue;
+            }
             $cleaned = false;
 
             try {
@@ -181,7 +190,7 @@ final class WordPressWriteSmokeService
     {
         $id = is_array($row) ? ($row['id'] ?? null) : null;
 
-        if (is_numeric($id) === false || (int) $id < 1) {
+        if (filter_var($id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
             throw new RuntimeException('missing_created_id');
         }
 
@@ -204,8 +213,23 @@ final class WordPressWriteSmokeService
     private function assertMarker(array $row, string $resource, string $expected, bool $initialMedia = false): void
     {
         if ($initialMedia) {
-            // WordPress may rename a generated file; authoritative object ID + read suffice.
-            return;
+            // WordPress may rewrite a media title or filename, but at least one
+            // authoritative property must identify our random upload marker.
+            // A bare ID from a POST is never proof that it is safe to DELETE.
+            $evidence = [
+                data_get($row, 'title.raw'),
+                data_get($row, 'title.rendered'),
+                $row['slug'] ?? null,
+                $row['source_url'] ?? null,
+                data_get($row, 'media_details.file'),
+            ];
+            foreach ($evidence as $field) {
+                if (is_string($field) && str_contains($field, $expected)) {
+                    return;
+                }
+            }
+
+            throw new RuntimeException('remote_media_marker_mismatch');
         }
         $value = match ($resource) {
             'posts', 'pages' => data_get($row, 'title.raw', data_get($row, 'title.rendered', '')),
