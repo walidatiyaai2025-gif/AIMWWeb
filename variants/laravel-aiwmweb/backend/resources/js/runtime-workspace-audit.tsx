@@ -8,8 +8,8 @@ export type LiveAuditEntry = {
     key: string;
     state: LiveAuditState;
     reason: 'read_ok' | 'http_error' | 'invalid_response' | 'network_error'
-        | 'missing_permission' | 'restricted' | 'missing_contract' | 'unsafe_endpoint'
-        | 'navigation_only' | 'parameterized_endpoint';
+        | 'missing_permission' | 'restricted' | 'missing_contract' | 'site_selection_required'
+        | 'unsafe_endpoint' | 'navigation_only' | 'parameterized_endpoint';
     http_status: number | null;
     duration_ms: number | null;
     declared_write_actions: number;
@@ -71,6 +71,12 @@ export function safeAuditEndpoint(endpoint: unknown, slug: string): endpoint is 
         allowedTenantReads.has(endpoint.slice(prefix.length));
 }
 
+/** These reads are advertised only after the user selects a tenant-owned site. */
+const selectedSiteReads = new Set([
+    'explorer', 'posts', 'pages', 'media', 'comments', 'taxonomy',
+    'categories', 'tags', 'wp-users', 'sync', 'seo-audit',
+]);
+
 export function liveAuditPlan(context: FrontendContext): LiveAuditEntry[] {
     const census = workspaceCapabilityCensus(context);
     return census.workspaces.map(entry => {
@@ -81,7 +87,8 @@ export function liveAuditPlan(context: FrontendContext): LiveAuditEntry[] {
                 ? 'restricted' : null;
         const reason: LiveAuditEntry['reason'] = denied ?? (!route.apiKey
             ? 'navigation_only'
-            : !endpoint ? 'missing_contract'
+            : !endpoint ? (selectedSiteReads.has(route.key) && !context.active_site
+                    ? 'site_selection_required' : 'missing_contract')
                 : /(?:\/:|[{}])/.test(endpoint) ? 'parameterized_endpoint'
                     : !safeAuditEndpoint(endpoint, context.tenant.slug)
                         ? 'unsafe_endpoint' : 'read_ok');
@@ -248,6 +255,9 @@ export function RuntimeWorkspaceAuditPanel({ context, onComplete }: {
         </button>
         {error && <p role="alert">{ar ? 'تعذر إكمال الفحص؛ لا تعتبر الوظائف ناجحة.' : 'Audit failed; no success is inferred.'}</p>}
         {result && <>
+            {result.workspaces.some(entry => entry.reason === 'site_selection_required') && <p role="status">{ar
+                ? 'بعض فحوص المحتوى تحتاج أولًا إلى اختيار موقع WordPress نشط من صفحة المواقع ثم إعادة الفحص؛ الاتصال وحده لا يحدد الموقع النشط.'
+                : 'Some content checks require selecting an active WordPress site from Sites before rescanning. A connected site is not automatically selected.'}</p>}
             <div role="status" className="status-grid">
                 <span>{ar ? 'الصفحات' : 'Pages'}: {result.totals.routes}</span>
                 <span>{ar ? 'GET ناجح' : 'GET passed'}: {result.totals.passed_read}</span>
