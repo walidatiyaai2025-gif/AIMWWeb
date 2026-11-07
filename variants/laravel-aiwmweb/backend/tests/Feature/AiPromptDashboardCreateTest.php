@@ -31,7 +31,7 @@ class AiPromptDashboardCreateTest extends TestCase
             if (str_contains($line, 'endforeach') || str_contains($line, 'foreach (') ||
                 str_contains($line, 'foreach(') || str_contains($line, 'endunless')) {
                 $near = array_slice($lines, max(0, $index - 2), 5);
-                fwrite(STDERR, 'AIWM_BLADE_COMPILED_'.($index + 1).": ".
+                fwrite(STDERR, 'AIWM_BLADE_COMPILED_'.($index + 1).': '.
                     str_replace("\n", ' | ', implode("\n", $near))."\n");
             }
         }
