@@ -111,6 +111,24 @@ describe('explicit all-workspace read-only live audit', () => {
         }
     });
 
+    it('distinguishes missing site selection from an actual missing API contract', () => {
+        const api = { dashboard: '/api/dashboard?tenant=wordpress' };
+        const noSite = liveAuditPlan({ ...context(), api, active_site: null });
+        for (const key of ['explorer', 'posts', 'pages', 'media', 'comments', 'taxonomy',
+            'categories', 'tags', 'wp-users', 'sync', 'seo-audit']) {
+            expect(noSite.find(entry => entry.key === key)?.reason, key)
+                .toBe('site_selection_required');
+        }
+        expect(noSite.find(entry => entry.key === 'site-connect')?.reason)
+            .toBe('missing_contract');
+
+        const selected = liveAuditPlan({
+            ...context(), api, active_site: { id: 1, name: 'site', status: 'connected' },
+        });
+        expect(selected.find(entry => entry.key === 'posts')?.reason).toBe('missing_contract');
+        expect(selected.every(entry => entry.tested_write_actions === 0)).toBe(true);
+    });
+
     it('probes documented production context paths without executing writes', async () => {
         const realistic = {
             ...context(),
