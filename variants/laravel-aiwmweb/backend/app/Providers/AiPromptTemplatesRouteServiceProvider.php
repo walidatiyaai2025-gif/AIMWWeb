@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Http\Controllers\AiPromptTemplateRestoreController;
+use App\Http\Controllers\AiPromptTemplateCreateController;
 use App\Http\Controllers\AiPromptTemplateSaveController;
 use App\Http\Controllers\AiPromptTemplatesReadController;
 use Illuminate\Support\Facades\Route;
@@ -15,6 +16,10 @@ final class AiPromptTemplatesRouteServiceProvider extends ServiceProvider
         Route::middleware(['web', 'auth', 'tenant.context'])
             ->get('/tenants/{tenant}/settings/ai-prompts', AiPromptTemplatesReadController::class)
             ->name('tenant.settings.ai-prompts');
+
+        Route::middleware(['web', 'auth', 'tenant.context', 'throttle:10,1'])
+            ->post('/tenants/{tenant}/settings/ai-prompts', AiPromptTemplateCreateController::class)
+            ->name('tenant.settings.ai-prompts.create');
 
         Route::middleware(['web', 'auth', 'tenant.context'])
             ->patch('/tenants/{tenant}/settings/ai-prompts/{template}', AiPromptTemplateSaveController::class)
