@@ -193,9 +193,22 @@ export async function loadSiteScopedAuditContext(
         // No advertised site endpoint may quietly redirect the audit to another site.
         const selectedPrefix = `/api/v1/tenants/${slug}/sites/${siteId}/`;
         const selectedLegacyPrefix = `/api/tenants/${slug}/sites/${siteId}/`;
-        // Do not accept a same-site but fictitious endpoint for the five
-        // authoritative site views; the details endpoint has no trailing slash.
+        // Match the exact server-advertised GET for each workspace. Merely
+        // sharing the selected site's prefix is not sufficient: e.g. "posts"
+        // must not silently probe a different same-site resource or action.
         const exactSiteReads: Record<string, string> = {
+            'explorer': `${selectedPrefix}explorer`,
+            'posts': `${selectedPrefix}content/post`,
+            'pages': `${selectedPrefix}content/page`,
+            'media': `${selectedPrefix}media`,
+            'comments': `${selectedPrefix}comments`,
+            'taxonomy': `${selectedPrefix}taxonomy`,
+            'categories': `${selectedPrefix}taxonomy?taxonomy=category`,
+            'tags': `${selectedPrefix}taxonomy?taxonomy=post_tag`,
+            'wp-users': `${selectedPrefix}users`,
+            'sync': `${selectedPrefix}sync`,
+            'seo-audit': `${selectedLegacyPrefix}seo/audits`,
+            // The details endpoint intentionally has no trailing slash.
             'site-details': `/api/tenants/${slug}/sites/${siteId}`,
             'site-snapshot': `${selectedLegacyPrefix}snapshot`,
             'site-offline-data': `${selectedLegacyPrefix}snapshot`,
@@ -205,9 +218,7 @@ export async function loadSiteScopedAuditContext(
         for (const key of selectedSiteReads) {
             const endpoint = selected.api[key];
             if (endpoint === undefined) continue;
-            const exact = exactSiteReads[key];
-            if (exact !== undefined ? endpoint !== exact :
-                !endpoint.startsWith(selectedPrefix) && !endpoint.startsWith(selectedLegacyPrefix)) {
+            if (endpoint !== exactSiteReads[key]) {
                 throw new Error('Site-scoped GET contract does not match the selected site.');
             }
         }
