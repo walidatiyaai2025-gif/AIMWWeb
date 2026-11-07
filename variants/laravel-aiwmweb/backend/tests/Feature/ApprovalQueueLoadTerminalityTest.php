@@ -43,6 +43,27 @@ class ApprovalQueueLoadTerminalityTest extends TestCase
         $this->assertContains('tenant.context', $route->gatherMiddleware());
     }
 
+    public function test_frontend_context_advertises_the_real_approval_read_contract(): void
+    {
+        $user = User::factory()->create();
+        $this->membership($user, 'approval-contract', ['tenant.view', 'approvals.view']);
+
+        $this->actingAs($user)->getJson('/tenants/approval-contract/context')
+            ->assertOk()
+            ->assertJsonPath('api.approvals', '/api/tenants/approval-contract/approvals');
+
+        $this->actingAs($user)->getJson('/api/tenants/approval-contract/approvals')
+            ->assertOk()
+            ->assertJsonPath('total', 0)
+            ->assertJsonCount(0, 'data');
+
+        // Advertising this route must not grant access to another tenant.
+        $this->actingAs($user)->getJson('/tenants/foreign-tenant/context')
+            ->assertNotFound();
+        $this->actingAs($user)->getJson('/api/tenants/foreign-tenant/approvals')
+            ->assertNotFound();
+    }
+
     public function test_load_returns_only_active_tenant_approvals_with_execution_state(): void
     {
         $user = User::factory()->create();
