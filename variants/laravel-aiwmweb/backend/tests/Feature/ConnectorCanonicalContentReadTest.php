@@ -112,14 +112,18 @@ final class ConnectorCanonicalContentReadTest extends TestCase
     {
         $site = $this->connectedSite();
 
-        foreach ([
+        $cases = [
             ['items' => [], 'success' => false],
             ['items' => [], 'error' => 'upstream_unavailable'],
             ['items' => [], 'status' => 'failed'],
             ['items' => [['id' => 5]], 'error' => ['code' => 'partial_failure']],
-        ] as $case) {
-            Http::fake(['https://wp.test/*' => Http::response($case, 200)]);
+        ];
+        $responses = Http::fakeSequence();
+        foreach ($cases as $case) {
+            $responses->push($case, 200);
+        }
 
+        foreach ($cases as $case) {
             try {
                 app(HttpWordPressGateway::class)->listResource($site, 'posts');
                 $this->fail('Error-marked HTTP 200 must not be treated as a genuine WordPress resource page.');
@@ -127,6 +131,7 @@ final class ConnectorCanonicalContentReadTest extends TestCase
                 $this->assertStringContainsString('error-marked response', $exception->getMessage());
             }
         }
+        Http::assertSentCount(count($cases));
     }
 
     public function test_signed_list_validates_all_remote_identities_and_page_bounds_before_projection(): void
@@ -141,8 +146,15 @@ final class ConnectorCanonicalContentReadTest extends TestCase
             ['items' => [['id' => 3], ['id' => []]]],
         ];
 
+        // A single ordered fake sequence guarantees every adversarial case
+        // is actually exercised rather than reusing the first registered stub.
+        $responses = Http::fakeSequence();
         foreach ($malformed as $payload) {
-            Http::fake(['https://wp.test/*' => Http::response($payload, 200)]);
+            $responses->push($payload, 200);
+        }
+        $responses->push(['items' => array_fill(0, 101, ['id' => 1])], 200);
+
+        foreach ($malformed as $payload) {
             try {
                 app(HttpWordPressGateway::class)->listResource($site, 'posts');
                 $this->fail('Signed WordPress resource listing must validate every row before returning.');
@@ -151,10 +163,13 @@ final class ConnectorCanonicalContentReadTest extends TestCase
             }
         }
 
-        Http::fake(['https://wp.test/*' => Http::response(['items' => array_fill(0, 101, ['id' => 1])], 200)]);
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('invalid items contract');
-        app(HttpWordPressGateway::class)->listResource($site, 'posts', ['per_page' => 100]);
+        try {
+            app(HttpWordPressGateway::class)->listResource($site, 'posts', ['per_page' => 100]);
+            $this->fail('A page exceeding the signed request limit must be rejected.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('invalid items contract', $exception->getMessage());
+        }
+        Http::assertSentCount(count($malformed) + 1);
     }
 
     public function test_signed_list_error_preserves_existing_canonical_content_and_fails_sync_closed(): void
