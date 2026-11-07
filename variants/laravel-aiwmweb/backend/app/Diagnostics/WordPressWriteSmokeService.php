@@ -4,9 +4,10 @@ namespace App\Diagnostics;
 
 use App\Models\Site;
 use App\Models\SiteCredential;
-use Illuminate\Http\Client\Response;
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -51,7 +52,7 @@ final class WordPressWriteSmokeService
                     true,
                 );
                 if ($png === false) {
-                    throw new \RuntimeException('fixture_invalid');
+                    throw new RuntimeException('fixture_invalid');
                 }
                 $created = $this->http($site, $credential)
                     ->attach('file', $png, $marker.'.png', ['Content-Type' => 'image/png'])
@@ -82,7 +83,7 @@ final class WordPressWriteSmokeService
             };
             $saved = $this->write($site, $credential, $resource, $remoteId, $changes);
             if (! is_array($saved) || (int) ($saved['id'] ?? 0) !== $remoteId) {
-                throw new \RuntimeException('save_response_invalid');
+                throw new RuntimeException('save_response_invalid');
             }
 
             $stage = 'read_save';
@@ -147,7 +148,7 @@ final class WordPressWriteSmokeService
         ];
     }
 
-    private function http(Site $site, SiteCredential $credential): \Illuminate\Http\Client\PendingRequest
+    private function http(Site $site, SiteCredential $credential): PendingRequest
     {
         return Http::connectTimeout(4)->timeout(12)->withoutRedirecting()
             ->acceptJson()->withBasicAuth((string) $credential->username, (string) $credential->secret_value);
@@ -163,7 +164,7 @@ final class WordPressWriteSmokeService
         $url = $this->url($site, $resource).($id === null ? '' : '/'.$id);
         $json = $this->http($site, $credential)->post($url, $payload)->throw()->json();
         if (! is_array($json)) {
-            throw new \RuntimeException('malformed_wordpress_write');
+            throw new RuntimeException('malformed_wordpress_write');
         }
 
         return $json;
@@ -173,7 +174,7 @@ final class WordPressWriteSmokeService
     {
         $id = is_array($row) ? ($row['id'] ?? null) : null;
         if (! is_numeric($id) || (int) $id < 1) {
-            throw new \RuntimeException('missing_created_id');
+            throw new RuntimeException('missing_created_id');
         }
         return (int) $id;
     }
@@ -184,7 +185,7 @@ final class WordPressWriteSmokeService
             $this->url($site, $resource).'/'.$id, ['context' => 'edit'],
         )->throw()->json();
         if (! is_array($row) || (int) ($row['id'] ?? 0) !== $id) {
-            throw new \RuntimeException('remote_id_mismatch');
+            throw new RuntimeException('remote_id_mismatch');
         }
         return $row;
     }
@@ -202,7 +203,7 @@ final class WordPressWriteSmokeService
             'media' => $row['alt_text'] ?? '',
         };
         if (! is_string($value) || ! str_contains($value, $expected)) {
-            throw new \RuntimeException('remote_marker_mismatch');
+            throw new RuntimeException('remote_marker_mismatch');
         }
     }
 }
