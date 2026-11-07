@@ -209,7 +209,7 @@ export function safeInspectorBundle(server: InspectorServer, events: RuntimeObse
                         key: entry.key,
                         state: ['passed_read', 'failed_read', 'skipped', 'not_tested'].includes(entry.state) ? entry.state : 'not_tested',
                         reason: ['read_ok', 'http_error', 'invalid_response', 'network_error',
-                            'missing_permission', 'restricted', 'missing_contract', 'unsafe_endpoint',
+                            'missing_permission', 'restricted', 'missing_contract', 'site_selection_required', 'unsafe_endpoint',
                             'navigation_only', 'parameterized_endpoint'].includes(entry.reason) ? entry.reason : 'unsafe_endpoint',
                         http_status: entry.http_status === null || !Number.isInteger(entry.http_status)
                             ? null : Math.min(599, Math.max(100, entry.http_status)),
