@@ -44,7 +44,7 @@ final class ContentExplorerApplyFiltersTerminalityTest extends TestCase
 
         $this->assertStringContainsString("\$auth->authorize('sites.view')", $controller);
         // Input must be validated before being interpreted as a scalar filter.
-        $this->assertStringContainsString("\$filters = \$request->validate([", $controller);
+        $this->assertStringContainsString('$filters = $request->validate([', $controller);
         $this->assertStringContainsString("'search' => ['sometimes', 'nullable', 'string', 'max:200']", $controller);
         $this->assertStringContainsString("'status' => ['sometimes', 'nullable', 'string', 'max:64']", $controller);
         $this->assertStringContainsString("'type' => ['sometimes', 'nullable', 'string', 'max:16']", $controller);
