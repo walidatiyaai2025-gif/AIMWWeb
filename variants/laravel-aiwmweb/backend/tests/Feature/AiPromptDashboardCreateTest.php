@@ -38,7 +38,6 @@ class AiPromptDashboardCreateTest extends TestCase
         $this->assertTrue(true);
     }
 
-
     public function test_prompt_page_uses_authenticated_dark_dashboard_shell_and_real_stylesheet(): void
     {
         $user = User::factory()->create();
