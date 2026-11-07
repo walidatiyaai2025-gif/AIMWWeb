@@ -155,6 +155,59 @@ final class BackupCreateTerminalityTest extends TestCase
         }
     }
 
+    public function test_symlinked_ancestor_of_real_local_root_blocks_backup_creation_without_writes(): void
+    {
+        Storage::fake('local');
+        [$admin, $tenant] = $this->member('alpha', true);
+
+        if (! function_exists('symlink')) {
+            $this->markTestSkipped('This filesystem does not support symbolic links.');
+        }
+
+        $fakeRoot = rtrim(Storage::disk('local')->path(''), '/\\\\');
+        $actualParent = $fakeRoot.'/disposable-real-parent';
+        $actualRoot = $actualParent.'/private';
+        $link = $fakeRoot.'/disposable-linked-parent';
+        $originalRoot = config('filesystems.disks.local.root');
+
+        $this->assertTrue(mkdir($actualParent, 0700));
+        $this->assertTrue(mkdir($actualRoot, 0700));
+        if (! @symlink($actualParent, $link)) {
+            rmdir($actualRoot);
+            rmdir($actualParent);
+            $this->markTestSkipped('Cannot create an isolated intermediate symlink.');
+        }
+
+        try {
+            // The final "private" directory is real, but its parent link
+            // would redirect backup writes outside the configured path.
+            config()->set('filesystems.disks.local.root', $link.'/private');
+            Storage::forgetDisk('local');
+            app(TenantContext::class)->activate($tenant);
+
+            try {
+                app(TenantBackupCreateService::class)->create($admin->id, 'Ancestor symlink test', null);
+                $this->fail('A parent symlink must prevent an archive write.');
+            } catch (\\RuntimeException $exception) {
+                $this->assertSame('Private backup storage root is unavailable or unsafe.', $exception->getMessage());
+                $this->assertStringNotContainsString($link, $exception->getMessage());
+                $this->assertStringNotContainsString($actualRoot, $exception->getMessage());
+            } finally {
+                app(TenantContext::class)->forget();
+            }
+
+            $this->assertSame(['.', '..'], scandir($actualRoot));
+            $this->assertDatabaseCount('backup_archives', 0);
+        } finally {
+            config()->set('filesystems.disks.local.root', $originalRoot);
+            Storage::forgetDisk('local');
+            @unlink($link);
+            // Test always creates an empty real parent, never shared storage.
+            @rmdir($actualRoot);
+            @rmdir($actualParent);
+        }
+    }
+
     public function test_existing_file_at_backup_or_tenant_folder_rejects_writes(): void
     {
         Storage::fake('local');
