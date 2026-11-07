@@ -295,6 +295,7 @@
                                             <button
                                                 type="submit"
                                                 data-ai-prompt-restore="true"
+                                                data-prompt-ar="استعادة"
                                                 @disabled((int) $revision->version === (int) $template->current_version)
                                             >Restore</button>
                                         </form>
@@ -331,7 +332,7 @@
                 if (flash && !original.has(flash)) original.set(flash, flash.textContent);
                 if (flash) {
                     const raw = original.get(flash).trim();
-                    const match = raw.match(/^(Created|Saved|Restored) (.+) as revision r(\\d+)\\.$/);
+                    const match = raw.match(/^(Created|Saved|Restored) (.+) as revision r(\d+)\.$/);
                     flash.textContent = arabic && match
                         ? (match[1] === 'Created' ? 'تم إنشاء ' : match[1] === 'Saved' ? 'تم حفظ ' : 'تمت استعادة ')
                             + match[2] + ' كإصدار r' + match[3] + '.'
