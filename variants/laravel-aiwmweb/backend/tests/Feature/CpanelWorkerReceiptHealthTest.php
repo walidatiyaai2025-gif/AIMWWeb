@@ -126,6 +126,47 @@ class CpanelWorkerReceiptHealthTest extends TestCase
         $this->assertSame('worker_receipt_invalid', $futureWorker['checks']['queue_processing']['reason_code']);
     }
 
+    public function test_non_integer_worker_and_scheduler_receipts_never_claim_success(): void
+    {
+        $store = Cache::store('database');
+        $health = app(RuntimeHealthService::class);
+
+        // These are PHP-numeric values but not valid whole-second receipts.
+        // A valid recent timestamp on the other source must not mask one.
+        foreach ([time() - 10.5, (string) (time() - 10).'e0', true] as $invalid) {
+            $store->put(RuntimeHealthService::SCHEDULER_HEARTBEAT_KEY, time() - 10, now()->addMinutes(10));
+            $store->put(RuntimeHealthService::CPANEL_QUEUE_TICK_RECEIPT_KEY, $invalid, now()->addMinutes(10));
+
+            $worker = $health->ready();
+            $this->assertSame('not_ready', $worker['status']);
+            $this->assertSame('unavailable', $worker['checks']['queue_processing']['status']);
+            $this->assertSame('worker_receipt_missing', $worker['checks']['queue_processing']['reason_code']);
+            $this->assertSame('ok', $worker['checks']['scheduler']['status']);
+
+            $store->put(RuntimeHealthService::CPANEL_QUEUE_TICK_RECEIPT_KEY, time() - 10, now()->addMinutes(10));
+            $store->put(RuntimeHealthService::SCHEDULER_HEARTBEAT_KEY, $invalid, now()->addMinutes(10));
+
+            $scheduler = $health->ready();
+            $this->assertSame('not_ready', $scheduler['status']);
+            $this->assertSame('unavailable', $scheduler['checks']['scheduler']['status']);
+            $this->assertSame('ok', $scheduler['checks']['queue_processing']['status']);
+        }
+    }
+
+    public function test_vps_scheduler_rejects_numeric_but_non_integer_receipts(): void
+    {
+        config(['cpanel.enabled' => false]);
+        $health = app(RuntimeHealthService::class);
+
+        foreach ([time() - 10.5, (string) (time() - 10).'e0', true] as $invalid) {
+            Cache::store('database')->put(RuntimeHealthService::SCHEDULER_HEARTBEAT_KEY, $invalid, now()->addMinutes(10));
+
+            $report = $health->ready();
+            $this->assertSame('unavailable', $report['checks']['scheduler']['status']);
+            $this->assertSame('not_ready', $report['status']);
+        }
+    }
+
     public function test_vps_scheduler_rejects_future_heartbeat_instead_of_green(): void
     {
         config(['cpanel.enabled' => false]);
