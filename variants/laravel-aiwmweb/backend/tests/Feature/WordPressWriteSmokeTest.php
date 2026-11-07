@@ -138,6 +138,7 @@ final class WordPressWriteSmokeTest extends TestCase
                 return $existing ? Http::response(['id' => 321, 'title' => ['raw' => $title]], 200)
                     : Http::response(['code' => 'rest_post_invalid_id'], 404);
             }
+
             return Http::response(['code' => 'unexpected'], 500);
         });
 
@@ -189,6 +190,7 @@ final class WordPressWriteSmokeTest extends TestCase
                     ? Http::response(['code' => 'not_found'], 404)
                     : Http::response(['id' => 777, 'title' => ['raw' => $title]], 200);
             }
+
             return Http::response([], 500);
         });
 
@@ -223,6 +225,7 @@ final class WordPressWriteSmokeTest extends TestCase
             if ($request->method() === 'DELETE') {
                 return Http::response([], 500);
             }
+
             return Http::response(['id' => 952, 'title' => ['raw' => $title]], 200);
         });
         $response = $this->actingAs($user)->postJson(
