@@ -21,6 +21,24 @@ class AiPromptDashboardCreateTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_temporary_compiled_blade_diagnostics(): void
+    {
+        $source = file_get_contents(resource_path('views/ai/prompt-templates.blade.php'));
+        $compiled = \Illuminate\Support\Facades\Blade::compileString($source);
+        $lines = explode("\n", $compiled);
+        foreach ($lines as $index => $line) {
+            if (str_contains($line, 'endforeach') || str_contains($line, 'foreach (') ||
+                str_contains($line, 'foreach(') || str_contains($line, 'endunless')) {
+                $near = array_slice($lines, max(0, $index - 2), 5);
+                fwrite(STDERR, "AIWM_BLADE_COMPILED_".($index + 1).": ".
+                    str_replace("\n", " | ", implode("\n", $near))."\n");
+            }
+        }
+
+        $this->assertTrue(true);
+    }
+
+
     public function test_prompt_page_uses_authenticated_dark_dashboard_shell_and_real_stylesheet(): void
     {
         $user = User::factory()->create();
