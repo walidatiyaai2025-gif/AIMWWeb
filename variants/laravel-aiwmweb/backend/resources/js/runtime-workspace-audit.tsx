@@ -129,8 +129,8 @@ export async function runReadOnlyWorkspaceAudit(
                 signal: controller.signal,
                 headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             });
-            const duration_ms = Math.min(60000, Math.max(0, Date.now() - started));
             const json = response.ok && await containsBoundedJsonDocument(response);
+            const duration_ms = Math.min(60000, Math.max(0, Date.now() - started));
             const ok = response.ok && json;
             return {
                 state: ok ? 'passed_read' as const : 'failed_read' as const,
