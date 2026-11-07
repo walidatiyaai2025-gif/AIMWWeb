@@ -30,7 +30,11 @@ final class ObservabilityApiShapeSecurityTest extends TestCase
         $response = $this->actingAs($actor)
             ->getJson('/tenants/alpha/admin/diagnostics')
             ->assertOk()
-            ->assertJsonStructure(['failed_operations', 'recent_audit'])
+            ->assertJsonStructure(['failed_operations', 'recent_audit', 'meta'])
+            ->assertJsonPath('meta.scope', 'tenant_operations_and_audit')
+            ->assertJsonPath('meta.failed_operations_total', 1)
+            ->assertJsonPath('meta.audit_events_total', 1)
+            ->assertJsonPath('meta.system_health_included', false)
             ->assertJsonCount(1, 'failed_operations')
             ->assertJsonCount(1, 'recent_audit');
 
@@ -94,12 +98,45 @@ final class ObservabilityApiShapeSecurityTest extends TestCase
 
         $this->actingAs($user)->getJson('/tenants/alpha/admin/diagnostics')
             ->assertOk()
-            ->assertExactJson(['failed_operations' => [], 'recent_audit' => []]);
+            ->assertJsonPath('failed_operations', [])
+            ->assertJsonPath('recent_audit', [])
+            ->assertJsonPath('meta.failed_operations_total', 0)
+            ->assertJsonPath('meta.audit_events_total', 0)
+            ->assertJsonPath('meta.empty_reason', 'no_tenant_events')
+            ->assertJsonPath('meta.system_health_included', false);
 
         [, $limited] = $this->member('limited', ['tenant.view', 'diagnostics.view']);
         $this->actingAs($limited)
             ->getJson('/tenants/limited/admin/diagnostics')
             ->assertForbidden();
+    }
+
+    public function test_diagnostics_reports_real_bounded_tenant_counts_not_just_100_returned_rows(): void
+    {
+        [$alpha, $actor] = $this->member('alpha', ['tenant.view', 'operations.manage', 'diagnostics.view']);
+        [$beta] = $this->member('beta', ['tenant.view', 'operations.manage', 'diagnostics.view']);
+
+        for ($index = 0; $index < 102; $index++) {
+            $this->seedFailedOperation($alpha, 'alpha.failure');
+            $this->seedAudit($alpha, 'alpha.audit');
+        }
+        $this->seedFailedOperation($beta, 'foreign.private');
+        $this->seedAudit($beta, 'foreign.private');
+
+        $response = $this->actingAs($actor)
+            ->getJson('/tenants/alpha/admin/diagnostics')
+            ->assertOk()
+            ->assertJsonCount(100, 'failed_operations')
+            ->assertJsonCount(100, 'recent_audit')
+            ->assertJsonPath('meta.failed_operations_total', 102)
+            ->assertJsonPath('meta.audit_events_total', 102)
+            ->assertJsonPath('meta.failed_operations_truncated', true)
+            ->assertJsonPath('meta.recent_audit_truncated', true)
+            ->assertJsonPath('meta.empty_reason', 'not_empty')
+            ->assertJsonPath('meta.limit_per_source', 100);
+
+        $this->assertStringNotContainsString('foreign.private', $response->getContent());
+        $this->assertStringNotContainsString('tenant_id', $response->getContent());
     }
 
     public function test_direct_foreign_tenant_access_is_rejected(): void
