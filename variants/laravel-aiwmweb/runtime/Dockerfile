@@ -17,7 +17,8 @@ FROM php:8.4.24-fpm-trixie AS app
 ARG PHPREDIS_VERSION=6.3.0
 ENV APP_ENV=production \
     APP_DEBUG=false \
-    COMPOSER_ALLOW_SUPERUSER=1
+    COMPOSER_ALLOW_SUPERUSER=1 \
+    COMPOSER_MAX_PARALLEL_HTTP=2
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -47,7 +48,20 @@ RUN apt-get update \
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 COPY backend/ ./
-RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
+# Keep deterministic locked production dependencies, but tolerate bounded
+# transient GitHub dist HTTP 5xx failures without a dependency-version change.
+# The BuildKit Composer cache survives retries within a Docker build.
+RUN --mount=type=cache,target=/root/.cache/composer \
+    set -eu; \
+    attempt=1; \
+    until composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader; do \
+        if [ "$attempt" -ge 4 ]; then \
+            echo "Composer locked dependency download failed after four attempts." >&2; \
+            exit 1; \
+        fi; \
+        sleep "$((attempt * 10))"; \
+        attempt="$((attempt + 1))"; \
+    done
 COPY --from=assets /build/public/build ./public/build
 COPY runtime/php/production.ini /usr/local/etc/php/conf.d/99-aiwmweb-production.ini
 COPY runtime/scripts/php-entrypoint.sh /usr/local/bin/aiwmweb-entrypoint

@@ -3,9 +3,12 @@
 namespace App\Content\Remote;
 
 use App\Models\SiteCredential;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
+use Throwable;
 
 final class NativeWordPressRestPath
 {
@@ -21,12 +24,52 @@ final class NativeWordPressRestPath
 
     public function list(int $siteId, string $resource, array $query = []): array
     {
-        return $this->request($siteId)->get($this->url($siteId, $this->endpoint($resource)), ['context' => 'edit'] + $query)->throw()->json() ?? [];
+        // Never retry WordPress 4xx responses: an out-of-range page is an
+        // expected terminal response, not a transient provider failure.
+        $response = $this->requestWithoutRetry($siteId)
+            ->retry(2, 250, static function (Throwable $exception): bool {
+                return $exception instanceof ConnectionException
+                    || ($exception instanceof RequestException && $exception->response->status() >= 500);
+            }, false)
+            ->get($this->url($siteId, $this->endpoint($resource)), ['context' => 'edit'] + $query);
+
+        // WordPress native REST rejects a page beyond the final full page
+        // with a specific 400 code; that one documented condition is an
+        // authoritative end-of-pagination, not a generic upstream failure.
+        if ((int) ($query['page'] ?? 1) > 1 && $response->status() === 400
+            && in_array($response->json('code'), [
+                'rest_post_invalid_page_number',
+                'rest_term_invalid_page_number',
+                'rest_comment_invalid_page_number',
+                'rest_user_invalid_page_number',
+            ], true)) {
+            return [];
+        }
+
+        $rows = $response->throw()->json();
+        if (! is_array($rows) || ! array_is_list($rows)) {
+            throw new RuntimeException('WordPress REST resource list returned an invalid JSON collection.');
+        }
+        foreach ($rows as $row) {
+            if (! is_array($row) || array_is_list($row)
+                || ! isset($row['id']) || ! ctype_digit((string) $row['id'])
+                || (int) $row['id'] < 1) {
+                throw new RuntimeException('WordPress REST resource list returned a malformed record.');
+            }
+        }
+
+        return $rows;
     }
 
     public function get(int $siteId, string $resource, int $remoteId, array $query = []): array
     {
-        return $this->request($siteId)->get($this->url($siteId, $this->endpoint($resource).'/'.$remoteId), ['context' => 'edit'] + $query)->throw()->json() ?? [];
+        $row = $this->request($siteId)->get($this->url($siteId, $this->endpoint($resource).'/'.$remoteId), ['context' => 'edit'] + $query)->throw()->json();
+        if (! is_array($row) || array_is_list($row)
+            || (int) ($row['id'] ?? 0) !== $remoteId) {
+            throw new RuntimeException('WordPress REST resource read returned an incorrect record.');
+        }
+
+        return $row;
     }
 
     public function mutate(int $siteId, string $resource, ?int $remoteId, string $action, array $payload = []): array
@@ -80,7 +123,7 @@ final class NativeWordPressRestPath
             if ($response->status() !== 404) {
                 $response->throw();
             }
-        } catch (\Throwable $error) {
+        } catch (Throwable $error) {
             if ($this->exists($siteId, 'media', $remoteId)) {
                 throw $error;
             }
