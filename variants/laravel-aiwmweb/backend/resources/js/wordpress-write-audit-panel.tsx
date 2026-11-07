@@ -112,7 +112,7 @@ export function WordPressWriteAuditPanel({ context, siteIds, onComplete }: {
                     onComplete(null);
                 }}>
                 <option value="">{ar ? 'اختر الموقع' : 'Choose a site'}</option>
-                {ids.map(id => <option key={id} value={id}>{ar ? 'الموقع' : 'Site'} #{id}</option>)}
+                {ids.map(id => <option key={id} value={id}>{ar ? 'موقع اختبار الكتابة' : 'Write probe site'} #{id}</option>)}
             </select>
         </label>
         <label>
