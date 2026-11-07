@@ -246,7 +246,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
             $activeSiteId = request()->session()->get('canonical_site_id');
             if ($activeSiteId !== null) {
                 $site = Site::query()->find((int) $activeSiteId);
-                if (! $site) {
+                if ($site === null) {
                     request()->session()->forget('canonical_site_id');
                 }
             }
