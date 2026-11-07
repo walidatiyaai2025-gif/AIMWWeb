@@ -87,21 +87,29 @@ final class WordPressUsersController extends Controller
             abort_unless((int) ($baseline['id'] ?? 0) === $remoteId, 404);
         }
 
-        $payload = [
-            'email' => trim((string) $data['email']),
-            'name' => trim((string) ($data['name'] ?? '')),
-            'first_name' => trim((string) ($data['first_name'] ?? '')),
-            'last_name' => trim((string) ($data['last_name'] ?? '')),
-            'url' => trim((string) ($data['url'] ?? '')),
-            'description' => trim((string) ($data['description'] ?? '')),
-            'roles' => [(string) ($data['role'] ?? 'subscriber')],
-        ];
+        // An edit must be a partial update. Missing optional fields are not
+        // instructions to erase WordPress profile data or demote a user to
+        // subscriber. Creation can still use its documented defaults.
+        $payload = ['email' => trim((string) $data['email'])];
+        foreach (['name', 'first_name', 'last_name', 'url', 'description'] as $field) {
+            if ($creating || array_key_exists($field, $data)) {
+                $payload[$field] = trim((string) ($data[$field] ?? ''));
+            }
+        }
 
         if ($creating) {
+            $payload['roles'] = [(string) ($data['role'] ?? 'subscriber')];
             $payload['username'] = trim((string) $data['username']);
             $payload['password'] = (string) $data['password'];
-        } elseif (filled($data['password'] ?? null)) {
-            $payload['password'] = (string) $data['password'];
+        } else {
+            // Roles are only changed by an explicit non-empty selection.
+            // A null role (e.g. an empty form control) preserves current roles.
+            if (filled($data['role'] ?? null)) {
+                $payload['roles'] = [(string) $data['role']];
+            }
+            if (filled($data['password'] ?? null)) {
+                $payload['password'] = (string) $data['password'];
+            }
         }
 
         $accepted = $this->wordpress->mutateOnce($site, 'users', $remoteId, $payload);

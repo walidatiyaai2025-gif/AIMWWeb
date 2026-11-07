@@ -176,6 +176,105 @@ final class WordPressUsersSaveTerminalityTest extends TestCase
         );
     }
 
+    public function test_partial_update_preserves_missing_role_and_profile_fields_in_wordpress(): void
+    {
+        $user = User::factory()->create();
+        $membership = $this->membership($user, 'alpha', ['sites.view', 'content.view', 'content.edit']);
+        $site = $this->site($membership, 'https://alpha.example.test');
+        $this->credential($membership, $site);
+
+        $reads = 0;
+        Http::fake(function ($request) use (&$reads) {
+            if ($request->method() === 'GET'
+                && $request->url() === 'https://alpha.example.test/wp-json/wp/v2/users/55?context=edit') {
+                $reads++;
+
+                return Http::response([
+                    'id' => 55,
+                    'username' => 'site-owner',
+                    'email' => $reads === 1 ? 'before@example.test' : 'after@example.test',
+                    'name' => 'Site Owner',
+                    'first_name' => 'Original',
+                    'last_name' => 'Owner',
+                    'url' => 'https://example.test/owner',
+                    'description' => 'Do not erase',
+                    'roles' => ['administrator'],
+                ], 200);
+            }
+
+            if ($request->method() === 'POST'
+                && $request->url() === 'https://alpha.example.test/wp-json/wp/v2/users/55') {
+                return Http::response(['id' => 55], 200);
+            }
+
+            return Http::response(['message' => 'unexpected request'], 500);
+        });
+
+        $this->actingAs($user)
+            ->postJson("/api/v1/tenants/alpha/sites/{$site->id}/users/save", [
+                'wordpress_user_id' => 55,
+                'email' => 'after@example.test',
+            ])
+            ->assertOk()
+            ->assertJsonPath('mode', 'update')
+            ->assertJsonPath('reconciled', true)
+            ->assertJsonPath('data.email', 'after@example.test')
+            ->assertJsonPath('data.roles.0', 'administrator')
+            ->assertJsonPath('data.name', 'Site Owner')
+            ->assertJsonPath('data.description', 'Do not erase');
+
+        $this->assertSame(2, $reads);
+        Http::assertSentCount(3);
+        Http::assertSent(function ($request): bool {
+            return $request->method() === 'POST'
+                && $request->url() === 'https://alpha.example.test/wp-json/wp/v2/users/55'
+                && $request->data() === ['email' => 'after@example.test'];
+        });
+    }
+
+    public function test_explicit_profile_clear_does_not_change_wordpress_roles(): void
+    {
+        $user = User::factory()->create();
+        $membership = $this->membership($user, 'alpha', ['sites.view', 'content.view', 'content.edit']);
+        $site = $this->site($membership, 'https://alpha.example.test');
+        $this->credential($membership, $site);
+
+        Http::fake(function ($request) {
+            if ($request->method() === 'GET'
+                && $request->url() === 'https://alpha.example.test/wp-json/wp/v2/users/55?context=edit') {
+                return Http::response([
+                    'id' => 55,
+                    'email' => 'owner@example.test',
+                    'description' => '',
+                    'roles' => ['administrator'],
+                ], 200);
+            }
+            if ($request->method() === 'POST'
+                && $request->url() === 'https://alpha.example.test/wp-json/wp/v2/users/55') {
+                return Http::response(['id' => 55], 200);
+            }
+
+            return Http::response(['message' => 'unexpected request'], 500);
+        });
+
+        $this->actingAs($user)
+            ->postJson("/api/v1/tenants/alpha/sites/{$site->id}/users/save", [
+                'wordpress_user_id' => 55,
+                'email' => 'owner@example.test',
+                'description' => '',
+                'role' => null,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.roles.0', 'administrator');
+
+        Http::assertSentCount(3);
+        Http::assertSent(function ($request): bool {
+            return $request->method() === 'POST'
+                && $request->url() === 'https://alpha.example.test/wp-json/wp/v2/users/55'
+                && $request->data() === ['email' => 'owner@example.test', 'description' => ''];
+        });
+    }
+
     public function test_guest_missing_permission_foreign_tenant_and_caller_identity_fail_closed_before_wordpress(): void
     {
         Http::fake();
