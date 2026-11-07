@@ -184,7 +184,7 @@ final class BackupCreateTerminalityTest extends TestCase
             try {
                 app(TenantBackupCreateService::class)->create($admin->id, 'Safe backup smoke', null);
                 $this->fail('A backup must never be created into an unsafe existing path.');
-            } catch (\\RuntimeException $exception) {
+            } catch (\RuntimeException $exception) {
                 $this->assertSame('Private backup storage target is unsafe.', $exception->getMessage());
             }
         } finally {
