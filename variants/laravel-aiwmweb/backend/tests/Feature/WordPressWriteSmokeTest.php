@@ -115,11 +115,16 @@ final class WordPressWriteSmokeTest extends TestCase
         $this->credential($membership, $site);
         Http::fake();
 
+        // The maximum comments path has 10 serial requests with a 12s
+        // per-request timeout. Keep at least 60 seconds of lease headroom
+        // for PHP/cleanup overhead before another probe may start.
+        $this->assertGreaterThan(10 * 12 + 60, WordPressWriteSmokeController::SITE_LOCK_SECONDS);
+
         // Hold the same cache lease from another hypothetical worker. The
         // second request must never create any WordPress canaries.
         $lock = Cache::lock(
             'wp-smoke:tenant:'.$membership->tenant_id.':site:'.$site->id,
-            300,
+            WordPressWriteSmokeController::SITE_LOCK_SECONDS,
         );
         $this->assertTrue($lock->get());
         try {
