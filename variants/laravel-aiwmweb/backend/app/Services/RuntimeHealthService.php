@@ -140,8 +140,9 @@ final class RuntimeHealthService
                 }
 
                 $maxAge = max(60, (int) env('SCHEDULER_HEALTH_MAX_AGE', 180));
-                if ((time() - (int) $tick) > $maxAge) {
-                    throw new RuntimeException('Scheduler heartbeat is stale.');
+                $age = time() - (int) $tick;
+                if ($age < 0 || $age > $maxAge) {
+                    throw new RuntimeException('Scheduler heartbeat is invalid, future dated or stale.');
                 }
             }),
         ];
@@ -203,16 +204,29 @@ final class RuntimeHealthService
                 : ['status' => 'disabled', 'reason_code' => 'cron_disabled'],
             'redis' => ['status' => 'not_required'],
             'ai' => ['status' => config('cpanel.ai_enabled') ? (config('cpanel.preflight_passed') && config('cpanel.cron_enabled') ? 'ok' : 'unavailable') : 'disabled'],
-            'scheduler' => ! config('cpanel.cron_enabled') ? ['status' => 'disabled'] : $this->probe('scheduler', function (): void {
-                $tick = Cache::store('database')->get(self::SCHEDULER_HEARTBEAT_KEY);
-                if (! config('cpanel.preflight_passed') || ! is_numeric($tick) || time() - (int) $tick > 180) {
-                    throw new RuntimeException('Validated cPanel scheduler heartbeat is missing or stale.');
-                }
-            }),
+            'scheduler' => ! config('cpanel.cron_enabled')
+                ? ['status' => 'disabled', 'reason_code' => 'cron_disabled']
+                : $this->probe('scheduler', function (): void {
+                    $tick = Cache::store('database')->get(self::SCHEDULER_HEARTBEAT_KEY);
+                    if (! config('cpanel.preflight_passed') || ! is_numeric($tick)) {
+                        throw new RuntimeException('Validated cPanel scheduler heartbeat is missing.');
+                    }
+                    $age = time() - (int) $tick;
+                    if ($age < 0 || $age > 180) {
+                        throw new RuntimeException('Validated cPanel scheduler heartbeat is future dated or stale.');
+                    }
+                }),
         ];
 
         return [
-            'status' => collect($checks)->every(fn ($check) => in_array($check['status'], ['ok', 'disabled', 'not_required'], true)) ? 'ready' : 'not_ready',
+            // Optional AI and Redis may be disabled/not_required, but the
+            // mandatory Cron-backed queue and scheduler must be operational.
+            // A cPanel site without validated preflight or enabled Cron must
+            // never return a false-green global readiness status.
+            'status' => config('cpanel.preflight_passed')
+                && config('cpanel.cron_enabled')
+                && collect($checks)->every(fn ($check) => in_array($check['status'], ['ok', 'disabled', 'not_required'], true))
+                    ? 'ready' : 'not_ready',
             'profile' => 'cpanel',
             'hosting_preflight' => config('cpanel.preflight_passed') ? 'operator_validated' : 'pending',
             'checks' => $checks,
@@ -229,7 +243,9 @@ final class RuntimeHealthService
             }
 
             $age = time() - (int) $receipt;
-            if ($age < -30) {
+            // A future-dated receipt cannot prove a worker cycle has
+            // already completed. Match the read-only Inspector contract.
+            if ($age < 0) {
                 return ['status' => 'unavailable', 'reason_code' => 'worker_receipt_invalid'];
             }
             if ($age > 180) {
@@ -243,7 +259,7 @@ final class RuntimeHealthService
             return [
                 'status' => 'ok',
                 'evidence' => 'bounded_worker_cycle_completed',
-                'age_seconds' => max(0, $age),
+                'age_seconds' => $age,
             ];
         } catch (Throwable $exception) {
             Log::warning('runtime.health.failed', [

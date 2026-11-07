@@ -72,11 +72,68 @@ class CpanelWorkerReceiptHealthTest extends TestCase
 
     public function test_disabled_cron_is_reported_as_disabled_and_never_green(): void
     {
-        config(['cpanel.cron_enabled' => false]);
+        config(['cpanel.cron_enabled' => false, 'cpanel.ai_enabled' => false]);
 
-        $queue = app(RuntimeHealthService::class)->ready()['checks']['queue_processing'];
+        $report = app(RuntimeHealthService::class)->ready();
 
-        $this->assertSame('disabled', $queue['status']);
-        $this->assertSame('cron_disabled', $queue['reason_code']);
+        $this->assertSame('not_ready', $report['status']);
+        $this->assertSame('disabled', $report['checks']['queue_processing']['status']);
+        $this->assertSame('cron_disabled', $report['checks']['queue_processing']['reason_code']);
+        $this->assertSame('disabled', $report['checks']['scheduler']['status']);
+        $this->assertSame('cron_disabled', $report['checks']['scheduler']['reason_code']);
+        $this->assertSame('not_required', $report['checks']['redis']['status']);
+        $this->assertSame('disabled', $report['checks']['ai']['status']);
+    }
+
+    public function test_recent_completed_receipts_are_healthy_but_do_not_override_other_failing_probes(): void
+    {
+        Cache::store('database')->put(RuntimeHealthService::SCHEDULER_HEARTBEAT_KEY, time() - 10, now()->addMinutes(10));
+        Cache::store('database')->put(RuntimeHealthService::CPANEL_QUEUE_TICK_RECEIPT_KEY, time() - 10, now()->addMinutes(10));
+
+        $report = app(RuntimeHealthService::class)->ready();
+
+        // Other independent health probes (notably database session setup
+        // in a generic SQLite CI environment) may still be unavailable.
+        // Two valid receipts must not be asserted to make the whole host ready.
+        $this->assertSame('ok', $report['checks']['scheduler']['status']);
+        $this->assertSame('ok', $report['checks']['queue_processing']['status']);
+        $this->assertSame('not_required', $report['checks']['redis']['status']);
+
+        config(['cpanel.preflight_passed' => false]);
+        $pending = app(RuntimeHealthService::class)->ready();
+        $this->assertSame('not_ready', $pending['status']);
+        $this->assertSame('pending', $pending['hosting_preflight']);
+    }
+
+    public function test_future_dated_scheduler_and_worker_receipts_are_not_evidence_of_completed_execution(): void
+    {
+        $store = Cache::store('database');
+        $store->put(RuntimeHealthService::SCHEDULER_HEARTBEAT_KEY, time() + 10, now()->addMinutes(10));
+        $store->put(RuntimeHealthService::CPANEL_QUEUE_TICK_RECEIPT_KEY, time() - 10, now()->addMinutes(10));
+
+        $futureScheduler = app(RuntimeHealthService::class)->ready();
+        $this->assertSame('not_ready', $futureScheduler['status']);
+        $this->assertSame('unavailable', $futureScheduler['checks']['scheduler']['status']);
+        $this->assertSame('ok', $futureScheduler['checks']['queue_processing']['status']);
+
+        $store->put(RuntimeHealthService::SCHEDULER_HEARTBEAT_KEY, time() - 10, now()->addMinutes(10));
+        $store->put(RuntimeHealthService::CPANEL_QUEUE_TICK_RECEIPT_KEY, time() + 10, now()->addMinutes(10));
+
+        $futureWorker = app(RuntimeHealthService::class)->ready();
+        $this->assertSame('not_ready', $futureWorker['status']);
+        $this->assertSame('ok', $futureWorker['checks']['scheduler']['status']);
+        $this->assertSame('unavailable', $futureWorker['checks']['queue_processing']['status']);
+        $this->assertSame('worker_receipt_invalid', $futureWorker['checks']['queue_processing']['reason_code']);
+    }
+
+    public function test_vps_scheduler_rejects_future_heartbeat_instead_of_green(): void
+    {
+        config(['cpanel.enabled' => false]);
+        Cache::store('database')->put(RuntimeHealthService::SCHEDULER_HEARTBEAT_KEY, time() + 10, now()->addMinutes(10));
+
+        $report = app(RuntimeHealthService::class)->ready();
+
+        $this->assertSame('unavailable', $report['checks']['scheduler']['status']);
+        $this->assertSame('not_ready', $report['status']);
     }
 }
