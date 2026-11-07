@@ -211,7 +211,7 @@ final class OperationsControlPlaneService
     public function operation(int $id): array
     {
         $operation = $this->row('operation_executions', $id);
-        $logs = DB::table('operation_logs')->where('tenant_id', $this->context->id())->where('operation_execution_id', $id)->orderBy('id')->get()->map(fn ($row) => $this->decodeColumns($this->objectToArray($row), ['context']))->all();
+        $logs = DB::table('operation_logs')->where('tenant_id', $this->context->id())->where('operation_execution_id', $id)->orderBy('id')->get()->map(fn ($row) => $this->redactor->redact($this->decodeColumns($this->objectToArray($row), ['context'])))->all();
 
         return ['operation' => $this->decodeColumns($operation, ['payload', 'result']), 'logs' => $logs];
     }
@@ -379,9 +379,11 @@ final class OperationsControlPlaneService
             $query->whereRaw("message LIKE ? ESCAPE '!'", ['%'.$needle.'%']);
         }
 
+        // Legacy or externally imported log contexts may predate write-time
+        // redaction. Sanitize both list and operation-detail read boundaries.
         $matchingCount = $hasFilters ? (clone $query)->count() : $tenantCount;
         $rows = $query->orderByDesc('occurred_at')->limit(500)->get()
-            ->map(fn ($row) => $this->decodeColumns($this->objectToArray($row), ['context']))->all();
+            ->map(fn ($row) => $this->redactor->redact($this->decodeColumns($this->objectToArray($row), ['context'])))->all();
 
         return [
             'data' => $rows,
