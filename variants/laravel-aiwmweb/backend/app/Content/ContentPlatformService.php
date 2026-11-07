@@ -33,6 +33,12 @@ final class ContentPlatformService
         return $q->latest('remote_modified_at')->paginate(min(max((int) ($filters['per_page'] ?? 25), 1), 100));
     }
 
+    private const DIRECT_SYNC_PAGE_SIZE = 100;
+
+    // This legacy in-process helper must remain bounded on shared hosting.
+    // Larger imports use the durable page-at-a-time SyncRuntimeService jobs.
+    private const DIRECT_SYNC_MAX_PAGES = 10;
+
     public function sync(int $siteId, bool $full = false): array
     {
         $resources = ['posts', 'pages', 'media', 'categories', 'tags', 'comments'];
@@ -40,23 +46,52 @@ final class ContentPlatformService
         foreach ($resources as $index => $resource) {
             $state = ContentSyncState::query()->firstOrCreate(['site_id' => $siteId, 'resource' => $resource], ['state' => 'idle']);
             $state->update(['state' => 'running', 'progress' => (int) floor(($index / count($resources)) * 100), 'attempts' => $state->attempts + 1, 'started_at' => now(), 'last_error' => null]);
+
             try {
-                $query = $full || ! $state->last_remote_modified_at ? ['per_page' => 100] : ['per_page' => 100, 'modified_after' => $state->last_remote_modified_at->toIso8601String()];
-                $rows = $this->remote->list($siteId, $resource, $query);
+                $query = $full || ! $state->last_remote_modified_at
+                    ? ['per_page' => self::DIRECT_SYNC_PAGE_SIZE]
+                    : ['per_page' => self::DIRECT_SYNC_PAGE_SIZE, 'modified_after' => $state->last_remote_modified_at->toIso8601String()];
+                $received = 0;
                 $changed = 0;
                 $maxModified = $state->last_remote_modified_at;
-                foreach ($rows as $row) {
-                    if (! is_array($row)) {
-                        continue;
+                $finished = false;
+
+                for ($page = 1; $page <= self::DIRECT_SYNC_MAX_PAGES; $page++) {
+                    $rows = $this->remote->list($siteId, $resource, $query + ['page' => $page]);
+
+                    // A malformed successful response is NOT an empty page.
+                    // Check the entire page before writing any of its records.
+                    if (! array_is_list($rows) || count($rows) > self::DIRECT_SYNC_PAGE_SIZE) {
+                        throw new \RuntimeException('Remote content sync returned an invalid resource page.');
                     }
-                    $changed += $this->upsertRemote($siteId, $resource, $row) ? 1 : 0;
-                    $modified = $this->date($row['modified_gmt'] ?? $row['modified'] ?? null);
-                    if ($modified && (! $maxModified || $modified->greaterThan($maxModified))) {
-                        $maxModified = $modified;
+                    foreach ($rows as $row) {
+                        if (! is_array($row) || array_is_list($row)
+                            || ! isset($row['id']) || ! ctype_digit((string) $row['id'])
+                            || (int) $row['id'] < 1) {
+                            throw new \RuntimeException('Remote content sync returned a malformed resource row.');
+                        }
+                    }
+
+                    foreach ($rows as $row) {
+                        $changed += $this->upsertRemote($siteId, $resource, $row) ? 1 : 0;
+                        $modified = $this->date($row['modified_gmt'] ?? $row['modified'] ?? null);
+                        if ($modified && (! $maxModified || $modified->greaterThan($maxModified))) {
+                            $maxModified = $modified;
+                        }
+                    }
+                    $received += count($rows);
+                    if (count($rows) < self::DIRECT_SYNC_PAGE_SIZE) {
+                        $finished = true;
+                        break;
                     }
                 }
+
+                if (! $finished) {
+                    throw new \RuntimeException('Direct content sync page limit reached; use durable queued synchronization for larger sites.');
+                }
+
                 $state->update(['state' => 'succeeded', 'progress' => 100, 'completed_at' => now(), 'last_remote_modified_at' => $maxModified]);
-                $summary[$resource] = ['received' => count($rows), 'changed' => $changed];
+                $summary[$resource] = ['received' => $received, 'changed' => $changed];
             } catch (\Throwable $e) {
                 $state->update(['state' => 'failed', 'last_error' => $e->getMessage(), 'completed_at' => now()]);
                 throw $e;
