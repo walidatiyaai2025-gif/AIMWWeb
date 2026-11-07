@@ -231,6 +231,89 @@ final class WordPressWriteSmokeTest extends TestCase
         Http::assertSent(fn (RemoteRequest $request): bool => $request->method() === 'DELETE' && str_ends_with($request->url(), '/posts/952'));
     }
 
+    public function test_all_six_resource_types_are_read_saved_then_deleted_without_touching_prior_content(): void
+    {
+        $user = User::factory()->create();
+        $membership = $this->membership($user, 'alpha', ['diagnostics.view', 'content.edit', 'content.manage']);
+        $site = $this->site($membership);
+        $this->credential($membership, $site);
+
+        $rows = [];
+        $sequence = [];
+        $nextId = 1500;
+
+        Http::fake(function (RemoteRequest $request) use (&$rows, &$sequence, &$nextId) {
+            $url = $request->url();
+            $method = $request->method();
+            $path = (string) parse_url($url, PHP_URL_PATH);
+            if (preg_match('#/wp-json/wp/v2/(posts|pages|categories|tags|comments|media)(?:/([0-9]+))?$#', $path, $parts) !== 1) {
+                return Http::response(['code' => 'unexpected'], 500);
+            }
+            $resource = $parts[1];
+            $remoteId = isset($parts[2]) ? (int) $parts[2] : null;
+            $key = $resource.':'.$remoteId;
+            $data = $request->data();
+            $sequence[] = $method.':'.$resource;
+
+            if ($method === 'POST' && $remoteId === null) {
+                $createdId = ++$nextId;
+                $rows[$resource.':'.$createdId] = [
+                    'id' => $createdId,
+                    'name' => $data['name'] ?? '',
+                    'title' => ['raw' => $data['title'] ?? ''],
+                    'content' => ['raw' => $data['content'] ?? ''],
+                    'alt_text' => '',
+                ];
+
+                return Http::response(['id' => $createdId], 201);
+            }
+            if ($method === 'POST' && $remoteId !== null && isset($rows[$key])) {
+                if (isset($data['name'])) {
+                    $rows[$key]['name'] = $data['name'];
+                }
+                if (isset($data['title'])) {
+                    $rows[$key]['title']['raw'] = $data['title'];
+                }
+                if (isset($data['content'])) {
+                    $rows[$key]['content']['raw'] = $data['content'];
+                }
+                if (isset($data['alt_text'])) {
+                    $rows[$key]['alt_text'] = $data['alt_text'];
+                }
+
+                return Http::response(['id' => $remoteId], 200);
+            }
+            if ($method === 'DELETE' && isset($rows[$key])) {
+                $this->assertSame(true, $data['force'] ?? false);
+                unset($rows[$key]);
+
+                return Http::response(['deleted' => true], 200);
+            }
+            if ($method === 'GET' && isset($rows[$key])) {
+                return Http::response($rows[$key], 200);
+            }
+            if ($method === 'GET') {
+                return Http::response(['code' => 'rest_not_found'], 404);
+            }
+
+            return Http::response(['code' => 'unexpected'], 400);
+        });
+
+        foreach (['posts', 'pages', 'categories', 'tags', 'comments', 'media'] as $resource) {
+            $this->actingAs($user)
+                ->postJson(self::ENDPOINT, $this->body($resource) + ['site_id' => $site->id])
+                ->assertOk()
+                ->assertJsonPath('resource', $resource)
+                ->assertJsonPath('state', 'passed')
+                ->assertJsonPath('save_verified', true)
+                ->assertJsonPath('delete_verified', true)
+                ->assertJsonPath('cleanup_required', false);
+            $this->assertSame([], $rows, 'Every synthetic WordPress object must be deleted after each resource probe.');
+        }
+        $this->assertCount(40, $sequence);
+        $this->assertSame(7, count(array_filter($sequence, fn (string $entry): bool => str_starts_with($entry, 'DELETE:'))));
+    }
+
     private function membership(User $user, string $slug, array $permissions): TenantMembership
     {
         $tenant = Tenant::query()->firstOrCreate(['slug' => $slug], ['name' => ucfirst($slug)]);
