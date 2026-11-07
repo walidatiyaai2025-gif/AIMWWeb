@@ -120,7 +120,7 @@ describe('explicit all-workspace read-only live audit', () => {
                 .toBe('site_selection_required');
         }
         expect(noSite.find(entry => entry.key === 'site-connect')?.reason)
-            .toBe('missing_contract');
+            .toBe('navigation_only');
 
         const selected = liveAuditPlan({
             ...context(), api, active_site: { id: 1, name: 'site', status: 'connected' },
