@@ -61,7 +61,12 @@ final class WordPressWriteSmokeController extends Controller
             ], 200)->header('Cache-Control', 'no-store, private');
         }
 
-        $lock = Cache::lock('wp-smoke:tenant:'.$context->id().':site:'.$site->id, 120);
+        // The comments canary performs up to ten serial REST operations,
+        // each with a 12-second timeout. A 120s lease may expire before the
+        // verification/cleanup loop finishes and let another write probe in.
+        // Allow generous headroom for PHP/DB overhead while retaining a finite
+        // stale-lock recovery bound if the worker is terminated unexpectedly.
+        $lock = Cache::lock('wp-smoke:tenant:'.$context->id().':site:'.$site->id, 300);
         if (! $lock->get()) {
             return response()->json([
                 'schema' => 'aiwm.wordpress-write-smoke.v1',
