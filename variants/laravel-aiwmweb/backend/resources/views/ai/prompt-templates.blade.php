@@ -128,8 +128,8 @@
         <header>
             <p>AI PROMPT REGISTRY</p>
             <h2 data-prompt-ar="قوالب أوامر الذكاء الاصطناعي">AI Prompt Templates</h2>
-            <p>Read and update persisted prompt templates and append-only revision history for {{ $tenant->name }}.</p>
-            <p>Settings managers only. Saving an existing template creates a new revision only when persisted prompt state actually changes.</p>
+            <p><span data-prompt-ar="عرض قوالب الأوامر المحفوظة وتعديلها ومراجعة سجل إصداراتها للحساب">Read and update persisted prompt templates and append-only revision history for</span> {{ $tenant->name }}.</p>
+            <p data-prompt-ar="لمديري الإعدادات فقط. لا يُنشأ إصدار جديد عند حفظ محتوى لم يتغير.">Settings managers only. Saving an existing template creates a new revision only when persisted prompt state actually changes.</p>
             <nav aria-label="AI prompt template navigation">
                 <a
                     href="/tenants/{{ rawurlencode($tenant->slug) }}/settings"
@@ -223,10 +223,10 @@
                         </header>
 
                         <dl>
-                            <dt>Domain</dt><dd>{{ $template->domain }}</dd>
-                            <dt>Built in</dt><dd>{{ $template->is_builtin ? 'Yes' : 'No' }}</dd>
-                            <dt>Tenant override</dt><dd>{{ $template->allow_tenant_override ? 'Allowed' : 'Not allowed' }}</dd>
-                            <dt>Variables</dt><dd>{{ empty($template->variables) ? 'None' : implode(', ', $template->variables) }}</dd>
+                            <dt data-prompt-ar="المجال">Domain</dt><dd>{{ $template->domain }}</dd>
+                            <dt data-prompt-ar="مدمج">Built in</dt><dd>{{ $template->is_builtin ? 'Yes' : 'No' }}</dd>
+                            <dt data-prompt-ar="تعديل الحساب">Tenant override</dt><dd>{{ $template->allow_tenant_override ? 'Allowed' : 'Not allowed' }}</dd>
+                            <dt data-prompt-ar="المتغيرات">Variables</dt><dd>{{ empty($template->variables) ? 'None' : implode(', ', $template->variables) }}</dd>
                         </dl>
 
                         <section aria-label="Edit prompt content for {{ $template->stable_key }}">
@@ -238,21 +238,21 @@
 
                                 <p>
                                     <strong>Stable key:</strong> {{ $template->stable_key }}
-                                    <small>The stable key is immutable.</small>
+                                    <small data-prompt-ar="مفتاح القالب ثابت ولا يمكن تغييره.">The stable key is immutable.</small>
                                 </p>
 
                                 <p>
-                                    <label for="title-{{ $template->id }}">Title</label>
+                                    <label for="title-{{ $template->id }}" data-prompt-ar="العنوان">Title</label>
                                     <input id="title-{{ $template->id }}" name="title" type="text" maxlength="120" required value="{{ $formTitle }}">
                                 </p>
 
                                 <p>
-                                    <label for="system-template-{{ $template->id }}">System prompt</label>
+                                    <label for="system-template-{{ $template->id }}" data-prompt-ar="أمر النظام">System prompt</label>
                                     <textarea id="system-template-{{ $template->id }}" name="system_template" maxlength="20000">{{ $formSystem }}</textarea>
                                 </p>
 
                                 <p>
-                                    <label for="user-template-{{ $template->id }}">User prompt</label>
+                                    <label for="user-template-{{ $template->id }}" data-prompt-ar="أمر المستخدم">User prompt</label>
                                     <textarea id="user-template-{{ $template->id }}" name="user_template" maxlength="20000" required>{{ $formUser }}</textarea>
                                 </p>
 
@@ -271,15 +271,15 @@
                             @if (! empty($template->output_schema))
                                 <pre>{{ json_encode($template->output_schema, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) }}</pre>
                             @else
-                                <p>No output schema is stored.</p>
+                                <p data-prompt-ar="لا يوجد مخطط مخرجات محفوظ.">No output schema is stored.</p>
                             @endif
                         </section>
 
                         <section aria-label="Revision history for {{ $template->stable_key }}">
                             <h4 data-prompt-ar="سجل الإصدارات">Revision history</h4>
-                            <p>Restoring never rewrites history; it creates a new revision from the selected historical content.</p>
+                            <p data-prompt-ar="الاستعادة لا تمحو السجل؛ بل تضيف إصدارًا جديدًا بناءً على المحتوى المحدد.">Restoring never rewrites history; it creates a new revision from the selected historical content.</p>
                             @if ($template->revisions->isEmpty())
-                                <p>No revision history has been persisted for this template.</p>
+                                <p data-prompt-ar="لا يوجد سجل إصدارات محفوظ لهذا القالب.">No revision history has been persisted for this template.</p>
                             @else
                                 @foreach ($template->revisions as $revision)
                                     <article data-revision="{{ $revision->version }}">
@@ -289,7 +289,7 @@
                                         <form
                                             method="POST"
                                             action="{{ route('tenant.settings.ai-prompts.restore', ['tenant' => $tenant->slug, 'template' => $template->stable_key, 'version' => $revision->version]) }}"
-                                            onsubmit="return window.confirm('Restore revision r{{ $revision->version }} of {{ $template->stable_key }} as a new revision?');"
+                                            onsubmit="return window.confirm(document.documentElement.lang === 'ar' ? 'استعادة الإصدار r{{ $revision->version }} من {{ $template->stable_key }} كإصدار جديد؟' : 'Restore revision r{{ $revision->version }} of {{ $template->stable_key }} as a new revision?');"
                                         >
                                             @csrf
                                             <button
@@ -327,6 +327,16 @@
                 if (count && arabic) count.textContent = count.dataset.promptTemplateCount + ' قالب محفوظ';
                 if (count && !arabic && !original.has(count)) original.set(count, count.textContent);
                 if (count && !arabic) count.textContent = original.get(count);
+                const flash = document.querySelector('[data-ai-prompt-transient][role=status]');
+                if (flash && !original.has(flash)) original.set(flash, flash.textContent);
+                if (flash) {
+                    const raw = original.get(flash).trim();
+                    const match = raw.match(/^(Created|Saved|Restored) (.+) as revision r(\\d+)\\.$/);
+                    flash.textContent = arabic && match
+                        ? (match[1] === 'Created' ? 'تم إنشاء ' : match[1] === 'Saved' ? 'تم حفظ ' : 'تمت استعادة ')
+                            + match[2] + ' كإصدار r' + match[3] + '.'
+                        : original.get(flash);
+                }
                 const target = document.querySelector('[data-prompt-locale-target]');
                 if (target) target.textContent = arabic ? 'EN' : 'العربية';
                 const control = document.querySelector('[data-prompt-locale-toggle]');
