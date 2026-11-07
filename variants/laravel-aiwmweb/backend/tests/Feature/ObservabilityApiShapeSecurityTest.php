@@ -120,6 +120,9 @@ final class ObservabilityApiShapeSecurityTest extends TestCase
             $this->seedFailedOperation($alpha, 'alpha.failure');
             $this->seedAudit($alpha, 'alpha.audit');
         }
+        // Every audit row uses the same second. Verify that truncation
+        // selects the newest audit IDs instead of an arbitrary 100 rows.
+        $latestAuditId = DB::table('audit_events')->where('tenant_id', $alpha->id)->max('id');
         $this->seedFailedOperation($beta, 'foreign.private');
         $this->seedAudit($beta, 'foreign.private');
 
@@ -132,6 +135,8 @@ final class ObservabilityApiShapeSecurityTest extends TestCase
             ->assertJsonPath('meta.audit_events_total', 102)
             ->assertJsonPath('meta.failed_operations_truncated', true)
             ->assertJsonPath('meta.recent_audit_truncated', true)
+            ->assertJsonPath('recent_audit.0.id', $latestAuditId)
+            ->assertJsonPath('recent_audit.99.id', $latestAuditId - 99)
             ->assertJsonPath('meta.empty_reason', 'not_empty')
             ->assertJsonPath('meta.limit_per_source', 100);
 
