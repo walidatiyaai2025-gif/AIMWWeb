@@ -78,6 +78,46 @@ class SiteDetailsRouteTerminalityTest extends TestCase
             ->assertJsonPath('name', 'Alpha Site');
     }
 
+    public function test_selected_site_advertises_exact_existing_json_gets_for_all_five_site_workspaces(): void
+    {
+        $user = User::factory()->create();
+        $membership = $this->tenantMembership($user, 'alpha', ['tenant.view', 'sites.view']);
+
+        // No selected site means no guessed site ID or live read contracts.
+        $withoutSite = $this->actingAs($user)->getJson('/tenants/alpha/context')->assertOk();
+        foreach (['site-details', 'site-snapshot', 'site-offline-data',
+            'site-connection-center', 'site-connection-operations'] as $key) {
+            $this->assertArrayNotHasKey($key, $withoutSite->json('api'));
+        }
+
+        $site = $this->site($membership, 'Alpha Audit Site');
+        $api = $this->actingAs($user)
+            ->getJson('/tenants/alpha/context?site='.$site->id)
+            ->assertOk()
+            ->assertJsonPath('active_site.id', $site->id)
+            ->json('api');
+
+        $prefix = '/api/tenants/alpha/sites/'.$site->id;
+        $expected = [
+            'site-details' => $prefix,
+            'site-snapshot' => $prefix.'/snapshot',
+            'site-offline-data' => $prefix.'/snapshot',
+            'site-connection-center' => $prefix.'/connection',
+            'site-connection-operations' => $prefix.'/operations',
+        ];
+        foreach ($expected as $key => $endpoint) {
+            $this->assertSame($endpoint, $api[$key] ?? null, $key.' must be a real selected-site GET');
+            $route = Route::getRoutes()->match(Request::create($endpoint, 'GET'));
+            $this->assertContains('GET', $route->methods());
+            $this->assertContains('auth', $route->gatherMiddleware());
+            $this->assertContains('tenant.context', $route->gatherMiddleware());
+        }
+        // Preserve the existing dotted key consumed by site-details controls.
+        $this->assertSame($prefix, $api['sites.detail.'.$site->id] ?? null);
+        // The onboarding form itself is not a JSON GET API.
+        $this->assertArrayNotHasKey('site-connect', $api);
+    }
+
     public function test_site_details_fails_closed_for_foreign_site_and_missing_site_view_permission(): void
     {
         $user = User::factory()->create();
