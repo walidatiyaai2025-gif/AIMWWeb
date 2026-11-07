@@ -16,24 +16,38 @@ type SiteRow = {
 type LoadState = 'loading' | 'ready' | 'error';
 
 function normalizeSites(payload: unknown): SiteRow[] {
-    const raw = Array.isArray(payload)
-        ? payload
-        : payload && typeof payload === 'object' && Array.isArray((payload as { data?: unknown }).data)
-            ? (payload as { data: unknown[] }).data
-            : [];
+    // The canonical site API returns a JSON array. Also accept a genuine
+    // paginated { data: [...] } envelope, but never interpret an unexpected
+    // 200 response (such as { message: 'error' }) as "no sites".
+    let raw: unknown[];
+    if (Array.isArray(payload)) {
+        raw = payload;
+    } else if (payload && typeof payload === 'object' && Array.isArray((payload as { data?: unknown }).data)) {
+        raw = (payload as { data: unknown[] }).data;
+    } else {
+        throw new Error('Invalid site collection response');
+    }
 
-    return raw.flatMap((candidate) => {
-        if (!candidate || typeof candidate !== 'object') return [];
+    return raw.map((candidate) => {
+        if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) {
+            throw new Error('Invalid site record');
+        }
         const row = candidate as Record<string, unknown>;
-        const id = Number(row.id);
-        if (!Number.isInteger(id) || id < 1) return [];
-        const name = typeof row.name === 'string' && row.name.trim() ? row.name.trim() : `Site #${id}`;
-        return [{
+        const id = typeof row.id === 'number'
+            ? row.id
+            : typeof row.id === 'string' && /^[1-9][0-9]*$/.test(row.id)
+                ? Number(row.id)
+                : NaN;
+        if (!Number.isSafeInteger(id) || id < 1 || typeof row.name !== 'string' || !row.name.trim()) {
+            throw new Error('Invalid site record');
+        }
+
+        return {
             id,
-            name,
+            name: row.name.trim(),
             url: typeof row.url === 'string' ? row.url : undefined,
             status: typeof row.status === 'string' ? row.status : undefined,
-        }];
+        };
     });
 }
 
