@@ -34,7 +34,33 @@ export function normalizeObservabilityCollection(routeKey: string, payload: unkn
 
     if (routeKey === 'logs') {
         if (!Array.isArray(payload.data) || !payload.data.every(record)) throw invalid();
-        return payload;
+        // Old deployed servers have only data; retain compatibility. If the
+        // server advertises evidence counts, verify them before displaying
+        // any empty-state explanation. Never forward unexpected meta fields.
+        if (payload.meta === undefined) return payload;
+        const meta = payload.meta;
+        const count = (value: unknown): value is number =>
+            typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
+        if (!record(meta) || meta.scope !== 'tenant_operation_logs' ||
+            !count(meta.tenant_records) || !count(meta.matching_records) ||
+            !count(meta.returned_records) || meta.limit !== 500 ||
+            meta.returned_records !== payload.data.length ||
+            typeof meta.truncated !== 'boolean' ||
+            !['no_tenant_events', 'filter_matched_none', 'not_empty'].includes(String(meta.empty_reason))) {
+            throw invalid();
+        }
+        return {
+            data: payload.data,
+            meta: {
+                scope: 'tenant_operation_logs',
+                tenant_records: meta.tenant_records,
+                matching_records: meta.matching_records,
+                returned_records: meta.returned_records,
+                limit: 500,
+                truncated: meta.truncated,
+                empty_reason: meta.empty_reason,
+            },
+        };
     }
 
     // Laravel returns two *separate* arrays, not a generic { data: [...] } envelope.
