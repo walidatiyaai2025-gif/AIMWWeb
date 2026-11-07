@@ -16,6 +16,7 @@ use Illuminate\Http\Client\Request as RemoteRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 final class WordPressWriteSmokeTest extends TestCase
@@ -23,6 +24,12 @@ final class WordPressWriteSmokeTest extends TestCase
     use RefreshDatabase;
 
     private const ENDPOINT = '/tenants/alpha/runtime-inspector/wordpress-write-check';
+
+    protected function tearDown(): void
+    {
+        Str::createRandomStringsNormally();
+        parent::tearDown();
+    }
 
     private function body(string $resource = 'posts'): array
     {
@@ -269,7 +276,7 @@ final class WordPressWriteSmokeTest extends TestCase
                 $rows[$resource.':'.$createdId] = [
                     'id' => $createdId,
                     'name' => $data['name'] ?? '',
-                    'title' => ['raw' => $data['title'] ?? ''],
+                    'title' => ['raw' => $data['title'] ?? ($resource === 'media' ? 'aiwm-probe-'.str_repeat('a', 16) : '')],
                     'content' => ['raw' => $data['content'] ?? ''],
                     'alt_text' => '',
                 ];
@@ -308,6 +315,9 @@ final class WordPressWriteSmokeTest extends TestCase
             return Http::response(['code' => 'unexpected'], 400);
         });
 
+        // Model the media title derived from the generated filename in WP REST.
+        // The real implementation must confirm this marker on GET before DELETE.
+        Str::createRandomStringsUsing(static fn (int $length): string => str_repeat('a', $length));
         foreach (['posts', 'pages', 'categories', 'tags', 'comments', 'media'] as $resource) {
             $this->actingAs($user)
                 ->postJson(self::ENDPOINT, $this->body($resource) + ['site_id' => $site->id])
@@ -321,6 +331,197 @@ final class WordPressWriteSmokeTest extends TestCase
         }
         $this->assertCount(40, $sequence);
         $this->assertSame(7, count(array_filter($sequence, fn (string $entry): bool => str_starts_with($entry, 'DELETE:'))));
+    }
+
+    public function test_corrupt_created_post_identity_never_permanently_deletes_an_existing_post(): void
+    {
+        $user = User::factory()->create();
+        $m = $this->membership($user, 'alpha', ['diagnostics.view', 'content.edit', 'content.manage']);
+        $site = $this->site($m);
+        $this->credential($m, $site);
+
+        Http::fake(function (RemoteRequest $request) {
+            if ($request->method() === 'POST' && str_ends_with($request->url(), '/posts')) {
+                return Http::response(['id' => 778], 201);
+            }
+            if ($request->method() === 'GET' && str_contains($request->url(), '/posts/778')) {
+                return Http::response(['id' => 778, 'title' => ['raw' => 'Real existing customer article']], 200);
+            }
+
+            $this->fail('Must never DELETE or mutate a remote ID whose probe marker was not confirmed.');
+        });
+
+        $response = $this->actingAs($user)->postJson(self::ENDPOINT, $this->body() + ['site_id' => $site->id]);
+        $response->assertOk()->assertJsonPath('state', 'needs_reconciliation')
+            ->assertJsonPath('cleanup_required', true)
+            ->assertJsonPath('create_verified', false)
+            ->assertJsonPath('delete_verified', false)
+            ->assertJsonPath('recovery.known_objects.0.remote_id', 778);
+        $this->assertStringStartsWith('aiwm-probe-', $response->json('recovery.marker'));
+        Http::assertSentCount(2);
+    }
+
+    public function test_initial_wordpress_read_failure_does_not_destroy_an_unverified_resource(): void
+    {
+        $user = User::factory()->create();
+        $m = $this->membership($user, 'alpha', ['diagnostics.view', 'content.edit', 'content.manage']);
+        $site = $this->site($m);
+        $this->credential($m, $site);
+
+        Http::fake(function (RemoteRequest $request) {
+            if ($request->method() === 'POST' && str_ends_with($request->url(), '/pages')) {
+                return Http::response(['id' => 119], 201);
+            }
+            if ($request->method() === 'GET') {
+                return Http::response(['code' => 'upstream_unavailable'], 503);
+            }
+
+            $this->fail('No DELETE should follow a failed verification GET.');
+        });
+
+        $this->actingAs($user)->postJson(self::ENDPOINT, $this->body('pages') + ['site_id' => $site->id])
+            ->assertOk()->assertJsonPath('state', 'needs_reconciliation')
+            ->assertJsonPath('reason', 'cleanup_not_verified')
+            ->assertJsonPath('recovery.known_objects.0.remote_id', 119)
+            ->assertJsonPath('delete_verified', false);
+        Http::assertSentCount(2);
+    }
+
+    public function test_unverified_media_upload_cannot_delete_an_unrelated_media_item(): void
+    {
+        $user = User::factory()->create();
+        $m = $this->membership($user, 'alpha', ['diagnostics.view', 'content.edit', 'content.manage']);
+        $site = $this->site($m);
+        $this->credential($m, $site);
+
+        Http::fake(function (RemoteRequest $request) {
+            if ($request->method() === 'POST' && str_ends_with($request->url(), '/media')) {
+                return Http::response(['id' => 912], 201);
+            }
+            if ($request->method() === 'GET') {
+                return Http::response([
+                    'id' => 912, 'title' => ['raw' => 'Existing family portrait'],
+                    'slug' => 'family-portrait', 'source_url' => 'https://wordpress.example.test/uploads/family.png',
+                ], 200);
+            }
+
+            $this->fail('No save or DELETE is permitted for media without the generated filename marker.');
+        });
+
+        $this->actingAs($user)->postJson(self::ENDPOINT, $this->body('media') + ['site_id' => $site->id])
+            ->assertOk()->assertJsonPath('state', 'needs_reconciliation')
+            ->assertJsonPath('cleanup_required', true)
+            ->assertJsonPath('recovery.known_objects.0.remote_id', 912)
+            ->assertJsonPath('delete_verified', false);
+        Http::assertSentCount(2);
+    }
+
+    public function test_marker_owned_media_can_be_verified_updated_and_safely_deleted(): void
+    {
+        $user = User::factory()->create();
+        $m = $this->membership($user, 'alpha', ['diagnostics.view', 'content.edit', 'content.manage']);
+        $site = $this->site($m);
+        $this->credential($m, $site);
+        Str::createRandomStringsUsing(static fn (int $length): string => str_repeat('b', $length));
+
+        $exists = false;
+        $alt = '';
+        Http::fake(function (RemoteRequest $request) use (&$exists, &$alt) {
+            $path = (string) parse_url($request->url(), PHP_URL_PATH);
+            if ($request->method() === 'POST' && str_ends_with($path, '/media')) {
+                $exists = true;
+
+                return Http::response(['id' => 919], 201);
+            }
+            if ($request->method() === 'POST' && str_ends_with($path, '/media/919')) {
+                $alt = (string) ($request->data()['alt_text'] ?? '');
+
+                return Http::response(['id' => 919], 200);
+            }
+            if ($request->method() === 'DELETE') {
+                $this->assertTrue($exists);
+                $exists = false;
+
+                return Http::response(['deleted' => true], 200);
+            }
+            if ($request->method() === 'GET') {
+                return $exists
+                    ? Http::response([
+                        'id' => 919, 'slug' => 'aiwm-probe-'.str_repeat('b', 16),
+                        'title' => ['raw' => 'Canary upload'],
+                        'alt_text' => $alt,
+                    ], 200)
+                    : Http::response(['code' => 'rest_media_invalid_id'], 404);
+            }
+            $this->fail('Unexpected media probe method.');
+        });
+
+        $this->actingAs($user)->postJson(self::ENDPOINT, $this->body('media') + ['site_id' => $site->id])
+            ->assertOk()->assertJsonPath('state', 'passed')
+            ->assertJsonPath('save_verified', true)
+            ->assertJsonPath('delete_verified', true)
+            ->assertJsonPath('cleanup_required', false);
+        $this->assertFalse($exists);
+        Http::assertSentCount(6);
+    }
+
+    public function test_comment_probe_parent_is_not_deleted_without_confirmed_parent_marker(): void
+    {
+        $user = User::factory()->create();
+        $m = $this->membership($user, 'alpha', ['diagnostics.view', 'content.edit', 'content.manage']);
+        $site = $this->site($m);
+        $this->credential($m, $site);
+        Http::fake(function (RemoteRequest $request) {
+            if ($request->method() === 'POST' && str_ends_with($request->url(), '/posts')) {
+                return Http::response(['id' => 531], 201);
+            }
+            if ($request->method() === 'GET') {
+                return Http::response(['id' => 531, 'title' => ['raw' => 'Unrelated published article']], 200);
+            }
+
+            $this->fail('Must not create comment or DELETE unverified parent.');
+        });
+
+        $this->actingAs($user)->postJson(self::ENDPOINT, $this->body('comments') + ['site_id' => $site->id])
+            ->assertOk()->assertJsonPath('state', 'needs_reconciliation')
+            ->assertJsonPath('recovery.known_objects.0.remote_id', 531)
+            ->assertJsonPath('cleanup_required', true);
+        Http::assertSentCount(2);
+    }
+
+    public function test_boolean_float_and_fractional_ids_cannot_be_coerced_to_existing_wordpress_records(): void
+    {
+        $user = User::factory()->create();
+        $m = $this->membership($user, 'alpha', ['diagnostics.view', 'content.edit', 'content.manage']);
+        $site = $this->site($m);
+        $this->credential($m, $site);
+        $invalidIds = [true, 12.0, '12.5'];
+        $attempt = 0;
+        Http::fake(function (RemoteRequest $request) use ($invalidIds, &$attempt) {
+            $this->assertSame('POST', $request->method());
+            $this->assertLessThan(count($invalidIds), $attempt);
+
+            $id = $invalidIds[$attempt++];
+
+            if (is_float($id)) {
+                // Preserve JSON 12.0 as a float. Http::response(array) would
+                // normalize it to JSON 12, which is a legitimate integer ID.
+                return Http::response('{"id":12.0}', 201, ['Content-Type' => 'application/json']);
+            }
+
+            return Http::response(['id' => $id], 201);
+        });
+
+        foreach ($invalidIds as $_) {
+            $this->actingAs($user)->postJson(self::ENDPOINT, $this->body() + ['site_id' => $site->id])
+                ->assertOk()->assertJsonPath('state', 'needs_reconciliation')
+                ->assertJsonPath('reason', 'create_result_ambiguous')
+                ->assertJsonPath('cleanup_required', true)
+                ->assertJsonPath('delete_verified', false)
+                ->assertJsonCount(0, 'recovery.known_objects');
+        }
+        $this->assertSame(count($invalidIds), $attempt);
+        Http::assertSentCount(count($invalidIds));
     }
 
     private function membership(User $user, string $slug, array $permissions): TenantMembership
