@@ -90,6 +90,10 @@ final class RuntimeInspectorExportTest extends TestCase
             ->assertJsonPath('schema', RuntimeInspectorController::SCHEMA)
             ->assertJsonPath('safety.redacted', true)
             ->assertJsonPath('safety.read_only', true)
+            ->assertJsonPath('wordpress_plugin.name', 'AIMW Connector')
+            ->assertJsonPath('wordpress_plugin.bundle_version', '0.2.3')
+            ->assertJsonPath('wordpress_plugin.install_target', 'wordpress_plugin')
+            ->assertJsonPath('sites.0.connector.installed_version', 'unknown')
             ->assertJsonPath('sites.0.site_id', $site->id)
             ->assertJsonPath('sites.0.connector.enabled_scopes.1', 'content.read')
             ->assertJsonPath('sites.0.record_counts.posts', 1)
@@ -236,6 +240,7 @@ final class RuntimeInspectorExportTest extends TestCase
         Http::fake([
             'https://wp.test/wp-json/aimw/v1/capabilities' => Http::response([
                 'state' => 'CONNECTED',
+                'plugin_version' => '0.2.3',
                 'secret' => 'REMOTE_RESPONSE_CANARY',
                 'runtime' => ['states' => ['content.read' => ['state' => 'SUPPORTED_ENABLED']]],
             ]),
@@ -243,13 +248,23 @@ final class RuntimeInspectorExportTest extends TestCase
         $response = $this->actingAs($user)
             ->getJson('/tenants/wordpress/runtime-inspector/report?probe=1')
             ->assertOk()
-            ->assertJsonPath('sites.0.remote_probe.attempted', true);
+            ->assertJsonPath('sites.0.remote_probe.attempted', true)
+            ->assertJsonPath('sites.0.connector.installed_version', '0.2.3');
 
         $this->assertStringNotContainsString('REMOTE_RESPONSE_CANARY', $response->getContent());
         $this->assertStringNotContainsString('SECRET_REMOTE_CANARY', $response->getContent());
         Http::assertSent(fn ($request): bool => $request->method() === 'GET'
             && str_contains($request->url(), '/wp-json/aimw/v1/capabilities'));
         Http::assertSentCount(1);
+    }
+
+    public function test_bundle_version_matches_canonical_wordpress_plugin_header_and_constant(): void
+    {
+        $plugin = file_get_contents(base_path('../connector/aimw-connector/aimw-connector.php'));
+        $this->assertIsString($plugin);
+        $version = (string) config('aimw_connector.plugin_version');
+        $this->assertMatchesRegularExpression('/^ \\* Version: '.preg_quote($version, '/').'$/m', $plugin);
+        $this->assertStringContainsString("public const PLUGIN_VERSION = '".$version."';", $plugin);
     }
 
     /** @param list<string> $permissions */
