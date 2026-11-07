@@ -258,6 +258,8 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
             'automation' => "/tenants/{$tenant}/admin/automations",
             'schedules' => "/tenants/{$tenant}/admin/schedules",
             'execution' => "/tenants/{$tenant}/admin/operations",
+            // A real tenant-authorized GET in ApprovalQueueRouteServiceProvider.
+            'approvals' => "/api/tenants/{$tenant}/approvals",
             'site-operations' => "/tenants/{$tenant}/route-api/site-operations",
             'site-reliability' => "/tenants/{$tenant}/route-api/site-reliability",
             'notifications' => "/api/v1/tenants/{$tenant}/notifications",
