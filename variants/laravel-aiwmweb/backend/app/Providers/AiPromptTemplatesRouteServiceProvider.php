@@ -2,8 +2,8 @@
 
 namespace App\Providers;
 
-use App\Http\Controllers\AiPromptTemplateRestoreController;
 use App\Http\Controllers\AiPromptTemplateCreateController;
+use App\Http\Controllers\AiPromptTemplateRestoreController;
 use App\Http\Controllers\AiPromptTemplateSaveController;
 use App\Http\Controllers\AiPromptTemplatesReadController;
 use Illuminate\Support\Facades\Route;
