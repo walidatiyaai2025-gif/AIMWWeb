@@ -776,6 +776,12 @@ final class ContentApiController extends Controller
             'kind' => (string) $transfer->kind,
             'state' => (string) $transfer->state,
             'progress' => (int) $transfer->progress,
+            'options' => [
+                'metadata' => array_intersect_key(
+                    is_array($transfer->options['metadata'] ?? null) ? $transfer->options['metadata'] : [],
+                    array_flip(['title', 'alt_text', 'caption', 'description']),
+                ),
+            ],
             'result' => is_array($transfer->result) ? $transfer->result : null,
             'failure_present' => $transfer->last_error !== null,
             'created_at' => $transfer->created_at?->toIso8601String(),
