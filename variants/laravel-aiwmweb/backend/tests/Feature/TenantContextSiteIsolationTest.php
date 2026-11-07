@@ -135,7 +135,9 @@ class TenantContextSiteIsolationTest extends TestCase
             'site-connection-center' => $prefix.'/connection',
             'site-connection-operations' => $prefix.'/operations',
         ] as $key => $path) {
-            $response->assertJsonPath('api.'.$key, $path);
+            // One canonical key contains a literal dot: Laravel's JSON-path
+            // accessor interprets it as nesting, so index the API map directly.
+            $this->assertSame($path, $response->json('api')[$key] ?? null, $key);
         }
         $response->assertJsonMissingPath('api.site-connect');
         $this->assertFalse(app(TenantContext::class)->active());
