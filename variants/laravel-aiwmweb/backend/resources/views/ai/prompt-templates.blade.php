@@ -138,38 +138,48 @@
             </section>
         @endif
 
+        @php($newFailed = old('_prompt_key') === '__new__')
         <section
+            class="panel"
             id="new-template-editor"
             data-ai-prompt-new-editor
-            data-state="idle"
-            hidden
+            data-state="{{ $newFailed ? 'new' : 'idle' }}"
+            @if (! $newFailed) hidden @endif
             aria-labelledby="new-template-heading"
         >
-            <h2 id="new-template-heading">New template</h2>
-            <p data-ai-prompt-new-status role="status" hidden></p>
-            <p>Start a new prompt template draft. No data is persisted until the separate Save operation runs.</p>
-            <p>
-                <label for="new-template-key">Template key</label>
-                <input id="new-template-key" data-ai-prompt-new-key name="new_stable_key" type="text" autocomplete="off" placeholder="content.rewrite">
-            </p>
-            <p>
-                <label for="new-template-title">Title</label>
-                <input id="new-template-title" data-ai-prompt-new-title name="new_title" type="text" maxlength="120" autocomplete="off">
-            </p>
-            <p>
-                <label for="new-template-system">System prompt</label>
-                <textarea id="new-template-system" data-ai-prompt-new-system name="new_system_template" maxlength="20000"></textarea>
-            </p>
-            <p>
-                <label for="new-template-user">User prompt</label>
-                <textarea id="new-template-user" data-ai-prompt-new-user name="new_user_template" maxlength="20000"></textarea>
-            </p>
-            <p>
-                <label>
-                    <input data-ai-prompt-new-enabled name="new_enabled" type="checkbox" checked>
-                    Enabled
-                </label>
-            </p>
+            <h2 id="new-template-heading">{{ $ar ? 'قالب جديد' : 'New template' }}</h2>
+            <p data-ai-prompt-new-status role="status" @if (! $newFailed) hidden @endif>{{ $newFailed ? ($ar ? 'راجع البيانات وصحّح الخطأ ثم احفظ.' : 'Review the validation error and save again.') : '' }}</p>
+            <p class="prompt-subtle">{{ $ar ? 'ابدأ مسودة قالب جديد. لا تُحفظ أي بيانات حتى تضغط حفظ.' : 'Start a new prompt template draft. No data is persisted until the separate Save operation runs.' }}</p>
+            <form method="POST" action="{{ route('tenant.settings.ai-prompts.create', ['tenant' => $tenant->slug]) }}" data-ai-prompt-create-form>
+                @csrf
+                <input type="hidden" name="_prompt_key" value="__new__">
+                <div class="prompt-fields">
+                    <p>
+                        <label for="new-template-key">{{ $ar ? 'مفتاح القالب' : 'Template key' }}</label>
+                        <input id="new-template-key" data-ai-prompt-new-key name="stable_key" type="text" autocomplete="off" maxlength="80" required pattern="[a-z0-9][a-z0-9._-]{0,79}" placeholder="content.rewrite" value="{{ $newFailed ? old('stable_key') : '' }}">
+                    </p>
+                    <p>
+                        <label for="new-template-title">{{ $ar ? 'العنوان' : 'Title' }}</label>
+                        <input id="new-template-title" data-ai-prompt-new-title name="title" type="text" maxlength="120" autocomplete="off" required value="{{ $newFailed ? old('title') : '' }}">
+                    </p>
+                    <p>
+                        <label for="new-template-system">{{ $ar ? 'تعليمات النظام' : 'System prompt' }}</label>
+                        <textarea id="new-template-system" data-ai-prompt-new-system name="system_template" maxlength="20000">{{ $newFailed ? old('system_template') : '' }}</textarea>
+                    </p>
+                    <p>
+                        <label for="new-template-user">{{ $ar ? 'تعليمات المستخدم' : 'User prompt' }}</label>
+                        <textarea id="new-template-user" data-ai-prompt-new-user name="user_template" maxlength="20000" required>{{ $newFailed ? old('user_template') : '' }}</textarea>
+                    </p>
+                    <p class="prompt-full">
+                        <input type="hidden" name="enabled" value="0">
+                        <label><input data-ai-prompt-new-enabled name="enabled" type="checkbox" value="1" @checked(! $newFailed || (string) old('enabled', '0') === '1')>
+                        {{ $ar ? 'مفعّل' : 'Enabled' }}</label>
+                    </p>
+                    <div class="prompt-full prompt-actions">
+                        <button class="btn primary" type="submit" data-ai-prompt-create-save>{{ $ar ? 'حفظ القالب الجديد' : 'Save new template' }}</button>
+                    </div>
+                </div>
+            </form>
         </section>
 
         <section aria-labelledby="template-library">
