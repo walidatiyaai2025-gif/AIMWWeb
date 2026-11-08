@@ -195,6 +195,34 @@ final class SystemUpdateCenterTest extends TestCase
             ->invoke(app(SystemUpdateService::class), $url, 4096);
     }
 
+    public function test_metadata_check_failure_displays_safe_phase_without_install_or_secret_leak(): void
+    {
+        $keys = sodium_crypto_sign_keypair();
+        config()->set('system_updates.enabled', true);
+        config()->set('system_updates.public_key', base64_encode(sodium_crypto_sign_publickey($keys)));
+        config()->set('system_updates.current_version', '0.0.0');
+
+        Http::fake([
+            'https://api.github.com/repos/walidatiyaai2025-gif/AIMWWeb/releases/latest' => Http::response('private upstream token must not leak', 404),
+        ]);
+
+        $admin = User::factory()->create(['platform_admin' => true]);
+        $this->actingAs($admin)->post('/admin/system-updates/check')
+            ->assertRedirect()
+            ->assertSessionHasErrors('update')
+            ->assertSessionHas('system_update_check_failure.category', 'metadata_unavailable')
+            ->assertSessionHas('system_update_check_failure.phase', 'release_metadata');
+
+        $this->actingAs($admin)->get('/admin/system-updates')
+            ->assertOk()
+            ->assertSee('Release metadata check failed')
+            ->assertSee('Verify Package')
+            ->assertDontSee('private upstream token must not leak');
+
+        $this->assertFileDoesNotExist(storage_path('app/system-updates/installed.json'));
+        Http::assertSentCount(1);
+    }
+
     public function test_unsigned_or_forged_release_is_rejected_before_download(): void
     {
         $keys = sodium_crypto_sign_keypair();

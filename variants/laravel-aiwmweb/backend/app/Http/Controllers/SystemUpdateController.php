@@ -51,7 +51,22 @@ final class SystemUpdateController extends Controller
                 ? 'A newer signed release has been verified.'
                 : 'No newer approved signed release is available.');
         } catch (Throwable $e) {
-            return back()->withErrors(['update' => $e->getMessage()]);
+            // A metadata lookup only reads an approved signed release; it never
+            // starts maintenance or installs files. Do not expose upstream URLs,
+            // credentials, stack traces or raw transport exceptions to the UI.
+            report($e);
+
+            $message = $e instanceof RuntimeException ? $e->getMessage() : '';
+            $category = str_contains($message, 'timed out') || str_contains($message, 'connection')
+                ? 'connection_timeout'
+                : (str_contains($message, 'signature') ? 'signature_invalid' : 'metadata_unavailable');
+
+            return back()
+                ->with('system_update_check_failure', [
+                    'phase' => 'release_metadata',
+                    'category' => $category,
+                ])
+                ->withErrors(['update' => 'Signed release check failed before installation. No update was applied.']);
         }
     }
 
