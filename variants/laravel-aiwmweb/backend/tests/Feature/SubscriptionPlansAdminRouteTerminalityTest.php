@@ -147,6 +147,43 @@ final class SubscriptionPlansAdminRouteTerminalityTest extends TestCase
         $this->assertDatabaseCount('billing_plans', 0);
     }
 
+    public function test_subscription_plans_render_bilingual_dashboard_shell_without_changing_secure_forms(): void
+    {
+        $user = User::factory()->create();
+        $this->membership($user, 'alpha', ['settings.manage']);
+        $originalLocale = app()->getLocale();
+
+        try {
+            foreach (['en' => ['ltr', 'Subscription Plans'], 'ar' => ['rtl', 'خطط الاشتراك']] as $locale => [$direction, $label]) {
+                app()->setLocale($locale);
+
+                $this->actingAs($user)
+                    ->get('/tenants/alpha/admin/subscription-plans')
+                    ->assertOk()
+                    ->assertSee('<html lang="'.$locale.'" dir="'.$direction.'" data-mode="dark">', false)
+                    ->assertSee('class="app-shell workspace-read-shell subscription-plans-dashboard"', false)
+                    ->assertSee('data-dashboard-shell="aiwmweb"', false)
+                    ->assertSee('class="sidebar"', false)
+                    ->assertSee('class="topbar"', false)
+                    ->assertSee('class="breadcrumb"', false)
+                    ->assertSee('href="/tenants/alpha/admin/subscription-plans"', false)
+                    ->assertSee('id="subscription-plans-content"', false)
+                    ->assertSee('name="_token"', false)
+                    ->assertSee('data-plan-create-form', false)
+                    ->assertSee('data-canonical-operation="AIMW-BILL-B86D339C12"', false)
+                    ->assertSee($label);
+            }
+        } finally {
+            app()->setLocale($originalLocale);
+        }
+
+        $viewSource = (string) file_get_contents(resource_path('views/billing/subscription-plans-admin.blade.php'));
+        $this->assertStringContainsString("@vite(['resources/css/app.css'])", $viewSource);
+        $this->assertStringContainsString("@include('layouts.partials.workspace-read-sidebar')", $viewSource);
+        $this->assertStringContainsString("@include('layouts.partials.workspace-read-topbar')", $viewSource);
+        $this->assertStringContainsString('@media (max-width: 760px)', $viewSource);
+    }
+
     private function membership(User $user, string $slug, array $permissions): Tenant
     {
         $tenant = Tenant::query()->create(['name' => ucfirst($slug), 'slug' => $slug]);
