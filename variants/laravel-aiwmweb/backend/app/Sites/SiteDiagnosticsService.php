@@ -79,7 +79,7 @@ final class SiteDiagnosticsService
             'site' => $siteView,
             'metadata' => $metadata,
             'sync_health' => [
-                'state' => $lastSync === null ? 'not_probed' : ($lastSync->status === 'succeeded' ? 'succeeded' : 'failed'),
+                'state' => $this->syncHistoryState($lastSync),
                 'last_attempt_at' => $lastSync?->started_at?->toIso8601String(),
             ],
             'connection' => $this->localConnectionState($connector),
@@ -92,6 +92,27 @@ final class SiteDiagnosticsService
             ] : null,
             'latest_diagnostic' => $latest,
         ];
+    }
+
+    /**
+     * A history row is not evidence of failure unless it is explicitly failed.
+     * Legacy and in-flight statuses must never be represented as success/failure
+     * based on an unrelated successful Connector health recheck.
+     */
+    private function syncHistoryState(?SiteOperationHistory $lastSync): string
+    {
+        if ($lastSync === null) {
+            return 'not_probed';
+        }
+
+        return match ($lastSync->status) {
+            'succeeded' => 'succeeded',
+            'failed' => 'failed',
+            'pending', 'queued' => 'queued',
+            'running', 'in_progress', 'processing' => 'in_progress',
+            'cancelled', 'canceled' => 'cancelled',
+            default => 'unknown',
+        };
     }
 
     public function reconnect(Site $site): array

@@ -13,6 +13,28 @@ export const SITE_CONNECTION_CENTER_SITE_URL_OPERATION_ID = 'AIMW-CONT-63EDB4BA6
 export const SITE_CONNECTION_CENTER_BACK_TO_SITES_OPERATION_ID = 'AIMW-CONT-8C19E4E3B2';
 export const SITE_CONNECTION_CENTER_DYNAMIC_LINKS_OPERATION_ID = 'AIMW-CONT-DF6FFA9D87';
 
+type SyncHealthState = 'not_probed' | 'succeeded' | 'failed' | 'queued' | 'in_progress' | 'cancelled' | 'unknown';
+
+export function formatSyncHealthState(state: string | null | undefined, locale: 'ar' | 'en'): string {
+    switch (state) {
+        case 'succeeded':
+            return locale === 'ar' ? 'ناجحة' : 'Succeeded';
+        case 'failed':
+            return locale === 'ar' ? 'فاشلة — راجع سجل العمليات' : 'Failed — review operation history';
+        case 'queued':
+            return locale === 'ar' ? 'في قائمة الانتظار' : 'Queued';
+        case 'in_progress':
+            return locale === 'ar' ? 'جارٍ تنفيذ المزامنة' : 'In progress';
+        case 'cancelled':
+            return locale === 'ar' ? 'أُلغيت المزامنة' : 'Cancelled';
+        case 'not_probed':
+            return locale === 'ar' ? 'لم يتم التحقق' : 'Not yet verified';
+        default:
+            // Unexpected legacy/upstream values must not be echoed to the UI.
+            return locale === 'ar' ? 'حالة المزامنة غير معروفة' : 'Synchronization status unknown';
+    }
+}
+
 type ConnectionSnapshot = {
     site: {
         id: number;
@@ -24,7 +46,7 @@ type ConnectionSnapshot = {
         last_verified_at?: string | null;
     };
     connection: string;
-    sync_health?: { state: 'not_probed' | 'succeeded' | 'failed'; last_attempt_at?: string | null };
+    sync_health?: { state: SyncHealthState; last_attempt_at?: string | null };
     last_verified_at?: string | null;
     metadata?: Partial<Record<'wordpress_version' | 'language_code', { state: string; checked_at?: string | null }>>;
 };
@@ -508,11 +530,7 @@ export function SiteConnectionCenterSyncControl({ context }: { context: Frontend
             <section className="workspace-card">
                 <strong>{locale === 'ar' ? 'حالة الاتصال' : 'Connection'}: {connection?.connection ?? '—'}</strong>
                 <p>{locale === 'ar' ? 'حالة الموقع' : 'Site state'}: {connection?.site.connection_status ?? '—'}</p>
-                <p data-testid="sync-health-state">{locale === 'ar' ? 'آخر حالة مزامنة' : 'Last synchronization'}: {connection?.sync_health?.state === 'succeeded'
-                    ? (locale === 'ar' ? 'ناجحة' : 'Succeeded')
-                    : connection?.sync_health?.state === 'failed'
-                        ? (locale === 'ar' ? 'فاشلة — راجع سجل العمليات' : 'Failed — review operation history')
-                        : (locale === 'ar' ? 'لم يتم التحقق' : 'Not yet verified')}</p>
+                <p data-testid="sync-health-state">{locale === 'ar' ? 'آخر حالة مزامنة' : 'Last synchronization'}: {formatSyncHealthState(connection?.sync_health?.state, locale)}</p>
                 {connection?.sync_health?.last_attempt_at ? (
                     <small>{locale === 'ar' ? 'آخر محاولة مزامنة' : 'Last sync attempt'}: {connection.sync_health.last_attempt_at}</small>
                 ) : null}

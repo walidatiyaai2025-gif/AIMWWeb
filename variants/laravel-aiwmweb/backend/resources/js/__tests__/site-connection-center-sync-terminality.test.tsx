@@ -7,6 +7,7 @@ import {
     SITE_CONNECTION_CENTER_SYNC_OPERATION_ID,
     SiteConnectionCenterSyncControl,
     connectionCenterSyncOutcome,
+    formatSyncHealthState,
     safeSyncHistoryFailure,
     siteConnectionCenterEndpoints,
 } from '../site-connection-center-sync-control';
@@ -43,6 +44,41 @@ function renderControl(active = context()) {
 afterEach(() => {
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
+});
+
+describe('Site Diagnostics truthful synchronization history states', () => {
+    it.each([
+        ['queued', 'Queued', 'في قائمة الانتظار'],
+        ['in_progress', 'In progress', 'جارٍ تنفيذ المزامنة'],
+        ['cancelled', 'Cancelled', 'أُلغيت المزامنة'],
+        ['failed', 'Failed — review operation history', 'فاشلة — راجع سجل العمليات'],
+        ['succeeded', 'Succeeded', 'ناجحة'],
+        ['not_probed', 'Not yet verified', 'لم يتم التحقق'],
+        ['unknown', 'Synchronization status unknown', 'حالة المزامنة غير معروفة'],
+        ['Bearer secret-status', 'Synchronization status unknown', 'حالة المزامنة غير معروفة'],
+    ])('does not fabricate failure for %s', (state, english, arabic) => {
+        expect(formatSyncHealthState(state, 'en')).toBe(english);
+        expect(formatSyncHealthState(state, 'ar')).toBe(arabic);
+    });
+
+    it('keeps queued synchronization distinct from an existing CONNECTED Connector in the actual workspace', async () => {
+        const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+            const payload = String(input).includes('/operations')
+                ? { items: [], page: 1, per_page: 25, total: 0, last_page: 1 }
+                : {
+                    site: { id: 7, name: 'Alpha Site', connection_status: 'CONNECTED' },
+                    connection: 'CONNECTED',
+                    sync_health: { state: 'queued', last_attempt_at: '2026-11-08T10:00:00Z' },
+                };
+            return new Response(JSON.stringify(payload), { status: 200, headers: { 'content-type': 'application/json' } });
+        });
+        vi.stubGlobal('fetch', fetchMock);
+        renderControl(context(['tenant.view', 'sites.view']));
+        expect(await screen.findByText('Alpha Site')).toBeInTheDocument();
+        expect(screen.getByTestId('sync-health-state')).toHaveTextContent('Queued');
+        expect(screen.getByText(/Connection: CONNECTED/)).toBeInTheDocument();
+        expect(screen.getByText(/Last sync attempt/)).toHaveTextContent('2026-11-08T10:00:00Z');
+    });
 });
 
 describe('AIMW-BILL-3762C05261 Site Connection Center SynchronizeAsync', () => {
