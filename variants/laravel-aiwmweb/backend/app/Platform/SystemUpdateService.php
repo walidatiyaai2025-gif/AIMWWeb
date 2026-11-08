@@ -473,45 +473,34 @@ final class SystemUpdateService
     }
 
     /**
-     * Download only metadata for assets enumerated by GitHub's release API.
-     * GitHub's browser asset CDN can stall on shared hosting; try the trusted
-     * GitHub asset API after a transient failure, within a single time budget.
-     * Signature and SHA-256 validation remain mandatory for every transport.
+     * The release CDN may stall on shared hosting. Try its trusted GitHub
+     * asset API endpoint after a transient failure, never on a permanent
+     * error. A shared time budget limits both requests before installation.
      *
      * @param array{url:string,size:int,id:?int} $asset
      */
     private function downloadSmall(array $asset, int $limit): string
     {
-        $budget = max(20, min(90, (int) config('system_updates.metadata_budget_seconds', 50)));
+        $deadline = microtime(true) + max(20, min(90, (int) config('system_updates.metadata_budget_seconds', 50)));
         $connect = max(3, min(12, (int) config('system_updates.metadata_connect_timeout', 8)));
-        $attempts = max(1, min(3, (int) config('system_updates.metadata_attempts', 3)));
-        $deadline = microtime(true) + $budget;
-        $assetApiUrl = isset($asset['id']) && $asset['id'] > 0
-            ? self::RELEASE_ASSET_API.$asset['id'] : null;
+        $urls = [$asset['url']];
+        $urls[] = isset($asset['id']) && $asset['id'] > 0
+            ? self::RELEASE_ASSET_API.$asset['id']
+            : $asset['url'];
 
-        for ($attempt = 1; $attempt <= $attempts; $attempt++) {
+        foreach ($urls as $index => $url) {
             $remaining = (int) ceil($deadline - microtime(true));
             if ($remaining <= 2) {
                 break;
             }
 
-            // Browser URL first; API asset endpoint is a trusted fallback. If
-            // the release feed lacks an asset ID, retry the validated URL only.
-            $apiFallback = $attempt > 1 && $assetApiUrl !== null;
-            $url = $apiFallback ? $assetApiUrl : $asset['url'];
             $timeout = max(3, min(30, $remaining));
-
             try {
                 $response = Http::accept('application/octet-stream')
                     ->connectTimeout(min($connect, $timeout - 1))
                     ->timeout($timeout)
                     ->get($url);
             } catch (ConnectionException $e) {
-                // Keep provider URLs and raw transport exceptions out of UI.
-                if ($attempt === $attempts) {
-                    break;
-                }
-                // No synchronous sleeps inside cPanel request handlers.
                 continue;
             }
 
@@ -520,15 +509,13 @@ final class SystemUpdateService
                 if (strlen($bytes) > $limit) {
                     throw new RuntimeException('Release metadata exceeds the allowed size.');
                 }
-                if ($apiFallback && str_contains(strtolower((string) $response->header('Content-Type')), 'application/json')) {
+                if ($index > 0 && str_contains(strtolower((string) $response->header('Content-Type')), 'application/json')) {
                     throw new RuntimeException('GitHub asset API returned metadata instead of signed asset bytes.');
                 }
 
                 return $bytes;
             }
 
-            // 404/401/403 and other permanent errors must fail closed; never
-            // fall back to another release or bypass signed verification.
             if (in_array($response->status(), [408, 429, 500, 502, 503, 504], true) === false) {
                 throw new RuntimeException('Release metadata download failed (HTTP '.$response->status().').');
             }
