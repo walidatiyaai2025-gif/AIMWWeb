@@ -74,7 +74,15 @@ final class BackupSensitiveColumnRedactionTest extends TestCase
             }
 
             $archive = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
-            $rows = $archive['tables']['backup_secret_fixture_rows'];
+            // MySQL and SQLite schema introspection can return either a bare
+            // table name or a database/schema-qualified table identifier.
+            $matching = array_filter(
+                array_keys($archive['tables']),
+                static fn (string $name): bool => $name === 'backup_secret_fixture_rows'
+                    || str_ends_with($name, '.backup_secret_fixture_rows'),
+            );
+            $this->assertCount(1, $matching, 'The actual tenant backup must include the fixture table.');
+            $rows = $archive['tables'][array_values($matching)[0]];
             $this->assertCount(1, $rows);
             $this->assertSame($tenant->id, $rows[0]['tenant_id']);
             $this->assertSame('safe-business-value', $rows[0]['notes']);
