@@ -22,14 +22,14 @@ Scope: `variants/laravel-aiwmweb/backend/resources/views/**`. **All 29 discovere
 | `auth/login.blade.php` | Standalone English login UI, no Vite | Public auth; verify bilingual expectation, not required authenticated sidebar |
 | `auth/register.blade.php` | Standalone English registration UI, no Vite | Public auth; verify bilingual expectation |
 | `billing/admin-support.blade.php` | Initial census: English-only standalone admin read-only view with no Vite/sidebar | **Current PR candidate**: shared platform-admin read-only shell, AR/EN localized safety copy, Vite CSS; guest/non-admin denial retained; browser/host unverified |
-| `billing/subscription-plans-admin.blade.php` | Previously standalone inline CSS, locale-aware document, no Vite/sidebar | **Current #1601 subscription-plan shell candidate**: shared AR/EN tenant shell, compiled Vite CSS, CSRF-preserving forms and responsive grid; CI/browser/host unverified |
+| `billing/subscription-plans-admin.blade.php` | Initial census: standalone CSS, no Vite/sidebar | **Merged PR #1655**: shared AR/EN tenant shell, Vite, permission-safe CSRF forms; production browser/host unverified |
 | `operations/site-operation-details.blade.php` | Vite, no Blade sidebar | Determine React ownership; browser verify |
 | `operations/site-operation-details-load-error.blade.php` | Vite, no Blade sidebar | Error/fallback route; verify accessibility/layout |
 | `platform/about-build.blade.php` | Vite, no Blade sidebar | Determine React ownership; browser verify |
 | `platform/access-denied.blade.php` | Standalone inline CSS, no Vite/sidebar | Forbidden page; verify authorized exit navigation |
 | `platform/error.blade.php` | Vite, no Blade sidebar | Error/fallback route; verify safe layout |
 | `platform/system-updates.blade.php` | Standalone light-mode inline CSS, no Vite/sidebar | **Review authenticated platform-admin dashboard parity**; preserve signed update security |
-| `reports/approvals-export.blade.php` | Standalone inline CSS, no Vite/sidebar | **Review authenticated dashboard parity** |
+| `reports/approvals-export.blade.php` | Initial census: English-only standalone reports and export tables, no compiled assets/dashboard | **PR #1656 candidate**: shared AR/EN tenant shell, compiled Vite, keyboard-scrollable tables, tenant-scoped CSV controls; source implementation, browser/host not verified |
 | `security/audit.blade.php` | On inventory base: English-only standalone read-only platform audit view without Vite/sidebar | **Current #1601 security audit shell candidate**: AR/EN sidebar/topbar/Vite with original platform-admin/read-only guards; browser/host acceptance unverified |
 | `seo/manager.blade.php` | Vite, no Blade sidebar | Determine React ownership; browser verify |
 | `seo/workspace.blade.php` | Vite, no Blade sidebar | Determine React ownership; browser verify |
