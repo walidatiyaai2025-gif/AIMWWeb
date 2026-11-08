@@ -35,6 +35,7 @@ function mount(): void {
 
 describe('AIMW-BILL-AA8C2FD5B3 operation diagnostic report copy', () => {
     beforeEach(() => {
+        document.documentElement.lang = 'en';
         mount();
     });
 
@@ -104,6 +105,31 @@ describe('AIMW-BILL-AA8C2FD5B3 operation diagnostic report copy', () => {
         await vi.waitFor(() => expect(success.hidden).toBe(false));
         expect(error.hidden).toBe(true);
         expect(writeText).toHaveBeenCalledTimes(2);
+    });
+
+    it('shows truthful Arabic clipboard failures without disclosing provider error details', async () => {
+        document.documentElement.lang = 'ar';
+        const writeText = vi.fn().mockRejectedValue(new Error('internal private clipboard sentinel'));
+        Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+        wireSiteOperationReportCopy();
+        document.querySelector<HTMLButtonElement>('[data-copy-operation-report]')!.click();
+
+        const error = document.querySelector<HTMLElement>('[data-copy-operation-report-error]')!;
+        await vi.waitFor(() => expect(error.hidden).toBe(false));
+        const message = document.querySelector<HTMLElement>('[data-copy-operation-report-error-message]')!.textContent!;
+        expect(message).toContain('تعذر نسخ التقرير');
+        expect(message).not.toContain('internal private clipboard sentinel');
+        expect(document.querySelector<HTMLElement>('[data-copy-operation-report-success]')!.hidden).toBe(true);
+    });
+
+    it('localizes unreadable report payload as a failed action without fake success', () => {
+        document.documentElement.lang = 'ar';
+        document.querySelector('#site-operation-report-payload')!.textContent = '{broken';
+        wireSiteOperationReportCopy();
+        expect(document.querySelector<HTMLElement>('[data-copy-operation-report-error-message]')!.textContent)
+            .toContain('تعذر قراءة بيانات التقرير');
+        expect(document.querySelector<HTMLButtonElement>('[data-copy-operation-report]')!.disabled).toBe(true);
+        expect(document.querySelector<HTMLElement>('[data-copy-operation-report-success]')!.hidden).toBe(true);
     });
 
     it('fails closed when the Clipboard API is unavailable', async () => {

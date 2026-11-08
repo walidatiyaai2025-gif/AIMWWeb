@@ -35,6 +35,9 @@ export function formatSiteOperationReport(payload: SiteOperationReportPayload): 
 }
 
 const FAILURE_MESSAGE = 'The report could not be written to the clipboard. No copy success was reported; check browser clipboard access and retry.';
+const AR_FAILURE_MESSAGE = 'تعذر نسخ التقرير إلى الحافظة. لم يتم تأكيد النسخ؛ تحقق من صلاحيات الحافظة وحاول مجددًا.';
+const PAYLOAD_FAILURE_MESSAGE = 'The operation report payload could not be read. No copy success was reported.';
+const AR_PAYLOAD_FAILURE_MESSAGE = 'تعذر قراءة بيانات التقرير. لم يتم تأكيد النسخ.';
 
 export function wireSiteOperationReportCopy(root: ParentNode = document): void {
     const button = root.querySelector<HTMLButtonElement>('[data-copy-operation-report]');
@@ -45,12 +48,13 @@ export function wireSiteOperationReportCopy(root: ParentNode = document): void {
     const payloadNode = root.querySelector<HTMLScriptElement>('#site-operation-report-payload');
 
     if (!button || !retry || !success || !error || !errorMessage || !payloadNode) return;
+    const isArabic = document.documentElement.lang.toLowerCase().startsWith('ar');
 
     let payload: SiteOperationReportPayload;
     try {
         payload = JSON.parse(payloadNode.textContent ?? '') as SiteOperationReportPayload;
     } catch {
-        errorMessage.textContent = 'The operation report payload could not be read. No copy success was reported.';
+        errorMessage.textContent = isArabic ? AR_PAYLOAD_FAILURE_MESSAGE : PAYLOAD_FAILURE_MESSAGE;
         error.hidden = false;
         button.disabled = true;
         retry.disabled = true;
@@ -78,7 +82,7 @@ export function wireSiteOperationReportCopy(root: ParentNode = document): void {
             await clipboard.writeText(formatSiteOperationReport(payload));
             success.hidden = false;
         } catch {
-            errorMessage.textContent = FAILURE_MESSAGE;
+            errorMessage.textContent = isArabic ? AR_FAILURE_MESSAGE : FAILURE_MESSAGE;
             error.hidden = false;
         } finally {
             copying = false;

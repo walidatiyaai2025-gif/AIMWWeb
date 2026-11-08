@@ -215,6 +215,76 @@ class SiteOperationDetailsRouteTerminalityTest extends TestCase
         $this->assertSame($before, SiteOperationHistory::query()->withoutGlobalScopes()->count());
     }
 
+    public function test_details_and_storage_failure_views_share_the_bilingual_responsive_tenant_dashboard(): void
+    {
+        $tenant = Tenant::query()->create(['name' => 'Alpha', 'slug' => 'alpha']);
+        $user = User::factory()->create();
+        $membership = $this->membership($user, $tenant, ['tenant.view', 'execution.view']);
+        $correlationId = (string) Str::uuid();
+        $this->recordOperation($membership, $correlationId, 'Alpha Site');
+        $before = SiteOperationHistory::query()->withoutGlobalScopes()->count();
+        $previousLocale = app()->getLocale();
+
+        try {
+            foreach (['en' => 'ltr', 'ar' => 'rtl'] as $locale => $direction) {
+                app()->setLocale($locale);
+                $response = $this->actingAs($user)->get("/tenants/alpha/site-operations/{$correlationId}");
+                $response->assertOk()
+                    ->assertSee('<html lang="'.$locale.'" dir="'.$direction.'" data-mode="dark">', false)
+                    ->assertSee('data-dashboard-shell="aiwmweb"', false)
+                    ->assertSee('data-aiwm-workspace-read-shell', false)
+                    ->assertSee('id="site-operation-details-content"', false)
+                    ->assertSee('data-copy-operation-report', false)
+                    ->assertSee('data-canonical-operation="'.self::COPY_REPORT_OPERATION_ID.'"', false)
+                    ->assertSee('Alpha Site')
+                    ->assertSee('[REDACTED]')
+                    ->assertDontSee('never-render-this-secret');
+                if ($locale === 'ar') {
+                    $response->assertSee('تفاصيل عملية الموقع')->assertSee('نسخ التقرير');
+                } else {
+                    $response->assertSee('Site operation details')->assertSee('Copy report');
+                }
+
+                $context = app(TenantContext::class);
+                $context->activate($membership->tenant, $membership);
+                try {
+                    $failure = response()->view('operations.site-operation-details-load-error', [
+                        'retryUrl' => route('canonical.workspace.site-operation-details', [
+                            'tenant' => 'alpha',
+                            'operationId' => $correlationId,
+                        ], false),
+                        'historyUrl' => route('canonical.workspace.site-operations', ['tenant' => 'alpha'], false),
+                    ], 503);
+                    $html = $failure->getContent();
+                    $this->assertSame(503, $failure->status());
+                    $this->assertStringContainsString('<html lang="'.$locale.'" dir="'.$direction.'" data-mode="dark">', $html);
+                    $this->assertStringContainsString('data-dashboard-shell="aiwmweb"', $html);
+                    $this->assertStringContainsString('data-load-operation-retry', $html);
+                    $this->assertStringContainsString('href="/tenants/alpha/site-operations/', $html);
+                    $this->assertStringNotContainsString('never-render-this-secret', $html);
+                    if ($locale === 'ar') {
+                        $this->assertStringContainsString('تعذر تحميل تفاصيل العملية', $html);
+                        $this->assertStringContainsString('إعادة المحاولة', $html);
+                    } else {
+                        $this->assertStringContainsString('Operation details could not be loaded', $html);
+                        $this->assertStringContainsString('Back to history', $html);
+                    }
+                } finally {
+                    $context->forget();
+                }
+            }
+        } finally {
+            app()->setLocale($previousLocale);
+        }
+
+        $this->assertSame($before, SiteOperationHistory::query()->withoutGlobalScopes()->count());
+        foreach (['site-operation-details.blade.php', 'site-operation-details-load-error.blade.php'] as $file) {
+            $view = (string) file_get_contents(resource_path('views/operations/'.$file));
+            $this->assertStringContainsString('resources/css/app.css', $view);
+            $this->assertStringContainsString("@include('layouts.partials.workspace-read-sidebar')", $view);
+        }
+    }
+
     public function test_route_fails_closed_for_guest_missing_permission_foreign_tenant_and_cross_tenant_guid(): void
     {
         $alpha = Tenant::query()->create(['name' => 'Alpha', 'slug' => 'alpha']);

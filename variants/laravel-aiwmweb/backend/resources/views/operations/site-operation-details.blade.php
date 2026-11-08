@@ -1,9 +1,25 @@
+@php
+    $isArabic = app()->getLocale() === 'ar';
+    $tr = fn (string $en, string $ar): string => $isArabic ? $ar : $en;
+    $tenantSlug = app(\App\Tenancy\TenantContext::class)->tenant()->slug;
+    $shellHomeUrl = $historyUrl;
+    $shellTitle = $tr('Site operation details', 'تفاصيل عملية الموقع');
+    $shellScope = $tr('Site operations', 'عمليات الموقع');
+    $shellLinks = [
+        ['url' => $historyUrl, 'label' => $tr('Site operations', 'عمليات الموقع')],
+        ['url' => route('canonical.workspace.site-operation-details', ['tenant' => $tenantSlug, 'operationId' => $operation->correlation_id], false), 'label' => $shellTitle, 'active' => true],
+    ];
+    if ($executionCenterUrl) {
+        $shellLinks[] = ['url' => $executionCenterUrl, 'label' => $tr('Execution Center', 'مركز التنفيذ')];
+    }
+@endphp
 <!doctype html>
-<html lang="en">
+<html lang="{{ $isArabic ? 'ar' : 'en' }}" dir="{{ $isArabic ? 'rtl' : 'ltr' }}" data-mode="dark">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Site operation details</title>
+    <title>{{ $shellTitle }} — AIWMWeb</title>
+    <meta name="robots" content="noindex,nofollow">
     @vite(['resources/css/app.css', 'resources/js/site-operation-details-copy-report.ts'])
     <!-- Google Fonts: Inter (Latin) and Tajawal (Arabic); typography 25% larger than 62.5% baseline. -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,70 +39,88 @@
         main form:has(> label ~ label ~ label) > :not(label), main section:has(> article ~ article) > :not(article), main section:has(> .record ~ .record) > :not(.record) { grid-column: 1 / -1; }
         main :is(.grid, .cards, .record-grid) > * { min-width: 0; }
 </style>
+    @include('layouts.partials.workspace-read-styles')
+    <style data-site-operation-details-shell>
+        .site-operation-details-shell .workspace-read-content :is(pre, code, dd) { overflow-wrap: anywhere; min-width: 0; }
+        .site-operation-details-shell .workspace-read-content pre { white-space: pre-wrap; overflow-x: auto; padding: 14px; border: 1px solid #30394c; border-radius: 10px; }
+        .site-operation-details-shell .workspace-read-content .contract-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 14px; }
+        .site-operation-details-shell .workspace-read-content .contract-details > div { padding: 12px; background: #111927; border: 1px solid #30394c; border-radius: 10px; min-width: 0; }
+        .site-operation-details-shell .workspace-read-content :is(button, .btn) { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 10px 14px; border: 1px solid #a99368; border-radius: 9px; color: #f4f6fa; background: #243047; font-weight: 700; cursor: pointer; text-decoration: none; }
+        .site-operation-details-shell .workspace-read-content .btn.primary { background: #c5a45d; color: #19170f; }
+        .site-operation-details-shell .workspace-read-content [hidden] { display: none !important; }
+        @media (max-width: 600px) { .site-operation-details-shell .workspace-read-content .d-flex { display: grid; grid-template-columns: minmax(0, 1fr); } .site-operation-details-shell .workspace-read-content :is(button, .btn) { width: 100%; } }
+    </style>
 </head>
 <body>
-    <main class="workspace-main" data-canonical-operation="AIMW-AI-3CDB30A4C2" data-canonical-load-operation="{{ \App\Http\Controllers\SiteOperationDetailsReadController::LOAD_OPERATION_ID }}">
+<div class="app-shell workspace-read-shell site-operation-details-shell" data-dashboard-shell="aiwmweb">
+    <a class="skip-link" href="#site-operation-details-content">{{ $tr('Skip to content', 'تخطَّ إلى المحتوى') }}</a>
+    @include('layouts.partials.workspace-read-sidebar')
+    <div class="main-area">
+        @include('layouts.partials.workspace-read-topbar')
+    <main id="site-operation-details-content" class="content workspace-read-content workspace-main" data-canonical-operation="AIMW-AI-3CDB30A4C2" data-canonical-load-operation="{{ \App\Http\Controllers\SiteOperationDetailsReadController::LOAD_OPERATION_ID }}">
         <section class="hero-panel" aria-labelledby="site-operation-heading">
             <div>
-                <span class="workspace-kicker">SITE OPERATION</span>
-                <h1 id="site-operation-heading">Site operation details</h1>
-                <p>Read-only execution history for the active tenant.</p>
+                <span class="workspace-kicker">{{ $tr('SITE OPERATION', 'عملية الموقع') }}</span>
+                <h1 id="site-operation-heading">{{ $shellTitle }}</h1>
+                <p>{{ $tr('Read-only execution history for the active tenant.', 'سجل تنفيذ للقراءة فقط خاص بمساحة العمل الحالية.') }}</p>
             </div>
             <div class="d-flex gap-2 flex-wrap">
-                <a class="btn" data-canonical-operation="AIMW-AI-BC89B13AF8" href="{{ $historyUrl }}">Back to site operations</a>
+                <a class="btn" data-canonical-operation="AIMW-AI-BC89B13AF8" href="{{ $historyUrl }}">{{ $tr('Back to site operations', 'العودة إلى عمليات الموقع') }}</a>
                 @if ($executionCenterUrl)
                     <a
                         class="btn"
                         data-canonical-operation="AIMW-AI-98F705F888"
                         href="{{ $executionCenterUrl }}"
-                    >Execution Center</a>
+                    >{{ $tr('Execution Center', 'مركز التنفيذ') }}</a>
                 @endif
             </div>
         </section>
 
         <section class="panel" aria-labelledby="operation-actions-heading">
-            <h2 id="operation-actions-heading">Operation actions</h2>
+            <h2 id="operation-actions-heading">{{ $tr('Operation actions', 'إجراءات العملية') }}</h2>
             <button
                 type="button"
                 data-copy-operation-report
                 data-canonical-operation="AIMW-BILL-AA8C2FD5B3"
                 aria-busy="false"
-            >Copy report</button>
-            <p data-copy-operation-report-success role="status" hidden>Report copied to the clipboard.</p>
+            >{{ $tr('Copy report', 'نسخ التقرير') }}</button>
+            <p data-copy-operation-report-success role="status" hidden>{{ $tr('Report copied to the clipboard.', 'تم نسخ التقرير إلى الحافظة.') }}</p>
             <div data-copy-operation-report-error role="alert" hidden>
-                <p data-copy-operation-report-error-message>The report could not be written to the clipboard. No copy success was reported; check browser clipboard access and retry.</p>
-                <button type="button" data-copy-operation-report-retry>Retry copy</button>
+                <p data-copy-operation-report-error-message>{{ $tr('The report could not be written to the clipboard. No copy success was reported; check browser clipboard access and retry.', 'تعذر نسخ التقرير إلى الحافظة. لم يتم تأكيد النسخ؛ تحقق من صلاحيات الحافظة وحاول مجددًا.') }}</p>
+                <button type="button" data-copy-operation-report-retry>{{ $tr('Retry copy', 'إعادة محاولة النسخ') }}</button>
             </div>
             <script id="site-operation-report-payload" type="application/json">@json($operationReport, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)</script>
         </section>
 
         <section class="panel" aria-labelledby="operation-summary-heading">
-            <h2 id="operation-summary-heading">Operation summary</h2>
+            <h2 id="operation-summary-heading">{{ $tr('Operation summary', 'ملخص العملية') }}</h2>
             <dl class="contract-details">
-                <div><dt>Result</dt><dd>{{ $operation->status ?: '—' }}</dd></div>
-                <div><dt>Operation</dt><dd>{{ $operation->operation ?: '—' }}</dd></div>
-                <div><dt>Site</dt><dd>{{ $site?->name ?: ('Site #'.(string) $operation->site_id) }}</dd></div>
-                <div><dt>Started</dt><dd>{{ $operation->started_at?->toIso8601String() ?: '—' }}</dd></div>
-                <div><dt>Completed</dt><dd>{{ $operation->completed_at?->toIso8601String() ?: '—' }}</dd></div>
-                <div><dt>Duration</dt><dd>{{ $durationMs === null ? '—' : $durationMs.' ms' }}</dd></div>
-                <div><dt>Affected records</dt><dd>{{ $operation->affected_records === null ? '—' : $operation->affected_records }}</dd></div>
-                <div><dt>Correlation ID</dt><dd><code>{{ $operation->correlation_id }}</code></dd></div>
+                <div><dt>{{ $tr('Result', 'النتيجة') }}</dt><dd>{{ $operation->status ?: '—' }}</dd></div>
+                <div><dt>{{ $tr('Operation', 'العملية') }}</dt><dd>{{ $operation->operation ?: '—' }}</dd></div>
+                <div><dt>{{ $tr('Site', 'الموقع') }}</dt><dd>{{ $site?->name ?: ('Site #'.(string) $operation->site_id) }}</dd></div>
+                <div><dt>{{ $tr('Started', 'وقت البدء') }}</dt><dd>{{ $operation->started_at?->toIso8601String() ?: '—' }}</dd></div>
+                <div><dt>{{ $tr('Completed', 'وقت الاكتمال') }}</dt><dd>{{ $operation->completed_at?->toIso8601String() ?: '—' }}</dd></div>
+                <div><dt>{{ $tr('Duration', 'المدة') }}</dt><dd>{{ $durationMs === null ? '—' : $durationMs.' ms' }}</dd></div>
+                <div><dt>{{ $tr('Affected records', 'السجلات المتأثرة') }}</dt><dd>{{ $operation->affected_records === null ? '—' : $operation->affected_records }}</dd></div>
+                <div><dt>{{ $tr('Correlation ID', 'معرّف التتبع') }}</dt><dd><code>{{ $operation->correlation_id }}</code></dd></div>
             </dl>
         </section>
 
         <section class="panel" aria-labelledby="operation-message-heading">
-            <h2 id="operation-message-heading">Message</h2>
-            <p>{{ $operation->message ?: 'No message was recorded.' }}</p>
+            <h2 id="operation-message-heading">{{ $tr('Message', 'الرسالة') }}</h2>
+            <p>{{ $operation->message ?: $tr('No message was recorded.', 'لم تُسجل رسالة.') }}</p>
         </section>
 
         <section class="panel" aria-labelledby="technical-details-heading">
-            <h2 id="technical-details-heading">Technical details</h2>
+            <h2 id="technical-details-heading">{{ $tr('Technical details', 'التفاصيل الفنية') }}</h2>
             @if (! empty($operation->details))
                 <pre>{{ json_encode($operation->details, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) }}</pre>
             @else
-                <p>No technical details were recorded.</p>
+                <p>{{ $tr('No technical details were recorded.', 'لم تُسجل تفاصيل فنية.') }}</p>
             @endif
         </section>
     </main>
+    </div>
+</div>
 </body>
 </html>
