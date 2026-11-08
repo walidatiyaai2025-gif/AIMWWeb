@@ -359,6 +359,66 @@ final class OperationalLogsLiteralSearchTest extends TestCase
             ->assertJsonPath('data.499.message', 'alpha-row-1');
         $this->assertStringNotContainsString('alpha-row-0', json_encode($response->json('data'), JSON_THROW_ON_ERROR));
         $this->assertStringNotContainsString('private beta record', $response->getContent());
+
+        // The 501st historical record must remain reachable through real
+        // database paging even though legacy callers only see the newest 500.
+        $this->actingAs($actor)
+            ->getJson('/tenants/alpha/admin/logs?page=6&per_page=100')
+            ->assertOk()->assertJsonCount(1, 'data')
+            ->assertJsonPath('current_page', 6)->assertJsonPath('total', 501)
+            ->assertJsonPath('data.0.message', 'alpha-row-0');
+    }
+
+    public function test_opt_in_log_pages_are_bounded_authoritative_and_tenant_isolated(): void
+    {
+        [$alpha, $actor] = $this->member('alpha');
+        [$beta] = $this->member('beta');
+        $this->log($beta, 'foreign private record');
+        for ($i = 0; $i < 27; $i++) {
+            $this->log($alpha, 'alpha-marker-'.$i);
+        }
+
+        $legacy = $this->actingAs($actor)->getJson('/tenants/alpha/admin/logs')
+            ->assertOk()->assertJsonCount(27, 'data')->assertJsonPath('meta.limit', 500);
+        $this->assertArrayNotHasKey('total', $legacy->json());
+
+        $first = $this->actingAs($actor)
+            ->getJson('/tenants/alpha/admin/logs?page=1&per_page=10')
+            ->assertOk()->assertJsonCount(10, 'data')
+            ->assertJsonPath('total', 27)->assertJsonPath('current_page', 1)
+            ->assertJsonPath('last_page', 3)->assertJsonPath('per_page', 10)
+            ->assertJsonPath('meta.pagination_mode', 'server')
+            ->assertJsonPath('meta.tenant_records', 27)
+            ->assertJsonPath('meta.matching_records', 27)
+            ->assertJsonPath('meta.truncated', false)
+            ->assertJsonPath('data.0.message', 'alpha-marker-26');
+        $second = $this->actingAs($actor)
+            ->getJson('/tenants/alpha/admin/logs?page=2&per_page=10')
+            ->assertOk()->assertJsonCount(10, 'data')
+            ->assertJsonPath('data.0.message', 'alpha-marker-16');
+        $this->assertSame([], array_values(array_intersect(
+            collect($first->json('data'))->pluck('id')->all(),
+            collect($second->json('data'))->pluck('id')->all(),
+        )));
+        $this->actingAs($actor)
+            ->getJson('/tenants/alpha/admin/logs?page=999&per_page=10')
+            ->assertOk()->assertJsonCount(7, 'data')
+            ->assertJsonPath('current_page', 3)->assertJsonPath('last_page', 3);
+        $this->actingAs($actor)
+            ->getJson('/tenants/alpha/admin/logs?page=2&per_page=25')
+            ->assertOk()->assertJsonCount(2, 'data')
+            ->assertJsonPath('current_page', 2)->assertJsonPath('total', 27);
+        $this->actingAs($actor)
+            ->getJson('/tenants/alpha/admin/logs?page=1&per_page=25&search=missing')
+            ->assertOk()->assertJsonCount(0, 'data')
+            ->assertJsonPath('total', 0)->assertJsonPath('meta.empty_reason', 'filter_matched_none');
+        foreach (['page=0', 'page=abc', 'per_page=500', 'per_page=0', 'per_page%5B%5D=25'] as $bad) {
+            $this->actingAs($actor)->getJson('/tenants/alpha/admin/logs?'.$bad)
+                ->assertUnprocessable();
+        }
+        $this->actingAs($actor)->getJson('/tenants/beta/admin/logs?page=1&per_page=10')
+            ->assertNotFound();
+        $this->assertStringNotContainsString('foreign private record', $first->getContent());
     }
 
     /** @return array{Tenant,User} */
