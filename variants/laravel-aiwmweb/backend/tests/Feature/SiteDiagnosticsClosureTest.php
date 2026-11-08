@@ -100,6 +100,59 @@ class SiteDiagnosticsClosureTest extends TestCase
         $this->assertCount(27, $service->diagnosticHistory($site));
     }
 
+    public function test_failed_sync_history_api_projection_never_serializes_legacy_secrets(): void
+    {
+        [$tenant, $member] = $this->tenant('safe-sync-history');
+        app(TenantContext::class)->activate($tenant, $member);
+        $site = Site::query()->create(['name' => 'Primary', 'url' => 'https://wp.test']);
+        $other = Site::query()->create(['name' => 'Other', 'url' => 'https://other.test']);
+        $unsafe = 'Bearer private-credential https://host.test/?token=private-query';
+        $record = SiteOperationHistory::query()->create([
+            'site_id' => $site->id,
+            'operation' => 'synchronization',
+            'status' => 'failed',
+            'message' => $unsafe,
+            'details' => [
+                'failure_code' => 'WP_SYNC_AUTHENTICATION',
+                'failure_category' => 'authentication',
+                'failure_message' => $unsafe,
+                'extra' => ['password' => 'private-json'],
+                'sync_run_id' => 42,
+            ],
+            'started_at' => now(),
+            'completed_at' => now(),
+        ]);
+        SiteOperationHistory::query()->create([
+            'site_id' => $other->id,
+            'operation' => 'synchronization',
+            'status' => 'failed',
+            'message' => 'another-tenant-secret',
+            'started_at' => now(),
+            'completed_at' => now(),
+        ]);
+        $history = new SiteOperationHistoryService;
+        foreach ([$history->get($site->id), $history->paginateForSite($site->id)['items']] as $items) {
+            $this->assertCount(1, $items);
+            $this->assertSame($record->id, $items[0]['id']);
+            $this->assertSame('WordPress synchronization failed.', $items[0]['message']);
+            $this->assertSame('WP_SYNC_AUTHENTICATION', $items[0]['details']['failure_code']);
+            $this->assertSame(42, $items[0]['details']['sync_run_id']);
+            $this->assertStringNotContainsString('private-', json_encode($items, JSON_THROW_ON_ERROR));
+            $this->assertArrayNotHasKey('extra', $items[0]['details']);
+        }
+        $this->assertSame($unsafe, $record->fresh()->message);
+
+        $record->update(['details' => [
+            'failure_category' => 'authentication',
+            'failure_code' => 'WP_SYNC_AUTHENTICATION; forged-private-code',
+            'failure_message' => $unsafe,
+            'sync_run_id' => -7,
+        ]]);
+        $invalid = $history->paginateForSite($site->id)['items'][0];
+        $this->assertSame([], $invalid['details']);
+        $this->assertStringNotContainsString('private-', json_encode($invalid, JSON_THROW_ON_ERROR));
+    }
+
     public function test_status_projects_connector_wordpress_metadata_without_persisting_or_fabricating_values(): void
     {
         [$tenant, $member] = $this->tenant('site-health-metadata');

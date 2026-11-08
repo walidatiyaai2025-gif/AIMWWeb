@@ -12,7 +12,7 @@ final class SiteOperationHistoryService
 
     public function get(int $siteId, int $take = 100): array
     {
-        return SiteOperationHistory::query()->where('site_id', $siteId)->latest('started_at')->limit(max(1, min(500, $take)))->get()->toArray();
+        return SiteOperationHistory::query()->where('site_id', $siteId)->latest('started_at')->limit(max(1, min(500, $take)))->get()->map(fn (SiteOperationHistory $item): array => $this->safeSiteItem($item))->all();
     }
 
     /**
@@ -38,7 +38,7 @@ final class SiteOperationHistoryService
         }
 
         return [
-            'items' => $result->items(),
+            'items' => array_map(fn (SiteOperationHistory $item): array => $this->safeSiteItem($item), $result->items()),
             'page' => $page,
             'per_page' => $perPage,
             'total' => $result->total(),
@@ -158,6 +158,48 @@ final class SiteOperationHistoryService
         }
 
         return $record;
+    }
+
+    /**
+     * Site diagnostics is a read-only support API. Historic sync failure records
+     * predate structured error classification and may contain credentials in
+     * either their message or arbitrary details. Never serialize those raw fields.
+     * Preserve the original database row for authorized forensic workflows.
+     */
+    private function safeSiteItem(SiteOperationHistory $item): array
+    {
+        $data = $item->toArray();
+        if ($item->operation !== 'synchronization' || $item->status !== 'failed') {
+            return $data;
+        }
+
+        $data['message'] = 'WordPress synchronization failed.';
+        $details = is_array($item->details) ? $item->details : [];
+        $guidance = [
+            'authentication' => 'WordPress rejected the connection. Recheck Connector credentials and signed request permissions.',
+            'rate_limit' => 'WordPress or a provider reported a limit. Check quotas and retry when permitted.',
+            'protocol' => 'The Connector protocol was not accepted. Verify both installed Connector and Laravel versions.',
+            'transport' => 'The WordPress endpoint could not be reached reliably. Check network and TLS connectivity.',
+            'remote_service' => 'WordPress returned a server-side error. Check the remote service health before retrying.',
+            'storage' => 'Synchronization encountered a database or storage failure. Check server health and free capacity.',
+            'unknown' => 'Synchronization failed for an unclassified reason. Open the authorized run details for diagnosis.',
+        ];
+        $category = $details['failure_category'] ?? null;
+        $code = is_string($category) && isset($guidance[$category]) ? 'WP_SYNC_'.strtoupper($category) : null;
+        $safeDetails = [];
+        if ($code !== null && ($details['failure_code'] ?? null) === $code) {
+            $safeDetails['failure_code'] = $code;
+            $safeDetails['failure_category'] = $category;
+            $safeDetails['failure_message'] = $guidance[$category];
+        }
+        $runId = $details['sync_run_id'] ?? null;
+        if (is_int($runId) && $runId > 0) {
+            $safeDetails['sync_run_id'] = $runId;
+        }
+
+        $data['details'] = $safeDetails;
+
+        return $data;
     }
 
     private function redact(array $value): array
