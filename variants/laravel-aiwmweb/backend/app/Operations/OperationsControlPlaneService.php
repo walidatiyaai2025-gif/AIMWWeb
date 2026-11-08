@@ -564,6 +564,10 @@ final class OperationsControlPlaneService
         // client-side slice of the historical latest-500-record sample.
         // Preserve both tenant scoping and deterministic ordering on ties.
         if ($page !== null && $perPage !== null) {
+            // Internal callers bypass the HTTP validator: never pass an unsafe
+            // limit or OFFSET to Eloquent's paginator on a direct service read.
+            $page = max(1, min(100000, $page));
+            $perPage = in_array($perPage, [10, 25, 50, 100], true) ? $perPage : 25;
             $ordered = (clone $query)->orderByDesc('occurred_at')->orderByDesc('id');
             $logs = $ordered->paginate($perPage, ['*'], 'page', $page);
             if ($page > $logs->lastPage()) {
