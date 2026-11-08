@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest, type FrontendContext } from './core';
-import { useToast } from './components';
+import { Pagination, useToast } from './components';
 import { useLocale } from './i18n';
 import {
     DEFAULT_GLOBAL_PAGES_FILTERS,
@@ -60,6 +60,7 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
     const [filterDraft, setFilterDraft] = useState(DEFAULT_GLOBAL_PAGES_FILTERS);
     const [appliedFilters, setAppliedFilters] = useState(DEFAULT_GLOBAL_PAGES_FILTERS);
     const [filterRevision, setFilterRevision] = useState(0);
+    const [page, setPage] = useState(1);
     const endpoint = globalPagesEndpoint(context.tenant.slug);
     const draftEndpoint = globalPagesDraftEndpoint(context.tenant.slug);
     const publishEndpoint = globalPagesPublishEndpoint(context.tenant.slug);
@@ -76,7 +77,7 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
         queryFn: () => apiRequest<Array<{ id: number; name: string }>>(sitesEndpoint as string),
         enabled: enabled && Boolean(sitesEndpoint),
     });
-    const filterUrl = globalPagesFilterUrl(context.tenant.slug, appliedFilters);
+    const filterUrl = globalPagesFilterUrl(context.tenant.slug, appliedFilters, page);
     const query = useQuery({
         queryKey: ['global-pages-confirm-trash', context.tenant.slug, filterUrl, filterRevision],
         queryFn: () => apiRequest<GlobalPagesEnvelope>(filterUrl as string),
@@ -84,6 +85,11 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
     });
 
     const rows = Array.isArray(query.data?.data) ? query.data.data : [];
+    const pageMeta = query.data;
+    const hasAuthoritativePage = Boolean(pageMeta && Number.isSafeInteger(pageMeta.total) && pageMeta.total >= 0
+        && Number.isSafeInteger(pageMeta.current_page) && pageMeta.current_page >= 1
+        && Number.isSafeInteger(pageMeta.last_page) && pageMeta.last_page >= 1
+        && pageMeta.current_page <= pageMeta.last_page);
     const selectedTargets = useMemo(
         () => rows
             .filter((row) => row.status !== 'trash' && selected.has(`${row.site_id}:${row.wordpress_id}`))
@@ -267,6 +273,8 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
                 onApply={() => {
                     if (busy || query.isFetching) return;
                     setSelected(new Set());
+                    setConfirmOpen(false);
+                    setPage(1);
                     setAppliedFilters({ ...filterDraft });
                     setFilterRevision((value) => value + 1);
                 }}
@@ -278,6 +286,7 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
                     if (busy || query.isFetching) return;
                     setFilterDraft({ ...DEFAULT_GLOBAL_PAGES_FILTERS });
                     setAppliedFilters({ ...DEFAULT_GLOBAL_PAGES_FILTERS });
+                    setPage(1);
                     setSelected(new Set());
                     setConfirmOpen(false);
                     setFilterRevision((value) => value + 1);
@@ -397,6 +406,22 @@ export function GlobalPagesConfirmTrashControl({ context }: { context: FrontendC
                             </tbody>
                         </table>
                     </div>
+                    {hasAuthoritativePage ? (
+                        <Pagination
+                            page={pageMeta!.current_page}
+                            lastPage={pageMeta!.last_page}
+                            total={pageMeta!.total}
+                            pageSize={appliedFilters.perPage}
+                            returnedCount={rows.length}
+                            onPage={(next) => {
+                                if (busy || query.isFetching || !Number.isSafeInteger(next) || next < 1 || next > pageMeta!.last_page) return;
+                                // Never carry hidden selections or an open destructive confirmation across pages.
+                                setSelected(new Set());
+                                setConfirmOpen(false);
+                                setPage(next);
+                            }}
+                        />
+                    ) : null}
                 </>
             ) : (!query.isLoading && !query.error ? <p>{locale === 'ar' ? 'لا توجد صفحات متزامنة.' : 'No synchronized pages are available.'}</p> : null)}
 
