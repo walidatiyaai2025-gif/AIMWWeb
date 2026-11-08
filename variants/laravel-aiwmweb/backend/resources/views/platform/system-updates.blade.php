@@ -83,6 +83,25 @@
     <section class="panel" aria-labelledby="available">
         <h2 id="available">{{ $t('Find and install an update', 'فحص وتثبيت تحديث') }}</h2>
         <p class="muted">{{ $t('Checks the latest published GitHub release, verifies its Ed25519 signature, and compares it with this installation.', 'يفحص أحدث إصدار منشور على GitHub، ويتحقق من توقيعه الرقمي ثم يقارنه بالإصدار المثبت.') }}</p>
+        @if(session('system_update_check_failure'))
+            <div class="alert error" role="alert" data-testid="release-metadata-failure">
+                <strong>{{ $t('Release metadata check failed — no installation was started.', 'فشل فحص بيانات الإصدار — لم يبدأ أي تثبيت.') }}</strong>
+                <p>{{ $t('Phase: signed release metadata lookup', 'المرحلة: جلب بيانات الإصدار الموقّع') }}
+                    · {{ $t('Reason', 'السبب') }}:
+                    @switch(session('system_update_check_failure.category'))
+                        @case('connection_timeout')
+                            {{ $t('Connection timed out or failed', 'انتهت مهلة الاتصال أو تعذر الاتصال') }}
+                            @break
+                        @case('signature_invalid')
+                            {{ $t('Digital signature verification failed', 'فشل التحقق من التوقيع الرقمي') }}
+                            @break
+                        @default
+                            {{ $t('Release metadata could not be verified', 'تعذر التحقق من بيانات الإصدار') }}
+                    @endswitch
+                </p>
+                <p>{{ $t('Try Check for updates again. If outbound access to GitHub remains blocked, use Verify Package with an authentic signed bundle instead. No maintenance mode or update was started by this check.', 'أعد البحث عن تحديث. إذا ظل اتصال الاستضافة بـGitHub متعذرًا، استخدم التحقق من حزمة ZIP موقّعة وموثوقة بدلًا منه. لم يبدأ هذا الفحص وضع الصيانة أو أي تحديث.') }}</p>
+            </div>
+        @endif
         <form method="post" action="{{ route('platform.updates.check') }}">
             @csrf
             <button type="submit" @disabled(! $state['enabled'] || ! $state['configured'])>{{ $t('Check for updates', 'البحث عن تحديث') }}</button>
