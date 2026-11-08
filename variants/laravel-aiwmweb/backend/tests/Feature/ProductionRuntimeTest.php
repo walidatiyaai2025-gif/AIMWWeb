@@ -41,6 +41,38 @@ class ProductionRuntimeTest extends TestCase
         $this->assertArrayNotHasKey('wordpress', $checks);
     }
 
+    public function test_structured_log_processor_fails_closed_at_depth_limit_in_context_and_extra(): void
+    {
+        $deep = ['password' => 'DEEP_PASSWORD_SECRET', 'safe' => 'DEEP_CANARY', 7 => ['token' => 'DEEP_TOKEN_SECRET']];
+        for ($level = 0; $level < 5; $level++) {
+            $deep = ['layer'.$level => $deep];
+        }
+
+        $record = new LogRecord(
+            datetime: now()->toDateTimeImmutable(),
+            channel: 'test',
+            level: Level::Info,
+            message: 'safe log message',
+            context: ['safe' => 'visible', 'nested' => $deep],
+            extra: ['request_id' => 'public-request', 'nested' => $deep],
+        );
+        $processed = (new RedactSecretsProcessor)($record);
+
+        $this->assertSame('visible', $processed->context['safe']);
+        $this->assertSame('public-request', $processed->extra['request_id']);
+        $this->assertStringNotContainsString('DEEP_PASSWORD_SECRET', json_encode($processed->context, JSON_THROW_ON_ERROR));
+        $this->assertStringNotContainsString('DEEP_TOKEN_SECRET', json_encode($processed->extra, JSON_THROW_ON_ERROR));
+        $this->assertStringNotContainsString('DEEP_CANARY', json_encode($processed->context, JSON_THROW_ON_ERROR));
+        $this->assertStringNotContainsString('DEEP_CANARY', json_encode($processed->extra, JSON_THROW_ON_ERROR));
+        $this->assertStringContainsString('[REDACTED]', json_encode($processed->context, JSON_THROW_ON_ERROR));
+        $this->assertStringContainsString('[REDACTED]', json_encode($processed->extra, JSON_THROW_ON_ERROR));
+
+        // The immutable Monolog record supplied to the processor keeps its
+        // original values; only the processed copy is safe to emit.
+        $this->assertStringContainsString('DEEP_PASSWORD_SECRET', json_encode($record->context, JSON_THROW_ON_ERROR));
+        $this->assertStringContainsString('DEEP_TOKEN_SECRET', json_encode($record->extra, JSON_THROW_ON_ERROR));
+    }
+
     public function test_structured_log_processor_redacts_secret_fields_recursively(): void
     {
         $record = new LogRecord(
