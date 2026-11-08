@@ -14,7 +14,7 @@ Scope: `variants/laravel-aiwmweb/backend/resources/views/**`. **All 29 discovere
 | `setup.blade.php` | Standalone owner activation; no Vite | Installer/public workflow; distinct by design; verify styled setup |
 | `welcome.blade.php` | Public welcome page; Vite | Public landing; intentionally no authenticated shell |
 | `admin/application-sessions.blade.php` | Initial census: standalone inline CSS with no Vite/sidebar | **Current PR candidate**: shared read-only authenticated tenant shell, locale-aware AR/EN topbar/nav, Vite CSS and mobile layout; browser/host unverified |
-| `ai/choose-tenant.blade.php` | Standalone inline CSS, no Vite | Tenant selection; route/visual verification needed |
+| `ai/choose-tenant.blade.php` | Previously standalone CSS, no Vite | **Current #1601 tenant-selector candidate**: branded tenant-neutral responsive AR/EN shell, Vite CSS, active-membership-only navigation; CI/browser/host verification pending. No tenant sidebar until explicit selection. |
 | `ai/prompt-templates.blade.php` | `data-dashboard-shell`, Vite-conditional app stylesheet, own inline shell CSS | Existing implemented shell; verify compiled CSS and AR/EN browser (#1512) |
 | `ai/provider-form.blade.php` | Partial form, no document markup | N/A; included in provider settings |
 | `ai/provider-settings.blade.php` | On inventory base: fixed `lang="ar" dir="rtl"`, inline CSS, no Vite/sidebar | **Merged in #1650**, published in signed GitHub v1.0.735; host and browser unverified |
