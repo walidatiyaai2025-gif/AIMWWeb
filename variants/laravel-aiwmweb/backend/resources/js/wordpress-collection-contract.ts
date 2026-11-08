@@ -27,6 +27,22 @@ function checkPageFields(container: Record<string, unknown>): void {
             throw invalidCollection();
         }
     }
+    // The page-local count is not an authoritative grand total unless the
+    // server explicitly supplies a boolean verification flag.
+    const authority = container.pagination_authoritative;
+    if (authority !== undefined && typeof authority !== 'boolean') {
+        throw invalidCollection();
+    }
+
+    const perPage = container.per_page;
+    if (perPage !== undefined && (
+        typeof perPage !== 'number' ||
+        !Number.isSafeInteger(perPage) ||
+        perPage < 1 ||
+        perPage > 100
+    )) {
+        throw invalidCollection();
+    }
 }
 
 export function assertValidWordPressCollection(routeKey: string, payload: unknown): void {
