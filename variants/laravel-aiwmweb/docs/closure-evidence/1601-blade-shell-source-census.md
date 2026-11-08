@@ -1,6 +1,6 @@
 # Issue #1601 — Laravel Blade shell source census (source inspection only)
 
-Source inventory baseline: `main@de4b08ff8eac483b87fc751da177edd3bc7e4b40` (2026-11-08). Incremental fixes tracked separately: #1648 Site Settings merged, #1650 AI Provider Settings merged, current #1601 email-shell candidate based on `main@5080cc43fa5bf18d6730c32f66b8d8048f5d8a9b`. This source census remains **not browser verification**.
+Source inventory baseline: `main@de4b08ff8eac483b87fc751da177edd3bc7e4b40` (2026-11-08). Incremental fixes tracked separately: #1648 Site Settings merged, #1650 AI Provider Settings merged, email shell merged through PR #1653, and Security Audit being reconciled in PR #1652. This source census remains **not browser verification**.
 Scope: `variants/laravel-aiwmweb/backend/resources/views/**`. **All 29 discovered Blade templates** were inspected for `@vite`, a visible dashboard shell, sidebar/topbar markup, and locale/direction declarations. This is a **static source census**, NOT a browser route crawl, visual acceptance, production CSS-load result, or evidence that a given route is reachable to a particular role. Laravel React SPA pages may render their shell client-side.
 
 ## Classification and evidence
@@ -30,7 +30,7 @@ Scope: `variants/laravel-aiwmweb/backend/resources/views/**`. **All 29 discovere
 | `platform/error.blade.php` | Vite, no Blade sidebar | Error/fallback route; verify safe layout |
 | `platform/system-updates.blade.php` | Standalone light-mode inline CSS, no Vite/sidebar | **Review authenticated platform-admin dashboard parity**; preserve signed update security |
 | `reports/approvals-export.blade.php` | Standalone inline CSS, no Vite/sidebar | **Review authenticated dashboard parity** |
-| `security/audit.blade.php` | Standalone English inline CSS, no Vite/sidebar | **Review authenticated dashboard parity + localization** |
+| `security/audit.blade.php` | On inventory base: English-only standalone read-only platform audit view without Vite/sidebar | **Current #1601 security audit shell candidate**: AR/EN sidebar/topbar/Vite with original platform-admin/read-only guards; browser/host acceptance unverified |
 | `seo/manager.blade.php` | Vite, no Blade sidebar | Determine React ownership; browser verify |
 | `seo/workspace.blade.php` | Vite, no Blade sidebar | Determine React ownership; browser verify |
 | `sites/email-diagnostics.blade.php` | On inventory base: standalone light/dark Canvas CSS, no Vite/sidebar | **Current #1601 email-shell candidate**: uses shared site-email shell/sidebar/topbar/Vite and AR/EN; live browser/host unverified |

@@ -1,9 +1,13 @@
+@php($isArabic = app()->getLocale() === 'ar')
 <!doctype html>
-<html lang="en">
+<html lang="{{ $isArabic ? 'ar' : 'en' }}" dir="{{ $isArabic ? 'rtl' : 'ltr' }}" data-mode="dark">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Security Audit</title>
+    <title>{{ $isArabic ? 'تدقيق الأمان' : 'Security Audit' }} — AIWMWeb</title>
+    @unless (app()->runningUnitTests())
+        @vite(['resources/css/app.css'])
+    @endunless
     <!-- Google Fonts: Inter (Latin) and Tajawal (Arabic); typography 25% larger than 62.5% baseline. -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,24 +25,54 @@
         @media (max-width: 700px) { main .grid, main form:has(> label ~ label ~ label), main section:has(> article ~ article), main section:has(> .record ~ .record) { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; } }
         main form:has(> label ~ label ~ label) > :not(label), main section:has(> article ~ article) > :not(article), main section:has(> .record ~ .record) > :not(.record) { grid-column: 1 / -1; }
         main :is(.grid, .cards, .record-grid) > * { min-width: 0; }
+        body { margin: 0; background: #0b0f17; color: #f4f6fa; }
+        .security-audit-shell { --bg: #0b0f17; --surface: #151923; --border: #30394c; --text: #f4f6fa; --accent: #c5a45d; display: grid; grid-template-columns: minmax(220px, 284px) minmax(0, 1fr); min-height: 100vh; }
+        .security-audit-shell, .security-audit-shell * { box-sizing: border-box; }
+        .security-audit-shell .sidebar { position: sticky; top: 0; height: 100vh; overflow-y: auto; background: var(--surface); border-inline-end: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; gap: 18px; }
+        .security-audit-shell .brand { display: flex; gap: 12px; align-items: center; color: var(--text); text-decoration: none; font-weight: 800; }
+        .security-audit-shell .brand-mark { background: var(--accent); color: #14100b; padding: 10px; border-radius: 10px; }
+        .security-audit-shell .main-nav { display: grid; gap: 8px; }
+        .security-audit-shell .main-nav a { color: var(--text); text-decoration: none; padding: 12px; min-height: 44px; border-radius: 10px; }
+        .security-audit-shell .main-nav a.active, .security-audit-shell .main-nav a:hover { background: rgba(197,164,93,.16); color: #e0bf73; }
+        .security-audit-shell .main-area { min-width: 0; }
+        .security-audit-shell .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 24px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+        .security-audit-shell main { max-width: 1150px; padding: 24px; margin: auto; }
+        .security-audit-shell main > section { background: var(--surface); border: 1px solid var(--border); padding: 20px; border-radius: 16px; margin-bottom: 16px; }
+        .security-audit-shell select, .security-audit-shell input { background: #1b2130; color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
+        .security-audit-shell button { background: var(--accent); color: #14100b; border: 0; border-radius: 8px; padding: 10px 14px; cursor: pointer; }
+        .security-audit-shell a { color: #e0bf73; }
+        @media (max-width: 700px) { .security-audit-shell { grid-template-columns: minmax(0, 1fr); } .security-audit-shell .sidebar { position: static; height: auto; padding: 12px; } .security-audit-shell .main-nav { grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); } .security-audit-shell .topbar, .security-audit-shell main { padding: 12px; } }
 </style>
 </head>
 <body>
+<div class="app-shell security-audit-shell" data-dashboard-shell="aiwmweb">
+    <aside class="sidebar" aria-label="{{ $isArabic ? 'القائمة الرئيسية' : 'Main navigation' }}">
+        <a class="brand" href="/admin"><span class="brand-mark">AI</span><span>AIWMWeb</span></a>
+        <nav class="main-nav" aria-label="{{ $isArabic ? 'الأقسام' : 'Sections' }}">
+            <a href="/admin">{{ $isArabic ? 'لوحة الإدارة' : 'Dashboard' }}</a>
+            <a href="/admin/security-audit" class="active" aria-current="page">{{ $isArabic ? 'تدقيق الأمان' : 'Security Audit' }}</a>
+            @if ($settingsHref !== null)
+                <a href="{{ $settingsHref }}">{{ $isArabic ? 'الإعدادات' : 'Settings' }}</a>
+            @endif
+        </nav>
+    </aside>
+    <div class="main-area">
+        <header class="topbar"><strong>{{ $isArabic ? 'تدقيق الأمان' : 'Security Audit' }}</strong><span>AIWMWeb</span></header>
 <main>
     <section>
         <p>SECURITY</p>
-        <h1>Security Audit</h1>
-        <p>Read-only security events from tenant-owned audit data.</p>
+        <h1>{{ $isArabic ? 'تدقيق الأمان' : 'Security Audit' }}</h1>
+        <p>{{ $isArabic ? 'سجل أحداث الأمان للقراءة فقط ضمن نطاق المستأجر.' : 'Read-only security events from tenant-owned audit data.' }}</p>
         @if ($settingsHref !== null)
             <a
                 href="{{ $settingsHref }}"
                 data-canonical-operation="{{ $settingsNavigationOperationId }}"
-            >Back to settings</a>
+            >{{ $isArabic ? 'العودة إلى الإعدادات' : 'Back to settings' }}</a>
         @endif
     </section>
 
     <section>
-        <h2>Filter events</h2>
+        <h2>{{ $isArabic ? 'تصفية الأحداث' : 'Filter events' }}</h2>
         <form method="GET" action="/admin/security-audit">
             <label>
                 <span>Category</span>
@@ -73,12 +107,12 @@
 
     <section>
         <header>
-            <h2>Latest security events</h2>
+            <h2>{{ $isArabic ? 'أحدث أحداث الأمان' : 'Latest security events' }}</h2>
             <span>{{ $events->count() }}</span>
         </header>
 
         @if ($events->isEmpty())
-            <p>No matching security events.</p>
+            <p>{{ $isArabic ? 'لا توجد أحداث أمان مطابقة.' : 'No matching security events.' }}</p>
         @else
             @foreach ($events as $event)
                 <article>
@@ -97,5 +131,7 @@
         @endif
     </section>
 </main>
+    </div>
+</div>
 </body>
 </html>
