@@ -100,6 +100,50 @@ class SiteDiagnosticsClosureTest extends TestCase
         $this->assertCount(27, $service->diagnosticHistory($site));
     }
 
+    public function test_status_projects_connector_wordpress_metadata_without_persisting_or_fabricating_values(): void
+    {
+        [$tenant, $member] = $this->tenant('site-health-metadata');
+        app(TenantContext::class)->activate($tenant, $member);
+        $site = Site::query()->create(['name' => 'WP', 'url' => 'https://wp.test']);
+        $service = $this->service(new SiteGatewayStub);
+
+        $initial = $service->status($site);
+        $this->assertNull($initial['site']->wordpress_version);
+        $this->assertSame('not_probed', $initial['metadata']['wordpress_version']['state']);
+
+        SiteDiagnostic::query()->create([
+            'site_id' => $site->id,
+            'classification' => SiteConnectionState::CONNECTED,
+            'connection_state' => SiteConnectionState::CONNECTED,
+            'checked_at' => now(),
+            'health' => [
+                'wordpress_version' => '6.9.1',
+                'language_code' => 'ar_KW',
+                'password' => 'must-not-be-copied',
+            ],
+        ]);
+
+        $status = $service->status($site->fresh());
+        $this->assertSame('6.9.1', $status['site']->wordpress_version);
+        $this->assertSame('ar_KW', $status['site']->language_code);
+        $this->assertSame('connector_health', $status['metadata']['wordpress_version']['source']);
+        $this->assertNotNull($status['metadata']['language_code']['checked_at']);
+        $this->assertNull($site->fresh()->wordpress_version);
+        $this->assertNull($site->fresh()->language_code);
+
+        SiteDiagnostic::query()->where('site_id', $site->id)->delete();
+        SiteDiagnostic::query()->create([
+            'site_id' => $site->id,
+            'classification' => SiteConnectionState::CONNECTED,
+            'connection_state' => SiteConnectionState::CONNECTED,
+            'checked_at' => now(),
+            'health' => ['wordpress_version' => 'untrusted <script>', 'language_code' => 'invalid'],
+        ]);
+        $invalid = $service->status($site->fresh());
+        $this->assertNull($invalid['site']->wordpress_version);
+        $this->assertSame('not_supported', $invalid['metadata']['language_code']['state']);
+    }
+
     public function test_disconnect_and_reconnect_reuse_canonical_connector_pairing(): void
     {
         [$tenant, $member] = $this->tenant('reconnect');

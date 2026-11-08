@@ -24,10 +24,41 @@ final class SiteDiagnosticsService
     public function status(Site $site): array
     {
         $connector = Connector::query()->where('site_id', $site->id)->first();
-        $latest = SiteDiagnostic::query()->where('site_id', $site->id)->latest('checked_at')->first();
+        $latest = SiteDiagnostic::query()->where('site_id', $site->id)
+            ->orderByDesc('checked_at')->orderByDesc('id')->first();
+
+        // This is a response-only projection: never overwrite live site settings
+        // with stale diagnostics or claim an absent field was remotely verified.
+        $siteView = clone $site;
+        $metadata = [];
+        foreach (['wordpress_version', 'language_code'] as $field) {
+            $stored = $site->getAttribute($field);
+            $verified = data_get($latest?->health, $field);
+            $pattern = $field === 'wordpress_version'
+                ? '/^[0-9]+(?:\.[0-9]+){1,3}(?:[-+][a-zA-Z0-9.-]+)?$/D'
+                : '/^[a-z]{2,3}(?:_[A-Z]{2})?$/D';
+            $source = null;
+            $value = null;
+            foreach (['site' => $stored, 'connector_health' => $verified] as $candidateSource => $candidate) {
+                if (is_string($candidate) && preg_match($pattern, $candidate) === 1) {
+                    $value = $candidate;
+                    $source = $candidateSource;
+                    break;
+                }
+            }
+            $siteView->setAttribute($field, $value);
+            $metadata[$field] = [
+                'source' => $source,
+                'state' => $source === null
+                    ? ($latest === null ? 'not_probed' : ($latest->classification === SiteConnectionState::AUTH_FAILED ? 'permission_denied' : 'not_supported'))
+                    : 'verified',
+                'checked_at' => $source === 'connector_health' ? $latest?->checked_at?->toIso8601String() : null,
+            ];
+        }
 
         return [
-            'site' => $site,
+            'site' => $siteView,
+            'metadata' => $metadata,
             'connection' => $this->localConnectionState($connector),
             'last_verified_at' => $site->last_verified_at?->toIso8601String(),
             'connector' => $connector ? [
