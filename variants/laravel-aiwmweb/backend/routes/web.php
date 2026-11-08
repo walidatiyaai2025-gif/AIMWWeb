@@ -185,6 +185,7 @@ Route::middleware(['auth', 'tenant.context'])->prefix('api/v1/tenants/{tenant}/b
     Route::get('/entitlements', [BillingController::class, 'entitlements']);
     Route::get('/usage', [BillingController::class, 'usage']);
     Route::get('/history', [BillingController::class, 'history']);
+    Route::get('/history/paged', [BillingController::class, 'pagedHistory']);
 });
 
 Route::middleware(['auth', 'tenant.context'])->group(function (): void {
