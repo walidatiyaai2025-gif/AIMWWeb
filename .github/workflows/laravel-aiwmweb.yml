@@ -301,7 +301,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npm run dev -- --host 127.0.0.1 --port 5173 --strictPort > /tmp/aiwm-geometry-vite.log 2>&1 &
+          # Laravel Vite plugin blocks HMR in CI unless explicitly enabled.
+          # This exception applies only to the loopback-only disposable test server.
+          LARAVEL_BYPASS_ENV_CHECK=1 npm run dev -- --host 127.0.0.1 --port 5173 --strictPort > /tmp/aiwm-geometry-vite.log 2>&1 &
           vite_pid=$!
           trap 'kill "$vite_pid" || true' EXIT
           ready=0
