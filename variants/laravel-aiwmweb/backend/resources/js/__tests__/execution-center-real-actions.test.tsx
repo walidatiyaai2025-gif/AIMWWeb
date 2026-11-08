@@ -107,5 +107,10 @@ describe('Execution Center authoritative actions (#1614)', () => {
         expect(readExecutionUrlState().page).toBe(1);
         expect(readExecutionUrlState().pageSize).toBe(25);
         expect(readExecutionUrlState().status).toBe('');
+        window.history.replaceState(null, '', '/tenants/alpha/module/execution?page=999999999999&per_page=50&site=4');
+        expect(readExecutionUrlState().page).toBe(1);
+        expect(readExecutionUrlState().pageSize).toBe(50);
+        window.history.replaceState(null, '', '/tenants/alpha/module/execution?page=1000000&per_page=100');
+        expect(readExecutionUrlState().page).toBe(1000000);
     });
 });
