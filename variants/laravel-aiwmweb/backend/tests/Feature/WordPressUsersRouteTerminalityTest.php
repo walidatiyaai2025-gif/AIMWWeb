@@ -245,6 +245,41 @@ final class WordPressUsersRouteTerminalityTest extends TestCase
             ->assertStatus(500);
     }
 
+    public function test_wordpress_page_rows_cannot_exceed_declared_total_or_remaining_page_capacity(): void
+    {
+        $user = User::factory()->create();
+        $membership = $this->membership($user, 'alpha', ['tenant.view', 'sites.view']);
+        $site = $this->site($membership, 'https://alpha.example.test');
+        $this->credential($membership, $site);
+
+        Http::fake(function ($request) {
+            parse_str((string) parse_url($request->url(), PHP_URL_QUERY), $query);
+
+            if (($query['page'] ?? '1') === '2') {
+                return Http::response([['id' => 51], ['id' => 52]], 200, [
+                    'X-WP-Total' => '51',
+                    'X-WP-TotalPages' => '2',
+                ]);
+            }
+
+            return Http::response([['id' => 1], ['id' => 2]], 200, [
+                'X-WP-Total' => '1',
+                'X-WP-TotalPages' => '1',
+            ]);
+        });
+
+        $uri = "/api/v1/tenants/alpha/sites/{$site->id}/users";
+        $this->actingAs($user)
+            ->getJson("{$uri}?page=1&per_page=50")
+            ->assertStatus(500);
+
+        $this->actingAs($user)
+            ->getJson("{$uri}?page=2&per_page=50")
+            ->assertStatus(500);
+
+        Http::assertSentCount(2);
+    }
+
     public function test_empty_and_failure_states_are_truthful_and_not_synthesized(): void
     {
         $source = (string) file_get_contents(
