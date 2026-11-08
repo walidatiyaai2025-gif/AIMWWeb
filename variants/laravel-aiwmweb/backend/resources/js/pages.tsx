@@ -14,6 +14,7 @@ import {
     type WorkspaceRoute,
 } from './core';
 import { ActionButton, ActionDialog, DataTable, LoadingState, Pagination, StatePanel, useToast } from './components';
+import { authoritativeCollectionTotal } from './canonical-pagination-window';
 import { commonText, useLocale } from './i18n';
 import { CONTENT_HUB_WORKSPACE_URL_OPERATION_ID, contentHubWorkspaceUrl, isContentHubWorkspacePath } from './content-hub-workspace-url';
 import { AiCenterGenerateControl } from './ai-center-generate-control';
@@ -153,7 +154,7 @@ function normalizeCollection(payload: unknown) {
     const envelope = (payload ?? {}) as CollectionEnvelope;
     const rows = Array.isArray(envelope.data) ? envelope.data : Array.isArray(envelope.items) ? envelope.items : [];
     const reportedTotal = envelope.total ?? envelope.meta?.total;
-    const authoritativeTotal = typeof reportedTotal === 'number' && Number.isSafeInteger(reportedTotal) && reportedTotal >= 0 ? reportedTotal : undefined;
+    const authoritativeTotal = authoritativeCollectionTotal(reportedTotal);
     const total = authoritativeTotal ?? rows.length;
     const reportedPage = envelope.current_page ?? envelope.page ?? envelope.meta?.current_page;
     const page = Number.isSafeInteger(reportedPage) && reportedPage! > 0 ? reportedPage! : 1;

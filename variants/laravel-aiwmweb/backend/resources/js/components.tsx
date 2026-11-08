@@ -376,7 +376,7 @@ export function Pagination({
     const hasPageSize = Number.isSafeInteger(pageSize) && pageSize! > 0 && pageSize! <= 100;
     if (safeLastPage <= 1 && !hasTotal && !onPageSizeChange) return null;
 
-    const firstShown = hasTotal && hasPageSize && total! > 0 ? (safePage - 1) * pageSize! + 1 : 0;
+    const firstShown = hasTotal && hasPageSize && total! > (safePage - 1) * pageSize! ? (safePage - 1) * pageSize! + 1 : 0;
     const count = Number.isSafeInteger(returnedCount) ? Math.max(0, returnedCount!) : pageSize ?? 0;
     const lastShown = hasTotal && hasPageSize ? Math.min(total!, firstShown > 0 ? firstShown + count - 1 : 0) : 0;
 
@@ -386,7 +386,7 @@ export function Pagination({
                 <button type="button" className="btn" onClick={() => onPage(1)} disabled={safePage <= 1}>
                     {locale === 'ar' ? 'الأولى' : 'First'}
                 </button>
-                <button type="button" className="btn" data-canonical-operation={previousOperationId} data-canonical-operation-alias={previousOperationAliasId} onClick={() => onPage(previousAppDataGridPage(page))} disabled={safePage <= 1}>{text(commonText.previous)}</button>
+                <button type="button" className="btn" data-canonical-operation={previousOperationId} data-canonical-operation-alias={previousOperationAliasId} onClick={() => onPage(previousAppDataGridPage(page))} disabled={page <= 1}>{text(commonText.previous)}</button>
                 <div className="pagination-numbers" aria-label={locale === 'ar' ? 'اختيار الصفحة' : 'Choose page'}>
                     {visiblePaginationPages(safePage, safeLastPage).map((number) => (
                         <button

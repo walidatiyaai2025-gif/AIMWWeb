@@ -27,7 +27,7 @@ export function ContentExplorerPagination({
     onPageSizeChange?: (size: number) => void;
 }) {
     const { locale, text } = useLocale();
-    if (lastPage <= 1) return null;
+    if (lastPage <= 1 && total === undefined && !onPageSizeChange) return null;
 
     const previous = () => {
         if (page <= 1) return;
@@ -40,7 +40,7 @@ export function ContentExplorerPagination({
 
     const hasTotal = Number.isSafeInteger(total) && total! >= 0;
     const hasSize = Number.isSafeInteger(pageSize) && pageSize! > 0;
-    const firstShown = hasTotal && hasSize && total! > 0 ? (page - 1) * pageSize! + 1 : 0;
+    const firstShown = hasTotal && hasSize && total! > (page - 1) * pageSize! ? (page - 1) * pageSize! + 1 : 0;
     const lastShown = hasTotal && hasSize ? Math.min(total!, firstShown > 0 ? firstShown + Math.max(0, returnedCount ?? pageSize!) - 1 : 0) : 0;
 
     return (
