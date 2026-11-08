@@ -56,6 +56,7 @@ import { DashboardMediaNavigationControl } from './dashboard-media-navigation-co
 import { DashboardConnectorDownloadControl } from './dashboard-connector-download-control';
 import { LiveSystemStatusRefreshControl } from './live-system-status-refresh-control';
 import { EMAIL_HISTORY_CLEAR_FILTERS_OPERATION_ID, EmailHistoryFiltersControl, type EmailHistoryFilterState } from './email-history-filters-control';
+import { ExecutionCenterRowActions, EXECUTION_PAGE_SIZES, EXECUTION_STATUSES, readExecutionUrlState, writeExecutionUrlState, type ExecutionUrlState } from './execution-center-real-actions';
 import { GlobalUsersFullManagementControl } from './global-users-full-management-control';
 import { WordPressUsersRefreshControl } from './wordpress-users-refresh-control';
 import {
@@ -430,9 +431,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const { locale, text } = useLocale();
     const { notify } = useToast();
     const queryClient = useQueryClient();
-    const [searchInput, setSearchInput] = useState(() => route.key === 'sites' ? readSitesUrlPageState().search : '');
-    const [search, setSearch] = useState(() => route.key === 'sites' ? readSitesUrlPageState().search : '');
-    const [page, setPage] = useState(() => route.key === 'sites' ? readSitesUrlPageState().page : 1);
+    const [searchInput, setSearchInput] = useState(() => route.key === 'sites' ? readSitesUrlPageState().search : route.key === 'execution' ? readExecutionUrlState().search : '');
+    const [search, setSearch] = useState(() => route.key === 'sites' ? readSitesUrlPageState().search : route.key === 'execution' ? readExecutionUrlState().search : '');
+    const [page, setPage] = useState(() => route.key === 'sites' ? readSitesUrlPageState().page : route.key === 'execution' ? readExecutionUrlState().page : 1);
     // Only enable page-size changes on APIs with verified server-side per_page.
     const [explorerPageSize, setExplorerPageSize] = useState(25);
     const [emailHistoryPageSize, setEmailHistoryPageSize] = useState(25);
@@ -442,6 +443,8 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const [notificationsPageSize, setNotificationsPageSize] = useState(25);
     const [logsPageSize, setLogsPageSize] = useState(25);
     const [sitesPageSize, setSitesPageSize] = useState(() => readSitesUrlPageState().pageSize);
+    const [executionState, setExecutionState] = useState<ExecutionUrlState>(readExecutionUrlState);
+    const [executionDraft, setExecutionDraft] = useState<ExecutionUrlState>(readExecutionUrlState);
     const [wordpressSiteRoleDraft, setWordpressSiteRoleDraft] = useState<WordPressSiteUserRole>('all');
     const [wordpressSiteRoleApplied, setWordpressSiteRoleApplied] = useState<WordPressSiteUserRole>('all');
     const [mediaDraft, setMediaDraft] = useState(defaultGlobalMediaFilters);
@@ -472,6 +475,29 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         setSitesPageSize(nextSize);
         setSitesFilter(nextFilter);
     };
+    const navigateExecution = (next: ExecutionUrlState): void => {
+        writeExecutionUrlState(next);
+        setExecutionState(next);
+        setExecutionDraft(next);
+        setSearchInput(next.search);
+        setSearch(next.search);
+        setPage(next.page);
+    };
+
+    useEffect(() => {
+        if (route.key !== 'execution') return undefined;
+        const restore = () => {
+            const next = readExecutionUrlState();
+            setExecutionState(next);
+            setExecutionDraft(next);
+            setSearchInput(next.search);
+            setSearch(next.search);
+            setPage(next.page);
+        };
+        window.addEventListener('popstate', restore);
+        return () => window.removeEventListener('popstate', restore);
+    }, [route.key]);
+
     const [explorerPreview, setExplorerPreview] = useState<Record<string, unknown> | null>(null);
     const [explorerSelectedKeys, setExplorerSelectedKeys] = useState<Set<string>>(() => new Set());
 
@@ -544,6 +570,18 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const query = useQuery(route.key === 'email-history' ? {
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType, emailHistoryFilters.siteId, emailHistoryFilters.status, emailHistoryFilters.correlation, appDataGridSortDescending, emailHistoryPageSize],
         queryFn: () => readWorkspaceCollection(endpointWithQuery(endpoint!, page, search, resourceFilters)),
+        enabled: state.state === 'enabled' && Boolean(endpoint),
+    } : route.key === 'execution' ? {
+        queryKey: ['workspace', context.tenant.slug, route.key, endpoint,
+            executionState.page, executionState.pageSize, executionState.search,
+            executionState.status, executionState.type, executionState.dateFrom, executionState.dateTo],
+        queryFn: () => readWorkspaceCollection(endpointWithQuery(endpoint!, executionState.page, executionState.search, {
+            per_page: String(executionState.pageSize),
+            ...(executionState.status ? { status: executionState.status } : {}),
+            ...(executionState.type ? { type: executionState.type } : {}),
+            ...(executionState.dateFrom ? { date_from: executionState.dateFrom } : {}),
+            ...(executionState.dateTo ? { date_to: executionState.dateTo } : {}),
+        })),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     } : route.key === 'notifications' ? {
         // Tenant/user scoped Laravel inbox returns authoritative paginator metadata.
@@ -1047,6 +1085,14 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         setWordpressSiteRoleApplied(wordpressSiteRoleDraft);
                         // UsersManager SearchClickedAsync always re-reads, even when the filters are unchanged.
                         if (unchanged) void query.refetch();
+                        return;
+                    }
+                    if (route.key === 'execution') {
+                        navigateExecution({
+                            ...executionDraft,
+                            page: 1,
+                            search: searchInput.trim().slice(0, 120),
+                        });
                         return;
                     }
                     if (route.key === 'sites') {
