@@ -69,11 +69,17 @@
     ];
 @endphp
 <!DOCTYPE html>
-<html lang="{{ $isArabic ? 'ar' : 'en' }}" dir="{{ $isArabic ? 'rtl' : 'ltr' }}">
+<html lang="{{ $isArabic ? 'ar' : 'en' }}" dir="{{ $isArabic ? 'rtl' : 'ltr' }}" data-mode="dark">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $copy['title'] }}</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="color-scheme" content="dark light">
+    <title>{{ $copy['title'] }} — AIWMWeb</title>
+    {{-- Match the compiled app asset used by the canonical authenticated Laravel dashboard. --}}
+    @unless (app()->runningUnitTests())
+        @vite(['resources/css/app.css'])
+    @endunless
     <style>
         :root { color-scheme: light dark; font-family: Inter, system-ui, sans-serif; }
         body { margin: 0; background: Canvas; color: CanvasText; }
@@ -109,9 +115,15 @@
         main form:has(> label ~ label ~ label) > :not(label), main section:has(> article ~ article) > :not(article), main section:has(> .record ~ .record) > :not(.record) { grid-column: 1 / -1; }
         main :is(.grid, .cards, .record-grid) > * { min-width: 0; }
 </style>
+    @include('sites.partials.email-shell-styles')
 </head>
 <body>
-<main>
+<div class="app-shell site-email-shell" data-dashboard-shell="aiwmweb">
+    <a class="skip-link" href="#site-email-content">{{ $isArabic ? 'تخط إلى المحتوى' : 'Skip to content' }}</a>
+    @include('sites.partials.email-sidebar', ['activeEmailView' => 'settings'])
+    <div class="main-area">
+        @include('sites.partials.email-topbar', ['activeEmailView' => 'settings'])
+        <main id="site-email-content" class="content site-email-content">
     <header>
         <p>Email / {{ $selectedSite?->name ?? $copy['choose'] }}</p>
         <h1>{{ $copy['title'] }}</h1>
@@ -281,6 +293,8 @@
             <p><a href="/tenants/{{ rawurlencode($tenant) }}/sites/{{ $selectedSite->getKey() }}">{{ $copy['back'] }}</a></p>
         </section>
     @endif
-</main>
+        </main>
+    </div>
+</div>
 </body>
 </html>
