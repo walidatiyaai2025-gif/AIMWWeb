@@ -254,13 +254,15 @@ export function DataTable({
     rows,
     renderActions,
     layout = 'table',
+    preferredColumns,
 }: {
     rows: Array<Record<string, unknown>>;
     renderActions?: (row: Record<string, unknown>) => React.ReactNode;
     layout?: 'table' | 'cards';
+    preferredColumns?: string[];
 }) {
     const { locale } = useLocale();
-    const preferred = ['id', 'title', 'name', 'status', 'type', 'site', 'updated_at', 'updatedAt', 'created_at'];
+    const preferred = preferredColumns ?? ['id', 'title', 'name', 'status', 'type', 'site', 'updated_at', 'updatedAt', 'created_at'];
     const available = new Set(rows.flatMap((row) => Object.keys(row)));
     const columns = preferred.filter((column) => available.has(column)).slice(0, 6);
     const fallbackColumns = columns.length ? columns : Array.from(available).slice(0, 6);
