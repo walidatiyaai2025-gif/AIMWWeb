@@ -41,6 +41,63 @@ class ProductionRuntimeTest extends TestCase
         $this->assertArrayNotHasKey('wordpress', $checks);
     }
 
+    public function test_monolog_message_redaction_masks_credentials_before_output(): void
+    {
+        $message = 'Sync failed Authorization: Bearer BEARER_MESSAGE_CANARY '
+            .'Authorization: Basic BASIC_MESSAGE_CANARY '
+            .'X-API-Key: HEADER_MESSAGE_CANARY '
+            .'api_key=API_MESSAGE_CANARY '
+            .'provider sk-THIS_IS_A_FAKE_KEY_1234567890 next retry scheduled';
+        $record = new LogRecord(
+            datetime: now()->toDateTimeImmutable(),
+            channel: 'test',
+            level: Level::Warning,
+            message: $message,
+            context: ['api_key' => 'STRUCTURED_CONTEXT_CANARY', 'safe' => 'visible'],
+            extra: ['access_token' => 'STRUCTURED_EXTRA_CANARY', 'request_id' => 'safe-request'],
+        );
+
+        $processed = (new RedactSecretsProcessor)($record);
+
+        $this->assertSame(
+            'Sync failed Authorization: Bearer [REDACTED] '
+                .'Authorization: Basic [REDACTED] '
+                .'X-API-Key: [REDACTED] '
+                .'api_key=[REDACTED] '
+                .'provider [REDACTED] next retry scheduled',
+            $processed->message,
+        );
+        $this->assertSame('[REDACTED]', $processed->context['api_key']);
+        $this->assertSame('[REDACTED]', $processed->extra['access_token']);
+        $this->assertSame('visible', $processed->context['safe']);
+        $this->assertSame('safe-request', $processed->extra['request_id']);
+        foreach ([
+            'BEARER_MESSAGE_CANARY', 'BASIC_MESSAGE_CANARY',
+            'HEADER_MESSAGE_CANARY', 'API_MESSAGE_CANARY',
+            'sk-THIS_IS_A_FAKE_KEY_1234567890',
+        ] as $secret) {
+            $this->assertStringNotContainsString($secret, $processed->message);
+        }
+        $this->assertSame($message, $record->message);
+        $this->assertSame('STRUCTURED_CONTEXT_CANARY', $record->context['api_key']);
+        $this->assertSame('STRUCTURED_EXTRA_CANARY', $record->extra['access_token']);
+    }
+
+    public function test_monolog_message_redaction_preserves_nonsecret_messages(): void
+    {
+        $record = new LogRecord(
+            datetime: now()->toDateTimeImmutable(),
+            channel: 'test',
+            level: Level::Info,
+            message: 'Sync completed: 17 records queued without errors',
+            context: ['status' => 'ok'],
+        );
+        $processed = (new RedactSecretsProcessor)($record);
+
+        $this->assertSame($record->message, $processed->message);
+        $this->assertSame('ok', $processed->context['status']);
+    }
+
     public function test_structured_log_processor_fails_closed_at_depth_limit_in_context_and_extra(): void
     {
         $deep = ['password' => 'DEEP_PASSWORD_SECRET', 'safe' => 'DEEP_CANARY', 7 => ['token' => 'DEEP_TOKEN_SECRET']];
