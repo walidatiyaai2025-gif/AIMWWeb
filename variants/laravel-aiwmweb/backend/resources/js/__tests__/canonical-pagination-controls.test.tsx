@@ -93,6 +93,39 @@ describe('Canonical server paging navigation (#1608)', () => {
         expect(screen.queryByText('0–0 من 137')).not.toBeInTheDocument();
     });
 
+    it('does not invent Content Explorer ranges for missing or invalid page-local counts', () => {
+        const onPage = vi.fn();
+        const props = { page: 3, lastPage: 7, onPage, total: 63, pageSize: 10 };
+        const { rerender } = render(<LocaleProvider><ContentExplorerPagination {...props} /></LocaleProvider>);
+        expect(screen.getByText('Page 3 of 7')).toBeInTheDocument();
+        expect(screen.queryByText('21–30 of 63')).not.toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Page 4' }));
+        expect(onPage).toHaveBeenCalledWith(4);
+
+        for (const badCount of [-1, Number.NaN, Number.POSITIVE_INFINITY, 1.5, Number.MAX_SAFE_INTEGER + 1]) {
+            rerender(<LocaleProvider><ContentExplorerPagination {...props} returnedCount={badCount} /></LocaleProvider>);
+            expect(screen.queryByText('21–30 of 63')).not.toBeInTheDocument();
+            expect(screen.queryByText('0–0 of 63')).not.toBeInTheDocument();
+        }
+
+        rerender(<LocaleProvider><ContentExplorerPagination {...props} returnedCount={0} /></LocaleProvider>);
+        expect(screen.getByText('0–0 of 63')).toBeInTheDocument();
+        rerender(<LocaleProvider><ContentExplorerPagination {...props} returnedCount={3} /></LocaleProvider>);
+        expect(screen.getByText('21–23 of 63')).toBeInTheDocument();
+        rerender(<LocaleProvider><ContentExplorerPagination {...props} returnedCount={999} /></LocaleProvider>);
+        expect(screen.getByText('21–30 of 63')).toBeInTheDocument();
+    });
+
+    it('keeps Arabic Content Explorer navigation when the visible count is unknown', () => {
+        window.localStorage.setItem('aiwm.locale', 'ar');
+        const onPage = vi.fn();
+        render(<LocaleProvider><ContentExplorerPagination page={3} lastPage={7} onPage={onPage} total={63} pageSize={10} /></LocaleProvider>);
+        expect(screen.getByText('صفحة 3 من 7')).toBeInTheDocument();
+        expect(screen.queryByText('21–30 من 63')).not.toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'الأولى' }));
+        expect(onPage).toHaveBeenCalledWith(1);
+    });
+
     it('renders Arabic RTL labels, numbers and safe exploration navigation', () => {
         window.localStorage.setItem('aiwm.locale', 'ar');
         const onPage = vi.fn();
