@@ -382,7 +382,7 @@ function Unavailable({ route, context, state = resolveCapability(context, route)
 }
 
 type SitesPageFilter = 'all' | 'connected' | 'review';
-type SitesUrlPageState = { page: number; pageSize: number; filter: SitesPageFilter };
+type SitesUrlPageState = { page: number; pageSize: number; filter: SitesPageFilter; search: string };
 
 // The Sites grid uses the same bounded URL contract as its Laravel paginator.
 // Preserve unrelated query parameters (for example a dashboard tab) and avoid
@@ -402,20 +402,27 @@ function readSitesUrlPageState(): SitesUrlPageState {
     const pageSize = rawSize && ['10', '25', '50', '100'].includes(rawSize) ? Number(rawSize) : 25;
     const rawFilter = params.get('connection_filter');
     const filter: SitesPageFilter = rawFilter === 'connected' || rawFilter === 'review' ? rawFilter : 'all';
-    return { page, pageSize, filter };
+    // Laravel accepts at most 150 characters for the Sites search request.
+    // A malicious or stale URL cannot turn a harmless GET into validation errors.
+    const rawSearch = params.get('search') ?? '';
+    const search = rawSearch.length <= 150 ? rawSearch.trim() : '';
+    return { page, pageSize, filter, search };
 }
 
-function writeSitesUrlPageState({ page, pageSize, filter }: SitesUrlPageState): void {
+function writeSitesUrlPageState({ page, pageSize, filter, search }: SitesUrlPageState, replace = false): void {
     if (!isSitesRouteLocation()) return;
     const params = new URLSearchParams(window.location.search);
     params.set('page', String(page));
     params.set('per_page', String(pageSize));
     if (filter === 'all') params.delete('connection_filter');
     else params.set('connection_filter', filter);
+    if (search) params.set('search', search);
+    else params.delete('search');
     const query = params.toString();
     const target = window.location.pathname + (query ? '?' + query : '') + window.location.hash;
     if (target !== window.location.pathname + window.location.search + window.location.hash) {
-        window.history.pushState(window.history.state, '', target);
+        if (replace) window.history.replaceState(window.history.state, '', target);
+        else window.history.pushState(window.history.state, '', target);
     }
 }
 
@@ -423,8 +430,8 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const { locale, text } = useLocale();
     const { notify } = useToast();
     const queryClient = useQueryClient();
-    const [searchInput, setSearchInput] = useState('');
-    const [search, setSearch] = useState('');
+    const [searchInput, setSearchInput] = useState(() => route.key === 'sites' ? readSitesUrlPageState().search : '');
+    const [search, setSearch] = useState(() => route.key === 'sites' ? readSitesUrlPageState().search : '');
     const [page, setPage] = useState(() => route.key === 'sites' ? readSitesUrlPageState().page : 1);
     // Only enable page-size changes on APIs with verified server-side per_page.
     const [explorerPageSize, setExplorerPageSize] = useState(25);
@@ -452,13 +459,15 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
             setPage(restored.page);
             setSitesPageSize(restored.pageSize);
             setSitesFilter(restored.filter);
+            setSearchInput(restored.search);
+            setSearch(restored.search);
         };
         window.addEventListener('popstate', restore);
         return () => window.removeEventListener('popstate', restore);
     }, [route.key]);
 
-    const navigateSites = (nextPage: number, nextSize: number, nextFilter: SitesPageFilter) => {
-        writeSitesUrlPageState({ page: nextPage, pageSize: nextSize, filter: nextFilter });
+    const navigateSites = (nextPage: number, nextSize: number, nextFilter: SitesPageFilter, nextSearch = search) => {
+        writeSitesUrlPageState({ page: nextPage, pageSize: nextSize, filter: nextFilter, search: nextSearch });
         setPage(nextPage);
         setSitesPageSize(nextSize);
         setSitesFilter(nextFilter);
@@ -880,6 +889,21 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         setDialog(null);
     };
 
+    // The API clamps a requested page that no longer exists (for example after
+    // deleting the final item). Reflect only that *authoritative* response in
+    // history, without creating an extra Back entry or changing other routes.
+    useEffect(() => {
+        if (route.key !== 'sites' || !query.data || query.isFetching) return;
+        if (Array.isArray(query.data) || typeof query.data !== 'object') return;
+        const response = query.data as CollectionEnvelope;
+        const last = response.last_page ?? response.meta?.last_page;
+        const current = response.current_page ?? response.meta?.current_page;
+        if (!Number.isSafeInteger(last) || !Number.isSafeInteger(current)
+            || last! < 1 || current! < 1 || current! !== last || page <= last!) return;
+        writeSitesUrlPageState({ page: current!, pageSize: sitesPageSize, filter: sitesFilter, search }, true);
+        setPage(current!);
+    }, [route.key, query.data, query.isFetching, page, sitesPageSize, sitesFilter, search]);
+
     if (state.state !== 'enabled') return <Unavailable route={route} context={context} state={state} />;
     if (query.isLoading) return <LoadingState />;
     if (query.error) return (
@@ -1023,6 +1047,13 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         setWordpressSiteRoleApplied(wordpressSiteRoleDraft);
                         // UsersManager SearchClickedAsync always re-reads, even when the filters are unchanged.
                         if (unchanged) void query.refetch();
+                        return;
+                    }
+                    if (route.key === 'sites') {
+                        const nextSearch = searchInput.trim().slice(0, 150);
+                        setSearchInput(nextSearch);
+                        setSearch(nextSearch);
+                        navigateSites(1, sitesPageSize, sitesFilter, nextSearch);
                         return;
                     }
                     setPage(1); setSearch(searchInput); if (route.key === 'explorer') setExplorerSelectedKeys(new Set());
