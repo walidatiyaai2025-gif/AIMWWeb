@@ -55,14 +55,20 @@ final class RuntimeHealthService
                 ? ['status' => 'disabled', 'reason_code' => 'cron_disabled']
                 : ($cpanel && ! $preflight
                     ? ['status' => 'unavailable', 'reason_code' => 'preflight_pending']
-                    : $this->inspectorReceipt(self::SCHEDULER_HEARTBEAT_KEY, $cpanel, 'scheduler_heartbeat_observed')),
+                    : ($cpanel && $cacheMode !== 'database'
+                        ? ['status' => 'unavailable', 'reason_code' => 'cache_driver_mismatch']
+                        : $this->inspectorReceipt(self::SCHEDULER_HEARTBEAT_KEY, $cpanel, 'scheduler_heartbeat_observed'))),
             'worker_cycle' => ! $cpanel
                 ? ['status' => 'not_advertised', 'reason_code' => 'no_cpanel_worker_receipt']
                 : (! $cron
                     ? ['status' => 'disabled', 'reason_code' => 'cron_disabled']
                     : (! $preflight
                         ? ['status' => 'unavailable', 'reason_code' => 'preflight_pending']
-                        : $this->inspectorReceipt(self::CPANEL_QUEUE_TICK_RECEIPT_KEY, true, 'bounded_worker_cycle_completed'))),
+                        : ($cacheMode !== 'database'
+                            ? ['status' => 'unavailable', 'reason_code' => 'cache_driver_mismatch']
+                            : ($queueMode !== 'database'
+                                ? ['status' => 'unavailable', 'reason_code' => 'queue_driver_mismatch']
+                                : $this->inspectorReceipt(self::CPANEL_QUEUE_TICK_RECEIPT_KEY, true, 'bounded_worker_cycle_completed'))))),
         ];
     }
 
