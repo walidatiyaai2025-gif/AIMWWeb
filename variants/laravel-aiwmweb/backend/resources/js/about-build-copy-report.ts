@@ -14,6 +14,9 @@ export type BuildReportPayload = {
 };
 
 const FAILURE_MESSAGE = 'The browser did not confirm a clipboard write. No copy success was reported; you can retry.';
+const AR_FAILURE_MESSAGE = 'لم يؤكد المتصفح نسخ التقرير. لم يتم الإبلاغ عن نجاح العملية؛ يمكنك إعادة المحاولة.';
+const PAYLOAD_ERROR = 'The build report payload could not be read. No copy success was reported.';
+const AR_PAYLOAD_ERROR = 'تعذر قراءة بيانات التقرير الآمنة. لم يتم الإبلاغ عن نجاح النسخ.';
 
 export function formatBuildReport(payload: BuildReportPayload): string {
     const lines = [
@@ -43,12 +46,13 @@ export function wireCopyBuildReport(root: ParentNode = document): void {
     const payloadNode = root.querySelector<HTMLScriptElement>('#build-report-payload');
 
     if (!button || !retry || !success || !error || !errorMessage || !payloadNode) return;
+    const isArabic = document.documentElement.lang.toLowerCase().startsWith('ar');
 
     let payload: BuildReportPayload;
     try {
         payload = JSON.parse(payloadNode.textContent ?? '') as BuildReportPayload;
     } catch {
-        errorMessage.textContent = 'The build report payload could not be read. No copy success was reported.';
+        errorMessage.textContent = isArabic ? AR_PAYLOAD_ERROR : PAYLOAD_ERROR;
         error.hidden = false;
         button.disabled = true;
         retry.disabled = true;
@@ -76,7 +80,7 @@ export function wireCopyBuildReport(root: ParentNode = document): void {
             await clipboard.writeText(formatBuildReport(payload));
             success.hidden = false;
         } catch {
-            errorMessage.textContent = FAILURE_MESSAGE;
+            errorMessage.textContent = isArabic ? AR_FAILURE_MESSAGE : FAILURE_MESSAGE;
             error.hidden = false;
         } finally {
             copying = false;
