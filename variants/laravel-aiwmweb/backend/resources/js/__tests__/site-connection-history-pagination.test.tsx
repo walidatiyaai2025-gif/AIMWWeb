@@ -70,7 +70,8 @@ describe('Site Diagnostics authoritative operation-history pagination (#1611)', 
 
         fireEvent.change(screen.getByLabelText('Operation status'), { target: { value: 'failed' } });
         await waitFor(() => expect(requests.at(-1)?.searchParams.get('status')).toBe('failed'));
-        expect(await screen.findByText('server-event-1')).toBeInTheDocument();
+        await waitFor(() => expect(screen.getAllByText('Synchronization failed. Review the safe classification below.')).toHaveLength(6));
+        expect(screen.queryByText('server-event-1')).not.toBeInTheDocument();
         expect(screen.getByText('Page 1 of 1')).toBeInTheDocument();
         expect(screen.queryByText('server-event-26')).not.toBeInTheDocument();
 
