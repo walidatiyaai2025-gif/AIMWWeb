@@ -22,7 +22,7 @@ Scope: `variants/laravel-aiwmweb/backend/resources/views/**`. **All 29 discovere
 | `auth/login.blade.php` | Standalone English login UI, no Vite | Public auth; verify bilingual expectation, not required authenticated sidebar |
 | `auth/register.blade.php` | Standalone English registration UI, no Vite | Public auth; verify bilingual expectation |
 | `billing/admin-support.blade.php` | Initial census: English-only standalone admin read-only view with no Vite/sidebar | **Current PR candidate**: shared platform-admin read-only shell, AR/EN localized safety copy, Vite CSS; guest/non-admin denial retained; browser/host unverified |
-| `billing/subscription-plans-admin.blade.php` | Standalone inline CSS, locale-aware document, no Vite/sidebar | **Review authenticated dashboard parity** |
+| `billing/subscription-plans-admin.blade.php` | Previously standalone inline CSS, locale-aware document, no Vite/sidebar | **Current #1601 subscription-plan shell candidate**: shared AR/EN tenant shell, compiled Vite CSS, CSRF-preserving forms and responsive grid; CI/browser/host unverified |
 | `operations/site-operation-details.blade.php` | Vite, no Blade sidebar | Determine React ownership; browser verify |
 | `operations/site-operation-details-load-error.blade.php` | Vite, no Blade sidebar | Error/fallback route; verify accessibility/layout |
 | `platform/about-build.blade.php` | Vite, no Blade sidebar | Determine React ownership; browser verify |
