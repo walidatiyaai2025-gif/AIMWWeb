@@ -32,7 +32,7 @@ final class Redactor
     public function redactLogMessage(string $message): string
     {
         $redacted = preg_replace(
-            '/\b(authorization\s*:\s*bearer\s+|(?:api[_-]?key|access[_-]?token|refresh[_-]?token|password|client[_-]?secret)\s*[:=]\s*)(?:"[^"]*"|\'[^\']*\'|[^\s,;&]+)/i',
+            '/\b(authorization\s*:\s*(?:bearer|basic)\s+|(?:x[-_]?api[-_]?key|api[_-]?key|access[_-]?token|refresh[_-]?token|password|client[_-]?secret)\s*[:=]\s*)(?:"[^"]*"|\'[^\']*\'|[^\s,;&]+)/i',
             '$1[REDACTED]',
             $message,
         ) ?? '[REDACTED]';
