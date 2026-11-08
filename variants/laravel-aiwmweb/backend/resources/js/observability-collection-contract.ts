@@ -17,10 +17,25 @@ const technical = (value: unknown): string =>
         ? value
         : 'unclassified';
 
-const timestamp = (value: unknown): string | null =>
-    typeof value === 'string' && /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/.test(value) && value.length <= 40
-        ? value
-        : null;
+// Do not trust a valid-looking date prefix or silently normalize impossible
+// dates. Accept Laravel SQL timestamps and bounded ISO 8601 timestamps only.
+const timestamp = (value: unknown): string | null => {
+    if (typeof value !== 'string' || value.length > 40) return null;
+    const match = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,6}))?(Z|[+-]\d{2}:\d{2})?$/.exec(value);
+    if (!match) return null;
+
+    const [, year, month, day, hour, minute, second, , offset] = match;
+    const y = Number(year), m = Number(month), d = Number(day);
+    const leap = y % 4 === 0 && (y % 100 !== 0 || y % 400 === 0);
+    const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    if (y < 1 || m < 1 || m > 12 || d < 1 || d > days[m - 1] ||
+        Number(hour) > 23 || Number(minute) > 59 || Number(second) > 59) return null;
+    if (offset && offset !== 'Z') {
+        const oh = Number(offset.slice(1, 3)), om = Number(offset.slice(4));
+        if (oh > 14 || om > 59 || (oh === 14 && om !== 0)) return null;
+    }
+    return value;
+};
 
 const identifier = (value: unknown): number | null =>
     typeof value === 'number' && Number.isSafeInteger(value) && value > 0 ? value : null;
