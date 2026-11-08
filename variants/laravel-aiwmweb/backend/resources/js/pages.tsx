@@ -484,9 +484,15 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         queryFn: () => readWorkspaceCollection(endpointWithQuery(endpoint!, page, search,
             wordpressSiteRoleApplied === 'all' ? {} : { role: wordpressSiteRoleApplied })),
         enabled: state.state === 'enabled' && Boolean(endpoint),
+    } : route.key === 'explorer' ? {
+        // Explorer explicitly supports server-side per_page, unlike generic
+        // WordPress GETs; never add unsupported query args to other workspaces.
+        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, explorerPageSize],
+        queryFn: () => readWorkspaceCollection(endpointWithQuery(endpoint!, page, search, { per_page: String(explorerPageSize) })),
+        enabled: state.state === 'enabled' && Boolean(endpoint),
     } : {
-        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType, taxonomyApplied.minimumUsage, taxonomyApplied.pageSize, wordpressUsersRole, explorerPageSize],
-        queryFn: () => readWorkspaceCollection(endpointWithQuery(endpoint!, page, search, { ...taxonomyAppliedQuery, ...wordpressUsersFilters, ...(route.key === 'explorer' ? { per_page: String(explorerPageSize) } : {}) })),
+        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType, taxonomyApplied.minimumUsage, taxonomyApplied.pageSize, wordpressUsersRole],
+        queryFn: () => readWorkspaceCollection(endpointWithQuery(endpoint!, page, search, { ...taxonomyAppliedQuery, ...wordpressUsersFilters })),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     });
 
