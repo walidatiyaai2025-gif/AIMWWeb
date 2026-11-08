@@ -67,6 +67,32 @@ describe('Canonical server paging navigation (#1608)', () => {
         expect(screen.getByText('26–50 of 137')).toBeInTheDocument();
     });
 
+    it('does not fabricate visible-range counts when a server omits or corrupts returnedCount', () => {
+        const props = { page: 2, lastPage: 6, onPage: vi.fn(), total: 137, pageSize: 25 };
+        const { rerender } = render(<LocaleProvider><Pagination {...props} /></LocaleProvider>);
+        expect(screen.getByText('Page 2 of 6')).toBeInTheDocument();
+        expect(screen.queryByText('26–50 of 137')).not.toBeInTheDocument();
+        expect(screen.queryByText('0–0 of 137')).not.toBeInTheDocument();
+
+        rerender(<LocaleProvider><Pagination {...props} returnedCount={-1} /></LocaleProvider>);
+        expect(screen.queryByText('0–0 of 137')).not.toBeInTheDocument();
+        rerender(<LocaleProvider><Pagination {...props} returnedCount={Number.NaN} /></LocaleProvider>);
+        expect(screen.queryByText('26–50 of 137')).not.toBeInTheDocument();
+
+        rerender(<LocaleProvider><Pagination {...props} returnedCount={0} /></LocaleProvider>);
+        expect(screen.getByText('0–0 of 137')).toBeInTheDocument();
+        rerender(<LocaleProvider><Pagination {...props} returnedCount={3} /></LocaleProvider>);
+        expect(screen.getByText('26–28 of 137')).toBeInTheDocument();
+    });
+
+    it('keeps Arabic page navigation without inventing an unknown visible range', () => {
+        window.localStorage.setItem('aiwm.locale', 'ar');
+        render(<LocaleProvider><Pagination page={2} lastPage={6} onPage={vi.fn()} total={137} pageSize={25} /></LocaleProvider>);
+        expect(screen.getByText('صفحة 2 من 6')).toBeInTheDocument();
+        expect(screen.queryByText('26–50 من 137')).not.toBeInTheDocument();
+        expect(screen.queryByText('0–0 من 137')).not.toBeInTheDocument();
+    });
+
     it('renders Arabic RTL labels, numbers and safe exploration navigation', () => {
         window.localStorage.setItem('aiwm.locale', 'ar');
         const onPage = vi.fn();
