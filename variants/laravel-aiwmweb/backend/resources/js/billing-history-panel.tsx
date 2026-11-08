@@ -53,6 +53,7 @@ export function formatBillingMinorAmount(amount: number | null, currency: string
             style: 'currency', currency,
         });
         const digits = formatter.resolvedOptions().maximumFractionDigits;
+        if (typeof digits !== 'number' || !Number.isSafeInteger(digits) || digits < 0 || digits > 6) return '—';
         return formatter.format(amount / (10 ** digits));
     } catch {
         return '—';
