@@ -91,6 +91,64 @@ final class SystemUpdateCenterTest extends TestCase
             ->assertSee('AIWMWeb');
     }
 
+    public function test_platform_update_center_renders_bilingual_authenticated_shell_without_weaking_signed_update_guards(): void
+    {
+        $this->withoutMiddleware(ThrottleRequests::class);
+        $this->withoutVite();
+        config()->set('system_updates.enabled', false);
+        config()->set('system_updates.public_key', '');
+
+        $admin = User::factory()->create(['platform_admin' => true]);
+
+        foreach ([
+            'en' => ['ltr', 'System updates', 'Backup Now'],
+            'ar' => ['rtl', 'تحديثات النظام', 'نسخ احتياطي الآن'],
+        ] as $locale => [$direction, $title, $backup]) {
+            $response = $this->actingAs($admin)
+                ->withHeaders(['Accept-Language' => $locale])
+                ->get('/admin/system-updates')
+                ->assertOk()
+                ->assertSee('<html lang="'.$locale.'" dir="'.$direction.'" data-mode="dark">', false)
+                ->assertSee('data-dashboard-shell="aiwmweb"', false)
+                ->assertSee('class="app-shell workspace-read-shell"', false)
+                ->assertSee('class="sidebar"', false)
+                ->assertSee('class="topbar"', false)
+                ->assertSee('id="workspace-read-content"', false)
+                ->assertSee('class="breadcrumb"', false)
+                ->assertSee('aria-current="page"', false)
+                ->assertSee('href="/admin/system-updates"', false)
+                ->assertSee('href="#backup-now"', false)
+                ->assertSee('href="#history"', false)
+                ->assertSee('name="_token"', false)
+                ->assertSee('name="confirmation"', false)
+                ->assertSee('disabled', false)
+                ->assertSee($title)
+                ->assertSee($backup)
+                ->assertDontSee('name="update_bundle"', false)
+                ->assertDontSee('AIWM_UPDATES_SECRET_KEY', false);
+        }
+    }
+
+    public function test_platform_update_shell_reuses_compiled_css_without_changing_signed_form_actions(): void
+    {
+        $source = (string) file_get_contents(resource_path('views/platform/system-updates.blade.php'));
+        $this->assertStringContainsString("@vite(['resources/css/app.css'])", $source);
+        $this->assertStringContainsString("@include('layouts.partials.workspace-read-styles')", $source);
+        $this->assertStringContainsString("@include('layouts.partials.workspace-read-sidebar')", $source);
+        $this->assertStringContainsString("@include('layouts.partials.workspace-read-topbar')", $source);
+        $this->assertStringContainsString('data-dashboard-shell="aiwmweb"', $source);
+        $this->assertStringContainsString('data-aiwm-update-center-shell-styles', $source);
+        $this->assertStringContainsString('@media (max-width: 760px)', $source);
+        $this->assertSame(5, substr_count($source, '<form '));
+        $this->assertSame(5, substr_count($source, '@csrf'));
+        foreach (['check', 'install', 'upload', 'verify', 'backup'] as $name) {
+            $this->assertStringContainsString("route('platform.updates.{$name}')", $source);
+        }
+        $this->assertStringContainsString('pattern="INSTALL"', $source);
+        $this->assertStringContainsString('pattern="BACKUP"', $source);
+        $this->assertStringContainsString('@disabled(! $state[\'enabled\'] || ! $state[\'configured\'])', $source);
+    }
+
     public function test_signed_stable_release_can_be_checked_without_installing_files(): void
     {
         $keys = sodium_crypto_sign_keypair();
