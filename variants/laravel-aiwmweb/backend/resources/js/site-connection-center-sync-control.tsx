@@ -164,6 +164,19 @@ function copiedOperationSummary(item: OperationHistoryItem, outcome: string): st
     const code = item.details?.failure_code === expected ? ' [' + expected + ']' : '';
     return 'Failed' + code + ': ' + DIAGNOSTIC_FAILURE_GUIDANCE[category];
 }
+/**
+ * Legacy operation history is not an authenticated diagnostic source for free-form
+ * messages. Render only static guidance keyed by an exact allowlisted pair.
+ */
+export function safeSyncHistoryFailure(item: OperationHistoryItem): { code: string; en: string; ar: string } | null {
+    if (item.operation !== 'synchronization' || item.status !== 'failed') return null;
+    const category = item.details?.failure_category;
+    if (typeof category !== 'string' || !Object.prototype.hasOwnProperty.call(DIAGNOSTIC_FAILURE_GUIDANCE, category)) return null;
+    const code = 'WP_SYNC_' + category.toUpperCase();
+    if (item.details?.failure_code !== code) return null;
+    return { code, en: DIAGNOSTIC_FAILURE_GUIDANCE[category], ar: SYNC_FAILURE_AR[category] };
+}
+
 export function formatSiteDiagnosticsReport(connection: ConnectionSnapshot, history: OperationHistoryItem[]): string {
     const site = connection.site as ConnectionSnapshot['site'] & { wordpress_version?: string | null; language_code?: string | null; last_verified_at?: string | null };
     const version = typeof site.wordpress_version === 'string'
@@ -546,13 +559,13 @@ export function SiteConnectionCenterSyncControl({ context }: { context: Frontend
                             <article key={item.id ?? `${item.operation}-${item.started_at ?? index}`} className="state-panel">
                                 <strong>{item.operation}</strong>
                                 <span> · {item.status}</span>
-                                <p>{item.message}</p>
-                                {item.operation === 'synchronization' && item.status === 'failed' && item.details?.failure_code ? (
+                                <p>{item.operation === 'synchronization' && item.status === 'failed'
+                                    ? (locale === 'ar' ? 'فشلت المزامنة. راجع التصنيف الآمن أدناه.' : 'Synchronization failed. Review the safe classification below.')
+                                    : item.message}</p>
+                                {safeSyncHistoryFailure(item) ? (
                                     <div className="workspace-stack" data-sync-failure-details>
-                                        <small>{locale === 'ar' ? 'رمز الفشل' : 'Failure code'}: {item.details.failure_code}</small>
-                                        <p>{locale === 'ar'
-                                            ? (SYNC_FAILURE_AR[item.details.failure_category ?? ''] ?? SYNC_FAILURE_AR.unknown)
-                                            : item.details.failure_message}</p>
+                                        <small>{locale === 'ar' ? 'رمز الفشل' : 'Failure code'}: {safeSyncHistoryFailure(item)?.code}</small>
+                                        <p>{locale === 'ar' ? safeSyncHistoryFailure(item)?.ar : safeSyncHistoryFailure(item)?.en}</p>
                                         {Number.isSafeInteger(item.details.sync_run_id) && Number(item.details.sync_run_id) > 0 ? (
                                             <small>{locale === 'ar' ? 'رقم تشغيل المزامنة' : 'Synchronization run'}: #{item.details.sync_run_id}</small>
                                         ) : null}
