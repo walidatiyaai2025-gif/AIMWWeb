@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { ApiError, apiRequest, tenantUrl, type FrontendContext } from './core';
+import { Pagination } from './components';
 import { useLocale } from './i18n';
 import { safeExternalSiteUrl } from './site-details-site-url-control';
 import { formatSiteSyncDiagnostic } from './site-details-synchronize-control';
@@ -40,7 +41,8 @@ type OperationHistoryItem = {
     completed_at?: string | null;
 };
 
-type OperationHistoryPayload = { items: OperationHistoryItem[] };
+type OperationHistoryPayload = { items: OperationHistoryItem[]; total?: number; page?: number; last_page?: number; per_page?: number };
+type HistoryPaging = { total: number; page: number; lastPage: number; perPage: number };
 const SYNC_FAILURE_AR: Record<string, string> = {
     authentication: 'فشل التحقق من اتصال WordPress. راجع بيانات الربط وتوقيع الطلبات.',
     rate_limit: 'تم تجاوز حدود الطلبات أو الحصة. راجع الحدود قبل إعادة المحاولة.',
@@ -127,6 +129,12 @@ export function siteConnectionCenterEndpoints(tenantSlug: string, siteId: string
     return {
         connection: `/api/tenants/${tenant}/sites/${site}/connection`,
         operations: `/api/tenants/${tenant}/sites/${site}/operations?take=100`,
+        pagedOperations: (page: number, perPage: number, status: string, operation: string) => {
+            const params = new URLSearchParams({ page: String(page), per_page: String(perPage) });
+            if (status) params.set('status', status);
+            if (operation) params.set('operation', operation);
+            return `/api/tenants/${tenant}/sites/${site}/operations?${params.toString()}`;
+        },
         recheck: `/api/tenants/${tenant}/sites/${site}/connection/recheck`,
         sync: `/api/tenants/${tenant}/sites/${site}/sync`,
         run: (runId: number) => `/api/tenants/${tenant}/sync-runs/${runId}`,
@@ -150,6 +158,11 @@ export function SiteConnectionCenterSyncControl({ context }: { context: Frontend
     const canRetest = context.permissions.includes('*') || context.permissions.includes('connector.manage');
     const [connection, setConnection] = useState<ConnectionSnapshot | null>(null);
     const [history, setHistory] = useState<OperationHistoryItem[]>([]);
+    const [historyPage, setHistoryPage] = useState(1);
+    const [historyPageSize, setHistoryPageSize] = useState(25);
+    const [historyStatus, setHistoryStatus] = useState('');
+    const [historyOperation, setHistoryOperation] = useState('');
+    const [historyPaging, setHistoryPaging] = useState<HistoryPaging | null>(null);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
@@ -162,7 +175,7 @@ export function SiteConnectionCenterSyncControl({ context }: { context: Frontend
 
         const [nextConnection, nextOperations] = await Promise.all([
             apiRequest<ConnectionSnapshot>(endpoints.connection),
-            apiRequest<OperationHistoryPayload>(endpoints.operations),
+            apiRequest<OperationHistoryPayload>(endpoints.pagedOperations(historyPage, historyPageSize, historyStatus, historyOperation)),
         ]);
 
         if (Number(nextConnection.site?.id) !== Number(siteId)) {
@@ -171,16 +184,24 @@ export function SiteConnectionCenterSyncControl({ context }: { context: Frontend
 
         setConnection(nextConnection);
         setHistory(Array.isArray(nextOperations.items) ? nextOperations.items : []);
+        setHistoryPaging([nextOperations.total, nextOperations.page, nextOperations.last_page, nextOperations.per_page]
+            .every((value) => Number.isSafeInteger(value) && Number(value) >= 0)
+            ? {
+                total: nextOperations.total!, page: nextOperations.page!,
+                lastPage: Math.max(1, nextOperations.last_page!), perPage: nextOperations.per_page!,
+            }
+            : null);
         setSiteNotFound(false);
 
         return { connection: nextConnection, operations: nextOperations };
-    }, [endpoints?.connection, endpoints?.operations, siteId]);
+    }, [endpoints?.connection, endpoints?.operations, siteId, historyPage, historyPageSize, historyStatus, historyOperation]);
 
     useEffect(() => {
         setError('');
         reload().catch((cause: unknown) => {
             setConnection(null);
             setHistory([]);
+            setHistoryPaging(null);
             setSiteNotFound(cause instanceof ApiError && cause.status === 404);
             setError(cause instanceof Error ? cause.message : 'Connection center unavailable.');
         });
@@ -411,11 +432,29 @@ export function SiteConnectionCenterSyncControl({ context }: { context: Frontend
 
             <section className="workspace-card">
                 <h3>{locale === 'ar' ? 'سجل العمليات' : 'Operation history'}</h3>
+                <div className="d-flex gap-2 flex-wrap" role="group" aria-label={locale === 'ar' ? 'تصفية سجل العمليات' : 'Filter operation history'}>
+                    <label>{locale === 'ar' ? 'الحالة' : 'Status'}
+                        <select aria-label="Operation status" value={historyStatus} onChange={(event) => { setHistoryPage(1); setHistoryStatus(event.target.value); }}>
+                            <option value="">{locale === 'ar' ? 'كل الحالات' : 'All statuses'}</option>
+                            <option value="succeeded">{locale === 'ar' ? 'ناجحة' : 'Succeeded'}</option>
+                            <option value="failed">{locale === 'ar' ? 'فاشلة' : 'Failed'}</option>
+                        </select>
+                    </label>
+                    <label>{locale === 'ar' ? 'العملية' : 'Operation'}
+                        <select aria-label="Operation type" value={historyOperation} onChange={(event) => { setHistoryPage(1); setHistoryOperation(event.target.value); }}>
+                            <option value="">{locale === 'ar' ? 'كل العمليات' : 'All operations'}</option>
+                            <option value="synchronization">{locale === 'ar' ? 'مزامنة' : 'Synchronization'}</option>
+                            <option value="diagnostic_recheck">{locale === 'ar' ? 'إعادة التشخيص' : 'Diagnostic recheck'}</option>
+                            <option value="reconnect">{locale === 'ar' ? 'إعادة اتصال' : 'Reconnect'}</option>
+                            <option value="disconnect">{locale === 'ar' ? 'قطع الاتصال' : 'Disconnect'}</option>
+                        </select>
+                    </label>
+                </div>
                 {history.length === 0 ? (
                     <p>{locale === 'ar' ? 'لا توجد عمليات مسجلة.' : 'No operations recorded yet.'}</p>
                 ) : (
                     <div className="workspace-stack">
-                        {history.slice(0, 20).map((item, index) => (
+                        {history.map((item, index) => (
                             <article key={item.id ?? `${item.operation}-${item.started_at ?? index}`} className="state-panel">
                                 <strong>{item.operation}</strong>
                                 <span> · {item.status}</span>
@@ -445,6 +484,11 @@ export function SiteConnectionCenterSyncControl({ context }: { context: Frontend
                         ))}
                     </div>
                 )}
+                {historyPaging ? (
+                    <Pagination page={historyPaging.page} lastPage={historyPaging.lastPage}
+                        total={historyPaging.total} pageSize={historyPaging.perPage} returnedCount={history.length}
+                        onPage={setHistoryPage} onPageSizeChange={(size) => { setHistoryPage(1); setHistoryPageSize(size); }} />
+                ) : null}
             </section>
         </div>
     );

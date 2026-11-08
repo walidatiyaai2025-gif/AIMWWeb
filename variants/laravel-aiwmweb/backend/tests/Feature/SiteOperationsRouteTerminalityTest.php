@@ -170,7 +170,7 @@ final class SiteOperationsRouteTerminalityTest extends TestCase
         $this->assertStringContainsString("r('site-connection-operations', '/sites/:siteId/operations'", $core);
         $this->assertStringContainsString("route.key === 'site-connection-center' || route.key === 'site-connection-operations'", $app);
         $this->assertStringContainsString('/operations?take=100', $control);
-        $this->assertStringContainsString('apiRequest<OperationHistoryPayload>(endpoints.operations)', $control);
+        $this->assertStringContainsString('apiRequest<OperationHistoryPayload>(endpoints.pagedOperations(', $control);
         $this->assertStringContainsString('setHistory(Array.isArray(nextOperations.items) ? nextOperations.items : [])', $control);
         $this->assertStringContainsString('setError(cause instanceof Error ? cause.message', $control);
     }
