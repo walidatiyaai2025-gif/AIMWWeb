@@ -210,7 +210,7 @@ final class SystemUpdateCenterTest extends TestCase
     {
         $service = new SystemUpdateService;
         $method = new \ReflectionMethod($service, 'validatePath');
-        foreach (['../.env', 'storage/logs/app.log', 'app/../../.env', 'public/index.php', 'public/.htaccess', 'public/downloads/other.zip', 'public/downloads/aimw-connector.zip/evil.php', 'app/.env', 'app\x.php', 'database/migrations/new.php'] as $path) {
+        foreach (['../.env', 'storage/logs/app.log', 'app/../../.env', 'public/index.php', 'public/.htaccess', 'public/downloads/other.zip', 'public/downloads/aimw-connector.zip/evil.php', 'app/.env', 'app\\x.php', 'database/migrations/new.php'] as $path) {
             try {
                 $method->invoke($service, $path);
                 $this->fail('Unsafe update path accepted: '.$path);
