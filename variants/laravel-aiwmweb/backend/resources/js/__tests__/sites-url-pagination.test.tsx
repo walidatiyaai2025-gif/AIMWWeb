@@ -114,8 +114,8 @@ describe('Sites URL-backed server pagination (#1608)', () => {
         });
         vi.stubGlobal('fetch', fetchMock);
         mount();
-        expect(await screen.findByText('Last surviving site')).toBeInTheDocument();
         await waitFor(() => expect(window.location.search).toContain('page=2'));
+        await waitFor(() => expect(screen.getByText('Last surviving site')).toBeInTheDocument());
         expect(window.location.search).toContain('tab=all');
         expect(window.location.search).toContain('search=alpha');
         await waitFor(() => expect(fetchMock.mock.calls.some(([input]) =>
