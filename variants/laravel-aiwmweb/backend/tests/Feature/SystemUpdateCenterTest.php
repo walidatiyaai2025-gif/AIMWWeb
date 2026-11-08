@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use App\Platform\SystemUpdateService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Routing\Middleware\ThrottleRequests;
@@ -687,6 +688,26 @@ final class SystemUpdateCenterTest extends TestCase
         $this->assertSame('9.9.9', $release['version']);
         $this->assertSame(str_repeat('a', 40), $release['sha']);
         Http::assertSent(fn ($request): bool => $request->url() === $assetApi);
+    }
+
+    public function test_curl28_connection_timeout_retries_via_github_asset_api(): void
+    {
+        $browser = 'https://github.com/walidatiyaai2025-gif/AIMWWeb/releases/download/v9.9.9/AIWMWeb-Laravel-release.json';
+        $api = 'https://api.github.com/repos/walidatiyaai2025-gif/AIMWWeb/releases/assets/987654';
+
+        Http::fake([
+            $browser => static fn () => throw new ConnectionException('cURL error 28: timed out after 15002ms'),
+            $api => Http::response('signed-manifest-bytes', 200, ['Content-Type' => 'application/octet-stream']),
+        ]);
+
+        $bytes = app(\\App\\Platform\\SignedReleaseMetadataFetcher::class)->download([
+            'url' => $browser,
+            'size' => 21,
+            'id' => 987654,
+        ], 4096);
+
+        $this->assertSame('signed-manifest-bytes', $bytes);
+        Http::assertSentCount(2);
     }
 
     public function test_github_release_manifest_404_never_falls_back_to_an_alternative_asset(): void
