@@ -90,6 +90,19 @@ class SiteDiagnosticsClosureTest extends TestCase
         $this->assertSame(27, $second['to']);
         $this->assertCount(2, $second['items']);
         $this->assertSame(2, $clamped['page']);
+        // Calling the service directly must not create an unbounded SQL OFFSET.
+        $oversized = $service->paginatedDiagnosticHistory($site, PHP_INT_MAX, 25);
+        $this->assertSame(2, $oversized['page']);
+        $this->assertSame(27, $oversized['total']);
+        $this->assertCount(2, $oversized['items']);
+        $zero = $service->paginatedDiagnosticHistory($site, 0, 10);
+        $this->assertSame(1, $zero['page']);
+        $this->assertSame(10, $zero['per_page']);
+        $negative = $service->paginatedDiagnosticHistory($site, -999, 25);
+        $this->assertSame(1, $negative['page']);
+        $invalidSize = $service->paginatedDiagnosticHistory($site, 1, PHP_INT_MAX);
+        $this->assertSame(25, $invalidSize['per_page']);
+        $this->assertSame(27, $invalidSize['total']);
         $this->assertSame(
             [],
             array_values(array_intersect(
