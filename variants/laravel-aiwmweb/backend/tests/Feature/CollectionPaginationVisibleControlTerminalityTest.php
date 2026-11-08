@@ -43,7 +43,7 @@ class CollectionPaginationVisibleControlTerminalityTest extends TestCase
         $this->assertStringContainsString('data-canonical-operation={previousOperationId}', $frontend);
         $this->assertStringContainsString("route.key === 'comments' ? COMMENTS_PREVIOUS_PAGE_OPERATION_ID", $frontend);
         $this->assertStringContainsString('onClick={() => query.refetch()}', $frontend);
-        $this->assertStringContainsString('onClick={() => onPage(previousAppDataGridPage(page))}', $frontend);
+        $this->assertStringContainsString('onClick={() => onPage(previousAppDataGridPage(safePage))}', $frontend);
     }
 
     public function test_collection_reads_require_content_view_and_foreign_tenant_fails_closed(): void
