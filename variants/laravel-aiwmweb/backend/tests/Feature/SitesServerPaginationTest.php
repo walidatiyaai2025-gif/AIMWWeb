@@ -118,6 +118,7 @@ final class SitesServerPaginationTest extends TestCase
         } finally {
             $ctx->forget();
         }
+
         return [$user, $tenant];
     }
 }
