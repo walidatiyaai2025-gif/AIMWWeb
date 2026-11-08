@@ -82,7 +82,7 @@ final class SyncSiteJob extends TenantAwareJob
                 'synchronization',
                 false,
                 'WordPress synchronization failed.',
-                ['sync_run_id' => (int) $run->getKey()],
+                ['sync_run_id' => (int) $run->getKey(), ...SyncDiagnosticFormatter::historyFailure($e)],
                 null,
                 null,
                 $startedAt,
