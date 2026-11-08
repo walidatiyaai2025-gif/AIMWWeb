@@ -181,11 +181,7 @@ final class BillingController extends Controller
         ]);
     }
 
-    /**
-     * @param  callable  $query
-     * @param  list<string>  $columns
-     * @return array{items:array,meta:array}
-     */
+    // Each requested page uses a fresh tenant-scoped query; no prior OFFSET is reused.
     private function paginateBillingHistory(callable $query, int $page, int $perPage, string $name, array $columns): array
     {
         $load = fn (int $requested) => $query()
