@@ -442,7 +442,6 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
                             }}
                         />
                     ) : null}
-                    </div>
                 </>
             ) : (!query.isLoading && !query.error ? <p>{locale === 'ar' ? 'لا توجد مقالات متزامنة بعد؛ افتح المزامنة لجلب محتوى WordPress.' : 'No synchronized posts yet; open synchronization to import WordPress content.'}</p> : null)}
 
