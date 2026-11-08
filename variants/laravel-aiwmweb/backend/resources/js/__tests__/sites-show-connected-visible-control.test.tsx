@@ -152,9 +152,9 @@ describe('AIMW-CONT-E346398EAD server-filtered Sites', () => {
         const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
             const url = new URL(String(input), 'http://localhost');
             const connected = url.searchParams.get('connection_filter') === 'connected';
-            const total = connected ? 12 : 30;
+            const total = connected ? 30 : 40;
             return new Response(JSON.stringify({
-                data: Array.from({ length: 10 }, (_, index) => ({
+                data: Array.from({ length: 25 }, (_, index) => ({
                     id: index + 1,
                     name: `Site ${index + 1}`,
                     status: 'active',
@@ -164,16 +164,16 @@ describe('AIMW-CONT-E346398EAD server-filtered Sites', () => {
                 current_page: 1,
                 last_page: Math.ceil(total / 25),
                 per_page: 25,
-                meta: { connected_count: 12, review_count: 8 },
+                meta: { connected_count: 30, review_count: 10 },
             }), { status: 200, headers: { 'content-type': 'application/json' } });
         });
         vi.stubGlobal('fetch', fetchMock);
         const view = renderWorkspace();
-        expect(await screen.findByRole('button', { name: 'Connected 12' })).toBeInTheDocument();
-        fireEvent.click(screen.getByRole('button', { name: 'Connected 12' }));
+        expect(await screen.findByRole('button', { name: 'Connected 30' })).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Connected 30' }));
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-        await waitFor(() => expect(screen.getByRole('button', { name: 'Connected 12' })).toHaveAttribute('aria-pressed', 'true'));
-        expect(view.container.querySelector('.count-badge')).toHaveTextContent('12');
-        expect(view.container.querySelector('.count-badge')).not.toHaveTextContent('10');
-    });
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Connected 30' })).toHaveAttribute('aria-pressed', 'true'));
+        expect(view.container.querySelector('.count-badge')).toHaveTextContent('30');
+        expect(view.container.querySelector('.count-badge')).not.toHaveTextContent('25');
+    });;
 });
