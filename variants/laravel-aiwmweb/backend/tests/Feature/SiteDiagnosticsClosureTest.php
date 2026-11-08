@@ -100,6 +100,60 @@ class SiteDiagnosticsClosureTest extends TestCase
         $this->assertCount(27, $service->diagnosticHistory($site));
     }
 
+    public function test_operation_history_service_bounds_direct_internal_pagination_calls(): void
+    {
+        [$tenant, $member] = $this->tenant('bounded-operation-history');
+        app(TenantContext::class)->activate($tenant, $member);
+        $site = Site::query()->create(['name' => 'Primary', 'url' => 'https://primary.test']);
+        $other = Site::query()->create(['name' => 'Other', 'url' => 'https://other.test']);
+        $history = new SiteOperationHistoryService;
+
+        for ($index = 0; $index < 27; $index++) {
+            SiteOperationHistory::query()->create([
+                'site_id' => $site->id,
+                'operation' => 'synchronization',
+                'status' => 'succeeded',
+                'message' => 'safe',
+                'started_at' => now()->subMinutes($index),
+                'completed_at' => now()->subMinutes($index),
+            ]);
+        }
+        SiteOperationHistory::query()->create([
+            'site_id' => $other->id,
+            'operation' => 'synchronization',
+            'status' => 'failed',
+            'message' => 'private-other-site',
+            'started_at' => now(),
+            'completed_at' => now(),
+        ]);
+
+        foreach ([0, -3, 101, 1000000000] as $invalidSize) {
+            $result = $history->paginateForSite($site->id, 1, $invalidSize);
+            $this->assertSame(25, $result['per_page']);
+            $this->assertSame(27, $result['total']);
+            $this->assertCount(25, $result['items']);
+            $this->assertSame(2, $result['last_page']);
+        }
+
+        foreach ([-5, 0] as $invalidPage) {
+            $result = $history->paginateForSite($site->id, $invalidPage, 10);
+            $this->assertSame(1, $result['page']);
+            $this->assertSame(10, $result['per_page']);
+            $this->assertCount(10, $result['items']);
+        }
+
+        $last = $history->paginateForSite($site->id, PHP_INT_MAX, 10);
+        $this->assertSame(3, $last['page']);
+        $this->assertSame(27, $last['total']);
+        $this->assertCount(7, $last['items']);
+        $this->assertSame(21, $last['from']);
+        $this->assertSame(27, $last['to']);
+
+        foreach ([10, 25, 50, 100] as $supported) {
+            $this->assertSame($supported, $history->paginateForSite($site->id, 1, $supported)['per_page']);
+        }
+    }
+
     public function test_failed_sync_history_api_projection_never_serializes_legacy_secrets(): void
     {
         [$tenant, $member] = $this->tenant('safe-sync-history');

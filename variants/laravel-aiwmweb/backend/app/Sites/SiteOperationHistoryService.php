@@ -21,6 +21,11 @@ final class SiteOperationHistoryService
      */
     public function paginateForSite(int $siteId, int $page = 1, int $perPage = 25, ?string $status = null, ?string $operation = null): array
     {
+        // Enforce HTTP-equivalent pagination limits at the service boundary too:
+        // queue jobs and other internal callers do not pass controller validation.
+        $page = max(1, min(1000000, $page));
+        $perPage = in_array($perPage, [10, 25, 50, 100], true) ? $perPage : 25;
+
         $query = SiteOperationHistory::query()->where('site_id', $siteId);
 
         if ($status !== null) {
