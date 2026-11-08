@@ -8,7 +8,7 @@ import { LocaleProvider } from '../i18n';
 import { WorkspacePage } from '../pages';
 
 const route: WorkspaceRoute = {
-    key: 'approvals', path: '/module/approvals', group: 'automation', icon: 'x',
+    key: 'approvals', path: '/module/approvals', group: 'seo', icon: 'x',
     label: { en: 'Approvals', ar: 'الموافقات' },
     description: { en: 'Approvals', ar: 'الموافقات' },
     apiKey: 'approvals', permission: 'approvals.view', controls: [], kind: 'resource',
