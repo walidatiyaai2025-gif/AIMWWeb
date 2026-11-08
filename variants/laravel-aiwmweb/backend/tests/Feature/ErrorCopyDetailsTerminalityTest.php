@@ -118,6 +118,42 @@ final class ErrorCopyDetailsTerminalityTest extends TestCase
         $this->assertStringNotContainsString('must-not-copy', json_encode($payload, JSON_THROW_ON_ERROR));
     }
 
+    public function test_arabic_error_center_preserves_safe_tracking_payload_and_authenticated_navigation(): void
+    {
+        $user = User::factory()->create(['name' => 'Private Error Sentinel']);
+        $response = $this->actingAs($user)->withHeaders([
+            'Accept-Language' => 'ar',
+            'X-Request-ID' => 'error-arabic-request-0001',
+            'X-Correlation-ID' => 'error-arabic-correlation-0001',
+        ])->get('/Error?exception=secret-parameter&tenant=foreign-tenant-secret');
+
+        $response->assertOk()
+            ->assertSee('<html lang="ar" dir="rtl" data-mode="dark">', false)
+            ->assertSee('<title>خطأ غير متوقع</title>', false)
+            ->assertSee('حدث خطأ غير متوقع')
+            ->assertSee('نسخ تفاصيل الخطأ')
+            ->assertSee('إعادة محاولة النسخ')
+            ->assertSee('العودة إلى لوحة التحكم')
+            ->assertSee('href="/"', false)
+            ->assertSee('data-canonical-operation="'.self::OPERATION_ID.'"', false)
+            ->assertSee('data-canonical-operation="AIMW-CONT-85394A0E55"', false)
+            ->assertSee('name="robots" content="noindex,nofollow"', false)
+            ->assertDontSee('secret-parameter')
+            ->assertDontSee('foreign-tenant-secret')
+            ->assertDontSee('Private Error Sentinel')
+            ->assertDontSee('Stack trace');
+
+        $this->assertSame([
+            'errorId' => 'error-arabic-request-0001',
+            'correlationId' => 'error-arabic-correlation-0001',
+        ], $this->extractPayload($response->getContent()));
+
+        $source = (string) file_get_contents(resource_path('views/platform/error.blade.php'));
+        $this->assertStringContainsString("@vite('resources/css/app.css')", $source);
+        $this->assertStringContainsString(':focus-visible', $source);
+        $this->assertStringContainsString('@media (max-width: 480px)', $source);
+    }
+
     /** @return array<string, string> */
     private function extractPayload(string $html): array
     {
