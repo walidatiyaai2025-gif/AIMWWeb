@@ -59,6 +59,20 @@ final class SiteDiagnosticsController extends Controller
         $auth->authorize('tenant.view');
         $model = Site::query()->findOrFail($site);
 
+        // Explicit page/per_page opt in to preserve the legacy bounded items envelope.
+        if ($request->exists('page') || $request->exists('per_page')) {
+            $params = $request->validate([
+                'page' => 'sometimes|integer|min:1|max:1000000',
+                'per_page' => 'sometimes|integer|in:10,25,50,100',
+            ]);
+
+            return response()->json($diagnostics->paginatedDiagnosticHistory(
+                $model,
+                (int) ($params['page'] ?? 1),
+                (int) ($params['per_page'] ?? 25),
+            ));
+        }
+
         return response()->json(['items' => $diagnostics->diagnosticHistory($model, $request->integer('take', 100))]);
     }
 

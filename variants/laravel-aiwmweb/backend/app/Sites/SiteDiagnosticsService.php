@@ -145,7 +145,36 @@ final class SiteDiagnosticsService
 
     public function diagnosticHistory(Site $site, int $take = 100): array
     {
-        return SiteDiagnostic::query()->where('site_id', $site->id)->latest('checked_at')->limit(max(1, min(500, $take)))->get()->toArray();
+        return SiteDiagnostic::query()->where('site_id', $site->id)
+            ->orderByDesc('checked_at')->orderByDesc('id')
+            ->limit(max(1, min(500, $take)))->get()->toArray();
+    }
+
+    /**
+     * Opt-in, authoritative database pagination. Legacy clients continue using
+     * diagnosticHistory() without changing their response envelope.
+     */
+    public function paginatedDiagnosticHistory(Site $site, int $page = 1, int $perPage = 25): array
+    {
+        $perPage = in_array($perPage, [10, 25, 50, 100], true) ? $perPage : 25;
+        $page = max(1, $page);
+        $query = SiteDiagnostic::query()->where('site_id', $site->id)
+            ->orderByDesc('checked_at')->orderByDesc('id');
+        $result = $query->paginate($perPage, ['*'], 'page', $page);
+        if ($page > $result->lastPage()) {
+            $page = max(1, $result->lastPage());
+            $result = $query->paginate($perPage, ['*'], 'page', $page);
+        }
+
+        return [
+            'items' => $result->items(),
+            'page' => $page,
+            'per_page' => $perPage,
+            'total' => $result->total(),
+            'last_page' => $result->lastPage(),
+            'from' => $result->firstItem(),
+            'to' => $result->lastItem(),
+        ];
     }
 
     private function persist(Site $site, string $classification, array $rest, ?array $health, ?string $failureCode, ?string $failureMessage, array $capabilities, array $details, DateTimeInterface $started): SiteDiagnostic
