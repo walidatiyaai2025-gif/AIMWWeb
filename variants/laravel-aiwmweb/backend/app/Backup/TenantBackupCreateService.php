@@ -183,7 +183,7 @@ final class TenantBackupCreateService
 
     private function isProtectedColumn(string $column): bool
     {
-        return (bool) preg_match('/(?:password|secret|token|api[_-]?key|credential|private[_-]?key|encrypted)/i', $column);
+        return (bool) preg_match('/(?:password|passwd|secret|token|authorization|cookie|access[_-]?key|api[_-]?key|credential|private[_-]?key|encrypted)/i', $column);
     }
 
     private function encryptProtected(string $value, string $key): array
