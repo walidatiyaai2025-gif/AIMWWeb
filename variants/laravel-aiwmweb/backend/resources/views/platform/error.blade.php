@@ -1,15 +1,20 @@
 @php
+    // Error fallback is tenant-neutral: translate presentation only, never inspect tenant secrets.
+    $isArabic = request()->getPreferredLanguage(['ar', 'en']) === 'ar';
+    $tr = fn (string $en, string $ar) => $isArabic ? $ar : $en;
     $errorDetailsPayload = [
         'errorId' => $errorId,
         'correlationId' => $correlationId,
     ];
 @endphp
 <!doctype html>
-<html lang="en">
+<html lang="{{ $isArabic ? 'ar' : 'en' }}" dir="{{ $isArabic ? 'rtl' : 'ltr' }}" data-mode="dark">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Unexpected error</title>
+    <title>{{ $tr('Unexpected error', 'خطأ غير متوقع') }}</title>
+    <meta name="robots" content="noindex,nofollow">
+    @vite('resources/css/app.css')
     @vite('resources/js/error-copy-details.ts')
     <style>
         :root { color-scheme: light dark; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
@@ -28,6 +33,12 @@
         .button { display: inline-flex; align-items: center; justify-content: center; padding: 10px 16px; border: 0; border-radius: 10px; background: #2563eb; color: #fff; font: inherit; font-weight: 700; text-decoration: none; cursor: pointer; }
         .button.secondary { background: #1e293b; border: 1px solid rgba(148, 163, 184, .25); }
         .button:disabled { cursor: wait; opacity: .65; }
+        .button:focus-visible { outline: 3px solid #93c5fd; outline-offset: 3px; }
+        @media (max-width: 480px) {
+            .error-page { padding: 16px; }
+            .error-card { padding: 20px 16px; }
+            .actions .button { min-height: 44px; width: 100%; justify-content: center; }
+        }
         .copy-status { margin: 12px 0 0; }
         .copy-error { margin-top: 12px; }
         [hidden] { display: none !important; }
@@ -54,32 +65,32 @@
 <body>
     <main class="error-page" role="main" aria-labelledby="error-title" data-canonical-operation="AIMW-CONT-455F01DAC7">
         <section class="error-card">
-            <span class="kicker">ERROR CENTER</span>
-            <h1 id="error-title">An unexpected error occurred</h1>
-            <p>The error was recorded. Use the tracking details below when reviewing logs or requesting support.</p>
+            <span class="kicker">{{ $tr('ERROR CENTER', 'مركز الأخطاء') }}</span>
+            <h1 id="error-title">{{ $tr('An unexpected error occurred', 'حدث خطأ غير متوقع') }}</h1>
+            <p>{{ $tr('The error was recorded. Use the tracking details below when reviewing logs or requesting support.', 'تم تسجيل الخطأ. استخدم معلومات التتبع أدناه عند مراجعة السجلات أو طلب الدعم.') }}</p>
 
-            <h2>Tracking information</h2>
-            <p>This screen does not expose sensitive technical details.</p>
+            <h2>{{ $tr('Tracking information', 'معلومات التتبع') }}</h2>
+            <p>{{ $tr('This screen does not expose sensitive technical details.', 'لا تعرض هذه الصفحة تفاصيل تقنية حساسة.') }}</p>
 
             <div class="diagnostics">
-                <div class="diagnostic"><small>Error ID</small><strong>{{ $errorId }}</strong></div>
-                <div class="diagnostic"><small>Correlation ID</small><strong>{{ $correlationId }}</strong></div>
-                <div class="diagnostic"><small>Error time</small><strong>{{ $errorTime }}</strong></div>
+                <div class="diagnostic"><small>{{ $tr('Error ID', 'معرّف الخطأ') }}</small><strong>{{ $errorId }}</strong></div>
+                <div class="diagnostic"><small>{{ $tr('Correlation ID', 'معرّف الارتباط') }}</small><strong>{{ $correlationId }}</strong></div>
+                <div class="diagnostic"><small>{{ $tr('Error time', 'وقت الخطأ') }}</small><strong>{{ $errorTime }}</strong></div>
             </div>
 
-            <div class="note">Use the Error ID or Correlation ID when reviewing server logs or requesting support.</div>
+            <div class="note">{{ $tr('Use the Error ID or Correlation ID when reviewing server logs or requesting support.', 'استخدم معرّف الخطأ أو الارتباط عند مراجعة سجلات الخادم أو التواصل مع الدعم.') }}</div>
 
             <div class="actions">
-                <button class="button" type="button" data-copy-error-details data-canonical-operation="AIMW-SYNC-89777052CB" aria-busy="false">Copy error details</button>
+                <button class="button" type="button" data-copy-error-details data-canonical-operation="AIMW-SYNC-89777052CB" aria-busy="false">{{ $tr('Copy error details', 'نسخ تفاصيل الخطأ') }}</button>
                 @if ($logsHref !== null)
-                    <a class="button secondary" href="{{ $logsHref }}" data-canonical-operation="AIMW-CONT-8B3518EF80">Open logs</a>
+                    <a class="button secondary" href="{{ $logsHref }}" data-canonical-operation="AIMW-CONT-8B3518EF80">{{ $tr('Open logs', 'فتح السجلات') }}</a>
                 @endif
-                <a class="button" href="/" data-canonical-operation="AIMW-CONT-85394A0E55">Back to dashboard</a>
+                <a class="button" href="/" data-canonical-operation="AIMW-CONT-85394A0E55">{{ $tr('Back to dashboard', 'العودة إلى لوحة التحكم') }}</a>
             </div>
-            <p class="copy-status" data-copy-error-success role="status" hidden>Error details copied. The browser confirmed the clipboard write.</p>
+            <p class="copy-status" data-copy-error-success role="status" hidden>{{ $tr('Error details copied. The browser confirmed the clipboard write.', 'تم نسخ تفاصيل الخطأ بعد تأكيد المتصفح إتمام النسخ.') }}</p>
             <div class="copy-error" data-copy-error-error role="alert" hidden>
-                <p data-copy-error-error-message>The browser did not confirm a clipboard write. No copy success was reported; you can retry.</p>
-                <button class="button" type="button" data-copy-error-retry>Retry copy</button>
+                <p data-copy-error-error-message>{{ $tr('The browser did not confirm a clipboard write. No copy success was reported; you can retry.', 'لم يؤكد المتصفح نسخ النص. لم يتم الإبلاغ عن نجاح العملية؛ يمكنك المحاولة مجددًا.') }}</p>
+                <button class="button" type="button" data-copy-error-retry>{{ $tr('Retry copy', 'إعادة محاولة النسخ') }}</button>
             </div>
 
             <script id="error-details-payload" type="application/json">@json($errorDetailsPayload, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)</script>

@@ -4,6 +4,9 @@ export type ErrorDetailsPayload = {
 };
 
 const FAILURE_MESSAGE = 'The browser did not confirm a clipboard write. No copy success was reported; you can retry.';
+const AR_FAILURE_MESSAGE = 'لم يؤكد المتصفح نسخ النص. لم يتم الإبلاغ عن نجاح العملية؛ يمكنك المحاولة مجددًا.';
+const PAYLOAD_ERROR = 'The safe error details payload could not be read. No copy success was reported.';
+const AR_PAYLOAD_ERROR = 'تعذر قراءة بيانات التتبع الآمنة. لم يتم الإبلاغ عن نجاح عملية النسخ.';
 
 export function formatErrorDetails(payload: ErrorDetailsPayload, copiedAt: string = new Date().toISOString()): string {
     return [
@@ -23,6 +26,7 @@ export function wireCopyErrorDetails(root: ParentNode = document): void {
     const payloadNode = root.querySelector<HTMLScriptElement>('#error-details-payload');
 
     if (!button || !retry || !success || !error || !errorMessage || !payloadNode) return;
+    const isArabic = document.documentElement.lang.toLowerCase().startsWith('ar');
 
     let payload: ErrorDetailsPayload;
     try {
@@ -31,7 +35,7 @@ export function wireCopyErrorDetails(root: ParentNode = document): void {
             throw new Error('Invalid error details payload');
         }
     } catch {
-        errorMessage.textContent = 'The safe error details payload could not be read. No copy success was reported.';
+        errorMessage.textContent = isArabic ? AR_PAYLOAD_ERROR : PAYLOAD_ERROR;
         error.hidden = false;
         button.disabled = true;
         retry.disabled = true;
@@ -59,7 +63,7 @@ export function wireCopyErrorDetails(root: ParentNode = document): void {
             await clipboard.writeText(formatErrorDetails(payload));
             success.hidden = false;
         } catch {
-            errorMessage.textContent = FAILURE_MESSAGE;
+            errorMessage.textContent = isArabic ? AR_FAILURE_MESSAGE : FAILURE_MESSAGE;
             error.hidden = false;
         } finally {
             copying = false;

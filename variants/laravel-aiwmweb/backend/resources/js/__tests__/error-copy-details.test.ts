@@ -25,6 +25,7 @@ async function settle(): Promise<void> {
 
 describe('copy error details visible control', () => {
     beforeEach(() => {
+        document.documentElement.lang = 'en';
         renderControl();
         Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true });
     });
@@ -95,6 +96,27 @@ describe('copy error details visible control', () => {
         expect(writeText).toHaveBeenCalledTimes(2);
         expect(error.hidden).toBe(true);
         expect(success.hidden).toBe(false);
+    });
+
+    it('localizes Arabic copy failures without claiming success or disclosing private errors', async () => {
+        document.documentElement.lang = 'ar';
+        const writeText = vi.fn().mockRejectedValue(new Error('private clipboard error'));
+        Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+        wireCopyErrorDetails();
+
+        document.querySelector<HTMLButtonElement>('[data-copy-error-details]')!.click();
+        await settle();
+
+        const message = document.querySelector<HTMLElement>('[data-copy-error-error-message]')!;
+        expect(message.textContent).toContain('لم يؤكد المتصفح نسخ النص');
+        expect(message.textContent).not.toContain('private clipboard error');
+        expect(document.querySelector<HTMLElement>('[data-copy-error-success]')!.hidden).toBe(true);
+
+        renderControl();
+        document.querySelector('#error-details-payload')!.textContent = '{invalid';
+        wireCopyErrorDetails();
+        expect(document.querySelector<HTMLElement>('[data-copy-error-error-message]')!.textContent).toContain('تعذر قراءة بيانات التتبع الآمنة');
+        expect(document.querySelector<HTMLButtonElement>('[data-copy-error-details]')!.disabled).toBe(true);
     });
 
     it('fails truthfully when Clipboard API or payload is unavailable', async () => {
