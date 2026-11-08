@@ -15,6 +15,8 @@ export function visiblePaginationPages(currentPage: number, lastPage: number, ma
  */
 export function authoritativeCollectionTotal(total: unknown, verified: boolean | undefined = true): number | undefined {
     // WordPress gateways can omit X-WP-Total; their page-local count is not a grand total.
-    if (verified === false) return undefined;
+    // JSON is untrusted at runtime even when the TypeScript caller expects
+    // boolean. Only an omitted flag or an actual true may confirm a total.
+    if (verified !== true && verified !== undefined) return undefined;
     return typeof total === 'number' && Number.isSafeInteger(total) && total >= 0 ? total : undefined;
 }
