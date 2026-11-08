@@ -58,7 +58,7 @@ final class SitesShowConnectedVisibleControlTerminalityTest extends TestCase
         $this->assertStringContainsString('function isSiteConnectedRow', $frontend);
         $this->assertStringContainsString("row.connection_status ?? 'unknown'", $frontend);
         $this->assertStringContainsString("return normalized === 'connected';", $frontend);
-        $this->assertStringContainsString("setSitesFilter('connected')", $frontend);
+        $this->assertStringContainsString("navigateSites(1, sitesPageSize, 'connected')", $frontend);
         $this->assertStringContainsString("'متصل' : 'Connected'", $frontend);
 
         $start = strpos($frontend, 'function isSiteConnectedRow');
