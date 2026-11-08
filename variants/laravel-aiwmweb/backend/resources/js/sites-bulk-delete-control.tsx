@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ApiError, apiRequest, type FrontendContext } from './core';
-import { useToast } from './components';
+import { Pagination, useToast } from './components';
 import { useLocale } from './i18n';
 import { AppDataGridClearSelectionControl } from './app-data-grid-clear-selection-control';
 import { AppBulkActionClearControl } from './app-bulk-action-clear-control';
@@ -13,6 +13,7 @@ const TOGGLE_VISIBLE_OPERATION_ID = 'AIMW-BILL-F8102254A8';
 const MAX_SITES = 100;
 
 type SiteRow = { id: number; name?: string; url?: string; status?: string };
+type SitePage = { data: SiteRow[]; total: number; current_page: number; last_page: number; per_page: number };
 
 export function SitesBulkDeleteControl({ context }: { context: FrontendContext }) {
     const { locale } = useLocale();
@@ -20,18 +21,25 @@ export function SitesBulkDeleteControl({ context }: { context: FrontendContext }
     const queryClient = useQueryClient();
     const [selected, setSelected] = useState<Set<number>>(new Set());
     const [confirmOpen, setConfirmOpen] = useState(false);
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(25);
     const endpoint = context.api.sites;
     const allowed = context.permissions.includes('*') || context.permissions.includes('sites.manage');
 
     const query = useQuery({
-        queryKey: ['sites-bulk-delete', context.tenant.slug, endpoint],
-        queryFn: () => apiRequest<SiteRow[]>(endpoint),
+        queryKey: ['sites-bulk-delete', context.tenant.slug, endpoint, page, pageSize],
+        queryFn: () => apiRequest<SitePage>(`${endpoint}?page=${page}&per_page=${pageSize}`),
         enabled: allowed && Boolean(endpoint),
     });
 
-    const sites = useMemo(() => Array.isArray(query.data) ? query.data : [], [query.data]);
-    const visibleIds = useMemo(() => sites.slice(0, MAX_SITES).map((site) => site.id), [sites]);
-    const selectedIds = useMemo(() => Array.from(selected).filter((id) => sites.some((site) => site.id === id)).slice(0, MAX_SITES), [selected, sites]);
+    const sites = useMemo(() => Array.isArray(query.data?.data) ? query.data.data : [], [query.data]);
+    const visibleIds = useMemo(() => sites.map((site) => site.id), [sites]);
+    // Selection never crosses a page boundary: hidden rows cannot enter a destructive payload.
+    const selectedIds = useMemo(() => Array.from(selected).filter((id) => visibleIds.includes(id)).slice(0, MAX_SITES), [selected, visibleIds]);
+    const lastPage = Number.isSafeInteger(query.data?.last_page) ? Math.max(1, query.data!.last_page) : 1;
+    const currentPage = Number.isSafeInteger(query.data?.current_page) ? query.data!.current_page : page;
+    const total = Number.isSafeInteger(query.data?.total) ? query.data!.total : undefined;
+    const changePage = (next: number) => { setSelected(new Set()); setConfirmOpen(false); setPage(next); };
     const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((id) => selected.has(id));
 
     const mutation = useMutation({
@@ -85,7 +93,7 @@ export function SitesBulkDeleteControl({ context }: { context: FrontendContext }
             return next;
         });
     };
-    const requestBulkDelete = () => setConfirmOpen(true);
+    const requestBulkDelete = () => { if (selectedIds.length > 0) setConfirmOpen(true); };
 
     return (
         <section className="panel data-panel" aria-label={locale === 'ar' ? 'الحذف الجماعي للمواقع' : 'Bulk site deletion'}>
@@ -143,6 +151,9 @@ export function SitesBulkDeleteControl({ context }: { context: FrontendContext }
                             ))}</tbody>
                         </table>
                     </div>
+                    <Pagination page={currentPage} lastPage={lastPage} onPage={changePage}
+                        total={total} pageSize={pageSize} returnedCount={sites.length}
+                        onPageSizeChange={(size) => { setSelected(new Set()); setConfirmOpen(false); setPage(1); setPageSize(size); }} />
                 </>
             ) : (!query.isLoading && !query.error ? <p>{locale === 'ar' ? 'لا توجد مواقع قابلة للتحديد.' : 'No sites are available for selection.'}</p> : null)}
 
