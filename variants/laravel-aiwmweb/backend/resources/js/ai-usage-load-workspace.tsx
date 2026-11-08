@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { ApiError, apiRequest, type FrontendContext, type WorkspaceRoute } from './core';
 import { LoadingState, Pagination, StateBanner, StatePanel } from './components';
 import { AppFilterBar } from './app-filter-bar';
@@ -55,6 +56,18 @@ function requestUrl(endpoint: string, siteId: string, page: number, pageSize: nu
     return `${url.pathname}${url.search}`;
 }
 
+// URL state is bounded before an API request and never trusts a cross-tenant site ID.
+function readPage(raw: string | null): number {
+    if (!raw || !/^[1-9][0-9]*$/.test(raw)) return 1;
+    const value = Number(raw);
+    return Number.isSafeInteger(value) ? value : 1;
+}
+
+function readPageSize(raw: string | null): number {
+    const value = Number(raw);
+    return raw && [10, 25, 50, 100].includes(value) ? value : 25;
+}
+
 function errorMessage(error: unknown, locale: 'en' | 'ar'): string {
     if (error instanceof ApiError) return error.message;
     if (error instanceof Error && error.message) return error.message;
@@ -66,9 +79,21 @@ export function AiUsageLoadWorkspace({ context, route }: { context: FrontendCont
     const endpoint = route.apiKey ? context.api[route.apiKey] : undefined;
     const canLoad = context.permissions.includes('tenant.view') && context.permissions.includes('ai.viewUsage');
     const [snapshot, setSnapshot] = useState<AiUsagePayload | null>(null);
-    const [selectedSiteId, setSelectedSiteId] = useState('');
-    const [page, setPage] = useState(1);
-    const [pageSize, setPageSize] = useState(25);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const selectedSiteId = /^\\d+$/.test(searchParams.get('site') ?? '') && Number(searchParams.get('site')) > 0
+        ? searchParams.get('site')! : '';
+    const page = readPage(searchParams.get('page'));
+    const pageSize = readPageSize(searchParams.get('per_page'));
+    const navigateToPage = useCallback((nextPage: number, nextPageSize: number, nextSite: string, replace = false) => {
+        setSearchParams((current) => {
+            const next = new URLSearchParams(current);
+            next.set('page', String(nextPage));
+            next.set('per_page', String(nextPageSize));
+            if (nextSite) next.set('site', nextSite);
+            else next.delete('site');
+            return next;
+        }, { replace });
+    }, [setSearchParams]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [loadedAt, setLoadedAt] = useState<Date | null>(null);
@@ -83,7 +108,9 @@ export function AiUsageLoadWorkspace({ context, route }: { context: FrontendCont
             const payload = await apiRequest<AiUsagePayload>(requestUrl(endpoint, siteId, requestedPage, requestedSize));
             if (epoch !== requestEpoch.current) return;
             setSnapshot(payload);
-            setPage(payload.current_page ?? requestedPage);
+            if (payload.current_page && payload.current_page !== requestedPage) {
+                navigateToPage(payload.current_page, requestedSize, siteId, true);
+            }
             setLoadedAt(new Date());
         } catch (reason) {
             if (epoch !== requestEpoch.current) return;
@@ -91,12 +118,12 @@ export function AiUsageLoadWorkspace({ context, route }: { context: FrontendCont
         } finally {
             if (epoch === requestEpoch.current) setLoading(false);
         }
-    }, [canLoad, endpoint, locale]);
+    }, [canLoad, endpoint, locale, navigateToPage]);
 
     useEffect(() => {
-        void load('', 1, 25);
+        void load(selectedSiteId, page, pageSize);
         return () => { requestEpoch.current += 1; };
-    }, [load]);
+    }, [load, selectedSiteId, page, pageSize]);
 
     if (!canLoad) {
         return (
@@ -151,8 +178,7 @@ export function AiUsageLoadWorkspace({ context, route }: { context: FrontendCont
                 clearAriaLabel={locale === 'ar' ? 'مسح فلتر الموقع' : 'Clear site filter'}
                 busy={loading}
                 onClearRequested={async () => {
-                    setSelectedSiteId('');
-                    await load('', 1, pageSize);
+                    navigateToPage(1, pageSize, '');
                 }}
                 appliedFilters={selectedSiteId ? (
                     <AppFilterChip
@@ -161,8 +187,7 @@ export function AiUsageLoadWorkspace({ context, route }: { context: FrontendCont
                         removeAriaLabel={locale === 'ar' ? 'إزالة فلتر الموقع' : 'Remove site filter'}
                         disabled={loading}
                         onRemoveRequested={async () => {
-                            setSelectedSiteId('');
-                            await load('', 1, pageSize);
+                            navigateToPage(1, pageSize, '');
                         }}
                     />
                 ) : undefined}
@@ -175,9 +200,7 @@ export function AiUsageLoadWorkspace({ context, route }: { context: FrontendCont
                         disabled={loading}
                         onChange={(event) => {
                             const next = event.target.value;
-                            setSelectedSiteId(next);
-                            setPage(1);
-                            void load(next, 1, pageSize);
+                            navigateToPage(1, pageSize, next);
                         }}
                     >
                         <option value="">{locale === 'ar' ? 'كل مواقعي' : 'All my sites'}</option>
@@ -249,8 +272,8 @@ export function AiUsageLoadWorkspace({ context, route }: { context: FrontendCont
                     total={snapshot?.total}
                     pageSize={snapshot?.per_page ?? pageSize}
                     returnedCount={rows.length}
-                    onPage={(next) => { setPage(next); void load(selectedSiteId, next, pageSize); }}
-                    onPageSizeChange={(size) => { setPage(1); setPageSize(size); void load(selectedSiteId, 1, size); }}
+                    onPage={(next) => navigateToPage(next, pageSize, selectedSiteId)}
+                    onPageSizeChange={(size) => navigateToPage(1, size, selectedSiteId)}
                 />
             </section>
         </div>
