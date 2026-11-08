@@ -1,35 +1,80 @@
+@php($isArabic = app()->getLocale() === 'ar')
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ $isArabic ? 'ar' : 'en' }}" dir="{{ $isArabic ? 'rtl' : 'ltr' }}" data-mode="dark">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Site settings · {{ $site->name }}</title>
-    <!-- Google Fonts: Inter (Latin) and Tajawal (Arabic); typography 25% larger than 62.5% baseline. -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="color-scheme" content="dark light">
+    <title>{{ $isArabic ? 'إعدادات الموقع' : 'Site settings' }} · {{ $site->name }} — AIWMWeb</title>
+    {{-- The CSS is the same production asset loaded by resources/views/app.blade.php. --}}
+    @unless (app()->runningUnitTests())
+        @vite(['resources/css/app.css'])
+    @endunless
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=Tajawal:wght@400;500;700;800;900&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=Tajawal:wght@400;500;700;800&amp;display=swap">
     <style data-aiwm-global-typography>
         :root { font-size: 78.125%; --aiwm-google-font: 'Inter', 'Tajawal', sans-serif; --font-sans: var(--aiwm-google-font); }
         html:lang(ar) { --aiwm-google-font: 'Tajawal', 'Inter', sans-serif; }
         body, button, input, textarea, select, option { font-family: var(--aiwm-google-font) !important; }
-        @media (min-width: 1140px) { main :is(.cards, .record-grid, .data-cards, .details-grid, .stats-grid, .summary-grid, .info-grid, .settings-grid), main dl:has(> div) { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; } }
-        @media (min-width: 701px) and (max-width: 1139px) { main :is(.cards, .record-grid, .data-cards, .details-grid, .stats-grid, .summary-grid, .info-grid, .settings-grid), main dl:has(> div) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } }
-        @media (max-width: 700px) { main :is(.cards, .record-grid, .data-cards, .details-grid, .stats-grid, .summary-grid, .info-grid, .settings-grid), main dl:has(> div) { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; } }
-            /* Three-column forms, plan cards and history records; full-width actions retained. */
-        @media (min-width: 1140px) { main .grid, main form:has(> label ~ label ~ label), main section:has(> article ~ article), main section:has(> .record ~ .record) { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; } }
-        @media (min-width: 701px) and (max-width: 1139px) { main .grid, main form:has(> label ~ label ~ label), main section:has(> article ~ article), main section:has(> .record ~ .record) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } }
-        @media (max-width: 700px) { main .grid, main form:has(> label ~ label ~ label), main section:has(> article ~ article), main section:has(> .record ~ .record) { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; } }
-        main form:has(> label ~ label ~ label) > :not(label), main section:has(> article ~ article) > :not(article), main section:has(> .record ~ .record) > :not(.record) { grid-column: 1 / -1; }
-        main :is(.grid, .cards, .record-grid) > * { min-width: 0; }
-</style>
+    </style>
 </head>
 <body>
-    <main data-canonical-operation="AIMW-SITE-9F9F2977B5">
+<div class="app-shell site-settings-shell" data-dashboard-shell="aiwmweb">
+    <a href="#site-settings-content" class="skip-link">{{ $isArabic ? 'تخط إلى المحتوى' : 'Skip to content' }}</a>
+    <aside class="sidebar" aria-label="{{ $isArabic ? 'التنقل الرئيسي' : 'Primary navigation' }}">
+        <div class="brand-row">
+            <a class="brand" href="/tenants/{{ rawurlencode($tenant) }}">
+                <span class="brand-mark" aria-hidden="true">AI</span>
+                <span class="brand-copy"><strong>AI WordPress Manager</strong><small>{{ $tenant }}</small></span>
+            </a>
+        </div>
+        <nav class="main-nav" aria-label="{{ $isArabic ? 'تنقل الموقع' : 'Site navigation' }}">
+            <details class="nav-section" open>
+                <summary><span>{{ $isArabic ? 'الموقع' : 'Site' }}</span><span aria-hidden="true">⌄</span></summary>
+                <div class="nav-links">
+                    <a href="{{ route('canonical.workspace.sites', ['tenant' => $tenant], false) }}"><span class="nav-icon" aria-hidden="true">▦</span>{{ $isArabic ? 'المواقع' : 'Sites' }}</a>
+                    <a href="{{ route('canonical.site.details', ['tenant' => $tenant, 'site' => $site->getKey()], false) }}"><span class="nav-icon" aria-hidden="true">◎</span>{{ $isArabic ? 'تفاصيل الموقع' : 'Site details' }}</a>
+                    <a href="/tenants/{{ rawurlencode($tenant) }}/sites/{{ $site->getKey() }}/connection"><span class="nav-icon" aria-hidden="true">◇</span>{{ $isArabic ? 'مركز الاتصال' : 'Connection center' }}</a>
+                    <a class="active" aria-current="page" href="{{ route('canonical.site.settings', ['tenant' => $tenant, 'site' => $site->getKey()], false) }}"><span class="nav-icon" aria-hidden="true">⚙</span>{{ $isArabic ? 'إعدادات الموقع' : 'Site settings' }}</a>
+                </div>
+            </details>
+            <details class="nav-section" open>
+                <summary><span>{{ $isArabic ? 'الحساب' : 'Account' }}</span><span aria-hidden="true">⌄</span></summary>
+                <div class="nav-links">
+                    <a href="/tenants/{{ rawurlencode($tenant) }}/settings"><span class="nav-icon" aria-hidden="true">⚙</span>{{ $isArabic ? 'إعدادات الحساب العامة' : 'Tenant settings' }}</a>
+                </div>
+            </details>
+        </nav>
+        <div class="sidebar-footer"><strong>{{ $site->name }}</strong><small>{{ $isArabic ? 'مساحة عمل محمية' : 'Protected site workspace' }}</small></div>
+    </aside>
+    <div class="main-area">
+        <header class="topbar">
+            <div class="topbar-title"><div class="heading-block">
+                <nav class="breadcrumb" aria-label="Breadcrumb">
+                    <a href="{{ route('canonical.workspace.sites', ['tenant' => $tenant], false) }}">{{ $isArabic ? 'المواقع' : 'Sites' }}</a>
+                    <b aria-hidden="true">›</b>
+                    <a href="{{ route('canonical.site.details', ['tenant' => $tenant, 'site' => $site->getKey()], false) }}">{{ $site->name }}</a>
+                    <b aria-hidden="true">›</b>
+                    <strong>{{ $isArabic ? 'إعدادات الموقع' : 'Site settings' }}</strong>
+                </nav>
+                <h1>{{ $isArabic ? 'إعدادات الموقع' : 'Site settings' }}</h1>
+            </div></div>
+            <div class="topbar-actions">
+                @if ($canManageCredential)
+                    <a class="btn primary" href="#wordpress-credential-heading">{{ $isArabic ? 'بيانات ووردبريس' : 'WordPress credential' }}</a>
+                @endif
+                <a class="btn" href="/tenants/{{ rawurlencode($tenant) }}/settings">{{ $isArabic ? 'إعدادات الحساب' : 'Tenant settings' }}</a>
+            </div>
+        </header>
+        <main id="site-settings-content" class="content site-settings-content" data-canonical-operation="AIMW-SITE-9F9F2977B5">
+
         <header>
-            <p>Site workspace</p>
-            <h1>Settings</h1>
-            <p>Authoritative settings summary for <strong>{{ $site->name }}</strong>.</p>
-            <nav aria-label="Site settings shortcuts">
+            <p class="workspace-kicker">{{ $isArabic ? "مساحة عمل الموقع" : "Site workspace" }}</p>
+            <h1>{{ $isArabic ? "إعدادات الموقع" : "Settings" }}</h1>
+            <p>{{ $isArabic ? "ملخص إعدادات الموقع المحفوظة لـ" : "Authoritative settings summary for" }} <strong>{{ $site->name }}</strong>.</p>
+            <nav class="site-settings-links" aria-label="Site settings shortcuts">
                 <a
                     href="{{ route('canonical.site.details', ['tenant' => $tenant, 'site' => $site->getKey()], false) }}"
                     data-canonical-operation="AIMW-CONT-0154E7772B"
@@ -60,22 +105,22 @@
         @endif
 
         <dl>
-            <div><dt>Name</dt><dd>{{ $site->name }}</dd></div>
-            <div><dt>URL</dt><dd>{{ $site->url }}</dd></div>
-            <div><dt>Status</dt><dd>{{ $site->status }}</dd></div>
-            <div><dt>Connection status</dt><dd>{{ $site->connection_status }}</dd></div>
+            <div><dt>{{ $isArabic ? "الاسم" : "Name" }}</dt><dd>{{ $site->name }}</dd></div>
+            <div><dt>{{ $isArabic ? "الرابط" : "URL" }}</dt><dd>{{ $site->url }}</dd></div>
+            <div><dt>{{ $isArabic ? "الحالة" : "Status" }}</dt><dd>{{ $site->status }}</dd></div>
+            <div><dt>{{ $isArabic ? "حالة الاتصال" : "Connection status" }}</dt><dd>{{ $site->connection_status }}</dd></div>
         </dl>
 
         @if ($canManageSite)
             <section aria-labelledby="site-profile-heading" data-canonical-operation="AIMW-BILL-5C15471E4B">
-                <h2 id="site-profile-heading">Site profile</h2>
-                <p>Change the display name or primary WordPress URL.</p>
+                <h2 id="site-profile-heading">{{ $isArabic ? "ملف الموقع" : "Site profile" }}</h2>
+                <p>{{ $isArabic ? "تغيير اسم العرض أو رابط الموقع الأساسي." : "Change the display name or primary WordPress URL." }}</p>
                 <form method="POST"
                       action="{{ route('canonical.site.settings.profile', ['tenant' => $tenant, 'site' => $site->getKey()]) }}"
                       data-site-profile-form
                       data-canonical-operation="AIMW-BILL-5C15471E4B">
                     @csrf
-                    <label for="site-profile-name">Site name</label>
+                    <label for="site-profile-name">{{ $isArabic ? "اسم الموقع" : "Site name" }}</label>
                     <input id="site-profile-name"
                            name="name"
                            type="text"
@@ -86,7 +131,7 @@
                         <p role="alert">{{ $message }}</p>
                     @enderror
 
-                    <label for="site-profile-url">Site URL</label>
+                    <label for="site-profile-url">{{ $isArabic ? "رابط الموقع" : "Site URL" }}</label>
                     <input id="site-profile-url"
                            name="url"
                            type="url"
@@ -105,8 +150,8 @@
         @if ($canManageSite)
             @php($isOperationallyDisabled = strtolower((string) $site->connection_status) === 'disabled')
             <section aria-labelledby="operational-state-heading" data-canonical-operation="AIMW-BILL-84B63E3F42">
-                <h2 id="operational-state-heading">Operational state</h2>
-                <p>Temporarily disable this site without deleting its data. Re-enabling resets the connection state to unknown so it can be verified again.</p>
+                <h2 id="operational-state-heading">{{ $isArabic ? "حالة التشغيل" : "Operational state" }}</h2>
+                <p>{{ $isArabic ? "تعطيل مؤقت دون حذف البيانات. عند إعادة التفعيل تصبح حالة الاتصال غير معروفة حتى التحقق مجددًا." : "Temporarily disable this site without deleting its data. Re-enabling resets the connection state to unknown so it can be verified again." }}</p>
                 <form method="POST"
                       action="{{ route('canonical.site.settings.operational-state', ['tenant' => $tenant, 'site' => $site->getKey()]) }}"
                       data-site-operational-state-form
@@ -114,24 +159,24 @@
                     @csrf
                     <input type="hidden" name="disabled" value="{{ $isOperationallyDisabled ? '0' : '1' }}">
                     <button type="submit" data-canonical-operation="AIMW-BILL-84B63E3F42">
-                        {{ $isOperationallyDisabled ? 'Enable site' : 'Disable site' }}
+                        {{ $isOperationallyDisabled ? ($isArabic ? 'تفعيل الموقع' : 'Enable site') : ($isArabic ? 'تعطيل الموقع' : 'Disable site') }}
                     </button>
                 </form>
             </section>
         @endif
 
         @if ($canManageCredential)
-            <section aria-labelledby="wordpress-credential-heading">
-                <h2 id="wordpress-credential-heading">WordPress credential</h2>
+            <section id="site-credential-settings" aria-labelledby="wordpress-credential-heading">
+                <h2 id="wordpress-credential-heading">{{ $isArabic ? "بيانات اتصال ووردبريس" : "WordPress credential" }}</h2>
 
                 <form method="POST" action="{{ route('canonical.site.settings.credential.store', ['tenant' => $tenant, 'site' => $site->getKey()]) }}" data-canonical-operation="AIMW-BILL-723BEA8F1D">
                     @csrf
                     <label>
-                        WordPress username
+                        {{ $isArabic ? "اسم مستخدم ووردبريس" : "WordPress username" }}
                         <input type="text" name="username" value="{{ old('username', $credential?->username ?? '') }}" maxlength="255" autocomplete="username" required>
                     </label>
                     <label>
-                        Application Password
+                        {{ $isArabic ? "كلمة مرور التطبيق" : "Application Password" }}
                         <input type="password" name="application_password" minlength="8" maxlength="1024" autocomplete="new-password" required>
                     </label>
                     <button type="submit" data-canonical-operation="AIMW-BILL-723BEA8F1D" data-canonical-control-operation="AIMW-CONT-E1A7A8CAA7">{{ app()->getLocale() === 'ar' ? 'حفظ واختبار' : 'Save and test' }}</button>
@@ -139,44 +184,46 @@
 
                 @if ($credential)
                     <dl>
-                        <div><dt>Username</dt><dd>{{ $credential->username ?: '—' }}</dd></div>
-                        <div><dt>Application Password</dt><dd>••••••••</dd></div>
+                        <div><dt>{{ $isArabic ? "اسم المستخدم" : "Username" }}</dt><dd>{{ $credential->username ?: "—" }}</dd></div>
+                        <div><dt>{{ $isArabic ? "كلمة مرور التطبيق" : "Application Password" }}</dt><dd>{{ $isArabic ? "محفوظة ومشفرة" : "Stored encrypted" }}</dd></div>
                     </dl>
                     <form method="POST" action="{{ route('canonical.site.settings.credential.destroy', ['tenant' => $tenant, 'site' => $site->getKey()]) }}">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" data-canonical-operation="AIMW-BILL-E36C3E1427">Remove credential</button>
+                        <button type="submit" data-canonical-operation="AIMW-BILL-E36C3E1427">{{ $isArabic ? "حذف بيانات الاتصال" : "Remove credential" }}</button>
                     </form>
                 @else
-                    <p>No stored credential.</p>
+                    <p role="status">{{ $isArabic ? "لا توجد بيانات اتصال محفوظة." : "No stored credential." }}</p>
                 @endif
             </section>
         @endif
 
         @if ($canManageSite)
             <section aria-labelledby="danger-zone-heading" data-canonical-operation="AIMW-BILL-D7D075EF3C">
-                <h2 id="danger-zone-heading">Danger zone</h2>
-                <p>Deletion removes this site from active lists. Type the exact site name to confirm.</p>
+                <h2 id="danger-zone-heading">{{ $isArabic ? "منطقة الخطر" : "Danger zone" }}</h2>
+                <p>{{ $isArabic ? "يحذف الموقع من القوائم النشطة. اكتب اسم الموقع بالكامل للتأكيد." : "Deletion removes this site from active lists. Type the exact site name to confirm." }}</p>
                 <form method="POST" action="{{ route('canonical.site.settings.delete', ['tenant' => $tenant, 'site' => $site->getKey()]) }}" autocomplete="off">
                     @csrf
                     @method('DELETE')
-                    <label for="site-delete-confirmation">Site name</label>
+                    <label for="site-delete-confirmation">{{ $isArabic ? "اسم الموقع" : "Site name" }}</label>
                     <input id="site-delete-confirmation" name="confirmation" type="text" required maxlength="255" autocomplete="off">
                     @error('confirmation')
                         <p role="alert">{{ $message }}</p>
                     @enderror
-                    <button type="submit">Delete site</button>
+                    <button type="submit">{{ $isArabic ? "حذف الموقع" : "Delete site" }}</button>
                 </form>
             </section>
         @endif
 
-        <nav aria-label="Site settings navigation">
+        <nav class="site-settings-links" aria-label="Site settings navigation">
             <a
                 href="{{ route('canonical.workspace.sites', ['tenant' => $tenant], false) }}"
                 data-canonical-operation="AIMW-CONT-3D6485D903"
             >{{ app()->getLocale() === 'ar' ? 'العودة للمواقع' : 'Back to sites' }}</a>
-            <a href="/tenants/{{ rawurlencode($tenant) }}/sites/{{ $site->getKey() }}">Back to site details</a>
+            <a href="/tenants/{{ rawurlencode($tenant) }}/sites/{{ $site->getKey() }}">{{ $isArabic ? "العودة إلى تفاصيل الموقع" : "Back to site details" }}</a>
         </nav>
-    </main>
+        </main>
+    </div>
+</div>
 </body>
 </html>
