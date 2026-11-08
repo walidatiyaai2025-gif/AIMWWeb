@@ -194,7 +194,7 @@ final class SystemUpdateCenterTest extends TestCase
     {
         $url = 'https://github.com/walidatiyaai2025-gif/AIMWWeb/releases/download/v9.9.9/AIWMWeb-Laravel-release.json';
         Http::fake([
-            $url => static fn () => throw new \Illuminate\Http\Client\ConnectionException(
+            $url => static fn () => throw new ConnectionException(
                 'cURL 28 confidential-proxy-host: timed out while contacting private route'
             ),
         ]);
