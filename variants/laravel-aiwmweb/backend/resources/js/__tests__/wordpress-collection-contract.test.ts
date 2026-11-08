@@ -49,7 +49,8 @@ describe('WordPress collection GET fail-closed contract', () => {
             const transport = vi.fn().mockResolvedValue(payload);
             await expect(readWorkspaceCollectionResponse(route, '/wp/collection', transport))
                 .rejects.toThrow('WordPress collection response was invalid');
-            expect(transport).toHaveBeenCalledExactlyOnceWith('/wp/collection');
+            expect(transport).toHaveBeenCalledTimes(1);
+            expect(transport).toHaveBeenCalledWith('/wp/collection');
         }
     });
 
