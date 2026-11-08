@@ -529,7 +529,7 @@ final class SystemUpdateService
 
             // 404/401/403 and other permanent errors must fail closed; never
             // fall back to another release or bypass signed verification.
-            if (! in_array($response->status(), [408, 429, 500, 502, 503, 504], true)) {
+            if (in_array($response->status(), [408, 429, 500, 502, 503, 504], true) === false) {
                 throw new RuntimeException('Release metadata download failed (HTTP '.$response->status().').');
             }
         }
