@@ -22,16 +22,16 @@ afterEach(() => {
 
 describe('Evidence Receipt real server paging (#1608)', () => {
     it('loads bounded page sizes via safe tenant GETs and resets on resizing', async () => {
-        const response = (page: number, size: number, title: string) =>
+        const response = (page: number, size: number, receiptId: number) =>
             new Response(JSON.stringify({
-                data: [{ id: page, operation_id: title }],
+                data: [{ id: receiptId, operation_id: `operation-${receiptId}` }],
                 current_page: page, last_page: Math.ceil(60 / size),
                 per_page: size, total: 60,
             }), { status: 200, headers: { 'content-type': 'application/json' } });
         const fetchMock = vi.fn()
-            .mockResolvedValueOnce(response(1, 25, 'Evidence receipt first'))
-            .mockResolvedValueOnce(response(2, 25, 'Evidence receipt second'))
-            .mockResolvedValueOnce(response(1, 50, 'Evidence receipt resized'));
+            .mockResolvedValueOnce(response(1, 25, 101))
+            .mockResolvedValueOnce(response(2, 25, 202))
+            .mockResolvedValueOnce(response(1, 50, 303));
         vi.stubGlobal('fetch', fetchMock);
 
         const context: FrontendContext = {
@@ -48,14 +48,16 @@ describe('Evidence Receipt real server paging (#1608)', () => {
             </QueryClientProvider>,
         );
 
-        expect(await screen.findByText('Evidence receipt first')).toBeInTheDocument();
+        expect(await screen.findByRole('cell', { name: '101' })).toBeInTheDocument();
         await waitFor(() => expect(fetchMock.mock.calls[0][0]).toBe('/api/tenants/alpha/evidence?page=1&per_page=25'));
         fireEvent.click(screen.getByRole('button', { name: 'Next' }));
-        expect(await screen.findByText('Evidence receipt second')).toBeInTheDocument();
+        expect(await screen.findByRole('cell', { name: '202' })).toBeInTheDocument();
+        expect(screen.queryByRole('cell', { name: '101' })).not.toBeInTheDocument();
         await waitFor(() => expect(fetchMock.mock.calls[1][0]).toBe('/api/tenants/alpha/evidence?page=2&per_page=25'));
 
         fireEvent.change(screen.getByRole('combobox', { name: 'Rows per page' }), { target: { value: '50' } });
-        expect(await screen.findByText('Evidence receipt resized')).toBeInTheDocument();
+        expect(await screen.findByRole('cell', { name: '303' })).toBeInTheDocument();
+        expect(screen.queryByRole('cell', { name: '202' })).not.toBeInTheDocument();
         await waitFor(() => expect(fetchMock.mock.calls[2][0]).toBe('/api/tenants/alpha/evidence?page=1&per_page=50'));
         expect(screen.getByRole('button', { name: 'First' })).toBeDisabled();
         expect(fetchMock.mock.calls.every(([, options]) => !options || !options.method || options.method === 'GET')).toBe(true);
