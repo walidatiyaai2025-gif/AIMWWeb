@@ -533,6 +533,8 @@ final class SystemUpdateService
         $deadline = microtime(true) + max(20, min(90, (int) config('system_updates.metadata_timeout', 60)));
         $assetApi = $assetId !== null && $assetId > 0 ? self::RELEASE_ASSET_API.$assetId : null;
 
+        $hadConnectionFailure = false;
+
         for ($attempt = 1; $attempt <= 3; $attempt++) {
             $remaining = (int) ceil($deadline - microtime(true));
             if ($remaining <= 2) {
@@ -564,6 +566,11 @@ final class SystemUpdateService
                     ])
                     ->get($source);
             } catch (ConnectionException) {
+                $hadConnectionFailure = true;
+                if (! $this->waitForMetadataRetry($attempt, $deadline)) {
+                    break;
+                }
+
                 continue;
             }
 
@@ -586,9 +593,58 @@ final class SystemUpdateService
             if (! in_array($response->status(), [408, 429, 500, 502, 503, 504], true)) {
                 throw new RuntimeException('Release metadata download failed (HTTP '.$response->status().').');
             }
+
+            // Respect GitHub's Retry-After when possible, but never sleep
+            // beyond the shared metadata deadline or hammer a rate-limited CDN.
+            if (! $this->waitForMetadataRetry($attempt, $deadline, $response->header('Retry-After'))) {
+                break;
+            }
         }
 
-        throw new RuntimeException('GitHub signed release metadata is temporarily unavailable. Retry or upload the signed update ZIP.');
+        throw new RuntimeException($hadConnectionFailure
+            ? 'GitHub signed release metadata connection failed or timed out. Retry or upload the signed update ZIP.'
+            : 'GitHub signed release metadata is temporarily unavailable. Retry or upload the signed update ZIP.');
+    }
+
+    /**
+     * Bounded exponential backoff with jitter for transport/429/5xx only.
+     * An authoritative Retry-After beyond our deadline ends the probe instead
+     * of issuing an early retry. No signature or 404 failure reaches this path.
+     */
+    private function waitForMetadataRetry(int $attempt, float $deadline, ?string $retryAfter = null): bool
+    {
+        if ($attempt >= 3) {
+            return false;
+        }
+
+        // Reserve two seconds for cleanup/error reporting on shared hosting.
+        $remainingMilliseconds = (int) floor(($deadline - microtime(true)) * 1000) - 2000;
+        if ($remainingMilliseconds <= 0) {
+            return false;
+        }
+
+        $retryAfterMilliseconds = 0;
+        if ($retryAfter !== null) {
+            $value = trim($retryAfter);
+            if (preg_match('/^[0-9]{1,8}$/D', $value) === 1) {
+                $retryAfterMilliseconds = min(86400, (int) $value) * 1000;
+            } elseif (preg_match('/^[A-Za-z]{3}, [0-9]{2} [A-Za-z]{3} [0-9]{4} [0-9]{2}:[0-9]{2}:[0-9]{2} GMT$/D', $value) === 1) {
+                $timestamp = strtotime($value);
+                if ($timestamp !== false) {
+                    $retryAfterMilliseconds = min(86400, max(0, $timestamp - time())) * 1000;
+                }
+            }
+        }
+
+        $backoffMilliseconds = min(2000, 250 * (2 ** max(0, $attempt - 1))) + random_int(0, 150);
+        $delayMilliseconds = max($backoffMilliseconds, $retryAfterMilliseconds);
+        if ($delayMilliseconds > $remainingMilliseconds) {
+            return false;
+        }
+
+        usleep($delayMilliseconds * 1000);
+
+        return true;
     }
 
     /** @return array<string, string> verified relative path => sha256 */
