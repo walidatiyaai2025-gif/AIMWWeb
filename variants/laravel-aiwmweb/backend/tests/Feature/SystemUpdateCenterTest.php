@@ -637,6 +637,129 @@ final class SystemUpdateCenterTest extends TestCase
         }
     }
 
+    public function test_transient_release_asset_cdn_error_falls_back_to_trusted_github_api_and_verifies_signature(): void
+    {
+        $keys = sodium_crypto_sign_keypair();
+        config()->set('system_updates.enabled', true);
+        config()->set('system_updates.public_key', base64_encode(sodium_crypto_sign_publickey($keys)));
+        config()->set('system_updates.current_version', '0.0.0');
+
+        $manifest = json_encode([
+            'product' => 'LARAVEL_AIWMWEB',
+            'version' => '9.9.9',
+            'sha' => str_repeat('a', 40),
+            'package' => 'AIWMWeb-Laravel-update.zip',
+            'sha256' => str_repeat('b', 64),
+            'files' => ['app/SignedExample.php' => str_repeat('c', 64)],
+        ], JSON_THROW_ON_ERROR);
+        $signature = base64_encode(sodium_crypto_sign_detached(
+            $manifest,
+            sodium_crypto_sign_secretkey($keys),
+        ));
+        $base = 'https://github.com/walidatiyaai2025-gif/AIMWWeb/releases/download/v9.9.9/';
+        $assetApi = 'https://api.github.com/repos/walidatiyaai2025-gif/AIMWWeb/releases/assets/987654';
+        $assets = [];
+        foreach ([
+            'AIWMWeb-Laravel-release.json' => $manifest,
+            'AIWMWeb-Laravel-release.sig' => $signature,
+            'AIWMWeb-Laravel-update.zip' => 'signed-package-available',
+        ] as $name => $bytes) {
+            $assets[] = [
+                'name' => $name,
+                'size' => strlen($bytes),
+                'id' => $name === 'AIWMWeb-Laravel-release.json' ? 987654 : 987655,
+                'browser_download_url' => $base.$name,
+            ];
+        }
+
+        Http::fake([
+            'https://api.github.com/repos/walidatiyaai2025-gif/AIMWWeb/releases/latest' => Http::response([
+                'draft' => false,
+                'prerelease' => false,
+                'assets' => $assets,
+            ]),
+            $base.'AIWMWeb-Laravel-release.json' => Http::response('GitHub CDN unavailable', 503),
+            $assetApi => Http::response($manifest, 200, ['Content-Type' => 'application/octet-stream']),
+            $base.'AIWMWeb-Laravel-release.sig' => Http::response($signature),
+        ]);
+
+        $release = app(SystemUpdateService::class)->latest();
+        $this->assertSame('9.9.9', $release['version']);
+        $this->assertSame(str_repeat('a', 40), $release['sha']);
+        Http::assertSent(fn ($request): bool => $request->url() === $assetApi);
+    }
+
+    public function test_github_release_manifest_404_never_falls_back_to_an_alternative_asset(): void
+    {
+        $keys = sodium_crypto_sign_keypair();
+        config()->set('system_updates.enabled', true);
+        config()->set('system_updates.public_key', base64_encode(sodium_crypto_sign_publickey($keys)));
+
+        $base = 'https://github.com/walidatiyaai2025-gif/AIMWWeb/releases/download/v9.9.9/';
+        $assetApi = 'https://api.github.com/repos/walidatiyaai2025-gif/AIMWWeb/releases/assets/987654';
+        $assets = [];
+        foreach (['AIWMWeb-Laravel-release.json', 'AIWMWeb-Laravel-release.sig', 'AIWMWeb-Laravel-update.zip'] as $name) {
+            $assets[] = [
+                'name' => $name,
+                'size' => 100,
+                'id' => 987654,
+                'browser_download_url' => $base.$name,
+            ];
+        }
+
+        Http::fake([
+            'https://api.github.com/repos/walidatiyaai2025-gif/AIMWWeb/releases/latest' => Http::response([
+                'draft' => false,
+                'prerelease' => false,
+                'assets' => $assets,
+            ]),
+            $base.'AIWMWeb-Laravel-release.json' => Http::response('Not found', 404),
+            $assetApi => Http::response('must-not-be-used'),
+        ]);
+
+        try {
+            app(SystemUpdateService::class)->latest();
+            $this->fail('A missing release manifest was accepted.');
+        } catch (RuntimeException $e) {
+            $this->assertStringContainsString('HTTP 404', $e->getMessage());
+        }
+
+        Http::assertNotSent(fn ($request): bool => $request->url() === $assetApi);
+    }
+
+    public function test_github_asset_api_json_response_never_counts_as_signed_manifest_bytes(): void
+    {
+        $keys = sodium_crypto_sign_keypair();
+        config()->set('system_updates.enabled', true);
+        config()->set('system_updates.public_key', base64_encode(sodium_crypto_sign_publickey($keys)));
+
+        $base = 'https://github.com/walidatiyaai2025-gif/AIMWWeb/releases/download/v9.9.9/';
+        $assets = [];
+        foreach (['AIWMWeb-Laravel-release.json', 'AIWMWeb-Laravel-release.sig', 'AIWMWeb-Laravel-update.zip'] as $name) {
+            $assets[] = [
+                'name' => $name,
+                'size' => 100,
+                'id' => 987654,
+                'browser_download_url' => $base.$name,
+            ];
+        }
+
+        Http::fake([
+            'https://api.github.com/repos/walidatiyaai2025-gif/AIMWWeb/releases/latest' => Http::response([
+                'draft' => false,
+                'prerelease' => false,
+                'assets' => $assets,
+            ]),
+            $base.'AIWMWeb-Laravel-release.json' => Http::response('Temporary error', 503),
+            'https://api.github.com/repos/walidatiyaai2025-gif/AIMWWeb/releases/assets/987654' =>
+                Http::response(['id' => 987654, 'name' => 'AIWMWeb-Laravel-release.json']),
+        ]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('metadata instead of signed asset bytes');
+        app(SystemUpdateService::class)->latest();
+    }
+
     private function fakeRelease(string $manifest, string $signature): void
     {
         $prefix = 'https://github.com/walidatiyaai2025-gif/AIMWWeb/releases/download/v9.9.9/';
