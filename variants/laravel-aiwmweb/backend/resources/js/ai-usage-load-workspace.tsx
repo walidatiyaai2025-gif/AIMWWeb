@@ -80,7 +80,7 @@ export function AiUsageLoadWorkspace({ context, route }: { context: FrontendCont
     const canLoad = context.permissions.includes('tenant.view') && context.permissions.includes('ai.viewUsage');
     const [snapshot, setSnapshot] = useState<AiUsagePayload | null>(null);
     const [searchParams, setSearchParams] = useSearchParams();
-    const selectedSiteId = /^\\d+$/.test(searchParams.get('site') ?? '') && Number(searchParams.get('site')) > 0
+    const selectedSiteId = /^\d+$/.test(searchParams.get('site') ?? '') && Number(searchParams.get('site')) > 0
         ? searchParams.get('site')! : '';
     const page = readPage(searchParams.get('page'));
     const pageSize = readPageSize(searchParams.get('per_page'));
