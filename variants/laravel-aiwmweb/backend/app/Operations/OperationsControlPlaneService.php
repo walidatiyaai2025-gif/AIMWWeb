@@ -211,7 +211,12 @@ final class OperationsControlPlaneService
     public function operation(int $id): array
     {
         $operation = $this->row('operation_executions', $id);
-        $logs = DB::table('operation_logs')->where('tenant_id', $this->context->id())->where('operation_execution_id', $id)->orderBy('id')->get()->map(fn ($row) => $this->redactor->redact($this->decodeColumns($this->objectToArray($row), ['context'])))->all();
+        $logs = DB::table('operation_logs')->where('tenant_id', $this->context->id())->where('operation_execution_id', $id)->orderBy('id')->get()->map(function ($row): array {
+                $entry = $this->redactor->redact($this->decodeColumns($this->objectToArray($row), ['context']));
+                $entry['message'] = $this->redactor->redactLogMessage((string) $entry['message']);
+
+                return $entry;
+            })->all();
 
         return ['operation' => $this->decodeColumns($operation, ['payload', 'result']), 'logs' => $logs];
     }
