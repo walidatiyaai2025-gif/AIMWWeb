@@ -83,9 +83,9 @@ describe('Sites URL-backed server pagination (#1608)', () => {
         mount();
 
         expect(await screen.findByText('Site page 2')).toBeInTheDocument();
-        expect(screen.getByRole('searchbox', { name: 'Search' })).toHaveValue('alpha');
+        expect(screen.getByRole('textbox', { name: 'Search' })).toHaveValue('alpha');
         expect(new URL(String(fetchMock.mock.calls[0][0]), 'http://localhost').searchParams.get('search')).toBe('alpha');
-        fireEvent.change(screen.getByRole('searchbox', { name: 'Search' }), { target: { value: 'beta' } });
+        fireEvent.change(screen.getByRole('textbox', { name: 'Search' }), { target: { value: 'beta' } });
         fireEvent.click(screen.getByRole('button', { name: 'Search' }));
         expect(await screen.findByText('Site page 1')).toBeInTheDocument();
         await waitFor(() => expect(window.location.search).toContain('search=beta'));
@@ -97,7 +97,7 @@ describe('Sites URL-backed server pagination (#1608)', () => {
         window.history.replaceState(null, '', original);
         window.dispatchEvent(new PopStateEvent('popstate'));
         expect(await screen.findByText('Site page 2')).toBeInTheDocument();
-        expect(screen.getByRole('searchbox', { name: 'Search' })).toHaveValue('alpha');
+        expect(screen.getByRole('textbox', { name: 'Search' })).toHaveValue('alpha');
     });
 
     it('replaces an out-of-range page with the authoritative final page after records disappear', async () => {
