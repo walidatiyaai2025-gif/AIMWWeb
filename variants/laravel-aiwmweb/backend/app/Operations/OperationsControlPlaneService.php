@@ -223,19 +223,19 @@ final class OperationsControlPlaneService
         $requestedPage = (int) ($filters['page'] ?? 1);
         $query = DB::table('operation_executions')->where('tenant_id', $tenantId);
 
-        if (! empty($filters['status'])) {
+        if (filled($filters['status'] ?? null)) {
             $query->where('status', $filters['status']);
         }
-        if (! empty($filters['type'])) {
+        if (filled($filters['type'] ?? null)) {
             $query->where('type', 'like', $filters['type'].'%');
         }
-        if (! empty($filters['date_from'])) {
+        if (filled($filters['date_from'] ?? null)) {
             $query->whereDate('created_at', '>=', $filters['date_from']);
         }
-        if (! empty($filters['date_to'])) {
+        if (filled($filters['date_to'] ?? null)) {
             $query->whereDate('created_at', '<=', $filters['date_to']);
         }
-        if (! empty($filters['search'])) {
+        if (filled($filters['search'] ?? null)) {
             $search = (string) $filters['search'];
             // Only the allowlisted identifier/type columns are searchable.
             $query->where(function ($q) use ($search): void {
@@ -320,13 +320,13 @@ final class OperationsControlPlaneService
                 ->where('requested_by_user_id', $actorUserId)
                 ->lockForUpdate()->first();
 
-            if (! $operation) {
+            if ($operation === null) {
                 throw (new ModelNotFoundException)->setModel('operation_execution');
             }
             if ($operation->status === 'cancelled') {
                 return $this->row('operation_executions', $id);
             }
-            if (! $operation->safe_to_cancel || ! in_array($operation->status, ['queued', 'retrying'], true)) {
+            if ($operation->safe_to_cancel === false || in_array($operation->status, ['queued', 'retrying'], true) === false) {
                 throw ValidationException::withMessages(['operation' => 'Operation can no longer be safely cancelled.']);
             }
 
@@ -357,7 +357,7 @@ final class OperationsControlPlaneService
                 ->where('requested_by_user_id', $actorUserId)
                 ->lockForUpdate()->first();
 
-            if (! $operation) {
+            if ($operation === null) {
                 throw (new ModelNotFoundException)->setModel('operation_execution');
             }
             if ($operation->status === 'retrying') {
@@ -373,7 +373,7 @@ final class OperationsControlPlaneService
             if ($operation->type === 'report.export') {
                 $exportId = DB::table('report_exports')
                     ->where('tenant_id', $tenantId)->where('operation_execution_id', $id)->value('id');
-                if (! $exportId) {
+                if ($exportId === null) {
                     throw ValidationException::withMessages(['operation' => 'The report export retry target is unavailable.']);
                 }
             } elseif (str_starts_with((string) $operation->type, 'sync.') === false || app()->bound(SyncOperationsGateway::class) === false) {
