@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Platform\SignedReleaseMetadataFetcher;
 use App\Platform\SystemUpdateService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
@@ -700,7 +701,7 @@ final class SystemUpdateCenterTest extends TestCase
             $api => Http::response('signed-manifest-bytes', 200, ['Content-Type' => 'application/octet-stream']),
         ]);
 
-        $bytes = app(\\App\\Platform\\SignedReleaseMetadataFetcher::class)->download([
+        $bytes = app(SignedReleaseMetadataFetcher::class)->download([
             'url' => $browser,
             'size' => 21,
             'id' => 987654,
