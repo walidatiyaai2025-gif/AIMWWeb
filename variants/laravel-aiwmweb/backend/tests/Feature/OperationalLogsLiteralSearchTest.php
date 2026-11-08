@@ -421,6 +421,45 @@ final class OperationalLogsLiteralSearchTest extends TestCase
         $this->assertStringNotContainsString('foreign private record', $first->getContent());
     }
 
+    public function test_direct_log_service_pagination_is_bounded_and_tenant_scoped(): void
+    {
+        [$alpha] = $this->member('direct-alpha');
+        [$beta] = $this->member('direct-beta');
+        $this->log($beta, 'foreign-private-marker');
+        for ($i = 0; $i < 27; $i++) {
+            $this->log($alpha, 'local-marker-'.$i);
+        }
+
+        app(TenantContext::class)->activate($alpha);
+        $service = app(\App\Operations\OperationsControlPlaneService::class);
+        foreach ([0, -1, 101, PHP_INT_MAX] as $invalidSize) {
+            $response = $service->logsWithEvidence([], 1, $invalidSize);
+            $this->assertSame(25, $response['per_page']);
+            $this->assertSame(27, $response['total']);
+            $this->assertCount(25, $response['data']);
+            $this->assertSame(27, $response['meta']['tenant_records']);
+        }
+
+        $first = $service->logsWithEvidence([], -10, 10);
+        $this->assertSame(1, $first['current_page']);
+        $this->assertCount(10, $first['data']);
+
+        $last = $service->logsWithEvidence([], PHP_INT_MAX, 10);
+        $this->assertSame(3, $last['current_page']);
+        $this->assertSame(3, $last['last_page']);
+        $this->assertCount(7, $last['data']);
+        $this->assertSame(27, $last['total']);
+
+        foreach ([10, 25, 50, 100] as $supported) {
+            $this->assertSame($supported, $service->logsWithEvidence([], 1, $supported)['per_page']);
+        }
+
+        $legacy = $service->logsWithEvidence();
+        $this->assertArrayNotHasKey('total', $legacy);
+        $this->assertCount(27, $legacy['data']);
+        $this->assertStringNotContainsString('foreign-private-marker', json_encode($last, JSON_THROW_ON_ERROR));
+    }
+
     /** @return array{Tenant,User} */
     private function member(string $slug): array
     {
