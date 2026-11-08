@@ -1,9 +1,15 @@
+@php
+    $isArabic = app()->getLocale() === 'ar';
+@endphp
 <!doctype html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ $isArabic ? 'rtl' : 'ltr' }}" data-mode="dark">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ __('Session Management') }}</title>
+    <title>{{ __('Session Management') }} — AIWMWeb</title>
+    @unless (app()->runningUnitTests())
+        @vite(['resources/css/app.css'])
+    @endunless
     <style>
         body { font-family: ui-sans-serif, system-ui, sans-serif; margin: 0; background: Canvas; color: CanvasText; }
         main { max-width: 1060px; margin: 0 auto; padding: 28px 20px 48px; }
@@ -49,9 +55,24 @@
         main form:has(> label ~ label ~ label) > :not(label), main section:has(> article ~ article) > :not(article), main section:has(> .record ~ .record) > :not(.record) { grid-column: 1 / -1; }
         main :is(.grid, .cards, .record-grid) > * { min-width: 0; }
 </style>
+    @include('layouts.partials.workspace-read-styles')
 </head>
 <body>
-<main data-canonical-operation="{{ $operationId }}">
+@php
+    $shellTitle = $isArabic ? 'جلسات التطبيق' : __('Application sessions');
+    $shellScope = $tenant->name;
+    $shellHomeUrl = route('canonical.application-sessions', ['tenant' => $tenant->slug], false);
+    $shellLinks = [
+        ['url' => $shellHomeUrl, 'label' => $shellTitle, 'active' => true],
+        ['url' => route('canonical.alias.settings-sessions', ['tenant' => $tenant->slug], false), 'label' => $isArabic ? 'جلساتي' : __('My sessions')],
+    ];
+@endphp
+<div class="app-shell workspace-read-shell" data-dashboard-shell="aiwmweb">
+    <a class="skip-link" href="#workspace-read-content">{{ $isArabic ? 'تخط إلى المحتوى' : 'Skip to content' }}</a>
+    @include('layouts.partials.workspace-read-sidebar')
+    <div class="main-area">
+        @include('layouts.partials.workspace-read-topbar')
+        <main id="workspace-read-content" class="content workspace-read-content" data-canonical-operation="{{ $operationId }}">
     <section class="panel hero">
         <div>
             <span class="kicker">SECURITY SESSIONS</span>
@@ -114,6 +135,8 @@
             </div>
         @endif
     </section>
-</main>
+        </main>
+    </div>
+</div>
 </body>
 </html>

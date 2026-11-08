@@ -13,7 +13,7 @@ Scope: `variants/laravel-aiwmweb/backend/resources/views/**`. **All 29 discovere
 | `site-operations-maintenance.blade.php` | Vite; no Blade sidebar | Determine React ownership and visual state |
 | `setup.blade.php` | Standalone owner activation; no Vite | Installer/public workflow; distinct by design; verify styled setup |
 | `welcome.blade.php` | Public welcome page; Vite | Public landing; intentionally no authenticated shell |
-| `admin/application-sessions.blade.php` | Standalone inline CSS, no Vite/sidebar | **Review authenticated dashboard parity** |
+| `admin/application-sessions.blade.php` | Initial census: standalone inline CSS with no Vite/sidebar | **Current PR candidate**: shared read-only authenticated tenant shell, locale-aware AR/EN topbar/nav, Vite CSS and mobile layout; browser/host unverified |
 | `ai/choose-tenant.blade.php` | Standalone inline CSS, no Vite | Tenant selection; route/visual verification needed |
 | `ai/prompt-templates.blade.php` | `data-dashboard-shell`, Vite-conditional app stylesheet, own inline shell CSS | Existing implemented shell; verify compiled CSS and AR/EN browser (#1512) |
 | `ai/provider-form.blade.php` | Partial form, no document markup | N/A; included in provider settings |
@@ -21,7 +21,7 @@ Scope: `variants/laravel-aiwmweb/backend/resources/views/**`. **All 29 discovere
 | `ai/welcome.blade.php` | Standalone welcome UI, no Vite | Public/entry context; verify route intent |
 | `auth/login.blade.php` | Standalone English login UI, no Vite | Public auth; verify bilingual expectation, not required authenticated sidebar |
 | `auth/register.blade.php` | Standalone English registration UI, no Vite | Public auth; verify bilingual expectation |
-| `billing/admin-support.blade.php` | Standalone inline CSS, no Vite/sidebar | **Review authenticated dashboard parity** |
+| `billing/admin-support.blade.php` | Initial census: English-only standalone admin read-only view with no Vite/sidebar | **Current PR candidate**: shared platform-admin read-only shell, AR/EN localized safety copy, Vite CSS; guest/non-admin denial retained; browser/host unverified |
 | `billing/subscription-plans-admin.blade.php` | Standalone inline CSS, locale-aware document, no Vite/sidebar | **Review authenticated dashboard parity** |
 | `operations/site-operation-details.blade.php` | Vite, no Blade sidebar | Determine React ownership; browser verify |
 | `operations/site-operation-details-load-error.blade.php` | Vite, no Blade sidebar | Error/fallback route; verify accessibility/layout |
