@@ -89,7 +89,7 @@ describe(`${AI_USAGE_LOAD_OPERATION_ID} AI Usage LoadAsync`, () => {
 
         expect(await screen.findByText('openai / gpt-test')).toBeInTheDocument();
         expect(fetchMock).toHaveBeenCalledTimes(1);
-        expect(fetchMock.mock.calls[0][0]).toBe(endpoint);
+        expect(fetchMock.mock.calls[0][0]).toBe(`${endpoint}?page=1&per_page=25`);
         expect(fetchMock.mock.calls[0][1]?.method).toBeUndefined();
         expect(fetchMock.mock.calls[0][1]?.body).toBeUndefined();
 
@@ -112,7 +112,7 @@ describe(`${AI_USAGE_LOAD_OPERATION_ID} AI Usage LoadAsync`, () => {
         fireEvent.change(siteFilter, { target: { value: '17' } });
 
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-        expect(fetchMock.mock.calls[1][0]).toBe(`${endpoint}?site=17`);
+        expect(fetchMock.mock.calls[1][0]).toBe(`${endpoint}?page=1&per_page=25&site=17`);
         expect(await screen.findByText('No AI calls yet')).toBeInTheDocument();
     });
 
@@ -165,7 +165,7 @@ describe(`${AI_USAGE_LOAD_OPERATION_ID} AI Usage LoadAsync`, () => {
 
         fireEvent.change(siteFilter, { target: { value: '17' } });
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-        expect(fetchMock.mock.calls[1][0]).toBe(`${endpoint}?site=17`);
+        expect(fetchMock.mock.calls[1][0]).toBe(`${endpoint}?page=1&per_page=25&site=17`);
 
         const clear = screen.getByRole('button', { name: 'Clear site filter' });
         expect(clear).toHaveAttribute('data-canonical-operation', APP_FILTER_BAR_CLEAR_OPERATION_ID);
@@ -174,9 +174,39 @@ describe(`${AI_USAGE_LOAD_OPERATION_ID} AI Usage LoadAsync`, () => {
         fireEvent.click(clear);
 
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
-        expect(fetchMock.mock.calls[2][0]).toBe(endpoint);
+        expect(fetchMock.mock.calls[2][0]).toBe(`${endpoint}?page=1&per_page=25`);
         await waitFor(() => expect(siteFilter).toHaveValue(''));
         expect(screen.getByText('Showing all sites')).toBeInTheDocument();
+    });
+
+    it('navigates real pages and changes size without fabricating aggregate totals', async () => {
+        const usage = (page: number, size: number, id: number) => payload({
+            total: 60,
+            summary: { ...payload().summary, total_calls: 60 },
+            recent: [{ ...payload().recent[0], id, workflow: 'page-'+id }],
+            current_page: page,
+            last_page: Math.ceil(60 / size),
+            per_page: size,
+        });
+        const fetchMock = vi.fn()
+            .mockImplementationOnce(() => ok(usage(1, 25, 101)))
+            .mockImplementationOnce(() => ok(usage(2, 25, 202)))
+            .mockImplementationOnce(() => ok(usage(1, 50, 303)));
+        vi.stubGlobal('fetch', fetchMock);
+        renderWorkspace();
+
+        expect(await screen.findByText('page-101')).toBeInTheDocument();
+        expect(screen.getByText('Total calls').parentElement).toHaveTextContent('60');
+        expect(fetchMock.mock.calls[0][0]).toBe(`${endpoint}?page=1&per_page=25`);
+        fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+        expect(await screen.findByText('page-202')).toBeInTheDocument();
+        expect(fetchMock.mock.calls[1][0]).toBe(`${endpoint}?page=2&per_page=25`);
+
+        fireEvent.change(screen.getByRole('combobox', { name: 'Rows per page' }), { target: { value: '50' } });
+        expect(await screen.findByText('page-303')).toBeInTheDocument();
+        expect(fetchMock.mock.calls[2][0]).toBe(`${endpoint}?page=1&per_page=50`);
+        expect(screen.getByRole('button', { name: 'First' })).toBeDisabled();
+        expect(fetchMock.mock.calls.every(([, options]) => !options || options.method === undefined || options.method === 'GET')).toBe(true);
     });
 
 });

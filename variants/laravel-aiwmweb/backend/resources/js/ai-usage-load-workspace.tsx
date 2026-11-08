@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiError, apiRequest, type FrontendContext, type WorkspaceRoute } from './core';
-import { LoadingState, StateBanner, StatePanel } from './components';
+import { LoadingState, Pagination, StateBanner, StatePanel } from './components';
 import { AppFilterBar } from './app-filter-bar';
 import { AppFilterChip } from './app-filter-chip';
 import { useLocale } from './i18n';
@@ -41,10 +41,15 @@ interface AiUsagePayload {
     sites: AiUsageSite[];
     recent: AiUsageRow[];
     total: number;
+    current_page?: number;
+    last_page?: number;
+    per_page?: number;
 }
 
-function requestUrl(endpoint: string, siteId: string): string {
+function requestUrl(endpoint: string, siteId: string, page: number, pageSize: number): string {
     const url = new URL(endpoint, window.location.origin);
+    url.searchParams.set('page', String(page));
+    url.searchParams.set('per_page', String(pageSize));
     if (siteId) url.searchParams.set('site', siteId);
     else url.searchParams.delete('site');
     return `${url.pathname}${url.search}`;
@@ -62,20 +67,23 @@ export function AiUsageLoadWorkspace({ context, route }: { context: FrontendCont
     const canLoad = context.permissions.includes('tenant.view') && context.permissions.includes('ai.viewUsage');
     const [snapshot, setSnapshot] = useState<AiUsagePayload | null>(null);
     const [selectedSiteId, setSelectedSiteId] = useState('');
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(25);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [loadedAt, setLoadedAt] = useState<Date | null>(null);
     const requestEpoch = useRef(0);
 
-    const load = useCallback(async (siteId: string) => {
+    const load = useCallback(async (siteId: string, requestedPage = 1, requestedSize = 25) => {
         if (!canLoad || !endpoint) return;
         const epoch = ++requestEpoch.current;
         setLoading(true);
         setError('');
         try {
-            const payload = await apiRequest<AiUsagePayload>(requestUrl(endpoint, siteId));
+            const payload = await apiRequest<AiUsagePayload>(requestUrl(endpoint, siteId, requestedPage, requestedSize));
             if (epoch !== requestEpoch.current) return;
             setSnapshot(payload);
+            setPage(payload.current_page ?? requestedPage);
             setLoadedAt(new Date());
         } catch (reason) {
             if (epoch !== requestEpoch.current) return;
@@ -86,7 +94,7 @@ export function AiUsageLoadWorkspace({ context, route }: { context: FrontendCont
     }, [canLoad, endpoint, locale]);
 
     useEffect(() => {
-        void load('');
+        void load('', 1, 25);
         return () => { requestEpoch.current += 1; };
     }, [load]);
 
@@ -118,7 +126,7 @@ export function AiUsageLoadWorkspace({ context, route }: { context: FrontendCont
                         type="button"
                         className="btn"
                         data-canonical-operation={AI_USAGE_LOAD_OPERATION_ID}
-                        onClick={() => void load(selectedSiteId)}
+                        onClick={() => void load(selectedSiteId, page, pageSize)}
                         disabled={loading}
                     >{locale === 'ar' ? 'إعادة المحاولة' : 'Try again'}</button>
                 )}
@@ -144,7 +152,7 @@ export function AiUsageLoadWorkspace({ context, route }: { context: FrontendCont
                 busy={loading}
                 onClearRequested={async () => {
                     setSelectedSiteId('');
-                    await load('');
+                    await load('', 1, pageSize);
                 }}
                 appliedFilters={selectedSiteId ? (
                     <AppFilterChip
@@ -154,7 +162,7 @@ export function AiUsageLoadWorkspace({ context, route }: { context: FrontendCont
                         disabled={loading}
                         onRemoveRequested={async () => {
                             setSelectedSiteId('');
-                            await load('');
+                            await load('', 1, pageSize);
                         }}
                     />
                 ) : undefined}
@@ -168,7 +176,8 @@ export function AiUsageLoadWorkspace({ context, route }: { context: FrontendCont
                         onChange={(event) => {
                             const next = event.target.value;
                             setSelectedSiteId(next);
-                            void load(next);
+                            setPage(1);
+                            void load(next, 1, pageSize);
                         }}
                     >
                         <option value="">{locale === 'ar' ? 'كل مواقعي' : 'All my sites'}</option>
@@ -180,7 +189,7 @@ export function AiUsageLoadWorkspace({ context, route }: { context: FrontendCont
                         type="button"
                         className="btn"
                         data-canonical-operation={AI_USAGE_LOAD_OPERATION_ID}
-                        onClick={() => void load(selectedSiteId)}
+                        onClick={() => void load(selectedSiteId, page, pageSize)}
                         disabled={loading}
                     >↻ {loading ? (locale === 'ar' ? 'جارٍ التحديث…' : 'Refreshing…') : (locale === 'ar' ? 'تحديث' : 'Refresh')}</button>
                 </div>
@@ -200,7 +209,7 @@ export function AiUsageLoadWorkspace({ context, route }: { context: FrontendCont
                     title={locale === 'ar' ? 'تعذر التحديث — آخر بيانات ناجحة ما زالت ظاهرة' : 'Refresh failed — showing last successful data'}
                     description={error}
                     freshnessText={loadedAt ? `${locale === 'ar' ? 'آخر تحديث ناجح' : 'Last successful refresh'}: ${loadedAt.toLocaleString()}` : undefined}
-                    onRetry={() => void load(selectedSiteId)}
+                    onRetry={() => void load(selectedSiteId, page, pageSize)}
                     busy={loading}
                     retryText={locale === 'ar' ? 'إعادة المحاولة' : 'Retry refresh'}
                 />
@@ -234,6 +243,15 @@ export function AiUsageLoadWorkspace({ context, route }: { context: FrontendCont
                         </table>
                     </div>
                 ) : <div className="empty-state"><strong>{locale === 'ar' ? 'لا توجد طلبات بعد' : 'No AI calls yet'}</strong><p>{locale === 'ar' ? 'هذه نتيجة حقيقية فارغة لهذا النطاق.' : 'This is the authoritative empty state for this scope.'}</p></div>}
+                <Pagination
+                    page={snapshot?.current_page ?? page}
+                    lastPage={snapshot?.last_page ?? 1}
+                    total={snapshot?.total}
+                    pageSize={snapshot?.per_page ?? pageSize}
+                    returnedCount={rows.length}
+                    onPage={(next) => { setPage(next); void load(selectedSiteId, next, pageSize); }}
+                    onPageSizeChange={(size) => { setPage(1); setPageSize(size); void load(selectedSiteId, 1, size); }}
+                />
             </section>
         </div>
     );

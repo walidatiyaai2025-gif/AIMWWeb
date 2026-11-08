@@ -46,6 +46,18 @@ final class AiUsageService
         ];
     }
 
+    /** @return array<string, mixed> */
+    public function pagedRecent(array $filters, int $page, int $perPage): array
+    {
+        $query = $this->query($filters)->orderByDesc('created_at')->orderByDesc('id');
+        $results = $query->paginate($perPage, ['*'], 'page', $page);
+        if ($page > $results->lastPage()) {
+            $results = $query->paginate($perPage, ['*'], 'page', $results->lastPage());
+        }
+
+        return $results->through(fn (AiUsageRecord $record): array => $this->serialize($record))->toArray();
+    }
+
     private function query(array $filters): Builder
     {
         return AiUsageRecord::query()

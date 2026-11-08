@@ -100,6 +100,48 @@ final class AiUsageLoadTerminalityTest extends TestCase
         $this->assertSame($before, AiUsageRecord::query()->withoutGlobalScopes()->count());
     }
 
+    public function test_opt_in_ai_usage_pages_preserve_summary_and_cross_user_scope(): void
+    {
+        $user = User::factory()->create();
+        $other = User::factory()->create();
+        $membership = $this->membership($user, 'usage-page-alpha', ['tenant.view', 'ai.viewUsage']);
+        $this->membershipOnTenant($other, $membership->tenant, ['tenant.view', 'ai.viewUsage'], 'paging-other');
+        $site = $this->site($membership->tenant, 'Usage paging site');
+
+        $mine = [];
+        for ($i = 0; $i < 12; $i++) {
+            $mine[] = $this->usage($membership->tenant, $user, $site, 'page-'.$i);
+        }
+        $foreign = $this->usage($membership->tenant, $other, $site, 'other-user');
+
+        $first = $this->actingAs($user)
+            ->getJson('/api/v1/tenants/usage-page-alpha/ai/usage?page=1&per_page=10')
+            ->assertOk()->assertJsonPath('summary.total_calls', 12)
+            ->assertJsonPath('total', 12)->assertJsonPath('last_page', 2)
+            ->assertJsonPath('current_page', 1)->assertJsonCount(10, 'recent');
+        $second = $this->actingAs($user)
+            ->getJson('/api/v1/tenants/usage-page-alpha/ai/usage?page=2&per_page=10')
+            ->assertOk()->assertJsonPath('current_page', 2)->assertJsonCount(2, 'recent');
+        $ids = array_merge(
+            collect($first->json('recent'))->pluck('id')->all(),
+            collect($second->json('recent'))->pluck('id')->all(),
+        );
+        $this->assertCount(12, array_unique($ids));
+        $this->assertNotContains($foreign->id, $ids);
+        $this->actingAs($user)->getJson('/api/v1/tenants/usage-page-alpha/ai/usage?page=99&per_page=10')
+            ->assertOk()->assertJsonPath('current_page', 2)->assertJsonCount(2, 'recent');
+
+        foreach (['page=0', 'page=abc', 'per_page=500', 'per_page=0'] as $invalid) {
+            $this->actingAs($user)
+                ->getJson('/api/v1/tenants/usage-page-alpha/ai/usage?'.$invalid)
+                ->assertUnprocessable();
+        }
+        $legacy = $this->actingAs($user)->getJson('/api/v1/tenants/usage-page-alpha/ai/usage')
+            ->assertOk()->assertJsonCount(12, 'recent');
+        $this->assertNull($legacy->json('last_page'));
+        $this->assertSame(12, $legacy->json('summary.total_calls'));
+    }
+
     public function test_guest_permission_and_foreign_site_boundaries_fail_closed(): void
     {
         $this->getJson('/api/v1/tenants/alpha/ai/usage')->assertUnauthorized();
