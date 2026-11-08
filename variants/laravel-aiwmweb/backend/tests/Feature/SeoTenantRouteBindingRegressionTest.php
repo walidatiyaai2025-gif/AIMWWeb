@@ -4,8 +4,8 @@ namespace Tests\Feature;
 
 use App\Http\Controllers\SeoController;
 use App\Http\Controllers\SeoRemediationClosureController;
-use App\Jobs\RunSeoAuditJob;
 use App\Jobs\ExecuteApprovedSuggestionJob;
+use App\Jobs\RunSeoAuditJob;
 use App\Models\Approval;
 use App\Models\Execution;
 use App\Models\Permission;
