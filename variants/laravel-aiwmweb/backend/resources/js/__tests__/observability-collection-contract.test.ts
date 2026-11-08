@@ -32,6 +32,28 @@ describe('tenant observability read contracts (#1514)', () => {
         expect(JSON.stringify(result)).not.toMatch(/NEVER_SHOW|actor_user_id|payload|result|metadata/i);
     });
 
+    it('shows last updated failure time, with legacy fallback and safe malformed timestamp handling (#1566)', () => {
+        const failure = (changes: Record<string, unknown>) => normalizeObservabilityCollection('diagnostics', {
+            failed_operations: [{
+                id: 8, type: 'sync.run', status: 'failed',
+                created_at: '2026-11-01T08:00:00Z',
+                ...changes,
+            }],
+            recent_audit: [],
+        }) as { data: Array<{ occurred_at: string | null }> };
+
+        expect(failure({ updated_at: '2026-11-08T00:12:00Z' }).data[0].occurred_at)
+            .toBe('2026-11-08T00:12:00Z');
+        expect(failure({}).data[0].occurred_at)
+            .toBe('2026-11-01T08:00:00Z');
+        expect(failure({ updated_at: '<script>SECRET</script>' }).data[0].occurred_at)
+            .toBe('2026-11-01T08:00:00Z');
+        expect(failure({ updated_at: '<script>SECRET</script>', created_at: null }).data[0].occurred_at)
+            .toBeNull();
+        expect(JSON.stringify(failure({ updated_at: '<script>SECRET</script>' })))
+            .not.toContain('SECRET');
+    });
+
     it('accepts genuinely empty diagnostics, without inventing sample events', () => {
         expect(normalizeObservabilityCollection('diagnostics', {
             failed_operations: [], recent_audit: [],
