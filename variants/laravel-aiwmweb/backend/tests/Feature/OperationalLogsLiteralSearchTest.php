@@ -118,6 +118,47 @@ final class OperationalLogsLiteralSearchTest extends TestCase
         $this->assertStringContainsString('LEGACY_API_SECRET_MARKER', (string) DB::table('operation_logs')->where('id', $logId)->value('context'));
     }
 
+    public function test_legacy_plain_log_messages_redact_inline_credentials_without_rewriting_persisted_rows(): void
+    {
+        [$alpha, $actor] = $this->member('alpha');
+        [$beta] = $this->member('beta');
+        $original = 'Sync failed Authorization: Bearer BEARER_SECRET_CANARY api_key=API_SECRET_CANARY '
+            .'access_token=ACCESS_SECRET_CANARY refresh_token="REFRESH SECRET CANARY" '
+            .'password=PASSWORD_SECRET_CANARY client_secret=CLIENT_SECRET_CANARY '
+            .'provider sk-THIS_IS_A_FAKE_SECRET_1234567890';
+        $id = $this->log($alpha, $original);
+        $this->log($alpha, 'Sync retry scheduled safely');
+        $this->log($beta, 'foreign tenant private canary');
+
+        $response = $this->actingAs($actor)
+            ->getJson('/tenants/alpha/admin/logs?q=Sync')
+            ->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('meta.tenant_records', 2)
+            ->assertJsonPath('meta.matching_records', 2)
+            ->assertJsonPath('data.0.message',
+                'Sync retry scheduled safely');
+
+        $messages = collect($response->json('data'))->pluck('message')->all();
+        $sanitized = implode(' ', $messages);
+        $this->assertStringContainsString('Sync failed Authorization: Bearer [REDACTED]', $sanitized);
+        $this->assertStringContainsString('api_key=[REDACTED]', $sanitized);
+        $this->assertStringContainsString('access_token=[REDACTED]', $sanitized);
+        $this->assertStringContainsString('refresh_token=[REDACTED]', $sanitized);
+        $this->assertStringContainsString('client_secret=[REDACTED]', $sanitized);
+        $this->assertStringContainsString('provider [REDACTED]', $sanitized);
+
+        foreach (['BEARER_SECRET_CANARY', 'API_SECRET_CANARY', 'ACCESS_SECRET_CANARY',
+            'REFRESH SECRET CANARY', 'PASSWORD_SECRET_CANARY', 'CLIENT_SECRET_CANARY',
+            'sk-THIS_IS_A_FAKE_SECRET_1234567890', 'foreign tenant private canary'] as $secret) {
+            $this->assertStringNotContainsString($secret, $response->getContent());
+        }
+        // Read-boundary protection must not mutate persisted historical evidence.
+        $this->assertSame($original, DB::table('operation_logs')->where('id', $id)->value('message'));
+        $this->getJson('/tenants/alpha/admin/logs')->assertUnauthorized();
+        $this->actingAs($actor)->getJson('/tenants/beta/admin/logs')->assertNotFound();
+    }
+
     public function test_invalid_logs_get_filters_return_422_without_reading_foreign_rows_or_writing_logs(): void
     {
         [$alpha, $actor] = $this->member('alpha');
