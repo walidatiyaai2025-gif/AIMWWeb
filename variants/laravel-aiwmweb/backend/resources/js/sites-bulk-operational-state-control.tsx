@@ -1,18 +1,22 @@
 import React, { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ApiError, apiRequest, type FrontendContext } from './core';
+import { Pagination } from './components';
 import { useLocale } from './i18n';
 
 export const SITES_ENABLE_SELECTED_OPERATION_ID = 'AIMW-SYNC-38D8A24B15';
 const MAX_SELECTED_SITES = 100;
 
 type SiteRow = { id: number; name: string; connection_status?: string };
+type SitePage = { data: SiteRow[]; total: number; current_page: number; last_page: number; per_page: number };
 type Result = { requested: number; updated: number; connection_status: string; ids: number[] };
 
 export function SitesBulkOperationalStateControl({ context }: { context: FrontendContext }) {
     const { locale } = useLocale();
     const queryClient = useQueryClient();
     const [selected, setSelected] = useState<Set<number>>(new Set());
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(25);
     const [message, setMessage] = useState<{ role: 'status' | 'alert'; text: string } | null>(null);
     const collection = `/api/tenants/${encodeURIComponent(context.tenant.slug)}/sites`;
     const authorized = (context.permissions.includes('*') || context.permissions.includes('sites.manage'))
@@ -20,13 +24,17 @@ export function SitesBulkOperationalStateControl({ context }: { context: Fronten
         && context.api.sites === collection;
 
     const query = useQuery({
-        queryKey: ['sites-bulk-operational-state', context.tenant.slug],
-        queryFn: () => apiRequest<SiteRow[]>(collection),
+        queryKey: ['sites-bulk-operational-state', context.tenant.slug, page, pageSize],
+        queryFn: () => apiRequest<SitePage>(`${collection}?page=${page}&per_page=${pageSize}`),
         enabled: authorized,
         retry: false,
     });
-    const sites = useMemo(() => Array.isArray(query.data) ? query.data : [], [query.data]);
+    const sites = useMemo(() => Array.isArray(query.data?.data) ? query.data.data : [], [query.data]);
+    // Only records visible on this authoritative server page may be enabled.
     const selectedIds = Array.from(selected).filter(id => sites.some(site => site.id === id)).slice(0, MAX_SELECTED_SITES);
+    const lastPage = Number.isSafeInteger(query.data?.last_page) ? Math.max(1, query.data!.last_page) : 1;
+    const currentPage = Number.isSafeInteger(query.data?.current_page) ? query.data!.current_page : page;
+    const total = Number.isSafeInteger(query.data?.total) ? query.data!.total : undefined;
 
     const enable = useMutation({
         mutationFn: async (ids: number[]) => {
@@ -35,10 +43,10 @@ export function SitesBulkOperationalStateControl({ context }: { context: Fronten
                 method: 'POST', body: JSON.stringify({ ids }),
             });
             const refreshed = await query.refetch();
-            if (refreshed.error || !Array.isArray(refreshed.data)) {
+            if (refreshed.error || !Array.isArray(refreshed.data?.data)) {
                 throw new Error('The selected sites were changed but the authoritative reread failed.');
             }
-            if (!ids.every(id => refreshed.data!.some(site => site.id === id && site.connection_status === 'unknown'))) {
+            if (!ids.every(id => refreshed.data!.data.some(site => site.id === id && site.connection_status === 'unknown'))) {
                 throw new Error('The authoritative Sites collection does not confirm the enabled state.');
             }
             return result;
@@ -55,6 +63,13 @@ export function SitesBulkOperationalStateControl({ context }: { context: Fronten
     });
 
     if (!authorized) return null;
+
+    const changePage = (next: number) => {
+        if (enable.isPending) return;
+        setSelected(new Set());
+        setMessage(null);
+        setPage(next);
+    };
 
     const toggle = (id: number) => {
         if (enable.isPending) return;
@@ -99,6 +114,12 @@ export function SitesBulkOperationalStateControl({ context }: { context: Fronten
                         </tr>)}</tbody>
                     </table>
                 </div>
+                <Pagination page={currentPage} lastPage={lastPage} onPage={changePage}
+                    total={total} pageSize={pageSize} returnedCount={sites.length}
+                    onPageSizeChange={(size) => {
+                        if (enable.isPending) return;
+                        setSelected(new Set()); setMessage(null); setPage(1); setPageSize(size);
+                    }} />
             </> : (!query.isLoading && !query.error ? <p>{locale === 'ar' ? 'لا توجد مواقع.' : 'No sites available.'}</p> : null)}
         </section>
     );
