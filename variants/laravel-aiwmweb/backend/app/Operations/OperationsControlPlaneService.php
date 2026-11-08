@@ -388,6 +388,9 @@ final class OperationsControlPlaneService
                 ->update([
                     'status' => 'retrying',
                     'attempts' => (int) $operation->attempts + 1,
+                    // Sync gateways can perform immediate external writes after claim.
+                    // Do not advertise cancellation once that dispatch begins.
+                    'safe_to_cancel' => $operation->type === 'report.export',
                     'failure' => null,
                     'completed_at' => null,
                     'updated_at' => now(),
