@@ -150,7 +150,7 @@ describe('AIMW-BILL-3762C05261 Site Connection Center SynchronizeAsync', () => {
         renderControl(context(['tenant.view', 'sites.view', 'execution.view']));
 
         expect(await screen.findByText(/WP_SYNC_AUTHENTICATION/)).toBeInTheDocument();
-        expect(screen.getByText(/WordPress rejected the connection/)).toBeInTheDocument();
+        expect(screen.getByText(/Check WordPress authentication and Connector permissions/)).toBeInTheDocument();
         expect(screen.getByText(/Synchronization run/)).toHaveTextContent('#91');
         const details = screen.getByRole('link', { name: 'Operation details' });
         expect(details).toHaveAttribute('href', `/tenants/alpha/site-operations/${correlationId}`);
