@@ -115,6 +115,54 @@ class EmailSchedulesCreateTerminalityTest extends TestCase
         ])->assertForbidden();
     }
 
+    public function test_schedules_opt_in_to_real_paging_without_changing_legacy_read_contract(): void
+    {
+        $user = User::factory()->create(['email' => 'schedules-owner@example.test']);
+        $this->membership($user, 'schedules-alpha', ['operations.manage']);
+        $this->membership($user, 'schedules-beta', ['operations.manage']);
+
+        for ($i = 0; $i < 12; $i++) {
+            $this->actingAs($user)->postJson('/api/tenants/schedules-alpha/email/schedules', $this->payload(), [
+                'Idempotency-Key' => 'schedule-page-alpha-'.$i,
+            ])->assertCreated();
+        }
+        $this->actingAs($user)->postJson('/api/tenants/schedules-beta/email/schedules', $this->payload(), [
+            'Idempotency-Key' => 'schedule-page-beta',
+        ])->assertCreated();
+
+        $legacy = $this->actingAs($user)
+            ->getJson('/api/tenants/schedules-alpha/email/schedules')
+            ->assertOk()->assertJsonCount(12, 'data');
+        $this->assertArrayNotHasKey('total', $legacy->json());
+
+        $first = $this->actingAs($user)
+            ->getJson('/api/tenants/schedules-alpha/email/schedules?page=1&per_page=10')
+            ->assertOk()->assertJsonPath('total', 12)
+            ->assertJsonPath('last_page', 2)
+            ->assertJsonPath('current_page', 1)
+            ->assertJsonCount(10, 'data');
+        $second = $this->actingAs($user)
+            ->getJson('/api/tenants/schedules-alpha/email/schedules?page=2&per_page=10')
+            ->assertOk()->assertJsonPath('current_page', 2)
+            ->assertJsonCount(2, 'data');
+        $this->assertSame([], array_values(array_intersect(
+            collect($first->json('data'))->pluck('id')->all(),
+            collect($second->json('data'))->pluck('id')->all(),
+        )));
+
+        $this->actingAs($user)
+            ->getJson('/api/tenants/schedules-alpha/email/schedules?page=500&per_page=10')
+            ->assertOk()->assertJsonPath('current_page', 2)->assertJsonCount(2, 'data');
+        $this->actingAs($user)
+            ->getJson('/api/tenants/schedules-beta/email/schedules?page=1&per_page=10')
+            ->assertOk()->assertJsonPath('total', 1)->assertJsonCount(1, 'data');
+        foreach (['page=0', 'page=abc', 'per_page=500', 'per_page=0'] as $bad) {
+            $this->actingAs($user)->getJson('/api/tenants/schedules-alpha/email/schedules?'.$bad)
+                ->assertUnprocessable();
+        }
+        $this->assertArrayNotHasKey('recipient', $first->json('data.0'));
+    }
+
     private function payload(): array
     {
         return [
