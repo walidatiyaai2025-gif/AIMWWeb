@@ -208,7 +208,6 @@ final class OperationsControlPlaneService
         return $query->orderByDesc('id')->limit(200)->get()->map(fn ($row) => $this->decodeColumns($this->objectToArray($row), ['payload', 'result']))->all();
     }
 
-
     /**
      * Opt-in, authoritative Execution Center collection; legacy operations()
      * consumers retain their old bounded array response. No payloads, credentials
