@@ -197,6 +197,49 @@ class SiteDiagnosticsClosureTest extends TestCase
         $this->assertSame('not_supported', $invalid['metadata']['language_code']['state']);
     }
 
+    public function test_fresh_connector_metadata_supersedes_stale_site_values_with_provenance(): void
+    {
+        [$tenant, $member] = $this->tenant('metadata-precedence');
+        app(TenantContext::class)->activate($tenant, $member);
+        $site = Site::query()->create([
+            'name' => 'WP',
+            'url' => 'https://wp.test',
+            'wordpress_version' => '6.7',
+            'language_code' => 'en_US',
+        ]);
+
+        SiteDiagnostic::query()->create([
+            'site_id' => $site->id,
+            'classification' => SiteConnectionState::CONNECTED,
+            'connection_state' => SiteConnectionState::CONNECTED,
+            'checked_at' => now()->subMinute(),
+            'health' => ['wordpress_version' => '6.9.1', 'language_code' => 'ar_KW'],
+        ]);
+
+        $service = $this->service(new SiteGatewayStub);
+        $status = $service->status($site->fresh());
+        $this->assertSame('6.9.1', $status['site']->wordpress_version);
+        $this->assertSame('ar_KW', $status['site']->language_code);
+        $this->assertSame('connector_health', $status['metadata']['wordpress_version']['source']);
+        $this->assertNotNull($status['metadata']['wordpress_version']['checked_at']);
+        $this->assertSame('6.7', $site->fresh()->wordpress_version);
+        $this->assertSame('en_US', $site->fresh()->language_code);
+
+        // A newer failed probe must not assert that its health payload was verified.
+        SiteDiagnostic::query()->create([
+            'site_id' => $site->id,
+            'classification' => SiteConnectionState::AUTH_FAILED,
+            'connection_state' => SiteConnectionState::AUTH_FAILED,
+            'checked_at' => now(),
+            'health' => ['wordpress_version' => '9.9.9', 'language_code' => 'fr_FR'],
+        ]);
+        $failed = $service->status($site->fresh());
+        $this->assertSame('6.7', $failed['site']->wordpress_version);
+        $this->assertSame('en_US', $failed['site']->language_code);
+        $this->assertSame('site', $failed['metadata']['wordpress_version']['source']);
+        $this->assertNull($failed['metadata']['wordpress_version']['checked_at']);
+    }
+
     public function test_missing_metadata_distinguishes_transport_auth_and_unsupported_diagnostics(): void
     {
         [$tenant, $member] = $this->tenant('metadata-failure-states');
