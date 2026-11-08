@@ -39,7 +39,7 @@ class SitesRequestBulkDeleteTerminalityTest extends TestCase
 
         $this->assertStringContainsString("const REQUEST_OPERATION_ID = '".self::OPERATION_ID."';", $frontend);
         $this->assertStringContainsString('data-canonical-operation={REQUEST_OPERATION_ID}', $frontend);
-        $this->assertStringContainsString('const requestBulkDelete = () => setConfirmOpen(true);', $frontend);
+        $this->assertStringContainsString('const requestBulkDelete = () => { if (selectedIds.length > 0) setConfirmOpen(true); };', $frontend);
         $this->assertStringContainsString('onClick={requestBulkDelete}', $frontend);
         $this->assertStringContainsString('role="dialog"', $frontend);
         $this->assertStringContainsString('data-canonical-operation={OPERATION_ID}', $frontend);
