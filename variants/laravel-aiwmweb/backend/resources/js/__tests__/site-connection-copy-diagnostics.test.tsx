@@ -108,6 +108,8 @@ describe('AIMW-BILL-D4E1DA62D9 CopyDiagnosticsAsync', () => {
             started_at: `2026-10-11T18:${String(index).padStart(2, '0')}:00Z`,
         }));
         const report = formatSiteDiagnosticsReport(connection, operations);
+        expect(report).toContain('WordPress: unavailable (not_probed)');
+        expect(report).toContain('Language: unavailable (not_probed)');
         expect(report).toContain('op-20');
         expect(report).not.toContain('op-21');
 
