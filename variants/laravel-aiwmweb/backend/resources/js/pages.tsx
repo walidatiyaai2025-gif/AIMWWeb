@@ -391,6 +391,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     // Only enable page-size changes on APIs with verified server-side per_page.
     const [explorerPageSize, setExplorerPageSize] = useState(25);
     const [emailHistoryPageSize, setEmailHistoryPageSize] = useState(25);
+    const [sitesPageSize, setSitesPageSize] = useState(25);
     const [wordpressSiteRoleDraft, setWordpressSiteRoleDraft] = useState<WordPressSiteUserRole>('all');
     const [wordpressSiteRoleApplied, setWordpressSiteRoleApplied] = useState<WordPressSiteUserRole>('all');
     const [mediaDraft, setMediaDraft] = useState(defaultGlobalMediaFilters);
@@ -483,6 +484,14 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, wordpressSiteRoleApplied],
         queryFn: () => readWorkspaceCollection(endpointWithQuery(endpoint!, page, search,
             wordpressSiteRoleApplied === 'all' ? {} : { role: wordpressSiteRoleApplied })),
+        enabled: state.state === 'enabled' && Boolean(endpoint),
+    } : route.key === 'sites' ? {
+        // Sites opt-in pagination keeps all legacy callers' no-query array shape.
+        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, sitesFilter, sitesPageSize],
+        queryFn: () => readWorkspaceCollection(endpointWithQuery(endpoint!, page, search, {
+            per_page: String(sitesPageSize),
+            connection_filter: sitesFilter,
+        })),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     } : route.key === 'explorer' ? {
         // Explorer explicitly supports server-side per_page, unlike generic
@@ -816,8 +825,12 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         : route.key === 'site-operations'
             ? filterSiteOperationsRows(collection.rows, search, siteOperationsFilters)
             : collection.rows;
-    const connectedSiteCount = route.key === 'sites' ? collection.rows.filter(isSiteConnectedRow).length : 0;
-    const reviewSiteCount = route.key === 'sites' ? collection.rows.filter(isSiteReviewRow).length : 0;
+    const sitesCounts = route.key === 'sites' && query.data && typeof query.data === 'object' && !Array.isArray(query.data)
+        ? (query.data as { meta?: { connected_count?: number; review_count?: number } }).meta : undefined;
+    const connectedSiteCount = route.key === 'sites'
+        ? sitesCounts?.connected_count ?? collection.rows.filter(isSiteConnectedRow).length : 0;
+    const reviewSiteCount = route.key === 'sites'
+        ? sitesCounts?.review_count ?? collection.rows.filter(isSiteReviewRow).length : 0;
     const serverErrors = mutation.error instanceof ApiError ? mutation.error.validation : {};
     const aiCenterMeta = route.key === 'ai-center' && query.data && typeof query.data === 'object'
         ? ((query.data as CollectionEnvelope).meta ?? null)
@@ -1072,7 +1085,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             className="btn"
                             data-canonical-operation={SITES_SHOW_ALL_OPERATION_ID}
                             aria-pressed={sitesFilter === 'all'}
-                            onClick={() => setSitesFilter('all')}
+                            onClick={() => { setPage(1); setSitesFilter('all'); }}
                         >{locale === 'ar' ? 'الكل' : 'All'}</button>
                     ) : null}
                     {route.key === 'sites' ? (
@@ -1081,7 +1094,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             className="btn"
                             data-canonical-operation={SITES_SHOW_CONNECTED_OPERATION_ID}
                             aria-pressed={sitesFilter === 'connected'}
-                            onClick={() => setSitesFilter('connected')}
+                            onClick={() => { setPage(1); setSitesFilter('connected'); }}
                         >{locale === 'ar' ? 'متصل' : 'Connected'} <b>{connectedSiteCount}</b></button>
                     ) : null}
                     {route.key === 'sites' ? (
@@ -1090,7 +1103,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             className="btn"
                             data-canonical-operation={SITES_SHOW_REVIEW_OPERATION_ID}
                             aria-pressed={sitesFilter === 'review'}
-                            onClick={() => setSitesFilter('review')}
+                            onClick={() => { setPage(1); setSitesFilter('review'); }}
                         >{locale === 'ar' ? 'يحتاج مراجعة' : 'Needs review'} <b>{reviewSiteCount}</b></button>
                     ) : null}
                     {route.key === 'taxonomy' ? (
@@ -1417,11 +1430,14 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         }} />
                     : <Pagination page={collection.page} lastPage={collection.lastPage} onPage={setPage}
                         total={collection.authoritativeTotal}
-                        pageSize={route.key === 'email-history' ? emailHistoryPageSize : undefined}
+                        pageSize={route.key === 'email-history' ? emailHistoryPageSize : route.key === 'sites' ? sitesPageSize : undefined}
                         returnedCount={collection.rows.length}
                         onPageSizeChange={route.key === 'email-history' ? (size) => {
                             setPage(1);
                             setEmailHistoryPageSize(size);
+                        } : route.key === 'sites' ? (size) => {
+                            setPage(1);
+                            setSitesPageSize(size);
                         } : undefined}
                         previousOperationAliasId={route.key === 'comments' ? COMMENTS_PREVIOUS_PAGE_OPERATION_ID : route.key === 'wp-users' ? WORDPRESS_USERS_PREVIOUS_OPERATION_ID : undefined}
                         previousOperationId={readOperations?.previous ?? (route.key === 'email-history' ? APP_DATA_GRID_PREVIOUS_PAGE_OPERATION_ID : undefined)} />}
