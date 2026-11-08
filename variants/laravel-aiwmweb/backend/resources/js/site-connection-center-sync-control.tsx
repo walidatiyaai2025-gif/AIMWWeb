@@ -566,8 +566,8 @@ export function SiteConnectionCenterSyncControl({ context }: { context: Frontend
                                     <div className="workspace-stack" data-sync-failure-details>
                                         <small>{locale === 'ar' ? 'رمز الفشل' : 'Failure code'}: {safeSyncHistoryFailure(item)?.code}</small>
                                         <p>{locale === 'ar' ? safeSyncHistoryFailure(item)?.ar : safeSyncHistoryFailure(item)?.en}</p>
-                                        {Number.isSafeInteger(item.details.sync_run_id) && Number(item.details.sync_run_id) > 0 ? (
-                                            <small>{locale === 'ar' ? 'رقم تشغيل المزامنة' : 'Synchronization run'}: #{item.details.sync_run_id}</small>
+                                        {Number.isSafeInteger(item.details?.sync_run_id) && Number(item.details?.sync_run_id) > 0 ? (
+                                            <small>{locale === 'ar' ? 'رقم تشغيل المزامنة' : 'Synchronization run'}: #{item.details?.sync_run_id}</small>
                                         ) : null}
                                     </div>
                                 ) : null}
