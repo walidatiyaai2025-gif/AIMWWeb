@@ -59,8 +59,8 @@ final class AppDataGridPreviousPageTerminalityTest extends TestCase
             'return currentPage > 1 ? currentPage - 1 : currentPage;',
             $contract,
         );
-        $this->assertStringContainsString('onPage(previousAppDataGridPage(page))', $components);
-        $this->assertStringContainsString('disabled={page <= 1}', $components);
+        $this->assertStringContainsString('onPage(previousAppDataGridPage(safePage))', $components);
+        $this->assertStringContainsString('disabled={safePage <= 1}', $components);
         $this->assertStringContainsString(
             "route.key === 'email-history' ? APP_DATA_GRID_PREVIOUS_PAGE_OPERATION_ID : undefined",
             $pages,
