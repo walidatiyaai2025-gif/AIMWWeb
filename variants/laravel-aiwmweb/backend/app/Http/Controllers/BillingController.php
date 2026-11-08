@@ -150,6 +150,61 @@ final class BillingController extends Controller
         return response()->json(['data' => ['audit' => BillingAudit::query()->latest('occurred_at')->limit(100)->get(['action', 'subject_type', 'subject_id', 'metadata', 'occurred_at']), 'transactions' => BillingTransaction::query()->latest('occurred_at')->limit(100)->get(['type', 'status', 'amount_minor', 'currency', 'occurred_at'])]]);
     }
 
+    /**
+     * Opt-in, tenant-scoped SQL pagination for account Billing History.
+     * Legacy /history payload remains untouched for existing clients.
+     * This response intentionally excludes raw audit metadata and provider IDs.
+     */
+    public function pagedHistory(Request $request, TenantAuthorizer $auth): JsonResponse
+    {
+        $auth->authorize('billing.view');
+
+        $filters = $request->validate([
+            'audit_page' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
+            'transaction_page' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
+            'per_page' => ['sometimes', 'integer', 'in:10,25,50,100'],
+        ]);
+        $perPage = (int) ($filters['per_page'] ?? 25);
+
+        $audit = $this->paginateBillingHistory(
+            fn () => BillingAudit::query(), (int) ($filters['audit_page'] ?? 1), $perPage,
+            'audit_page', ['id', 'action', 'occurred_at'],
+        );
+        $transactions = $this->paginateBillingHistory(
+            fn () => BillingTransaction::query(), (int) ($filters['transaction_page'] ?? 1), $perPage,
+            'transaction_page', ['id', 'type', 'status', 'amount_minor', 'currency', 'occurred_at'],
+        );
+
+        return response()->json([
+            'data' => ['audit' => $audit['items'], 'transactions' => $transactions['items']],
+            'pagination' => ['audit' => $audit['meta'], 'transactions' => $transactions['meta']],
+        ]);
+    }
+
+    // Each requested page uses a fresh tenant-scoped query; no prior OFFSET is reused.
+    private function paginateBillingHistory(callable $query, int $page, int $perPage, string $name, array $columns): array
+    {
+        $load = fn (int $requested) => $query()
+            ->orderByDesc('occurred_at')->orderByDesc('id')
+            ->paginate($perPage, $columns, $name, $requested);
+        $result = $load($page);
+        if ($page > $result->lastPage()) {
+            $result = $load(max(1, $result->lastPage()));
+        }
+
+        return [
+            'items' => $result->items(),
+            'meta' => [
+                'page' => $result->currentPage(),
+                'last_page' => $result->lastPage(),
+                'per_page' => $result->perPage(),
+                'total' => $result->total(),
+                'from' => $result->firstItem(),
+                'to' => $result->lastItem(),
+            ],
+        ];
+    }
+
     private function canReactivate(TenantSubscription $subscription): bool
     {
         return $subscription->provider === 'paypal'
