@@ -89,7 +89,9 @@ describe('runtime inspector safe diagnostics', () => {
         const observations = runtimeInspectorEvents();
         expect(observations).toHaveLength(120);
         expect(JSON.stringify(observations)).not.toContain('CANARY_SECRET');
-        expect(JSON.stringify(observations)).not.toContain('987');
+        // Inspect route fields only: timestamp milliseconds may coincidentally
+        // contain the same digits as a redacted site ID.
+        expect(observations.map((item) => item.route).join(' ')).not.toContain('987');
         expect(observations[0]).toMatchObject({ status: 403, kind: 'api', method: 'GET' });
         recordApiObservation('https://wp.example.test/?password=CANARY_PASSWORD', 'POST', null, 100);
         expect(runtimeInspectorEvents().at(-1)?.kind).toBe('network_failure');
