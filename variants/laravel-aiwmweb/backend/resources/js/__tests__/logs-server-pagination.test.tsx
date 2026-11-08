@@ -1,5 +1,6 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MemoryRouter } from 'react-router';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ToastProvider } from '../components';
@@ -46,9 +47,11 @@ describe('Real tenant log paging (#1608)', () => {
         };
         const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
         render(
-            <QueryClientProvider client={client}>
-                <LocaleProvider><ToastProvider><WorkspacePage context={context} route={route} /></ToastProvider></LocaleProvider>
-            </QueryClientProvider>,
+            <MemoryRouter initialEntries={['/tenants/alpha/module/logs']}>
+                <QueryClientProvider client={client}>
+                    <LocaleProvider><ToastProvider><WorkspacePage context={context} route={route} /></ToastProvider></LocaleProvider>
+                </QueryClientProvider>
+            </MemoryRouter>,
         );
 
         expect(await screen.findByText('Log 101')).toBeInTheDocument();
