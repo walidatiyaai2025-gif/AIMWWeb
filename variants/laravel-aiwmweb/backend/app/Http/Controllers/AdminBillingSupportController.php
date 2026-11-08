@@ -106,7 +106,8 @@ final class AdminBillingSupportController extends Controller
             $records = $ordered->limit(50)->get();
         }
 
-        $subscriptions = $records->map(fn (TenantSubscription $subscription): array => [
+        $subscriptions = $records
+            ->map(fn (TenantSubscription $subscription): array => [
                 ...$this->snapshot($subscription),
                 'account_id' => (int) $tenant->getKey(),
                 'account_slug' => (string) $tenant->slug,
