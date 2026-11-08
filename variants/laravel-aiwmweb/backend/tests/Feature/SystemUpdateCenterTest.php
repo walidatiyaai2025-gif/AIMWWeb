@@ -784,7 +784,9 @@ final class SystemUpdateCenterTest extends TestCase
             ->invoke(app(SystemUpdateService::class), $browser, 4096, 987654);
 
         $this->assertSame('signed-manifest-bytes', $bytes);
-        Http::assertSentCount(2);
+        // Laravel records the successful fallback fake, not the thrown
+        // ConnectionException from the first attempt.
+        Http::assertSent(fn ($request): bool => $request->url() === $api);
     }
 
     public function test_github_release_manifest_404_never_falls_back_to_an_alternative_asset(): void
