@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest, type FrontendContext } from './core';
-import { useToast } from './components';
+import { Pagination, useToast } from './components';
 import { useLocale } from './i18n';
 import { GLOBAL_POSTS_RESET_OPERATION_ID, defaultGlobalPostsFilters, globalPostsFilterQuery } from './global-posts-reset-control';
 import { GlobalPostsApplyFiltersControl, globalPostsFilterUrl, type GlobalPostsApplyFilterState } from './global-posts-apply-filters-control';
@@ -68,6 +68,7 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
     const [filterDraft, setFilterDraft] = useState<GlobalPostsApplyFilterState>({ ...defaultGlobalPostsFilters(), siteId: '' });
     const [siteFilter, setSiteFilter] = useState('');
     const [filterRevision, setFilterRevision] = useState(0);
+    const [page, setPage] = useState(1);
     const [selected, setSelected] = useState<Set<string>>(new Set());
     const [confirmOpen, setConfirmOpen] = useState(false);
     const endpoint = globalPostsEndpoint(context.tenant.slug);
@@ -88,12 +89,17 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
     });
 
     const query = useQuery({
-        queryKey: ['global-posts-confirm-trash', context.tenant.slug, filters.search, filters.status, filters.perPage, siteFilter, filterRevision],
-        queryFn: () => apiRequest<GlobalPostsEnvelope>(`${endpoint}?${globalPostsFilterQuery(filters)}${siteFilter ? '&site_id=' + encodeURIComponent(siteFilter) : ''}`),
+        queryKey: ['global-posts-confirm-trash', context.tenant.slug, filters.search, filters.status, filters.perPage, siteFilter, filterRevision, page],
+        queryFn: () => apiRequest<GlobalPostsEnvelope>(`${endpoint}?${globalPostsFilterQuery(filters, page)}${siteFilter ? '&site_id=' + encodeURIComponent(siteFilter) : ''}`),
         enabled,
     });
 
     const rows = Array.isArray(query.data?.data) ? query.data.data : [];
+    const pageMeta = query.data;
+    const hasAuthoritativePage = Boolean(pageMeta && Number.isSafeInteger(pageMeta.total) && pageMeta.total >= 0
+        && Number.isSafeInteger(pageMeta.current_page) && pageMeta.current_page >= 1
+        && Number.isSafeInteger(pageMeta.last_page) && pageMeta.last_page >= 1
+        && pageMeta.current_page <= pageMeta.last_page);
     const selectedTargets = useMemo(
         () => rows
             .filter((row) => row.status !== 'trash' && selected.has(`${row.site_id}:${row.wordpress_id}`))
@@ -249,6 +255,7 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
     const resetFilters = () => {
         // ResetAsync: clear filters/selection and force a fresh authorized read, including at defaults.
         setSelected(new Set());
+        setPage(1);
         setFilters(defaultGlobalPostsFilters());
         setFilterDraft({ ...defaultGlobalPostsFilters(), siteId: '' });
         setSiteFilter('');
@@ -293,6 +300,7 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
                 onApply={() => {
                     if (busy || query.isFetching || !globalPostsFilterUrl(context.tenant.slug, filterDraft)) return;
                     setSelected(new Set());
+                    setPage(1);
                     setConfirmOpen(false);
                     setFilters({ search: filterDraft.search, status: filterDraft.status, perPage: filterDraft.perPage });
                     setSiteFilter(filterDraft.siteId);
@@ -417,6 +425,23 @@ export function GlobalPostsConfirmTrashControl({ context }: { context: FrontendC
                                 })}
                             </tbody>
                         </table>
+                    </div>
+                    {hasAuthoritativePage ? (
+                        <Pagination
+                            page={pageMeta!.current_page}
+                            lastPage={pageMeta!.last_page}
+                            total={pageMeta!.total}
+                            pageSize={filters.perPage}
+                            returnedCount={rows.length}
+                            onPage={(next) => {
+                                if (busy || query.isFetching || !Number.isSafeInteger(next) || next < 1 || next > pageMeta!.last_page) return;
+                                // Never carry hidden selections or an open destructive confirmation across pages.
+                                setSelected(new Set());
+                                setConfirmOpen(false);
+                                setPage(next);
+                            }}
+                        />
+                    ) : null}
                     </div>
                 </>
             ) : (!query.isLoading && !query.error ? <p>{locale === 'ar' ? 'لا توجد مقالات متزامنة بعد؛ افتح المزامنة لجلب محتوى WordPress.' : 'No synchronized posts yet; open synchronization to import WordPress content.'}</p> : null)}
