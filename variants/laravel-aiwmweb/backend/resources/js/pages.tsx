@@ -1330,7 +1330,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                                 }}
                             />
                         ) : null}
-                        <span className="count-badge">{route.key === 'sites' && sitesFilter !== 'all' ? visibleRows.length : collection.total}</span>
+                        <span className="count-badge">{collection.total}</span>
                     </div>
                 </header>
                 {route.key === 'explorer' ? (
