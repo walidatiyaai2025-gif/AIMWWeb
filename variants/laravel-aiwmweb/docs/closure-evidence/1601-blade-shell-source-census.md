@@ -19,7 +19,7 @@ Scope: `variants/laravel-aiwmweb/backend/resources/views/**`. **All 29 discovere
 | `ai/provider-form.blade.php` | Partial form, no document markup | N/A; included in provider settings |
 | `ai/provider-settings.blade.php` | On inventory base: fixed `lang="ar" dir="rtl"`, inline CSS, no Vite/sidebar | **Merged in #1650**, published in signed GitHub v1.0.735; host and browser unverified |
 | `ai/welcome.blade.php` | Standalone welcome UI, no Vite | Public/entry context; verify route intent |
-| `auth/login.blade.php` | Standalone English login UI, no Vite | Public auth; verify bilingual expectation, not required authenticated sidebar |
+| `auth/login.blade.php` | Previously English-only standalone auth UI, no Vite | **Current #1601 login candidate**: AR/EN RTL/LTR branded public form, Vite CSS, tenant-neutral login with safe returnUrl and CSRF unchanged; browser/host evidence pending, intentionally no authenticated sidebar |
 | `auth/register.blade.php` | Standalone English registration UI, no Vite | Public auth; verify bilingual expectation |
 | `billing/admin-support.blade.php` | Initial census: English-only standalone admin read-only view with no Vite/sidebar | **Current PR candidate**: shared platform-admin read-only shell, AR/EN localized safety copy, Vite CSS; guest/non-admin denial retained; browser/host unverified |
 | `billing/subscription-plans-admin.blade.php` | Initial census: standalone CSS, no Vite/sidebar | **Merged PR #1655**: shared AR/EN tenant shell, Vite, permission-safe CSRF forms; production browser/host unverified |
