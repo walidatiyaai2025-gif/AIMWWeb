@@ -15,9 +15,9 @@ use App\Models\Suggestion;
 use App\Models\SyncedContent;
 use App\Services\SeoManagerService;
 use App\Tenancy\TenantContext;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Throwable;
 
@@ -166,6 +166,7 @@ final class SeoController extends Controller
 
         return response()->json($model->fresh(), 202);
     }
+
     private static function safeBulkError(Throwable $exception): string
     {
         if ($exception instanceof ModelNotFoundException) {
@@ -184,5 +185,4 @@ final class SeoController extends Controller
         // Never return raw provider, SQL, exception or credential text in partial results.
         return 'Operation failed.';
     }
-
 }
