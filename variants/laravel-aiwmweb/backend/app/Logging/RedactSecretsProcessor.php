@@ -2,6 +2,7 @@
 
 namespace App\Logging;
 
+use App\Operations\Redactor;
 use Monolog\LogRecord;
 use Monolog\Processor\ProcessorInterface;
 
@@ -12,6 +13,7 @@ final class RedactSecretsProcessor implements ProcessorInterface
     public function __invoke(LogRecord $record): LogRecord
     {
         return $record->with(
+            message: (new Redactor)->redactLogMessage($record->message),
             context: $this->redact($record->context),
             extra: $this->redact($record->extra),
         );
