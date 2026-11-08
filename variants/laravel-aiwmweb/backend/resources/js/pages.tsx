@@ -1396,6 +1396,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         <SiteReliabilityOperationHistoryLinkControl context={context} />
                     ) : null}
                     {route.controls?.map((actionKey) => {
+                        // Global execution actions have no operation ID; keep their
+                        // inventory contracts while rendering only scoped row controls.
+                        if (route.key === 'execution' && (actionKey === 'execution.retry' || actionKey === 'execution.cancel')) return null;
                         if (route.key === 'roles' && actionKey === 'roles.create') return null;
                         const canonicalOperation = AUTOMATION_PHASE_ACTION_OPERATIONS[actionKey];
                         return (
