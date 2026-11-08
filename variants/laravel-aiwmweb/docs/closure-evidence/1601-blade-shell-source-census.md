@@ -1,6 +1,6 @@
 # Issue #1601 — Laravel Blade shell source census (source inspection only)
 
-Candidate source base: `main@de4b08ff8eac483b87fc751da177edd3bc7e4b40` (2026-11-08).
+Initial census source base: `main@de4b08ff8eac483b87fc751da177edd3bc7e4b40` (2026-11-08). Findings below track incremental candidate fixes; they are not browser acceptance.
 Scope: `variants/laravel-aiwmweb/backend/resources/views/**`. **All 29 discovered Blade templates** were inspected for `@vite`, a visible dashboard shell, sidebar/topbar markup, and locale/direction declarations. This is a **static source census**, NOT a browser route crawl, visual acceptance, production CSS-load result, or evidence that a given route is reachable to a particular role. Laravel React SPA pages may render their shell client-side.
 
 ## Classification and evidence
@@ -30,7 +30,7 @@ Scope: `variants/laravel-aiwmweb/backend/resources/views/**`. **All 29 discovere
 | `platform/error.blade.php` | Vite, no Blade sidebar | Error/fallback route; verify safe layout |
 | `platform/system-updates.blade.php` | Standalone light-mode inline CSS, no Vite/sidebar | **Review authenticated platform-admin dashboard parity**; preserve signed update security |
 | `reports/approvals-export.blade.php` | Standalone inline CSS, no Vite/sidebar | **Review authenticated dashboard parity** |
-| `security/audit.blade.php` | Standalone English inline CSS, no Vite/sidebar | **Review authenticated dashboard parity + localization** |
+| `security/audit.blade.php` | At initial census: English-only standalone read-only platform audit view without Vite/sidebar | **Fixed in security audit candidate**: locale-selected AR/EN shell/sidebar/topbar and production app CSS; platform-admin/read-only route unchanged; browser verify |
 | `seo/manager.blade.php` | Vite, no Blade sidebar | Determine React ownership; browser verify |
 | `seo/workspace.blade.php` | Vite, no Blade sidebar | Determine React ownership; browser verify |
 | `sites/email-diagnostics.blade.php` | Standalone light/dark Canvas inline CSS, no Vite/sidebar | **Review authenticated site-shell parity** |
