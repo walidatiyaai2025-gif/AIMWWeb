@@ -203,8 +203,7 @@ final class SystemUpdateCenterTest extends TestCase
         config()->set('system_updates.current_version', '0.0.0');
 
         Http::fake([
-            'https://api.github.com/repos/walidatiyaai2025-gif/AIMWWeb/releases/latest' =>
-                Http::response('private upstream token must not leak', 404),
+            'https://api.github.com/repos/walidatiyaai2025-gif/AIMWWeb/releases/latest' => Http::response('private upstream token must not leak', 404),
         ]);
 
         $admin = User::factory()->create(['platform_admin' => true]);
