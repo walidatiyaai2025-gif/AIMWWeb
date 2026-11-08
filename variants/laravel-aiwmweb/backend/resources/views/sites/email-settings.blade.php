@@ -245,7 +245,7 @@
             @if ($recipients->isEmpty())
                 <p>{{ $copy['empty'] }}</p>
             @else
-                <div style="overflow-x:auto">
+                <div class="table-scroll" role="region" aria-label="{{ $copy['recipients'] }}" tabindex="0">
                     <table>
                         <thead><tr><th>{{ $copy['email'] }}</th><th>{{ $copy['name'] }}</th><th>{{ $copy['status'] }}</th></tr></thead>
                         <tbody>
