@@ -378,7 +378,10 @@ export function Pagination({
     const hasPageSize = Number.isSafeInteger(pageSize) && pageSize! > 0 && pageSize! <= 100;
     if (safeLastPage <= 1 && !hasTotal && !onPageSizeChange) return null;
 
-    const count = Number.isSafeInteger(returnedCount) ? Math.max(0, Math.min(returnedCount!, pageSize ?? 0)) : pageSize ?? 0;
+    // A server total cannot establish how many rows were returned on this page.
+    // Do not fabricate a visible range when the page-local count is unknown.
+    const hasReturnedCount = Number.isSafeInteger(returnedCount) && returnedCount! >= 0;
+    const count = hasReturnedCount ? Math.min(returnedCount!, pageSize ?? 0) : 0;
     const firstShown = hasTotal && hasPageSize && count > 0 && total! > (safePage - 1) * pageSize! ? (safePage - 1) * pageSize! + 1 : 0;
     const lastShown = hasTotal && hasPageSize && firstShown > 0 ? Math.min(total!, firstShown + count - 1) : 0;
 
@@ -410,7 +413,7 @@ export function Pagination({
                     {locale === 'ar' ? 'الأخيرة' : 'Last'}
                 </button>
             </div>
-            {hasTotal && hasPageSize ? (
+            {hasTotal && hasPageSize && hasReturnedCount ? (
                 <span className="pagination-range" role="status">
                     {locale === 'ar' ? `${firstShown}–${lastShown} من ${total}` : `${firstShown}–${lastShown} of ${total}`}
                 </span>
