@@ -179,6 +179,36 @@ describe('tenant observability read contracts (#1514)', () => {
         });
     });
 
+    it('accepts only truthful server-paginated tenant logs metadata (#1608)', () => {
+        const safe = {
+            data: [{ id: 102, message: 'Visible event', level: 'info' }],
+            current_page: 2, last_page: 3, per_page: 25, total: 60,
+            meta: {
+                scope: 'tenant_operation_logs', pagination_mode: 'server',
+                tenant_records: 63, matching_records: 60,
+                returned_records: 1, limit: 25, truncated: false,
+                empty_reason: 'not_empty',
+            },
+        };
+        expect(normalizeObservabilityCollection('logs', {
+            ...safe, meta: { ...safe.meta, private_key: 'DO_NOT_EXPORT' },
+        })).toEqual(safe);
+        const invalidCases = [
+            { ...safe, total: 61 },
+            { ...safe, last_page: 1 },
+            { ...safe, current_page: 4 },
+            { ...safe, per_page: 500 },
+            { ...safe, meta: { ...safe.meta, matching_records: 64 } },
+            { ...safe, meta: { ...safe.meta, returned_records: 0 } },
+            { ...safe, meta: { ...safe.meta, truncated: true } },
+            { ...safe, meta: { ...safe.meta, pagination_mode: 'unknown' } },
+        ];
+        for (const payload of invalidCases) {
+            expect(() => normalizeObservabilityCollection('logs', payload))
+                .toThrow('Operational observability response was invalid');
+        }
+    });
+
     it('sanitizes unexpected diagnostic identifiers, free text and timestamps', () => {
         const rows = normalizeObservabilityCollection('diagnostics', {
             failed_operations: [{

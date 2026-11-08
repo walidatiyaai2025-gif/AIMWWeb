@@ -58,12 +58,40 @@ export function normalizeObservabilityCollection(routeKey: string, payload: unkn
             typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
         if (!record(meta) || meta.scope !== 'tenant_operation_logs' ||
             !count(meta.tenant_records) || !count(meta.matching_records) ||
-            !count(meta.returned_records) || meta.limit !== 500 ||
-            meta.returned_records !== payload.data.length ||
+            !count(meta.returned_records) || meta.returned_records !== payload.data.length ||
             typeof meta.truncated !== 'boolean' ||
             !['no_tenant_events', 'filter_matched_none', 'not_empty'].includes(String(meta.empty_reason))) {
             throw invalid();
         }
+
+        if (meta.pagination_mode === 'server') {
+            const { total, current_page: currentPage, last_page: lastPage, per_page: perPage } = payload;
+            if (!count(total) || !count(currentPage) || currentPage < 1 ||
+                !count(lastPage) || lastPage < 1 ||
+                ![10, 25, 50, 100].includes(Number(perPage)) ||
+                total !== meta.matching_records || meta.limit !== perPage ||
+                meta.truncated !== false || payload.data.length > Number(perPage) ||
+                lastPage !== Math.max(1, Math.ceil(total / Number(perPage))) ||
+                currentPage > lastPage || meta.matching_records > meta.tenant_records ||
+                (payload.data.length === 0 && meta.empty_reason === 'not_empty') ||
+                (payload.data.length > 0 && meta.empty_reason !== 'not_empty')) {
+                throw invalid();
+            }
+            return {
+                data: payload.data, total, current_page: currentPage,
+                last_page: lastPage, per_page: perPage,
+                meta: {
+                    scope: 'tenant_operation_logs', pagination_mode: 'server',
+                    tenant_records: meta.tenant_records,
+                    matching_records: meta.matching_records,
+                    returned_records: meta.returned_records,
+                    limit: perPage, truncated: false, empty_reason: meta.empty_reason,
+                },
+            };
+        }
+
+        // Historic responses expose a capped sample rather than real pages.
+        if (meta.limit !== 500 || meta.pagination_mode !== undefined) throw invalid();
         return {
             data: payload.data,
             meta: {
