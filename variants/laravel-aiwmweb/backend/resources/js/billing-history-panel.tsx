@@ -44,6 +44,21 @@ export function billingHistoryUrl(tenantSlug: string, auditPage: number, transac
     return `${path}?${params.toString()}`;
 }
 
+/** Currency-aware display of the provider's minor units; KWD is 3 decimals. */
+export function formatBillingMinorAmount(amount: number | null, currency: string | null, locale: 'ar' | 'en'): string {
+    if (typeof amount !== 'number' || !Number.isSafeInteger(amount) || amount < 0
+        || typeof currency !== 'string' || !/^[A-Z]{3}$/.test(currency)) return '—';
+    try {
+        const formatter = new Intl.NumberFormat(locale === 'ar' ? 'ar-KW' : 'en-US', {
+            style: 'currency', currency,
+        });
+        const digits = formatter.resolvedOptions().maximumFractionDigits;
+        return formatter.format(amount / (10 ** digits));
+    } catch {
+        return '—';
+    }
+}
+
 export function BillingHistoryPanel({ context }: { context: FrontendContext }) {
     const { locale } = useLocale();
     const canRead = context.permissions.includes('*') || context.permissions.includes('billing.view');
@@ -134,9 +149,7 @@ export function BillingHistoryPanel({ context }: { context: FrontendContext }) {
                                 <thead><tr><th>{locale === 'ar' ? 'النوع' : 'Type'}</th><th>{locale === 'ar' ? 'الحالة' : 'Status'}</th><th>{locale === 'ar' ? 'المبلغ' : 'Amount'}</th><th>{locale === 'ar' ? 'التاريخ' : 'Date'}</th></tr></thead>
                                 <tbody>{result.data.transactions.map((item) => <tr key={item.id}>
                                     <td>{item.type}</td><td>{item.status}</td>
-                                    <td>{typeof item.amount_minor === 'number' && Number.isSafeInteger(item.amount_minor)
-                                        ? `${(item.amount_minor / 100).toFixed(2)} ${item.currency ?? ''}`
-                                        : '—'}</td>
+                                    <td>{formatBillingMinorAmount(item.amount_minor, item.currency, locale)}</td>
                                     <td>{dateLabel(item.occurred_at)}</td>
                                 </tr>)}</tbody>
                             </table></div>
