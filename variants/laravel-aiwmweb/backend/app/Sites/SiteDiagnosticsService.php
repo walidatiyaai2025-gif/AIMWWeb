@@ -237,7 +237,8 @@ final class SiteDiagnosticsService
     public function paginatedDiagnosticHistory(Site $site, int $page = 1, int $perPage = 25): array
     {
         $perPage = in_array($perPage, [10, 25, 50, 100], true) ? $perPage : 25;
-        $page = max(1, $page);
+        // Internal service callers bypass request validation: bound OFFSET arithmetic.
+        $page = max(1, min(1000000, $page));
         $query = SiteDiagnostic::query()->where('site_id', $site->id)
             ->orderByDesc('checked_at')->orderByDesc('id');
         $result = $query->paginate($perPage, ['*'], 'page', $page);
