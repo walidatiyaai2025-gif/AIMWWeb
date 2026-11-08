@@ -83,6 +83,25 @@ final class SiteDiagnosticsController extends Controller
         $siteId = $this->siteId($site);
         Site::query()->findOrFail($siteId);
 
+        // Preserve old consumers; new clients opt into authoritative filtered pages.
+        if ($request->exists('page') || $request->exists('per_page')
+            || $request->exists('status') || $request->exists('operation')) {
+            $params = $request->validate([
+                'page' => 'sometimes|integer|min:1|max:1000000',
+                'per_page' => 'sometimes|integer|in:10,25,50,100',
+                'status' => 'sometimes|string|in:succeeded,failed',
+                'operation' => ['sometimes', 'string', 'max:80', 'regex:/^[a-z][a-z0-9_\\-]*$/D'],
+            ]);
+
+            return response()->json($history->paginateForSite(
+                $siteId,
+                (int) ($params['page'] ?? 1),
+                (int) ($params['per_page'] ?? 25),
+                $params['status'] ?? null,
+                $params['operation'] ?? null,
+            ));
+        }
+
         return response()->json(['items' => $history->get($siteId, max(1, min(500, $request->integer('take', 100))))]);
     }
 
