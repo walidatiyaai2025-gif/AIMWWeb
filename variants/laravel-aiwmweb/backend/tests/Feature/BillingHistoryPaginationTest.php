@@ -129,8 +129,9 @@ final class BillingHistoryPaginationTest extends TestCase
         $this->assertSame('empty', $tenant->slug);
     }
 
-    /** @param list<string> $permissions
-     *  @return array{0:Tenant,1:TenantMembership}
+    /**
+     * @param  list<string>  $permissions
+     * @return array{0:Tenant,1:TenantMembership}
      */
     private function tenant(string $slug, array $permissions): array
     {
