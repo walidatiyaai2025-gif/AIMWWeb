@@ -158,6 +158,40 @@ final class OperationalLogsLiteralSearchTest extends TestCase
         $this->actingAs($actor)->getJson('/tenants/beta/admin/logs')->assertNotFound();
     }
 
+    public function test_legacy_basic_authorization_and_x_api_key_are_redacted_only_on_read(): void
+    {
+        [$alpha, $actor] = $this->member('alpha');
+        [$beta] = $this->member('beta');
+        $original = 'Sync failed Authorization: Basic BASIC_CREDENTIAL_CANARY '
+            .'X-API-Key: HEADER_CREDENTIAL_CANARY next action scheduled';
+        $id = $this->log($alpha, $original);
+        $this->log($alpha, 'Basic authorization is configured for testing');
+        $this->log($beta, 'foreign tenant private event');
+
+        $this->getJson('/tenants/alpha/admin/logs')->assertUnauthorized();
+        $response = $this->actingAs($actor)
+            ->getJson('/tenants/alpha/admin/logs?q=Sync')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $id)
+            ->assertJsonPath('meta.tenant_records', 2)
+            ->assertJsonPath('meta.matching_records', 1)
+            ->assertJsonPath(
+                'data.0.message',
+                'Sync failed Authorization: Basic [REDACTED] X-API-Key: [REDACTED] next action scheduled',
+            );
+
+        $this->assertStringNotContainsString('BASIC_CREDENTIAL_CANARY', $response->getContent());
+        $this->assertStringNotContainsString('HEADER_CREDENTIAL_CANARY', $response->getContent());
+        $this->assertStringNotContainsString('foreign tenant private event', $response->getContent());
+        $this->assertSame($original, DB::table('operation_logs')->where('id', $id)->value('message'));
+        $this->actingAs($actor)->getJson('/tenants/beta/admin/logs')->assertNotFound();
+        $this->actingAs($actor)->getJson('/tenants/alpha/admin/logs?q=configured')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.message', 'Basic authorization is configured for testing');
+    }
+
     public function test_invalid_logs_get_filters_return_422_without_reading_foreign_rows_or_writing_logs(): void
     {
         [$alpha, $actor] = $this->member('alpha');
