@@ -98,28 +98,96 @@ export function siteConnectionCenterDynamicLinks(
     };
 }
 
+
+// Clipboard reports may be forwarded outside this tenant. Do not copy raw
+// upstream messages, signed URLs, credentials, SQL or untrusted extra fields.
+const DIAGNOSTIC_METADATA_STATES = new Set([
+    'verified', 'not_probed', 'not_supported', 'permission_denied', 'temporarily_unavailable',
+]);
+const DIAGNOSTIC_FAILURE_GUIDANCE: Record<string, string> = {
+    authentication: 'Check WordPress authentication and Connector permissions.',
+    rate_limit: 'Check provider rate limits before retrying.',
+    protocol: 'Check Laravel and Connector protocol compatibility.',
+    transport: 'Check WordPress network and TLS connectivity.',
+    remote_service: 'Check WordPress server availability.',
+    storage: 'Check database and storage health.',
+    unknown: 'Review authorized operation details.',
+};
+function copiedSiteLabel(value: unknown): string {
+    if (typeof value !== 'string') return '[WITHHELD]';
+    const label = value.trim();
+    if (!label || label.length > 120 || /[\u0000-\u001f\u007f]/.test(label)
+        || /(?:https?:\/\/|Bearer\s|(?:password|passwd|token|secret|api[_-]?key)\s*[:=])/i.test(label)) return '[WITHHELD]';
+    return label;
+}
+function copiedSiteOrigin(value: unknown): string {
+    if (typeof value !== 'string' || value.trim() !== value || /[\u0000-\u001f\u007f]/.test(value)) return 'unavailable';
+    try {
+        const url = new URL(value);
+        // Origin drops all userinfo, path, query, hash and authorization hints.
+        return (url.protocol === 'https:' || url.protocol === 'http:') && url.hostname
+            ? url.origin : 'unavailable';
+    } catch {
+        return 'unavailable';
+    }
+}
+function copiedTimestamp(value: unknown): string {
+    if (typeof value !== 'string' || value.length > 40) return 'not verified';
+    return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/.test(value)
+        ? value : 'not verified';
+}
+function copiedMetadataState(value: unknown): string {
+    return typeof value === 'string' && DIAGNOSTIC_METADATA_STATES.has(value) ? value : 'not_probed';
+}
+function copiedOperationName(value: unknown): string {
+    return typeof value === 'string' && /^[a-z][a-z0-9_-]{0,79}$/.test(value) ? value : 'operation_withheld';
+}
+function copiedOperationOutcome(value: unknown): string {
+    if (typeof value !== 'string') return 'UNKNOWN';
+    const status = value.toLowerCase();
+    return ['succeeded', 'failed', 'cancelled', 'cancel_requested', 'queued', 'running'].includes(status)
+        ? (status === 'succeeded' ? 'OK' : status.toUpperCase()) : 'UNKNOWN';
+}
+function copiedOperationSummary(item: OperationHistoryItem, outcome: string): string {
+    if (outcome === 'OK') return item.operation === 'synchronization'
+        ? 'Synchronization completed.' : 'Operation completed.';
+    if (outcome !== 'FAILED') return 'See authorized operation details.';
+    const category = item.details?.failure_category;
+    if (typeof category !== 'string' || !Object.prototype.hasOwnProperty.call(DIAGNOSTIC_FAILURE_GUIDANCE, category))
+        return 'Failed; review authorized operation details.';
+    const expected = 'WP_SYNC_' + category.toUpperCase();
+    const code = item.details?.failure_code === expected ? ' [' + expected + ']' : '';
+    return 'Failed' + code + ': ' + DIAGNOSTIC_FAILURE_GUIDANCE[category];
+}
 export function formatSiteDiagnosticsReport(connection: ConnectionSnapshot, history: OperationHistoryItem[]): string {
     const site = connection.site as ConnectionSnapshot['site'] & { wordpress_version?: string | null; language_code?: string | null; last_verified_at?: string | null };
+    const version = typeof site.wordpress_version === 'string'
+        && /^[0-9]+(?:\.[0-9]+){1,3}(?:[-+][a-zA-Z0-9.-]+)?$/.test(site.wordpress_version)
+        ? site.wordpress_version : null;
+    const language = typeof site.language_code === 'string'
+        && /^[a-z]{2,3}(?:_[A-Z]{2})?$/.test(site.language_code) ? site.language_code : null;
+    const state = site.connection_status;
+    const status = typeof state === 'string'
+        && /^(?:connected|disconnected|degraded|auth_failed|capability_disabled|connector_disabled|temporarily_unavailable|unsupported|unknown)$/i.test(state)
+        ? state : 'unknown';
     const lines = [
         'AI WordPress Manager - Site Diagnostics',
-        `Site: ${site.name}`,
-        `URL: ${typeof site.url === 'string' ? site.url : '—'}`,
-        `Status: ${site.connection_status ?? connection.connection ?? '—'}`,
-        `WordPress: ${site.wordpress_version ?? `unavailable (${connection.metadata?.wordpress_version?.state ?? 'not_probed'})`}`,
-        `Language: ${site.language_code ?? `unavailable (${connection.metadata?.language_code?.state ?? 'not_probed'})`}`,
-        `WordPress metadata checked: ${connection.metadata?.wordpress_version?.checked_at ?? 'not verified'}`,
-        `Language metadata checked: ${connection.metadata?.language_code?.checked_at ?? 'not verified'}`,
-        `Last test: ${connection.last_verified_at ?? site.last_verified_at ?? '—'}`,
+        'Site: ' + copiedSiteLabel(site.name),
+        'URL: ' + copiedSiteOrigin(site.url),
+        'Status: ' + status,
+        'WordPress: ' + (version ?? 'unavailable (' + copiedMetadataState(connection.metadata?.wordpress_version?.state) + ')'),
+        'Language: ' + (language ?? 'unavailable (' + copiedMetadataState(connection.metadata?.language_code?.state) + ')'),
+        'WordPress metadata checked: ' + copiedTimestamp(connection.metadata?.wordpress_version?.checked_at),
+        'Language metadata checked: ' + copiedTimestamp(connection.metadata?.language_code?.checked_at),
+        'Last test: ' + copiedTimestamp(connection.last_verified_at ?? site.last_verified_at),
         '',
         'Recent operations:',
     ];
-
     for (const item of history.slice(0, 20)) {
-        const started = item.started_at ?? '—';
-        const outcome = item.status.toLowerCase() === 'succeeded' ? 'OK' : item.status.toUpperCase();
-        lines.push(`[${started}] ${item.operation} ${outcome} - ${item.message}`);
+        const outcome = copiedOperationOutcome(item.status);
+        lines.push('[' + copiedTimestamp(item.started_at) + '] ' + copiedOperationName(item.operation)
+            + ' ' + outcome + ' - ' + copiedOperationSummary(item, outcome));
     }
-
     return lines.join('\n');
 }
 
