@@ -153,7 +153,45 @@ final class SystemUpdateCenterTest extends TestCase
 
         $this->assertSame(15, $request->getOptions()['connect_timeout']);
         $this->assertSame(90, $request->getOptions()['timeout']);
-        $this->assertSame(['max' => 3, 'protocols' => ['https']], $request->getOptions()['allow_redirects']);
+        $redirectOptions = $request->getOptions()['allow_redirects'];
+        $this->assertSame(3, $redirectOptions['max']);
+        $this->assertSame(['https'], $redirectOptions['protocols']);
+        $this->assertIsCallable($redirectOptions['on_redirect']);
+    }
+
+    public function test_release_metadata_refuses_unapproved_cdn_redirects(): void
+    {
+        $request = (new \\ReflectionMethod(SystemUpdateService::class, 'releaseMetadataRequest'))
+            ->invoke(app(SystemUpdateService::class));
+        $callback = $request->getOptions()['allow_redirects']['on_redirect'];
+
+        // Official, authenticated GitHub asset-CDN destinations remain allowed.
+        $callback(null, null, new \\GuzzleHttp\\Psr7\\Uri('https://release-assets.githubusercontent.com/allowed'));
+
+        foreach ([
+            'https://example.com/metadata',
+            'https://127.0.0.1/internal',
+            'https://github.com:8443/asset',
+            'http://github.com/asset',
+        ] as $url) {
+            try {
+                $callback(null, null, new \\GuzzleHttp\\Psr7\\Uri($url));
+                $this->fail('Unsafe signed metadata redirect was allowed: '.$url);
+            } catch (RuntimeException $e) {
+                $this->assertStringContainsString('Unapproved release metadata redirect', $e->getMessage());
+            }
+        }
+    }
+
+    public function test_release_metadata_rejects_oversized_signed_asset_before_verification(): void
+    {
+        $url = 'https://github.com/walidatiyaai2025-gif/AIMWWeb/releases/download/v9.9.9/AIWMWeb-Laravel-release.json';
+        Http::fake([$url => Http::response(str_repeat('X', 4097))]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Release metadata download failed');
+        (new \\ReflectionMethod(SystemUpdateService::class, 'downloadSmall'))
+            ->invoke(app(SystemUpdateService::class), $url, 4096);
     }
 
     public function test_unsigned_or_forged_release_is_rejected_before_download(): void
