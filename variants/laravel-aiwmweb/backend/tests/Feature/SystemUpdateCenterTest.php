@@ -146,6 +146,77 @@ final class SystemUpdateCenterTest extends TestCase
         Http::assertSentCount(1);
     }
 
+    public function test_rate_limited_metadata_respects_retry_after_longer_than_remaining_budget(): void
+    {
+        $url = 'https://github.com/walidatiyaai2025-gif/AIMWWeb/releases/download/v9.9.9/AIWMWeb-Laravel-release.json';
+        Http::fake([
+            $url => Http::sequence()
+                ->push('rate limited', 429, ['Retry-After' => '120'])
+                ->push('must-not-fetch', 200),
+        ]);
+
+        try {
+            (new \ReflectionMethod(SystemUpdateService::class, 'downloadSmall'))
+                ->invoke(app(SystemUpdateService::class), $url, 4096);
+            $this->fail('A rate-limited release must not be retried before Retry-After.');
+        } catch (RuntimeException $e) {
+            $this->assertStringContainsString('temporarily unavailable', $e->getMessage());
+        }
+
+        Http::assertSentCount(1);
+    }
+
+    public function test_rate_limited_metadata_recovers_when_retry_after_is_within_budget(): void
+    {
+        $url = 'https://github.com/walidatiyaai2025-gif/AIMWWeb/releases/download/v9.9.9/AIWMWeb-Laravel-release.json';
+        Http::fake([
+            $url => Http::sequence()
+                ->push('rate limited', 429, ['Retry-After' => '0'])
+                ->push('verified-signed-fixture', 200),
+        ]);
+
+        $bytes = (new \ReflectionMethod(SystemUpdateService::class, 'downloadSmall'))
+            ->invoke(app(SystemUpdateService::class), $url, 4096);
+
+        $this->assertSame('verified-signed-fixture', $bytes);
+        Http::assertSentCount(2);
+    }
+
+    public function test_metadata_retry_after_http_date_aborts_when_outside_deadline(): void
+    {
+        $delay = (new \ReflectionMethod(SystemUpdateService::class, 'mayRetryMetadataNow'))
+            ->invoke(app(SystemUpdateService::class), 1, microtime(true) + 3, gmdate('D, d M Y H:i:s', time() + 120).' GMT');
+
+        $this->assertFalse($delay);
+    }
+
+    public function test_exhausted_transport_failures_are_safely_classified_without_raw_curl_error(): void
+    {
+        $url = 'https://github.com/walidatiyaai2025-gif/AIMWWeb/releases/download/v9.9.9/AIWMWeb-Laravel-release.json';
+        $attempts = 0;
+        Http::fake([
+            $url => static function () use (&$attempts): void {
+                $attempts++;
+                throw new ConnectionException(
+                    'cURL 28 confidential-proxy-host: timed out while contacting private route'
+                );
+            },
+        ]);
+
+        try {
+            (new \ReflectionMethod(SystemUpdateService::class, 'downloadSmall'))
+                ->invoke(app(SystemUpdateService::class), $url, 4096);
+            $this->fail('Persistent transport failure must not yield a release asset.');
+        } catch (RuntimeException $e) {
+            $this->assertStringContainsString('connection failed or timed out', $e->getMessage());
+            $this->assertStringNotContainsString('confidential-proxy-host', $e->getMessage());
+        }
+
+        // Fake closures that throw before returning are not recorded as sent
+        // by Laravel, so count the actual callback invocations instead.
+        $this->assertSame(3, $attempts);
+    }
+
     public function test_release_metadata_request_bounds_administrator_timeout_configuration(): void
     {
         config()->set('system_updates.metadata_connect_timeout', 999);

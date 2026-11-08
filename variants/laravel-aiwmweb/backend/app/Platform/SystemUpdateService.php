@@ -533,6 +533,8 @@ final class SystemUpdateService
         $deadline = microtime(true) + max(20, min(90, (int) config('system_updates.metadata_timeout', 60)));
         $assetApi = $assetId !== null && $assetId > 0 ? self::RELEASE_ASSET_API.$assetId : null;
 
+        $hadConnectionFailure = false;
+
         for ($attempt = 1; $attempt <= 3; $attempt++) {
             $remaining = (int) ceil($deadline - microtime(true));
             if ($remaining <= 2) {
@@ -564,6 +566,11 @@ final class SystemUpdateService
                     ])
                     ->get($source);
             } catch (ConnectionException) {
+                $hadConnectionFailure = true;
+                if (! $this->mayRetryMetadataNow($attempt, $deadline)) {
+                    break;
+                }
+
                 continue;
             }
 
@@ -586,9 +593,55 @@ final class SystemUpdateService
             if (! in_array($response->status(), [408, 429, 500, 502, 503, 504], true)) {
                 throw new RuntimeException('Release metadata download failed (HTTP '.$response->status().').');
             }
+
+            // Respect GitHub Retry-After without sleeping in a web request.
+            // A positive server delay is a safe fail-closed outcome.
+            if (! $this->mayRetryMetadataNow($attempt, $deadline, $response->header('Retry-After'))) {
+                break;
+            }
         }
 
-        throw new RuntimeException('GitHub signed release metadata is temporarily unavailable. Retry or upload the signed update ZIP.');
+        throw new RuntimeException($hadConnectionFailure
+            ? 'GitHub signed release metadata connection failed or timed out. Retry or upload the signed update ZIP.'
+            : 'GitHub signed release metadata is temporarily unavailable. Retry or upload the signed update ZIP.');
+    }
+
+    /**
+     * A shared-host PHP request must not block on a remote Retry-After deadline.
+     * A 429 with a positive HTTP-date or delta-seconds delay fails closed and
+     * lets the administrator retry later, rather than hammering GitHub.
+     * Retry only immediately eligible transient responses on the approved URL.
+     */
+    private function mayRetryMetadataNow(int $attempt, float $deadline, ?string $retryAfter = null): bool
+    {
+        if ($attempt >= 3 || $deadline - microtime(true) <= 2) {
+            return false;
+        }
+
+        if ($retryAfter === null) {
+            return true;
+        }
+
+        $value = trim($retryAfter);
+        // Laravel's response->header() yields an empty string for no header.
+        // That is not an explicit rate-limit instruction.
+        if ($value === '') {
+            return true;
+        }
+
+        if (preg_match('/^[0-9]{1,8}$/D', $value) === 1) {
+            return (int) $value === 0;
+        }
+
+        if (preg_match('/^[A-Za-z]{3}, [0-9]{2} [A-Za-z]{3} [0-9]{4} [0-9]{2}:[0-9]{2}:[0-9]{2} GMT$/D', $value) === 1) {
+            $timestamp = strtotime($value);
+
+            return $timestamp !== false && $timestamp <= time();
+        }
+
+        // An unknown Retry-After format is not permission to send a new
+        // request during an upstream rate-limit or outage.
+        return false;
     }
 
     /** @return array<string, string> verified relative path => sha256 */
