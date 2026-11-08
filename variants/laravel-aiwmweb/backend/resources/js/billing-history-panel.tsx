@@ -134,7 +134,7 @@ export function BillingHistoryPanel({ context }: { context: FrontendContext }) {
                                 <thead><tr><th>{locale === 'ar' ? 'النوع' : 'Type'}</th><th>{locale === 'ar' ? 'الحالة' : 'Status'}</th><th>{locale === 'ar' ? 'المبلغ' : 'Amount'}</th><th>{locale === 'ar' ? 'التاريخ' : 'Date'}</th></tr></thead>
                                 <tbody>{result.data.transactions.map((item) => <tr key={item.id}>
                                     <td>{item.type}</td><td>{item.status}</td>
-                                    <td>{Number.isSafeInteger(item.amount_minor) && item.amount_minor !== null
+                                    <td>{typeof item.amount_minor === 'number' && Number.isSafeInteger(item.amount_minor)
                                         ? `${(item.amount_minor / 100).toFixed(2)} ${item.currency ?? ''}`
                                         : '—'}</td>
                                     <td>{dateLabel(item.occurred_at)}</td>
