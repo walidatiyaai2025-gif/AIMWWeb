@@ -23,8 +23,11 @@ final class RedactSecretsProcessor implements ProcessorInterface
      */
     private function redact(array $values, int $depth = 0): array
     {
+        // A depth limit must not expose the untouched remainder of a log
+        // context. Preserve keys for structure while masking every value,
+        // including any nested arrays, without descending any further.
         if ($depth >= 5) {
-            return $values;
+            return array_fill_keys(array_keys($values), self::REDACTED);
         }
 
         foreach ($values as $key => $value) {
