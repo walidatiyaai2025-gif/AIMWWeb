@@ -114,6 +114,50 @@ class AiProviderSettingsRouteTerminalityTest extends TestCase
         $this->assertSame('text/html; charset=utf-8', $response->headers->get('content-type'));
     }
 
+    public function test_provider_settings_uses_authenticated_bilingual_dashboard_shell_and_production_assets(): void
+    {
+        $user = User::factory()->create();
+        $this->membership($user, 'alpha', ['settings.manage'], 'Shell Manager');
+
+        $previousLocale = app()->getLocale();
+        try {
+            app()->setLocale('en');
+            $this->actingAs($user)
+                ->get('/tenants/alpha/settings/ai-providers')
+                ->assertOk()
+                ->assertSee('<html lang="en" dir="ltr" data-mode="dark">', false)
+                ->assertSee('class="app-shell provider-settings-shell"', false)
+                ->assertSee('data-dashboard-shell="aiwmweb"', false)
+                ->assertSee('class="sidebar"', false)
+                ->assertSee('class="topbar"', false)
+                ->assertSee('id="provider-settings-content"', false)
+                ->assertSee('aria-current="page"', false)
+                ->assertSee('AI Provider Settings')
+                ->assertSee('Back to Settings')
+                ->assertSee('name="api_key"', false);
+
+            app()->setLocale('ar');
+            $this->actingAs($user)
+                ->get('/tenants/alpha/settings/ai-providers')
+                ->assertOk()
+                ->assertSee('<html lang="ar" dir="rtl" data-mode="dark">', false)
+                ->assertSee('data-dashboard-shell="aiwmweb"', false)
+                ->assertSee('إعدادات مزودي الذكاء الاصطناعي')
+                ->assertSee('مزودو الذكاء الاصطناعي')
+                ->assertSee('العودة إلى الإعدادات')
+                ->assertSee('حالة التشغيل')
+                ->assertSee('name="api_key"', false);
+        } finally {
+            app()->setLocale($previousLocale);
+        }
+
+        $source = (string) file_get_contents(resource_path('views/ai/provider-settings.blade.php'));
+        $this->assertStringContainsString("@vite(['resources/css/app.css'])", $source);
+        $this->assertStringContainsString('@media (max-width: 700px)', $source);
+        $this->assertStringContainsString('data-dashboard-shell="aiwmweb"', $source);
+        $this->assertDatabaseCount('ai_provider_profiles', 0);
+    }
+
     public function test_guest_missing_permission_and_cross_tenant_access_fail_closed(): void
     {
         $this->get('/tenants/alpha/settings/ai-providers')->assertRedirect('/login');
