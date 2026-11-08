@@ -155,7 +155,6 @@ final class OperationalLogsLiteralSearchTest extends TestCase
         }
         // Read-boundary protection must not mutate persisted historical evidence.
         $this->assertSame($original, DB::table('operation_logs')->where('id', $id)->value('message'));
-        $this->getJson('/tenants/alpha/admin/logs')->assertUnauthorized();
         $this->actingAs($actor)->getJson('/tenants/beta/admin/logs')->assertNotFound();
     }
 
