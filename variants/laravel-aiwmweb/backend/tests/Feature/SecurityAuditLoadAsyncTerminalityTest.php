@@ -109,6 +109,13 @@ class SecurityAuditLoadAsyncTerminalityTest extends TestCase
             'outcome' => 'failed',
             'ip' => 'never-show-ip',
         ]);
+        $this->audit($tenant->id, $admin->id, 'auth.login', 'session', '44', [
+            'category' => ['authorization' => 'never-show-nested-category'],
+            'outcome' => ['error' => 'never-show-nested-outcome'],
+            'status' => 'failed',
+            'ip' => ['value' => 'never-show-nested-ip'],
+            'count' => ['value' => 'never-show-nested-count'],
+        ]);
         $before = DB::table('audit_events')->orderBy('id')->get()->toJson();
 
         $response = $this->actingAs($admin)->get('/admin/security-audit')->assertOk()
@@ -119,7 +126,9 @@ class SecurityAuditLoadAsyncTerminalityTest extends TestCase
             ->assertSee('count=3')
             ->assertSee('duration_ms=125');
         foreach (['never-show-password', 'never-show-token', 'never-show-raw-exception',
-            'never-show-nested', 'never-show-category', 'never-show-ip', 'api_token='] as $secret) {
+            'never-show-nested', 'never-show-category', 'never-show-ip',
+            'never-show-nested-category', 'never-show-nested-outcome',
+            'never-show-nested-ip', 'never-show-nested-count', 'api_token='] as $secret) {
             $response->assertDontSee($secret);
         }
 
