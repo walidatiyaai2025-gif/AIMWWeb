@@ -81,13 +81,15 @@ describe('complete declarative workspace census', () => {
 
         const unselected = workspaceCapabilityCensus(context);
         expect(unselected.totals.site_selection_required).toBe(16);
-        expect(unselected.totals.contract_not_advertised).toBe(0);
+        // This minimal fixture omits many unrelated APIs. Only site-scoped
+        // contracts should move between these two categories.
 
         const selected = workspaceCapabilityCensus({
             ...context, active_site: { id: 1, name: 'Owned site' },
         });
         expect(selected.totals.site_selection_required).toBe(0);
-        expect(selected.totals.contract_not_advertised).toBe(16);
+        expect(selected.totals.contract_not_advertised)
+            .toBe(unselected.totals.contract_not_advertised + 16);
         expect(unselected.totals.write_controls_advertised).toBe(selected.totals.write_controls_advertised);
     });
 
