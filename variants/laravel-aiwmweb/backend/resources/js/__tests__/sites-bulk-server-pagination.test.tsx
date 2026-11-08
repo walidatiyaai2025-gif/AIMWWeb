@@ -65,6 +65,7 @@ describe('Sites bulk delete authoritative paged selection (#1608)', () => {
         fireEvent.change(screen.getByRole('combobox', { name: 'Rows per page' }), { target: { value: '10' } });
         await waitFor(() => expect(requests.at(-1)?.searchParams.get('per_page')).toBe('10'));
         expect(requests.at(-1)?.searchParams.get('page')).toBe('1');
+        expect(await screen.findByRole('checkbox', { name: 'Select Site 1' })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Delete selected' })).toBeDisabled();
     });
 });
