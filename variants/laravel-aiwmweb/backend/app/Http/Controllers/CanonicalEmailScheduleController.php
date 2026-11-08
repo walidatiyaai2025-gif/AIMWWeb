@@ -20,11 +20,25 @@ final class CanonicalEmailScheduleController extends Controller
         private readonly EmailScheduleService $schedules,
     ) {}
 
-    public function index(string $tenant): JsonResponse
+    public function index(Request $request, string $tenant): JsonResponse
     {
         $this->authorizer->authorize('operations.manage');
 
-        return response()->json(['data' => $this->schedules->all()]);
+        // No-query callers retain the historical {data: [...]} envelope.
+        // Browser grids opt in to authoritative, tenant-scoped server paging.
+        if (! $request->hasAny(['page', 'per_page'])) {
+            return response()->json(['data' => $this->schedules->all()]);
+        }
+
+        $filters = $request->validate([
+            'page' => ['sometimes', 'integer', 'min:1'],
+            'per_page' => ['sometimes', 'integer', 'in:10,25,50,100'],
+        ]);
+
+        return response()->json($this->schedules->paged(
+            (int) ($filters['page'] ?? 1),
+            (int) ($filters['per_page'] ?? 25),
+        ));
     }
 
     public function store(Request $request, string $tenant): JsonResponse
