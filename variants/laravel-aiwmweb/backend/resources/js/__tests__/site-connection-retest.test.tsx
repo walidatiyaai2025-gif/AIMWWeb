@@ -34,6 +34,9 @@ describe('AIMW-BILL-E747D0E843 RetestAsync', () => {
         const button = await screen.findByRole('button', { name: 'Run test' });
         expect(button).toHaveAttribute('data-canonical-operation', SITE_CONNECTION_CENTER_RETEST_OPERATION_ID);
         expect(SITE_CONNECTION_CENTER_RETEST_OPERATION_ID).toBe('AIMW-BILL-E747D0E843');
+        // The button is present while the first connection request is loading,
+        // but must not be clicked until the authoritative site state enables it.
+        await waitFor(() => expect(button).toBeEnabled());
         fireEvent.click(button);
 
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(5));
