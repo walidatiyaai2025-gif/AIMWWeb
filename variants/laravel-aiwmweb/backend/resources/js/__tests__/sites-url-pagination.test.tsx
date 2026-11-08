@@ -88,7 +88,7 @@ describe('Sites URL-backed server pagination (#1608)', () => {
         await waitFor(() => expect(window.location.search).toContain('connection_filter=connected'));
         expect(window.location.search).toContain('tab=other');
         expect(window.location.search).toContain('page=1');
-        fireEvent.change(screen.getByRole('combobox', { name: 'Rows per page' }), { target: { value: '10' } });
+        fireEvent.change(await screen.findByRole('combobox', { name: 'Rows per page' }), { target: { value: '10' } });
         await waitFor(() => expect(window.location.search).toContain('per_page=10'));
         expect(window.location.search).toContain('page=1');
         expect(fetchMock.mock.calls.every(([input]) => new URL(String(input), 'http://localhost').pathname === '/api/tenants/alpha/sites')).toBe(true);
