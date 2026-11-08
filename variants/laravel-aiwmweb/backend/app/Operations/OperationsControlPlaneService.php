@@ -356,7 +356,7 @@ final class OperationsControlPlaneService
         return $this->logsWithEvidence($filters)['data'];
     }
 
-    public function logsWithEvidence(array $filters = []): array
+    public function logsWithEvidence(array $filters = [], ?int $page = null, ?int $perPage = null): array
     {
         // These counts are scoped to the current tenant and are never inferred
         // from an empty response array (which can simply mean "no match").
@@ -382,9 +382,41 @@ final class OperationsControlPlaneService
         // Legacy or externally imported log contexts may predate write-time
         // redaction. Sanitize both list and operation-detail read boundaries.
         $matchingCount = $hasFilters ? (clone $query)->count() : $tenantCount;
-        // Multiple events can share one timestamp (e.g. a bounded Cron
-        // batch). Break ties by insertion ID so the 500-row cap retains
-        // the newest events rather than arbitrary older rows.
+        // The explicit page contract is a database-backed paginator, not a
+        // client-side slice of the historical latest-500-record sample.
+        // Preserve both tenant scoping and deterministic ordering on ties.
+        if ($page !== null && $perPage !== null) {
+            $ordered = (clone $query)->orderByDesc('occurred_at')->orderByDesc('id');
+            $logs = $ordered->paginate($perPage, ['*'], 'page', $page);
+            if ($page > $logs->lastPage()) {
+                $logs = (clone $query)->orderByDesc('occurred_at')->orderByDesc('id')
+                    ->paginate($perPage, ['*'], 'page', $logs->lastPage());
+            }
+            $rows = $logs->getCollection()->map(
+                fn ($row) => $this->redactOperationLogRow($row),
+            )->all();
+
+            return [
+                'data' => $rows,
+                'current_page' => $logs->currentPage(),
+                'last_page' => $logs->lastPage(),
+                'per_page' => $perPage,
+                'total' => $matchingCount,
+                'meta' => [
+                    'scope' => 'tenant_operation_logs',
+                    'pagination_mode' => 'server',
+                    'tenant_records' => $tenantCount,
+                    'matching_records' => $matchingCount,
+                    'returned_records' => count($rows),
+                    'limit' => $perPage,
+                    'truncated' => false,
+                    'empty_reason' => $rows !== [] ? 'not_empty'
+                        : ($tenantCount === 0 ? 'no_tenant_events' : 'filter_matched_none'),
+                ],
+            ];
+        }
+
+        // Legacy data-only reads remain bounded to 500 with explicit truncation.
         $rows = $query->orderByDesc('occurred_at')->orderByDesc('id')->limit(500)->get()
             ->map(fn ($row) => $this->redactOperationLogRow($row))->all();
 
