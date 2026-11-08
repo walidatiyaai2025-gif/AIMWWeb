@@ -18,6 +18,10 @@ use Throwable;
 
 final class SeoManagerService
 {
+    public const SAFE_AUDIT_FAILURE = 'SEO audit failed.';
+
+    public const SAFE_BULK_FAILURE = 'SEO item could not be prepared.';
+
     public const WRITABLE_FIELDS = [
         'title', 'slug', 'seo_title', 'seo_description', 'seo_canonical', 'seo_robots',
     ];
@@ -66,7 +70,7 @@ final class SeoManagerService
                 $log[] = ['item' => $content->resource_type.':'.$content->remote_id, 'status' => 'succeeded', 'findings' => count($findings)];
             } catch (Throwable $exception) {
                 $failed++;
-                $log[] = ['item' => $content->resource_type.':'.$content->remote_id, 'status' => 'failed', 'error' => $exception->getMessage()];
+                $log[] = ['item' => $content->resource_type.':'.$content->remote_id, 'status' => 'failed', 'error' => self::SAFE_AUDIT_FAILURE];
             }
             $audit->update(['processed_items' => $processed, 'failed_items' => $failed, 'log' => $log]);
         }
@@ -187,7 +191,7 @@ final class SeoManagerService
                     'status' => 'pending_approval',
                 ];
             } catch (Throwable $exception) {
-                $result['failed'][] = ['finding_id' => $findingId, 'error' => $exception->getMessage()];
+                $result['failed'][] = ['finding_id' => $findingId, 'error' => self::SAFE_BULK_FAILURE];
             }
         }
 
