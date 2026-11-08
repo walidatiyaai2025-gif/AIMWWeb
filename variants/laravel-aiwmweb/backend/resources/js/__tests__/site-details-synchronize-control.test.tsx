@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { FrontendContext } from '../core';
 import { LocaleProvider } from '../i18n';
@@ -101,7 +101,9 @@ describe('AIMW-BILL-94755B17E4 Site Details SynchronizeAsync', () => {
 
         renderControl();
         fireEvent.click(screen.getByRole('button', { name: 'Sync now' }));
-        await vi.advanceTimersByTimeAsync(31_000);
+        await act(async () => {
+            await vi.advanceTimersByTimeAsync(31_000);
+        });
 
         expect(fetchMock).toHaveBeenCalledTimes(61);
         expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/tenants/alpha/sites/17/sync');
