@@ -379,6 +379,8 @@ final class AdminOperationsController extends Controller
             'correlation_id' => ['nullable', 'string', 'max:100'],
             'q' => ['nullable', 'string', 'max:160'],
             'search' => ['nullable', 'string', 'max:160'],
+            'page' => ['sometimes', 'integer', 'min:1', 'max:100000'],
+            'per_page' => ['sometimes', 'integer', 'in:10,25,50,100'],
         ]);
         // A literal '0' is a valid search term, not an empty value. Preserve
         // explicit q precedence over the legacy search alias.
@@ -387,8 +389,14 @@ final class AdminOperationsController extends Controller
             $filters['q'] = $filters['search'];
         }
         unset($filters['search']);
+        // Only explicit pagination opts in; keep the legacy bounded 500-row
+        // response for existing integrations that do not request pages.
+        $paged = $request->hasAny(['page', 'per_page']);
+        $page = $paged ? (int) ($filters['page'] ?? 1) : null;
+        $perPage = $paged ? (int) ($filters['per_page'] ?? 25) : null;
+        unset($filters['page'], $filters['per_page']);
 
-        return response()->json($this->operations->logsWithEvidence($filters));
+        return response()->json($this->operations->logsWithEvidence($filters, $page, $perPage));
     }
 
     public function diagnostics(string $tenant): JsonResponse
