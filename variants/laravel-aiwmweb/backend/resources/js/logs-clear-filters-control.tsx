@@ -9,10 +9,29 @@ type LogsPayload = {
     data?: Array<Record<string, unknown>>;
 };
 
+// Clipboard text is shareable and must not trust arbitrary historic log messages,
+// even when the API has already applied its own legacy-record redaction.
+const WITHHELD_LOG_TEXT = '[withheld: unsafe log text]';
+function safeCopiedLogLevel(value: unknown): string {
+    return typeof value === 'string' && /^[a-z]{1,20}$/i.test(value) ? value : 'Unknown';
+}
+function safeCopiedLogMessage(value: unknown): string {
+    if (typeof value !== 'string' || !value.trim() || value.length > 240) return WITHHELD_LOG_TEXT;
+    // Reject entire opaque values: partial regex replacements can leave credentials,
+    // signed query strings, JSON bodies or multiline trace fragments behind.
+    if (/[\x00-\x1f\x7f<>{}=?&]/.test(value)
+        || value.includes('[') || value.includes(']')
+        || /https?:\/\/|www\./i.test(value)
+        || /\b(?:bearer|authorization|password|passwd|token|secret|api[_-]?key|credential|session|cookie|private[_-]?key|access[_-]?key|sqlstate|traceback|stack trace|exception)\b/i.test(value)) {
+        return WITHHELD_LOG_TEXT;
+    }
+    return value;
+}
+
 export function formatVisibleLogs(rows: Array<Record<string, unknown>>): string {
-    return rows
-        .map((row) => `[${String(row.level ?? '')}] ${String(row.message ?? '')}`)
-        .join('\n');
+    return rows.slice(0, 100).map((row) =>
+        `[${safeCopiedLogLevel(row.level)}] ${safeCopiedLogMessage(row.message)}`,
+    ).join('\n');
 }
 
 export function LogsClearFiltersControl({ context }: { context: FrontendContext }) {

@@ -115,6 +115,41 @@ describe('canonical logs copy-visible control', () => {
         expect(fetchMock).not.toHaveBeenCalled();
     });
 
+
+    it('does not export credentials, JSON, SQL, signed URLs, or injected newlines', () => {
+        const cases = [
+            'Bearer abcd.efgh.ijkl',
+            'password=not-for-export',
+            'https://example.test/path?signature=confidential',
+            '{"api_key":"confidential"}',
+            'SQLSTATE[42S02] private trace',
+            'legitimate event\nAuthorization: Bearer confidential',
+            'Stack trace: /private/vendor/runtime.php',
+        ];
+        const output = formatVisibleLogs(cases.map((message) => ({ level: 'Error', message })));
+        expect(output.split('\n')).toHaveLength(cases.length);
+        expect(output.split('\n').every((line) => line === '[Error] [withheld: unsafe log text]')).toBe(true);
+        for (const secret of ['confidential', 'not-for-export', 'Bearer', 'SQLSTATE', 'Stack trace']) {
+            expect(output).not.toContain(secret);
+        }
+        expect(formatVisibleLogs([{ level: 'Warning\nAdmin', message: 'Safe event' }]))
+            .toBe('[Unknown] Safe event');
+    });
+
+    it('copies redacted text instead of a private API message in clipboard flow', async () => {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({
+            data: [{ level: 'Error', message: 'Authorization: Bearer super-private-token' }],
+        })));
+        const writeText = vi.fn().mockResolvedValue(undefined);
+        Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+        renderControl('');
+        const copy = screen.getByRole('button', { name: 'Copy results' });
+        await waitFor(() => expect(copy).toBeEnabled());
+        fireEvent.click(copy);
+        await waitFor(() => expect(writeText).toHaveBeenCalledWith('[Error] [withheld: unsafe log text]'));
+        expect(writeText.mock.calls[0][0]).not.toContain('super-private-token');
+    });
+
     it('formats rows using the source [level] message clipboard contract', () => {
         expect(formatVisibleLogs([
             { level: 'Info', message: 'one' },
