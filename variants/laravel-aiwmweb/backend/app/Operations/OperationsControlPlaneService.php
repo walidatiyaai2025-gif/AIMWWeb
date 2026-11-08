@@ -211,12 +211,7 @@ final class OperationsControlPlaneService
     public function operation(int $id): array
     {
         $operation = $this->row('operation_executions', $id);
-        $logs = DB::table('operation_logs')->where('tenant_id', $this->context->id())->where('operation_execution_id', $id)->orderBy('id')->get()->map(function ($row): array {
-                $entry = $this->redactor->redact($this->decodeColumns($this->objectToArray($row), ['context']));
-                $entry['message'] = $this->redactor->redactLogMessage((string) $entry['message']);
-
-                return $entry;
-            })->all();
+        $logs = DB::table('operation_logs')->where('tenant_id', $this->context->id())->where('operation_execution_id', $id)->orderBy('id')->get()->map(fn ($row) => $this->redactOperationLogRow($row))->all();
 
         return ['operation' => $this->decodeColumns($operation, ['payload', 'result']), 'logs' => $logs];
     }
@@ -391,7 +386,7 @@ final class OperationsControlPlaneService
         // batch). Break ties by insertion ID so the 500-row cap retains
         // the newest events rather than arbitrary older rows.
         $rows = $query->orderByDesc('occurred_at')->orderByDesc('id')->limit(500)->get()
-            ->map(fn ($row) => $this->redactor->redact($this->decodeColumns($this->objectToArray($row), ['context'])))->all();
+            ->map(fn ($row) => $this->redactOperationLogRow($row))->all();
 
         return [
             'data' => $rows,
@@ -644,6 +639,15 @@ final class OperationsControlPlaneService
         $decoded = json_decode($value, true);
 
         return is_array($decoded) ? $decoded : [];
+    }
+
+    /** @return array<string, mixed> */
+    private function redactOperationLogRow(object $row): array
+    {
+        $entry = $this->decodeColumns($this->objectToArray($row), ['context']);
+        $entry['message'] = $this->redactor->redactLogMessage((string) $entry['message']);
+
+        return $entry;
     }
 
     private function objectToArray(object $row): array
