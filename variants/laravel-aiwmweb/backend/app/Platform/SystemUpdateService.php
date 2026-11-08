@@ -47,7 +47,7 @@ final class SystemUpdateService
     public function latest(): array
     {
         $this->assertReady();
-        $release = Http::acceptJson()->timeout(12)->get(self::RELEASE_API);
+        $release = Http::acceptJson()->connectTimeout(8)->timeout(30)->get(self::RELEASE_API);
 
         if (! $release->successful()) {
             throw new RuntimeException('Approved GitHub release feed is unavailable.');
@@ -75,7 +75,7 @@ final class SystemUpdateService
                 if (! str_starts_with($url, $prefix) || ! str_ends_with($url, '/'.$name)) {
                     throw new RuntimeException('Release asset URL is not approved.');
                 }
-                $assets[$name] = ['url' => $url, 'size' => (int) ($asset['size'] ?? 0)];
+                $assets[$name] = ['url' => $url, 'size' => (int) ($asset['size'] ?? 0), 'id' => (int) ($asset['id'] ?? 0)];
             }
         }
 
@@ -92,8 +92,8 @@ final class SystemUpdateService
             throw new RuntimeException('Release asset size is outside the approved limits.');
         }
 
-        $manifestBytes = $this->downloadSmall($assets[self::MANIFEST]['url'], 4194304);
-        $signatureBytes = $this->downloadSmall($assets[self::SIGNATURE]['url'], 4096);
+        $manifestBytes = $this->downloadSmall($assets[self::MANIFEST], 4194304);
+        $signatureBytes = $this->downloadSmall($assets[self::SIGNATURE], 4096);
         $manifest = $this->verifySignedManifest($manifestBytes, $signatureBytes);
 
         $current = $this->state()['version'];
@@ -467,15 +467,9 @@ final class SystemUpdateService
         return $key !== false && strlen($key) === SODIUM_CRYPTO_SIGN_PUBLICKEYBYTES ? $key : null;
     }
 
-    private function downloadSmall(string $url, int $limit): string
+    private function downloadSmall(array $asset, int $limit): string
     {
-        $response = Http::connectTimeout(8)->timeout(45)->get($url);
-
-        if (! $response->successful() || strlen($response->body()) > $limit) {
-            throw new RuntimeException('Release metadata download failed.');
-        }
-
-        return $response->body();
+        return app(SignedReleaseMetadataFetcher::class)->download($asset, $limit);
     }
 
     /** @return array<string, string> verified relative path => sha256 */
