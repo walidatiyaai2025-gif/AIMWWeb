@@ -56,7 +56,7 @@ final class AppFilterBarClearControlTerminalityTest extends TestCase
         $this->assertStringContainsString('<AppFilterBar', $consumer);
         $this->assertStringContainsString('activeFilterCount={selectedSiteId ? 1 : 0}', $consumer);
         $this->assertStringContainsString('onClearRequested={async () => {', $consumer);
-        $this->assertStringContainsString("await load('');", $consumer);
+        $this->assertStringContainsString("await load('', 1, pageSize);", $consumer);
         $this->assertStringContainsString('<AppFilterChip', $consumer);
     }
 
