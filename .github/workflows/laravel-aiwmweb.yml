@@ -293,8 +293,10 @@ jobs:
       - name: Install pinned application and browser test dependencies
         run: |
           npm ci --no-audit --no-fund
-          npm install --no-save --package-lock=false --no-audit --no-fund playwright@1.56.1
-          npx playwright install --with-deps chromium
+          # Keep Playwright out of the application dependency tree: npm 10 can
+          # fail with Arborist edgesOut when npm install follows npm ci there.
+          npm --prefix tests/browser install --no-save --package-lock=false --no-audit --no-fund playwright@1.56.1
+          tests/browser/node_modules/.bin/playwright install --with-deps chromium
       - name: Verify editor geometry in Chromium (EN/AR and desktop/mobile)
         shell: bash
         run: |
