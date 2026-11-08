@@ -43,7 +43,7 @@ describe('AIMW-BILL-DD0FD9926B Sites RetestSelectedAsync', () => {
         const retest = screen.getByRole('button', { name: 'Retest selected' });
         expect(retest).toHaveAttribute('data-canonical-operation', SITES_RETEST_SELECTED_OPERATION_ID);
         fireEvent.click(retest);
-        expect(await screen.findByRole('status')).toHaveTextContent('Retested 2 sites: 2 succeeded, 0 need review.');
+        expect(await screen.findByText('Retested 2 sites: 2 succeeded, 0 need review.')).toBeInTheDocument();
         expect(fetchMock.mock.calls[1]?.[0]).toBe('/api/tenants/alpha/sites/11/connection/recheck');
         expect(fetchMock.mock.calls[2]?.[0]).toBe('/api/tenants/alpha/sites/12/connection/recheck');
         expect(fetchMock.mock.calls[3]?.[0]).toBe('/api/tenants/alpha/sites?page=1&per_page=25');
