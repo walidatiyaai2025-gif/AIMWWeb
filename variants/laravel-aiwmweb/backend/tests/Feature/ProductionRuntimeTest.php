@@ -83,6 +83,40 @@ class ProductionRuntimeTest extends TestCase
         $this->assertSame('STRUCTURED_EXTRA_CANARY', $record->extra['access_token']);
     }
 
+    public function test_log_secret_alias_assignments_are_redacted_in_message_and_nested_context(): void
+    {
+        $message = 'WordPress passwd=FAKE_PASSWD_CANARY private_key: FAKE_PRIVATE_CANARY '
+            .'cookie=FAKE_COOKIE_CANARY token=FAKE_TOKEN_CANARY secret: FAKE_SECRET_CANARY '
+            .'next retry scheduled';
+        $record = new LogRecord(
+            datetime: now()->toDateTimeImmutable(),
+            channel: 'test',
+            level: Level::Warning,
+            message: $message,
+            context: [
+                'detail' => 'Got passwd=FAKE_NESTED_PASSWD_CANARY',
+                'nested' => ['note' => 'cookie: FAKE_NESTED_COOKIE_CANARY', 'safe' => 'normal operation'],
+            ],
+            extra: ['trace' => 'private-key=FAKE_EXTRA_KEY_CANARY', 'request_id' => 'public-request'],
+        );
+
+        $processed = (new RedactSecretsProcessor)($record);
+
+        $this->assertSame(
+            'WordPress passwd=[REDACTED] private_key: [REDACTED] '
+                .'cookie=[REDACTED] token=[REDACTED] secret: [REDACTED] next retry scheduled',
+            $processed->message,
+        );
+        $this->assertSame('Got passwd=[REDACTED]', $processed->context['detail']);
+        $this->assertSame('cookie: [REDACTED]', $processed->context['nested']['note']);
+        $this->assertSame('private-key=[REDACTED]', $processed->extra['trace']);
+        $this->assertSame('normal operation', $processed->context['nested']['safe']);
+        $this->assertSame('public-request', $processed->extra['request_id']);
+        $this->assertSame($message, $record->message);
+        $this->assertSame('Got passwd=FAKE_NESTED_PASSWD_CANARY', $record->context['detail']);
+        $this->assertSame('private-key=FAKE_EXTRA_KEY_CANARY', $record->extra['trace']);
+    }
+
     public function test_monolog_message_redaction_preserves_nonsecret_messages(): void
     {
         $record = new LogRecord(
