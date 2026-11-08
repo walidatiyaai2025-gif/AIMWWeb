@@ -1,10 +1,12 @@
 import { workspaceRoutes, type FrontendContext, type WorkspaceRoute, type CapabilityState } from './core';
+import { siteScopedWorkspaceKeys } from './site-scoped-workspace-keys';
 
 export type WorkspaceCensusState =
     | 'missing_permission'
     | 'backend_restricted'
     | 'connector_read_missing'
     | 'contract_not_advertised'
+    | 'site_selection_required'
     | 'declared_accessible';
 
 export type WorkspaceCensusEntry = {
@@ -31,6 +33,7 @@ export type WorkspaceCensus = {
         backend_restricted: number;
         connector_read_missing: number;
         contract_not_advertised: number;
+        site_selection_required: number;
         write_controls_declared: number;
         write_controls_advertised: number;
     };
@@ -74,6 +77,7 @@ export function workspaceCapabilityCensus(context: FrontendContext): WorkspaceCe
         let state: WorkspaceCensusState;
         if (!permissionPresent) state = 'missing_permission';
         else if (explicit && explicit.state !== 'enabled') state = 'backend_restricted';
+        else if (apiContract === 'not_advertised' && !context.active_site && siteScopedWorkspaceKeys.has(route.key)) state = 'site_selection_required';
         else if (apiContract === 'not_advertised') state = 'contract_not_advertised';
         else if (connectorRead === 'not_advertised') state = 'connector_read_missing';
         else state = 'declared_accessible';
@@ -94,7 +98,7 @@ export function workspaceCapabilityCensus(context: FrontendContext): WorkspaceCe
     });
     const names: WorkspaceCensusState[] = [
         'declared_accessible', 'missing_permission', 'backend_restricted',
-        'connector_read_missing', 'contract_not_advertised',
+        'connector_read_missing', 'contract_not_advertised', 'site_selection_required',
     ];
     const stateCounts = Object.fromEntries(names.map(name =>
         [name, workspaces.filter(item => item.view_state === name).length])) as Record<WorkspaceCensusState, number>;
