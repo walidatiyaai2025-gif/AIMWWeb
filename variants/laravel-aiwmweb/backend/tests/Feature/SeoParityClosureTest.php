@@ -26,6 +26,7 @@ use App\Models\User;
 use App\Services\SeoManagerService;
 use App\Tenancy\TenantContext;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -103,7 +104,7 @@ final class SeoParityClosureTest extends TestCase
             try {
                 (new RunSeoAuditJob($tenant->id, $audit->id))->handle($seo);
                 $this->fail('An unhandled failure must still propagate to the queue.');
-            } catch (\Illuminate\Database\QueryException $exception) {
+            } catch (QueryException $exception) {
                 $this->assertStringContainsString('secret-test-only', $exception->getMessage());
             }
         } finally {
