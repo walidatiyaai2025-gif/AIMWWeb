@@ -33,6 +33,7 @@ final class SeoController extends Controller
 
     public function startAudit(string $tenant, int|string $site, Request $request, TenantContext $context, TenantAuthorizer $auth): JsonResponse
     {
+        abort_unless((is_int($site) && $site > 0) || (is_string($site) && ctype_digit($site) && (int) $site > 0), 404);
         $siteId = (int) $site;
         $auth->authorize('seo.manage');
         Site::query()
