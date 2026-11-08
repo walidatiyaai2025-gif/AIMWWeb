@@ -120,6 +120,50 @@ class RegisterAsyncTerminalityTest extends TestCase
             ->assertDontSee('name="billing_plan_id"', false);
     }
 
+    public function test_public_registration_uses_bilingual_responsive_shell_without_changing_security_contracts(): void
+    {
+        foreach ([
+            'en' => ['ltr', 'Create your account', 'Start free trial', 'العربية'],
+            'ar' => ['rtl', 'أنشئ حسابك', 'ابدأ التجربة المجانية', 'English'],
+        ] as $locale => [$direction, $heading, $buttonText, $switchLabel]) {
+            $this->get('/register?lang='.$locale.'&tenant=untrusted-sentinel')
+                ->assertOk()
+                ->assertSee('<html lang="'.$locale.'" dir="'.$direction.'" data-mode="dark">', false)
+                ->assertSee('data-auth-shell="aiwmweb"', false)
+                ->assertSee('data-tenant-neutral="true"', false)
+                ->assertSee('name="robots" content="noindex,nofollow"', false)
+                ->assertSee('href="/register?lang='.($locale === 'en' ? 'ar' : 'en').'"', false)
+                ->assertSee('name="_token"', false)
+                ->assertSee('name="username"', false)
+                ->assertSee('name="password_confirmation"', false)
+                ->assertSee('data-canonical-operation="'.self::OPERATION_ID.'"', false)
+                ->assertSee($heading)
+                ->assertSee($buttonText)
+                ->assertSee($switchLabel)
+                ->assertDontSee('untrusted-sentinel')
+                ->assertDontSee('name="tenant_id"', false)
+                ->assertDontSee('class="sidebar"', false);
+        }
+
+        $this->get('/register?lang=ar')
+            ->assertOk()
+            ->assertSee('href="/login?lang=ar"', false)
+            ->assertSee('تسجيل الدخول');
+
+        $this->withSession(['public_welcome_locale' => 'ar'])->get('/register')
+            ->assertOk()
+            ->assertSee('<html lang="ar" dir="rtl" data-mode="dark">', false);
+
+        $this->get('/register?lang=invalid-locale')
+            ->assertOk()
+            ->assertDontSee('invalid-locale');
+
+        $source = (string) file_get_contents(resource_path('views/auth/register.blade.php'));
+        $this->assertStringContainsString("@vite(['resources/css/app.css'])", $source);
+        $this->assertStringContainsString('min-height: 44px', $source);
+        $this->assertStringContainsString(':focus-visible', $source);
+    }
+
     public function test_weak_or_mismatched_credentials_fail_before_any_identity_or_workspace_mutation(): void
     {
         $this->post('/register', [
