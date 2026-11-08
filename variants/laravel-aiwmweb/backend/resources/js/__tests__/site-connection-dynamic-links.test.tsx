@@ -61,6 +61,7 @@ describe('AIMW-CONT-DF6FFA9D87 Site Connection Center dynamic links', () => {
         expect(SITE_CONNECTION_CENTER_DYNAMIC_LINKS_OPERATION_ID).toBe('AIMW-CONT-DF6FFA9D87');
         expect(links).toEqual({
             dashboard: '/tenants/alpha/sites/7',
+            siteSettings: '/tenants/alpha/sites/7/settings',
             applicationPassword: 'https://wordpress.example.test/subdir/wp-admin/profile.php',
             localContent: '/tenants/alpha/explorer?site=7',
             execution: '/tenants/alpha/module/execution?siteId=7',
@@ -90,6 +91,7 @@ describe('AIMW-CONT-DF6FFA9D87 Site Connection Center dynamic links', () => {
 
         expect(links?.applicationPassword).toBeNull();
         expect(links?.dashboard).toBe('/tenants/alpha/sites/7');
+        expect(links?.siteSettings).toBe('/tenants/alpha/sites/7/settings');
         expect(links?.localContent).toBe('/tenants/alpha/explorer?site=7');
         expect(links?.execution).toBe('/tenants/alpha/module/execution?siteId=7');
     });
@@ -116,6 +118,7 @@ describe('AIMW-CONT-DF6FFA9D87 Site Connection Center dynamic links', () => {
             SITE_CONNECTION_CENTER_DYNAMIC_LINKS_OPERATION_ID,
         );
         expect(screen.getByRole('link', { name: 'Site dashboard' })).toHaveAttribute('href', '/tenants/alpha/sites/7');
+        expect(screen.getByRole('link', { name: 'Site settings and credentials' })).toHaveAttribute('href', '/tenants/alpha/sites/7/settings');
         expect(screen.getByRole('link', { name: 'Application Password' }))
             .toHaveAttribute('href', 'https://wordpress.example.test/wp-admin/profile.php');
         expect(screen.getByRole('link', { name: 'Local content' })).toHaveAttribute('href', '/tenants/alpha/explorer?site=7');
