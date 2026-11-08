@@ -71,73 +71,11 @@ final class DemoController extends Controller
         return response()->json(['ok' => true]);
     }
 
-    public function sites(Request $request, TenantAuthorizer $auth): JsonResponse
+    public function sites(TenantAuthorizer $auth): JsonResponse
     {
         $auth->authorize('tenant.view');
 
-        // Preserve the original array response for existing site selectors,
-        // onboarding and account controls. Only explicit paging requests
-        // receive an authoritative tenant-scoped collection envelope.
-        if (! $request->hasAny(['page', 'per_page', 'connection_filter'])) {
-            return response()->json(Site::query()->orderByDesc('created_at')->orderByDesc('id')->get());
-        }
-
-        $validated = $request->validate([
-            'page' => 'sometimes|integer|min:1|max:100000',
-            'per_page' => 'sometimes|integer|in:10,25,50,100',
-            'connection_filter' => 'sometimes|in:all,connected,review',
-            'search' => 'sometimes|nullable|string|max:150',
-        ]);
-        $pageSize = (int) ($validated['per_page'] ?? 25);
-        $requestedPage = (int) ($validated['page'] ?? 1);
-        $filter = $validated['connection_filter'] ?? 'all';
-
-        // Site's tenant global scope remains authoritative for results and
-        // for all facet counts; no cross-tenant totals may be exposed.
-        $tenantSites = Site::query();
-        $connectedCount = (clone $tenantSites)->where('connection_status', 'connected')->count();
-        $reviewCount = (clone $tenantSites)
-            ->whereNotNull('connection_status')
-            ->whereNotIn('connection_status', ['connected', 'unknown', ''])
-            ->count();
-
-        $query = Site::query();
-        if ($filter === 'connected') {
-            $query->where('connection_status', 'connected');
-        } elseif ($filter === 'review') {
-            $query->whereNotNull('connection_status')
-                ->whereNotIn('connection_status', ['connected', 'unknown', '']);
-        }
-
-        $search = trim((string) ($validated['search'] ?? ''));
-        if ($search !== '') {
-            // Bind all user input; never interpolate a SQL identifier.
-            $query->where(function ($builder) use ($search): void {
-                $builder->where('name', 'like', '%'.$search.'%')
-                    ->orWhere('url', 'like', '%'.$search.'%');
-            });
-        }
-
-        $total = (clone $query)->count();
-        $lastPage = max(1, (int) ceil($total / $pageSize));
-        $currentPage = min($requestedPage, $lastPage);
-        $rows = $query
-            ->orderByDesc('created_at')
-            ->orderByDesc('id')
-            ->forPage($currentPage, $pageSize)
-            ->get();
-
-        return response()->json([
-            'data' => $rows,
-            'total' => $total,
-            'current_page' => $currentPage,
-            'last_page' => $lastPage,
-            'per_page' => $pageSize,
-            'meta' => [
-                'connected_count' => $connectedCount,
-                'review_count' => $reviewCount,
-            ],
-        ]);
+        return response()->json(Site::query()->latest()->get());
     }
 
     public function createSite(Request $request, TenantAuthorizer $auth): JsonResponse
