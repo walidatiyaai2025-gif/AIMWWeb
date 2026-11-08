@@ -1,6 +1,6 @@
 # Issue #1601 — Laravel Blade shell source census (source inspection only)
 
-Source inventory baseline: `main@de4b08ff8eac483b87fc751da177edd3bc7e4b40` (2026-11-08). Incremental fixes tracked separately: #1648 Site Settings merged, #1650 AI Provider Settings merged, current #1601 email-shell candidate based on `main@5080cc43fa5bf18d6730c32f66b8d8048f5d8a9b`. This source census remains **not browser verification**.
+Source inventory baseline: `main@de4b08ff8eac483b87fc751da177edd3bc7e4b40` (2026-11-08). Incremental fixes tracked separately: #1648 Site Settings merged, #1650 AI Provider Settings merged, email shell merged through PR #1653, and Security Audit being reconciled in PR #1652. This source census remains **not browser verification**.
 Scope: `variants/laravel-aiwmweb/backend/resources/views/**`. **All 29 discovered Blade templates** were inspected for `@vite`, a visible dashboard shell, sidebar/topbar markup, and locale/direction declarations. This is a **static source census**, NOT a browser route crawl, visual acceptance, production CSS-load result, or evidence that a given route is reachable to a particular role. Laravel React SPA pages may render their shell client-side.
 
 ## Classification and evidence
