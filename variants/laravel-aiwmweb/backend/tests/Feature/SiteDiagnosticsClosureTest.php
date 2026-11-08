@@ -54,6 +54,52 @@ class SiteDiagnosticsClosureTest extends TestCase
         $this->assertSame(0, SiteOperationHistory::query()->count());
     }
 
+    public function test_site_diagnostic_history_uses_bounded_authoritative_pages_and_preserves_legacy(): void
+    {
+        [$tenant, $member] = $this->tenant('diagnostic-paging');
+        app(TenantContext::class)->activate($tenant, $member);
+        $site = Site::query()->create(['name' => 'Primary', 'url' => 'https://primary.test']);
+        $other = Site::query()->create(['name' => 'Other', 'url' => 'https://other.test']);
+
+        for ($index = 0; $index < 27; $index++) {
+            SiteDiagnostic::query()->create([
+                'site_id' => $site->id,
+                'classification' => SiteConnectionState::CONNECTED,
+                'connection_state' => SiteConnectionState::CONNECTED,
+                'checked_at' => now()->subMinutes($index),
+            ]);
+        }
+        SiteDiagnostic::query()->create([
+            'site_id' => $other->id,
+            'classification' => SiteConnectionState::DISCONNECTED,
+            'connection_state' => SiteConnectionState::DISCONNECTED,
+            'checked_at' => now(),
+        ]);
+
+        $service = $this->service(new SiteGatewayStub);
+        $first = $service->paginatedDiagnosticHistory($site, 1, 25);
+        $second = $service->paginatedDiagnosticHistory($site, 2, 25);
+        $clamped = $service->paginatedDiagnosticHistory($site, 100, 25);
+
+        $this->assertSame(27, $first['total']);
+        $this->assertSame(2, $first['last_page']);
+        $this->assertSame(1, $first['from']);
+        $this->assertSame(25, $first['to']);
+        $this->assertCount(25, $first['items']);
+        $this->assertSame(26, $second['from']);
+        $this->assertSame(27, $second['to']);
+        $this->assertCount(2, $second['items']);
+        $this->assertSame(2, $clamped['page']);
+        $this->assertSame(
+            [],
+            array_values(array_intersect(
+                array_map(fn ($item) => $item->id, $first['items']),
+                array_map(fn ($item) => $item->id, $second['items'])
+            ))
+        );
+        $this->assertCount(27, $service->diagnosticHistory($site));
+    }
+
     public function test_disconnect_and_reconnect_reuse_canonical_connector_pairing(): void
     {
         [$tenant, $member] = $this->tenant('reconnect');
