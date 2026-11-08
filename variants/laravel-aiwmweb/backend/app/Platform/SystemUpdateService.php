@@ -18,6 +18,8 @@ final class SystemUpdateService
 {
     private const RELEASE_API = 'https://api.github.com/repos/walidatiyaai2025-gif/AIMWWeb/releases/latest';
 
+    private const RELEASE_ASSET_API = 'https://api.github.com/repos/walidatiyaai2025-gif/AIMWWeb/releases/assets/';
+
     private const MANIFEST = 'AIWMWeb-Laravel-release.json';
 
     private const SIGNATURE = 'AIWMWeb-Laravel-release.sig';
@@ -47,7 +49,7 @@ final class SystemUpdateService
     public function latest(): array
     {
         $this->assertReady();
-        $release = Http::acceptJson()->timeout(12)->get(self::RELEASE_API);
+        $release = Http::acceptJson()->connectTimeout(8)->timeout(30)->get(self::RELEASE_API);
 
         if (! $release->successful()) {
             throw new RuntimeException('Approved GitHub release feed is unavailable.');
@@ -75,7 +77,9 @@ final class SystemUpdateService
                 if (! str_starts_with($url, $prefix) || ! str_ends_with($url, '/'.$name)) {
                     throw new RuntimeException('Release asset URL is not approved.');
                 }
-                $assets[$name] = ['url' => $url, 'size' => (int) ($asset['size'] ?? 0)];
+                // The asset ID is supplied by GitHub's trusted release API, never by the browser.
+                $assetId = filter_var($asset['id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+                $assets[$name] = ['url' => $url, 'size' => (int) ($asset['size'] ?? 0), 'id' => $assetId ?: null];
             }
         }
 
@@ -92,8 +96,8 @@ final class SystemUpdateService
             throw new RuntimeException('Release asset size is outside the approved limits.');
         }
 
-        $manifestBytes = $this->downloadSmall($assets[self::MANIFEST]['url'], 4194304);
-        $signatureBytes = $this->downloadSmall($assets[self::SIGNATURE]['url'], 4096);
+        $manifestBytes = $this->downloadSmall($assets[self::MANIFEST], 4194304);
+        $signatureBytes = $this->downloadSmall($assets[self::SIGNATURE], 4096);
         $manifest = $this->verifySignedManifest($manifestBytes, $signatureBytes);
 
         $current = $this->state()['version'];
@@ -467,15 +471,83 @@ final class SystemUpdateService
         return $key !== false && strlen($key) === SODIUM_CRYPTO_SIGN_PUBLICKEYBYTES ? $key : null;
     }
 
-    private function downloadSmall(string $url, int $limit): string
+    /**
+     * Download only metadata for assets enumerated by GitHub's release API.
+     * GitHub's browser asset CDN can stall on shared hosting; try the trusted
+     * GitHub asset API after a transient failure, within a single time budget.
+     * Signature and SHA-256 validation remain mandatory for every transport.
+     *
+     * @param array{url:string,size:int,id:?int} $asset
+     */
+    private function downloadSmall(array $asset, int $limit): string
     {
-        $response = Http::timeout(15)->get($url);
+        $budget = max(20, min(90, (int) config('system_updates.metadata_budget_seconds', 50)));
+        $connect = max(3, min(12, (int) config('system_updates.metadata_connect_timeout', 8)));
+        $attempts = max(1, min(3, (int) config('system_updates.metadata_attempts', 3)));
+        $deadline = microtime(true) + $budget;
+        $assetApiUrl = isset($asset['id']) && $asset['id'] > 0
+            ? self::RELEASE_ASSET_API.$asset['id'] : null;
 
-        if (! $response->successful() || strlen($response->body()) > $limit) {
-            throw new RuntimeException('Release metadata download failed.');
+        for ($attempt = 1; $attempt <= $attempts; $attempt++) {
+            $remaining = (int) ceil($deadline - microtime(true));
+            if ($remaining <= 2) {
+                break;
+            }
+
+            // Browser URL first; API asset endpoint is a trusted fallback. If
+            // the release feed lacks an asset ID, retry the validated URL only.
+            $apiFallback = $attempt > 1 && $assetApiUrl !== null;
+            $url = $apiFallback ? $assetApiUrl : $asset['url'];
+            $timeout = max(3, min(30, $remaining));
+
+            try {
+                $response = Http::accept('application/octet-stream')
+                    ->connectTimeout(min($connect, $timeout - 1))
+                    ->timeout($timeout)
+                    ->get($url);
+            } catch (\\Illuminate\\Http\\Client\\ConnectionException $e) {
+                // Keep provider URLs and raw transport exceptions out of UI.
+                if ($attempt === $attempts) {
+                    break;
+                }
+                $this->metadataRetryDelay($attempt, $deadline);
+                continue;
+            }
+
+            if ($response->successful()) {
+                $bytes = $response->body();
+                if (strlen($bytes) > $limit) {
+                    throw new RuntimeException('Release metadata exceeds the allowed size.');
+                }
+                if ($apiFallback && str_contains(strtolower((string) $response->header('Content-Type')), 'application/json')) {
+                    throw new RuntimeException('GitHub asset API returned metadata instead of signed asset bytes.');
+                }
+
+                return $bytes;
+            }
+
+            // 404/401/403 and other permanent errors must fail closed; never
+            // fall back to another release or bypass signed verification.
+            if (! in_array($response->status(), [408, 429, 500, 502, 503, 504], true)) {
+                throw new RuntimeException('Release metadata download failed (HTTP '.$response->status().').');
+            }
+            if ($attempt < $attempts) {
+                $this->metadataRetryDelay($attempt, $deadline);
+            }
         }
 
-        return $response->body();
+        throw new RuntimeException('GitHub release metadata is temporarily unavailable. Retry later or upload a signed update ZIP.');
+    }
+
+    private function metadataRetryDelay(int $attempt, float $deadline): void
+    {
+        // A short bounded exponential backoff keeps repeated requests from
+        // overwhelming cPanel workers and never exceeds the overall budget.
+        $remainingMs = (int) max(0, ($deadline - microtime(true) - 2) * 1000);
+        $delayMs = min($remainingMs, 250 * (2 ** ($attempt - 1)));
+        if ($delayMs > 0) {
+            usleep($delayMs * 1000);
+        }
     }
 
     /** @return array<string, string> verified relative path => sha256 */
