@@ -49,6 +49,19 @@ describe('Canonical server paging navigation (#1608)', () => {
         expect(go).not.toHaveBeenCalled();
     });
 
+    it('does not claim visible rows when a server page is temporarily empty', () => {
+        const go = vi.fn();
+        const { rerender } = render(<LocaleProvider><Pagination page={2} lastPage={6} onPage={go}
+            total={137} pageSize={25} returnedCount={0} /></LocaleProvider>);
+        expect(screen.getByText('0–0 of 137')).toBeInTheDocument();
+        expect(screen.getByText('Page 2 of 6')).toBeInTheDocument();
+        expect(screen.queryByText('26–25 of 137')).not.toBeInTheDocument();
+
+        rerender(<LocaleProvider><Pagination page={2} lastPage={6} onPage={go}
+            total={137} pageSize={25} returnedCount={1000} /></LocaleProvider>);
+        expect(screen.getByText('26–50 of 137')).toBeInTheDocument();
+    });
+
     it('renders Arabic RTL labels, numbers and safe exploration navigation', () => {
         window.localStorage.setItem('aiwm.locale', 'ar');
         const onPage = vi.fn();
