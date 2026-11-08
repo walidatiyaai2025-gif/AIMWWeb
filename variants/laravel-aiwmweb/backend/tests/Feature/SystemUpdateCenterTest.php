@@ -190,7 +190,7 @@ final class SystemUpdateCenterTest extends TestCase
         Http::fake([$url => Http::response(str_repeat('X', 4097))]);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Release metadata download failed');
+        $this->expectExceptionMessage('Release metadata exceeds the allowed size.');
         (new \ReflectionMethod(SystemUpdateService::class, 'downloadSmall'))
             ->invoke(app(SystemUpdateService::class), $url, 4096);
     }
