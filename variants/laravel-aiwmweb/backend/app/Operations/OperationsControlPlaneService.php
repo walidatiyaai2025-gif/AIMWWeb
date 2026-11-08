@@ -219,8 +219,11 @@ final class OperationsControlPlaneService
     public function paginatedOperations(array $filters, int $actorUserId): array
     {
         $tenantId = $this->context->id();
-        $perPage = (int) ($filters['per_page'] ?? 25);
-        $requestedPage = (int) ($filters['page'] ?? 1);
+        // Internal callers bypass the HTTP validator: enforce the same bounded
+        // page sizes here to prevent zero divisors or unbounded database scans.
+        $candidateSize = (int) ($filters['per_page'] ?? 25);
+        $perPage = in_array($candidateSize, [10, 25, 50, 100], true) ? $candidateSize : 25;
+        $requestedPage = max(1, min(1000000, (int) ($filters['page'] ?? 1)));
         $query = DB::table('operation_executions')->where('tenant_id', $tenantId);
 
         if (filled($filters['status'] ?? null)) {
