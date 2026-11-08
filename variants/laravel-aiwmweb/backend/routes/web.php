@@ -473,7 +473,9 @@ Route::prefix('/tenants/{tenant}')
         Route::get('/execution-center', 'redirect')->defaults('workspace_permissions', 'operations.manage,execution.view')->defaults('workspace_target', '/module/execution')->name('canonical.alias.execution-center');
     });
 
-Route::middleware(['auth', 'tenant.context'])->get('/tenants/{tenant}/console', fn (string $tenant) => view('console', compact('tenant')));
+// The historical demo console exposed direct mutation controls outside the governed dashboard.
+// Fail closed instead of letting the SPA catch-all silently resurrect the page.
+Route::middleware(['auth', 'tenant.context'])->get('/tenants/{tenant}/console', fn () => abort(404));
 
 Route::middleware(['auth', 'tenant.context'])->get('/tenants/{tenant}/{path?}', function () {
     app(TenantAuthorizer::class)->authorize('tenant.view');

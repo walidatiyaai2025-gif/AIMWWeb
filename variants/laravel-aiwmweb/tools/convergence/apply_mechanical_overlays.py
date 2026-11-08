@@ -301,7 +301,9 @@ Route::middleware(['auth', 'tenant.context'])->prefix('/tenants/{tenant}/admin')
     Route::get('/reports/{report}', 'report');
 });
 
-Route::middleware(['auth', 'tenant.context'])->get('/tenants/{tenant}/console', fn (string $tenant) => view('console', compact('tenant')));
+// The historical demo console exposed direct mutation controls outside the governed dashboard.
+// Fail closed instead of letting the SPA catch-all silently resurrect the page.
+Route::middleware(['auth', 'tenant.context'])->get('/tenants/{tenant}/console', fn () => abort(404));
 
 // Frontend catch-all MUST remain after every tenant-specific backend route.
 Route::middleware(['auth', 'tenant.context'])->get('/tenants/{tenant}/{path?}', function () {
