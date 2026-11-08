@@ -88,7 +88,7 @@ describe('Sites disable-selected authoritative server pagination (#1608)', () =>
         const fetchMock = vi.fn();
         vi.stubGlobal('fetch', fetchMock);
         mount({ ...tenantContext, permissions: ['tenant.view', 'sites.view'] });
-        expect(screen.queryByRole('region', { name: 'Selected site operational state' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('region', { name: 'Disable selected sites' })).not.toBeInTheDocument();
         expect(fetchMock).not.toHaveBeenCalled();
     });
 });
