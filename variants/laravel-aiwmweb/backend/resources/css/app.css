@@ -929,3 +929,63 @@ body, button, input, textarea, select, option { font-family: var(--aiwm-google-f
     .content > .ai-center-resource-grid > [data-testid="ai-center-generate"] { grid-column: 1 / -1; }
     .ai-center-resource-grid [data-testid="ai-center-generate"] > .form-grid { grid-template-columns: minmax(0, 1fr); }
 }
+
+
+/* #1603 — WordPress HTML editor: prevent intrinsic iframe dimensions and
+   long HTML content from collapsing the preview to a narrow RTL column. */
+.content-editor-content-card,
+.content-editor-content-card > label,
+.content-editor-content-card .content-preview {
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+}
+.content-editor-content-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+}
+.content-editor-content-card .editor-card-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    min-width: 0;
+}
+.content-editor-content-card .editor-card-head > div { min-width: 0; }
+.content-editor-content-card textarea {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+.content-editor-content-card .content-preview {
+    display: block;
+    min-height: 380px;
+    overflow: hidden;
+    border-radius: var(--radius);
+    background: #fff;
+}
+.content-editor-content-card .content-preview-frame {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    height: clamp(380px, 65vh, 800px);
+    border: 0;
+    background: #fff;
+    box-sizing: border-box;
+}
+.content-editor-content-card .content-preview-empty {
+    display: grid;
+    place-items: center;
+    padding: 2rem;
+    text-align: center;
+}
+@media (max-width: 760px) {
+    .content-editor-content-card .content-preview-frame {
+        height: max(380px, 65vh);
+    }
+}
