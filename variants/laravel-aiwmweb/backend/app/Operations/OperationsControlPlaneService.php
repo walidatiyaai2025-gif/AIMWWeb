@@ -208,6 +208,100 @@ final class OperationsControlPlaneService
         return $query->orderByDesc('id')->limit(200)->get()->map(fn ($row) => $this->decodeColumns($this->objectToArray($row), ['payload', 'result']))->all();
     }
 
+    /**
+     * Opt-in, authoritative Execution Center collection; legacy operations()
+     * consumers retain their old bounded array response. No payloads, credentials
+     * or raw failure text are projected into the browser grid.
+     *
+     * @param  array<string, mixed>  $filters
+     * @return array<string, mixed>
+     */
+    public function paginatedOperations(array $filters, int $actorUserId): array
+    {
+        $tenantId = $this->context->id();
+        $perPage = (int) ($filters['per_page'] ?? 25);
+        $requestedPage = (int) ($filters['page'] ?? 1);
+        $query = DB::table('operation_executions')->where('tenant_id', $tenantId);
+
+        if (filled($filters['status'] ?? null)) {
+            $query->where('status', $filters['status']);
+        }
+        if (filled($filters['type'] ?? null)) {
+            $query->where('type', 'like', $filters['type'].'%');
+        }
+        if (filled($filters['date_from'] ?? null)) {
+            $query->whereDate('created_at', '>=', $filters['date_from']);
+        }
+        if (filled($filters['date_to'] ?? null)) {
+            $query->whereDate('created_at', '<=', $filters['date_to']);
+        }
+        if (filled($filters['search'] ?? null)) {
+            $search = (string) $filters['search'];
+            // Only the allowlisted identifier/type columns are searchable.
+            $query->where(function ($q) use ($search): void {
+                $q->where('type', 'like', '%'.$search.'%')
+                    ->orWhere('correlation_id', 'like', '%'.$search.'%');
+                if (ctype_digit($search) && strlen($search) <= 18) {
+                    $q->orWhere('id', (int) $search);
+                }
+            });
+        }
+
+        $total = (clone $query)->count();
+        $lastPage = max(1, (int) ceil($total / $perPage));
+        $page = min(max(1, $requestedPage), $lastPage);
+        $rows = $query->orderByDesc('id')->forPage($page, $perPage)->get([
+            'id', 'tenant_id', 'requested_by_user_id', 'type', 'status',
+            'correlation_id', 'progress', 'attempts', 'max_attempts',
+            'safe_to_cancel', 'created_at', 'updated_at', 'completed_at',
+        ])->map(function ($row) use ($tenantId, $actorUserId): array {
+            $owned = (int) $row->requested_by_user_id === $actorUserId;
+            $retrySupported = false;
+            if ($row->type === 'report.export') {
+                $retrySupported = DB::table('report_exports')->where('tenant_id', $tenantId)
+                    ->where('operation_execution_id', $row->id)->exists();
+            } elseif (str_starts_with((string) $row->type, 'sync.')) {
+                $retrySupported = app()->bound(SyncOperationsGateway::class);
+            }
+
+            $canCancel = $owned && (bool) $row->safe_to_cancel && in_array($row->status, ['queued', 'retrying'], true);
+            $canRetry = $owned && $retrySupported && in_array($row->status, ['failed', 'cancelled'], true)
+                && (int) $row->attempts < (int) $row->max_attempts;
+
+            return [
+                'id' => (int) $row->id,
+                'type' => (string) $row->type,
+                'status' => (string) $row->status,
+                'correlation_id' => (string) $row->correlation_id,
+                'progress' => (int) $row->progress,
+                'attempts' => (int) $row->attempts,
+                'max_attempts' => (int) $row->max_attempts,
+                'created_at' => $row->created_at,
+                'updated_at' => $row->updated_at,
+                'completed_at' => $row->completed_at,
+                'can_cancel' => $canCancel,
+                'can_retry' => $canRetry,
+            ];
+        })->all();
+
+        $tenantHasRecords = $total > 0;
+        if ($tenantHasRecords === false) {
+            $tenantHasRecords = DB::table('operation_executions')->where('tenant_id', $tenantId)->exists();
+        }
+
+        return [
+            'data' => $rows,
+            'total' => $total,
+            'current_page' => $page,
+            'last_page' => $lastPage,
+            'per_page' => $perPage,
+            'meta' => [
+                'scope' => 'tenant_operation_executions',
+                'empty_reason' => $tenantHasRecords ? 'filter_matched_none' : 'no_tenant_executions',
+            ],
+        ];
+    }
+
     public function operation(int $id): array
     {
         $operation = $this->row('operation_executions', $id);
@@ -218,48 +312,129 @@ final class OperationsControlPlaneService
 
     public function cancelOperation(int $id, int $actorUserId): array
     {
-        $operation = DB::table('operation_executions')->where('tenant_id', $this->context->id())->where('id', $id)->first();
-        if (! $operation) {
-            throw (new ModelNotFoundException)->setModel('operation_execution');
-        }
-        if (! $operation->safe_to_cancel || ! in_array($operation->status, ['queued', 'retrying'], true)) {
-            throw ValidationException::withMessages(['operation' => 'Operation can no longer be safely cancelled.']);
-        }
-        DB::table('operation_executions')->where('id', $id)->update(['status' => 'cancelled', 'completed_at' => now(), 'updated_at' => now()]);
-        $this->log((int) $operation->tenant_id, $id, (string) $operation->correlation_id, 'warning', 'Operation cancelled before unsafe mutation.', ['actor_user_id' => $actorUserId]);
-        $this->audit($actorUserId, 'operation.cancelled', 'operation_execution', $id, []);
+        $tenantId = $this->context->id();
 
-        return $this->row('operation_executions', $id);
+        return DB::transaction(function () use ($id, $actorUserId, $tenantId): array {
+            $operation = DB::table('operation_executions')
+                ->where('tenant_id', $tenantId)->where('id', $id)
+                ->where('requested_by_user_id', $actorUserId)
+                ->lockForUpdate()->first();
+
+            if ($operation === null) {
+                throw (new ModelNotFoundException)->setModel('operation_execution');
+            }
+            if ($operation->status === 'cancelled') {
+                return $this->row('operation_executions', $id);
+            }
+            if ($operation->safe_to_cancel === false || in_array($operation->status, ['queued', 'retrying'], true) === false) {
+                throw ValidationException::withMessages(['operation' => 'Operation can no longer be safely cancelled.']);
+            }
+
+            $updated = DB::table('operation_executions')
+                ->where('tenant_id', $tenantId)->where('id', $id)
+                ->where('requested_by_user_id', $actorUserId)
+                ->whereIn('status', ['queued', 'retrying'])
+                ->where('safe_to_cancel', true)
+                ->update(['status' => 'cancelled', 'completed_at' => now(), 'updated_at' => now()]);
+            if ($updated !== 1) {
+                throw ValidationException::withMessages(['operation' => 'Operation state changed; reload before cancelling.']);
+            }
+
+            $this->log($tenantId, $id, (string) $operation->correlation_id, 'warning', 'Operation cancelled before unsafe mutation.', ['actor_user_id' => $actorUserId]);
+            $this->audit($actorUserId, 'operation.cancelled', 'operation_execution', $id, []);
+
+            return $this->row('operation_executions', $id);
+        }, 3);
     }
 
     public function retryOperation(int $id, int $actorUserId): array
     {
-        $operation = DB::table('operation_executions')->where('tenant_id', $this->context->id())->where('id', $id)->first();
-        if (! $operation) {
-            throw (new ModelNotFoundException)->setModel('operation_execution');
-        }
-        if (! in_array($operation->status, ['failed', 'cancelled'], true) || $operation->attempts >= $operation->max_attempts) {
-            throw ValidationException::withMessages(['operation' => 'Operation is not retryable.']);
-        }
-        DB::table('operation_executions')->where('id', $id)->update(['status' => 'retrying', 'attempts' => $operation->attempts + 1, 'failure' => null, 'completed_at' => null, 'updated_at' => now()]);
-        $this->audit($actorUserId, 'operation.retry_requested', 'operation_execution', $id, ['type' => $operation->type]);
+        $tenantId = $this->context->id();
+        // Claim inside a database row lock; actual handlers run only AFTER commit.
+        $claim = DB::transaction(function () use ($id, $actorUserId, $tenantId): array {
+            $operation = DB::table('operation_executions')
+                ->where('tenant_id', $tenantId)->where('id', $id)
+                ->where('requested_by_user_id', $actorUserId)
+                ->lockForUpdate()->first();
 
-        if ($operation->type === 'report.export') {
-            $export = DB::table('report_exports')->where('tenant_id', $this->context->id())->where('operation_execution_id', $id)->first();
-            if ($export) {
-                GenerateReportExport::dispatch($this->context->id(), (int) $export->id);
+            if ($operation === null) {
+                throw (new ModelNotFoundException)->setModel('operation_execution');
             }
-        } elseif (str_starts_with((string) $operation->type, 'sync.') && app()->bound(SyncOperationsGateway::class)) {
-            try {
-                $result = app(SyncOperationsGateway::class)->retry($this->context->id(), $this->decodeColumns($this->objectToArray($operation), ['payload', 'result']));
-                DB::table('operation_executions')->where('id', $id)->update(['status' => 'running', 'result' => json_encode($this->redactor->redact($result), JSON_THROW_ON_ERROR), 'started_at' => now(), 'updated_at' => now()]);
-            } catch (Throwable $e) {
-                $this->failOperation($id, $e->getMessage());
+            if ($operation->status === 'retrying') {
+                return ['already_requested' => true, 'type' => (string) $operation->type, 'export_id' => null];
             }
-        } else {
-            $this->failOperation($id, 'Retry handler capability is not integrated for this operation type.');
+            $retryableState = in_array($operation->status, ['failed', 'cancelled'], true);
+            $hasRetryBudget = (int) $operation->attempts < (int) $operation->max_attempts;
+            if ($retryableState === false || $hasRetryBudget === false) {
+                throw ValidationException::withMessages(['operation' => 'Operation is not retryable.']);
+            }
+
+            $exportId = null;
+            if ($operation->type === 'report.export') {
+                $exportId = DB::table('report_exports')
+                    ->where('tenant_id', $tenantId)->where('operation_execution_id', $id)->value('id');
+                if ($exportId === null) {
+                    throw ValidationException::withMessages(['operation' => 'The report export retry target is unavailable.']);
+                }
+            } elseif (str_starts_with((string) $operation->type, 'sync.') === false || app()->bound(SyncOperationsGateway::class) === false) {
+                throw ValidationException::withMessages(['operation' => 'Retry is unsupported for this operation type.']);
+            }
+
+            $updated = DB::table('operation_executions')
+                ->where('tenant_id', $tenantId)->where('id', $id)
+                ->where('requested_by_user_id', $actorUserId)
+                ->whereIn('status', ['failed', 'cancelled'])
+                ->where('attempts', '<', (int) $operation->max_attempts)
+                ->update([
+                    'status' => 'retrying',
+                    'attempts' => (int) $operation->attempts + 1,
+                    // Sync gateways can perform immediate external writes after claim.
+                    // Do not advertise cancellation once that dispatch begins.
+                    'safe_to_cancel' => $operation->type === 'report.export',
+                    'failure' => null,
+                    'completed_at' => null,
+                    'updated_at' => now(),
+                ]);
+            if ($updated !== 1) {
+                throw ValidationException::withMessages(['operation' => 'Operation state changed; reload before retrying.']);
+            }
+
+            $this->audit($actorUserId, 'operation.retry_requested', 'operation_execution', $id, ['type' => $operation->type]);
+
+            return [
+                'already_requested' => false,
+                'type' => (string) $operation->type,
+                'export_id' => $exportId ? (int) $exportId : null,
+                'operation' => $this->decodeColumns($this->objectToArray($operation), ['payload', 'result']),
+            ];
+        }, 3);
+
+        if ($claim['already_requested'] === false) {
+            if ($claim['type'] === 'report.export') {
+                try {
+                    GenerateReportExport::dispatch($tenantId, $claim['export_id']);
+                } catch (Throwable) {
+                    $this->failOperation($id, 'Report retry dispatch failed; inspect restricted operation logs.');
+                }
+            } else {
+                try {
+                    $result = app(SyncOperationsGateway::class)->retry($tenantId, $claim['operation']);
+                    DB::table('operation_executions')
+                        ->where('tenant_id', $tenantId)->where('id', $id)
+                        ->where('status', 'retrying')
+                        ->update([
+                            'status' => 'running',
+                            'result' => json_encode($this->redactor->redact($result), JSON_THROW_ON_ERROR),
+                            'started_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                } catch (Throwable) {
+                    $this->failOperation($id, 'Sync retry failed; inspect restricted operation logs.');
+                }
+            }
         }
 
+        // Authoritative read-after-write. Duplicate requests never dispatch twice.
         return $this->row('operation_executions', $id);
     }
 
