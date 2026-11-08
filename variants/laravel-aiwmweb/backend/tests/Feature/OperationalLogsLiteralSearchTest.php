@@ -78,6 +78,41 @@ final class OperationalLogsLiteralSearchTest extends TestCase
             ->assertJsonPath('data.0.id', $alphaId);
     }
 
+    public function test_legacy_context_string_values_mask_credentials_without_changing_persisted_evidence(): void
+    {
+        [$alpha, $actor] = $this->member('alpha');
+        [$beta] = $this->member('beta');
+        $id = $this->log($alpha, 'legacy nested credential event');
+        $this->log($beta, 'foreign tenant credential event');
+        $context = [
+            'detail' => 'Sync failed Authorization: Bearer LEGACY_DETAIL_CANARY retry queued',
+            'nested' => [
+                'trace' => 'X-API-Key: LEGACY_HEADER_CANARY',
+                'safe' => 'process completed normally',
+                'json' => '{"api_key":"LEGACY_JSON_CANARY","status":"retry"}',
+            ],
+            'password' => 'LEGACY_PASSWORD_CANARY',
+        ];
+        DB::table('operation_logs')->where('id', $id)->update([
+            'context' => json_encode($context, JSON_THROW_ON_ERROR),
+        ]);
+
+        $response = $this->actingAs($actor)
+            ->getJson('/tenants/alpha/admin/logs?q=legacy')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.context.detail', 'Sync failed Authorization: Bearer [REDACTED] retry queued')
+            ->assertJsonPath('data.0.context.nested.trace', 'X-API-Key: [REDACTED]')
+            ->assertJsonPath('data.0.context.nested.json', '{"api_key":"[REDACTED]","status":"retry"}')
+            ->assertJsonPath('data.0.context.nested.safe', 'process completed normally')
+            ->assertJsonPath('data.0.context.password', '[REDACTED]');
+
+        foreach (['LEGACY_DETAIL_CANARY', 'LEGACY_HEADER_CANARY', 'LEGACY_JSON_CANARY', 'LEGACY_PASSWORD_CANARY', 'foreign tenant credential event'] as $secret) {
+            $this->assertStringNotContainsString($secret, $response->getContent());
+        }
+        $this->assertSame($context, json_decode((string) DB::table('operation_logs')->where('id', $id)->value('context'), true, 512, JSON_THROW_ON_ERROR));
+    }
+
     public function test_legacy_persisted_context_secrets_are_masked_at_read_time(): void
     {
         [$alpha, $actor] = $this->member('alpha');
