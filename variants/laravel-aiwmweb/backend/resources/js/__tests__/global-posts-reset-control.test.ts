@@ -24,6 +24,22 @@ describe('Global Posts ResetAsync / #944', () => {
         expect(widget).toContain('setSelected(new Set())');
         expect(widget).toContain('queryClient.invalidateQueries');
         expect(widget).toContain("locale === 'ar' ? 'إعادة ضبط' : 'Reset'");
-        expect(widget).toContain('globalPostsFilterQuery(filters)');
+        expect(widget).toContain('globalPostsFilterQuery(filters, page)');
+        expect(widget).toContain('setPage(1)');
+        expect(widget).toContain('setConfirmOpen(false)');
+    });
+    it('uses bounded server pages, never losing the tenant filter or inventing a grand total', () => {
+        const filters = { search: 'alpha & beta', status: 'publish', perPage: 10 };
+        expect(globalPostsFilterQuery(filters, 2)).toBe('page=2&per_page=10&status=publish&search=alpha+%26+beta');
+        expect(globalPostsFilterQuery(filters, Number.MAX_SAFE_INTEGER)).toContain('page=1');
+        expect(globalPostsFilterQuery(filters, 0)).toContain('page=1');
+        expect(globalPostsFilterQuery(filters, 1000000)).toContain('page=1000000');
+
+        const widget = readFileSync('resources/js/global-posts-confirm-trash-widget.tsx', 'utf8');
+        expect(widget).toContain('hasAuthoritativePage');
+        expect(widget).toContain('lastPage={pageMeta!.last_page}');
+        expect(widget).toContain('setPage(next)');
+        expect(widget).toContain('setSelected(new Set())');
+        expect(widget).toContain('setConfirmOpen(false)');
     });
 });
