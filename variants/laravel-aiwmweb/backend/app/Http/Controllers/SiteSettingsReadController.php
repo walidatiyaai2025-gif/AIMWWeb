@@ -46,6 +46,7 @@ final class SiteSettingsReadController extends Controller
             'credential' => $credential,
             'canManageCredential' => $canManageSite,
             'canManageSite' => $canManageSite,
+            'canManageTenantSettings' => $membership->hasPermission('settings.manage'),
             'canViewEmailHistory' => $canViewEmailHistory,
         ]);
     }

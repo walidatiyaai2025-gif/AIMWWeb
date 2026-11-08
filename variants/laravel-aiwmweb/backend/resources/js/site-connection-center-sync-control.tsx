@@ -63,6 +63,7 @@ type SyncRun = { id: number; status: string; processed?: number; failure?: strin
 
 export type SiteConnectionCenterDynamicLinks = {
     dashboard: string;
+    siteSettings: string;
     applicationPassword: string | null;
     localContent: string;
     execution: string;
@@ -95,6 +96,7 @@ export function siteConnectionCenterDynamicLinks(
 
     return {
         dashboard: tenantUrl(tenantSlug, `/sites/${encodedSiteId}`),
+        siteSettings: tenantUrl(tenantSlug, `/sites/${encodedSiteId}/settings`),
         applicationPassword,
         localContent: `${tenantUrl(tenantSlug, '/explorer')}?site=${encodedSiteId}`,
         execution: `${tenantUrl(tenantSlug, '/module/execution')}?siteId=${encodedSiteId}`,
@@ -466,6 +468,9 @@ export function SiteConnectionCenterSyncControl({ context }: { context: Frontend
                     <div className="workspace-grid">
                         <a href={dynamicLinks.dashboard} data-testid="site-connection-dashboard-link">
                             <strong>{locale === 'ar' ? 'لوحة الموقع' : 'Site dashboard'}</strong>
+                        </a>
+                        <a href={dynamicLinks.siteSettings} data-testid="site-connection-settings-link">
+                            <strong>{locale === 'ar' ? 'إعدادات الموقع وبيانات الربط' : 'Site settings and credentials'}</strong>
                         </a>
                         {dynamicLinks.applicationPassword ? (
                             <a

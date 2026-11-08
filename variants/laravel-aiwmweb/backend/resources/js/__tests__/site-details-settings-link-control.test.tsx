@@ -43,7 +43,8 @@ describe('AIMW-AI-2B31C6BDAF Site Details interpolated settings navigation', () 
         renderControl();
 
         const link = screen.getByRole('link', { name: /site settings/i });
-        expect(link).toHaveAttribute('href', '/tenants/alpha/settings?site=17');
+        expect(link).toHaveAttribute('href', '/tenants/alpha/sites/17/settings');
+        expect(screen.queryByRole('link', { name: 'Tenant settings' })).not.toBeInTheDocument();
         expect(link.closest('section')).toHaveAttribute(
             'data-canonical-operation',
             SITE_DETAILS_SETTINGS_LINK_OPERATION_ID,
@@ -51,9 +52,17 @@ describe('AIMW-AI-2B31C6BDAF Site Details interpolated settings navigation', () 
         expect(SITE_DETAILS_SETTINGS_LINK_OPERATION_ID).toBe('AIMW-AI-2B31C6BDAF');
     });
 
+    it('exposes global tenant settings only to authorized settings managers, separate from site settings', () => {
+        renderControl(context('alpha', ['tenant.view', 'sites.view', 'settings.manage']));
+        expect(screen.getByRole('link', { name: /site settings/i }))
+            .toHaveAttribute('href', '/tenants/alpha/sites/17/settings');
+        expect(screen.getByRole('link', { name: 'Tenant settings' }))
+            .toHaveAttribute('href', '/tenants/alpha/settings');
+    });
+
     it('derives tenant ownership only from active context and encodes the tenant slug', () => {
         expect(siteDetailsSettingsHref('tenant with space', '17'))
-            .toBe('/tenants/tenant%20with%20space/settings?site=17');
+            .toBe('/tenants/tenant%20with%20space/sites/17/settings');
     });
 
     it('fails closed for malformed or non-positive site route identifiers', () => {
