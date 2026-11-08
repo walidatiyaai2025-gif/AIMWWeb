@@ -33,7 +33,7 @@ export function readExecutionUrlState(): ExecutionUrlState {
     const status = params.get('status') ?? '';
 
     return {
-        page: Number.isSafeInteger(page) && page > 0 ? page : DEFAULTS.page,
+        page: Number.isSafeInteger(page) && page > 0 && page <= 1000000 ? page : DEFAULTS.page,
         pageSize: EXECUTION_PAGE_SIZES.includes(size as typeof EXECUTION_PAGE_SIZES[number])
             ? size : DEFAULTS.pageSize,
         search: bounded('search', 120, /^[a-zA-Z0-9 .:_-]*$/),

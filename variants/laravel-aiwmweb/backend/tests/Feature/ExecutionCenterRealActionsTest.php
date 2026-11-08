@@ -8,6 +8,7 @@ use App\Models\Role;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
+use App\Operations\OperationsControlPlaneService;
 use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -59,6 +60,38 @@ final class ExecutionCenterRealActionsTest extends TestCase
         // Existing integration consumers keep their legacy response contract.
         $this->actingAs($owner->user)->getJson('/tenants/alpha/admin/operations')
             ->assertOk()->assertJsonCount(27, 'data');
+    }
+
+    public function test_direct_execution_pagination_service_enforces_safe_page_limits(): void
+    {
+        [$tenant, $owner] = $this->tenantWithOwner('bounded-alpha');
+        [, $foreign] = $this->tenantWithOwner('bounded-beta');
+        app(TenantContext::class)->activate($tenant, $owner);
+        $service = app(OperationsControlPlaneService::class);
+        for ($i = 0; $i < 27; $i++) {
+            $this->execution($tenant, $owner->user_id, 'failed', 'report.export');
+        }
+        $this->execution(
+            Tenant::query()->withoutGlobalScopes()->findOrFail($foreign->tenant_id),
+            $foreign->user_id, 'queued', 'sync.foreign'
+        );
+
+        foreach ([0, -5, 101, PHP_INT_MAX] as $badSize) {
+            $page = $service->paginatedOperations(['page' => 1, 'per_page' => $badSize], $owner->user_id);
+            $this->assertSame(25, $page['per_page']);
+            $this->assertSame(27, $page['total']);
+            $this->assertCount(25, $page['data']);
+        }
+        $first = $service->paginatedOperations(['page' => -4, 'per_page' => 10], $owner->user_id);
+        $this->assertSame(1, $first['current_page']);
+        $this->assertCount(10, $first['data']);
+        $last = $service->paginatedOperations(['page' => PHP_INT_MAX, 'per_page' => 10], $owner->user_id);
+        $this->assertSame(3, $last['current_page']);
+        $this->assertCount(7, $last['data']);
+        $this->assertSame(27, $last['total']);
+        foreach ([10, 25, 50, 100] as $supported) {
+            $this->assertSame($supported, $service->paginatedOperations(['per_page' => $supported], $owner->user_id)['per_page']);
+        }
     }
 
     public function test_cancel_requires_owner_state_and_is_idempotent_with_one_audit_event(): void
