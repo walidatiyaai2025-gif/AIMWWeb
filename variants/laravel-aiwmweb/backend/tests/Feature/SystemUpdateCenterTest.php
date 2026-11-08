@@ -751,8 +751,7 @@ final class SystemUpdateCenterTest extends TestCase
                 'assets' => $assets,
             ]),
             $base.'AIWMWeb-Laravel-release.json' => Http::response('Temporary error', 503),
-            'https://api.github.com/repos/walidatiyaai2025-gif/AIMWWeb/releases/assets/987654' =>
-                Http::response(['id' => 987654, 'name' => 'AIWMWeb-Laravel-release.json']),
+            'https://api.github.com/repos/walidatiyaai2025-gif/AIMWWeb/releases/assets/987654' => Http::response(['id' => 987654, 'name' => 'AIWMWeb-Laravel-release.json']),
         ]);
 
         $this->expectException(RuntimeException::class);
