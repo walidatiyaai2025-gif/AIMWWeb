@@ -7,6 +7,7 @@ use App\Models\Role;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
+use App\Operations\OperationsControlPlaneService;
 use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -431,7 +432,7 @@ final class OperationalLogsLiteralSearchTest extends TestCase
         }
 
         app(TenantContext::class)->activate($alpha);
-        $service = app(\App\Operations\OperationsControlPlaneService::class);
+        $service = app(OperationsControlPlaneService::class);
         foreach ([0, -1, 101, PHP_INT_MAX] as $invalidSize) {
             $response = $service->logsWithEvidence([], 1, $invalidSize);
             $this->assertSame(25, $response['per_page']);
