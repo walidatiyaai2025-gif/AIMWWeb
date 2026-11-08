@@ -194,7 +194,7 @@ final class SystemUpdateCenterTest extends TestCase
         Http::assertSentCount(1);
     }
 
-    public function test_latest_release_feed_retries_transient_503_but_not_permanent_404(): void
+    public function test_latest_release_feed_retries_transient_503_without_trusting_unsigned_assets(): void
     {
         $keys = sodium_crypto_sign_keypair();
         config()->set('system_updates.enabled', true);
@@ -211,7 +211,14 @@ final class SystemUpdateCenterTest extends TestCase
             $this->assertStringContainsString('missing a required signed artifact', $e->getMessage());
         }
         Http::assertSentCount(2);
+    }
 
+    public function test_latest_release_feed_never_retries_http_404(): void
+    {
+        $keys = sodium_crypto_sign_keypair();
+        config()->set('system_updates.enabled', true);
+        config()->set('system_updates.public_key', base64_encode(sodium_crypto_sign_publickey($keys)));
+        $feed = 'https://api.github.com/repos/walidatiyaai2025-gif/AIMWWeb/releases/latest';
         Http::fake([$feed => Http::sequence()->push('not found', 404)->push('untrusted', 200)]);
         try {
             app(SystemUpdateService::class)->latest();
