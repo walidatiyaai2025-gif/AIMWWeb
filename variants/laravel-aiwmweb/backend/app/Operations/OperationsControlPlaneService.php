@@ -213,7 +213,7 @@ final class OperationsControlPlaneService
      * consumers retain their old bounded array response. No payloads, credentials
      * or raw failure text are projected into the browser grid.
      *
-     * @param array<string, mixed> $filters
+     * @param  array<string, mixed>  $filters
      * @return array<string, mixed>
      */
     public function paginatedOperations(array $filters, int $actorUserId): array
