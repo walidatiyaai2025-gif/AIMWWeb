@@ -146,6 +146,30 @@ final class SiteDetailsSynchronizeTerminalityTest extends TestCase
                 'Provider failure refresh_token=REFRESH_TOKEN_CANARY and access_token=ACCESS_TOKEN_CANARY',
                 ['REFRESH_TOKEN_CANARY', 'ACCESS_TOKEN_CANARY'],
             ],
+            [
+                'Connector failed {"apiKey":"CAMEL_API_KEY_CANARY","debug":"AFTER_CAMEL_CANARY"}',
+                ['CAMEL_API_KEY_CANARY', 'AFTER_CAMEL_CANARY'],
+            ],
+            [
+                "Connector failed ['clientSecret' => 'CAMEL_CLIENT_SECRET_CANARY', 'trace' => 'AFTER_CAMEL_PHP_CANARY']",
+                ['CAMEL_CLIENT_SECRET_CANARY', 'AFTER_CAMEL_PHP_CANARY'],
+            ],
+            [
+                'SDK refreshAccess accessToken=CAMEL_ACCESS_CANARY refreshToken=CAMEL_REFRESH_CANARY',
+                ['CAMEL_ACCESS_CANARY', 'CAMEL_REFRESH_CANARY'],
+            ],
+            [
+                'Database dbPassword=CAMEL_DB_CANARY and authToken=CAMEL_AUTH_CANARY',
+                ['CAMEL_DB_CANARY', 'CAMEL_AUTH_CANARY'],
+            ],
+            [
+                'Signing secretKey=CAMEL_SIGNING_CANARY and sharedSecret=CAMEL_SHARED_CANARY',
+                ['CAMEL_SIGNING_CANARY', 'CAMEL_SHARED_CANARY'],
+            ],
+            [
+                'Session sessionToken=CAMEL_SESSION_CANARY',
+                ['CAMEL_SESSION_CANARY'],
+            ],
         ];
 
         foreach ($cases as [$raw, $secrets]) {
@@ -171,7 +195,7 @@ final class SiteDetailsSynchronizeTerminalityTest extends TestCase
         $run = SyncRun::query()->create([
             'site_id' => $site->id,
             'status' => 'failed',
-            'failure' => 'RuntimeException: invalid_protocol {"token":"ROUTE_TOKEN_CANARY","trace":"ROUTE_TRACE_CANARY"}',
+            'failure' => 'RuntimeException: invalid_protocol {"apiKey":"ROUTE_TOKEN_CANARY","trace":"ROUTE_TRACE_CANARY"}',
             'completed_at' => now(),
         ]);
         app(TenantContext::class)->forget();
@@ -179,7 +203,7 @@ final class SiteDetailsSynchronizeTerminalityTest extends TestCase
         $this->actingAs($manager)->getJson("/api/tenants/alpha/sync-runs/{$run->id}")
             ->assertOk()
             ->assertJsonPath('diagnostic_code', 'WORDPRESS_SYNC_FAILED')
-            ->assertJsonPath('failure', 'RuntimeException: invalid_protocol {token=[REDACTED]')
+            ->assertJsonPath('failure', 'RuntimeException: invalid_protocol {apiKey=[REDACTED]')
             ->assertDontSee('ROUTE_TOKEN_CANARY')
             ->assertDontSee('ROUTE_TRACE_CANARY');
 
