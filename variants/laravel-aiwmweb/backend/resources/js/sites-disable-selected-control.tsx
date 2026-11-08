@@ -1,28 +1,36 @@
 import React, { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ApiError, apiRequest, type FrontendContext } from './core';
+import { Pagination } from './components';
 import { useLocale } from './i18n';
 
 export const SITES_DISABLE_SELECTED_OPERATION_ID = 'AIMW-SYNC-45A3B43BB9';
 type SiteRow = { id: number; name: string; connection_status?: string };
+type SitePage = { data: SiteRow[]; total: number; current_page: number; last_page: number; per_page: number };
 type Result = { requested: number; updated: number; connection_status: string; ids: number[] };
 
 export function SitesDisableSelectedControl({ context }: { context: FrontendContext }) {
     const { locale } = useLocale();
     const queryClient = useQueryClient();
     const [selected, setSelected] = useState<Set<number>>(new Set());
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(25);
     const [message, setMessage] = useState<{ role: 'status' | 'alert'; text: string } | null>(null);
     const collection = `/api/tenants/${encodeURIComponent(context.tenant.slug)}/sites`;
     const authorized = context.api.sites === collection
         && (context.permissions.includes('*') || context.permissions.includes('sites.view'))
         && (context.permissions.includes('*') || context.permissions.includes('sites.manage'));
     const query = useQuery({
-        queryKey: ['sites-disable-selected', context.tenant.slug],
-        queryFn: () => apiRequest<SiteRow[]>(collection),
+        queryKey: ['sites-disable-selected', context.tenant.slug, page, pageSize],
+        queryFn: () => apiRequest<SitePage>(`${collection}?page=${page}&per_page=${pageSize}`),
         enabled: authorized, retry: false,
     });
-    const sites = useMemo(() => Array.isArray(query.data) ? query.data : [], [query.data]);
+    const sites = useMemo(() => Array.isArray(query.data?.data) ? query.data.data : [], [query.data]);
+    // Never send an ID from a previous page into a bulk mutation.
     const selectedIds = Array.from(selected).filter(id => sites.some(site => site.id === id)).slice(0, 100);
+    const currentPage = Number.isSafeInteger(query.data?.current_page) ? query.data!.current_page : page;
+    const lastPage = Number.isSafeInteger(query.data?.last_page) ? Math.max(1, query.data!.last_page) : 1;
+    const total = Number.isSafeInteger(query.data?.total) ? query.data!.total : undefined;
     const disable = useMutation({
         mutationFn: async (ids: number[]) => {
             if (!authorized || !ids.length) throw new Error('No authorized selected sites.');
@@ -30,10 +38,10 @@ export function SitesDisableSelectedControl({ context }: { context: FrontendCont
                 method: 'POST', body: JSON.stringify({ ids }),
             });
             const refreshed = await query.refetch();
-            if (refreshed.error || !Array.isArray(refreshed.data)) {
+            if (refreshed.error || !Array.isArray(refreshed.data?.data)) {
                 throw new Error('Sites may be disabled, but the authoritative reread failed.');
             }
-            if (!ids.every(id => refreshed.data!.some(site => site.id === id && site.connection_status === 'disabled'))) {
+            if (!ids.every(id => refreshed.data!.data.some(site => site.id === id && site.connection_status === 'disabled'))) {
                 throw new Error('Authoritative site state does not confirm selected-site disable.');
             }
             return result;
@@ -48,6 +56,10 @@ export function SitesDisableSelectedControl({ context }: { context: FrontendCont
             ? error.message : 'Failed to disable selected sites.' }),
     });
     if (!authorized) return null;
+    const changePage = (next: number) => {
+        if (disable.isPending) return;
+        setSelected(new Set()); setMessage(null); setPage(next);
+    };
     const toggle = (id: number) => {
         if (disable.isPending) return;
         setSelected(current => {
@@ -88,6 +100,12 @@ export function SitesDisableSelectedControl({ context }: { context: FrontendCont
                     </tr>)}</tbody>
                 </table>
             </div>
+            <Pagination page={currentPage} lastPage={lastPage} onPage={changePage}
+                total={total} pageSize={pageSize} returnedCount={sites.length}
+                onPageSizeChange={(size) => {
+                    if (disable.isPending) return;
+                    setSelected(new Set()); setMessage(null); setPage(1); setPageSize(size);
+                }} />
         </> : (!query.isLoading && !query.error ? <p>No sites available.</p> : null)}
     </section>;
 }
