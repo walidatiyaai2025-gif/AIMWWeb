@@ -623,6 +623,12 @@ final class SystemUpdateService
         }
 
         $value = trim($retryAfter);
+        // Laravel's response->header() yields an empty string for no header.
+        // That is not an explicit rate-limit instruction.
+        if ($value === '') {
+            return true;
+        }
+
         if (preg_match('/^[0-9]{1,8}$/D', $value) === 1) {
             return (int) $value === 0;
         }
