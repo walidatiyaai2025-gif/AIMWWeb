@@ -43,8 +43,8 @@ jobs:
           git diff --name-only "$BASE_SHA" "$HEAD_SHA" > /tmp/changed-files.txt
           cat /tmp/changed-files.txt
 
-          if ! [[ "$HEAD_REF" =~ ^(worker|recovery|feat|fix|test|release|chore|docs|closure|lead|governance)/ ]]; then
-            echo "::error title=Invalid branch name::Use an issue-scoped branch prefix: worker/, recovery/, feat/, fix/, test/, release/, chore/, docs/, closure/, or lead/."
+          if ! [[ "$HEAD_REF" =~ ^(worker|recovery|feat|fix|test|release|chore|docs|closure|lead|governance|task)/ ]]; then
+            echo "::error title=Invalid branch name::Use an issue-scoped branch prefix: worker/, recovery/, feat/, fix/, test/, release/, chore/, docs/, closure/, lead/, governance/, or task/."
             exit 1
           fi
 
