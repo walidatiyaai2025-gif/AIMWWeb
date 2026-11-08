@@ -511,7 +511,7 @@ final class SystemUpdateService
                 if ($attempt === $attempts) {
                     break;
                 }
-                $this->metadataRetryDelay($attempt, $deadline);
+                // No synchronous sleeps inside cPanel request handlers.
                 continue;
             }
 
@@ -532,23 +532,9 @@ final class SystemUpdateService
             if (! in_array($response->status(), [408, 429, 500, 502, 503, 504], true)) {
                 throw new RuntimeException('Release metadata download failed (HTTP '.$response->status().').');
             }
-            if ($attempt < $attempts) {
-                $this->metadataRetryDelay($attempt, $deadline);
-            }
         }
 
         throw new RuntimeException('GitHub release metadata is temporarily unavailable. Retry later or upload a signed update ZIP.');
-    }
-
-    private function metadataRetryDelay(int $attempt, float $deadline): void
-    {
-        // A short bounded exponential backoff keeps repeated requests from
-        // overwhelming cPanel workers and never exceeds the overall budget.
-        $remainingMs = (int) max(0, ($deadline - microtime(true) - 2) * 1000);
-        $delayMs = min($remainingMs, 250 * (2 ** ($attempt - 1)));
-        if ($delayMs > 0) {
-            usleep($delayMs * 1000);
-        }
     }
 
     /** @return array<string, string> verified relative path => sha256 */
