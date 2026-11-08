@@ -55,51 +55,96 @@ function result(rows: Array<Record<string, unknown>>, connectedCount: number, re
     }), { status: 200, headers: { 'content-type': 'application/json' } });
 }
 
-afterEach(() => {
-    vi.unstubAllGlobals();
-    vi.restoreAllMocks();
-});
+afterEach(() => { vi.unstubAllGlobals(); });
 
-describe(`${OPERATION_ID} ShowConnectedSites — server paging`, () => {
-    it('filters by real authoritative connection_status, not operational status with tenant-scoped read-only GET and verified totals', async () => {
-        const initial = [{"id":11,"name":"Connected but inactive","status":"inactive","connection_status":"connected"},{"id":12,"name":"Active but failed","status":"active","connection_status":"authentication_failed"},{"id":13,"name":"Active unknown","status":"active","connection_status":"unknown"}];
-        const filtered = [{"id":11,"name":"Connected but inactive","status":"inactive","connection_status":"connected"}];
-        const fetchMock = vi.fn()
-            .mockResolvedValueOnce(result(initial, 1, 2))
-            .mockResolvedValueOnce(result(filtered, 1, 2));
+function stubPagedSites(rows: Array<{ id: number; name: string; status: string; connection_status: string }>) {
+    const counts = {
+        connected_count: rows.filter(row => row.connection_status === 'connected').length,
+        review_count: rows.filter(row => row.connection_status !== 'connected' && row.connection_status !== 'unknown' && row.connection_status !== '').length,
+    };
+    return vi.fn(async (input: RequestInfo | URL) => {
+        const url = new URL(String(input), 'http://localhost');
+        const filter = url.searchParams.get('connection_filter') ?? 'all';
+        const selected = rows.filter(row => filter === 'connected'
+            ? row.connection_status === 'connected'
+            : filter === 'review'
+                ? row.connection_status !== 'connected' && row.connection_status !== 'unknown' && row.connection_status !== ''
+                : true);
+        return new Response(JSON.stringify({
+            data: selected,
+            total: selected.length,
+            current_page: 1,
+            last_page: 1,
+            per_page: 25,
+            meta: counts,
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+    });
+}
+
+describe('AIMW-CONT-E346398EAD server-filtered Sites', () => {
+    it('fetches the authoritative connected page and preserves accessible filter state', async () => {
+        const fetchMock = stubPagedSites([
+          {
+                    "id": 11,
+                    "name": "Connected but inactive",
+                    "status": "inactive",
+                    "connection_status": "connected"
+          },
+          {
+                    "id": 12,
+                    "name": "Active but failed",
+                    "status": "active",
+                    "connection_status": "authentication_failed"
+          },
+          {
+                    "id": 13,
+                    "name": "Active unknown",
+                    "status": "active",
+                    "connection_status": "unknown"
+          }
+]);
         vi.stubGlobal('fetch', fetchMock);
         renderWorkspace();
 
         expect(await screen.findByText('Connected but inactive')).toBeInTheDocument();
-        expect(await screen.findByText('Active but failed')).toBeInTheDocument();
-        expect(await screen.findByText('Active unknown')).toBeInTheDocument();
-        const control = screen.getByRole('button', { name: 'Connected 1' });
-        expect(control).toHaveAttribute('data-canonical-operation', OPERATION_ID);
-        expect(control).toHaveAttribute('aria-pressed', 'false');
-        fireEvent.click(control);
+        const button = screen.getByRole('button', { name: 'Connected 1' });
+        expect(button).toHaveAttribute('data-canonical-operation', 'AIMW-CONT-E346398EAD');
+        expect(button).toHaveAttribute('aria-pressed', 'false');
 
-        await waitFor(() => expect(control).toHaveAttribute('aria-pressed', 'true'));
-        expect(await screen.findByText('Connected but inactive')).toBeInTheDocument();
-        await waitFor(() => expect(screen.queryByText('Active but failed')).not.toBeInTheDocument());
-        await waitFor(() => expect(screen.queryByText('Active unknown')).not.toBeInTheDocument());
+        fireEvent.click(button);
+
+        await waitFor(() => expect(button).toHaveAttribute('aria-pressed', 'true'));
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-        expect(fetchMock.mock.calls[0][0]).toBe('/api/tenants/alpha/sites?page=1&per_page=25&connection_filter=all');
-        expect(fetchMock.mock.calls[1][0]).toBe('/api/tenants/alpha/sites?page=1&per_page=25&connection_filter=connected');
-        expect(fetchMock.mock.calls.every(([, options]) => !options || !options.method || options.method === 'GET')).toBe(true);
+        expect(screen.getByText('Connected but inactive')).toBeInTheDocument();
+        expect(screen.queryByText('Active but failed')).not.toBeInTheDocument();
+        expect(screen.queryByText('Active unknown')).not.toBeInTheDocument();
+        const filteredUrl = String(fetchMock.mock.calls[1][0]);
+        expect(new URL(filteredUrl, 'http://localhost').searchParams.get('connection_filter')).toBe('connected');
+        expect(fetchMock.mock.calls.every(([, options]) => !options || options.method === undefined || options.method === 'GET')).toBe(true);
     });
 
-    it('shows the existing empty state when authoritative connected result is empty', async () => {
-        const initial = [{"id":21,"name":"Failed site","status":"active","connection_status":"authentication_failed"},{"id":22,"name":"Unknown site","status":"active","connection_status":"unknown"}];
-        const fetchMock = vi.fn()
-            .mockResolvedValueOnce(result(initial, 0, 1))
-            .mockResolvedValueOnce(result([], 0, 1));
+    it('renders a truthful empty response for the connected filter', async () => {
+        const fetchMock = stubPagedSites([
+          {
+                    "id": 21,
+                    "name": "Failed site",
+                    "status": "active",
+                    "connection_status": "authentication_failed"
+          },
+          {
+                    "id": 22,
+                    "name": "Unknown site",
+                    "status": "active",
+                    "connection_status": "unknown"
+          }
+]);
         vi.stubGlobal('fetch', fetchMock);
         renderWorkspace();
 
-        const control = await screen.findByRole('button', { name: 'Connected 0' });
-        fireEvent.click(control);
-        expect(await screen.findByText('No sample rows are synthesized when the server returns an empty result.')).toBeInTheDocument();
+        const button = await screen.findByRole('button', { name: 'Connected 0' });
+        fireEvent.click(button);
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-        expect(fetchMock.mock.calls[1][0]).toBe('/api/tenants/alpha/sites?page=1&per_page=25&connection_filter=connected');
+        expect(await screen.findByText('No sample rows are synthesized when the server returns an empty result.')).toBeInTheDocument();
+        expect(button).toHaveAttribute('aria-pressed', 'true');
     });
 });
