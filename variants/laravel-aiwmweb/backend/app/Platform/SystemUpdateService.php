@@ -6,6 +6,9 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
+use Illuminate\Http\Client\PendingRequest;
 use RuntimeException;
 use Throwable;
 use ZipArchive;
@@ -47,7 +50,11 @@ final class SystemUpdateService
     public function latest(): array
     {
         $this->assertReady();
-        $release = Http::acceptJson()->timeout(12)->get(self::RELEASE_API);
+        try {
+            $release = $this->releaseMetadataRequest()->acceptJson()->get(self::RELEASE_API);
+        } catch (ConnectionException) {
+            throw new RuntimeException('Approved GitHub release feed timed out or failed; retry later.');
+        }
 
         if (! $release->successful()) {
             throw new RuntimeException('Approved GitHub release feed is unavailable.');
@@ -467,9 +474,35 @@ final class SystemUpdateService
         return $key !== false && strlen($key) === SODIUM_CRYPTO_SIGN_PUBLICKEYBYTES ? $key : null;
     }
 
+    /**
+     * Bounded transport retry only. Never retry signature failures or malformed
+     * manifests, and never disable TLS checks for an unreliable cPanel network.
+     */
+    private function releaseMetadataRequest(): PendingRequest
+    {
+        $connect = max(3, min(15, (int) config('system_updates.metadata_connect_timeout', 8)));
+        $total = max($connect, min(90, (int) config('system_updates.metadata_timeout', 60)));
+
+        return Http::connectTimeout($connect)
+            ->timeout($total)
+            ->withOptions(['allow_redirects' => ['max' => 3, 'protocols' => ['https']]])
+            ->retry(3, [250, 750], static function (Throwable $exception): bool {
+                if ($exception instanceof ConnectionException) {
+                    return true;
+                }
+
+                return $exception instanceof RequestException
+                    && in_array($exception->response->status(), [429, 502, 503, 504], true);
+            }, throw: false);
+    }
+
     private function downloadSmall(string $url, int $limit): string
     {
-        $response = Http::timeout(15)->get($url);
+        try {
+            $response = $this->releaseMetadataRequest()->get($url);
+        } catch (ConnectionException) {
+            throw new RuntimeException('Release metadata connection timed out or failed; retry later or upload a signed update bundle.');
+        }
 
         if (! $response->successful() || strlen($response->body()) > $limit) {
             throw new RuntimeException('Release metadata download failed.');
