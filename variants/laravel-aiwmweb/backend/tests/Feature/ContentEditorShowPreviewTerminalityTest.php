@@ -63,7 +63,11 @@ final class ContentEditorShowPreviewTerminalityTest extends TestCase
         $this->assertStringNotContainsString('PATCH', $slice);
         $this->assertStringNotContainsString('DELETE', $slice);
         $this->assertStringContainsString('sandbox=""', $slice);
-        $this->assertStringContainsString('srcDoc={content}', $slice);
+        $this->assertStringContainsString('srcDoc={buildContentEditorPreviewDocument(content, locale)}', $slice);
+        $this->assertStringContainsString('export function buildContentEditorPreviewDocument', $slice);
+        $this->assertStringContainsString("script-src 'none'", $slice);
+        $this->assertStringContainsString("form-action 'none'", $slice);
+        $this->assertStringContainsString('referrerPolicy="no-referrer"', $slice);
         $this->assertStringNotContainsString('dangerouslySetInnerHTML', $slice);
     }
 
