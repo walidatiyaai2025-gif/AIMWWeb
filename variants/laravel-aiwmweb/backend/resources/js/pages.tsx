@@ -392,6 +392,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const [explorerPageSize, setExplorerPageSize] = useState(25);
     const [emailHistoryPageSize, setEmailHistoryPageSize] = useState(25);
     const [approvalPageSize, setApprovalPageSize] = useState(25);
+    const [evidencePageSize, setEvidencePageSize] = useState(25);
     const [sitesPageSize, setSitesPageSize] = useState(25);
     const [wordpressSiteRoleDraft, setWordpressSiteRoleDraft] = useState<WordPressSiteUserRole>('all');
     const [wordpressSiteRoleApplied, setWordpressSiteRoleApplied] = useState<WordPressSiteUserRole>('all');
@@ -472,6 +473,11 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const query = useQuery(route.key === 'email-history' ? {
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType, emailHistoryFilters.siteId, emailHistoryFilters.status, emailHistoryFilters.correlation, appDataGridSortDescending, emailHistoryPageSize],
         queryFn: () => readWorkspaceCollection(endpointWithQuery(endpoint!, page, search, resourceFilters)),
+        enabled: state.state === 'enabled' && Boolean(endpoint),
+    } : route.key === 'evidence' ? {
+        // Evidence endpoint returns a tenant-authorized Laravel paginator.
+        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, evidencePageSize],
+        queryFn: () => readWorkspaceCollection(endpointWithQuery(endpoint!, page, search, { per_page: String(evidencePageSize) })),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     } : route.key === 'approvals' ? {
         // Approval Queue is tenant-scoped and supports authoritative server
@@ -1437,11 +1443,14 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         }} />
                     : <Pagination page={collection.page} lastPage={collection.lastPage} onPage={setPage}
                         total={collection.authoritativeTotal}
-                        pageSize={route.key === 'email-history' ? emailHistoryPageSize : route.key === 'approvals' ? approvalPageSize : route.key === 'sites' ? sitesPageSize : undefined}
+                        pageSize={route.key === 'email-history' ? emailHistoryPageSize : route.key === 'approvals' ? approvalPageSize : route.key === 'evidence' ? evidencePageSize : route.key === 'sites' ? sitesPageSize : undefined}
                         returnedCount={collection.rows.length}
                         onPageSizeChange={route.key === 'email-history' ? (size) => {
                             setPage(1);
                             setEmailHistoryPageSize(size);
+                        } : route.key === 'evidence' ? (size) => {
+                            setPage(1);
+                            setEvidencePageSize(size);
                         } : route.key === 'approvals' ? (size) => {
                             setPage(1);
                             setApprovalPageSize(size);
