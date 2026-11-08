@@ -27,7 +27,7 @@ final class GlobalPostsResetTerminalityTest extends TestCase
         $this->assertStringContainsString('AIMW-SYNC-1A20057999', $control);
         $this->assertStringContainsString('GLOBAL_POSTS_RESET_OPERATION_ID', $widget);
         $this->assertStringContainsString('queryClient.invalidateQueries', $widget);
-        $this->assertStringContainsString('globalPostsFilterQuery(filters)', $widget);
+        $this->assertStringContainsString('globalPostsFilterQuery(filters, page)', $widget);
     }
 
     public function test_read_api_rejects_guests_foreign_tenants_and_unauthorized_members(): void
