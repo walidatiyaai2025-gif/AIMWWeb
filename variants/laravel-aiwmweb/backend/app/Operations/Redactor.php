@@ -25,6 +25,32 @@ final class Redactor
     }
 
     /**
+     * Sanitize historical operation-log context at the API read boundary.
+     * Old rows may contain credential-bearing text under harmless field names.
+     * Never modify the persisted row or expose deeply nested untrusted values.
+     */
+    public function redactLogContext(mixed $value, int $depth = 0): mixed
+    {
+        if (! is_array($value)) {
+            return is_string($value) ? $this->redactLogMessage($value) : $value;
+        }
+
+        if ($depth >= 5) {
+            return array_fill_keys(array_keys($value), '[REDACTED]');
+        }
+
+        $clean = [];
+        foreach ($value as $key => $item) {
+            $normalized = strtolower((string) $key);
+            $clean[$key] = $this->isSensitive($normalized)
+                ? '[REDACTED]'
+                : $this->redactLogContext($item, $depth + 1);
+        }
+
+        return $clean;
+    }
+
+    /**
      * Protect the Logs API from historical/imported free-text messages that
      * bypassed structured write-time redaction. Preserve non-secret context
      * and never modify the stored source row.

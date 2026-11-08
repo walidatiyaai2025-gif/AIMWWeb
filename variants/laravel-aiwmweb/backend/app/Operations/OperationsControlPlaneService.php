@@ -645,6 +645,7 @@ final class OperationsControlPlaneService
     private function redactOperationLogRow(object $row): array
     {
         $entry = $this->decodeColumns($this->objectToArray($row), ['context']);
+        $entry['context'] = $this->redactor->redactLogContext($entry['context'] ?? null);
         $entry['message'] = $this->redactor->redactLogMessage((string) $entry['message']);
 
         return $entry;
