@@ -258,4 +258,5 @@ final class SecurityAuditReadController
         }
 
         return implode(' · ', $parts);
-    }}
+    }
+}
