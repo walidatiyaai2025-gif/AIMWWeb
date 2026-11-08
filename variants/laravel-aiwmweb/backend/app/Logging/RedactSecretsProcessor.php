@@ -41,6 +41,10 @@ final class RedactSecretsProcessor implements ProcessorInterface
 
             if (is_array($value)) {
                 $values[$key] = $this->redact($value, $depth + 1);
+            } elseif (is_string($value)) {
+                // Benign field names can contain raw upstream error messages,
+                // request headers or URLs with credential-bearing text.
+                $values[$key] = (new Redactor)->redactLogMessage($value);
             }
         }
 
