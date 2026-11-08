@@ -73,7 +73,7 @@ describe('Sites enable-selected authoritative server pagination (#1608)', () => 
         fireEvent.click(screen.getByRole('checkbox', { name: 'Select Site 26' }));
         fireEvent.click(screen.getByRole('button', { name: 'Enable selected' }));
         await waitFor(() => expect(mutations).toEqual([[26]]));
-        await waitFor(() => expect(screen.getByRole('status').textContent).toContain('Enabled 1 sites'));
+        expect(await screen.findByText('Enabled 1 sites and reset them for connection testing.')).toBeInTheDocument();
         expect(screen.getByRole('checkbox', { name: 'Select Site 26' })).not.toBeChecked();
         expect(gets.at(-1)?.searchParams.get('page')).toBe('2');
 
