@@ -18,6 +18,7 @@ final class EvidenceReceiptReadController extends Controller
             'site_id' => ['sometimes', 'integer', 'min:1'],
             'verified' => ['sometimes', 'boolean'],
             'search' => ['sometimes', 'string', 'max:120'],
+            'page' => ['sometimes', 'integer', 'min:1'],
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
         ]);
 
@@ -47,7 +48,14 @@ final class EvidenceReceiptReadController extends Controller
             });
         }
 
-        $receipts = $query->paginate((int) ($filters['per_page'] ?? 20));
+        $page = (int) ($filters['page'] ?? 1);
+        $perPage = (int) ($filters['per_page'] ?? 20);
+        $receipts = $query->paginate($perPage, ['*'], 'page', $page);
+        // Filtering or deletion can leave a bookmarked page past the real end.
+        // Return the last valid page rather than presenting a false empty list.
+        if ($page > $receipts->lastPage()) {
+            $receipts = $query->paginate($perPage, ['*'], 'page', $receipts->lastPage());
+        }
         $receipts->setCollection($receipts->getCollection()->map(
             static fn (EvidenceReceipt $receipt): array => [
                 'id' => (int) $receipt->id,

@@ -108,6 +108,54 @@ final class EvidenceReceiptReadTest extends TestCase
             ->assertJsonCount(0, 'data');
     }
 
+    public function test_evidence_pages_have_real_totals_stable_ids_and_tenant_safe_clamping(): void
+    {
+        $user = User::factory()->create();
+        $alpha = $this->membership($user, 'evidence-paging-alpha', ['tenant.view', 'execution.view']);
+        $beta = $this->membership($user, 'evidence-paging-beta', ['tenant.view', 'execution.view']);
+
+        for ($i = 0; $i < 11; $i++) {
+            $this->receipt($alpha, $i < 6);
+        }
+        $this->receipt($beta, true);
+
+        $first = $this->actingAs($user)
+            ->getJson('/api/tenants/evidence-paging-alpha/evidence?page=1&per_page=10')
+            ->assertOk()->assertJsonPath('total', 11)
+            ->assertJsonPath('current_page', 1)->assertJsonPath('last_page', 2)
+            ->assertJsonCount(10, 'data');
+        $second = $this->actingAs($user)
+            ->getJson('/api/tenants/evidence-paging-alpha/evidence?page=2&per_page=10')
+            ->assertOk()->assertJsonPath('current_page', 2)->assertJsonCount(1, 'data');
+        $this->assertSame([], array_values(array_intersect(
+            collect($first->json('data'))->pluck('id')->all(),
+            collect($second->json('data'))->pluck('id')->all(),
+        )));
+
+        $this->actingAs($user)
+            ->getJson('/api/tenants/evidence-paging-alpha/evidence?page=99&per_page=10')
+            ->assertOk()->assertJsonPath('current_page', 2)->assertJsonCount(1, 'data');
+        $this->actingAs($user)
+            ->getJson('/api/tenants/evidence-paging-alpha/evidence?page=2&per_page=10&verified=1')
+            ->assertOk()->assertJsonPath('total', 6)
+            ->assertJsonPath('current_page', 1)->assertJsonCount(6, 'data');
+
+        foreach (['page=0', 'page=nope', 'per_page=101', 'per_page=0'] as $invalid) {
+            $this->actingAs($user)
+                ->getJson('/api/tenants/evidence-paging-alpha/evidence?'.$invalid)
+                ->assertUnprocessable();
+        }
+
+        $this->actingAs($user)
+            ->getJson('/api/tenants/evidence-paging-beta/evidence?page=1&per_page=10')
+            ->assertOk()->assertJsonPath('total', 1)->assertJsonCount(1, 'data');
+        $this->actingAs($user)
+            ->getJson('/api/tenants/evidence-paging-alpha/evidence?page=1&per_page=10')
+            ->assertJsonMissingPath('data.0.before_state')
+            ->assertJsonMissingPath('data.0.actual_after_state')
+            ->assertJsonMissingPath('data.0.failure');
+    }
+
     private function membership(User $user, string $slug, array $permissions): TenantMembership
     {
         $tenant = Tenant::query()->create(['name' => ucfirst($slug), 'slug' => $slug]);
