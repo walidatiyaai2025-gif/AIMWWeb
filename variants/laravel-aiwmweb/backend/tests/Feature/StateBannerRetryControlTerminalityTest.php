@@ -53,7 +53,7 @@ final class StateBannerRetryControlTerminalityTest extends TestCase
         $this->assertStringContainsString("aria-live={isAssertive ? 'assertive' : 'polite'}", $slice);
         $this->assertStringContainsString('<StateBanner', $consumer);
         $this->assertStringContainsString('kind="cached"', $consumer);
-        $this->assertStringContainsString('onRetry={() => void load(selectedSiteId)}', $consumer);
+        $this->assertStringContainsString('onRetry={() => void load(selectedSiteId, page, pageSize)}', $consumer);
 
         $this->assertStringNotContainsString('apiRequest', $slice);
         $this->assertStringNotContainsString('fetch(', $slice);
