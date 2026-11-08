@@ -25,7 +25,7 @@ Scope: `variants/laravel-aiwmweb/backend/resources/views/**`. **All 29 discovere
 | `billing/subscription-plans-admin.blade.php` | Initial census: standalone CSS, no Vite/sidebar | **Merged PR #1655**: shared AR/EN tenant shell, Vite, permission-safe CSRF forms; production browser/host unverified |
 | `operations/site-operation-details.blade.php` | Vite, no Blade sidebar | Determine React ownership; browser verify |
 | `operations/site-operation-details-load-error.blade.php` | Vite, no Blade sidebar | Error/fallback route; verify accessibility/layout |
-| `platform/about-build.blade.php` | Vite, no Blade sidebar | Determine React ownership; browser verify |
+| `platform/about-build.blade.php` | Originally JS-only Vite, standalone English metadata with no common sidebar or CSS | **#1601 AR/EN shared shell candidate**: authorized tenant sidebar/topbar, real version/commit data, guarded Build API, safe copy/report fallback and responsive CSS; source + feature + JS regressions, live cPanel/browser acceptance pending |
 | `platform/access-denied.blade.php` | Previously standalone English no Vite | **Current #1601 candidate**: AR/EN RTL/LTR tenant-neutral error shell, Vite CSS, preserved public Return Home and conditional account-exit link; automated scope/no-leak coverage added; CI/browser/host verification pending. No tenant sidebar on 403 by design. |
 | `platform/error.blade.php` | Vite, no Blade sidebar | Error/fallback route; verify safe layout |
 | `platform/system-updates.blade.php` | Initial census: standalone light-mode inline CSS, no Vite/sidebar | **Current #1601 update-center candidate**: shared platform-admin AR/EN shell and production Vite CSS; **all signed update / backup forms and RBAC unchanged**; browser/host unverified |

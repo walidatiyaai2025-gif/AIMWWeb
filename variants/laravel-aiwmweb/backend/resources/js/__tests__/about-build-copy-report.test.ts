@@ -30,6 +30,7 @@ async function settle(): Promise<void> {
 
 describe('copy build report visible control', () => {
     beforeEach(() => {
+        document.documentElement.lang = 'en';
         renderControl();
         Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true });
     });
@@ -100,6 +101,25 @@ describe('copy build report visible control', () => {
         expect(writeText).toHaveBeenCalledTimes(2);
         expect(error.hidden).toBe(true);
         expect(success.hidden).toBe(false);
+    });
+
+    it('localizes Arabic failure and preserves fail-closed clipboard behaviour', async () => {
+        document.documentElement.lang = 'ar';
+        const writeText = vi.fn().mockRejectedValue(new Error('private error sentinel'));
+        Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+        wireCopyBuildReport();
+        document.querySelector<HTMLButtonElement>('[data-copy-build-report]')!.click();
+        await settle();
+        const message = document.querySelector<HTMLElement>('[data-copy-build-error-message]')!.textContent!;
+        expect(message).toContain('لم يؤكد المتصفح نسخ التقرير');
+        expect(message).not.toContain('private error sentinel');
+        expect(document.querySelector<HTMLElement>('[data-copy-build-success]')!.hidden).toBe(true);
+
+        renderControl();
+        document.querySelector('#build-report-payload')!.textContent = '{broken';
+        wireCopyBuildReport();
+        expect(document.querySelector<HTMLElement>('[data-copy-build-error-message]')!.textContent).toContain('تعذر قراءة بيانات التقرير الآمنة');
+        expect(document.querySelector<HTMLButtonElement>('[data-copy-build-report]')!.disabled).toBe(true);
     });
 
     it('fails truthfully when the Clipboard API is unavailable', async () => {

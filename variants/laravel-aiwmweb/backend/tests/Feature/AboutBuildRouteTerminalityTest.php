@@ -108,6 +108,52 @@ class AboutBuildRouteTerminalityTest extends TestCase
             ->assertExactJson($snapshot);
     }
 
+    public function test_about_build_and_release_notes_render_in_shared_arabic_and_english_dashboard_shell(): void
+    {
+        $user = User::factory()->create();
+        $this->membership($user, 'alpha', ['tenant.view', 'execution.view']);
+        $snapshot = app(BuildInformationReadService::class)->snapshot();
+        $oldLocale = app()->getLocale();
+
+        try {
+            foreach (['en' => 'ltr', 'ar' => 'rtl'] as $locale => $dir) {
+                app()->setLocale($locale);
+                foreach (['about-build', 'release-notes'] as $page) {
+                    $response = $this->actingAs($user)->get('/tenants/alpha/'.$page.'?user_id=999&tenant=foreign');
+                    $response->assertOk()
+                        ->assertSee('<html lang="'.$locale.'" dir="'.$dir.'" data-mode="dark">', false)
+                        ->assertSee('data-dashboard-shell="aiwmweb"', false)
+                        ->assertSee('data-aiwm-workspace-read-shell', false)
+                        ->assertSee('id="about-build-content"', false)
+                        ->assertSee('href="/tenants/alpha/about-build"', false)
+                        ->assertSee('href="/tenants/alpha/release-notes"', false)
+                        ->assertSee('data-copy-build-report', false)
+                        ->assertSee('data-canonical-operation="AIMW-SYNC-68B372C9FE"', false)
+                        ->assertSee($snapshot['commit'])
+                        ->assertDontSee('user_id=999')
+                        ->assertDontSee('tenant=foreign');
+
+                    if ($locale === 'ar') {
+                        $response->assertSee('حول هذا الإصدار')
+                            ->assertSee('نسخ تقرير الإصدار')
+                            ->assertSee('لم يُعثر على ملاحظات للإصدار.');
+                    } else {
+                        $response->assertSee('About this build')
+                            ->assertSee('Copy build report')
+                            ->assertSee('No release notes were found.');
+                    }
+                }
+            }
+        } finally {
+            app()->setLocale($oldLocale);
+        }
+
+        $source = (string) file_get_contents(resource_path('views/platform/about-build.blade.php'));
+        $this->assertStringContainsString("resources/css/app.css", $source);
+        $this->assertStringContainsString("@include('layouts.partials.workspace-read-sidebar')", $source);
+        $this->assertStringContainsString('@media (max-width: 600px)', $source);
+    }
+
     public function test_both_source_routes_fail_closed_for_missing_permission_and_foreign_tenant(): void
     {
         $limited = User::factory()->create();
