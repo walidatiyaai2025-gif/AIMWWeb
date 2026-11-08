@@ -192,6 +192,36 @@ describe('tenant observability read contracts (#1514)', () => {
         expect(JSON.stringify(rows)).not.toContain('<script>');
     });
 
+    it('accepts complete real dates and rejects misleading diagnostic date prefixes (#1568)', () => {
+        const project = (time: unknown, created: unknown = null) => normalizeObservabilityCollection('diagnostics', {
+            failed_operations: [{ id: 9, type: 'sync.run', updated_at: time, created_at: created }],
+            recent_audit: [{ id: 10, event: 'sync.failed', occurred_at: time }],
+        }) as { data: Array<{ occurred_at: string | null }> };
+
+        const good = [
+            '2026-11-08T00:12:42Z', '2026-11-08T00:12:42.123456+03:00',
+            '2026-11-08 00:12:42', '2024-02-29T23:59:59-05:00',
+        ];
+        for (const value of good) {
+            expect(project(value).data.map(row => row.occurred_at)).toEqual([value, value]);
+        }
+        const bad = [
+            '2026-11-08T00:12BAD', '2026-11-08T00:12:42SECRET',
+            '2026-02-29T12:30:00Z', '2026-13-08T12:30:00Z',
+            '2026-11-31T12:30:00Z', '2026-11-08T25:00:00Z',
+            '2026-11-08T00:60:00Z', '2026-11-08T00:12:61Z',
+            '2026-11-08T00:12:42+15:00', '2026-11-08T00:12:42+14:01',
+            '0000-11-08T00:12:42Z', '2026-11-08T00:12:42Z<script>',
+        ];
+        for (const value of bad) {
+            expect(project(value).data.map(row => row.occurred_at)).toEqual([null, null]);
+            const fallback = project(value, '2026-11-07 10:15:00');
+            expect(fallback.data[0].occurred_at).toBe('2026-11-07 10:15:00');
+            expect(fallback.data[1].occurred_at).toBeNull();
+            expect(JSON.stringify(fallback)).not.toContain(value);
+        }
+    });
+
     it('does not change unrelated resource contracts or swallow transport failures', async () => {
         const other = { ok: true, status: 'ready' };
         expect(normalizeObservabilityCollection('system-health', other)).toBe(other);
