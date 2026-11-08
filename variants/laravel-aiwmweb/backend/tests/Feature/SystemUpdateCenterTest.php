@@ -3,10 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use App\Platform\SignedReleaseMetadataFetcher;
 use App\Platform\SystemUpdateService;
+use GuzzleHttp\Psr7\Uri;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Routing\Middleware\ThrottleRequests;
@@ -115,6 +114,85 @@ final class SystemUpdateCenterTest extends TestCase
         $this->assertSame('9.9.9', $release['version']);
         $this->assertTrue($release['available']);
         $this->assertSame(str_repeat('a', 40), $release['sha']);
+    }
+
+    public function test_release_metadata_retries_transient_503_but_not_404(): void
+    {
+        $url = 'https://github.com/walidatiyaai2025-gif/AIMWWeb/releases/download/v9.9.9/AIWMWeb-Laravel-release.json';
+        Http::fake([
+            $url => Http::sequence()
+                ->push('temporarily unavailable', 503)
+                ->push('signed-manifest-fixture', 200),
+        ]);
+
+        $download = new \ReflectionMethod(SystemUpdateService::class, 'downloadSmall');
+        $this->assertSame('signed-manifest-fixture', $download->invoke(app(SystemUpdateService::class), $url, 4096));
+        Http::assertSentCount(2);
+    }
+
+    public function test_release_metadata_404_fails_closed_without_retry(): void
+    {
+        $url = 'https://github.com/walidatiyaai2025-gif/AIMWWeb/releases/download/v9.9.9/AIWMWeb-Laravel-release.json';
+        Http::fake([$url => Http::response('not found', 404)]);
+        $download = new \ReflectionMethod(SystemUpdateService::class, 'downloadSmall');
+
+        try {
+            $download->invoke(app(SystemUpdateService::class), $url, 4096);
+            $this->fail('A missing signed release asset must fail closed.');
+        } catch (RuntimeException $e) {
+            $this->assertStringContainsString('metadata download failed', $e->getMessage());
+        }
+        Http::assertSentCount(1);
+    }
+
+    public function test_release_metadata_request_bounds_administrator_timeout_configuration(): void
+    {
+        config()->set('system_updates.metadata_connect_timeout', 999);
+        config()->set('system_updates.metadata_timeout', 999);
+        $request = (new \ReflectionMethod(SystemUpdateService::class, 'releaseMetadataRequest'))
+            ->invoke(app(SystemUpdateService::class));
+
+        $this->assertSame(15, $request->getOptions()['connect_timeout']);
+        $this->assertSame(90, $request->getOptions()['timeout']);
+        $redirectOptions = $request->getOptions()['allow_redirects'];
+        $this->assertSame(3, $redirectOptions['max']);
+        $this->assertSame(['https'], $redirectOptions['protocols']);
+        $this->assertIsCallable($redirectOptions['on_redirect']);
+    }
+
+    public function test_release_metadata_refuses_unapproved_cdn_redirects(): void
+    {
+        $request = (new \ReflectionMethod(SystemUpdateService::class, 'releaseMetadataRequest'))
+            ->invoke(app(SystemUpdateService::class));
+        $callback = $request->getOptions()['allow_redirects']['on_redirect'];
+
+        // Official, authenticated GitHub asset-CDN destinations remain allowed.
+        $callback(null, null, new Uri('https://release-assets.githubusercontent.com/allowed'));
+
+        foreach ([
+            'https://example.com/metadata',
+            'https://127.0.0.1/internal',
+            'https://github.com:8443/asset',
+            'http://github.com/asset',
+        ] as $url) {
+            try {
+                $callback(null, null, new Uri($url));
+                $this->fail('Unsafe signed metadata redirect was allowed: '.$url);
+            } catch (RuntimeException $e) {
+                $this->assertStringContainsString('Unapproved release metadata redirect', $e->getMessage());
+            }
+        }
+    }
+
+    public function test_release_metadata_rejects_oversized_signed_asset_before_verification(): void
+    {
+        $url = 'https://github.com/walidatiyaai2025-gif/AIMWWeb/releases/download/v9.9.9/AIWMWeb-Laravel-release.json';
+        Http::fake([$url => Http::response(str_repeat('X', 4097))]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Release metadata download failed');
+        (new \ReflectionMethod(SystemUpdateService::class, 'downloadSmall'))
+            ->invoke(app(SystemUpdateService::class), $url, 4096);
     }
 
     public function test_unsigned_or_forged_release_is_rejected_before_download(): void
@@ -701,11 +779,8 @@ final class SystemUpdateCenterTest extends TestCase
             $api => Http::response('signed-manifest-bytes', 200, ['Content-Type' => 'application/octet-stream']),
         ]);
 
-        $bytes = app(SignedReleaseMetadataFetcher::class)->download([
-            'url' => $browser,
-            'size' => 21,
-            'id' => 987654,
-        ], 4096);
+        $bytes = (new \ReflectionMethod(SystemUpdateService::class, 'downloadSmall'))
+            ->invoke(app(SystemUpdateService::class), $browser, 4096, 987654);
 
         $this->assertSame('signed-manifest-bytes', $bytes);
         Http::assertSentCount(2);
