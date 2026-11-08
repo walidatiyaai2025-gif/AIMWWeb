@@ -88,6 +88,57 @@ class SecurityAuditLoadAsyncTerminalityTest extends TestCase
             ->assertDontSee('auth.login');
     }
 
+    public function test_audit_metadata_projection_never_exposes_legacy_secret_or_nested_fields(): void
+    {
+        $admin = User::factory()->create(['platform_admin' => true]);
+        $tenant = Tenant::query()->create(['name' => 'Alpha', 'slug' => 'alpha']);
+        $this->membership($tenant->id, $admin->id, 'active');
+        $this->audit($tenant->id, $admin->id, 'auth.login', 'session', '42', [
+            'category' => 'authentication',
+            'outcome' => 'succeeded',
+            'ip' => '10.0.0.1',
+            'count' => 3,
+            'duration_ms' => 125,
+            'password' => 'never-show-password',
+            'api_token' => 'never-show-token',
+            'error_message' => 'never-show-raw-exception',
+            'response' => ['authorization' => 'never-show-nested'],
+        ]);
+        $this->audit($tenant->id, $admin->id, 'auth.login', 'session', '43', [
+            'category' => 'never-show-category',
+            'outcome' => 'failed',
+            'ip' => 'never-show-ip',
+        ]);
+        $before = DB::table('audit_events')->orderBy('id')->get()->toJson();
+
+        $response = $this->actingAs($admin)->get('/admin/security-audit')->assertOk()
+            ->assertSee('data-audit-safe-metadata-note', false)
+            ->assertSee('category=Authentication')
+            ->assertSee('outcome=Succeeded')
+            ->assertSee('ip=10.0.0.1')
+            ->assertSee('count=3')
+            ->assertSee('duration_ms=125');
+        foreach (['never-show-password', 'never-show-token', 'never-show-raw-exception',
+            'never-show-nested', 'never-show-category', 'never-show-ip', 'api_token='] as $secret) {
+            $response->assertDontSee($secret);
+        }
+
+        $this->actingAs($admin)
+            ->get('/admin/security-audit?q=never-show-password')
+            ->assertOk()
+            ->assertSee('No matching security events.')
+            ->assertDontSee('never-show-password');
+
+        $this->actingAs($admin)
+            ->get('/admin/security-audit?category=Authentication&q=10.0.0.1')
+            ->assertOk()
+            ->assertSee('count=3')
+            ->assertSee('ip=10.0.0.1')
+            ->assertDontSee('never-show-token');
+
+        $this->assertSame($before, DB::table('audit_events')->orderBy('id')->get()->toJson());
+    }
+
     public function test_load_is_read_only_and_repeated_requests_do_not_create_audits(): void
     {
         $admin = User::factory()->create(['platform_admin' => true]);

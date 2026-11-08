@@ -135,9 +135,14 @@ final class SecurityAuditReadController
 
     private function category(string $event, array $metadata): string
     {
-        $explicit = trim((string) ($metadata['category'] ?? ''));
-        if ($explicit !== '') {
-            return $explicit;
+        // Legacy metadata is untrusted and may contain a secret-bearing category.
+        $explicit = $metadata['category'] ?? null;
+        if (is_string($explicit)) {
+            foreach (['Authentication', 'Account', 'Authorization', 'Session', 'Configuration'] as $allowed) {
+                if (strcasecmp(trim($explicit), $allowed) === 0) {
+                    return $allowed;
+                }
+            }
         }
         $value = mb_strtolower($event);
         if (str_contains($value, 'session')) {
@@ -201,14 +206,56 @@ final class SecurityAuditReadController
         return $id === '' ? $type : ($type === '' ? 'Target' : $type).': '.$id;
     }
 
+    /**
+     * Safe presentation-only projection. Never serialize arbitrary audit
+     * metadata, nested provider responses, credentials or exception messages.
+     * The original evidence stays unchanged in its protected database row.
+     */
     private function metadataText(array $metadata): string
     {
-        return collect($metadata)->map(function ($value, $key): string {
-            if (is_array($value) || is_object($value)) {
-                $value = json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $parts = [];
+        $category = $metadata['category'] ?? null;
+        if (is_string($category)) {
+            foreach (['Authentication', 'Account', 'Authorization', 'Session', 'Configuration'] as $allowed) {
+                if (strcasecmp(trim($category), $allowed) === 0) {
+                    $parts[] = 'category='.$allowed;
+                    break;
+                }
+            }
+        }
+
+        foreach (['outcome', 'status'] as $key) {
+            $raw = $metadata[$key] ?? null;
+            if (! is_string($raw)) {
+                continue;
             }
 
-            return $key.'='.(string) $value;
-        })->implode(' · ');
-    }
-}
+            $normalized = strtolower(trim($raw));
+            $safe = match ($normalized) {
+                'success', 'succeeded', 'ok', 'completed' => 'Succeeded',
+                'failure', 'failed', 'error' => 'Failed',
+                'blocked', 'denied', 'forbidden' => 'Blocked',
+                default => null,
+            };
+            if ($safe !== null) {
+                $parts[] = $key.'='.$safe;
+            }
+        }
+
+        $ip = $metadata['ip'] ?? null;
+        if (is_string($ip) && filter_var($ip, FILTER_VALIDATE_IP) !== false) {
+            $parts[] = 'ip='.$ip;
+        }
+
+        foreach (['count', 'duration_ms'] as $key) {
+            $value = $metadata[$key] ?? null;
+            if (is_int($value) && $value >= 0 && $value <= 1000000000) {
+                $parts[] = $key.'='.$value;
+            } elseif (is_string($value) && preg_match('/^(?:0|[1-9][0-9]{0,9})$/D', $value) === 1
+                && (float) $value <= 1000000000) {
+                $parts[] = $key.'='.(int) $value;
+            }
+        }
+
+        return implode(' · ', $parts);
+    }}
