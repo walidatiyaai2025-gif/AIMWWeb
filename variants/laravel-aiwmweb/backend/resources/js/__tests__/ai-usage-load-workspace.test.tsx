@@ -1,4 +1,5 @@
 import React from 'react';
+import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AI_USAGE_LOAD_OPERATION_ID, AiUsageLoadWorkspace } from '../ai-usage-load-workspace';
@@ -68,11 +69,23 @@ function ok(body = payload()) {
     }));
 }
 
-function renderWorkspace(value = context()) {
+function LocationHistoryControls() {
+    const location = useLocation();
+    const navigate = useNavigate();
+    return <>
+        <output data-testid="usage-location">{location.search}</output>
+        <button type="button" onClick={() => navigate(-1)}>History back</button>
+    </>;
+}
+
+function renderWorkspace(value = context(), initialEntry = '/module/ai-usage') {
     return render(
-        <LocaleProvider>
-            <AiUsageLoadWorkspace context={value} route={route} />
-        </LocaleProvider>,
+        <MemoryRouter initialEntries={[initialEntry]}>
+            <LocaleProvider>
+                <AiUsageLoadWorkspace context={value} route={route} />
+                <LocationHistoryControls />
+            </LocaleProvider>
+        </MemoryRouter>,
     );
 }
 
@@ -177,6 +190,37 @@ describe(`${AI_USAGE_LOAD_OPERATION_ID} AI Usage LoadAsync`, () => {
         expect(fetchMock.mock.calls[2][0]).toBe(`${endpoint}?page=1&per_page=25`);
         await waitFor(() => expect(siteFilter).toHaveValue(''));
         expect(screen.getByText('Showing all sites')).toBeInTheDocument();
+    });
+
+    it('restores URL page, page size and site and navigates back without cross-tenant queries', async () => {
+        const usage = (page: number, id: number) => payload({
+            total: 60, current_page: page, last_page: 6, per_page: 10,
+            recent: [{ ...payload().recent[0], id, workflow: 'page-'+id }],
+        });
+        const fetchMock = vi.fn()
+            .mockImplementationOnce(() => ok(usage(2, 202)))
+            .mockImplementationOnce(() => ok(usage(3, 303)))
+            .mockImplementationOnce(() => ok(usage(2, 202)));
+        vi.stubGlobal('fetch', fetchMock);
+        renderWorkspace(context(), '/module/ai-usage?tab=metrics&site=17&page=2&per_page=10');
+        expect(await screen.findByText('page-202')).toBeInTheDocument();
+        expect(fetchMock.mock.calls[0][0]).toBe(`${endpoint}?page=2&per_page=10&site=17`);
+        fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+        expect(await screen.findByText('page-303')).toBeInTheDocument();
+        expect(screen.getByTestId('usage-location')).toHaveTextContent('tab=metrics&site=17&page=3&per_page=10');
+        fireEvent.click(screen.getByRole('button', { name: 'History back' }));
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+        expect(await screen.findByText('page-202')).toBeInTheDocument();
+        expect(screen.getByTestId('usage-location')).toHaveTextContent('tab=metrics&site=17&page=2&per_page=10');
+    });
+
+    it('bounds untrusted URL paging parameters to safe defaults without mutating the tenant', async () => {
+        const fetchMock = vi.fn().mockImplementation(() => ok());
+        vi.stubGlobal('fetch', fetchMock);
+        renderWorkspace(context(), '/module/ai-usage?page=-5&per_page=999&site=wrong');
+        expect(await screen.findByText('openai / gpt-test')).toBeInTheDocument();
+        expect(fetchMock.mock.calls[0][0]).toBe(`${endpoint}?page=1&per_page=25`);
+        expect(fetchMock.mock.calls.every(([, options]) => !options?.method || options.method === 'GET')).toBe(true);
     });
 
     it('navigates real pages and changes size without fabricating aggregate totals', async () => {
