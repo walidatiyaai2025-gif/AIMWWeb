@@ -42,7 +42,9 @@ export function ContentExplorerPagination({
 
     const hasTotal = Number.isSafeInteger(total) && total! >= 0;
     const hasSize = Number.isSafeInteger(pageSize) && pageSize! > 0 && pageSize! <= 100;
-    const count = Number.isSafeInteger(returnedCount) ? Math.max(0, Math.min(returnedCount!, pageSize ?? 0)) : pageSize ?? 0;
+    // An authoritative collection total does not tell us how many rows this page returned.
+    const hasReturnedCount = Number.isSafeInteger(returnedCount) && returnedCount! >= 0;
+    const count = hasReturnedCount ? Math.min(returnedCount!, pageSize ?? 0) : 0;
     const firstShown = hasTotal && hasSize && count > 0 && total! > (safePage - 1) * pageSize! ? (safePage - 1) * pageSize! + 1 : 0;
     const lastShown = hasTotal && hasSize && firstShown > 0 ? Math.min(total!, firstShown + count - 1) : 0;
 
@@ -71,7 +73,7 @@ export function ContentExplorerPagination({
                 <button type="button" className="btn" onClick={next} disabled={safePage >= safeLastPage}>{text(commonText.next)}</button>
                 <button type="button" className="btn" onClick={() => onPage(safeLastPage)} disabled={safePage >= safeLastPage}>{locale === 'ar' ? 'الأخيرة' : 'Last'}</button>
             </div>
-            {hasTotal && hasSize ? <span className="pagination-range" role="status">
+            {hasTotal && hasSize && hasReturnedCount ? <span className="pagination-range" role="status">
                 {locale === 'ar' ? `${firstShown}–${lastShown} من ${total}` : `${firstShown}–${lastShown} of ${total}`}
             </span> : null}
             {onPageSizeChange && hasSize ? (
