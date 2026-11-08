@@ -19,6 +19,7 @@ import { commonText, useLocale } from './i18n';
 import { CONTENT_HUB_WORKSPACE_URL_OPERATION_ID, contentHubWorkspaceUrl, isContentHubWorkspacePath } from './content-hub-workspace-url';
 import { AiCenterGenerateControl } from './ai-center-generate-control';
 import { AdminBillingSupportClearSearchControl } from './admin-billing-support-clear-search-control';
+import { billingSupportPageUrl } from './admin-billing-support-pages';
 import { APP_DATA_GRID_PREVIOUS_PAGE_OPERATION_ID } from './app-data-grid-previous-page-control';
 import { AppDataGridSortControl } from './app-data-grid-sort-control';
 import { AppDataGridClearFiltersControl } from './app-data-grid-clear-filters-control';
@@ -440,6 +441,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const [explorerPageSize, setExplorerPageSize] = useState(25);
     const [emailHistoryPageSize, setEmailHistoryPageSize] = useState(25);
     const [approvalPageSize, setApprovalPageSize] = useState(25);
+    const [billingSupportPageSize, setBillingSupportPageSize] = useState(25);
     const [evidencePageSize, setEvidencePageSize] = useState(25);
     const [emailSchedulesPageSize, setEmailSchedulesPageSize] = useState(25);
     const [notificationsPageSize, setNotificationsPageSize] = useState(25);
@@ -569,7 +571,13 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const resourceFilters = { ...taxonomyFilter, ...emailHistoryQueryFilters, ...siteReliabilityQueryFilters, ...mediaQueryFilters };
     const readWorkspaceCollection = (url: string): Promise<unknown> =>
         readWorkspaceCollectionResponse(route.key, url, (target) => apiRequest<unknown>(target));
-    const query = useQuery(route.key === 'email-history' ? {
+    const query = useQuery(route.key === 'admin-billing-support' ? {
+        // Canonical support grid opts into authoritative tenant-scoped SQL pages;
+        // the existing SearchAsync endpoint without page remains backward compatible.
+        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, billingSupportPageSize],
+        queryFn: () => readWorkspaceCollection(billingSupportPageUrl(endpoint!, page, search, billingSupportPageSize)),
+        enabled: state.state === 'enabled' && Boolean(endpoint),
+    } : route.key === 'email-history' ? {
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType, emailHistoryFilters.siteId, emailHistoryFilters.status, emailHistoryFilters.correlation, appDataGridSortDescending, emailHistoryPageSize],
         queryFn: () => readWorkspaceCollection(endpointWithQuery(endpoint!, page, search, resourceFilters)),
         enabled: state.state === 'enabled' && Boolean(endpoint),
@@ -800,8 +808,8 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         setPage(1);
         setDialog(null);
         await queryClient.fetchQuery({
-            queryKey: ['workspace', context.tenant.slug, route.key, endpoint, 1, ''],
-            queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint, 1, '')),
+            queryKey: ['workspace', context.tenant.slug, route.key, endpoint, 1, '', billingSupportPageSize],
+            queryFn: () => readWorkspaceCollection(billingSupportPageUrl(endpoint, 1, '', billingSupportPageSize)),
             staleTime: 0,
         });
     };
@@ -1644,9 +1652,12 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         }} />
                     : <Pagination page={collection.page} lastPage={collection.lastPage} onPage={route.key === 'sites' ? (next) => navigateSites(next, sitesPageSize, sitesFilter) : route.key === 'execution' ? (next) => navigateExecution({ ...executionState, page: next }) : setPage}
                         total={collection.authoritativeTotal}
-                        pageSize={route.key === 'execution' ? executionState.pageSize : route.key === 'email-history' ? emailHistoryPageSize : route.key === 'approvals' ? approvalPageSize : route.key === 'evidence' ? evidencePageSize : route.key === 'email-schedules' ? emailSchedulesPageSize : route.key === 'notifications' ? notificationsPageSize : route.key === 'logs' ? logsPageSize : route.key === 'sites' ? sitesPageSize : undefined}
+                        pageSize={route.key === 'admin-billing-support' ? billingSupportPageSize : route.key === 'execution' ? executionState.pageSize : route.key === 'email-history' ? emailHistoryPageSize : route.key === 'approvals' ? approvalPageSize : route.key === 'evidence' ? evidencePageSize : route.key === 'email-schedules' ? emailSchedulesPageSize : route.key === 'notifications' ? notificationsPageSize : route.key === 'logs' ? logsPageSize : route.key === 'sites' ? sitesPageSize : undefined}
                         returnedCount={collection.rows.length}
-                        onPageSizeChange={route.key === 'execution' ? (size) => {
+                        onPageSizeChange={route.key === 'admin-billing-support' ? (size) => {
+                            setPage(1);
+                            setBillingSupportPageSize(size);
+                        } : route.key === 'execution' ? (size) => {
                             if (EXECUTION_PAGE_SIZES.includes(size as typeof EXECUTION_PAGE_SIZES[number])) {
                                 navigateExecution({ ...executionState, page: 1, pageSize: size });
                             }
