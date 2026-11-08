@@ -52,12 +52,48 @@ final class SystemUpdateService
     public function latest(): array
     {
         $this->assertReady();
-        try {
-            $release = $this->releaseMetadataRequest()->acceptJson()->get(self::RELEASE_API);
-        } catch (ConnectionException) {
-            throw new RuntimeException('Approved GitHub release feed timed out or failed; retry later.');
+        // The release feed shares the same aggregate metadata budget as signed
+        // asset retrieval. A generic retry(3) would permit three full timeouts
+        // and ignore upstream Retry-After on 429 responses.
+        $deadline = microtime(true) + max(20, min(90, (int) config('system_updates.metadata_timeout', 60)));
+        $release = null;
+        for ($attempt = 1; $attempt <= 3; $attempt++) {
+            $remaining = (int) ceil($deadline - microtime(true));
+            if ($remaining <= 2) {
+                break;
+            }
+
+            try {
+                $release = $this->releaseMetadataRequest()
+                    ->retry(1, 0, null, false)
+                    ->timeout(max(3, min(20, $remaining - 1)))
+                    ->acceptJson()
+                    ->get(self::RELEASE_API);
+            } catch (ConnectionException) {
+                $release = null;
+                if (! $this->mayRetryMetadataNow($attempt, $deadline)) {
+                    break;
+                }
+
+                continue;
+            }
+
+            if ($release->successful()) {
+                break;
+            }
+
+            if (! in_array($release->status(), [408, 429, 500, 502, 503, 504], true)) {
+                throw new RuntimeException('Approved GitHub release feed is unavailable.');
+            }
+
+            if (! $this->mayRetryMetadataNow($attempt, $deadline, $release->header('Retry-After'))) {
+                break;
+            }
         }
 
+        if ($release === null) {
+            throw new RuntimeException('Approved GitHub release feed timed out or failed; retry later.');
+        }
         if (! $release->successful()) {
             throw new RuntimeException('Approved GitHub release feed is unavailable.');
         }

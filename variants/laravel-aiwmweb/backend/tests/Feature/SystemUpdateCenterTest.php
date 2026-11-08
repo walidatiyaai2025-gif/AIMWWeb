@@ -175,6 +175,82 @@ final class SystemUpdateCenterTest extends TestCase
         $this->assertSame(str_repeat('a', 40), $release['sha']);
     }
 
+    public function test_latest_release_feed_honors_retry_after_without_bypassing_signatures(): void
+    {
+        $keys = sodium_crypto_sign_keypair();
+        config()->set('system_updates.enabled', true);
+        config()->set('system_updates.public_key', base64_encode(sodium_crypto_sign_publickey($keys)));
+        $feed = 'https://api.github.com/repos/walidatiyaai2025-gif/AIMWWeb/releases/latest';
+        Http::fake([$feed => Http::sequence()
+            ->push('rate limited', 429, ['Retry-After' => '120'])
+            ->push(['draft' => false, 'prerelease' => false, 'assets' => []], 200)]);
+
+        try {
+            app(SystemUpdateService::class)->latest();
+            $this->fail('Release feed rate limits must not be retried before Retry-After.');
+        } catch (RuntimeException $e) {
+            $this->assertStringContainsString('release feed is unavailable', $e->getMessage());
+        }
+        Http::assertSentCount(1);
+    }
+
+    public function test_latest_release_feed_retries_transient_503_without_trusting_unsigned_assets(): void
+    {
+        $keys = sodium_crypto_sign_keypair();
+        config()->set('system_updates.enabled', true);
+        config()->set('system_updates.public_key', base64_encode(sodium_crypto_sign_publickey($keys)));
+        $feed = 'https://api.github.com/repos/walidatiyaai2025-gif/AIMWWeb/releases/latest';
+
+        Http::fake([$feed => Http::sequence()
+            ->push('temporarily unavailable', 503)
+            ->push(['draft' => false, 'prerelease' => false, 'assets' => []], 200)]);
+        try {
+            app(SystemUpdateService::class)->latest();
+            $this->fail('Missing signed release assets must fail closed.');
+        } catch (RuntimeException $e) {
+            $this->assertStringContainsString('missing a required signed artifact', $e->getMessage());
+        }
+        Http::assertSentCount(2);
+    }
+
+    public function test_latest_release_feed_never_retries_http_404(): void
+    {
+        $keys = sodium_crypto_sign_keypair();
+        config()->set('system_updates.enabled', true);
+        config()->set('system_updates.public_key', base64_encode(sodium_crypto_sign_publickey($keys)));
+        $feed = 'https://api.github.com/repos/walidatiyaai2025-gif/AIMWWeb/releases/latest';
+        Http::fake([$feed => Http::sequence()->push('not found', 404)->push('untrusted', 200)]);
+        try {
+            app(SystemUpdateService::class)->latest();
+            $this->fail('404 must not be retried.');
+        } catch (RuntimeException $e) {
+            $this->assertStringContainsString('release feed is unavailable', $e->getMessage());
+        }
+        Http::assertSentCount(1);
+    }
+
+    public function test_latest_release_feed_sanitizes_transport_errors_after_bounded_retries(): void
+    {
+        $keys = sodium_crypto_sign_keypair();
+        config()->set('system_updates.enabled', true);
+        config()->set('system_updates.public_key', base64_encode(sodium_crypto_sign_publickey($keys)));
+        $feed = 'https://api.github.com/repos/walidatiyaai2025-gif/AIMWWeb/releases/latest';
+        $attempts = 0;
+        Http::fake([$feed => static function () use (&$attempts): void {
+            $attempts++;
+            throw new ConnectionException('private-upstream-host cURL28');
+        }]);
+
+        try {
+            app(SystemUpdateService::class)->latest();
+            $this->fail('Transport errors must fail closed.');
+        } catch (RuntimeException $e) {
+            $this->assertStringContainsString('feed timed out or failed', $e->getMessage());
+            $this->assertStringNotContainsString('private-upstream-host', $e->getMessage());
+        }
+        $this->assertSame(3, $attempts);
+    }
+
     public function test_release_metadata_retries_transient_503_but_not_404(): void
     {
         $url = 'https://github.com/walidatiyaai2025-gif/AIMWWeb/releases/download/v9.9.9/AIWMWeb-Laravel-release.json';
