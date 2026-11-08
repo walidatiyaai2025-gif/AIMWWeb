@@ -160,7 +160,10 @@ class EmailSchedulesCreateTerminalityTest extends TestCase
             $this->actingAs($user)->getJson('/api/tenants/schedules-alpha/email/schedules?'.$bad)
                 ->assertUnprocessable();
         }
-        $this->assertArrayNotHasKey('recipient', $first->json('data.0'));
+        // The list endpoint intentionally returns a masked recipient for display.
+        // Unlike the create receipt, the read DTO retains the field without exposing PII.
+        $this->assertSame('s***@example.test', $first->json('data.0.recipient'));
+        $this->assertStringNotContainsString('schedules-owner@example.test', $first->getContent());
     }
 
     private function payload(): array
