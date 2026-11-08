@@ -138,9 +138,9 @@ final class SeoController extends Controller
         foreach (array_values(array_unique($data['approval_ids'])) as $approvalId) {
             try {
                 $approval = Approval::query()->findOrFail((int) $approvalId);
+                // Scope the approval's suggestion before revealing its state.
+                Suggestion::query()->where('site_id', $site)->findOrFail($approval->suggestion_id);
                 abort_unless($approval->status === 'APPROVED', 409, 'Every SEO mutation requires explicit approval.');
-                $suggestion = Suggestion::query()->where('site_id', $site)->findOrFail($approval->suggestion_id);
-                abort_unless($suggestion->site_id === $site, 404);
                 [$execution, $created] = $creator->create($approval, $request->user()->id);
                 if ($created) {
                     ExecuteApprovedSuggestionJob::dispatch($context->id(), $execution->id);
