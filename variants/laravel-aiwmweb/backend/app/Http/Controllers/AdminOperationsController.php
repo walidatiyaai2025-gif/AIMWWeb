@@ -301,6 +301,24 @@ final class AdminOperationsController extends Controller
     {
         $this->authorizer->authorize('operations.manage');
 
+        // The Execution Center opts in to authoritative server paging. Existing
+        // callers without paging params keep the previous legacy array shape.
+        if ($request->hasAny(['page', 'per_page', 'search', 'date_from', 'date_to'])) {
+            $filters = $request->validate([
+                'page' => ['sometimes', 'integer', 'min:1'],
+                'per_page' => ['sometimes', 'integer', 'in:10,25,50,100'],
+                'search' => ['nullable', 'string', 'max:120', 'regex:/^[a-zA-Z0-9 .:_-]*$/'],
+                'status' => ['nullable', 'string', 'max:40', 'regex:/^[a-z_]*$/'],
+                'type' => ['nullable', 'string', 'max:80', 'regex:/^[a-zA-Z0-9._-]*$/'],
+                'date_from' => ['nullable', 'date_format:Y-m-d'],
+                'date_to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:date_from'],
+            ]);
+
+            return response()->json($this->operations->paginatedOperations(
+                $filters, (int) $request->user()->getAuthIdentifier(),
+            ));
+        }
+
         return response()->json(['data' => $this->operations->operations($request->only(['status', 'type']))]);
     }
 
