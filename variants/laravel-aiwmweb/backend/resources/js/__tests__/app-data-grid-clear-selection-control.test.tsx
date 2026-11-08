@@ -88,11 +88,11 @@ describe(`${APP_DATA_GRID_CLEAR_SELECTION_OPERATION_ID} AppDataGrid ClearSelecti
     });
 
     it('reuses the existing Sites clear-selection action and never issues a mutation request', async () => {
-        const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify([
+        const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ data: [
             { id: 11, name: 'One', status: 'active' },
             { id: 12, name: 'Two', status: 'active' },
             { id: 13, name: 'Three', status: 'active' },
-        ]), { status: 200, headers: { 'content-type': 'application/json' } }));
+        ], total: 3, current_page: 1, last_page: 1, per_page: 25 }), { status: 200, headers: { 'content-type': 'application/json' } }));
         vi.stubGlobal('fetch', fetchMock);
 
         renderSites();
