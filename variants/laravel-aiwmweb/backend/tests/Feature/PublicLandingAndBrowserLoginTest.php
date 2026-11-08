@@ -49,6 +49,38 @@ final class PublicLandingAndBrowserLoginTest extends TestCase
         $this->get('/login')->assertOk()->assertSee('action="'.route('login.store').'"', false);
     }
 
+    public function test_login_screen_renders_bilingual_tenant_neutral_shell_and_retains_safe_return_url(): void
+    {
+        foreach ([
+            'en' => ['ltr', 'Sign in to continue to your workspace', 'العربية'],
+            'ar' => ['rtl', 'سجّل الدخول للمتابعة إلى مساحة عملك', 'English'],
+        ] as $locale => [$direction, $subtitle, $switchLanguage]) {
+            $this->get('/login?lang='.$locale.'&returnUrl='.urlencode('/tenants/owned/workspace?tab=ops'))
+                ->assertOk()
+                ->assertSee('<html lang="'.$locale.'" dir="'.$direction.'" data-mode="dark">', false)
+                ->assertSee('data-tenant-neutral="true"', false)
+                ->assertSee('data-auth-shell="aiwmweb"', false)
+                ->assertSee('name="robots" content="noindex,nofollow"', false)
+                ->assertSee('name="returnUrl" value="/tenants/owned/workspace?tab=ops"', false)
+                ->assertSee('name="password"', false)
+                ->assertSee('name="_token"', false)
+                ->assertSee('href="/login?lang='.($locale === 'ar' ? 'en' : 'ar').'&amp;returnUrl=%2Ftenants%2Fowned%2Fworkspace%3Ftab%3Dops"', false)
+                ->assertSee($subtitle)
+                ->assertSee($switchLanguage)
+                ->assertDontSee('class="sidebar"', false);
+        }
+
+        $this->get('/login?lang=ar&returnUrl='.urlencode('//evil.example/steal'))
+            ->assertOk()
+            ->assertSee('name="returnUrl" value="/"', false)
+            ->assertDontSee('evil.example');
+
+        $source = (string) file_get_contents(resource_path('views/auth/login.blade.php'));
+        $this->assertStringContainsString("@vite(['resources/css/app.css'])", $source);
+        $this->assertStringContainsString('min-height: 44px', $source);
+        $this->assertStringContainsString(':focus-visible', $source);
+    }
+
     public function test_browser_login_redirects_to_actual_owned_tenant_not_guessed_slug(): void
     {
         $user = User::factory()->create(['email' => 'owner@example.test', 'password' => bcrypt('correct-password')]);
