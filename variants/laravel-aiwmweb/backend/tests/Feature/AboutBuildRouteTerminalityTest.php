@@ -149,7 +149,7 @@ class AboutBuildRouteTerminalityTest extends TestCase
         }
 
         $source = (string) file_get_contents(resource_path('views/platform/about-build.blade.php'));
-        $this->assertStringContainsString("resources/css/app.css", $source);
+        $this->assertStringContainsString('resources/css/app.css', $source);
         $this->assertStringContainsString("@include('layouts.partials.workspace-read-sidebar')", $source);
         $this->assertStringContainsString('@media (max-width: 600px)', $source);
     }
