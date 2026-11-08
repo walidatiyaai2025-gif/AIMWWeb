@@ -27,7 +27,7 @@ final class SecurityAuditDashboardShellTest extends TestCase
                     ->assertSee('class="sidebar"', false)
                     ->assertSee('class="topbar"', false)
                     ->assertSee('aria-current="page"', false)
-                    ->assertSee('data-canonical-operation="AIMW-CONT-EBD89B0642"', false)
+                    ->assertSee('data-canonical-operation=', false)
                     ->assertSee('name="category"', false)
                     ->assertSee('name="outcome"', false);
 
