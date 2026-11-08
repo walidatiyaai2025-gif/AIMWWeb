@@ -226,6 +226,39 @@ export function ContentEditorShowPreviewControl({
     );
 }
 
+/**
+ * Compose a self-contained, readable preview of the UNSAVED editor draft.
+ * The iframe also uses sandbox="" and no-referrer; this defense-in-depth CSP
+ * prevents WordPress HTML from executing scripts, submitting forms or framing.
+ */
+export function buildContentEditorPreviewDocument(content: string, locale: 'ar' | 'en'): string {
+    const direction = locale === 'ar' ? 'rtl' : 'ltr';
+    return `<!doctype html>
+<html lang="${locale}" dir="${direction}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; connect-src 'none'; object-src 'none'; frame-src 'none'; form-action 'none'; base-uri 'none'; img-src https: http: data:; media-src https: http: data:; style-src 'unsafe-inline'; font-src https: http: data:">
+<style>
+* { box-sizing: border-box; overflow-wrap: anywhere; }
+html { color-scheme: light; background: #fff; }
+body { margin: 0 auto; padding: clamp(16px, 3vw, 32px); max-width: 1120px; min-height: 100%; color: #24292f; background: #fff; font: 16px/1.7 system-ui, -apple-system, "Segoe UI", Tahoma, sans-serif; }
+h1, h2, h3, h4, h5, h6 { line-height: 1.3; overflow-wrap: break-word; }
+p, li, blockquote { overflow-wrap: break-word; }
+img, svg, canvas, video, audio { max-width: 100%; height: auto; }
+figure { margin-inline: 0; max-width: 100%; }
+iframe, object, embed { max-width: 100%; }
+table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; }
+th, td { padding: .5rem; border: 1px solid #d0d7de; }
+pre, code { white-space: pre-wrap; overflow-wrap: anywhere; }
+pre { max-width: 100%; overflow-x: auto; padding: .75rem; background: #f6f8fa; border-radius: 6px; }
+a { color: #0969da; }
+</style>
+</head>
+<body>${content}</body>
+</html>`;
+}
+
 export function ContentEditorPreviewSurface({ content }: { content: string }) {
     const { locale } = useLocale();
 
@@ -247,7 +280,7 @@ export function ContentEditorPreviewSurface({ content }: { content: string }) {
                 title={locale === 'ar' ? 'معاينة HTML للمحتوى' : 'Content HTML preview'}
                 sandbox=""
                 referrerPolicy="no-referrer"
-                srcDoc={content}
+                srcDoc={buildContentEditorPreviewDocument(content, locale)}
             />
         </article>
     );
@@ -654,7 +687,7 @@ export function ContentEditorSaveControl({ context }: { context: FrontendContext
                         </div>
                     </div>
                     {viewMode === 'edit' ? (
-                        <label>
+                        <label className="content-editor-html-input">
                             <span className="sr-only">{locale === 'ar' ? 'المحتوى HTML' : 'Content HTML'}</span>
                             <textarea rows={14} value={draft.content} onChange={(e) => set('content', e.target.value)} />
                         </label>
