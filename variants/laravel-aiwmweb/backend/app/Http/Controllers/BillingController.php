@@ -182,7 +182,7 @@ final class BillingController extends Controller
     }
 
     /**
-     * @param  callable(): \Illuminate\Database\Eloquent\Builder  $query
+     * @param  callable  $query
      * @param  list<string>  $columns
      * @return array{items:array,meta:array}
      */
