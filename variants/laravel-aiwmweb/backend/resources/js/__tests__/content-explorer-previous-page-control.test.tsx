@@ -48,6 +48,32 @@ describe('AIMW-CONT-A31317B378 ContentExplorer PreviousPage', () => {
         expect(onPage).not.toHaveBeenCalled();
     });
 
+
+    it('clamps invalid server page metadata and prevents out-of-bounds navigation', () => {
+        const { onPage } = renderPagination(999, 3);
+        expect(screen.getByText('Page 3 of 3')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+        expect(screen.getByRole('button', { name: 'Last' })).toBeDisabled();
+        fireEvent.click(screen.getByRole('button', { name: 'Previous' }));
+        expect(onPage).toHaveBeenCalledWith(2);
+    });
+
+    it('fails closed on NaN metadata and does not show imaginary rows', () => {
+        const onPage = vi.fn();
+        const { rerender } = render(
+            <LocaleProvider><ContentExplorerPagination page={Number.NaN} lastPage={3} onPage={onPage}
+                total={21} pageSize={10} returnedCount={0} /></LocaleProvider>,
+        );
+        expect(screen.getByText('Page 1 of 3')).toBeInTheDocument();
+        expect(screen.getByText('0–0 of 21')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled();
+        fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+        expect(onPage).toHaveBeenCalledWith(2);
+        rerender(<LocaleProvider><ContentExplorerPagination page={2} lastPage={3} onPage={onPage}
+            total={21} pageSize={10} returnedCount={100} /></LocaleProvider>);
+        expect(screen.getByText('11–20 of 21')).toBeInTheDocument();
+    });
+
     it('does not render pagination when the authoritative result has a single page', () => {
         renderPagination(1, 1);
         expect(screen.queryByRole('navigation', { name: 'Content pagination' })).not.toBeInTheDocument();

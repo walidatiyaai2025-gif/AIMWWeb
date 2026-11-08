@@ -39,9 +39,9 @@ final class ContentExplorerPreviousPageTerminalityTest extends TestCase
         $pages = (string) file_get_contents(resource_path('js/pages.tsx'));
 
         $this->assertStringContainsString(self::OPERATION_ID, $control);
-        $this->assertStringContainsString('previousContentExplorerPage(page)', $control);
-        $this->assertStringContainsString('if (page <= 1) return;', $control);
-        $this->assertStringContainsString('onPage(previousContentExplorerPage(page))', $control);
+        $this->assertStringContainsString('function previousContentExplorerPage(page: number)', $control);
+        $this->assertStringContainsString('if (safePage <= 1) return;', $control);
+        $this->assertStringContainsString('onPage(previousContentExplorerPage(safePage))', $control);
         $this->assertStringContainsString("route.key === 'explorer'", $pages);
         $this->assertStringContainsString('<ContentExplorerPagination page={collection.page} lastPage={collection.lastPage} onPage={setPage}', $pages);
         $this->assertStringContainsString("url.searchParams.set('page', String(page))", $pages);
