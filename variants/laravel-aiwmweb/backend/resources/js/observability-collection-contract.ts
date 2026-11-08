@@ -80,7 +80,7 @@ export function normalizeObservabilityCollection(routeKey: string, payload: unkn
             record_id: identifier(row.id),
             event_type: technical(row.type),
             status: 'failed',
-            occurred_at: timestamp(row.failed_at ?? row.created_at),
+            occurred_at: timestamp(row.updated_at) ?? timestamp(row.failed_at) ?? timestamp(row.created_at),
         })),
         ...audits.map((row) => ({
             source: 'audit_event',
