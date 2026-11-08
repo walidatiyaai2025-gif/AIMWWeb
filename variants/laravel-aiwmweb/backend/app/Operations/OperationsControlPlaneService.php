@@ -256,11 +256,17 @@ final class OperationsControlPlaneService
             'safe_to_cancel', 'created_at', 'updated_at', 'completed_at',
         ])->map(function ($row) use ($tenantId, $actorUserId): array {
             $owned = (int) $row->requested_by_user_id === $actorUserId;
-            $retrySupported = $row->type === 'report.export'
-                ? DB::table('report_exports')->where('tenant_id', $tenantId)
-                    ->where('operation_execution_id', $row->id)->exists()
-                : (str_starts_with((string) $row->type, 'sync.')
-                    && app()->bound(SyncOperationsGateway::class));
+            $retrySupported = false;
+            if ($row->type === 'report.export') {
+                $retrySupported = DB::table('report_exports')->where('tenant_id', $tenantId)
+                    ->where('operation_execution_id', $row->id)->exists();
+            } elseif (str_starts_with((string) $row->type, 'sync.')) {
+                $retrySupported = app()->bound(SyncOperationsGateway::class);
+            }
+
+            $canCancel = $owned && (bool) $row->safe_to_cancel && in_array($row->status, ['queued', 'retrying'], true);
+            $canRetry = $owned && $retrySupported && in_array($row->status, ['failed', 'cancelled'], true)
+                && (int) $row->attempts < (int) $row->max_attempts;
 
             return [
                 'id' => (int) $row->id,
@@ -273,16 +279,15 @@ final class OperationsControlPlaneService
                 'created_at' => $row->created_at,
                 'updated_at' => $row->updated_at,
                 'completed_at' => $row->completed_at,
-                'can_cancel' => $owned && (bool) $row->safe_to_cancel
-                    && in_array($row->status, ['queued', 'retrying'], true),
-                'can_retry' => $owned && $retrySupported
-                    && in_array($row->status, ['failed', 'cancelled'], true)
-                    && (int) $row->attempts < (int) $row->max_attempts,
+                'can_cancel' => $canCancel,
+                'can_retry' => $canRetry,
             ];
         })->all();
 
-        $tenantHasRecords = $total > 0 || DB::table('operation_executions')
-            ->where('tenant_id', $tenantId)->exists();
+        $tenantHasRecords = $total > 0;
+        if ($tenantHasRecords === false) {
+            $tenantHasRecords = DB::table('operation_executions')->where('tenant_id', $tenantId)->exists();
+        }
 
         return [
             'data' => $rows,
