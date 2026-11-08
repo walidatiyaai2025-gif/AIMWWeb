@@ -27,6 +27,7 @@ use App\Services\SeoManagerService;
 use App\Tenancy\TenantContext;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -58,19 +59,25 @@ final class SeoParityClosureTest extends TestCase
 
     public function test_audit_item_failure_persists_only_safe_message_and_real_counters(): void
     {
+        if (DB::getDriverName() !== 'sqlite') {
+            $this->markTestSkipped('Synthetic SQLite trigger tests the persisted failure message without altering MySQL schema.');
+        }
+
         [$tenant, $membership] = $this->tenant('audit-redaction');
         app(TenantContext::class)->activate($tenant, $membership);
         $site = Site::query()->create(['name' => 'Audit Redaction', 'url' => 'https://audit.test']);
-        $this->content($site);
+        $this->content($site, ['title' => '', 'seo_title' => '', 'seo_description' => '']);
         $audit = SeoAudit::query()->create(['site_id' => $site->id, 'actor_user_id' => $membership->user_id]);
-        $seo = \Mockery::mock(SeoManagerService::class, [new SeoFakeWordPressGateway([])])->makePartial();
-        $seo->shouldReceive('analyze')
-            ->once()
-            ->andThrow(new RuntimeException('DB_PASSWORD=secret-test-only and raw SQL query'));
+        $seo = new SeoManagerService(new SeoFakeWordPressGateway([]));
 
-        $seo->runAudit($audit);
+        DB::statement("CREATE TEMP TRIGGER seo_test_secret_failure BEFORE INSERT ON seo_findings BEGIN SELECT RAISE(ABORT, 'DB_PASSWORD=secret-test-only'); END");
+        try {
+            $seo->runAudit($audit);
+        } finally {
+            DB::statement('DROP TRIGGER IF EXISTS seo_test_secret_failure');
+        }
+
         $audit->refresh();
-
         $this->assertSame('partial', $audit->status);
         $this->assertSame(1, $audit->total_items);
         $this->assertSame(0, $audit->processed_items);
@@ -81,20 +88,26 @@ final class SeoParityClosureTest extends TestCase
 
     public function test_unhandled_audit_job_failure_is_redacted_in_storage_but_rethrown(): void
     {
+        if (DB::getDriverName() !== 'sqlite') {
+            $this->markTestSkipped('Synthetic SQLite trigger tests persisted job failure without altering MySQL schema.');
+        }
+
         [$tenant, $membership] = $this->tenant('job-redaction');
         app(TenantContext::class)->activate($tenant, $membership);
         $site = Site::query()->create(['name' => 'Job Redaction', 'url' => 'https://audit.test']);
         $audit = SeoAudit::query()->create(['site_id' => $site->id, 'actor_user_id' => $membership->user_id]);
-        $seo = \Mockery::mock(SeoManagerService::class, [new SeoFakeWordPressGateway([])])->makePartial();
-        $seo->shouldReceive('runAudit')
-            ->once()
-            ->andThrow(new RuntimeException('api_token=secret-test-only'));
+        $seo = new SeoManagerService(new SeoFakeWordPressGateway([]));
 
+        DB::statement("CREATE TEMP TRIGGER seo_test_job_secret_failure BEFORE UPDATE ON seo_audits WHEN NEW.status = 'running' BEGIN SELECT RAISE(ABORT, 'api_token=secret-test-only'); END");
         try {
-            (new RunSeoAuditJob($tenant->id, $audit->id))->handle($seo);
-            $this->fail('An unhandled failure must still propagate to the queue.');
-        } catch (RuntimeException $exception) {
-            $this->assertStringContainsString('secret-test-only', $exception->getMessage());
+            try {
+                (new RunSeoAuditJob($tenant->id, $audit->id))->handle($seo);
+                $this->fail('An unhandled failure must still propagate to the queue.');
+            } catch (\Illuminate\Database\QueryException $exception) {
+                $this->assertStringContainsString('secret-test-only', $exception->getMessage());
+            }
+        } finally {
+            DB::statement('DROP TRIGGER IF EXISTS seo_test_job_secret_failure');
         }
 
         $audit->refresh();
