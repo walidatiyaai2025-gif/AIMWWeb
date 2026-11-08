@@ -47,7 +47,7 @@ describe('Billing History #1703 real server paging', () => {
     it('uses independent authoritative audit/transaction pages and real refresh', async () => {
         const fetchMock = vi.fn((url: string) => {
             const query = new URL(url, 'https://example.test').searchParams;
-            return Promise.resolve(json(Number(query.get('audit_page')), Number(query.get('transaction_page'))));
+            return Promise.resolve(json(payload(Number(query.get('audit_page')), Number(query.get('transaction_page')))));
         });
         vi.stubGlobal('fetch', fetchMock);
 
