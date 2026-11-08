@@ -165,6 +165,35 @@ final class SeoTenantRouteBindingRegressionTest extends TestCase
         Queue::assertPushed(RunSeoAuditJob::class, 1);
     }
 
+    public function test_bulk_seo_failures_return_safe_per_item_messages_without_internal_exception_text(): void
+    {
+        [$manager, $membership] = $this->member('wordpress', [
+            'tenant.view', 'seo.view', 'seo.write', 'executions.manage',
+        ]);
+        $site = $this->site($membership, 'NOB');
+
+        $prepare = $this->actingAs($manager)->postJson(
+            "/api/tenants/wordpress/sites/{$site->id}/seo/remediations/bulk",
+            ['items' => [['finding_id' => 987654321, 'changes' => ['seo_title' => 'Test']]]],
+        );
+        $prepare->assertStatus(207)
+            ->assertJsonPath('prepared', [])
+            ->assertJsonPath('failed.0.finding_id', 987654321)
+            ->assertJsonPath('failed.0.error', 'Item not found or unavailable.');
+        $this->assertStringNotContainsString('App\\Models', $prepare->getContent());
+
+        $execute = $this->actingAs($manager)->postJson(
+            "/api/tenants/wordpress/sites/{$site->id}/seo/executions/bulk",
+            ['approval_ids' => [987654321]],
+        );
+        $execute->assertStatus(207)
+            ->assertJsonPath('queued', [])
+            ->assertJsonPath('failed.0.approval_id', 987654321)
+            ->assertJsonPath('failed.0.error', 'Item not found or unavailable.');
+        $this->assertStringNotContainsString('App\\Models', $execute->getContent());
+        $this->assertDatabaseCount('executions', 0);
+    }
+
     /** @return array{User,TenantMembership} */
     private function member(string $slug, array $permissions): array
     {
