@@ -175,5 +175,5 @@ describe('AIMW-CONT-E346398EAD server-filtered Sites', () => {
         await waitFor(() => expect(screen.getByRole('button', { name: 'Connected 30' })).toHaveAttribute('aria-pressed', 'true'));
         expect(view.container.querySelector('.count-badge')).toHaveTextContent('30');
         expect(view.container.querySelector('.count-badge')).not.toHaveTextContent('25');
-    });;
+    });
 });
