@@ -22,6 +22,7 @@ type ConnectionSnapshot = {
     };
     connection: string;
     last_verified_at?: string | null;
+    metadata?: Partial<Record<'wordpress_version' | 'language_code', { state: string; checked_at?: string | null }>>;
 };
 
 type OperationHistoryItem = {
@@ -103,8 +104,10 @@ export function formatSiteDiagnosticsReport(connection: ConnectionSnapshot, hist
         `Site: ${site.name}`,
         `URL: ${typeof site.url === 'string' ? site.url : '—'}`,
         `Status: ${site.connection_status ?? connection.connection ?? '—'}`,
-        `WordPress: ${site.wordpress_version ?? '—'}`,
-        `Language: ${site.language_code ?? '—'}`,
+        `WordPress: ${site.wordpress_version ?? `unavailable (${connection.metadata?.wordpress_version?.state ?? 'not_probed'})`}`,
+        `Language: ${site.language_code ?? `unavailable (${connection.metadata?.language_code?.state ?? 'not_probed'})`}`,
+        `WordPress metadata checked: ${connection.metadata?.wordpress_version?.checked_at ?? 'not verified'}`,
+        `Language metadata checked: ${connection.metadata?.language_code?.checked_at ?? 'not verified'}`,
         `Last test: ${connection.last_verified_at ?? site.last_verified_at ?? '—'}`,
         '',
         'Recent operations:',
