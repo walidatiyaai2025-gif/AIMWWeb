@@ -1,12 +1,14 @@
 import React, { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ApiError, apiRequest, type FrontendContext } from './core';
+import { Pagination } from './components';
 import { useLocale } from './i18n';
 
 export const SITES_RETEST_SELECTED_OPERATION_ID = 'AIMW-BILL-DD0FD9926B';
 export const SITES_RETEST_SELECTED_MAX = 100;
 
 type SiteRow = { id: number; name?: string; status?: string };
+type SitePage = { data: SiteRow[]; total: number; current_page: number; last_page: number; per_page: number };
 type RecheckPayload = { id?: number; classification?: string | null; message?: string | null };
 
 export function canonicalSitesRetestCollection(context: FrontendContext): string | null {
@@ -23,18 +25,23 @@ export function SitesRetestSelectedControl({ context }: { context: FrontendConte
     const { locale } = useLocale();
     const queryClient = useQueryClient();
     const [selected, setSelected] = useState<Set<number>>(new Set());
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(25);
     const [message, setMessage] = useState<{ role: 'status' | 'alert'; text: string } | null>(null);
     const collection = canonicalSitesRetestCollection(context);
     const allowed = context.permissions.includes('*') || context.permissions.includes('connector.manage');
 
     const query = useQuery({
-        queryKey: ['sites-retest-selected', context.tenant.slug, collection],
-        queryFn: () => apiRequest<SiteRow[]>(collection!),
+        queryKey: ['sites-retest-selected', context.tenant.slug, collection, page, pageSize],
+        queryFn: () => apiRequest<SitePage>(`${collection}?page=${page}&per_page=${pageSize}`),
         enabled: allowed && Boolean(collection),
         retry: false,
     });
 
-    const sites = useMemo(() => Array.isArray(query.data) ? query.data : [], [query.data]);
+    const sites = useMemo(() => Array.isArray(query.data?.data) ? query.data.data : [], [query.data]);
+    const currentPage = Number.isSafeInteger(query.data?.current_page) ? query.data!.current_page : page;
+    const lastPage = Number.isSafeInteger(query.data?.last_page) ? Math.max(1, query.data!.last_page) : 1;
+    const total = Number.isSafeInteger(query.data?.total) ? query.data!.total : undefined;
     const selectedIds = useMemo(
         () => Array.from(selected).filter((id) => sites.some((site) => site.id === id)).slice(0, SITES_RETEST_SELECTED_MAX),
         [selected, sites],
@@ -56,7 +63,7 @@ export function SitesRetestSelectedControl({ context }: { context: FrontendConte
 
             const refreshed = await query.refetch();
             if (refreshed.error) throw refreshed.error;
-            if (!Array.isArray(refreshed.data)) throw new Error('Retest completed but authoritative Sites state could not be reread.');
+            if (!Array.isArray(refreshed.data?.data)) throw new Error('Retest completed but authoritative Sites state could not be reread.');
 
             return {
                 requested: ids.length,
@@ -79,6 +86,13 @@ export function SitesRetestSelectedControl({ context }: { context: FrontendConte
     });
 
     if (!allowed || !collection) return null;
+
+    const changePage = (next: number) => {
+        if (mutation.isPending) return;
+        setSelected(new Set());
+        setMessage(null);
+        setPage(next);
+    };
 
     const toggle = (id: number) => {
         if (mutation.isPending) return;
@@ -129,6 +143,12 @@ export function SitesRetestSelectedControl({ context }: { context: FrontendConte
                             ))}</tbody>
                         </table>
                     </div>
+                    <Pagination page={currentPage} lastPage={lastPage} onPage={changePage}
+                        total={total} pageSize={pageSize} returnedCount={sites.length}
+                        onPageSizeChange={(size) => {
+                            if (mutation.isPending) return;
+                            setSelected(new Set()); setMessage(null); setPage(1); setPageSize(size);
+                        }} />
                 </>
             ) : (!query.isLoading && !query.error ? <p>{locale === 'ar' ? 'لا توجد مواقع لإعادة اختبارها.' : 'No sites are available to retest.'}</p> : null)}
         </section>

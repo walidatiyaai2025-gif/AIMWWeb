@@ -32,10 +32,10 @@ describe('AIMW-BILL-DD0FD9926B Sites RetestSelectedAsync', () => {
 
     it('retests every selected site then rereads authoritative Sites before success', async () => {
         const fetchMock = vi.fn()
-            .mockResolvedValueOnce(json([{ id: 11, name: 'One', status: 'active' }, { id: 12, name: 'Two', status: 'active' }]))
+            .mockResolvedValueOnce(json({ data: [{ id: 11, name: 'One', status: 'active' }, { id: 12, name: 'Two', status: 'active' }], total: 2, current_page: 1, last_page: 1, per_page: 25 }))
             .mockResolvedValueOnce(json({ id: 11, classification: 'healthy' }))
             .mockResolvedValueOnce(json({ id: 12, classification: 'healthy' }))
-            .mockResolvedValueOnce(json([{ id: 11, name: 'One', status: 'active' }, { id: 12, name: 'Two', status: 'active' }]));
+            .mockResolvedValueOnce(json({ data: [{ id: 11, name: 'One', status: 'active' }, { id: 12, name: 'Two', status: 'active' }], total: 2, current_page: 1, last_page: 1, per_page: 25 }));
         vi.stubGlobal('fetch', fetchMock);
         show();
         fireEvent.click(await screen.findByLabelText('Select One'));
@@ -43,18 +43,18 @@ describe('AIMW-BILL-DD0FD9926B Sites RetestSelectedAsync', () => {
         const retest = screen.getByRole('button', { name: 'Retest selected' });
         expect(retest).toHaveAttribute('data-canonical-operation', SITES_RETEST_SELECTED_OPERATION_ID);
         fireEvent.click(retest);
-        expect(await screen.findByRole('status')).toHaveTextContent('Retested 2 sites: 2 succeeded, 0 need review.');
+        expect(await screen.findByText('Retested 2 sites: 2 succeeded, 0 need review.')).toBeInTheDocument();
         expect(fetchMock.mock.calls[1]?.[0]).toBe('/api/tenants/alpha/sites/11/connection/recheck');
         expect(fetchMock.mock.calls[2]?.[0]).toBe('/api/tenants/alpha/sites/12/connection/recheck');
-        expect(fetchMock.mock.calls[3]?.[0]).toBe('/api/tenants/alpha/sites');
+        expect(fetchMock.mock.calls[3]?.[0]).toBe('/api/tenants/alpha/sites?page=1&per_page=25');
     });
 
     it('reports partial failures after authoritative reread', async () => {
         const fetchMock = vi.fn()
-            .mockResolvedValueOnce(json([{ id: 11, name: 'One', status: 'active' }, { id: 12, name: 'Two', status: 'active' }]))
+            .mockResolvedValueOnce(json({ data: [{ id: 11, name: 'One', status: 'active' }, { id: 12, name: 'Two', status: 'active' }], total: 2, current_page: 1, last_page: 1, per_page: 25 }))
             .mockResolvedValueOnce(json({ id: 11, classification: 'healthy' }))
             .mockResolvedValueOnce(json({ message: 'unreachable' }, 502))
-            .mockResolvedValueOnce(json([{ id: 11, name: 'One', status: 'active' }, { id: 12, name: 'Two', status: 'active' }]));
+            .mockResolvedValueOnce(json({ data: [{ id: 11, name: 'One', status: 'active' }, { id: 12, name: 'Two', status: 'active' }], total: 2, current_page: 1, last_page: 1, per_page: 25 }));
         vi.stubGlobal('fetch', fetchMock);
         show();
         fireEvent.click(await screen.findByLabelText('Select One'));
