@@ -113,6 +113,53 @@ class ApprovalQueueLoadTerminalityTest extends TestCase
             ->assertJsonPath('data.0.status', 'APPROVED');
     }
 
+    public function test_approval_queue_uses_real_bounded_pages_and_clamps_stale_page_requests(): void
+    {
+        $user = User::factory()->create();
+        $alpha = $this->membership($user, 'approval-page-alpha', ['tenant.view', 'approvals.view']);
+        $beta = $this->membership($user, 'approval-page-beta', ['tenant.view', 'approvals.view']);
+
+        for ($i = 0; $i < 12; $i++) {
+            $this->seedApproval($alpha, $i < 7 ? 'PENDING' : 'APPROVED');
+        }
+        $this->seedApproval($beta, 'PENDING');
+
+        $first = $this->actingAs($user)->getJson('/api/tenants/approval-page-alpha/approvals?page=1&per_page=10')
+            ->assertOk()
+            ->assertJsonPath('total', 12)
+            ->assertJsonPath('last_page', 2)
+            ->assertJsonPath('current_page', 1)
+            ->assertJsonCount(10, 'data');
+        $second = $this->actingAs($user)->getJson('/api/tenants/approval-page-alpha/approvals?page=2&per_page=10')
+            ->assertOk()
+            ->assertJsonPath('total', 12)
+            ->assertJsonPath('current_page', 2)
+            ->assertJsonCount(2, 'data');
+
+        $firstIds = collect($first->json('data'))->pluck('id')->all();
+        $secondIds = collect($second->json('data'))->pluck('id')->all();
+        $this->assertSame([], array_values(array_intersect($firstIds, $secondIds)));
+
+        $this->actingAs($user)->getJson('/api/tenants/approval-page-alpha/approvals?page=99&per_page=10')
+            ->assertOk()
+            ->assertJsonPath('current_page', 2)
+            ->assertJsonCount(2, 'data');
+        $this->actingAs($user)->getJson('/api/tenants/approval-page-alpha/approvals?page=2&per_page=10&search=PENDING')
+            ->assertOk()
+            ->assertJsonPath('total', 7)
+            ->assertJsonPath('current_page', 1)
+            ->assertJsonCount(7, 'data');
+
+        foreach (['page=0', 'page=nope', 'per_page=500', 'per_page=0'] as $invalid) {
+            $this->actingAs($user)->getJson('/api/tenants/approval-page-alpha/approvals?'.$invalid)
+                ->assertUnprocessable();
+        }
+        $this->actingAs($user)->getJson('/api/tenants/approval-page-beta/approvals?page=1&per_page=10')
+            ->assertOk()
+            ->assertJsonPath('total', 1)
+            ->assertJsonCount(1, 'data');
+    }
+
     private function membership(User $user, string $slug, array $permissions): TenantMembership
     {
         $tenant = Tenant::query()->create(['name' => ucfirst($slug), 'slug' => $slug]);
