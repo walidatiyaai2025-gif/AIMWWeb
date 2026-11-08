@@ -28,12 +28,30 @@ type OperationHistoryItem = {
     operation: string;
     status: string;
     message: string;
+    correlation_id?: string | null;
+    details?: {
+        sync_run_id?: number;
+        failure_code?: string;
+        failure_category?: string;
+        failure_message?: string;
+    } | null;
     affected_records?: number | null;
     started_at?: string | null;
     completed_at?: string | null;
 };
 
 type OperationHistoryPayload = { items: OperationHistoryItem[] };
+const SYNC_FAILURE_AR: Record<string, string> = {
+    authentication: 'فشل التحقق من اتصال WordPress. راجع بيانات الربط وتوقيع الطلبات.',
+    rate_limit: 'تم تجاوز حدود الطلبات أو الحصة. راجع الحدود قبل إعادة المحاولة.',
+    protocol: 'بروتوكول الربط غير متوافق. تحقق من إصدار الإضافة والتطبيق.',
+    transport: 'تعذر الوصول إلى WordPress. تحقق من الشبكة وشهادة الاتصال.',
+    remote_service: 'أعاد WordPress خطأ من الخادم. تحقق من حالته قبل إعادة المحاولة.',
+    storage: 'حدث خطأ في قاعدة البيانات أو مساحة التخزين. تحقق من حالة الخادم.',
+    unknown: 'فشلت المزامنة لسبب غير مصنف. افتح تفاصيل العملية لمزيد من التشخيص.',
+};
+
+
 type SyncRun = { id: number; status: string; processed?: number; failure?: string | null; diagnostic_code?: string | null };
 
 export type SiteConnectionCenterDynamicLinks = {
@@ -402,6 +420,24 @@ export function SiteConnectionCenterSyncControl({ context }: { context: Frontend
                                 <strong>{item.operation}</strong>
                                 <span> · {item.status}</span>
                                 <p>{item.message}</p>
+                                {item.operation === 'synchronization' && item.status === 'failed' && item.details?.failure_code ? (
+                                    <div className="workspace-stack" data-sync-failure-details>
+                                        <small>{locale === 'ar' ? 'رمز الفشل' : 'Failure code'}: {item.details.failure_code}</small>
+                                        <p>{locale === 'ar'
+                                            ? (SYNC_FAILURE_AR[item.details.failure_category ?? ''] ?? SYNC_FAILURE_AR.unknown)
+                                            : item.details.failure_message}</p>
+                                        {Number.isSafeInteger(item.details.sync_run_id) && Number(item.details.sync_run_id) > 0 ? (
+                                            <small>{locale === 'ar' ? 'رقم تشغيل المزامنة' : 'Synchronization run'}: #{item.details.sync_run_id}</small>
+                                        ) : null}
+                                    </div>
+                                ) : null}
+                                {(context.permissions.includes('*') || context.permissions.includes('execution.view'))
+                                    && typeof item.correlation_id === 'string'
+                                    && /^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(item.correlation_id) ? (
+                                        <a href={tenantUrl(context.tenant.slug, `/site-operations/${encodeURIComponent(item.correlation_id)}`)}>
+                                            {locale === 'ar' ? 'تفاصيل العملية' : 'Operation details'}
+                                        </a>
+                                    ) : null}
                                 {item.affected_records != null ? (
                                     <small>{locale === 'ar' ? 'السجلات المتأثرة' : 'Affected records'}: {item.affected_records}</small>
                                 ) : null}

@@ -108,6 +108,37 @@ describe('AIMW-BILL-3762C05261 Site Connection Center SynchronizeAsync', () => {
         expect(screen.getByText('Affected records: 4')).toBeInTheDocument();
     });
 
+    it('shows bounded safe sync failure details with authorized operation drilldown', async () => {
+        const correlationId = '12345678-1234-4234-8234-1234567890ab';
+        const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+            const path = String(input);
+            const payload = path.includes('/operations')
+                ? { items: [{
+                    id: 44, correlation_id: correlationId,
+                    operation: 'synchronization', status: 'failed',
+                    message: 'WordPress synchronization failed.',
+                    details: {
+                        sync_run_id: 91,
+                        failure_code: 'WP_SYNC_AUTHENTICATION',
+                        failure_category: 'authentication',
+                        failure_message: 'WordPress rejected the connection. Recheck Connector credentials and signed request permissions.',
+                    },
+                }] }
+                : { site: { id: 7, name: 'Alpha Site', connection_status: 'connected' }, connection: 'CONNECTED' };
+            return new Response(JSON.stringify(payload), { status: 200, headers: { 'content-type': 'application/json' } });
+        });
+        vi.stubGlobal('fetch', fetchMock);
+        renderControl(context(['tenant.view', 'sites.view', 'execution.view']));
+
+        expect(await screen.findByText(/WP_SYNC_AUTHENTICATION/)).toBeInTheDocument();
+        expect(screen.getByText(/WordPress rejected the connection/)).toBeInTheDocument();
+        expect(screen.getByText(/Synchronization run/)).toHaveTextContent('#91');
+        const details = screen.getByRole('link', { name: 'Operation details' });
+        expect(details).toHaveAttribute('href', `/tenants/alpha/site-operations/${correlationId}`);
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+        expect(screen.queryByText(/private-value|unsafe-token/)).not.toBeInTheDocument();
+    });
+
     it('fails closed for invalid identifiers and hides mutation without sites.manage', async () => {
         expect(siteConnectionCenterEndpoints('alpha', '../7')).toBeNull();
         expect(siteConnectionCenterEndpoints('alpha/beta', 7)).toBeNull();
