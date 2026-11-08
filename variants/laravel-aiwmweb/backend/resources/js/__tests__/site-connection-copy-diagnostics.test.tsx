@@ -137,4 +137,107 @@ describe('AIMW-BILL-D4E1DA62D9 CopyDiagnosticsAsync', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Copy diagnostics' }));
         expect(await screen.findByRole('alert')).toHaveTextContent('Clipboard API is unavailable');
     });
+
+    it('never copies credentialed site URLs, raw upstream failures, or untrusted report fields', () => {
+        const report = formatSiteDiagnosticsReport({
+            site: {
+                id: 7,
+                name: 'Alpha Test',
+                url: 'https://operator:private-pass@wp.example.test/hidden-path?token=query-secret#fragment-secret',
+                connection_status: 'CONNECTED',
+                wordpress_version: '6.8',
+                language_code: 'en_US',
+            },
+            connection: 'CONNECTED',
+            metadata: {
+                wordpress_version: { state: 'verified', checked_at: '2026-11-08T13:15:00Z' },
+                language_code: { state: 'verified', checked_at: '2026-11-08T13:15:00Z' },
+            },
+            last_verified_at: '2026-11-08T13:16:00Z',
+        }, [{
+            operation: 'synchronization',
+            status: 'failed',
+            message: 'Bearer private-bearer https://unsafe.example/?api_key=hidden {"password":"private-json"} SQL: delete from users',
+            started_at: '2026-11-08T13:17:00Z',
+            details: {
+                sync_run_id: 7,
+                failure_category: 'authentication',
+                failure_code: 'WP_SYNC_AUTHENTICATION',
+                failure_message: 'raw private diagnostic message must not leave the tenant',
+            },
+        }]);
+        expect(report).toContain('URL: https://wp.example.test');
+        expect(report).toContain('WordPress: 6.8');
+        expect(report).toContain('Language: en_US');
+        expect(report).toContain('WP_SYNC_AUTHENTICATION');
+        expect(report).toContain('Check WordPress authentication and Connector permissions.');
+        for (const secret of ['operator', 'private-pass', 'hidden-path', 'query-secret', 'fragment-secret',
+            'private-bearer', 'unsafe.example', 'private-json', 'delete from users', 'raw private diagnostic']) {
+            expect(report).not.toContain(secret);
+        }
+    });
+
+    it('withholds invalid URL, control-character injection and unsupported failure details instead of copying them', () => {
+        const report = formatSiteDiagnosticsReport({
+            site: {
+                id: 7,
+                name: 'Alpha' + '\n' + 'password=private-secret',
+                url: 'javascript:alert(1)',
+                connection_status: 'CONNECTED' + '\n' + 'token=private-secret',
+                wordpress_version: '6.9<script>',
+                language_code: 'en_US?token=private-secret',
+            },
+            connection: 'CONNECTED',
+            metadata: {
+                wordpress_version: { state: 'Bearer private-secret', checked_at: '2026-11-08T00:00:00Z' + '\n' + 'password=private-secret' },
+                language_code: { state: 'not_supported', checked_at: null },
+            },
+        }, [{
+            operation: 'sync' + '\n' + 'password=private-secret',
+            status: 'failed',
+            message: 'WordPress token=private-secret',
+            details: { failure_category: 'token=private-secret', failure_code: 'WP_SYNC_private-secret' },
+            started_at: 'not a date password=private-secret',
+        }]);
+        expect(report).toContain('Site: [WITHHELD]');
+        expect(report).toContain('URL: unavailable');
+        expect(report).toContain('Status: unknown');
+        expect(report).toContain('WordPress: unavailable (not_probed)');
+        expect(report).toContain('Language: unavailable (not_supported)');
+        expect(report).toContain('operation_withheld FAILED - Failed; review authorized operation details.');
+        expect(report).not.toContain('private-secret');
+        expect(report).not.toContain('<script>');
+        expect(report).not.toContain('javascript:');
+    });
+
+    it('copy button passes only redacted origin and static failure guidance to clipboard', async () => {
+        const fetchMock = vi.fn()
+            .mockResolvedValueOnce(new Response(JSON.stringify({
+                site: { id: 7, name: 'Alpha Site',
+                    url: 'https://user:password@wp.example.test/wp?api_key=private-token', connection_status: 'connected' },
+                connection: 'CONNECTED',
+            }), { status: 200, headers: { 'content-type': 'application/json' } }))
+            .mockResolvedValueOnce(new Response(JSON.stringify({
+                items: [{ operation: 'synchronization', status: 'failed',
+                    message: 'Bearer private-bearer from upstream exception', started_at: '2026-11-08T12:00:00Z',
+                    details: { failure_category: 'transport', failure_code: 'WP_SYNC_TRANSPORT' } }],
+            }), { status: 200, headers: { 'content-type': 'application/json' } }));
+        const writeText = vi.fn().mockResolvedValue(undefined);
+        vi.stubGlobal('fetch', fetchMock);
+        Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+        render(<LocaleProvider><MemoryRouter initialEntries={['/tenants/alpha/sites/7/connection']}>
+            <Routes><Route path="/tenants/:tenantSlug/sites/:siteId/connection"
+                element={<SiteConnectionCenterSyncControl context={context()} />} /></Routes>
+        </MemoryRouter></LocaleProvider>);
+        expect(await screen.findByText('Alpha Site')).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Copy diagnostics' }));
+        await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
+        const copied = String(writeText.mock.calls[0]?.[0]);
+        expect(copied).toContain('URL: https://wp.example.test');
+        expect(copied).toContain('WP_SYNC_TRANSPORT');
+        expect(copied).not.toContain('password');
+        expect(copied).not.toContain('private-token');
+        expect(copied).not.toContain('private-bearer');
+    });
+
 });
