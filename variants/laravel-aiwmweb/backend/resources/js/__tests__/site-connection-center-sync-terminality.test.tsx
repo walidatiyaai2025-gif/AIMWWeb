@@ -130,7 +130,7 @@ describe('AIMW-BILL-3762C05261 Site Connection Center SynchronizeAsync', () => {
         vi.stubGlobal('fetch', fetchMock);
         renderControl(context(['tenant.view', 'sites.view', 'execution.view']));
 
-        expect(await screen.findByText('WP_SYNC_AUTHENTICATION')).toBeInTheDocument();
+        expect(await screen.findByText(/WP_SYNC_AUTHENTICATION/)).toBeInTheDocument();
         expect(screen.getByText(/WordPress rejected the connection/)).toBeInTheDocument();
         expect(screen.getByText(/Synchronization run/)).toHaveTextContent('#91');
         const details = screen.getByRole('link', { name: 'Operation details' });
