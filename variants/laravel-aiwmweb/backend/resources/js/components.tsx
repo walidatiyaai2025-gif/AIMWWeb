@@ -388,7 +388,7 @@ export function Pagination({
                 <button type="button" className="btn" onClick={() => onPage(1)} disabled={safePage <= 1}>
                     {locale === 'ar' ? 'الأولى' : 'First'}
                 </button>
-                <button type="button" className="btn" data-canonical-operation={previousOperationId} data-canonical-operation-alias={previousOperationAliasId} onClick={() => onPage(previousAppDataGridPage(page))} disabled={page <= 1}>{text(commonText.previous)}</button>
+                <button type="button" className="btn" data-canonical-operation={previousOperationId} data-canonical-operation-alias={previousOperationAliasId} onClick={() => onPage(previousAppDataGridPage(safePage))} disabled={safePage <= 1}>{text(commonText.previous)}</button>
                 <div className="pagination-numbers" aria-label={locale === 'ar' ? 'اختيار الصفحة' : 'Choose page'}>
                     {visiblePaginationPages(safePage, safeLastPage).map((number) => (
                         <button
