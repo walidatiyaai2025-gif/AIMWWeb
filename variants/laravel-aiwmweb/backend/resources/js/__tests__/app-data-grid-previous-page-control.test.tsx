@@ -81,6 +81,28 @@ describe(`${APP_DATA_GRID_PREVIOUS_PAGE_OPERATION_ID} AppDataGrid PreviousPageAs
         expect(onPage).not.toHaveBeenCalled();
     });
 
+    it('clamps an out-of-range server page before dispatching the previous action', () => {
+        const onPage = vi.fn();
+        const { rerender } = render(
+            <LocaleProvider>
+                <Pagination page={999} lastPage={3} onPage={onPage} />
+            </LocaleProvider>,
+        );
+        expect(screen.getByText('Page 3 of 3')).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Previous' }));
+        expect(onPage).toHaveBeenCalledExactlyOnceWith(2);
+
+        rerender(
+            <LocaleProvider>
+                <Pagination page={Number.NaN} lastPage={3} onPage={onPage} />
+            </LocaleProvider>,
+        );
+        expect(screen.getByText('Page 1 of 3')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled();
+        fireEvent.click(screen.getByRole('button', { name: 'Previous' }));
+        expect(onPage).toHaveBeenCalledTimes(1);
+    });
+
     it('moves Email History from page 2 to page 1 and performs a fresh tenant-scoped read', async () => {
         const fetchMock = vi.fn()
             .mockResolvedValueOnce(new Response(JSON.stringify({
