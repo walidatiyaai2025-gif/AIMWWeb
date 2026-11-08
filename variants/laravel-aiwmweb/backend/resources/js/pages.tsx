@@ -387,8 +387,14 @@ type SitesUrlPageState = { page: number; pageSize: number; filter: SitesPageFilt
 // The Sites grid uses the same bounded URL contract as its Laravel paginator.
 // Preserve unrelated query parameters (for example a dashboard tab) and avoid
 // treating a malformed user-supplied page number as a valid API request.
+function isSitesRouteLocation(): boolean {
+    // Avoid interpreting or mutating global URL state when this resource is
+    // rendered as a preview or test outside the actual Sites route.
+    return /\/sites\/?$/.test(window.location.pathname);
+}
+
 function readSitesUrlPageState(): SitesUrlPageState {
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(isSitesRouteLocation() ? window.location.search : '');
     const rawPage = params.get('page');
     const number = rawPage && /^[1-9][0-9]*$/.test(rawPage) ? Number(rawPage) : 1;
     const page = Number.isSafeInteger(number) && number <= 100000 ? number : 1;
@@ -400,6 +406,7 @@ function readSitesUrlPageState(): SitesUrlPageState {
 }
 
 function writeSitesUrlPageState({ page, pageSize, filter }: SitesUrlPageState): void {
+    if (!isSitesRouteLocation()) return;
     const params = new URLSearchParams(window.location.search);
     params.set('page', String(page));
     params.set('per_page', String(pageSize));
