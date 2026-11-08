@@ -94,7 +94,7 @@ final class SubscriptionPlansAdminNewPlanTerminalityTest extends TestCase
         $this->actingAs($user)
             ->get('/tenants/alpha/admin/subscription-plans')
             ->assertOk()
-            ->assertSee('<html lang="en" dir="ltr">', false)
+            ->assertSee('<html lang="en" dir="ltr" data-mode="dark">', false)
             ->assertSee('New plan')
             ->assertSee('data-canonical-operation="'.self::OPERATION_ID.'"', false);
 
@@ -102,7 +102,7 @@ final class SubscriptionPlansAdminNewPlanTerminalityTest extends TestCase
         $this->actingAs($user)
             ->get('/tenants/alpha/admin/subscription-plans')
             ->assertOk()
-            ->assertSee('<html lang="ar" dir="rtl">', false)
+            ->assertSee('<html lang="ar" dir="rtl" data-mode="dark">', false)
             ->assertSee('خطة جديدة')
             ->assertSee('data-canonical-operation="'.self::OPERATION_ID.'"', false);
     }

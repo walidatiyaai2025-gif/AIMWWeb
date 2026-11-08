@@ -1,9 +1,15 @@
 <!doctype html>
-<html lang="{{ app()->getLocale() }}" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
+@php
+    $isArabic = app()->getLocale() === 'ar';
+@endphp
+<html lang="{{ $isArabic ? 'ar' : 'en' }}" dir="{{ $isArabic ? 'rtl' : 'ltr' }}" data-mode="dark">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ app()->getLocale() === 'ar' ? 'خطط الاشتراك' : 'Subscription Plans' }}</title>
+    <title>{{ $isArabic ? 'خطط الاشتراك' : 'Subscription Plans' }} — AIWMWeb</title>
+    @unless (app()->runningUnitTests())
+        @vite(['resources/css/app.css'])
+    @endunless
     <!-- Google Fonts: Inter (Latin) and Tajawal (Arabic); typography 25% larger than 62.5% baseline. -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,9 +28,38 @@
         main form:has(> label ~ label ~ label) > :not(label), main section:has(> article ~ article) > :not(article), main section:has(> .record ~ .record) > :not(.record) { grid-column: 1 / -1; }
         main :is(.grid, .cards, .record-grid) > * { min-width: 0; }
 </style>
+    @include('layouts.partials.workspace-read-styles')
+    <style data-subscription-plans-dashboard>
+        .subscription-plans-dashboard :is(input, textarea, select) { display: block; width: 100%; max-width: 100%; min-height: 42px; margin-top: 6px; padding: 9px 12px; border: 1px solid #53617a; border-radius: 8px; background: #101723; color: #f4f6fa; }
+        .subscription-plans-dashboard input[type="checkbox"] { display: inline-block; width: auto; min-height: auto; margin-inline-end: 8px; }
+        .subscription-plans-dashboard label { display: block; min-width: 0; margin: 8px 0; line-height: 1.6; }
+        .subscription-plans-dashboard form { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); align-items: end; gap: 12px; margin-block: 16px; }
+        .subscription-plans-dashboard form > button, .subscription-plans-dashboard form > p, .subscription-plans-dashboard form > input[type="hidden"] { grid-column: 1 / -1; }
+        .subscription-plans-dashboard button { min-height: 44px; padding: 10px 16px; border: 1px solid #c5a45d; border-radius: 8px; background: #c5a45d; color: #16171b; font-weight: 700; cursor: pointer; }
+        .subscription-plans-dashboard article { background: #1b2130; border: 1px solid #30394c; border-radius: 12px; padding: 18px; margin-block: 16px; min-width: 0; }
+        .subscription-plans-dashboard nav { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+        .subscription-plans-dashboard nav a { min-height: 44px; display: inline-flex; align-items: center; }
+        .subscription-plans-dashboard dl { display: grid; grid-template-columns: minmax(100px, auto) 1fr; gap: 8px; }
+        .subscription-plans-dashboard :is(dd, dt, p, code) { overflow-wrap: anywhere; }
+        @media (max-width: 760px) { .subscription-plans-dashboard form { grid-template-columns: minmax(0, 1fr); } }
+    </style>
 </head>
 <body>
-<main data-canonical-operation="AIMW-BILL-B86D339C12" data-tenant="{{ $tenant->slug }}">
+@php
+    $shellTitle = $isArabic ? 'خطط الاشتراك' : 'Subscription Plans';
+    $shellScope = $isArabic ? 'إدارة الفوترة' : 'Billing administration';
+    $shellHomeUrl = route('tenant.admin.subscription-plans', ['tenant' => $tenant->slug], false);
+    $shellLinks = [
+        ['url' => $shellHomeUrl, 'label' => $shellTitle, 'active' => true],
+        ['url' => route('canonical.workspace.account-billing', ['tenant' => $tenant->slug], false), 'label' => $isArabic ? 'فوترة الحساب' : 'Account billing'],
+    ];
+@endphp
+<div class="app-shell workspace-read-shell subscription-plans-dashboard" data-dashboard-shell="aiwmweb">
+    <a class="skip-link" href="#subscription-plans-content">{{ $isArabic ? 'تخط إلى المحتوى' : 'Skip to content' }}</a>
+    @include('layouts.partials.workspace-read-sidebar')
+    <div class="main-area">
+        @include('layouts.partials.workspace-read-topbar')
+        <main id="subscription-plans-content" class="content workspace-read-content" data-canonical-operation="AIMW-BILL-B86D339C12" data-tenant="{{ $tenant->slug }}">
     <header>
         <p>{{ app()->getLocale() === 'ar' ? 'الإدارة والفوترة' : 'ADMIN · BILLING' }}</p>
         <h1>{{ app()->getLocale() === 'ar' ? 'خطط الاشتراك' : 'Subscription Plans' }}</h1>
@@ -186,6 +221,8 @@
         @endforelse
     </section>
 </main>
+    </div>
+</div>
 <script src="{{ asset('js/subscription-plans-new-plan.js') }}" defer></script>
 <script src="{{ asset('js/subscription-plans-clone-current.js') }}" defer></script>
 </body>
