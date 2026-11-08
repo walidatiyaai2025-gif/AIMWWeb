@@ -26,7 +26,7 @@ Scope: `variants/laravel-aiwmweb/backend/resources/views/**`. **All 29 discovere
 | `operations/site-operation-details.blade.php` | Vite, no Blade sidebar | Determine React ownership; browser verify |
 | `operations/site-operation-details-load-error.blade.php` | Vite, no Blade sidebar | Error/fallback route; verify accessibility/layout |
 | `platform/about-build.blade.php` | Vite, no Blade sidebar | Determine React ownership; browser verify |
-| `platform/access-denied.blade.php` | Standalone inline CSS, no Vite/sidebar | Forbidden page; verify authorized exit navigation |
+| `platform/access-denied.blade.php` | Previously standalone English no Vite | **Current #1601 candidate**: AR/EN RTL/LTR tenant-neutral error shell, Vite CSS, preserved public Return Home and conditional account-exit link; automated scope/no-leak coverage added; CI/browser/host verification pending. No tenant sidebar on 403 by design. |
 | `platform/error.blade.php` | Vite, no Blade sidebar | Error/fallback route; verify safe layout |
 | `platform/system-updates.blade.php` | Initial census: standalone light-mode inline CSS, no Vite/sidebar | **Current #1601 update-center candidate**: shared platform-admin AR/EN shell and production Vite CSS; **all signed update / backup forms and RBAC unchanged**; browser/host unverified |
 | `reports/approvals-export.blade.php` | Initial census: English standalone, no Vite/sidebar | **Merged PR #1656**, published in signed GitHub v1.0.753: shared AR/EN tenant shell, Vite, keyboard-scrollable tables, tenant-scoped CSV controls; browser/host unverified |
