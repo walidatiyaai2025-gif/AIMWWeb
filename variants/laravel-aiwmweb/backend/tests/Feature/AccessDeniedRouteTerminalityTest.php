@@ -112,6 +112,45 @@ final class AccessDeniedRouteTerminalityTest extends TestCase
         }
     }
 
+    public function test_access_denied_uses_tenant_neutral_bilingual_responsive_shell_without_exposing_user_identifiers(): void
+    {
+        $user = User::factory()->create(['name' => 'Private Access Denied Person', 'email' => 'private-denial@example.test']);
+
+        foreach ([
+            'en' => ['ltr', 'Access denied', 'Return home'],
+            'ar' => ['rtl', 'الوصول غير مسموح', 'العودة للرئيسية'],
+        ] as $locale => [$direction, $heading, $back]) {
+            foreach ([false, true] as $authenticated) {
+                $this->app['auth']->logout();
+                if ($authenticated) {
+                    $this->be($user);
+                }
+
+                $this->withHeaders(['Accept-Language' => $locale])
+                    ->get('/access-denied?tenant=untrusted-slug')
+                    ->assertOk()
+                    ->assertSee('<html lang="'.$locale.'" dir="'.$direction.'" data-mode="dark">', false)
+                    ->assertSee('data-dashboard-shell="aiwmweb"', false)
+                    ->assertSee('data-tenant-neutral="true"', false)
+                    ->assertSee('name="robots" content="noindex,nofollow"', false)
+                    ->assertSee('data-canonical-operation="AIMW-CONT-9D5E269773"', false)
+                    ->assertSee('href="/"', false)
+                    ->assertSee($heading)
+                    ->assertSee($back)
+                    ->assertDontSee($user->name)
+                    ->assertDontSee($user->email)
+                    ->assertDontSee('untrusted-slug')
+                    ->assertDontSee('class="sidebar"', false)
+                    ->assertDontSee('/tenants/', false);
+            }
+        }
+
+        $source = (string) file_get_contents(resource_path('views/platform/access-denied.blade.php'));
+        $this->assertStringContainsString("@vite(['resources/css/app.css'])", $source);
+        $this->assertStringContainsString('min-height: 44px', $source);
+        $this->assertStringContainsString(':focus-visible', $source);
+    }
+
     /** @return array<string, mixed> */
     private function reconciliation(): array
     {
