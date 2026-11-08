@@ -33,9 +33,13 @@ final class GlobalPagesTrashService
             $query->where('status', $status);
         }
 
-        $paginator = $query
-            ->latest('remote_modified_at')
-            ->paginate(min(max((int) ($filters['per_page'] ?? 50), 1), 100));
+        $perPage = min(max((int) ($filters['per_page'] ?? 50), 1), 100);
+        $page = min(max((int) ($filters['page'] ?? 1), 1), 1000000);
+        $ordered = $query->orderByDesc('remote_modified_at')->orderByDesc('id');
+        $paginator = $ordered->paginate($perPage, ['*'], 'page', $page);
+        if ($page > $paginator->lastPage()) {
+            $paginator = $ordered->paginate($perPage, ['*'], 'page', max(1, $paginator->lastPage()));
+        }
 
         $siteNames = Site::query()
             ->whereIn('id', collect($paginator->items())->pluck('site_id')->unique()->values())

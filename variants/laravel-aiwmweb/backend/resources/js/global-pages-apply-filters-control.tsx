@@ -18,14 +18,15 @@ export const DEFAULT_GLOBAL_PAGES_FILTERS: GlobalPagesFilterState = {
     perPage: 25,
 };
 
-export function globalPagesFilterUrl(tenantSlug: string, filters: GlobalPagesFilterState): string | null {
+export function globalPagesFilterUrl(tenantSlug: string, filters: GlobalPagesFilterState, page = 1): string | null {
     const endpoint = globalPagesEndpoint(tenantSlug);
     if (!endpoint) return null;
     if (!['all', 'publish', 'draft', 'pending', 'private'].includes(filters.status)) return null;
     if (![10, 25, 50, 100].includes(filters.perPage)) return null;
 
     const params = new URLSearchParams();
-    params.set('page', '1');
+    const safePage = Number.isSafeInteger(page) && page >= 1 && page <= 1000000 ? page : 1;
+    params.set('page', String(safePage));
     params.set('per_page', String(filters.perPage));
     if (filters.search.trim()) params.set('search', filters.search.trim());
     if (filters.status !== 'all') params.set('status', filters.status);
