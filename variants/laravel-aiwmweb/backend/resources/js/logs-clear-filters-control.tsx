@@ -19,8 +19,10 @@ function safeCopiedLogMessage(value: unknown): string {
     if (typeof value !== 'string' || !value.trim() || value.length > 240) return WITHHELD_LOG_TEXT;
     // Reject entire opaque values: partial regex replacements can leave credentials,
     // signed query strings, JSON bodies or multiline trace fragments behind.
-    if (/[\u0000-\u001f\u007f<>={}\[\]?&]/.test(value)
-        || /(?:https?:\/\/|www\.|\b(?:bearer|authorization|password|passwd|token|secret|api[_-]?key|credential|session|cookie|private[_-]?key|access[_-]?key|sqlstate|traceback|stack trace|exception)\b)/i.test(value)) {
+    if (/[\x00-\x1f\x7f<>{}=?&]/.test(value)
+        || value.includes('[') || value.includes(']')
+        || /https?:\/\/|www\./i.test(value)
+        || /\b(?:bearer|authorization|password|passwd|token|secret|api[_-]?key|credential|session|cookie|private[_-]?key|access[_-]?key|sqlstate|traceback|stack trace|exception)\b/i.test(value)) {
         return WITHHELD_LOG_TEXT;
     }
     return value;
