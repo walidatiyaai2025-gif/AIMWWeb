@@ -34,13 +34,18 @@ final class SiteDiagnosticsService
         $metadata = [];
         foreach (['wordpress_version', 'language_code'] as $field) {
             $stored = $site->getAttribute($field);
-            $verified = data_get($latest?->health, $field);
+            // Only a successful signed Connector diagnostic can supersede stored
+            // metadata. Never promote values from a failed or disconnected probe.
+            $verified = in_array($latest?->classification, [
+                SiteConnectionState::CONNECTED,
+                SiteConnectionState::DEGRADED,
+            ], true) ? data_get($latest?->health, $field) : null;
             $pattern = $field === 'wordpress_version'
                 ? '/^[0-9]+(?:\.[0-9]+){1,3}(?:[-+][a-zA-Z0-9.-]+)?$/D'
                 : '/^[a-z]{2,3}(?:_[A-Z]{2})?$/D';
             $source = null;
             $value = null;
-            foreach (['site' => $stored, 'connector_health' => $verified] as $candidateSource => $candidate) {
+            foreach (['connector_health' => $verified, 'site' => $stored] as $candidateSource => $candidate) {
                 if (is_string($candidate) && preg_match($pattern, $candidate) === 1) {
                     $value = $candidate;
                     $source = $candidateSource;
