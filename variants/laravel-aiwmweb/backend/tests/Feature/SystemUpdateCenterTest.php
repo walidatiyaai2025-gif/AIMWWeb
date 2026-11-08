@@ -184,7 +184,7 @@ final class SystemUpdateCenterTest extends TestCase
 
     public function test_metadata_retry_after_http_date_aborts_when_outside_deadline(): void
     {
-        $delay = (new \ReflectionMethod(SystemUpdateService::class, 'waitForMetadataRetry'))
+        $delay = (new \ReflectionMethod(SystemUpdateService::class, 'mayRetryMetadataNow'))
             ->invoke(app(SystemUpdateService::class), 1, microtime(true) + 3, gmdate('D, d M Y H:i:s', time() + 120).' GMT');
 
         $this->assertFalse($delay);
