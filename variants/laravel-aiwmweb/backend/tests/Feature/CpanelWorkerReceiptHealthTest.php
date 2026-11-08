@@ -157,6 +157,58 @@ class CpanelWorkerReceiptHealthTest extends TestCase
         $this->assertSame('not_required', $pending['checks']['redis']['status']);
     }
 
+    public function test_inspector_rejects_valid_receipts_when_cpanel_drivers_are_incompatible(): void
+    {
+        $store = Cache::store('database');
+        $schedulerTick = time() - 15;
+        $workerTick = time() - 10;
+        $store->put(RuntimeHealthService::SCHEDULER_HEARTBEAT_KEY, $schedulerTick, now()->addMinutes(10));
+        $store->put(RuntimeHealthService::CPANEL_QUEUE_TICK_RECEIPT_KEY, $workerTick, now()->addMinutes(10));
+        $health = app(RuntimeHealthService::class);
+
+        // A persisted receipt does not establish that this process is using
+        // the durable cache and database queue required by the cPanel profile.
+        config(['cache.default' => 'array']);
+        $badCache = $health->inspectorEvidence();
+        $this->assertSame('array', $badCache['runtime_modes']['cache']);
+        $this->assertSame('unavailable', $badCache['scheduler_heartbeat']['status']);
+        $this->assertSame('cache_driver_mismatch', $badCache['scheduler_heartbeat']['reason_code']);
+        $this->assertSame('unavailable', $badCache['worker_cycle']['status']);
+        $this->assertSame('cache_driver_mismatch', $badCache['worker_cycle']['reason_code']);
+
+        config(['cache.default' => 'database', 'queue.default' => 'sync']);
+        $badQueue = $health->inspectorEvidence();
+        $this->assertSame('ok', $badQueue['scheduler_heartbeat']['status']);
+        $this->assertSame('unavailable', $badQueue['worker_cycle']['status']);
+        $this->assertSame('queue_driver_mismatch', $badQueue['worker_cycle']['reason_code']);
+        $this->assertSame('sync', $badQueue['runtime_modes']['queue']);
+
+        config(['queue.default' => 'database']);
+        $recovered = $health->inspectorEvidence();
+        $this->assertSame('ok', $recovered['scheduler_heartbeat']['status']);
+        $this->assertSame('ok', $recovered['worker_cycle']['status']);
+        $this->assertSame('bounded_worker_cycle_completed', $recovered['worker_cycle']['evidence']);
+
+        // The Inspector is read-only; changing its status must not replace
+        // old receipts, which remain useful as historical execution evidence.
+        $this->assertSame($schedulerTick, $store->get(RuntimeHealthService::SCHEDULER_HEARTBEAT_KEY));
+        $this->assertSame($workerTick, $store->get(RuntimeHealthService::CPANEL_QUEUE_TICK_RECEIPT_KEY));
+    }
+
+    public function test_inspector_preserves_disabled_cron_and_pending_preflight_precedence_over_driver_errors(): void
+    {
+        config(['cache.default' => 'array', 'queue.default' => 'sync', 'cpanel.cron_enabled' => false]);
+        $health = app(RuntimeHealthService::class);
+        $disabled = $health->inspectorEvidence();
+        $this->assertSame('disabled', $disabled['scheduler_heartbeat']['status']);
+        $this->assertSame('cron_disabled', $disabled['worker_cycle']['reason_code']);
+
+        config(['cpanel.cron_enabled' => true, 'cpanel.preflight_passed' => false]);
+        $pending = $health->inspectorEvidence();
+        $this->assertSame('preflight_pending', $pending['scheduler_heartbeat']['reason_code']);
+        $this->assertSame('preflight_pending', $pending['worker_cycle']['reason_code']);
+    }
+
     public function test_preflight_pending_does_not_turn_existing_worker_receipt_into_green_health(): void
     {
         $store = Cache::store('database');
