@@ -108,6 +108,24 @@ describe('AIMW-BILL-3762C05261 Site Connection Center SynchronizeAsync', () => {
         expect(screen.getByText('Affected records: 4')).toBeInTheDocument();
     });
 
+    it('keeps failed synchronization visible while connector is connected', async () => {
+        const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+            const path = String(input);
+            const payload = path.includes('/operations')
+                ? { items: [], page: 1, per_page: 25, total: 0, last_page: 1 }
+                : { site: { id: 7, name: 'Alpha Site', connection_status: 'CONNECTED' },
+                    connection: 'CONNECTED',
+                    sync_health: { state: 'failed', last_attempt_at: '2026-11-08T10:00:00Z' } };
+            return new Response(JSON.stringify(payload), { status: 200, headers: { 'content-type': 'application/json' } });
+        });
+        vi.stubGlobal('fetch', fetchMock);
+        renderControl(context(['tenant.view', 'sites.view']));
+        expect(await screen.findByText('Alpha Site')).toBeInTheDocument();
+        expect(screen.getByTestId('sync-health-state')).toHaveTextContent('Failed — review operation history');
+        expect(screen.getByText(/Last sync attempt/)).toHaveTextContent('2026-11-08T10:00:00Z');
+        expect(screen.getByText(/Connection: CONNECTED/)).toBeInTheDocument();
+    });
+
     it('shows bounded safe sync failure details with authorized operation drilldown', async () => {
         const correlationId = '12345678-1234-4234-8234-1234567890ab';
         const fetchMock = vi.fn(async (input: RequestInfo | URL) => {

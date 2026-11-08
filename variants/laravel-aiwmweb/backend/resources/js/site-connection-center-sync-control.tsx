@@ -21,6 +21,7 @@ type ConnectionSnapshot = {
         connection_status?: string | null;
     };
     connection: string;
+    sync_health?: { state: 'not_probed' | 'succeeded' | 'failed'; last_attempt_at?: string | null };
     last_verified_at?: string | null;
     metadata?: Partial<Record<'wordpress_version' | 'language_code', { state: string; checked_at?: string | null }>>;
 };
@@ -418,6 +419,14 @@ export function SiteConnectionCenterSyncControl({ context }: { context: Frontend
             <section className="workspace-card">
                 <strong>{locale === 'ar' ? 'حالة الاتصال' : 'Connection'}: {connection?.connection ?? '—'}</strong>
                 <p>{locale === 'ar' ? 'حالة الموقع' : 'Site state'}: {connection?.site.connection_status ?? '—'}</p>
+                <p data-testid="sync-health-state">{locale === 'ar' ? 'آخر حالة مزامنة' : 'Last synchronization'}: {connection?.sync_health?.state === 'succeeded'
+                    ? (locale === 'ar' ? 'ناجحة' : 'Succeeded')
+                    : connection?.sync_health?.state === 'failed'
+                        ? (locale === 'ar' ? 'فاشلة — راجع سجل العمليات' : 'Failed — review operation history')
+                        : (locale === 'ar' ? 'لم يتم التحقق' : 'Not yet verified')}</p>
+                {connection?.sync_health?.last_attempt_at ? (
+                    <small>{locale === 'ar' ? 'آخر محاولة مزامنة' : 'Last sync attempt'}: {connection.sync_health.last_attempt_at}</small>
+                ) : null}
                 {canRetest ? (
                     <button
                         type="button"

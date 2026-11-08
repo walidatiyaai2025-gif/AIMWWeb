@@ -7,6 +7,7 @@ use App\Connector\PairingService;
 use App\Models\Connector;
 use App\Models\Site;
 use App\Models\SiteDiagnostic;
+use App\Models\SiteOperationHistory;
 use DateTimeInterface;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
@@ -56,9 +57,22 @@ final class SiteDiagnosticsService
             ];
         }
 
+        // Connection rechecks are independent of synchronization outcome. A recent
+        // successful diagnostic must never erase or fabricate a sync result.
+        $lastSync = SiteOperationHistory::query()
+            ->where('site_id', $site->id)
+            ->where('operation', 'synchronization')
+            ->orderByDesc('started_at')
+            ->orderByDesc('id')
+            ->first();
+
         return [
             'site' => $siteView,
             'metadata' => $metadata,
+            'sync_health' => [
+                'state' => $lastSync === null ? 'not_probed' : ($lastSync->status === 'succeeded' ? 'succeeded' : 'failed'),
+                'last_attempt_at' => $lastSync?->started_at?->toIso8601String(),
+            ],
             'connection' => $this->localConnectionState($connector),
             'last_verified_at' => $site->last_verified_at?->toIso8601String(),
             'connector' => $connector ? [
