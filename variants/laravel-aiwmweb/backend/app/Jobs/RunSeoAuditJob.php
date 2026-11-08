@@ -26,7 +26,7 @@ final class RunSeoAuditJob extends TenantAwareJob
         } catch (Throwable $e) {
             $audit->update([
                 'status' => 'failed',
-                'failure' => $e->getMessage(),
+                'failure' => SeoManagerService::SAFE_AUDIT_FAILURE,
                 'current_item' => null,
                 'completed_at' => now(),
             ]);

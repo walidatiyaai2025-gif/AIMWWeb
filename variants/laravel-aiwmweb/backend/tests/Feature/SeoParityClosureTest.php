@@ -8,6 +8,7 @@ use App\Connector\ConnectorScopePolicy;
 use App\Connector\WordPressGateway;
 use App\Execution\ExecutionCreator;
 use App\Jobs\ExecuteApprovedSuggestionJob;
+use App\Jobs\RunSeoAuditJob;
 use App\Models\Approval;
 use App\Models\Connector;
 use App\Models\EvidenceReceipt;
@@ -25,7 +26,9 @@ use App\Models\User;
 use App\Services\SeoManagerService;
 use App\Tenancy\TenantContext;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -53,6 +56,65 @@ final class SeoParityClosureTest extends TestCase
         $this->assertNotNull($content->fresh()->seo_readability_score);
         $this->assertTrue(SeoFinding::query()->where('code', 'missing_title')->exists());
         $this->assertTrue(SeoFinding::query()->where('code', 'missing_meta_description')->exists());
+    }
+
+    public function test_audit_item_failure_persists_only_safe_message_and_real_counters(): void
+    {
+        if (DB::getDriverName() !== 'sqlite') {
+            $this->markTestSkipped('Synthetic SQLite trigger tests the persisted failure message without altering MySQL schema.');
+        }
+
+        [$tenant, $membership] = $this->tenant('audit-redaction');
+        app(TenantContext::class)->activate($tenant, $membership);
+        $site = Site::query()->create(['name' => 'Audit Redaction', 'url' => 'https://audit.test']);
+        $this->content($site, ['title' => '', 'seo_title' => '', 'seo_description' => '']);
+        $audit = SeoAudit::query()->create(['site_id' => $site->id, 'actor_user_id' => $membership->user_id]);
+        $seo = new SeoManagerService(new SeoFakeWordPressGateway([]));
+
+        DB::statement("CREATE TEMP TRIGGER seo_test_secret_failure BEFORE INSERT ON seo_findings BEGIN SELECT RAISE(ABORT, 'DB_PASSWORD=secret-test-only'); END");
+        try {
+            $seo->runAudit($audit);
+        } finally {
+            DB::statement('DROP TRIGGER IF EXISTS seo_test_secret_failure');
+        }
+
+        $audit->refresh();
+        $this->assertSame('partial', $audit->status);
+        $this->assertSame(1, $audit->total_items);
+        $this->assertSame(0, $audit->processed_items);
+        $this->assertSame(1, $audit->failed_items);
+        $this->assertSame(SeoManagerService::SAFE_AUDIT_FAILURE, $audit->log[0]['error']);
+        $this->assertStringNotContainsString('secret-test-only', json_encode($audit->toArray()));
+    }
+
+    public function test_unhandled_audit_job_failure_is_redacted_in_storage_but_rethrown(): void
+    {
+        if (DB::getDriverName() !== 'sqlite') {
+            $this->markTestSkipped('Synthetic SQLite trigger tests persisted job failure without altering MySQL schema.');
+        }
+
+        [$tenant, $membership] = $this->tenant('job-redaction');
+        app(TenantContext::class)->activate($tenant, $membership);
+        $site = Site::query()->create(['name' => 'Job Redaction', 'url' => 'https://audit.test']);
+        $audit = SeoAudit::query()->create(['site_id' => $site->id, 'actor_user_id' => $membership->user_id]);
+        $seo = new SeoManagerService(new SeoFakeWordPressGateway([]));
+
+        DB::statement("CREATE TEMP TRIGGER seo_test_job_secret_failure BEFORE UPDATE ON seo_audits WHEN NEW.status = 'running' BEGIN SELECT RAISE(ABORT, 'api_token=secret-test-only'); END");
+        try {
+            try {
+                (new RunSeoAuditJob($tenant->id, $audit->id))->handle($seo);
+                $this->fail('An unhandled failure must still propagate to the queue.');
+            } catch (QueryException $exception) {
+                $this->assertStringContainsString('secret-test-only', $exception->getMessage());
+            }
+        } finally {
+            DB::statement('DROP TRIGGER IF EXISTS seo_test_job_secret_failure');
+        }
+
+        $audit->refresh();
+        $this->assertSame('failed', $audit->status);
+        $this->assertSame(SeoManagerService::SAFE_AUDIT_FAILURE, $audit->failure);
+        $this->assertStringNotContainsString('secret-test-only', json_encode($audit->toArray()));
     }
 
     public function test_connector_scope_policy_requires_seo_write_for_all_plugin_metadata(): void
@@ -206,6 +268,8 @@ final class SeoParityClosureTest extends TestCase
 
         $this->assertCount(1, $result['prepared']);
         $this->assertCount(1, $result['failed']);
+        $this->assertSame(SeoManagerService::SAFE_BULK_FAILURE, $result['failed'][0]['error']);
+        $this->assertStringNotContainsString('SEO plugin metadata write is unsupported', json_encode($result));
         $this->assertSame('PENDING', Approval::query()->findOrFail($result['prepared'][0]['approval_id'])->status);
         $this->assertSame(0, Execution::query()->count());
     }
