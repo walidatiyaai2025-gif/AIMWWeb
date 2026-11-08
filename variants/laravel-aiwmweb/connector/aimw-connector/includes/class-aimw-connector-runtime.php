@@ -163,6 +163,7 @@ final class AIMW_Connector_Runtime
 
         return [
             'wordpress_version' => get_bloginfo('version'),
+            'language_code' => get_locale(),
             'php_version' => PHP_VERSION,
             'memory_limit' => ini_get('memory_limit'),
             'memory_usage_bytes' => memory_get_usage(true),
