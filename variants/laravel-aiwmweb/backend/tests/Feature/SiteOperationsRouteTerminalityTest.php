@@ -116,7 +116,8 @@ final class SiteOperationsRouteTerminalityTest extends TestCase
         $url = "/api/tenants/history-alpha/sites/{$site->id}/operations";
         $this->actingAs($user)->getJson($url.'?page=1&per_page=25&operation=synchronization')
             ->assertOk()->assertJsonPath('total', 27)->assertJsonPath('last_page', 2)
-            ->assertJsonCount(25, 'items')->assertJsonPath('items.0.details.api_key', '[REDACTED]');
+            ->assertJsonCount(25, 'items')->assertJsonPath('items.0.message', 'WordPress synchronization failed.')
+            ->assertJsonMissingPath('items.0.details.api_key');
         $this->actingAs($user)->getJson($url.'?page=2&per_page=25&operation=synchronization')
             ->assertOk()->assertJsonPath('total', 27)->assertJsonPath('from', 26)
             ->assertJsonCount(2, 'items');
