@@ -28,8 +28,8 @@ Scope: `variants/laravel-aiwmweb/backend/resources/views/**`. **All 29 discovere
 | `platform/about-build.blade.php` | Vite, no Blade sidebar | Determine React ownership; browser verify |
 | `platform/access-denied.blade.php` | Standalone inline CSS, no Vite/sidebar | Forbidden page; verify authorized exit navigation |
 | `platform/error.blade.php` | Vite, no Blade sidebar | Error/fallback route; verify safe layout |
-| `platform/system-updates.blade.php` | Standalone light-mode inline CSS, no Vite/sidebar | **Review authenticated platform-admin dashboard parity**; preserve signed update security |
-| `reports/approvals-export.blade.php` | Initial census: English-only standalone reports and export tables, no compiled assets/dashboard | **PR #1656 candidate**: shared AR/EN tenant shell, compiled Vite, keyboard-scrollable tables, tenant-scoped CSV controls; source implementation, browser/host not verified |
+| `platform/system-updates.blade.php` | Initial census: standalone light-mode inline CSS, no Vite/sidebar | **Current #1601 update-center candidate**: shared platform-admin AR/EN shell and production Vite CSS; **all signed update / backup forms and RBAC unchanged**; browser/host unverified |
+| `reports/approvals-export.blade.php` | Initial census: English standalone, no Vite/sidebar | **Merged PR #1656**, published in signed GitHub v1.0.753: shared AR/EN tenant shell, Vite, keyboard-scrollable tables, tenant-scoped CSV controls; browser/host unverified |
 | `security/audit.blade.php` | On inventory base: English-only standalone read-only platform audit view without Vite/sidebar | **Current #1601 security audit shell candidate**: AR/EN sidebar/topbar/Vite with original platform-admin/read-only guards; browser/host acceptance unverified |
 | `seo/manager.blade.php` | Vite, no Blade sidebar | Determine React ownership; browser verify |
 | `seo/workspace.blade.php` | Vite, no Blade sidebar | Determine React ownership; browser verify |
