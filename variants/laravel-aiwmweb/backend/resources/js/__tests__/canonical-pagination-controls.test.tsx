@@ -14,6 +14,11 @@ describe('Canonical server paging navigation (#1608)', () => {
         expect(authoritativeCollectionTotal('300')).toBeUndefined();
         expect(authoritativeCollectionTotal(-1)).toBeUndefined();
         expect(authoritativeCollectionTotal(0)).toBe(0);
+        // A WordPress response without verified X-WP-Total cannot report its page count as a grand total.
+        expect(authoritativeCollectionTotal(25, false)).toBeUndefined();
+        expect(authoritativeCollectionTotal(0, false)).toBeUndefined();
+        expect(authoritativeCollectionTotal(25, true)).toBe(25);
+        expect(authoritativeCollectionTotal(25)).toBe(25);
         expect(visiblePaginationPages(5, 20)).toEqual([3, 4, 5, 6, 7]);
         expect(visiblePaginationPages(1, 3)).toEqual([1, 2, 3]);
         expect(visiblePaginationPages(20, 20)).toEqual([16, 17, 18, 19, 20]);

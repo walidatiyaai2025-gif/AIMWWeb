@@ -142,6 +142,7 @@ type CollectionEnvelope = {
     data?: Array<Record<string, unknown>>;
     items?: Array<Record<string, unknown>>;
     total?: number;
+    pagination_authoritative?: boolean;
     current_page?: number;
     page?: number;
     last_page?: number;
@@ -155,7 +156,7 @@ function normalizeCollection(payload: unknown) {
     const envelope = (payload ?? {}) as CollectionEnvelope;
     const rows = Array.isArray(envelope.data) ? envelope.data : Array.isArray(envelope.items) ? envelope.items : [];
     const reportedTotal = envelope.total ?? envelope.meta?.total;
-    const authoritativeTotal = authoritativeCollectionTotal(reportedTotal);
+    const authoritativeTotal = authoritativeCollectionTotal(reportedTotal, envelope.pagination_authoritative);
     const total = authoritativeTotal ?? rows.length;
     const reportedPage = envelope.current_page ?? envelope.page ?? envelope.meta?.current_page;
     const page = Number.isSafeInteger(reportedPage) && reportedPage! > 0 ? reportedPage! : 1;
