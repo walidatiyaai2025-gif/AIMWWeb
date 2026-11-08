@@ -100,10 +100,10 @@ describe(`${APP_BULK_ACTION_CLEAR_OPERATION_ID} AppBulkActionBar ClearAsync`, ()
     });
 
     it('clears a real tenant-scoped Sites selection without issuing a mutation request', async () => {
-        const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify([
+        const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ data: [
             { id: 11, name: 'One', status: 'active' },
             { id: 12, name: 'Two', status: 'active' },
-        ]), { status: 200, headers: { 'content-type': 'application/json' } }));
+        ], total: 2, current_page: 1, last_page: 1, per_page: 25 }), { status: 200, headers: { 'content-type': 'application/json' } }));
         vi.stubGlobal('fetch', fetchMock);
 
         renderSitesControl();
