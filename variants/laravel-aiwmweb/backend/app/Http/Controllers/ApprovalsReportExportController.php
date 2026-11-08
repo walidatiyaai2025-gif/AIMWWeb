@@ -24,6 +24,7 @@ final class ApprovalsReportExportController extends Controller
         $plannerRows = $this->plannerRows($context);
 
         return view('reports.approvals-export', [
+            'activeTenant' => $context->tenant(),
             'rows' => $rows,
             'siteRows' => $siteRows,
             'plannerRows' => $plannerRows,
