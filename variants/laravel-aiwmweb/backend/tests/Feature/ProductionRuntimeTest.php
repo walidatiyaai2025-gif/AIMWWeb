@@ -98,6 +98,39 @@ class ProductionRuntimeTest extends TestCase
         $this->assertSame('ok', $processed->context['status']);
     }
 
+    public function test_monolog_redacts_credentials_in_benign_nested_text_fields(): void
+    {
+        $record = new LogRecord(
+            datetime: now()->toDateTimeImmutable(),
+            channel: 'test',
+            level: Level::Warning,
+            message: 'safe message',
+            context: [
+                'detail' => 'Retry Authorization: Bearer NESTED_BEARER_CANARY now',
+                'nested' => [
+                    'description' => 'Authorization: Basic NESTED_BASIC_CANARY',
+                    'safe' => 'operation still running',
+                ],
+            ],
+            extra: [
+                'note' => 'X-API-Key: NESTED_HEADER_CANARY',
+                'nested' => ['detail' => 'api_key=NESTED_API_CANARY and sk-THIS_IS_A_FAKE_KEY_1234567890'],
+                'trace_id' => 'public-trace',
+            ],
+        );
+
+        $processed = (new RedactSecretsProcessor)($record);
+
+        $this->assertSame('Retry Authorization: Bearer [REDACTED] now', $processed->context['detail']);
+        $this->assertSame('Authorization: Basic [REDACTED]', $processed->context['nested']['description']);
+        $this->assertSame('X-API-Key: [REDACTED]', $processed->extra['note']);
+        $this->assertSame('api_key=[REDACTED] and [REDACTED]', $processed->extra['nested']['detail']);
+        $this->assertSame('operation still running', $processed->context['nested']['safe']);
+        $this->assertSame('public-trace', $processed->extra['trace_id']);
+        $this->assertSame('Retry Authorization: Bearer NESTED_BEARER_CANARY now', $record->context['detail']);
+        $this->assertSame('X-API-Key: NESTED_HEADER_CANARY', $record->extra['note']);
+    }
+
     public function test_structured_log_processor_fails_closed_at_depth_limit_in_context_and_extra(): void
     {
         $deep = ['password' => 'DEEP_PASSWORD_SECRET', 'safe' => 'DEEP_CANARY', 7 => ['token' => 'DEEP_TOKEN_SECRET']];
