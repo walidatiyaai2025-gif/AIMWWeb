@@ -14,8 +14,15 @@ final class ApprovalQueueReadController extends Controller
     {
         $authorizer->authorize('approvals.view');
 
-        $search = trim((string) $request->query('search', ''));
-        $perPage = max(1, min(100, $request->integer('per_page', 20)));
+        $filters = $request->validate([
+            'search' => ['sometimes', 'nullable', 'string', 'max:200'],
+            'page' => ['sometimes', 'integer', 'min:1'],
+            'per_page' => ['sometimes', 'integer', 'in:10,25,50,100'],
+        ]);
+
+        $search = trim((string) ($filters['search'] ?? ''));
+        $perPage = (int) ($filters['per_page'] ?? 25);
+        $page = (int) ($filters['page'] ?? 1);
 
         $query = Approval::query()->orderByDesc('created_at')->orderByDesc('id');
         if ($search !== '') {
@@ -30,7 +37,12 @@ final class ApprovalQueueReadController extends Controller
             });
         }
 
-        $paginator = $query->paginate($perPage);
+        // Preserve accurate server-side totals while clamping stale page URLs
+        // after filters change or the last row on the last page is deleted.
+        $paginator = $query->paginate($perPage, ['*'], 'page', $page);
+        if ($page > $paginator->lastPage()) {
+            $paginator = $query->paginate($perPage, ['*'], 'page', $paginator->lastPage());
+        }
         $approvalIds = $paginator->getCollection()->pluck('id');
         $executions = Execution::query()
             ->whereIn('approval_id', $approvalIds)
