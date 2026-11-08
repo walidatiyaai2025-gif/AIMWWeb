@@ -96,6 +96,45 @@ final class SiteOperationsRouteTerminalityTest extends TestCase
         $this->assertContains('tenant.context', $apiRoute->gatherMiddleware());
     }
 
+    public function test_operation_history_pagination_filters_counts_and_tenant_isolation(): void
+    {
+        $user = User::factory()->create();
+        $alpha = $this->membership($user, 'history-alpha', ['tenant.view', 'sites.view']);
+        $beta = $this->membership($user, 'history-beta', ['tenant.view', 'sites.view']);
+        $site = $this->site($alpha, 'Paged Site');
+        $other = $this->site($beta, 'Foreign Site');
+        $context = app(TenantContext::class);
+        $service = app(SiteOperationHistoryService::class);
+        $context->activate($beta->tenant, $beta);
+        $service->record($other->id, 'synchronization', false, 'Foreign tenant error');
+        $context->activate($alpha->tenant, $alpha);
+        for ($index = 0; $index < 27; $index++) {
+            $service->record($site->id, 'synchronization', $index === 0, 'Recorded event', ['api_key' => 'private']);
+        }
+        $context->forget();
+
+        $url = "/api/tenants/history-alpha/sites/{$site->id}/operations";
+        $this->actingAs($user)->getJson($url.'?page=1&per_page=25&operation=synchronization')
+            ->assertOk()->assertJsonPath('total', 27)->assertJsonPath('last_page', 2)
+            ->assertJsonCount(25, 'items')->assertJsonPath('items.0.details.api_key', '[REDACTED]');
+        $this->actingAs($user)->getJson($url.'?page=2&per_page=25&operation=synchronization')
+            ->assertOk()->assertJsonPath('total', 27)->assertJsonPath('from', 26)
+            ->assertJsonCount(2, 'items');
+        $this->actingAs($user)->getJson($url.'?page=999&per_page=25&status=failed')
+            ->assertOk()->assertJsonPath('page', 2)->assertJsonPath('total', 26)
+            ->assertJsonCount(1, 'items');
+        $this->actingAs($user)->getJson($url.'?page=1&status=succeeded')
+            ->assertOk()->assertJsonPath('total', 1);
+        $this->actingAs($user)->getJson($url.'?page=1&per_page=999')
+            ->assertUnprocessable();
+        $this->actingAs($user)->getJson($url.'?operation=%25')
+            ->assertUnprocessable();
+        $this->actingAs($user)->getJson("/api/tenants/history-alpha/sites/{$other->id}/operations?page=1")
+            ->assertNotFound();
+        $this->actingAs($user)->getJson($url.'?take=100')
+            ->assertOk()->assertJsonCount(27, 'items')->assertJsonMissingPath('total');
+    }
+
     public function test_foreign_site_and_missing_permission_fail_closed(): void
     {
         $user = User::factory()->create();

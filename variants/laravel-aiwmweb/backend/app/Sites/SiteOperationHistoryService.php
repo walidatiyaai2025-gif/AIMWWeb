@@ -15,6 +15,39 @@ final class SiteOperationHistoryService
         return SiteOperationHistory::query()->where('site_id', $siteId)->latest('started_at')->limit(max(1, min(500, $take)))->get()->toArray();
     }
 
+    /**
+     * Opt-in server-side history paging. The legacy get() contract is unchanged.
+     * All filters are exact allowlisted values and the active site is mandatory.
+     */
+    public function paginateForSite(int $siteId, int $page = 1, int $perPage = 25, ?string $status = null, ?string $operation = null): array
+    {
+        $query = SiteOperationHistory::query()->where('site_id', $siteId);
+
+        if ($status !== null) {
+            $query->where('status', $status);
+        }
+        if ($operation !== null) {
+            $query->where('operation', $operation);
+        }
+
+        $query->orderByDesc('started_at')->orderByDesc('id');
+        $result = $query->paginate($perPage, ['*'], 'page', $page);
+        if ($page > $result->lastPage()) {
+            $page = max(1, $result->lastPage());
+            $result = $query->paginate($perPage, ['*'], 'page', $page);
+        }
+
+        return [
+            'items' => $result->items(),
+            'page' => $page,
+            'per_page' => $perPage,
+            'total' => $result->total(),
+            'last_page' => $result->lastPage(),
+            'from' => $result->firstItem(),
+            'to' => $result->lastItem(),
+        ];
+    }
+
     public function getAll(int $take = 250): array
     {
         return SiteOperationHistory::query()
