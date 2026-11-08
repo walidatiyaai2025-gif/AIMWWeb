@@ -118,7 +118,8 @@ final class SecurityAuditReadController
 
     private function snapshot(object $row): array
     {
-        $metadata = is_array($row->metadata) ? $row->metadata : (json_decode((string) $row->metadata, true) ?: []);
+        $decoded = is_array($row->metadata) ? $row->metadata : json_decode((string) $row->metadata, true);
+        $metadata = is_array($decoded) ? $decoded : [];
 
         return [
             'id' => (int) $row->id,
@@ -163,7 +164,11 @@ final class SecurityAuditReadController
 
     private function outcome(string $event, array $metadata): string
     {
-        $raw = mb_strtolower(trim((string) ($metadata['outcome'] ?? $metadata['status'] ?? '')));
+        $rawValue = $metadata['outcome'] ?? null;
+        if (! is_string($rawValue)) {
+            $rawValue = $metadata['status'] ?? null;
+        }
+        $raw = mb_strtolower(trim(is_string($rawValue) ? $rawValue : ''));
         if (in_array($raw, ['failed', 'failure', 'error'], true)) {
             return 'Failed';
         }
