@@ -259,6 +259,50 @@ class SiteDiagnosticsClosureTest extends TestCase
         $this->assertSame($site->id, $failure->site_id);
     }
 
+    public function test_nonterminal_and_unrecognized_sync_history_never_masquerades_as_failed(): void
+    {
+        [$tenant, $member] = $this->tenant('sync-history-truth');
+        app(TenantContext::class)->activate($tenant, $member);
+        $site = Site::query()->create(['name' => 'WP', 'url' => 'https://wp.test']);
+        $service = $this->service(new SiteGatewayStub);
+        $this->assertSame('not_probed', $service->status($site)['sync_health']['state']);
+
+        $history = SiteOperationHistory::query()->create([
+            'site_id' => $site->id,
+            'operation' => 'synchronization',
+            'status' => 'pending',
+            'message' => 'Bearer must-never-be-reflected',
+            'started_at' => now(),
+            'completed_at' => now(),
+        ]);
+
+        foreach ([
+            'pending' => 'queued',
+            'queued' => 'queued',
+            'running' => 'in_progress',
+            'processing' => 'in_progress',
+            'in_progress' => 'in_progress',
+            'cancelled' => 'cancelled',
+            'canceled' => 'cancelled',
+            'unrecognized-secret-value' => 'unknown',
+            'failed' => 'failed',
+            'succeeded' => 'succeeded',
+        ] as $rawStatus => $expected) {
+            $history->update(['status' => $rawStatus]);
+            $before = $history->fresh()->toArray();
+
+            $snapshot = $service->status($site->fresh());
+            $this->assertSame($expected, $snapshot['sync_health']['state']);
+            $this->assertNotNull($snapshot['sync_health']['last_attempt_at']);
+            $this->assertArrayNotHasKey('message', $snapshot['sync_health']);
+            $this->assertStringNotContainsString('must-never-be-reflected', json_encode($snapshot['sync_health'], JSON_THROW_ON_ERROR));
+            $this->assertStringNotContainsString('unrecognized-secret-value', json_encode($snapshot['sync_health'], JSON_THROW_ON_ERROR));
+            $this->assertSame($before, $history->fresh()->toArray());
+        }
+
+        $this->assertSame(1, SiteOperationHistory::query()->where('site_id', $site->id)->count());
+    }
+
     public function test_disconnect_and_reconnect_reuse_canonical_connector_pairing(): void
     {
         [$tenant, $member] = $this->tenant('reconnect');
