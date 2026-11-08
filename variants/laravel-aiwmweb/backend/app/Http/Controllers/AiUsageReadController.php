@@ -23,6 +23,8 @@ final class AiUsageReadController extends Controller
 
         $validated = $request->validate([
             'site' => ['nullable', 'integer', 'min:1'],
+            'page' => ['sometimes', 'integer', 'min:1'],
+            'per_page' => ['sometimes', 'integer', 'in:10,25,50,100'],
         ]);
 
         $siteId = null;
@@ -34,7 +36,7 @@ final class AiUsageReadController extends Controller
         $report = $this->usage->report([
             'user_id' => (int) $request->user()->getKey(),
             'site_id' => $siteId,
-            'take' => self::SOURCE_LOAD_TAKE,
+            'take' => $request->hasAny(['page', 'per_page']) ? 100 : self::SOURCE_LOAD_TAKE,
         ]);
 
         $report['sites'] = Site::query()
@@ -46,6 +48,19 @@ final class AiUsageReadController extends Controller
             ])
             ->values()
             ->all();
+
+        // Existing clients keep the legacy full snapshot contract; opted-in
+        // browser grids get bounded real pages, not the first 10k rows sliced locally.
+        if ($request->hasAny(['page', 'per_page'])) {
+            $paging = $this->usage->pagedRecent([
+                'user_id' => (int) $request->user()->getKey(),
+                'site_id' => $siteId,
+            ], (int) ($validated['page'] ?? 1), (int) ($validated['per_page'] ?? 25));
+            $report['recent'] = $paging['data'];
+            $report['current_page'] = $paging['current_page'];
+            $report['last_page'] = $paging['last_page'];
+            $report['per_page'] = $paging['per_page'];
+        }
 
         // Preserve the full usage dashboard payload while also publishing the
         // generic live-resource envelope consumed by the React workspace.
