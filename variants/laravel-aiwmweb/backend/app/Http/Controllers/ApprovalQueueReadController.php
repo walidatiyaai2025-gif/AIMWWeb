@@ -17,11 +17,11 @@ final class ApprovalQueueReadController extends Controller
         $filters = $request->validate([
             'search' => ['sometimes', 'nullable', 'string', 'max:200'],
             'page' => ['sometimes', 'integer', 'min:1'],
-            'per_page' => ['sometimes', 'integer', 'in:10,25,50,100'],
+            'per_page' => ['sometimes', 'integer', 'in:10,20,25,50,100'],
         ]);
 
         $search = trim((string) ($filters['search'] ?? ''));
-        $perPage = (int) ($filters['per_page'] ?? 25);
+        $perPage = (int) ($filters['per_page'] ?? 20);
         $page = (int) ($filters['page'] ?? 1);
 
         $query = Approval::query()->orderByDesc('created_at')->orderByDesc('id');
