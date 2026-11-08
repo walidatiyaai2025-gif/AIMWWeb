@@ -161,12 +161,12 @@ final class SystemUpdateCenterTest extends TestCase
 
     public function test_release_metadata_refuses_unapproved_cdn_redirects(): void
     {
-        $request = (new \\ReflectionMethod(SystemUpdateService::class, 'releaseMetadataRequest'))
+        $request = (new \ReflectionMethod(SystemUpdateService::class, 'releaseMetadataRequest'))
             ->invoke(app(SystemUpdateService::class));
         $callback = $request->getOptions()['allow_redirects']['on_redirect'];
 
         // Official, authenticated GitHub asset-CDN destinations remain allowed.
-        $callback(null, null, new \\GuzzleHttp\\Psr7\\Uri('https://release-assets.githubusercontent.com/allowed'));
+        $callback(null, null, new \GuzzleHttp\Psr7\Uri('https://release-assets.githubusercontent.com/allowed'));
 
         foreach ([
             'https://example.com/metadata',
@@ -175,7 +175,7 @@ final class SystemUpdateCenterTest extends TestCase
             'http://github.com/asset',
         ] as $url) {
             try {
-                $callback(null, null, new \\GuzzleHttp\\Psr7\\Uri($url));
+                $callback(null, null, new \GuzzleHttp\Psr7\Uri($url));
                 $this->fail('Unsafe signed metadata redirect was allowed: '.$url);
             } catch (RuntimeException $e) {
                 $this->assertStringContainsString('Unapproved release metadata redirect', $e->getMessage());
@@ -190,7 +190,7 @@ final class SystemUpdateCenterTest extends TestCase
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Release metadata download failed');
-        (new \\ReflectionMethod(SystemUpdateService::class, 'downloadSmall'))
+        (new \ReflectionMethod(SystemUpdateService::class, 'downloadSmall'))
             ->invoke(app(SystemUpdateService::class), $url, 4096);
     }
 
@@ -210,7 +210,7 @@ final class SystemUpdateCenterTest extends TestCase
     {
         $service = new SystemUpdateService;
         $method = new \ReflectionMethod($service, 'validatePath');
-        foreach (['../.env', 'storage/logs/app.log', 'app/../../.env', 'public/index.php', 'public/.htaccess', 'public/downloads/other.zip', 'public/downloads/aimw-connector.zip/evil.php', 'app/.env', 'app\\x.php', 'database/migrations/new.php'] as $path) {
+        foreach (['../.env', 'storage/logs/app.log', 'app/../../.env', 'public/index.php', 'public/.htaccess', 'public/downloads/other.zip', 'public/downloads/aimw-connector.zip/evil.php', 'app/.env', 'app\x.php', 'database/migrations/new.php'] as $path) {
             try {
                 $method->invoke($service, $path);
                 $this->fail('Unsafe update path accepted: '.$path);
