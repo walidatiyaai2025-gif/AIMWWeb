@@ -144,6 +144,40 @@ class SiteDiagnosticsClosureTest extends TestCase
         $this->assertSame('not_supported', $invalid['metadata']['language_code']['state']);
     }
 
+    public function test_missing_metadata_distinguishes_transport_auth_and_unsupported_diagnostics(): void
+    {
+        [$tenant, $member] = $this->tenant('metadata-failure-states');
+        app(TenantContext::class)->activate($tenant, $member);
+        $site = Site::query()->create(['name' => 'WP', 'url' => 'https://wp.test']);
+        $service = $this->service(new SiteGatewayStub);
+
+        foreach ([
+            SiteConnectionState::TEMPORARILY_UNAVAILABLE => 'temporarily_unavailable',
+            SiteConnectionState::DEGRADED => 'temporarily_unavailable',
+            SiteConnectionState::AUTH_FAILED => 'permission_denied',
+            SiteConnectionState::UNSUPPORTED => 'not_supported',
+        ] as $classification => $expectedState) {
+            SiteDiagnostic::query()->where('site_id', $site->id)->delete();
+            SiteDiagnostic::query()->create([
+                'site_id' => $site->id,
+                'classification' => $classification,
+                'connection_state' => $classification,
+                'checked_at' => now(),
+                'health' => [],
+            ]);
+
+            $status = $service->status($site->fresh());
+            foreach (['wordpress_version', 'language_code'] as $field) {
+                $this->assertNull($status['site']->getAttribute($field));
+                $this->assertSame($expectedState, $status['metadata'][$field]['state']);
+                $this->assertNotNull($status['metadata'][$field]['checked_at']);
+            }
+        }
+
+        $this->assertNull($site->fresh()->wordpress_version);
+        $this->assertNull($site->fresh()->language_code);
+    }
+
     public function test_sync_health_is_not_masked_by_successful_connection_recheck(): void
     {
         [$tenant, $member] = $this->tenant('sync-health-separation');
