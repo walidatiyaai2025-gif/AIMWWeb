@@ -119,7 +119,7 @@ describe('AIMW-CONT-CA17F05024 server-filtered Sites', () => {
 
         fireEvent.click(button);
 
-        await waitFor(() => expect(button).toHaveAttribute('aria-pressed', 'true'));
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Needs review 2' })).toHaveAttribute('aria-pressed', 'true'));
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
         expect(screen.getByText('Authentication failed site')).toBeInTheDocument();
         expect(screen.getByText('Degraded site')).toBeInTheDocument();

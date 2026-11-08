@@ -113,7 +113,7 @@ describe('AIMW-CONT-E346398EAD server-filtered Sites', () => {
 
         fireEvent.click(button);
 
-        await waitFor(() => expect(button).toHaveAttribute('aria-pressed', 'true'));
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Connected 1' })).toHaveAttribute('aria-pressed', 'true'));
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
         expect(screen.getByText('Connected but inactive')).toBeInTheDocument();
         expect(screen.queryByText('Active but failed')).not.toBeInTheDocument();
