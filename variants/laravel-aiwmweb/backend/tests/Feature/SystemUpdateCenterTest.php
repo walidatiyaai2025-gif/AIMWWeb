@@ -193,10 +193,14 @@ final class SystemUpdateCenterTest extends TestCase
     public function test_exhausted_transport_failures_are_safely_classified_without_raw_curl_error(): void
     {
         $url = 'https://github.com/walidatiyaai2025-gif/AIMWWeb/releases/download/v9.9.9/AIWMWeb-Laravel-release.json';
+        $attempts = 0;
         Http::fake([
-            $url => static fn () => throw new ConnectionException(
-                'cURL 28 confidential-proxy-host: timed out while contacting private route'
-            ),
+            $url => static function () use (&$attempts): void {
+                $attempts++;
+                throw new ConnectionException(
+                    'cURL 28 confidential-proxy-host: timed out while contacting private route'
+                );
+            },
         ]);
 
         try {
@@ -208,7 +212,9 @@ final class SystemUpdateCenterTest extends TestCase
             $this->assertStringNotContainsString('confidential-proxy-host', $e->getMessage());
         }
 
-        Http::assertSentCount(3);
+        // Fake closures that throw before returning are not recorded as sent
+        // by Laravel, so count the actual callback invocations instead.
+        $this->assertSame(3, $attempts);
     }
 
     public function test_release_metadata_request_bounds_administrator_timeout_configuration(): void
