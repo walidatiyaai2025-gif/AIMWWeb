@@ -103,6 +103,67 @@ final class ApplicationSessionsRouteTerminalityTest extends TestCase
         $this->assertStringNotContainsString('password', strtolower($response->getContent()));
     }
 
+    public function test_active_session_inventory_is_sql_paginated_with_correct_totals_safe_navigation_and_tenant_isolation(): void
+    {
+        [$alpha, $owner] = $this->tenantWithUser('alpha', ['tenant.view', 'members.manage'], 'owner');
+        [$beta, $foreign] = $this->tenantWithUser('beta', ['tenant.view', 'members.manage'], 'owner');
+
+        $now = time();
+        $rows = [];
+        for ($i = 1; $i <= 27; $i++) {
+            $rows[] = $this->sessionRow(
+                sprintf('alpha-page-%02d', $i),
+                $owner->user_id,
+                $now - $i,
+                '10.0.0.'.($i % 200 + 1),
+                sprintf('Private Browser %02d', $i),
+            );
+        }
+        $rows[] = $this->sessionRow('beta-foreign', $foreign->user_id, $now, '10.99.0.1', 'Foreign Private Browser');
+        $rows[] = $this->sessionRow('alpha-expired', $owner->user_id, $now - 10000, '10.0.9.9', 'Expired Private Browser');
+        DB::table('sessions')->insert($rows);
+        $before = DB::table('sessions')->count();
+
+        $this->actingAs($owner->user)
+            ->get('/tenants/alpha/admin/sessions?per_page=10&page=1&secret=not-for-html')
+            ->assertOk()
+            ->assertSee('Sessions: 1–10 / 27')
+            ->assertSee('Private Browser 01')
+            ->assertDontSee('Private Browser 11')
+            ->assertSee('27 active sessions')
+            ->assertSee('data-session-paginator', false)
+            ->assertSee('page=2&amp;accounts_page=1&amp;per_page=10', false)
+            ->assertDontSee('not-for-html')
+            ->assertDontSee('Foreign Private Browser')
+            ->assertDontSee('Expired Private Browser');
+
+        $this->actingAs($owner->user)
+            ->get('/tenants/alpha/admin/sessions?per_page=10&page=2')
+            ->assertOk()
+            ->assertSee('Sessions: 11–20 / 27')
+            ->assertSee('Private Browser 11')
+            ->assertDontSee('Private Browser 01')
+            ->assertDontSee('Foreign Private Browser');
+
+        $this->actingAs($owner->user)
+            ->get('/tenants/alpha/admin/sessions?per_page=10&page=999')
+            ->assertOk()
+            ->assertSee('Sessions: 21–27 / 27')
+            ->assertSee('Private Browser 27')
+            ->assertDontSee('Private Browser 01');
+
+        $this->actingAs($owner->user)
+            ->get('/tenants/alpha/admin/sessions?per_page=not-valid&page[]=2')
+            ->assertOk()
+            ->assertSee('Sessions: 1–25 / 27')
+            ->assertDontSee('Private Browser 26')
+            ->assertDontSee('Foreign Private Browser');
+
+        $this->assertSame($before, DB::table('sessions')->count());
+        $this->assertSame('alpha', $alpha->slug);
+        $this->assertSame('beta', $beta->slug);
+    }
+
     public function test_existing_json_sessions_contract_remains_available_for_sessions_manage_clients(): void
     {
         [$alpha, $member] = $this->tenantWithUser('alpha', ['tenant.view', 'sessions.manage'], 'member');

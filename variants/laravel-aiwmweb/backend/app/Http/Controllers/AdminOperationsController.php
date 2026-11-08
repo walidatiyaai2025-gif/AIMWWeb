@@ -111,13 +111,31 @@ final class AdminOperationsController extends Controller
         $activeAfter = $now->getTimestamp() - $lifetimeSeconds;
         $currentSessionId = $this->sessionId($request);
 
-        $rows = empty($userIds)
+        // Sessions are paged in SQL, not sliced from an unbounded fetched session list.
+        // Only active members of the resolved tenant are included in counts and rows.
+        $allowedPageSizes = [10, 25, 50, 100];
+        $requestedSize = $request->query('per_page', '25');
+        $perPage = is_string($requestedSize) && in_array($requestedSize, ['10', '25', '50', '100'], true)
+            ? (int) $requestedSize
+            : 25;
+        $safePage = static function (mixed $value): int {
+            return is_string($value) && preg_match('/^[1-9][0-9]{0,8}$/D', $value) === 1
+                ? (int) $value
+                : 1;
+        };
+
+        $sessionQuery = DB::table((string) config('session.table', 'sessions'))
+            ->whereIn('user_id', $userIds)
+            ->where('last_activity', '>', $activeAfter);
+        $totalSessions = empty($userIds) ? 0 : (clone $sessionQuery)->count();
+        $sessionPages = max(1, (int) ceil($totalSessions / $perPage));
+        $sessionPage = min($safePage($request->query('page', '1')), $sessionPages);
+        $rows = $totalSessions === 0
             ? collect()
-            : DB::table((string) config('session.table', 'sessions'))
-                ->whereIn('user_id', $userIds)
-                ->where('last_activity', '>', $activeAfter)
+            : (clone $sessionQuery)
                 ->orderByDesc('last_activity')
                 ->orderBy('id')
+                ->forPage($sessionPage, $perPage)
                 ->get([
                     'id',
                     'user_id',
@@ -147,25 +165,67 @@ final class AdminOperationsController extends Controller
             ];
         })->values();
 
-        $activeAccounts = $sessions
-            ->groupBy(fn (array $session): string => $session['user_name'].'|'.$session['role'])
+        // Aggregate active sessions per authorized user in SQL to keep account
+        // counters authoritative even when that user's sessions span many pages.
+        $currentSessionUserId = $currentSessionId === null || $totalSessions === 0
+            ? null
+            : (clone $sessionQuery)->where('id', $currentSessionId)->value('user_id');
+        $accountRows = $totalSessions === 0
+            ? collect()
+            : (clone $sessionQuery)->select('user_id')
+                ->selectRaw('COUNT(*) AS active_sessions')
+                ->groupBy('user_id')
+                ->get();
+
+        $allActiveAccounts = $accountRows
+            ->map(function (object $row) use ($membersByUserId, $currentSessionUserId): array {
+                /** @var TenantMembership $membership */
+                $membership = $membersByUserId->get((int) $row->user_id);
+                $role = $membership->roles
+                    ->pluck('name')
+                    ->filter()
+                    ->sort(SORT_NATURAL | SORT_FLAG_CASE)
+                    ->first() ?? 'member';
+
+                return [
+                    'user_name' => (string) $membership->user->name,
+                    'role' => (string) $role,
+                    'active_sessions' => (int) $row->active_sessions,
+                    'has_current_session' => $currentSessionUserId !== null
+                        && (int) $currentSessionUserId === (int) $row->user_id,
+                ];
+            })
+            ->groupBy(fn (array $account): string => $account['user_name'].'|'.$account['role'])
             ->map(function ($group): array {
                 $first = $group->first();
 
                 return [
                     'user_name' => $first['user_name'],
                     'role' => $first['role'],
-                    'active_sessions' => $group->count(),
-                    'has_current_session' => $group->contains(fn (array $session): bool => $session['is_current']),
+                    'active_sessions' => $group->sum('active_sessions'),
+                    'has_current_session' => $group->contains(fn (array $account): bool => $account['has_current_session']),
                 ];
             })
             ->sortBy(fn (array $account): string => mb_strtolower($account['user_name']))
             ->values();
 
+        $totalActiveAccounts = $allActiveAccounts->count();
+        $accountPages = max(1, (int) ceil($totalActiveAccounts / $perPage));
+        $accountPage = min($safePage($request->query('accounts_page', '1')), $accountPages);
+        $activeAccounts = $allActiveAccounts->forPage($accountPage, $perPage)->values();
+
         return view('admin.application-sessions', [
             'tenant' => $this->context->tenant(),
             'sessions' => $sessions,
             'activeAccounts' => $activeAccounts,
+            'totalActiveAccounts' => $totalActiveAccounts,
+            'accountPage' => $accountPage,
+            'accountPages' => $accountPages,
+            'totalSessions' => $totalSessions,
+            'sessionPage' => $sessionPage,
+            'sessionPages' => $sessionPages,
+            'perPage' => $perPage,
+            'allowedPageSizes' => $allowedPageSizes,
             'now' => $now,
             'operationId' => 'AIMW-CONT-6B051BD8C0',
         ]);

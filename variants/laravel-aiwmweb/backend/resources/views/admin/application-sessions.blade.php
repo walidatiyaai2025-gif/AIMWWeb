@@ -26,6 +26,13 @@
         .badge { border: 1px solid color-mix(in srgb, CanvasText 20%, transparent); border-radius: 999px; padding: 4px 9px; font-size: 9.375px; white-space: nowrap; }
         .empty { padding: 14px; border-radius: 10px; background: color-mix(in srgb, CanvasText 6%, transparent); }
         small { display: block; opacity: .75; margin-top: 3px; }
+        .sessions-paging { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 16px; }
+        .sessions-paging a, .sessions-paging span[aria-current] { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; padding: 8px 13px; border: 1px solid #516071; border-radius: 9px; text-decoration: none; }
+        .sessions-paging [aria-current="page"] { background: #315f50; color: #fff; font-weight: 800; }
+        .sessions-page-size { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 16px 0; }
+        .sessions-page-size :is(select, button) { min-height: 44px; border-radius: 9px; padding: 7px 12px; }
+        .sessions-count { margin-top: 16px; overflow-wrap: anywhere; }
+        @media (max-width: 650px) { .sessions-paging a { flex: 1 0 auto; } .sessions-page-size { align-items: stretch; } }
     </style>
     <!-- Google Fonts: Inter (Latin) and Tajawal (Arabic); typography 25% larger than the 62.5% baseline. -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -82,6 +89,30 @@
         <a href="{{ route('canonical.alias.settings-sessions', ['tenant' => $tenant->slug], false) }}" data-canonical-operation="AIMW-CONT-F9A87DD98C">{{ __('My sessions') }}</a>
     </section>
 
+    @php
+        // Never echo untrusted query keys into pager links (especially credentials/tokens).
+        $paginationBase = route('canonical.application-sessions', ['tenant' => $tenant->slug], false);
+        $sessionLink = fn (int $page): string => $paginationBase.'?'.http_build_query([
+            'page' => $page,
+            'accounts_page' => $accountPage,
+            'per_page' => $perPage,
+        ]);
+        $accountLink = fn (int $page): string => $paginationBase.'?'.http_build_query([
+            'page' => $sessionPage,
+            'accounts_page' => $page,
+            'per_page' => $perPage,
+        ]);
+    @endphp
+    <form class="sessions-page-size" method="GET" action="{{ $paginationBase }}" data-sessions-page-size>
+        <label for="sessions-per-page">{{ $isArabic ? 'عدد السجلات في الصفحة' : 'Rows per page' }}</label>
+        <select id="sessions-per-page" name="per_page">
+            @foreach ($allowedPageSizes as $size)
+                <option value="{{ $size }}" @selected($perPage === $size)>{{ $size }}</option>
+            @endforeach
+        </select>
+        <button type="submit">{{ $isArabic ? 'تطبيق' : 'Apply' }}</button>
+    </form>
+
     <section class="panel">
         <h2>{{ __('Active accounts') }}</h2>
         <p>{{ __('Accounts in this tenant that currently have at least one non-expired application session.') }}</p>
@@ -104,6 +135,26 @@
                     </article>
                 @endforeach
             </div>
+        @endif
+        @if ($accountPages > 1)
+            <p class="sessions-count" data-account-count>{{ $isArabic ? 'الحسابات' : 'Accounts' }}: {{ (($accountPage - 1) * $perPage) + 1 }}–{{ min($accountPage * $perPage, $totalActiveAccounts) }} / {{ $totalActiveAccounts }}</p>
+            <nav class="sessions-paging" aria-label="{{ $isArabic ? 'صفحات الحسابات النشطة' : 'Active account pages' }}" data-account-paginator>
+                @if ($accountPage > 1)
+                    <a href="{{ $accountLink(1) }}">{{ $isArabic ? 'الأولى' : 'First' }}</a>
+                    <a href="{{ $accountLink($accountPage - 1) }}">{{ $isArabic ? 'السابقة' : 'Previous' }}</a>
+                @endif
+                @for ($p = max(1, $accountPage - 2); $p <= min($accountPages, $accountPage + 2); $p++)
+                    @if ($p === $accountPage)
+                        <span aria-current="page">{{ $p }}</span>
+                    @else
+                        <a href="{{ $accountLink($p) }}">{{ $p }}</a>
+                    @endif
+                @endfor
+                @if ($accountPage < $accountPages)
+                    <a href="{{ $accountLink($accountPage + 1) }}">{{ $isArabic ? 'التالية' : 'Next' }}</a>
+                    <a href="{{ $accountLink($accountPages) }}">{{ $isArabic ? 'الأخيرة' : 'Last' }}</a>
+                @endif
+            </nav>
         @endif
     </section>
 
@@ -133,6 +184,26 @@
                     </article>
                 @endforeach
             </div>
+        @endif
+        @if ($sessionPages > 1)
+            <p class="sessions-count" data-session-count>{{ $isArabic ? 'الجلسات' : 'Sessions' }}: {{ (($sessionPage - 1) * $perPage) + 1 }}–{{ min($sessionPage * $perPage, $totalSessions) }} / {{ $totalSessions }}</p>
+            <nav class="sessions-paging" aria-label="{{ $isArabic ? 'صفحات الجلسات' : 'Session pages' }}" data-session-paginator>
+                @if ($sessionPage > 1)
+                    <a href="{{ $sessionLink(1) }}">{{ $isArabic ? 'الأولى' : 'First' }}</a>
+                    <a href="{{ $sessionLink($sessionPage - 1) }}">{{ $isArabic ? 'السابقة' : 'Previous' }}</a>
+                @endif
+                @for ($p = max(1, $sessionPage - 2); $p <= min($sessionPages, $sessionPage + 2); $p++)
+                    @if ($p === $sessionPage)
+                        <span aria-current="page">{{ $p }}</span>
+                    @else
+                        <a href="{{ $sessionLink($p) }}">{{ $p }}</a>
+                    @endif
+                @endfor
+                @if ($sessionPage < $sessionPages)
+                    <a href="{{ $sessionLink($sessionPage + 1) }}">{{ $isArabic ? 'التالية' : 'Next' }}</a>
+                    <a href="{{ $sessionLink($sessionPages) }}">{{ $isArabic ? 'الأخيرة' : 'Last' }}</a>
+                @endif
+            </nav>
         @endif
     </section>
         </main>
