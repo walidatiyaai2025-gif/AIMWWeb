@@ -929,3 +929,87 @@ body, button, input, textarea, select, option { font-family: var(--aiwm-google-f
     .content > .ai-center-resource-grid > [data-testid="ai-center-generate"] { grid-column: 1 / -1; }
     .ai-center-resource-grid [data-testid="ai-center-generate"] > .form-grid { grid-template-columns: minmax(0, 1fr); }
 }
+
+
+/* #1603 — WordPress HTML editor: full-width, isolated preview at every viewport.
+   Keep this local to the editor so other workspaces retain their grid layout. */
+.workspace-stack:has(.content-editor-content-card),
+.workspace-stack fieldset.panel:has(.content-editor-content-card) {
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+}
+.workspace-stack fieldset.panel:has(.content-editor-content-card) > :is(label, section) {
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+}
+.workspace-stack fieldset.panel:has(.content-editor-content-card) :is(input, select, textarea) {
+    min-width: 0;
+    max-width: 100%;
+}
+.content-editor-content-card {
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+    overflow: hidden;
+    padding: clamp(12px, 2vw, 20px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface2);
+}
+.content-editor-content-card .editor-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+    min-width: 0;
+}
+.content-editor-content-card .editor-card-head > div { min-width: 0; }
+.content-editor-content-card .editor-view-toggle {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+.content-editor-content-card .content-editor-html-input { display: block; min-width: 0; width: 100%; }
+.content-editor-content-card .content-editor-html-input textarea {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 320px;
+    resize: vertical;
+    direction: ltr;
+    text-align: left;
+    overflow-x: auto;
+}
+.content-editor-content-card .content-preview {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    background: #fff;
+    color: #24292f;
+    border: 1px solid #d0d7de;
+    border-radius: 10px;
+}
+.content-editor-content-card .content-preview-frame {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    height: clamp(360px, 58vh, 720px);
+    border: 0;
+    background: #fff;
+}
+.content-editor-content-card .content-preview-empty { padding: 24px; }
+@media (max-width: 700px) {
+    .content-editor-content-card { padding: 12px; }
+    .content-editor-content-card .editor-card-head { flex-direction: column; align-items: stretch; }
+    .content-editor-content-card .editor-view-toggle { width: 100%; }
+    .content-editor-content-card .content-preview-frame { height: 55svh; min-height: 320px; }
+}
