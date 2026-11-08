@@ -486,7 +486,7 @@ final class SystemUpdateService
         return Http::connectTimeout($connect)
             ->timeout($total)
             ->withOptions(['allow_redirects' => ['max' => 3, 'protocols' => ['https']]])
-            ->retry(3, [250, 750], static function (Throwable $exception): bool {
+            ->retry(3, static fn (int $attempt): int => $attempt === 1 ? 250 : 750, static function (Throwable $exception): bool {
                 if ($exception instanceof ConnectionException) {
                     return true;
                 }
