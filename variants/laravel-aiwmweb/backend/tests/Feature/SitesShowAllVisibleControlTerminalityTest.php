@@ -32,7 +32,7 @@ class SitesShowAllVisibleControlTerminalityTest extends TestCase
 
         $frontend = file_get_contents(resource_path('js/pages.tsx'));
         $this->assertStringContainsString(self::OPERATION_ID, $frontend);
-        $this->assertStringContainsString("setSitesFilter('all')", $frontend);
+        $this->assertStringContainsString("navigateSites(1, sitesPageSize, 'all')", $frontend);
     }
 
     public function test_sites_view_member_can_reach_show_all_surface_without_manage_permission(): void
