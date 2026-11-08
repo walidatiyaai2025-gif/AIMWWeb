@@ -360,7 +360,7 @@ final class OperationsControlPlaneService
             }
             $retryableState = in_array($operation->status, ['failed', 'cancelled'], true);
             $hasRetryBudget = (int) $operation->attempts < (int) $operation->max_attempts;
-            if (! $retryableState || ! $hasRetryBudget) {
+            if ($retryableState === false || $hasRetryBudget === false) {
                 throw ValidationException::withMessages(['operation' => 'Operation is not retryable.']);
             }
 
@@ -371,7 +371,7 @@ final class OperationsControlPlaneService
                 if (! $exportId) {
                     throw ValidationException::withMessages(['operation' => 'The report export retry target is unavailable.']);
                 }
-            } elseif (! (str_starts_with((string) $operation->type, 'sync.') && app()->bound(SyncOperationsGateway::class))) {
+            } elseif (str_starts_with((string) $operation->type, 'sync.') === false || app()->bound(SyncOperationsGateway::class) === false) {
                 throw ValidationException::withMessages(['operation' => 'Retry is unsupported for this operation type.']);
             }
 
@@ -401,7 +401,7 @@ final class OperationsControlPlaneService
             ];
         }, 3);
 
-        if (! $claim['already_requested']) {
+        if ($claim['already_requested'] === false) {
             if ($claim['type'] === 'report.export') {
                 try {
                     GenerateReportExport::dispatch($tenantId, $claim['export_id']);
