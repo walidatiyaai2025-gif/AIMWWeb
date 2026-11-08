@@ -2,7 +2,6 @@
 
 namespace App\Platform;
 
-use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -18,8 +17,6 @@ use ZipArchive;
 final class SystemUpdateService
 {
     private const RELEASE_API = 'https://api.github.com/repos/walidatiyaai2025-gif/AIMWWeb/releases/latest';
-
-    private const RELEASE_ASSET_API = 'https://api.github.com/repos/walidatiyaai2025-gif/AIMWWeb/releases/assets/';
 
     private const MANIFEST = 'AIWMWeb-Laravel-release.json';
 
@@ -50,7 +47,7 @@ final class SystemUpdateService
     public function latest(): array
     {
         $this->assertReady();
-        $release = Http::acceptJson()->connectTimeout(8)->timeout(30)->get(self::RELEASE_API);
+        $release = Http::acceptJson()->timeout(12)->get(self::RELEASE_API);
 
         if (! $release->successful()) {
             throw new RuntimeException('Approved GitHub release feed is unavailable.');
@@ -78,9 +75,7 @@ final class SystemUpdateService
                 if (! str_starts_with($url, $prefix) || ! str_ends_with($url, '/'.$name)) {
                     throw new RuntimeException('Release asset URL is not approved.');
                 }
-                // The asset ID is supplied by GitHub's trusted release API, never by the browser.
-                $assetId = filter_var($asset['id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
-                $assets[$name] = ['url' => $url, 'size' => (int) ($asset['size'] ?? 0), 'id' => $assetId ?: null];
+                $assets[$name] = ['url' => $url, 'size' => (int) ($asset['size'] ?? 0)];
             }
         }
 
@@ -97,8 +92,8 @@ final class SystemUpdateService
             throw new RuntimeException('Release asset size is outside the approved limits.');
         }
 
-        $manifestBytes = $this->downloadSmall($assets[self::MANIFEST], 4194304);
-        $signatureBytes = $this->downloadSmall($assets[self::SIGNATURE], 4096);
+        $manifestBytes = $this->downloadSmall($assets[self::MANIFEST]['url'], 4194304);
+        $signatureBytes = $this->downloadSmall($assets[self::SIGNATURE]['url'], 4096);
         $manifest = $this->verifySignedManifest($manifestBytes, $signatureBytes);
 
         $current = $this->state()['version'];
@@ -472,56 +467,15 @@ final class SystemUpdateService
         return $key !== false && strlen($key) === SODIUM_CRYPTO_SIGN_PUBLICKEYBYTES ? $key : null;
     }
 
-    /**
-     * The release CDN may stall on shared hosting. Try its trusted GitHub
-     * asset API endpoint after a transient failure, never on a permanent
-     * error. A shared time budget limits both requests before installation.
-     *
-     * @param array{url:string,size:int,id:?int} $asset
-     */
-    private function downloadSmall(array $asset, int $limit): string
+    private function downloadSmall(string $url, int $limit): string
     {
-        $deadline = microtime(true) + max(20, min(90, (int) config('system_updates.metadata_budget_seconds', 50)));
-        $connect = max(3, min(12, (int) config('system_updates.metadata_connect_timeout', 8)));
-        $urls = [$asset['url']];
-        $urls[] = isset($asset['id']) && $asset['id'] > 0
-            ? self::RELEASE_ASSET_API.$asset['id']
-            : $asset['url'];
+        $response = Http::connectTimeout(8)->timeout(45)->get($url);
 
-        foreach ($urls as $index => $url) {
-            $remaining = (int) ceil($deadline - microtime(true));
-            if ($remaining <= 2) {
-                break;
-            }
-
-            $timeout = max(3, min(30, $remaining));
-            try {
-                $response = Http::accept('application/octet-stream')
-                    ->connectTimeout(min($connect, $timeout - 1))
-                    ->timeout($timeout)
-                    ->get($url);
-            } catch (ConnectionException $e) {
-                continue;
-            }
-
-            if ($response->successful()) {
-                $bytes = $response->body();
-                if (strlen($bytes) > $limit) {
-                    throw new RuntimeException('Release metadata exceeds the allowed size.');
-                }
-                if ($index > 0 && str_contains(strtolower((string) $response->header('Content-Type')), 'application/json')) {
-                    throw new RuntimeException('GitHub asset API returned metadata instead of signed asset bytes.');
-                }
-
-                return $bytes;
-            }
-
-            if (in_array($response->status(), [408, 429, 500, 502, 503, 504], true) === false) {
-                throw new RuntimeException('Release metadata download failed (HTTP '.$response->status().').');
-            }
+        if (! $response->successful() || strlen($response->body()) > $limit) {
+            throw new RuntimeException('Release metadata download failed.');
         }
 
-        throw new RuntimeException('GitHub release metadata is temporarily unavailable. Retry later or upload a signed update ZIP.');
+        return $response->body();
     }
 
     /** @return array<string, string> verified relative path => sha256 */
