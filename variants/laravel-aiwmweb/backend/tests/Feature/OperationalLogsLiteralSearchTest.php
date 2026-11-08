@@ -97,6 +97,8 @@ final class OperationalLogsLiteralSearchTest extends TestCase
             'context' => json_encode($context, JSON_THROW_ON_ERROR),
         ]);
 
+        $storedContext = (string) DB::table('operation_logs')->where('id', $id)->value('context');
+
         $response = $this->actingAs($actor)
             ->getJson('/tenants/alpha/admin/logs?q=legacy')
             ->assertOk()
@@ -110,7 +112,7 @@ final class OperationalLogsLiteralSearchTest extends TestCase
         foreach (['LEGACY_DETAIL_CANARY', 'LEGACY_HEADER_CANARY', 'LEGACY_JSON_CANARY', 'LEGACY_PASSWORD_CANARY', 'foreign tenant credential event'] as $secret) {
             $this->assertStringNotContainsString($secret, $response->getContent());
         }
-        $this->assertSame($context, json_decode((string) DB::table('operation_logs')->where('id', $id)->value('context'), true, 512, JSON_THROW_ON_ERROR));
+        $this->assertSame($storedContext, (string) DB::table('operation_logs')->where('id', $id)->value('context'));
     }
 
     public function test_legacy_persisted_context_secrets_are_masked_at_read_time(): void
