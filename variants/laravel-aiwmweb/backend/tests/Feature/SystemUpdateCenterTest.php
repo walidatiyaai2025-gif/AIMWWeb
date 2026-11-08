@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Platform\SystemUpdateService;
+use GuzzleHttp\Psr7\Uri;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -166,7 +167,7 @@ final class SystemUpdateCenterTest extends TestCase
         $callback = $request->getOptions()['allow_redirects']['on_redirect'];
 
         // Official, authenticated GitHub asset-CDN destinations remain allowed.
-        $callback(null, null, new \GuzzleHttp\Psr7\Uri('https://release-assets.githubusercontent.com/allowed'));
+        $callback(null, null, new Uri('https://release-assets.githubusercontent.com/allowed'));
 
         foreach ([
             'https://example.com/metadata',
@@ -175,7 +176,7 @@ final class SystemUpdateCenterTest extends TestCase
             'http://github.com/asset',
         ] as $url) {
             try {
-                $callback(null, null, new \GuzzleHttp\Psr7\Uri($url));
+                $callback(null, null, new Uri($url));
                 $this->fail('Unsafe signed metadata redirect was allowed: '.$url);
             } catch (RuntimeException $e) {
                 $this->assertStringContainsString('Unapproved release metadata redirect', $e->getMessage());
