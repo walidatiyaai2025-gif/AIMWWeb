@@ -147,4 +147,33 @@ describe('AIMW-CONT-E346398EAD server-filtered Sites', () => {
         expect(await screen.findByText('No sample rows are synthesized when the server returns an empty result.')).toBeInTheDocument();
         await waitFor(() => expect(screen.getByRole('button', { name: 'Connected 0' })).toHaveAttribute('aria-pressed', 'true'));
     });
+
+    it('shows the authoritative filtered total rather than just the current page size', async () => {
+        const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+            const url = new URL(String(input), 'http://localhost');
+            const connected = url.searchParams.get('connection_filter') === 'connected';
+            const total = connected ? 12 : 30;
+            return new Response(JSON.stringify({
+                data: Array.from({ length: 10 }, (_, index) => ({
+                    id: index + 1,
+                    name: `Site ${index + 1}`,
+                    status: 'active',
+                    connection_status: 'connected',
+                })),
+                total,
+                current_page: 1,
+                last_page: Math.ceil(total / 25),
+                per_page: 25,
+                meta: { connected_count: 12, review_count: 8 },
+            }), { status: 200, headers: { 'content-type': 'application/json' } });
+        });
+        vi.stubGlobal('fetch', fetchMock);
+        const view = renderWorkspace();
+        expect(await screen.findByRole('button', { name: 'Connected 12' })).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Connected 12' }));
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Connected 12' })).toHaveAttribute('aria-pressed', 'true'));
+        expect(view.container.querySelector('.count-badge')).toHaveTextContent('12');
+        expect(view.container.querySelector('.count-badge')).not.toHaveTextContent('10');
+    });
 });
