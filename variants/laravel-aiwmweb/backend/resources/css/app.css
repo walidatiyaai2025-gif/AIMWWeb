@@ -1037,3 +1037,26 @@ body, button, input, textarea, select, option { font-family: var(--aiwm-google-f
     .content-editor-content-card .editor-view-toggle { width: 100%; }
     .content-editor-content-card .content-preview-frame { height: 55svh; min-height: 320px; }
 }
+
+
+/* #1608 — shared server-authoritative, keyboard-accessible list navigation. */
+.pagination {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: .65rem 1rem;
+}
+.pagination-nav { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .4rem; min-width: 0; }
+.pagination-nav .btn { min-width: 38px; min-height: 38px; padding: .38rem .6rem; }
+.pagination-nav .pagination-page.active { color: var(--accent-strong); background: var(--accent-soft); border-color: var(--accent); }
+.pagination-numbers { display: inline-flex; align-items: center; gap: .3rem; }
+.pagination-counter { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pagination-range { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pagination-size { display: inline-flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.pagination-size select { width: auto; min-width: 76px; min-height: 38px; }
+@media (max-width: 720px) {
+    .pagination { justify-content: center; }
+    .pagination-nav { width: 100%; }
+    .pagination-numbers .pagination-page:not([aria-current="page"]) { display: none; }
+    .pagination-counter { width: 100%; text-align: center; order: -1; }
+    .pagination-range { width: 100%; text-align: center; }
+}
