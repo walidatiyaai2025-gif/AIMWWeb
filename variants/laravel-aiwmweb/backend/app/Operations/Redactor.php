@@ -24,6 +24,22 @@ final class Redactor
         return $clean;
     }
 
+    /**
+     * Protect the Logs API from historical/imported free-text messages that
+     * bypassed structured write-time redaction. Preserve non-secret context
+     * and never modify the stored source row.
+     */
+    public function redactLogMessage(string $message): string
+    {
+        $redacted = preg_replace(
+            '/\b(authorization\s*:\s*bearer\s+|(?:api[_-]?key|access[_-]?token|refresh[_-]?token|password|client[_-]?secret)\s*[:=]\s*)(?:"[^"]*"|\'[^\']*\'|[^\s,;&]+)/i',
+            '$1[REDACTED]',
+            $message,
+        ) ?? '[REDACTED]';
+
+        return preg_replace('/\bsk-[A-Za-z0-9_-]{12,}\b/', '[REDACTED]', $redacted) ?? '[REDACTED]';
+    }
+
     private function isSensitive(string $key): bool
     {
         foreach (self::SENSITIVE as $needle) {
