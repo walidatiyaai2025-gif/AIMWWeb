@@ -95,7 +95,14 @@
         <span>{{ $tr('✓ 3-day backup retention', '✓ الاحتفاظ بالنسخ الاحتياطية لمدة 3 أيام') }}</span>
     </div>
 
-    <div class="footer">{{ $tr('Already registered?', 'لديك حساب بالفعل؟') }} <a href="{{ $isArabic ? '/login?lang=ar' : '/login' }}" data-canonical-operation="{{ \App\Http\Controllers\RegisterController::LOGIN_NAVIGATION_OPERATION_ID }}">{{ $tr('Sign in', 'تسجيل الدخول') }}</a></div>
+    <div class="footer">
+    {{ $tr('Already registered?', 'لديك حساب بالفعل؟') }}
+    @if ($isArabic)
+        <a href="/login?lang=ar" data-canonical-operation="{{ \App\Http\Controllers\RegisterController::LOGIN_NAVIGATION_OPERATION_ID }}">تسجيل الدخول</a>
+    @else
+        <a href="/login" data-canonical-operation="{{ \App\Http\Controllers\RegisterController::LOGIN_NAVIGATION_OPERATION_ID }}">Sign in</a>
+    @endif
+</div>
 </section>
 </body>
 </html>
