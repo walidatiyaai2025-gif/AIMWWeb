@@ -54,16 +54,16 @@ describe('Real tenant log paging (#1608)', () => {
             </MemoryRouter>,
         );
 
-        expect(await screen.findByText('Log 101')).toBeInTheDocument();
+        expect(await screen.findByRole('cell', { name: '101' })).toBeInTheDocument();
         await waitFor(() => expect(fetchMock.mock.calls[0][0])
             .toBe('/tenants/alpha/admin/logs?page=1&per_page=25'));
         fireEvent.click(screen.getByRole('button', { name: 'Next' }));
-        expect(await screen.findByText('Log 202')).toBeInTheDocument();
+        expect(await screen.findByRole('cell', { name: '202' })).toBeInTheDocument();
         await waitFor(() => expect(fetchMock.mock.calls[1][0])
             .toBe('/tenants/alpha/admin/logs?page=2&per_page=25'));
 
         fireEvent.change(screen.getByRole('combobox', { name: 'Rows per page' }), { target: { value: '50' } });
-        expect(await screen.findByText('Log 303')).toBeInTheDocument();
+        expect(await screen.findByRole('cell', { name: '303' })).toBeInTheDocument();
         await waitFor(() => expect(fetchMock.mock.calls[2][0])
             .toBe('/tenants/alpha/admin/logs?page=1&per_page=50'));
         expect(screen.getByRole('button', { name: 'First' })).toBeDisabled();
