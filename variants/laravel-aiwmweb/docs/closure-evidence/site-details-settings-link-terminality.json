@@ -22,9 +22,9 @@
     "frontend_control": "backend/resources/js/site-details-settings-link-control.tsx",
     "site_details_wiring": "backend/resources/js/app.tsx",
     "control_binding": "data-canonical-operation=AIMW-AI-2B31C6BDAF",
-    "target_contract": "/tenants/{tenant}/settings?site={site}",
+    "target_contract": "/tenants/{tenant}/sites/{site}/settings",
     "context_contract": "GET /tenants/{tenant}/context?site={site}",
-    "adaptation_reason": "Laravel preserves the canonical Settings navigation intent inside its tenant-scoped SPA: the current positive site route identifier is encoded into the Settings selector while the active tenant slug comes only from trusted frontend context.",
+    "adaptation_reason": "Laravel uses the protected server-rendered canonical site-settings route; the site id is validated and derived from the selected route, the tenant slug comes solely from authoritative frontend context, and tenant-wide settings are separately permission-gated.",
     "fake_or_demo_data": false
   },
   "authorization": {
@@ -36,7 +36,7 @@
     "foreign_tenant_or_site_semantics": "404"
   },
   "tenant_isolation": {
-    "proof": "The target tenant slug is derived only from authoritative frontend context, malformed/non-positive site route identifiers fail closed, foreign site selectors are hidden by tenant-scoped context lookup, and foreign tenant namespaces fail membership resolution as 404 before route permissions run.",
+    "proof": "The canonical target resolves a tenant-scoped Site from the authenticated Laravel tenant context; the control rejects malformed/non-positive site ids and derives tenant identity only from trusted frontend context, while the server responds 404 for foreign tenant/site selectors.",
     "caller_override_probe": "Route identifiers containing traversal/query syntax are rejected and the control cannot accept a caller-supplied tenant override."
   },
   "semantics": {
@@ -53,19 +53,21 @@
       "coverage": [
         "exact canonical operation identity and source metadata",
         "authenticated Site Details source route",
-        "same-tenant Settings boot with selected site",
-        "authoritative tenant context resolves the selected site",
+        "same-tenant canonical site settings authorization and render",
+        "separate global tenant settings route",
+        "authoritative tenant context",
         "guest redirect",
-        "sites.view denial on the protected source route",
-        "foreign-site selector 404",
-        "foreign-tenant namespace 404"
+        "sites.view denial",
+        "foreign-site 404",
+        "foreign-tenant 404"
       ]
     },
     "frontend": {
       "file": "backend/resources/js/__tests__/site-details-settings-link-control.test.tsx",
       "coverage": [
         "exact canonical operation marker",
-        "tenant-scoped Settings href with current site pinned",
+        "server-backed tenant/site settings href",
+        "separate permission-gated tenant settings link",
         "tenant slug encoding",
         "malformed/non-positive site identifiers fail closed",
         "permission-denied control is absent"
@@ -93,6 +95,6 @@
   },
   "terminality": {
     "state": "ADAPTED",
-    "basis": "The canonical Site Details Settings navigation is implemented as a real Laravel control bound to trusted tenant context and the current site route, with deterministic frontend/PHP coverage for permission, malformed identifier, and cross-tenant fail-closed behavior and no fabricated external evidence."
+    "basis": "Corrected site-scoped navigation targets the actual protected Laravel Site Settings controller; tenant-wide settings are a separately permission-gated destination. New acceptance tests are pending required CI on the new task PR; historical hashes above are previous provenance only."
   }
 }

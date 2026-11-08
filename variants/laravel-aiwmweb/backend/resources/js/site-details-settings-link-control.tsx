@@ -8,7 +8,7 @@ export const SITE_DETAILS_SETTINGS_LINK_OPERATION_ID = 'AIMW-AI-2B31C6BDAF';
 export function siteDetailsSettingsHref(tenantSlug: string, siteId: string | undefined): string | null {
     if (!siteId || !/^[1-9]\d*$/.test(siteId)) return null;
 
-    return `${tenantUrl(tenantSlug, '/settings')}?site=${encodeURIComponent(siteId)}`;
+    return tenantUrl(tenantSlug, `/sites/${siteId}/settings`);
 }
 
 export function SiteDetailsSettingsLinkControl({ context }: { context: FrontendContext }) {
@@ -30,15 +30,20 @@ export function SiteDetailsSettingsLinkControl({ context }: { context: FrontendC
                 <span className="workspace-kicker">{locale === 'ar' ? 'إعدادات الموقع' : 'SITE SETTINGS'}</span>
                 <p>
                     {locale === 'ar'
-                        ? 'افتح إعدادات الحساب مع تثبيت الموقع الحالي من سياق الحساب الموثوق.'
-                        : 'Open settings with the current site pinned through the authoritative tenant context.'}
+                        ? 'افتح إعدادات الموقع المحدد وبيانات اتصال ووردبريس من الصفحة المحمية.'
+                        : 'Open this site’s settings and WordPress credentials in the authorized site workspace.'}
                 </p>
             </div>
             <div className="toolbar-actions">
-                <Link className="btn" to={target}>
+                <a className="btn primary" href={target}>
                     <span aria-hidden="true">⚙</span>
                     {locale === 'ar' ? 'إعدادات الموقع' : 'Site settings'}
-                </Link>
+                </a>
+                {(context.permissions.includes('*') || context.permissions.includes('settings.manage')) && (
+                    <Link className="btn" to={tenantUrl(context.tenant.slug, '/settings')}>
+                        {locale === 'ar' ? 'إعدادات الحساب العامة' : 'Tenant settings'}
+                    </Link>
+                )}
             </div>
         </section>
     );

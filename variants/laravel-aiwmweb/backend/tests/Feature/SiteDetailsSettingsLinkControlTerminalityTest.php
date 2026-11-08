@@ -51,7 +51,12 @@ class SiteDetailsSettingsLinkControlTerminalityTest extends TestCase
             ->assertSee('id="app"', false);
 
         $this->actingAs($user)
-            ->get('/tenants/alpha/settings?site='.$site->id)
+            ->get('/tenants/alpha/sites/'.$site->id.'/settings')
+            ->assertOk()
+            ->assertSee('data-dashboard-shell="aiwmweb"', false);
+
+        $this->actingAs($user)
+            ->get('/tenants/alpha/settings')
             ->assertOk()
             ->assertSee('id="app"', false);
 
