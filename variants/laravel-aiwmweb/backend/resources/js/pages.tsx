@@ -381,13 +381,44 @@ function Unavailable({ route, context, state = resolveCapability(context, route)
     );
 }
 
+type SitesPageFilter = 'all' | 'connected' | 'review';
+type SitesUrlPageState = { page: number; pageSize: number; filter: SitesPageFilter };
+
+// The Sites grid uses the same bounded URL contract as its Laravel paginator.
+// Preserve unrelated query parameters (for example a dashboard tab) and avoid
+// treating a malformed user-supplied page number as a valid API request.
+function readSitesUrlPageState(): SitesUrlPageState {
+    const params = new URLSearchParams(window.location.search);
+    const rawPage = params.get('page');
+    const number = rawPage && /^[1-9][0-9]*$/.test(rawPage) ? Number(rawPage) : 1;
+    const page = Number.isSafeInteger(number) && number <= 100000 ? number : 1;
+    const rawSize = params.get('per_page');
+    const pageSize = rawSize && ['10', '25', '50', '100'].includes(rawSize) ? Number(rawSize) : 25;
+    const rawFilter = params.get('connection_filter');
+    const filter: SitesPageFilter = rawFilter === 'connected' || rawFilter === 'review' ? rawFilter : 'all';
+    return { page, pageSize, filter };
+}
+
+function writeSitesUrlPageState({ page, pageSize, filter }: SitesUrlPageState): void {
+    const params = new URLSearchParams(window.location.search);
+    params.set('page', String(page));
+    params.set('per_page', String(pageSize));
+    if (filter === 'all') params.delete('connection_filter');
+    else params.set('connection_filter', filter);
+    const query = params.toString();
+    const target = window.location.pathname + (query ? '?' + query : '') + window.location.hash;
+    if (target !== window.location.pathname + window.location.search + window.location.hash) {
+        window.history.pushState(window.history.state, '', target);
+    }
+}
+
 function ResourceContent({ context, route }: { context: FrontendContext; route: WorkspaceRoute }) {
     const { locale, text } = useLocale();
     const { notify } = useToast();
     const queryClient = useQueryClient();
     const [searchInput, setSearchInput] = useState('');
     const [search, setSearch] = useState('');
-    const [page, setPage] = useState(1);
+    const [page, setPage] = useState(() => route.key === 'sites' ? readSitesUrlPageState().page : 1);
     // Only enable page-size changes on APIs with verified server-side per_page.
     const [explorerPageSize, setExplorerPageSize] = useState(25);
     const [emailHistoryPageSize, setEmailHistoryPageSize] = useState(25);
@@ -396,14 +427,35 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const [emailSchedulesPageSize, setEmailSchedulesPageSize] = useState(25);
     const [notificationsPageSize, setNotificationsPageSize] = useState(25);
     const [logsPageSize, setLogsPageSize] = useState(25);
-    const [sitesPageSize, setSitesPageSize] = useState(25);
+    const [sitesPageSize, setSitesPageSize] = useState(() => readSitesUrlPageState().pageSize);
     const [wordpressSiteRoleDraft, setWordpressSiteRoleDraft] = useState<WordPressSiteUserRole>('all');
     const [wordpressSiteRoleApplied, setWordpressSiteRoleApplied] = useState<WordPressSiteUserRole>('all');
     const [mediaDraft, setMediaDraft] = useState(defaultGlobalMediaFilters);
     const [mediaAppliedFilters, setMediaAppliedFilters] = useState(defaultGlobalMediaFilters);
     const [appDataGridSortDescending, setAppDataGridSortDescending] = useState(false);
     const applicationUsersSearchInFlight = useRef(false);
-    const [sitesFilter, setSitesFilter] = useState<'all' | 'connected' | 'review'>('all');
+    const [sitesFilter, setSitesFilter] = useState<SitesPageFilter>(() => readSitesUrlPageState().filter);
+
+    // Browser Back/Forward restores the actual server query, not merely the
+    // highlighted filter button. Other resource routes retain their own state.
+    useEffect(() => {
+        if (route.key !== 'sites') return undefined;
+        const restore = () => {
+            const restored = readSitesUrlPageState();
+            setPage(restored.page);
+            setSitesPageSize(restored.pageSize);
+            setSitesFilter(restored.filter);
+        };
+        window.addEventListener('popstate', restore);
+        return () => window.removeEventListener('popstate', restore);
+    }, [route.key]);
+
+    const navigateSites = (nextPage: number, nextSize: number, nextFilter: SitesPageFilter) => {
+        writeSitesUrlPageState({ page: nextPage, pageSize: nextSize, filter: nextFilter });
+        setPage(nextPage);
+        setSitesPageSize(nextSize);
+        setSitesFilter(nextFilter);
+    };
     const [explorerPreview, setExplorerPreview] = useState<Record<string, unknown> | null>(null);
     const [explorerSelectedKeys, setExplorerSelectedKeys] = useState<Set<string>>(() => new Set());
 
@@ -1116,7 +1168,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             className="btn"
                             data-canonical-operation={SITES_SHOW_ALL_OPERATION_ID}
                             aria-pressed={sitesFilter === 'all'}
-                            onClick={() => { setPage(1); setSitesFilter('all'); }}
+                            onClick={() => navigateSites(1, sitesPageSize, 'all')}
                         >{locale === 'ar' ? 'الكل' : 'All'}</button>
                     ) : null}
                     {route.key === 'sites' ? (
@@ -1125,7 +1177,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             className="btn"
                             data-canonical-operation={SITES_SHOW_CONNECTED_OPERATION_ID}
                             aria-pressed={sitesFilter === 'connected'}
-                            onClick={() => { setPage(1); setSitesFilter('connected'); }}
+                            onClick={() => navigateSites(1, sitesPageSize, 'connected')}
                         >{locale === 'ar' ? 'متصل' : 'Connected'} <b>{connectedSiteCount}</b></button>
                     ) : null}
                     {route.key === 'sites' ? (
@@ -1134,7 +1186,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             className="btn"
                             data-canonical-operation={SITES_SHOW_REVIEW_OPERATION_ID}
                             aria-pressed={sitesFilter === 'review'}
-                            onClick={() => { setPage(1); setSitesFilter('review'); }}
+                            onClick={() => navigateSites(1, sitesPageSize, 'review')}
                         >{locale === 'ar' ? 'يحتاج مراجعة' : 'Needs review'} <b>{reviewSiteCount}</b></button>
                     ) : null}
                     {route.key === 'taxonomy' ? (
@@ -1460,7 +1512,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             setExplorerSelectedKeys(new Set());
                             setExplorerPageSize(size);
                         }} />
-                    : <Pagination page={collection.page} lastPage={collection.lastPage} onPage={setPage}
+                    : <Pagination page={collection.page} lastPage={collection.lastPage} onPage={route.key === 'sites' ? (next) => navigateSites(next, sitesPageSize, sitesFilter) : setPage}
                         total={collection.authoritativeTotal}
                         pageSize={route.key === 'email-history' ? emailHistoryPageSize : route.key === 'approvals' ? approvalPageSize : route.key === 'evidence' ? evidencePageSize : route.key === 'email-schedules' ? emailSchedulesPageSize : route.key === 'notifications' ? notificationsPageSize : route.key === 'logs' ? logsPageSize : route.key === 'sites' ? sitesPageSize : undefined}
                         returnedCount={collection.rows.length}
@@ -1482,10 +1534,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         } : route.key === 'approvals' ? (size) => {
                             setPage(1);
                             setApprovalPageSize(size);
-                        } : route.key === 'sites' ? (size) => {
-                            setPage(1);
-                            setSitesPageSize(size);
-                        } : undefined}
+                        } : route.key === 'sites' ? (size) => navigateSites(1, size, sitesFilter) : undefined}
                         previousOperationAliasId={route.key === 'comments' ? COMMENTS_PREVIOUS_PAGE_OPERATION_ID : route.key === 'wp-users' ? WORDPRESS_USERS_PREVIOUS_OPERATION_ID : undefined}
                         previousOperationId={readOperations?.previous ?? (route.key === 'email-history' ? APP_DATA_GRID_PREVIOUS_PAGE_OPERATION_ID : undefined)} />}
             </section>
