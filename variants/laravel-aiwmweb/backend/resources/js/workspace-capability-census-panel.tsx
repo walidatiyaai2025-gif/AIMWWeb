@@ -8,6 +8,7 @@ const stateLabels: Record<WorkspaceCensusState, { en: string; ar: string }> = {
     backend_restricted: { en: 'Backend capability restricted', ar: 'الخادم يرفض القدرة' },
     connector_read_missing: { en: 'Connector read scope absent', ar: 'صلاحية قراءة البلجن ناقصة' },
     contract_not_advertised: { en: 'API contract not advertised (review)', ar: 'عقد API غير معلن (يحتاج مراجعة)' },
+    site_selection_required: { en: 'Select a site to check this API', ar: 'اختر موقعًا للتحقق من عقد API' },
     declared_accessible: { en: 'Declared accessible; not runtime-tested', ar: 'معلن كمتاح، لم يُختبر فعليًا' },
 };
 
@@ -30,6 +31,7 @@ export function WorkspaceCapabilityCensusPanel({ context }: { context: FrontendC
             <span>{ar ? 'قيود الخادم' : 'Backend restrictions'}: {result.totals.backend_restricted}</span>
             <span>{ar ? 'صلاحيات البلجن' : 'Connector read gaps'}: {result.totals.connector_read_missing}</span>
             <span>{ar ? 'عقود غير معلنة' : 'API contracts to review'}: {result.totals.contract_not_advertised}</span>
+            <span>{ar ? 'تحتاج اختيار موقع' : 'Require site selection'}: {result.totals.site_selection_required}</span>
             <span>{ar ? 'معلنة كمتاحة' : 'Declared accessible'}: {result.totals.declared_accessible}</span>
             <span>{ar ? 'عقود أفعال ظاهرة' : 'Server action contracts'}: {result.totals.write_controls_advertised}/{result.totals.write_controls_declared}</span>
         </div>
