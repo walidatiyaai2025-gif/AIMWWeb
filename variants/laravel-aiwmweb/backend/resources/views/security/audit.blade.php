@@ -63,6 +63,7 @@
         <p>SECURITY</p>
         <h1>{{ $isArabic ? 'تدقيق الأمان' : 'Security Audit' }}</h1>
         <p>{{ $isArabic ? 'سجل أحداث الأمان للقراءة فقط ضمن نطاق المستأجر.' : 'Read-only security events from tenant-owned audit data.' }}</p>
+        <p data-audit-safe-metadata-note>{{ $isArabic ? 'تُعرض حقول التشخيص المسموح بها فقط؛ تُحجب بيانات الاعتماد والاستجابات الخام والحقول غير المعروفة.' : 'Only allowlisted diagnostic fields are displayed. Credentials, raw provider errors and unknown metadata are never shown.' }}</p>
         @if ($settingsHref !== null)
             <a
                 href="{{ $settingsHref }}"
