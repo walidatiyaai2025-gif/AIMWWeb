@@ -378,9 +378,9 @@ export function Pagination({
     const hasPageSize = Number.isSafeInteger(pageSize) && pageSize! > 0 && pageSize! <= 100;
     if (safeLastPage <= 1 && !hasTotal && !onPageSizeChange) return null;
 
-    const firstShown = hasTotal && hasPageSize && total! > (safePage - 1) * pageSize! ? (safePage - 1) * pageSize! + 1 : 0;
-    const count = Number.isSafeInteger(returnedCount) ? Math.max(0, returnedCount!) : pageSize ?? 0;
-    const lastShown = hasTotal && hasPageSize ? Math.min(total!, firstShown > 0 ? firstShown + count - 1 : 0) : 0;
+    const count = Number.isSafeInteger(returnedCount) ? Math.max(0, Math.min(returnedCount!, pageSize ?? 0)) : pageSize ?? 0;
+    const firstShown = hasTotal && hasPageSize && count > 0 && total! > (safePage - 1) * pageSize! ? (safePage - 1) * pageSize! + 1 : 0;
+    const lastShown = hasTotal && hasPageSize && firstShown > 0 ? Math.min(total!, firstShown + count - 1) : 0;
 
     return (
         <nav className="pagination" aria-label={locale === 'ar' ? 'ترقيم الصفحات' : 'Pagination'}>
