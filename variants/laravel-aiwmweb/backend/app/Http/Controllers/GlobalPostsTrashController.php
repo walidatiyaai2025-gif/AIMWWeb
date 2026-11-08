@@ -24,7 +24,7 @@ final class GlobalPostsTrashController extends Controller
             'site_id' => 'nullable|integer|min:1',
             'status' => ['nullable', Rule::in(['all', 'draft', 'pending', 'publish', 'private', 'future', 'trash'])],
             'per_page' => 'nullable|integer|min:1|max:100',
-            'page' => 'nullable|integer|min:1',
+            'page' => 'nullable|integer|min:1|max:1000000',
         ]);
 
         if (isset($data['site_id'])) {
