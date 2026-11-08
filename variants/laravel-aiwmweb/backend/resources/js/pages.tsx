@@ -1104,6 +1104,37 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                     }
                     setPage(1); setSearch(searchInput); if (route.key === 'explorer') setExplorerSelectedKeys(new Set());
                 }} role="search">
+                    {route.key === 'execution' ? (
+                        <span className="toolbar-actions">
+                            <label>{locale === 'ar' ? 'الحالة' : 'Status'}
+                                <select aria-label={locale === 'ar' ? 'حالة التنفيذ' : 'Execution status'}
+                                    value={executionDraft.status}
+                                    onChange={(event) => setExecutionDraft((current) => ({ ...current, status: event.target.value }))}>
+                                    {EXECUTION_STATUSES.map((status) => (
+                                        <option key={status} value={status}>
+                                            {status || (locale === 'ar' ? 'جميع الحالات' : 'All statuses')}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                            <label>{locale === 'ar' ? 'نوع العملية' : 'Operation type'}
+                                <input aria-label={locale === 'ar' ? 'نوع العملية' : 'Operation type'}
+                                    value={executionDraft.type}
+                                    maxLength={80}
+                                    onChange={(event) => setExecutionDraft((current) => ({ ...current, type: event.target.value }))} />
+                            </label>
+                            <label>{locale === 'ar' ? 'من تاريخ' : 'From date'}
+                                <input type="date" aria-label={locale === 'ar' ? 'من تاريخ' : 'From date'}
+                                    value={executionDraft.dateFrom}
+                                    onChange={(event) => setExecutionDraft((current) => ({ ...current, dateFrom: event.target.value }))} />
+                            </label>
+                            <label>{locale === 'ar' ? 'إلى تاريخ' : 'To date'}
+                                <input type="date" aria-label={locale === 'ar' ? 'إلى تاريخ' : 'To date'}
+                                    value={executionDraft.dateTo}
+                                    onChange={(event) => setExecutionDraft((current) => ({ ...current, dateTo: event.target.value }))} />
+                            </label>
+                        </span>
+                    ) : null}
                     <label className="sr-only" htmlFor={`search-${route.key}`}>{text(commonText.search)}</label>
                     {route.key === 'comments' ? (
                         <AppSearchBox
@@ -1338,8 +1369,8 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         data-canonical-operation={refreshOperationId}
                         data-canonical-load-operation={readOperations?.load}
                         data-canonical-refresh-operation={readOperations?.refresh}
-                        disabled={(route.key === 'comments' || route.key === 'ai-center' || route.key === 'backups' || route.key === 'site-operations' || route.key === 'site-reliability') && query.isFetching}
-                        aria-busy={(route.key === 'comments' || route.key === 'ai-center' || route.key === 'backups' || route.key === 'site-operations' || route.key === 'site-reliability') && query.isFetching ? 'true' : 'false'}
+                        disabled={(route.key === 'comments' || route.key === 'ai-center' || route.key === 'backups' || route.key === 'site-operations' || route.key === 'site-reliability' || route.key === 'execution') && query.isFetching}
+                        aria-busy={(route.key === 'comments' || route.key === 'ai-center' || route.key === 'backups' || route.key === 'site-operations' || route.key === 'site-reliability' || route.key === 'execution') && query.isFetching ? 'true' : 'false'}
                         onClick={() => void refreshWorkspace()}
                     >
                         {route.key === 'ai-center'
@@ -1487,9 +1518,15 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                 {visibleRows.length ? (
                     <DataTable
                         rows={visibleRows}
-                        preferredColumns={route.key === 'logs' ? ['id', 'level', 'message', 'occurred_at'] : undefined}
+                        preferredColumns={route.key === 'logs' ? ['id', 'level', 'message', 'occurred_at'] : route.key === 'execution' ? ['id', 'type', 'status', 'progress', 'attempts', 'max_attempts', 'created_at', 'updated_at'] : undefined}
                         layout={route.key === 'sites' ? 'cards' : 'table'}
-                        renderActions={route.key === 'site-operations' ? (row) => (
+                        renderActions={route.key === 'execution' ? (row) => (
+                            <ExecutionCenterRowActions context={context} row={row}
+                                onReconcile={async () => {
+                                    const refreshed = await query.refetch();
+                                    if (refreshed.error) throw refreshed.error;
+                                }} />
+                        ) : route.key === 'site-operations' ? (row) => (
                             <SiteOperationsDetailsLinkControl context={context} row={row} />
                         ) : route.key === 'site-reliability' ? (row) => (
                             <SiteReliabilityConnectionLinkControl tenantSlug={context.tenant.slug} siteId={row.site_id} />
@@ -1583,6 +1620,10 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                     />
                 ) : <div className="empty-state"><strong>{text(commonText.empty)}</strong><p>{route.key === 'diagnostics'
                     ? (locale === 'ar' ? 'لم تُرجع واجهة Laravel عمليات فاشلة أو أحداث تدقيق لهذا الحساب. تحقق من صحة النظام ومفتش التشغيل لمشكلات الاستضافة.' : 'Laravel returned no failed operations or audit events for this tenant. Check System Health and Runtime Inspector for host incidents.')
+                    : route.key === 'execution'
+                        ? (locale === 'ar'
+                            ? 'لا توجد عمليات مطابقة لهذا الحساب والفلاتر الحالية. قد لا تكون هناك عمليات مسجلة؛ لا يتم إنشاء بيانات تجريبية.'
+                            : 'No executions match this tenant and its filters. There may be no recorded work; sample rows are never created.')
                     : route.key === 'logs'
                         ? logsMeta?.empty_reason === 'filter_matched_none' || (!logsMeta && search.trim())
                             ? (locale === 'ar' ? 'توجد سجلات عمليات لهذا الحساب، لكن الفلاتر الحالية لم تُطابق أي سجل.' : 'Tenant operation logs exist, but the current filters matched none.')
@@ -1596,11 +1637,15 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             setExplorerSelectedKeys(new Set());
                             setExplorerPageSize(size);
                         }} />
-                    : <Pagination page={collection.page} lastPage={collection.lastPage} onPage={route.key === 'sites' ? (next) => navigateSites(next, sitesPageSize, sitesFilter) : setPage}
+                    : <Pagination page={collection.page} lastPage={collection.lastPage} onPage={route.key === 'sites' ? (next) => navigateSites(next, sitesPageSize, sitesFilter) : route.key === 'execution' ? (next) => navigateExecution({ ...executionState, page: next }) : setPage}
                         total={collection.authoritativeTotal}
-                        pageSize={route.key === 'email-history' ? emailHistoryPageSize : route.key === 'approvals' ? approvalPageSize : route.key === 'evidence' ? evidencePageSize : route.key === 'email-schedules' ? emailSchedulesPageSize : route.key === 'notifications' ? notificationsPageSize : route.key === 'logs' ? logsPageSize : route.key === 'sites' ? sitesPageSize : undefined}
+                        pageSize={route.key === 'execution' ? executionState.pageSize : route.key === 'email-history' ? emailHistoryPageSize : route.key === 'approvals' ? approvalPageSize : route.key === 'evidence' ? evidencePageSize : route.key === 'email-schedules' ? emailSchedulesPageSize : route.key === 'notifications' ? notificationsPageSize : route.key === 'logs' ? logsPageSize : route.key === 'sites' ? sitesPageSize : undefined}
                         returnedCount={collection.rows.length}
-                        onPageSizeChange={route.key === 'email-history' ? (size) => {
+                        onPageSizeChange={route.key === 'execution' ? (size) => {
+                            if (EXECUTION_PAGE_SIZES.includes(size as typeof EXECUTION_PAGE_SIZES[number])) {
+                                navigateExecution({ ...executionState, page: 1, pageSize: size });
+                            }
+                        } : route.key === 'email-history' ? (size) => {
                             setPage(1);
                             setEmailHistoryPageSize(size);
                         } : route.key === 'notifications' ? (size) => {
