@@ -18,6 +18,10 @@ describe('Canonical server paging navigation (#1608)', () => {
         expect(authoritativeCollectionTotal(25, false)).toBeUndefined();
         expect(authoritativeCollectionTotal(0, false)).toBeUndefined();
         expect(authoritativeCollectionTotal(25, true)).toBe(25);
+        // Untrusted runtime JSON can violate the TypeScript boolean annotation.
+        expect(authoritativeCollectionTotal(25, 'false' as unknown as boolean)).toBeUndefined();
+        expect(authoritativeCollectionTotal(25, null as unknown as boolean)).toBeUndefined();
+        expect(authoritativeCollectionTotal(25, 0 as unknown as boolean)).toBeUndefined();
         expect(authoritativeCollectionTotal(25)).toBe(25);
         expect(visiblePaginationPages(5, 20)).toEqual([3, 4, 5, 6, 7]);
         expect(visiblePaginationPages(1, 3)).toEqual([1, 2, 3]);
