@@ -63,13 +63,10 @@ final class SeoParityClosureTest extends TestCase
         $site = Site::query()->create(['name' => 'Audit Redaction', 'url' => 'https://audit.test']);
         $this->content($site);
         $audit = SeoAudit::query()->create(['site_id' => $site->id, 'actor_user_id' => $membership->user_id]);
-        $seo = new class(new SeoFakeWordPressGateway([])) extends SeoManagerService
-        {
-            public function analyze(SyncedContent $content): array
-            {
-                throw new RuntimeException('DB_PASSWORD=secret-test-only and raw SQL query');
-            }
-        };
+        $seo = \Mockery::mock(SeoManagerService::class, [new SeoFakeWordPressGateway([])])->makePartial();
+        $seo->shouldReceive('analyze')
+            ->once()
+            ->andThrow(new RuntimeException('DB_PASSWORD=secret-test-only and raw SQL query'));
 
         $seo->runAudit($audit);
         $audit->refresh();
@@ -88,13 +85,10 @@ final class SeoParityClosureTest extends TestCase
         app(TenantContext::class)->activate($tenant, $membership);
         $site = Site::query()->create(['name' => 'Job Redaction', 'url' => 'https://audit.test']);
         $audit = SeoAudit::query()->create(['site_id' => $site->id, 'actor_user_id' => $membership->user_id]);
-        $seo = new class(new SeoFakeWordPressGateway([])) extends SeoManagerService
-        {
-            public function runAudit(SeoAudit $audit): SeoAudit
-            {
-                throw new RuntimeException('api_token=secret-test-only');
-            }
-        };
+        $seo = \Mockery::mock(SeoManagerService::class, [new SeoFakeWordPressGateway([])])->makePartial();
+        $seo->shouldReceive('runAudit')
+            ->once()
+            ->andThrow(new RuntimeException('api_token=secret-test-only'));
 
         try {
             (new RunSeoAuditJob($tenant->id, $audit->id))->handle($seo);
