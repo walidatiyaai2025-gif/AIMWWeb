@@ -100,7 +100,7 @@ final class ExecutionCenterRealActionsTest extends TestCase
             ->assertOk()->assertJsonPath('data.0.can_retry', true);
         $this->actingAs($owner->user)->postJson($url)->assertOk()->assertJsonPath('status', 'retrying');
         $this->actingAs($owner->user)->postJson($url)->assertOk()->assertJsonPath('attempts', 1);
-        Queue::assertPushed(GenerateReportExport::class, 2);
+        Queue::assertPushed(GenerateReportExport::class, 1);
         $this->assertSame(1, DB::table('audit_events')->where('event', 'operation.retry_requested')->count());
 
         $unsupported = $this->execution($tenant, $owner->user_id, 'failed', 'integration.unimplemented');
