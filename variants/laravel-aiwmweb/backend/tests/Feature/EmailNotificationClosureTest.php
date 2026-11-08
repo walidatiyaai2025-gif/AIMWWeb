@@ -148,6 +148,51 @@ class EmailNotificationClosureTest extends TestCase
         $this->assertSame(0, app(NotificationPlatformService::class)->unreadCount());
     }
 
+    public function test_inbox_paging_is_authoritative_stable_and_tenant_isolated(): void
+    {
+        [$alpha, $alphaMember] = $this->tenantWithMember('inbox-paging-alpha');
+        [$beta, $betaMember] = $this->tenantWithMember('inbox-paging-beta');
+        $context = app(TenantContext::class);
+        $context->activate($alpha, $alphaMember);
+        for ($i = 0; $i < 12; $i++) {
+            InAppNotification::query()->create([
+                'user_id' => $alphaMember->user_id,
+                'event_id' => (string) Str::uuid(),
+                'notification_id' => (string) Str::uuid(),
+                'category' => 'sync',
+                'severity' => $i < 7 ? 'info' : 'warning',
+                'source' => 'sync',
+                'title' => 'Paging event '.$i,
+                'message' => 'Paging test',
+                'locale' => 'en',
+                'delivery_mode' => 'immediate',
+                'mandatory' => false,
+            ]);
+        }
+        $service = app(NotificationPlatformService::class);
+        $first = $service->listForCurrentUser(['page' => 1, 'per_page' => 10]);
+        $second = $service->listForCurrentUser(['page' => 2, 'per_page' => 10]);
+        $this->assertSame(12, $first['total']);
+        $this->assertSame(2, $first['last_page']);
+        $this->assertCount(10, $first['data']);
+        $this->assertSame(2, $second['current_page']);
+        $this->assertCount(2, $second['data']);
+        $this->assertSame([], array_values(array_intersect(
+            array_column($first['data'], 'id'),
+            array_column($second['data'], 'id'),
+        )));
+        $clamped = $service->listForCurrentUser(['page' => 99, 'per_page' => 10]);
+        $this->assertSame(2, $clamped['current_page']);
+        $this->assertCount(2, $clamped['data']);
+        $filtered = $service->listForCurrentUser(['page' => 5, 'per_page' => 10, 'severity' => 'info']);
+        $this->assertSame(7, $filtered['total']);
+        $this->assertSame(1, $filtered['current_page']);
+        $context->activate($beta, $betaMember);
+        $other = app(NotificationPlatformService::class)->listForCurrentUser(['page' => 1, 'per_page' => 10]);
+        $this->assertSame(0, $other['total']);
+        $this->assertSame([], $other['data']);
+    }
+
     private function tenantWithMember(string $slug): array
     {
         $tenant = Tenant::query()->create(['name' => ucfirst($slug), 'slug' => $slug]);

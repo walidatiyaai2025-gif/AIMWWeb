@@ -133,13 +133,21 @@ final class NotificationPlatformService implements NotificationEventSink
 
     public function listForCurrentUser(array $filters = []): array
     {
-        return InAppNotification::query()
+        $query = InAppNotification::query()
             ->where('user_id', app(TenantContext::class)->membership()->user_id)
             ->when(isset($filters['unread']), fn ($q) => $filters['unread'] ? $q->whereNull('read_at') : $q)
             ->when($filters['severity'] ?? null, fn ($q, $v) => $q->where('severity', $v))
             ->when($filters['source'] ?? null, fn ($q, $v) => $q->where('source', $v))
-            ->latest()->paginate(min(max((int) ($filters['per_page'] ?? 25), 1), 100))
-            ->through(fn (InAppNotification $n) => $this->serialize($n))->toArray();
+            ->orderByDesc('created_at')->orderByDesc('id');
+
+        $perPage = min(max((int) ($filters['per_page'] ?? 25), 1), 100);
+        $page = max((int) ($filters['page'] ?? 1), 1);
+        $notifications = $query->paginate($perPage, ['*'], 'page', $page);
+        if ($page > $notifications->lastPage()) {
+            $notifications = $query->paginate($perPage, ['*'], 'page', $notifications->lastPage());
+        }
+
+        return $notifications->through(fn (InAppNotification $n) => $this->serialize($n))->toArray();
     }
 
     public function unreadCount(): int

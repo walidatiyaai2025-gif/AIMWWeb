@@ -27,7 +27,15 @@ final class EmailNotificationController extends Controller
     {
         $this->authorizer->authorize('tenant.view');
 
-        return response()->json($this->notifications->listForCurrentUser($request->only(['unread', 'severity', 'source', 'per_page'])));
+        $filters = $request->validate([
+            'unread' => ['sometimes', 'boolean'],
+            'severity' => ['sometimes', 'nullable', 'string', 'max:50'],
+            'source' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'page' => ['sometimes', 'integer', 'min:1'],
+            'per_page' => ['sometimes', 'integer', 'between:1,100'],
+        ]);
+
+        return response()->json($this->notifications->listForCurrentUser($filters));
     }
 
     public function unreadCount(string $tenant): JsonResponse
