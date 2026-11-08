@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { workspaceRoutes, type FrontendContext } from './core';
 import { useLocale } from './i18n';
 import { workspaceCapabilityCensus } from './workspace-capability-census';
+import { siteScopedWorkspaceKeys } from './site-scoped-workspace-keys';
 
 export type LiveAuditState = 'passed_read' | 'failed_read' | 'skipped' | 'not_tested';
 export type LiveAuditEntry = {
@@ -16,6 +17,35 @@ export type LiveAuditEntry = {
     advertised_write_actions: number;
     tested_write_actions: 0;
 };
+export type LiveAuditFailure = {
+    schema: 'aiwm.workspace-live-audit-failure.v1';
+    stage: 'site_context' | 'workspace_gets';
+    reason: 'site_not_owned' | 'context_rejected' | 'invalid_context_json'
+        | 'context_identity_mismatch' | 'context_contract_mismatch'
+        | 'context_timeout' | 'context_network_error' | 'unexpected_error';
+    occurred_at: string;
+};
+
+/** Only explicitly classified error codes cross into UI or support exports. */
+export function classifyLiveAuditFailure(error: unknown, stage: LiveAuditFailure['stage']): LiveAuditFailure {
+    const message = error instanceof Error ? error.message : '';
+    let reason: LiveAuditFailure['reason'] = 'unexpected_error';
+    if (message === 'Site is not available for the requested tenant audit.') reason = 'site_not_owned';
+    else if (message === 'Site context was rejected by the server.') reason = 'context_rejected';
+    else if (message === 'Site context is not valid JSON.') reason = 'invalid_context_json';
+    else if (message === 'Site context does not match the requested tenant, user or site.') reason = 'context_identity_mismatch';
+    else if (message === 'Site-scoped GET contract does not match the selected site.') reason = 'context_contract_mismatch';
+    else if (error instanceof Error && error.name === 'AbortError') reason = 'context_timeout';
+    else if (error instanceof TypeError) reason = 'context_network_error';
+
+    return {
+        schema: 'aiwm.workspace-live-audit-failure.v1',
+        stage,
+        reason,
+        occurred_at: new Date().toISOString(),
+    };
+}
+
 export type LiveAuditResult = {
     schema: 'aiwm.workspace-live-audit.v1';
     completed_at: string;
@@ -72,13 +102,7 @@ export function safeAuditEndpoint(endpoint: unknown, slug: string): endpoint is 
 }
 
 /** These reads are advertised only after the user selects a tenant-owned site. */
-const selectedSiteReads = new Set([
-    'explorer', 'posts', 'pages', 'media', 'comments', 'taxonomy',
-    'categories', 'tags', 'wp-users', 'sync', 'seo-audit',
-    // These existing JSON GETs are only advertised after an authorized site is selected.
-    'site-details', 'site-snapshot', 'site-offline-data',
-    'site-connection-center', 'site-connection-operations',
-]);
+const selectedSiteReads = siteScopedWorkspaceKeys;
 
 export function liveAuditPlan(context: FrontendContext): LiveAuditEntry[] {
     const census = workspaceCapabilityCensus(context);
@@ -303,17 +327,18 @@ const stateLabels = {
     not_tested: { en: 'Not tested / navigation only', ar: 'لم يُختبر / صفحة تنقل' },
 } as const;
 
-export function RuntimeWorkspaceAuditPanel({ context, availableSiteIds = [], onComplete }: {
+export function RuntimeWorkspaceAuditPanel({ context, availableSiteIds = [], onComplete, onFailure }: {
     context: FrontendContext;
     availableSiteIds?: number[];
     onComplete: (result: LiveAuditResult | null, auditedContext: FrontendContext | null) => void;
+    onFailure?: (failure: LiveAuditFailure | null) => void;
 }) {
     const { locale } = useLocale();
     const ar = locale === 'ar';
     const [working, setWorking] = useState(false);
     const [progress, setProgress] = useState('');
     const [result, setResult] = useState<LiveAuditResult | null>(null);
-    const [error, setError] = useState(false);
+    const [error, setError] = useState<LiveAuditFailure | null>(null);
     const [chosenSite, setChosenSite] = useState(0);
     const siteIds = [...new Set(availableSiteIds.filter(id => Number.isSafeInteger(id) && id > 0))].slice(0, 50);
     // Choosing a site for this audit must be possible even if the dashboard
@@ -323,18 +348,23 @@ export function RuntimeWorkspaceAuditPanel({ context, availableSiteIds = [], onC
     const start = async () => {
         if (working) return;
         setWorking(true);
-        setError(false);
+        setError(null);
         setResult(null);
         onComplete(null, null);
+        onFailure?.(null);
+        let stage: LiveAuditFailure['stage'] = siteChoiceRequired ? 'site_context' : 'workspace_gets';
         try {
             const auditContext = siteChoiceRequired
                 ? await loadSiteScopedAuditContext(context, selectedSiteId, siteIds)
                 : context;
+            stage = 'workspace_gets';
             const next = await runReadOnlyWorkspaceAudit(auditContext, (done, total) => setProgress(`${done}/${total}`));
             setResult(next);
             onComplete(next, auditContext);
-        } catch {
-            setError(true);
+        } catch (cause) {
+            const failure = classifyLiveAuditFailure(cause, stage);
+            setError(failure);
+            onFailure?.(failure);
         } finally {
             setWorking(false);
         }
@@ -355,7 +385,7 @@ export function RuntimeWorkspaceAuditPanel({ context, availableSiteIds = [], onC
                 <button className="btn primary" type="button" onClick={() => void start()} disabled={working || (siteChoiceRequired && !selectedSiteId)}>
             {working ? (ar ? `جارٍ الفحص ${progress}` : `Scanning ${progress}`) : (ar ? 'فحص جميع الوظائف الآمنة' : 'Scan safe functions across all pages')}
         </button>
-        {error && <p role="alert">{ar ? 'تعذر إكمال الفحص؛ لا تعتبر الوظائف ناجحة.' : 'Audit failed; no success is inferred.'}</p>}
+        {error && <p role="alert">{ar ? 'تعذر إكمال الفحص؛ لا تعتبر الوظائف ناجحة.' : 'Audit failed; no success is inferred.'} {' · '}{error.stage}: {error.reason}</p>}
         {result && <>
             {result.workspaces.some(entry => entry.reason === 'site_selection_required') && <p role="status">{ar
                 ? 'بعض الفحوص تحتاج تحديد موقع لهذا الفحص فقط. شغّل Inspector واختر الموقع ثم أعد الفحص، دون تغيير الموقع النشط في اللوحة.'
