@@ -21,7 +21,8 @@ final class SyncDiagnosticFormatter
         $message = preg_replace('~https?://[^\s<>"\x27]+~i', '[URL REDACTED]', $message) ?? $message;
         $message = preg_replace('/\bBearer\s+\S+/i', 'Bearer [REDACTED]', $message) ?? $message;
 
-        // Include common camelCase credential keys emitted by REST/SDK clients.\n        // Upstream errors sometimes embed JSON or PHP array dumps. Quoted
+        // Include common camelCase credential keys emitted by REST/SDK clients.
+        // Upstream errors sometimes embed JSON or PHP array dumps. Quoted
         // credential keys bypass the bare-key regex below. Truncate from the
         // first quoted secret key instead of parsing untrusted escaped values:
         // malformed JSON must not expose the tail of a credential or payload.
