@@ -1,14 +1,18 @@
 @php
     $ar = request()->getPreferredLanguage(['ar', 'en']) === 'ar';
+    $isArabic = $ar;
     $t = fn (string $en, string $arabic) => $ar ? $arabic : $en;
 @endphp
 <!doctype html>
-<html lang="{{ $ar ? 'ar' : 'en' }}" dir="{{ $ar ? 'rtl' : 'ltr' }}">
+<html lang="{{ $ar ? 'ar' : 'en' }}" dir="{{ $ar ? 'rtl' : 'ltr' }}" data-mode="dark">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex,nofollow">
     <title>{{ $t('System updates', 'تحديثات النظام') }} | AIWMWeb</title>
+    @unless (app()->runningUnitTests())
+        @vite(['resources/css/app.css'])
+    @endunless
     <style>
         :root { color-scheme: light; --green:#13845f; --navy:#15293c; --muted:#607187; --edge:#dce5eb; --bg:#f3f6f8; }
         * { box-sizing:border-box; }
@@ -56,9 +60,65 @@
         main form:has(> label ~ label ~ label) > :not(label), main section:has(> article ~ article) > :not(article), main section:has(> .record ~ .record) > :not(.record) { grid-column: 1 / -1; }
         main :is(.grid, .cards, .record-grid) > * { min-width: 0; }
 </style>
+    @include('layouts.partials.workspace-read-styles')
+    <style data-aiwm-update-center-shell-styles>
+        .workspace-read-shell .workspace-read-content { max-width: 1180px; padding: 24px; }
+        .workspace-read-shell .workspace-read-content .panel {
+            background: var(--surface); color: var(--text); border: 1px solid var(--border);
+            border-radius: 16px; box-shadow: none; padding: clamp(16px, 2vw, 24px);
+        }
+        .workspace-read-shell .workspace-read-content .grid { grid-template-columns: repeat(auto-fit, minmax(185px, 1fr)); }
+        .workspace-read-shell .workspace-read-content .stat {
+            background: var(--surface2); color: var(--text); border: 1px solid var(--border);
+        }
+        .workspace-read-shell .workspace-read-content :is(.muted, small, .stat span) { color: #c1ccdb; }
+        .workspace-read-shell .workspace-read-content .alert {
+            background: #4b341b; border: 1px solid #bd8d45; color: #fff2d4;
+        }
+        .workspace-read-shell .workspace-read-content .alert.ok {
+            background: #173c2d; border-color: #3da57c; color: #e5fff0;
+        }
+        .workspace-read-shell .workspace-read-content .alert.error {
+            background: #4c252a; border-color: #d27577; color: #fff0f0;
+        }
+        .workspace-read-shell .workspace-read-content button {
+            color: #fff; background: #13845f; min-height: 44px;
+        }
+        .workspace-read-shell .workspace-read-content button.install { background: #44658a; }
+        .workspace-read-shell .workspace-read-content button[disabled] { background: #687687; }
+        .workspace-read-shell .workspace-read-content input {
+            max-width: 100%; background: #f8fafc; color: #15293c;
+        }
+        .workspace-read-shell .workspace-read-content .record { border-color: var(--border); }
+        .workspace-read-shell .workspace-read-content hr { border-color: var(--border) !important; }
+        .workspace-read-shell .workspace-read-content .back { color: #e0bf73; }
+        .workspace-read-shell .workspace-read-content .top { align-items: center; }
+        @media (max-width: 760px) {
+            .workspace-read-shell .workspace-read-content { padding: 12px; }
+            .workspace-read-shell .workspace-read-content .grid { grid-template-columns: minmax(0, 1fr); }
+            .workspace-read-shell .workspace-read-content form > input { width: 100%; }
+        }
+    </style>
 </head>
 <body>
-<main>
+@php
+    $shellTitle = $t('System updates', 'تحديثات النظام');
+    $shellScope = $t('Platform administration', 'إدارة المنصة');
+    $shellHomeUrl = '/admin/system-updates';
+    $shellLinks = [
+        ['url' => $shellHomeUrl, 'label' => $shellTitle, 'active' => true],
+        ['url' => '#installed', 'label' => $t('Installed version', 'الإصدار الحالي')],
+        ['url' => '#available', 'label' => $t('Find and install an update', 'فحص وتثبيت تحديث')],
+        ['url' => '#backup-now', 'label' => $t('Backup & Recovery', 'النسخ الاحتياطي والاسترجاع')],
+        ['url' => '#history', 'label' => $t('Recent update history', 'سجل آخر التحديثات')],
+    ];
+@endphp
+<div class="app-shell workspace-read-shell" data-dashboard-shell="aiwmweb">
+    <a class="skip-link" href="#workspace-read-content">{{ $t('Skip to content', 'تخط إلى المحتوى') }}</a>
+    @include('layouts.partials.workspace-read-sidebar')
+    <div class="main-area">
+        @include('layouts.partials.workspace-read-topbar')
+        <main id="workspace-read-content" class="content workspace-read-content">
     <div class="top">
         <div><strong>AIWMWeb</strong> <span class="muted">/ {{ $t('Platform administration', 'إدارة المنصة') }}</span></div>
         <a class="back" href="/">{{ $t('Home', 'الرئيسية') }}</a>
@@ -190,6 +250,8 @@
             <p class="muted">{{ $t('No recorded update attempts.', 'لا توجد محاولات تحديث مسجلة.') }}</p>
         @endforelse
     </section>
-</main>
+        </main>
+    </div>
+</div>
 </body>
 </html>
