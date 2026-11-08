@@ -34,6 +34,10 @@ describe('AIMW-BILL-E747D0E843 RetestAsync', () => {
         const button = await screen.findByRole('button', { name: 'Run test' });
         expect(button).toHaveAttribute('data-canonical-operation', SITE_CONNECTION_CENTER_RETEST_OPERATION_ID);
         expect(SITE_CONNECTION_CENTER_RETEST_OPERATION_ID).toBe('AIMW-BILL-E747D0E843');
+        // The retest control is intentionally disabled until the first authoritative
+        // connection snapshot resolves. Wait for that state before interacting.
+        await waitFor(() => expect(button).toBeEnabled());
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
         fireEvent.click(button);
 
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(5));
