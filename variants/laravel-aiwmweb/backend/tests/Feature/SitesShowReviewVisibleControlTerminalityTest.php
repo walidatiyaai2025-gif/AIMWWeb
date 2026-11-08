@@ -53,7 +53,7 @@ final class SitesShowReviewVisibleControlTerminalityTest extends TestCase
         $frontend = (string) file_get_contents(resource_path('js/pages.tsx'));
 
         $this->assertStringContainsString(self::OPERATION_ID, $frontend);
-        $this->assertStringContainsString("setSitesFilter('review')", $frontend);
+        $this->assertStringContainsString("navigateSites(1, sitesPageSize, 'review')", $frontend);
         $this->assertStringContainsString("row.connection_status ?? 'unknown'", $frontend);
         $this->assertStringContainsString("normalized !== 'connected' && normalized !== 'unknown'", $frontend);
         $this->assertStringContainsString("'يحتاج مراجعة' : 'Needs review'", $frontend);
