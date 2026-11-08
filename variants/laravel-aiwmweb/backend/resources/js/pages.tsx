@@ -391,6 +391,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     // Only enable page-size changes on APIs with verified server-side per_page.
     const [explorerPageSize, setExplorerPageSize] = useState(25);
     const [emailHistoryPageSize, setEmailHistoryPageSize] = useState(25);
+    const [approvalPageSize, setApprovalPageSize] = useState(25);
     const [sitesPageSize, setSitesPageSize] = useState(25);
     const [wordpressSiteRoleDraft, setWordpressSiteRoleDraft] = useState<WordPressSiteUserRole>('all');
     const [wordpressSiteRoleApplied, setWordpressSiteRoleApplied] = useState<WordPressSiteUserRole>('all');
@@ -471,6 +472,12 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const query = useQuery(route.key === 'email-history' ? {
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType, emailHistoryFilters.siteId, emailHistoryFilters.status, emailHistoryFilters.correlation, appDataGridSortDescending, emailHistoryPageSize],
         queryFn: () => readWorkspaceCollection(endpointWithQuery(endpoint!, page, search, resourceFilters)),
+        enabled: state.state === 'enabled' && Boolean(endpoint),
+    } : route.key === 'approvals' ? {
+        // Approval Queue is tenant-scoped and supports authoritative server
+        // pagination. Include page size in the query key to avoid stale rows.
+        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, approvalPageSize],
+        queryFn: () => readWorkspaceCollection(endpointWithQuery(endpoint!, page, search, { per_page: String(approvalPageSize) })),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     } : route.key === 'site-reliability' ? {
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, siteReliabilityFilters.periodDays, siteReliabilityFilters.minimumOperations],
@@ -1430,11 +1437,14 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         }} />
                     : <Pagination page={collection.page} lastPage={collection.lastPage} onPage={setPage}
                         total={collection.authoritativeTotal}
-                        pageSize={route.key === 'email-history' ? emailHistoryPageSize : route.key === 'sites' ? sitesPageSize : undefined}
+                        pageSize={route.key === 'email-history' ? emailHistoryPageSize : route.key === 'approvals' ? approvalPageSize : route.key === 'sites' ? sitesPageSize : undefined}
                         returnedCount={collection.rows.length}
                         onPageSizeChange={route.key === 'email-history' ? (size) => {
                             setPage(1);
                             setEmailHistoryPageSize(size);
+                        } : route.key === 'approvals' ? (size) => {
+                            setPage(1);
+                            setApprovalPageSize(size);
                         } : route.key === 'sites' ? (size) => {
                             setPage(1);
                             setSitesPageSize(size);
