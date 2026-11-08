@@ -115,6 +115,7 @@ class SiteDiagnosticsClosureTest extends TestCase
                 'status' => 'succeeded',
                 'message' => 'safe',
                 'started_at' => now()->subMinutes($index),
+                'completed_at' => now()->subMinutes($index),
             ]);
         }
         SiteOperationHistory::query()->create([
@@ -123,6 +124,7 @@ class SiteDiagnosticsClosureTest extends TestCase
             'status' => 'failed',
             'message' => 'private-other-site',
             'started_at' => now(),
+            'completed_at' => now(),
         ]);
 
         foreach ([0, -3, 101, 1000000000] as $invalidSize) {
