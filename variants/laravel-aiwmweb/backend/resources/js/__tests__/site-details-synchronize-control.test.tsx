@@ -34,6 +34,7 @@ function renderControl(activeContext = context()) {
 afterEach(() => {
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
+    vi.useRealTimers();
 });
 
 describe('AIMW-BILL-94755B17E4 Site Details SynchronizeAsync', () => {
@@ -84,6 +85,33 @@ describe('AIMW-BILL-94755B17E4 Site Details SynchronizeAsync', () => {
         expect(error).toHaveTextContent('HTTP 409');
         expect(error).toHaveTextContent('Sync Run: 41');
         expect(screen.queryByText('Synchronization completed and authoritative Site Details were reread from the server.')).not.toBeInTheDocument();
+    });
+
+    it('preserves a queued WordPress sync as pending after all 60 bounded polls without a false HTTP 409', async () => {
+        vi.useFakeTimers();
+        const fetchMock = vi.fn()
+            .mockResolvedValueOnce(new Response(JSON.stringify({ id: 41, status: 'queued' }), {
+                status: 202, headers: { 'content-type': 'application/json' },
+            }))
+            .mockImplementation(async () => new Response(JSON.stringify({ id: 41, status: 'running' }), {
+                status: 200, headers: { 'content-type': 'application/json' },
+            }));
+        vi.stubGlobal('fetch', fetchMock);
+        vi.stubGlobal('crypto', { randomUUID: () => '11111111-1111-4111-8111-111111111111' });
+
+        renderControl();
+        fireEvent.click(screen.getByRole('button', { name: 'Sync now' }));
+        await vi.advanceTimersByTimeAsync(31_000);
+
+        expect(fetchMock).toHaveBeenCalledTimes(61);
+        expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/tenants/alpha/sites/17/sync');
+        for (const [url] of fetchMock.mock.calls.slice(1)) {
+            expect(url).toBe('/api/tenants/alpha/sync-runs/41');
+        }
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+        expect(screen.getByRole('status')).toHaveTextContent('Sync run 41 is still processing');
+        expect(screen.getByRole('status')).not.toHaveTextContent('completed and authoritative');
+        expect(screen.getByRole('button', { name: 'Sync now' })).toBeEnabled();
     });
 
     it('shows an HTTP 500 cause and request ID instead of generic Server Error', async () => {
