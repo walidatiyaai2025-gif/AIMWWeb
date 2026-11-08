@@ -2,6 +2,9 @@
 
 namespace App\Platform;
 
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -47,7 +50,11 @@ final class SystemUpdateService
     public function latest(): array
     {
         $this->assertReady();
-        $release = Http::acceptJson()->timeout(12)->get(self::RELEASE_API);
+        try {
+            $release = $this->releaseMetadataRequest()->acceptJson()->get(self::RELEASE_API);
+        } catch (ConnectionException) {
+            throw new RuntimeException('Approved GitHub release feed timed out or failed; retry later.');
+        }
 
         if (! $release->successful()) {
             throw new RuntimeException('Approved GitHub release feed is unavailable.');
@@ -467,9 +474,69 @@ final class SystemUpdateService
         return $key !== false && strlen($key) === SODIUM_CRYPTO_SIGN_PUBLICKEYBYTES ? $key : null;
     }
 
+    /**
+     * Bounded transport retry only. Never retry signature failures or malformed
+     * manifests, and never disable TLS checks for an unreliable cPanel network.
+     */
+    private function releaseMetadataRequest(): PendingRequest
+    {
+        $connect = max(3, min(15, (int) config('system_updates.metadata_connect_timeout', 8)));
+        $total = max($connect, min(90, (int) config('system_updates.metadata_timeout', 60)));
+
+        return Http::connectTimeout($connect)
+            ->timeout($total)
+            ->withOptions(['allow_redirects' => [
+                'max' => 3,
+                'protocols' => ['https'],
+                'on_redirect' => static function ($request, $response, $uri): void {
+                    // GitHub signed release assets may redirect to its official CDN only.
+                    // Never permit an arbitrary HTTPS redirect to private networks.
+                    if (strtolower((string) $uri->getScheme()) !== 'https' ||
+                        $uri->getUserInfo() !== '' ||
+                        $uri->getPort() !== null ||
+                        ! in_array(strtolower((string) $uri->getHost()), [
+                            'github.com',
+                            'api.github.com',
+                            'release-assets.githubusercontent.com',
+                            'objects.githubusercontent.com',
+                        ], true)) {
+                        throw new RuntimeException('Unapproved release metadata redirect destination.');
+                    }
+                },
+            ]])
+            ->retry(3, static fn (int $attempt): int => $attempt === 1 ? 250 : 750, static function (Throwable $exception): bool {
+                if ($exception instanceof ConnectionException) {
+                    return true;
+                }
+
+                return $exception instanceof RequestException
+                    && in_array($exception->response->status(), [429, 502, 503, 504], true);
+            }, throw: false);
+    }
+
     private function downloadSmall(string $url, int $limit): string
     {
-        $response = Http::timeout(15)->get($url);
+        try {
+            $response = $this->releaseMetadataRequest()
+                ->withOptions([
+                    // Abort oversized responses while they are being transferred,
+                    // not only after PHP has buffered the complete body.
+                    'on_headers' => static function ($response) use ($limit): void {
+                        $length = $response->getHeaderLine('Content-Length');
+                        if ($length !== '' && ctype_digit($length) && (float) $length > $limit) {
+                            throw new RuntimeException('Release metadata exceeds the allowed size.');
+                        }
+                    },
+                    'progress' => static function ($total, $downloaded) use ($limit): void {
+                        if ($downloaded > $limit) {
+                            throw new RuntimeException('Release metadata exceeds the allowed size.');
+                        }
+                    },
+                ])
+                ->get($url);
+        } catch (ConnectionException) {
+            throw new RuntimeException('Release metadata connection timed out or failed; retry later or upload a signed update bundle.');
+        }
 
         if (! $response->successful() || strlen($response->body()) > $limit) {
             throw new RuntimeException('Release metadata download failed.');

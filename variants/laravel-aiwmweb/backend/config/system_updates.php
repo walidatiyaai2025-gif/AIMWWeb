@@ -9,4 +9,7 @@ return [
     'current_version' => env('APP_VERSION', '0.0.0'),
     // Configure when cPanel's document root is outside the Laravel app directory.
     'public_root' => env('AIWM_UPDATES_PUBLIC_ROOT', ''),
+    // Bounded signed release metadata fetch on slow cPanel outbound connections.
+    'metadata_connect_timeout' => (int) env('AIWM_UPDATES_METADATA_CONNECT_TIMEOUT', 8),
+    'metadata_timeout' => (int) env('AIWM_UPDATES_METADATA_TIMEOUT', 60),
 ];
