@@ -127,8 +127,14 @@ final class SystemUpdateCenterTest extends TestCase
         $download = new \ReflectionMethod(SystemUpdateService::class, 'downloadSmall');
         $this->assertSame('signed-manifest-fixture', $download->invoke(app(SystemUpdateService::class), $url, 4096));
         Http::assertSentCount(2);
+    }
 
+    public function test_release_metadata_404_fails_closed_without_retry(): void
+    {
+        $url = 'https://github.com/walidatiyaai2025-gif/AIMWWeb/releases/download/v9.9.9/AIWMWeb-Laravel-release.json';
         Http::fake([$url => Http::response('not found', 404)]);
+        $download = new \ReflectionMethod(SystemUpdateService::class, 'downloadSmall');
+
         try {
             $download->invoke(app(SystemUpdateService::class), $url, 4096);
             $this->fail('A missing signed release asset must fail closed.');
