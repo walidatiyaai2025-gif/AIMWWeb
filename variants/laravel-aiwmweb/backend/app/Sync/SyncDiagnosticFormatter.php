@@ -2,6 +2,7 @@
 
 namespace App\Sync;
 
+use Illuminate\Http\Client\ConnectionException;
 use Throwable;
 
 final class SyncDiagnosticFormatter
@@ -55,7 +56,7 @@ REGEX;
             preg_match('/\b(401|403|unauthorized|forbidden|authentication|signature)\b/', $message) === 1 => 'authentication',
             preg_match('/\b(429|quota|rate.limit(?:ed)?)\b/', $message) === 1 => 'rate_limit',
             preg_match('/\b(invalid.protocol|protocol mismatch|version mismatch)\b/', $message) === 1 => 'protocol',
-            $exception instanceof \Illuminate\Http\Client\ConnectionException,
+            $exception instanceof ConnectionException,
             preg_match('/\b(timeout|timed out|connection refused|dns|curl|socket|tls)\b/', $message) === 1 => 'transport',
             preg_match('/\b(5[0-9]{2}|server error|service unavailable)\b/', $message) === 1 => 'remote_service',
             preg_match('/\b(sqlstate|database|disk full)\b/', $message) === 1 => 'storage',
