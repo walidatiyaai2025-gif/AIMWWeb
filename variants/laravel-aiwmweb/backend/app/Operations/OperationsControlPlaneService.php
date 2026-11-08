@@ -358,8 +358,9 @@ final class OperationsControlPlaneService
             if ($operation->status === 'retrying') {
                 return ['already_requested' => true, 'type' => (string) $operation->type, 'export_id' => null];
             }
-            if (! in_array($operation->status, ['failed', 'cancelled'], true)
-                || (int) $operation->attempts >= (int) $operation->max_attempts) {
+            $retryableState = in_array($operation->status, ['failed', 'cancelled'], true);
+            $hasRetryBudget = (int) $operation->attempts < (int) $operation->max_attempts;
+            if (! $retryableState || ! $hasRetryBudget) {
                 throw ValidationException::withMessages(['operation' => 'Operation is not retryable.']);
             }
 
@@ -370,8 +371,7 @@ final class OperationsControlPlaneService
                 if (! $exportId) {
                     throw ValidationException::withMessages(['operation' => 'The report export retry target is unavailable.']);
                 }
-            } elseif (! str_starts_with((string) $operation->type, 'sync.')
-                || ! app()->bound(SyncOperationsGateway::class)) {
+            } elseif (! (str_starts_with((string) $operation->type, 'sync.') && app()->bound(SyncOperationsGateway::class))) {
                 throw ValidationException::withMessages(['operation' => 'Retry is unsupported for this operation type.']);
             }
 
