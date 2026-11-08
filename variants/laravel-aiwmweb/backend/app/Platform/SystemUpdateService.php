@@ -21,6 +21,8 @@ final class SystemUpdateService
 {
     private const RELEASE_API = 'https://api.github.com/repos/walidatiyaai2025-gif/AIMWWeb/releases/latest';
 
+    private const RELEASE_ASSET_API = 'https://api.github.com/repos/walidatiyaai2025-gif/AIMWWeb/releases/assets/';
+
     private const MANIFEST = 'AIWMWeb-Laravel-release.json';
 
     private const SIGNATURE = 'AIWMWeb-Laravel-release.sig';
@@ -82,7 +84,14 @@ final class SystemUpdateService
                 if (! str_starts_with($url, $prefix) || ! str_ends_with($url, '/'.$name)) {
                     throw new RuntimeException('Release asset URL is not approved.');
                 }
-                $assets[$name] = ['url' => $url, 'size' => (int) ($asset['size'] ?? 0)];
+                // Only numeric asset IDs obtained from the approved release feed
+                // may be used with the pinned GitHub API download endpoint.
+                $assetId = filter_var($asset['id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+                $assets[$name] = [
+                    'url' => $url,
+                    'size' => (int) ($asset['size'] ?? 0),
+                    'id' => $assetId ?: null,
+                ];
             }
         }
 
@@ -99,8 +108,8 @@ final class SystemUpdateService
             throw new RuntimeException('Release asset size is outside the approved limits.');
         }
 
-        $manifestBytes = $this->downloadSmall($assets[self::MANIFEST]['url'], 4194304);
-        $signatureBytes = $this->downloadSmall($assets[self::SIGNATURE]['url'], 4096);
+        $manifestBytes = $this->downloadSmall($assets[self::MANIFEST]['url'], 4194304, $assets[self::MANIFEST]['id']);
+        $signatureBytes = $this->downloadSmall($assets[self::SIGNATURE]['url'], 4096, $assets[self::SIGNATURE]['id']);
         $manifest = $this->verifySignedManifest($manifestBytes, $signatureBytes);
 
         $current = $this->state()['version'];
@@ -514,35 +523,72 @@ final class SystemUpdateService
             }, throw: false);
     }
 
-    private function downloadSmall(string $url, int $limit): string
+    /**
+     * Try an approved release asset URL, then its immutable GitHub asset ID.
+     * Transport is never an authenticity check: Ed25519 validation still follows.
+     * Each metadata asset has a bounded overall deadline across all attempts.
+     */
+    private function downloadSmall(string $url, int $limit, ?int $assetId = null): string
     {
-        try {
-            $response = $this->releaseMetadataRequest()
-                ->withOptions([
-                    // Abort oversized responses while they are being transferred,
-                    // not only after PHP has buffered the complete body.
-                    'on_headers' => static function ($response) use ($limit): void {
-                        $length = $response->getHeaderLine('Content-Length');
-                        if ($length !== '' && ctype_digit($length) && (float) $length > $limit) {
-                            throw new RuntimeException('Release metadata exceeds the allowed size.');
-                        }
-                    },
-                    'progress' => static function ($total, $downloaded) use ($limit): void {
-                        if ($downloaded > $limit) {
-                            throw new RuntimeException('Release metadata exceeds the allowed size.');
-                        }
-                    },
-                ])
-                ->get($url);
-        } catch (ConnectionException) {
-            throw new RuntimeException('Release metadata connection timed out or failed; retry later or upload a signed update bundle.');
+        $deadline = microtime(true) + max(20, min(90, (int) config('system_updates.metadata_timeout', 60)));
+        $assetApi = $assetId !== null && $assetId > 0 ? self::RELEASE_ASSET_API.$assetId : null;
+
+        for ($attempt = 1; $attempt <= 3; $attempt++) {
+            $remaining = (int) ceil($deadline - microtime(true));
+            if ($remaining <= 2) {
+                break;
+            }
+
+            // An asset ID is taken only from the trusted stable-release feed.
+            // A missing ID retains retries against the prevalidated browser URL.
+            $apiFallback = $attempt > 1 && $assetApi !== null;
+            $source = $apiFallback ? $assetApi : $url;
+
+            try {
+                $response = $this->releaseMetadataRequest()
+                    ->retry(1, 0, null, false)
+                    ->timeout(max(3, min(20, $remaining - 1)))
+                    ->accept('application/octet-stream')
+                    ->withOptions([
+                        'on_headers' => static function ($response) use ($limit): void {
+                            $length = $response->getHeaderLine('Content-Length');
+                            if ($length !== '' && ctype_digit($length) && (float) $length > $limit) {
+                                throw new RuntimeException('Release metadata exceeds the allowed size.');
+                            }
+                        },
+                        'progress' => static function ($total, $downloaded) use ($limit): void {
+                            if ($downloaded > $limit) {
+                                throw new RuntimeException('Release metadata exceeds the allowed size.');
+                            }
+                        },
+                    ])
+                    ->get($source);
+            } catch (ConnectionException) {
+                continue;
+            }
+
+            if ($response->successful()) {
+                // GitHub asset API may return a JSON metadata object instead
+                // of bytes if its Accept header was ignored. Never trust it.
+                if ($apiFallback && str_contains(strtolower((string) $response->header('Content-Type')), 'application/json')) {
+                    throw new RuntimeException('GitHub asset API returned metadata instead of signed asset bytes.');
+                }
+
+                $bytes = $response->body();
+                if (strlen($bytes) > $limit) {
+                    throw new RuntimeException('Release metadata exceeds the allowed size.');
+                }
+
+                return $bytes;
+            }
+
+            // Missing/forbidden assets are permanent; no alternate release.
+            if (! in_array($response->status(), [408, 429, 500, 502, 503, 504], true)) {
+                throw new RuntimeException('Release metadata download failed (HTTP '.$response->status().').');
+            }
         }
 
-        if (! $response->successful() || strlen($response->body()) > $limit) {
-            throw new RuntimeException('Release metadata download failed.');
-        }
-
-        return $response->body();
+        throw new RuntimeException('GitHub signed release metadata is temporarily unavailable. Retry or upload the signed update ZIP.');
     }
 
     /** @return array<string, string> verified relative path => sha256 */
