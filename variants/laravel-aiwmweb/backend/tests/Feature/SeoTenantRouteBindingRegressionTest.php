@@ -4,12 +4,15 @@ namespace Tests\Feature;
 
 use App\Http\Controllers\SeoController;
 use App\Http\Controllers\SeoRemediationClosureController;
+use App\Jobs\ExecuteApprovedSuggestionJob;
 use App\Jobs\RunSeoAuditJob;
+use App\Models\Approval;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\SeoAudit;
 use App\Models\SeoFinding;
 use App\Models\Site;
+use App\Models\Suggestion;
 use App\Models\SyncedContent;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
@@ -192,6 +195,75 @@ final class SeoTenantRouteBindingRegressionTest extends TestCase
             ->assertJsonPath('failed.0.error', 'Item not found or unavailable.');
         $this->assertStringNotContainsString('App\\Models', $execute->getContent());
         $this->assertDatabaseCount('executions', 0);
+    }
+
+    public function test_bulk_execution_does_not_reveal_foreign_site_approval_status(): void
+    {
+        Queue::fake();
+        [$manager, $membership] = $this->member('wordpress', [
+            'tenant.view', 'seo.view', 'seo.write', 'executions.manage',
+        ]);
+        $ownSite = $this->site($membership, 'NOB');
+        app(TenantContext::class)->activate($membership->tenant, $membership);
+        $otherSite = Site::query()->create([
+            'name' => 'Other WordPress Site',
+            'url' => 'https://other.example.test',
+            'status' => 'active',
+        ]);
+        $content = SyncedContent::query()->create([
+            'site_id' => $otherSite->id,
+            'resource_type' => 'post',
+            'remote_id' => 41,
+            'slug' => 'private-seo-page',
+            'title' => 'Private article',
+            'content' => 'Private test content',
+        ]);
+        $audit = SeoAudit::query()->create([
+            'site_id' => $otherSite->id,
+            'actor_user_id' => $manager->id,
+        ]);
+        $finding = SeoFinding::query()->create([
+            'seo_audit_id' => $audit->id,
+            'synced_content_id' => $content->id,
+            'code' => 'private-seo-title',
+            'severity' => 'high',
+            'recommendation' => 'Improve title',
+        ]);
+        $foreignApprovals = [];
+        foreach (['PENDING', 'APPROVED'] as $status) {
+            $suggestion = Suggestion::query()->create([
+                'site_id' => $otherSite->id,
+                'seo_finding_id' => $finding->id,
+                'synced_content_id' => $content->id,
+                'actor_user_id' => $manager->id,
+                'status' => 'awaiting_approval',
+                'before_state' => [],
+                'proposed_state' => ['seo_title' => 'Private SEO change'],
+            ]);
+            $foreignApprovals[] = Approval::query()->create([
+                'suggestion_id' => $suggestion->id,
+                'actor_user_id' => $manager->id,
+                'status' => $status,
+                'before_state' => [],
+                'proposed_state' => ['seo_title' => 'Private SEO change'],
+            ])->id;
+        }
+        app(TenantContext::class)->forget();
+
+        $response = $this->actingAs($manager)->postJson(
+            "/api/tenants/wordpress/sites/{$ownSite->id}/seo/executions/bulk",
+            ['approval_ids' => $foreignApprovals],
+        );
+
+        $response->assertStatus(207)
+            ->assertJsonPath('queued', [])
+            ->assertJsonCount(2, 'failed')
+            ->assertJsonPath('failed.0.error', 'Item not found or unavailable.')
+            ->assertJsonPath('failed.1.error', 'Item not found or unavailable.');
+        $this->assertSame($foreignApprovals[0], $response->json('failed.0.approval_id'));
+        $this->assertSame($foreignApprovals[1], $response->json('failed.1.approval_id'));
+        $this->assertDatabaseCount('executions', 0);
+        Queue::assertNotPushed(ExecuteApprovedSuggestionJob::class);
     }
 
     /** @return array{User,TenantMembership} */
