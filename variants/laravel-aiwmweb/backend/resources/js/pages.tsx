@@ -24,6 +24,7 @@ import { AppDataGridSortControl } from './app-data-grid-sort-control';
 import { AppDataGridClearFiltersControl } from './app-data-grid-clear-filters-control';
 import { AppSearchBox } from './app-search-box';
 import { AccountProfileEmailSettingsLinkControl } from './account-profile-email-settings-link-control';
+import { BillingHistoryPanel } from './billing-history-panel';
 import { ApplicationUsersClearSearchControl } from './application-users-clear-search-control';
 import { ApplicationUsersSearchControl } from './application-users-search-control';
 import { ApplicationUsersRolesPermissionsLinkControl } from './application-users-roles-permissions-link-control';
@@ -1749,6 +1750,7 @@ export function WorkspacePage({ context, route }: { context: FrontendContext; ro
     if (route.key === 'wp-users') return <><GlobalUsersFullManagementControl context={context} route={route} /><ResourceContent context={context} route={route} /></>;
     if (route.key === 'explorer') return <><ContentExplorerBackToSitesControl context={context} /><ResourceContent context={context} route={route} /></>;
     if (route.key === 'account-profile') return <><AccountProfileEmailSettingsLinkControl context={context} /><ResourceContent context={context} route={route} /></>;
+    if (route.key === 'account-billing') return <><ResourceContent context={context} route={route} /><BillingHistoryPanel context={context} /></>;
     if (route.kind === 'dashboard') return <DashboardContent context={context} route={route} />;
     if (route.kind === 'workspace') return <WorkspaceHub context={context} route={route} />;
     return <ResourceContent context={context} route={route} />;
