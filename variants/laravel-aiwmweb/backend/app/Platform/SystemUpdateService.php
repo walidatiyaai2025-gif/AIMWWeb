@@ -2,6 +2,7 @@
 
 namespace App\Platform;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -505,7 +506,7 @@ final class SystemUpdateService
                     ->connectTimeout(min($connect, $timeout - 1))
                     ->timeout($timeout)
                     ->get($url);
-            } catch (\\Illuminate\\Http\\Client\\ConnectionException $e) {
+            } catch (ConnectionException $e) {
                 // Keep provider URLs and raw transport exceptions out of UI.
                 if ($attempt === $attempts) {
                     break;
