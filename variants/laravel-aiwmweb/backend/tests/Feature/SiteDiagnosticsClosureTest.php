@@ -144,6 +144,34 @@ class SiteDiagnosticsClosureTest extends TestCase
         $this->assertSame('not_supported', $invalid['metadata']['language_code']['state']);
     }
 
+    public function test_sync_health_is_not_masked_by_successful_connection_recheck(): void
+    {
+        [$tenant, $member] = $this->tenant('sync-health-separation');
+        app(TenantContext::class)->activate($tenant, $member);
+        $site = Site::query()->create(['name' => 'WP', 'url' => 'https://wp.test']);
+        $this->connector($site, ['health', 'diagnostics.read']);
+        Http::fake(['https://wp.test/wp-json/' => Http::response(['namespaces' => []], 200)]);
+        $service = $this->service(new SiteGatewayStub);
+
+        $this->assertSame('not_probed', $service->status($site)['sync_health']['state']);
+
+        $failure = (new SiteOperationHistoryService)->record(
+            $site->id, 'synchronization', false, 'WordPress synchronization failed.',
+            ['failure_code' => 'WP_SYNC_TRANSPORT'], null, null, now()->subMinute()
+        );
+        $diagnostic = $service->recheck($site->fresh());
+        $this->assertSame(SiteConnectionState::CONNECTED, $diagnostic->classification);
+        $status = $service->status($site->fresh());
+        $this->assertSame('failed', $status['sync_health']['state']);
+        $this->assertNotNull($status['sync_health']['last_attempt_at']);
+
+        (new SiteOperationHistoryService)->record($site->id, 'synchronization', true, 'Synchronization completed.');
+        $recovered = $service->status($site->fresh());
+        $this->assertSame('succeeded', $recovered['sync_health']['state']);
+        $this->assertSame(SiteConnectionState::CONNECTED, $recovered['connection']);
+        $this->assertSame($site->id, $failure->site_id);
+    }
+
     public function test_disconnect_and_reconnect_reuse_canonical_connector_pairing(): void
     {
         [$tenant, $member] = $this->tenant('reconnect');
