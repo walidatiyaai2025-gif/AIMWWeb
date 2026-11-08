@@ -394,6 +394,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const [approvalPageSize, setApprovalPageSize] = useState(25);
     const [evidencePageSize, setEvidencePageSize] = useState(25);
     const [emailSchedulesPageSize, setEmailSchedulesPageSize] = useState(25);
+    const [logsPageSize, setLogsPageSize] = useState(25);
     const [sitesPageSize, setSitesPageSize] = useState(25);
     const [wordpressSiteRoleDraft, setWordpressSiteRoleDraft] = useState<WordPressSiteUserRole>('all');
     const [wordpressSiteRoleApplied, setWordpressSiteRoleApplied] = useState<WordPressSiteUserRole>('all');
@@ -479,6 +480,11 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         // This route explicitly opts into the server-paginated schedule API.
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, emailSchedulesPageSize],
         queryFn: () => readWorkspaceCollection(endpointWithQuery(endpoint!, page, search, { per_page: String(emailSchedulesPageSize) })),
+        enabled: state.state === 'enabled' && Boolean(endpoint),
+    } : route.key === 'logs' ? {
+        // Tenant logs opt in to authoritative server paging, never the legacy 500-row sample.
+        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, logsPageSize],
+        queryFn: () => readWorkspaceCollection(endpointWithQuery(endpoint!, page, search, { per_page: String(logsPageSize) })),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     } : route.key === 'evidence' ? {
         // Evidence endpoint returns a tenant-authorized Laravel paginator.
@@ -1449,7 +1455,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         }} />
                     : <Pagination page={collection.page} lastPage={collection.lastPage} onPage={setPage}
                         total={collection.authoritativeTotal}
-                        pageSize={route.key === 'email-history' ? emailHistoryPageSize : route.key === 'approvals' ? approvalPageSize : route.key === 'evidence' ? evidencePageSize : route.key === 'email-schedules' ? emailSchedulesPageSize : route.key === 'sites' ? sitesPageSize : undefined}
+                        pageSize={route.key === 'email-history' ? emailHistoryPageSize : route.key === 'approvals' ? approvalPageSize : route.key === 'evidence' ? evidencePageSize : route.key === 'email-schedules' ? emailSchedulesPageSize : route.key === 'logs' ? logsPageSize : route.key === 'sites' ? sitesPageSize : undefined}
                         returnedCount={collection.rows.length}
                         onPageSizeChange={route.key === 'email-history' ? (size) => {
                             setPage(1);
@@ -1457,6 +1463,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         } : route.key === 'email-schedules' ? (size) => {
                             setPage(1);
                             setEmailSchedulesPageSize(size);
+                        } : route.key === 'logs' ? (size) => {
+                            setPage(1);
+                            setLogsPageSize(size);
                         } : route.key === 'evidence' ? (size) => {
                             setPage(1);
                             setEvidencePageSize(size);
