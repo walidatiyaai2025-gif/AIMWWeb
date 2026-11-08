@@ -120,7 +120,7 @@ describe('AIMW-CONT-E346398EAD server-filtered Sites', () => {
         expect(screen.queryByText('Active unknown')).not.toBeInTheDocument();
         const filteredUrl = String(fetchMock.mock.calls[1][0]);
         expect(new URL(filteredUrl, 'http://localhost').searchParams.get('connection_filter')).toBe('connected');
-        expect(fetchMock.mock.calls.every(([, options]) => !options || options.method === undefined || options.method === 'GET')).toBe(true);
+        expect(fetchMock.mock.calls.every(([input]) => new URL(String(input), 'http://localhost').pathname === '/api/tenants/alpha/sites')).toBe(true);
     });
 
     it('renders a truthful empty response for the connected filter', async () => {
