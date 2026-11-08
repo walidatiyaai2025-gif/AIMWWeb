@@ -89,6 +89,16 @@ export function SiteDetailsSynchronizeControl({ context }: { context: FrontendCo
                 run = await apiRequest<SyncRun>(endpoints.run(run.id));
             }
 
+            // Exhausting the bounded polling window does not mean WordPress
+            // synchronization failed: the accepted job can still be queued or
+            // running on the server. Do not synthesize HTTP 409 or auto-retry.
+            if (siteDetailsSyncOutcome(run.status) === 'pending') {
+                setMessage(locale === 'ar'
+                    ? `المزامنة رقم ${run.id} ما زالت قيد المعالجة. لم يتم تأكيد اكتمالها أو فشلها؛ يمكنك متابعة حالتها لاحقًا.`
+                    : `Sync run ${run.id} is still processing. Completion or failure has not been confirmed; check its status later.`);
+                return;
+            }
+
             if (siteDetailsSyncOutcome(run.status) !== 'success') {
                 throw new ApiError(
                     run.failure || 'Synchronization did not complete successfully.',
