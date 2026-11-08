@@ -98,6 +98,45 @@ class ProductionRuntimeTest extends TestCase
         $this->assertSame('ok', $processed->context['status']);
     }
 
+    public function test_monolog_redacts_quoted_json_secrets_in_message_context_and_extra(): void
+    {
+        $message = '{"api_key":"JSON_MESSAGE_CANARY","password":"JSON_PASSWORD_CANARY","status":"ok"}';
+        $record = new LogRecord(
+            datetime: now()->toDateTimeImmutable(),
+            channel: 'test',
+            level: Level::Warning,
+            message: $message,
+            context: [
+                'detail' => '{"access_token": "JSON_CONTEXT_CANARY", "status": "retry"}',
+                'nested' => ['info' => '{"client_secret":"JSON_NESTED_CANARY","safe":"visible"}'],
+            ],
+            extra: [
+                'note' => '{"token":"JSON_EXTRA_CANARY","count":3}',
+                'safe' => 'unchanged operation details',
+            ],
+        );
+
+        $processed = (new RedactSecretsProcessor)($record);
+
+        $this->assertSame(
+            '{"api_key":"[REDACTED]","password":"[REDACTED]","status":"ok"}',
+            $processed->message,
+        );
+        $this->assertSame(
+            '{"access_token": "[REDACTED]", "status": "retry"}',
+            $processed->context['detail'],
+        );
+        $this->assertSame(
+            '{"client_secret":"[REDACTED]","safe":"visible"}',
+            $processed->context['nested']['info'],
+        );
+        $this->assertSame('{"token":"[REDACTED]","count":3}', $processed->extra['note']);
+        $this->assertSame('unchanged operation details', $processed->extra['safe']);
+        $this->assertSame($message, $record->message);
+        $this->assertStringContainsString('JSON_CONTEXT_CANARY', $record->context['detail']);
+        $this->assertStringContainsString('JSON_EXTRA_CANARY', $record->extra['note']);
+    }
+
     public function test_monolog_redacts_credentials_in_benign_nested_text_fields(): void
     {
         $record = new LogRecord(
