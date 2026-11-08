@@ -17,6 +17,8 @@ use App\Services\SeoManagerService;
 use App\Tenancy\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Throwable;
 
 final class SeoController extends Controller
@@ -108,7 +110,7 @@ final class SeoController extends Controller
                     'status' => 'pending_approval',
                 ];
             } catch (Throwable $exception) {
-                $result['failed'][] = ['finding_id' => (int) $item['finding_id'], 'error' => $exception->getMessage()];
+                $result['failed'][] = ['finding_id' => (int) $item['finding_id'], 'error' => self::safeBulkError($exception)];
             }
         }
 
@@ -145,7 +147,7 @@ final class SeoController extends Controller
                 }
                 $result['queued'][] = ['approval_id' => $approval->id, 'execution_id' => $execution->id, 'created' => $created];
             } catch (Throwable $exception) {
-                $result['failed'][] = ['approval_id' => (int) $approvalId, 'error' => $exception->getMessage()];
+                $result['failed'][] = ['approval_id' => (int) $approvalId, 'error' => self::safeBulkError($exception)];
             }
         }
 
@@ -164,4 +166,23 @@ final class SeoController extends Controller
 
         return response()->json($model->fresh(), 202);
     }
+    private static function safeBulkError(Throwable $exception): string
+    {
+        if ($exception instanceof ModelNotFoundException) {
+            return 'Item not found or unavailable.';
+        }
+
+        if ($exception instanceof HttpExceptionInterface) {
+            return match ($exception->getStatusCode()) {
+                403 => 'Action not authorized.',
+                404 => 'Item not found or unavailable.',
+                409 => 'Item not ready for this action.',
+                default => 'Operation failed.',
+            };
+        }
+
+        // Never return raw provider, SQL, exception or credential text in partial results.
+        return 'Operation failed.';
+    }
+
 }
