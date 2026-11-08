@@ -124,7 +124,7 @@ final class SystemUpdateCenterTest extends TestCase
                 ->push('signed-manifest-fixture', 200),
         ]);
 
-        $download = new \\ReflectionMethod(SystemUpdateService::class, 'downloadSmall');
+        $download = new \ReflectionMethod(SystemUpdateService::class, 'downloadSmall');
         $this->assertSame('signed-manifest-fixture', $download->invoke(app(SystemUpdateService::class), $url, 4096));
         Http::assertSentCount(2);
 
@@ -142,7 +142,7 @@ final class SystemUpdateCenterTest extends TestCase
     {
         config()->set('system_updates.metadata_connect_timeout', 999);
         config()->set('system_updates.metadata_timeout', 999);
-        $request = (new \\ReflectionMethod(SystemUpdateService::class, 'releaseMetadataRequest'))
+        $request = (new \ReflectionMethod(SystemUpdateService::class, 'releaseMetadataRequest'))
             ->invoke(app(SystemUpdateService::class));
 
         $this->assertSame(15, $request->getOptions()['connect_timeout']);
