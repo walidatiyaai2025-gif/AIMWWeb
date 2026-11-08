@@ -40,12 +40,14 @@
                     <a class="active" aria-current="page" href="{{ route('canonical.site.settings', ['tenant' => $tenant, 'site' => $site->getKey()], false) }}"><span class="nav-icon" aria-hidden="true">⚙</span>{{ $isArabic ? 'إعدادات الموقع' : 'Site settings' }}</a>
                 </div>
             </details>
+            @if ($canManageTenantSettings)
             <details class="nav-section" open>
                 <summary><span>{{ $isArabic ? 'الحساب' : 'Account' }}</span><span aria-hidden="true">⌄</span></summary>
                 <div class="nav-links">
                     <a href="/tenants/{{ rawurlencode($tenant) }}/settings"><span class="nav-icon" aria-hidden="true">⚙</span>{{ $isArabic ? 'إعدادات الحساب العامة' : 'Tenant settings' }}</a>
                 </div>
             </details>
+            @endif
         </nav>
         <div class="sidebar-footer"><strong>{{ $site->name }}</strong><small>{{ $isArabic ? 'مساحة عمل محمية' : 'Protected site workspace' }}</small></div>
     </aside>
@@ -65,7 +67,9 @@
                 @if ($canManageCredential)
                     <a class="btn primary" href="#wordpress-credential-heading">{{ $isArabic ? 'بيانات ووردبريس' : 'WordPress credential' }}</a>
                 @endif
-                <a class="btn" href="/tenants/{{ rawurlencode($tenant) }}/settings">{{ $isArabic ? 'إعدادات الحساب' : 'Tenant settings' }}</a>
+                @if ($canManageTenantSettings)
+                    <a class="btn" href="/tenants/{{ rawurlencode($tenant) }}/settings">{{ $isArabic ? 'إعدادات الحساب' : 'Tenant settings' }}</a>
+                @endif
             </div>
         </header>
         <main id="site-settings-content" class="content site-settings-content" data-canonical-operation="AIMW-SITE-9F9F2977B5">

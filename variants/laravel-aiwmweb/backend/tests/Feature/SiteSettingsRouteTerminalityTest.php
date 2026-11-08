@@ -126,6 +126,57 @@ final class SiteSettingsRouteTerminalityTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_authorized_bilingual_dashboard_shell_separates_tenant_and_site_settings_and_credential_access(): void
+    {
+        $user = User::factory()->create();
+        $membership = $this->membership($user, 'shell-reader', ['tenant.view', 'sites.view']);
+        $site = $this->site($membership, 'Shell Site', 'https://shell-site.test');
+
+        $this->actingAs($user)
+            ->get('/tenants/shell-reader/sites/'.$site->id.'/settings')
+            ->assertOk()
+            ->assertSee('data-dashboard-shell="aiwmweb"', false)
+            ->assertSee('class="app-shell site-settings-shell"', false)
+            ->assertSee('class="sidebar"', false)
+            ->assertSee('id="site-settings-content"', false)
+            ->assertDontSee('name="application_password"', false)
+            ->assertDontSee('Tenant settings');
+
+        $manager = User::factory()->create();
+        $managerMembership = $this->membership(
+            $manager,
+            'shell-manager',
+            ['tenant.view', 'sites.view', 'sites.manage', 'settings.manage'],
+        );
+        $managedSite = $this->site($managerMembership, 'Managed Shell Site', 'https://managed-shell.test');
+        $this->actingAs($manager)
+            ->get('/tenants/shell-manager/sites/'.$managedSite->id.'/settings')
+            ->assertOk()
+            ->assertSee('Tenant settings')
+            ->assertSee('WordPress credential')
+            ->assertSee('name="application_password"', false)
+            ->assertSee('No stored credential.');
+
+        $previousLocale = app()->getLocale();
+        try {
+            app()->setLocale('ar');
+            $this->actingAs($manager)
+                ->get('/tenants/shell-manager/sites/'.$managedSite->id.'/settings')
+                ->assertOk()
+                ->assertSee('lang="ar" dir="rtl"', false)
+                ->assertSee('إعدادات الموقع')
+                ->assertSee('بيانات اتصال ووردبريس');
+        } finally {
+            app()->setLocale($previousLocale);
+        }
+
+        $source = (string) file_get_contents(resource_path('views/sites/settings.blade.php'));
+        $css = (string) file_get_contents(resource_path('css/app.css'));
+        $this->assertStringContainsString("@vite(['resources/css/app.css'])", $source);
+        $this->assertStringContainsString('.site-settings-content', $css);
+        $this->assertStringContainsString('@media (max-width: 700px)', $css);
+    }
+
     public function test_source_and_laravel_rendering_states_are_deterministic_and_not_fake(): void
     {
         $source = (string) file_get_contents(
