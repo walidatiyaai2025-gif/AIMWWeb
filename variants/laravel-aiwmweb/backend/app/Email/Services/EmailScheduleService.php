@@ -24,6 +24,22 @@ final class EmailScheduleService
         return EmailSchedule::query()->orderBy('name')->get()->map(fn (EmailSchedule $schedule) => $this->serialize($schedule))->all();
     }
 
+    /** @return array<string, mixed> */
+    public function paged(int $page, int $perPage): array
+    {
+        $query = EmailSchedule::query()->orderBy('name')->orderBy('id');
+        $schedules = $query->paginate($perPage, ['*'], 'page', $page);
+        if ($page > $schedules->lastPage()) {
+            $schedules = $query->paginate($perPage, ['*'], 'page', $schedules->lastPage());
+        }
+
+        $schedules->setCollection($schedules->getCollection()->map(
+            fn (EmailSchedule $schedule): array => $this->serialize($schedule),
+        ));
+
+        return $schedules->toArray();
+    }
+
     public function save(?EmailSchedule $schedule, array $input): EmailSchedule
     {
         $recipient = trim((string) ($input['recipient'] ?? $schedule?->recipient));
