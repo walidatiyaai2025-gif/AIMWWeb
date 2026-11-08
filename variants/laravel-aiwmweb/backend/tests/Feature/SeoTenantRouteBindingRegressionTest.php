@@ -210,10 +210,31 @@ final class SeoTenantRouteBindingRegressionTest extends TestCase
             'url' => 'https://other.example.test',
             'status' => 'active',
         ]);
+        $content = SyncedContent::query()->create([
+            'site_id' => $otherSite->id,
+            'resource_type' => 'post',
+            'remote_id' => 41,
+            'slug' => 'private-seo-page',
+            'title' => 'Private article',
+            'content' => 'Private test content',
+        ]);
+        $audit = SeoAudit::query()->create([
+            'site_id' => $otherSite->id,
+            'actor_user_id' => $manager->id,
+        ]);
+        $finding = SeoFinding::query()->create([
+            'seo_audit_id' => $audit->id,
+            'synced_content_id' => $content->id,
+            'code' => 'private-seo-title',
+            'severity' => 'high',
+            'recommendation' => 'Improve title',
+        ]);
         $foreignApprovals = [];
         foreach (['PENDING', 'APPROVED'] as $status) {
             $suggestion = Suggestion::query()->create([
                 'site_id' => $otherSite->id,
+                'seo_finding_id' => $finding->id,
+                'synced_content_id' => $content->id,
                 'actor_user_id' => $manager->id,
                 'status' => 'awaiting_approval',
                 'before_state' => [],
