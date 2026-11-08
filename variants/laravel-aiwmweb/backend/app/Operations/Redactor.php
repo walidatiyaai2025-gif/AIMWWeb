@@ -31,6 +31,15 @@ final class Redactor
      */
     public function redactLogMessage(string $message): string
     {
+        // Credential values in quoted JSON keys are not captured by the
+        // free-text key=value matcher below. Preserve valid JSON syntax and
+        // avoid ever returning the credential text to a log sink.
+        $message = preg_replace(
+            '/("(?:x[-_]?api[-_]?key|api[_-]?key|access[_-]?token|refresh[_-]?token|password|passwd|client[_-]?secret|private[_-]?key|authorization|cookie|token|secret)"\\s*:\\s*")((?:\\\\\\\\.|[^"\\\\\\\\])*)(")/i',
+            '$1[REDACTED]$3',
+            $message,
+        ) ?? '[REDACTED]';
+
         $redacted = preg_replace(
             '/\b(authorization\s*:\s*(?:bearer|basic)\s+|(?:x[-_]?api[-_]?key|api[_-]?key|access[_-]?token|refresh[_-]?token|password|client[_-]?secret)\s*[:=]\s*)(?:"[^"]*"|\'[^\']*\'|[^\s,;&]+)/i',
             '$1[REDACTED]',
