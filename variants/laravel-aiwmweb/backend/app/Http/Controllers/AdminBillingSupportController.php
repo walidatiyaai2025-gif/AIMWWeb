@@ -41,6 +41,9 @@ final class AdminBillingSupportController extends Controller
     {
         $data = $request->validate([
             'q' => ['nullable', 'string', 'max:200'],
+            'search' => ['nullable', 'string', 'max:200'],
+            'page' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
+            'per_page' => ['sometimes', 'integer', 'in:10,25,50,100'],
             'limit' => ['prohibited'],
             'tenant_id' => ['prohibited'],
             'account_id' => ['prohibited'],
@@ -48,7 +51,10 @@ final class AdminBillingSupportController extends Controller
             'provider_subscription_hash' => ['prohibited'],
         ]);
 
-        $search = trim((string) ($data['q'] ?? ''));
+        // React's canonical grid uses `search`; the historical SearchAsync action uses `q`.
+        // Preserve both contracts without widening the tenant or provider-reference scope.
+        $search = trim((string) ($data['q'] ?? $data['search'] ?? ''));
+        $wantsPage = $request->has('page') || $request->has('per_page');
         $tenant = $tenantContext->tenant();
         $subscriptionsQuery = TenantSubscription::query()->with('plan:id,code,name');
 
@@ -83,12 +89,24 @@ final class AdminBillingSupportController extends Controller
             });
         }
 
-        $subscriptions = $subscriptionsQuery
-            ->latest('updated_at')
-            ->latest('id')
-            ->limit(50)
-            ->get()
-            ->map(fn (TenantSubscription $subscription): array => [
+        // Existing action contracts without pagination parameters keep the legacy
+        // maximum 50 rows and page-local count. The grid explicitly opts in to
+        // SQL-backed, tenant-scoped, authoritative pagination.
+        $ordered = $subscriptionsQuery->orderByDesc('updated_at')->orderByDesc('id');
+        $paginator = null;
+        if ($wantsPage) {
+            $page = (int) ($data['page'] ?? 1);
+            $perPage = (int) ($data['per_page'] ?? 25);
+            $paginator = $ordered->paginate($perPage, ['*'], 'page', $page);
+            if ($page > $paginator->lastPage()) {
+                $paginator = $ordered->paginate($perPage, ['*'], 'page', max(1, $paginator->lastPage()));
+            }
+            $records = $paginator->getCollection();
+        } else {
+            $records = $ordered->limit(50)->get();
+        }
+
+        $subscriptions = $records->map(fn (TenantSubscription $subscription): array => [
                 ...$this->snapshot($subscription),
                 'account_id' => (int) $tenant->getKey(),
                 'account_slug' => (string) $tenant->slug,
@@ -103,11 +121,23 @@ final class AdminBillingSupportController extends Controller
             ])
             ->values();
 
-        return response()->json([
+        $response = [
             'operation_id' => self::SEARCH_OPERATION_ID,
             'count' => $subscriptions->count(),
             'data' => $subscriptions,
-        ]);
+        ];
+
+        if ($paginator !== null) {
+            $response += [
+                'total' => $paginator->total(),
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'per_page' => $paginator->perPage(),
+                'pagination_authoritative' => true,
+            ];
+        }
+
+        return response()->json($response);
     }
 
     public function suspend(
