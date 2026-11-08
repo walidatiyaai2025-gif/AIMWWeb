@@ -115,6 +115,41 @@ final class SystemUpdateCenterTest extends TestCase
         $this->assertSame(str_repeat('a', 40), $release['sha']);
     }
 
+    public function test_release_metadata_retries_transient_503_but_not_404(): void
+    {
+        $url = 'https://github.com/walidatiyaai2025-gif/AIMWWeb/releases/download/v9.9.9/AIWMWeb-Laravel-release.json';
+        Http::fake([
+            $url => Http::sequence()
+                ->push('temporarily unavailable', 503)
+                ->push('signed-manifest-fixture', 200),
+        ]);
+
+        $download = new \\ReflectionMethod(SystemUpdateService::class, 'downloadSmall');
+        $this->assertSame('signed-manifest-fixture', $download->invoke(app(SystemUpdateService::class), $url, 4096));
+        Http::assertSentCount(2);
+
+        Http::fake([$url => Http::response('not found', 404)]);
+        try {
+            $download->invoke(app(SystemUpdateService::class), $url, 4096);
+            $this->fail('A missing signed release asset must fail closed.');
+        } catch (RuntimeException $e) {
+            $this->assertStringContainsString('metadata download failed', $e->getMessage());
+        }
+        Http::assertSentCount(1);
+    }
+
+    public function test_release_metadata_request_bounds_administrator_timeout_configuration(): void
+    {
+        config()->set('system_updates.metadata_connect_timeout', 999);
+        config()->set('system_updates.metadata_timeout', 999);
+        $request = (new \\ReflectionMethod(SystemUpdateService::class, 'releaseMetadataRequest'))
+            ->invoke(app(SystemUpdateService::class));
+
+        $this->assertSame(15, $request->getOptions()['connect_timeout']);
+        $this->assertSame(90, $request->getOptions()['timeout']);
+        $this->assertSame(['max' => 3, 'protocols' => ['https']], $request->getOptions()['allow_redirects']);
+    }
+
     public function test_unsigned_or_forged_release_is_rejected_before_download(): void
     {
         $keys = sodium_crypto_sign_keypair();
