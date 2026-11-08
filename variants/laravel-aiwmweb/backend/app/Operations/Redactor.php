@@ -67,7 +67,7 @@ final class Redactor
         ) ?? '[REDACTED]';
 
         $redacted = preg_replace(
-            '/\b(authorization\s*:\s*(?:bearer|basic)\s+|(?:x[-_]?api[-_]?key|api[_-]?key|access[_-]?token|refresh[_-]?token|password|client[_-]?secret)\s*[:=]\s*)(?:"[^"]*"|\'[^\']*\'|[^\s,;&]+)/i',
+            '/\b(authorization\s*:\s*(?:bearer|basic)\s+|(?:x[-_]?api[-_]?key|api[_-]?key|access[_-]?token|refresh[_-]?token|password|passwd|private[_-]?key|client[_-]?secret|cookie|token|secret)\s*[:=]\s*)(?:"[^"]*"|\'[^\']*\'|[^\s,;&]+)/i',
             '$1[REDACTED]',
             $message,
         ) ?? '[REDACTED]';
