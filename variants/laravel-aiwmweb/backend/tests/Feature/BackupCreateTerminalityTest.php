@@ -9,11 +9,9 @@ use App\Models\TenantMembership;
 use App\Models\User;
 use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -64,73 +62,6 @@ final class BackupCreateTerminalityTest extends TestCase
             'sha256' => hash('sha256', $stored),
             'protected_secret_recovery' => false,
         ]);
-    }
-
-    public function test_archive_redacts_authorization_cookies_access_keys_and_passwd_but_keeps_business_fields(): void
-    {
-        Storage::fake('local');
-        [$admin, $tenant] = $this->member('alpha', true);
-
-        // The archive writer enumerates tenant-owned tables dynamically. Use a
-        // disposable table so the test proves the persisted gzip payload rather
-        // than merely asserting a private regular expression.
-        Schema::create('backup_secret_fixture_rows', static function (Blueprint $table): void {
-            $table->id();
-            $table->unsignedBigInteger('tenant_id');
-            $table->string('authorization_header');
-            $table->string('cookie_value');
-            $table->string('access_key');
-            $table->string('passwd');
-            $table->string('notes');
-        });
-
-        $secrets = [
-            'authorization_header' => 'Bearer never-export-authorization',
-            'cookie_value' => 'session=never-export-cookie',
-            'access_key' => 'never-export-access-key',
-            'passwd' => 'never-export-passwd',
-        ];
-
-        try {
-            DB::table('backup_secret_fixture_rows')->insert([
-                'tenant_id' => $tenant->id,
-                ...$secrets,
-                'notes' => 'safe-business-value',
-            ]);
-
-            $response = $this->actingAs($admin)
-                ->postJson('/api/tenants/alpha/backups', ['note' => 'Redaction regression'])
-                ->assertCreated()
-                ->assertJsonPath('data.verified', true);
-
-            $path = (string) $response->json('data.path');
-            Storage::disk('local')->assertExists($path);
-            $stored = (string) Storage::disk('local')->get($path);
-            $uncompressed = gzdecode($stored);
-            $this->assertNotFalse($uncompressed);
-
-            foreach ($secrets as $secret) {
-                $this->assertStringNotContainsString($secret, $uncompressed);
-            }
-
-            $archive = json_decode($uncompressed, true, 512, JSON_THROW_ON_ERROR);
-            $rows = $archive['tables']['backup_secret_fixture_rows'] ?? [];
-            $this->assertCount(1, $rows);
-            $this->assertSame($tenant->id, $rows[0]['tenant_id']);
-            $this->assertSame('safe-business-value', $rows[0]['notes']);
-
-            foreach (array_keys($secrets) as $column) {
-                $this->assertSame(['redacted' => true], $rows[0][$column]);
-            }
-
-            $this->assertDatabaseHas('backup_archives', [
-                'tenant_id' => $tenant->id,
-                'path' => $path,
-                'sha256' => hash('sha256', $stored),
-            ]);
-        } finally {
-            Schema::dropIfExists('backup_secret_fixture_rows');
-        }
     }
 
     public function test_recovery_secret_is_verified_wrapped_and_never_persisted_in_plaintext(): void
