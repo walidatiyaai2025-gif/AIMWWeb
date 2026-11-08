@@ -93,6 +93,38 @@ describe('Canonical server paging navigation (#1608)', () => {
         expect(screen.queryByText('0–0 من 137')).not.toBeInTheDocument();
     });
 
+    it('Content Explorer keeps navigation but does not fabricate a range without actual returned rows', () => {
+        const props = { page: 3, lastPage: 7, total: 63, pageSize: 10, onPage: vi.fn() };
+        const { rerender } = render(<LocaleProvider><ContentExplorerPagination {...props} /></LocaleProvider>);
+        expect(screen.getByText('Page 3 of 7')).toBeInTheDocument();
+        expect(screen.queryByText('21–30 of 63')).not.toBeInTheDocument();
+        expect(screen.queryByRole('status')).not.toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+        expect(props.onPage).toHaveBeenCalledWith(4);
+
+        rerender(<LocaleProvider><ContentExplorerPagination {...props} returnedCount={-2} /></LocaleProvider>);
+        expect(screen.queryByRole('status')).not.toBeInTheDocument();
+        rerender(<LocaleProvider><ContentExplorerPagination {...props} returnedCount={Number.NaN} /></LocaleProvider>);
+        expect(screen.queryByRole('status')).not.toBeInTheDocument();
+        rerender(<LocaleProvider><ContentExplorerPagination {...props} returnedCount={0} /></LocaleProvider>);
+        expect(screen.getByRole('status')).toHaveTextContent('0–0 of 63');
+        rerender(<LocaleProvider><ContentExplorerPagination {...props} returnedCount={3} /></LocaleProvider>);
+        expect(screen.getByRole('status')).toHaveTextContent('21–23 of 63');
+        rerender(<LocaleProvider><ContentExplorerPagination {...props} returnedCount={1000} /></LocaleProvider>);
+        expect(screen.getByRole('status')).toHaveTextContent('21–30 of 63');
+    });
+
+    it('Content Explorer Arabic RTL never asserts unknown page-local records', () => {
+        window.localStorage.setItem('aiwm.locale', 'ar');
+        const props = { page: 3, lastPage: 7, total: 63, pageSize: 10, onPage: vi.fn() };
+        const { rerender } = render(<LocaleProvider><ContentExplorerPagination {...props} /></LocaleProvider>);
+        expect(screen.getByRole('navigation', { name: 'ترقيم صفحات المحتوى' })).toBeInTheDocument();
+        expect(screen.getByText('صفحة 3 من 7')).toBeInTheDocument();
+        expect(screen.queryByRole('status')).not.toBeInTheDocument();
+        rerender(<LocaleProvider><ContentExplorerPagination {...props} returnedCount={5} /></LocaleProvider>);
+        expect(screen.getByRole('status')).toHaveTextContent('21–25 من 63');
+    });
+
     it('renders Arabic RTL labels, numbers and safe exploration navigation', () => {
         window.localStorage.setItem('aiwm.locale', 'ar');
         const onPage = vi.fn();
