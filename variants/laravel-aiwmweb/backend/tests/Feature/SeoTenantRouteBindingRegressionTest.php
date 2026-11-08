@@ -142,6 +142,29 @@ final class SeoTenantRouteBindingRegressionTest extends TestCase
         Queue::assertPushed(RunSeoAuditJob::class, 1);
     }
 
+    public function test_malformed_site_identifiers_never_alias_a_real_site_or_queue_an_audit(): void
+    {
+        Queue::fake();
+        [$manager, $membership] = $this->member('wordpress', ['tenant.view', 'seo.view', 'seo.manage']);
+        $site = $this->site($membership, 'NOB');
+
+        foreach (["{$site->id}invalid", 'not-a-site', '0'] as $malformedSite) {
+            $this->actingAs($manager)
+                ->postJson("/api/tenants/wordpress/sites/{$malformedSite}/seo/audits", [])
+                ->assertNotFound();
+        }
+
+        $this->assertDatabaseCount('seo_audits', 0);
+        Queue::assertNotPushed(RunSeoAuditJob::class);
+
+        $this->actingAs($manager)
+            ->postJson("/api/tenants/wordpress/sites/{$site->id}/seo/audits", [])
+            ->assertStatus(202)
+            ->assertJsonPath('status', 'queued');
+
+        Queue::assertPushed(RunSeoAuditJob::class, 1);
+    }
+
     /** @return array{User,TenantMembership} */
     private function member(string $slug, array $permissions): array
     {
