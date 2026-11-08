@@ -90,7 +90,8 @@ describe(`${APP_DATA_GRID_PREVIOUS_PAGE_OPERATION_ID} AppDataGrid PreviousPageAs
         );
         expect(screen.getByText('Page 3 of 3')).toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: 'Previous' }));
-        expect(onPage).toHaveBeenCalledExactlyOnceWith(2);
+        expect(onPage).toHaveBeenCalledTimes(1);
+        expect(onPage).toHaveBeenCalledWith(2);
 
         rerender(
             <LocaleProvider>
