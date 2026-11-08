@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { workspaceRoutes, type FrontendContext } from '../core';
 import {
-    liveAuditPlan, loadSiteScopedAuditContext, runReadOnlyWorkspaceAudit, safeAuditEndpoint,
+    classifyLiveAuditFailure, liveAuditPlan, loadSiteScopedAuditContext, runReadOnlyWorkspaceAudit, safeAuditEndpoint,
     type LiveAuditResult,
 } from '../runtime-workspace-audit';
 import { safeInspectorBundle, type InspectorServer } from '../runtime-inspector-panel';
@@ -420,6 +420,48 @@ describe('explicit all-workspace read-only live audit', () => {
         expect(result.workspaces.find(entry => entry.key === 'dashboard')).toMatchObject({
             state: 'failed_read', reason: 'invalid_response', http_status: 200,
         });
+    });
+
+    it('exports not-run and failed attempts explicitly without leaking provider errors', () => {
+        const notRun = safeInspectorBundle(server, [], context());
+        expect(notRun.workspace_live_audit.state).toBe('not_run');
+        expect(notRun.workspace_live_audit.workspaces).toEqual([]);
+
+        const failure = classifyLiveAuditFailure(
+            new Error('Site-scoped GET contract does not match the selected site.'),
+            'site_context',
+        );
+        const exported = safeInspectorBundle(server, [], context(), null, null, failure);
+        expect(exported.workspace_live_audit).toMatchObject({
+            state: 'failed',
+            failure: { stage: 'site_context', reason: 'context_contract_mismatch' },
+            workspaces: [],
+        });
+        expect(exported.workspace_live_audit.safety.write_actions_executed).toBe(false);
+
+        const privateError = classifyLiveAuditFailure(
+            new Error('cURL failed https://private.test?token=CANARY_SECRET'),
+            'site_context',
+        );
+        const redacted = safeInspectorBundle(server, [], context(), null, null, privateError);
+        expect(redacted.workspace_live_audit).toMatchObject({
+            state: 'failed',
+            failure: { stage: 'site_context', reason: 'unexpected_error' },
+        });
+        expect(JSON.stringify(redacted)).not.toContain('CANARY_SECRET');
+        expect(JSON.stringify(redacted)).not.toContain('private.test');
+    });
+
+    it('distinguishes context rejection, invalid JSON and timeout without exporting raw exceptions', () => {
+        expect(classifyLiveAuditFailure(
+            new Error('Site context was rejected by the server.'), 'site_context',
+        ).reason).toBe('context_rejected');
+        expect(classifyLiveAuditFailure(
+            new Error('Site context is not valid JSON.'), 'site_context',
+        ).reason).toBe('invalid_context_json');
+        expect(classifyLiveAuditFailure(
+            Object.assign(new Error('sensitive network details'), { name: 'AbortError' }), 'site_context',
+        ).reason).toBe('context_timeout');
     });
 
     it('sanitized export includes status-only audit and never a URL or supplied secret', async () => {

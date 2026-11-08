@@ -53,7 +53,7 @@ describe('complete declarative workspace census', () => {
         expect(census.safety).toEqual({
             read_only: true, endpoint_probes: false, no_write_authorization_inferred: true,
         });
-        expect(census.totals.routes).toBe(Object.values(census.totals).slice(1, 6)
+        expect(census.totals.routes).toBe(Object.values(census.totals).slice(1, 7)
             .reduce((total, n) => total + n, 0));
     });
 
@@ -70,7 +70,27 @@ describe('complete declarative workspace census', () => {
             view_state: 'declared_accessible',
         });
         const posts = census.workspaces.find(item => item.key === 'posts')!;
-        expect(posts.view_state).toBe('contract_not_advertised');
+        expect(posts.view_state).toBe('site_selection_required');
+    });
+
+    it('distinguishes 16 site-selection-only read APIs from broken contracts', () => {
+        const context = ctx();
+        context.permissions = ['*'];
+        context.api = { dashboard: '/api/dashboard' };
+        context.active_site = null;
+
+        const unselected = workspaceCapabilityCensus(context);
+        expect(unselected.totals.site_selection_required).toBe(16);
+        // This minimal fixture omits many unrelated APIs. Only site-scoped
+        // contracts should move between these two categories.
+
+        const selected = workspaceCapabilityCensus({
+            ...context, active_site: { id: 1, name: 'Owned site' },
+        });
+        expect(selected.totals.site_selection_required).toBe(0);
+        expect(selected.totals.contract_not_advertised)
+            .toBe(unselected.totals.contract_not_advertised + 16);
+        expect(unselected.totals.write_controls_advertised).toBe(selected.totals.write_controls_advertised);
     });
 
     it('never treats a connected content.read scope as permission to publish or mutate', () => {

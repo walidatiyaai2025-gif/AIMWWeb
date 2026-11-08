@@ -4,7 +4,7 @@ import { apiRequest, tenantUrl, type FrontendContext } from './core';
 import { useLocale } from './i18n';
 import { WorkspaceCapabilityCensusPanel } from './workspace-capability-census-panel';
 import { DashboardConnectorDownloadControl } from './dashboard-connector-download-control';
-import { RuntimeWorkspaceAuditPanel, type LiveAuditResult } from './runtime-workspace-audit';
+import { RuntimeWorkspaceAuditPanel, type LiveAuditResult, type LiveAuditFailure } from './runtime-workspace-audit';
 import { WordPressWriteAuditPanel, WP_SMOKE_RESOURCES, type WpSmokeRun } from './wordpress-write-audit-panel';
 import { workspaceCapabilityCensus } from './workspace-capability-census';
 import {
@@ -107,7 +107,7 @@ const allowedEventMethods = new Set<NonNullable<RuntimeObservation['method']>>([
 ]);
 
 /** Explicit allowlist; future backend response additions cannot enter the user export. */
-export function safeInspectorBundle(server: InspectorServer, events: RuntimeObservation[], context?: FrontendContext, liveAudit?: LiveAuditResult | null, writeAudit?: WpSmokeRun | null) {
+export function safeInspectorBundle(server: InspectorServer, events: RuntimeObservation[], context?: FrontendContext, liveAudit?: LiveAuditResult | null, writeAudit?: WpSmokeRun | null, auditFailure?: LiveAuditFailure | null) {
     return {
         schema: 'aiwm.support-export.v1',
         exported_at: new Date().toISOString(),
@@ -195,6 +195,8 @@ export function safeInspectorBundle(server: InspectorServer, events: RuntimeObse
         ...(liveAudit?.schema === 'aiwm.workspace-live-audit.v1' ? {
             workspace_live_audit: {
                 schema: 'aiwm.workspace-live-audit.v1',
+                state: 'completed',
+                failure: null,
                 safety: { read_only: true, request_methods: ['GET'], write_actions_executed: false },
                 totals: {
                     routes: count(liveAudit.totals.routes),
@@ -220,7 +222,20 @@ export function safeInspectorBundle(server: InspectorServer, events: RuntimeObse
                         tested_write_actions: 0,
                     })),
             },
-        } : {}),
+        } : {
+            workspace_live_audit: {
+                schema: 'aiwm.workspace-live-audit.v1',
+                state: auditFailure ? 'failed' : 'not_run',
+                failure: auditFailure ? {
+                    stage: auditFailure.stage,
+                    reason: auditFailure.reason,
+                    occurred_at: safeIsoTimestamp(auditFailure.occurred_at),
+                } : null,
+                safety: { read_only: true, request_methods: ['GET'], write_actions_executed: false },
+                totals: { routes: 0, passed_read: 0, failed_read: 0, skipped: 0, not_tested: 0, write_actions_untested: 0 },
+                workspaces: [],
+            },
+        }),
         ...(writeAudit ? {
             wordpress_write_smoke: {
                 schema: 'aiwm.wordpress-write-smoke.summary.v1',
@@ -272,6 +287,7 @@ export function RuntimeInspectorPanel({ context }: { context: FrontendContext })
     const [message, setMessage] = useState('');
     const [localCount, setLocalCount] = useState(() => runtimeInspectorEvents().length);
     const [liveAudit, setLiveAudit] = useState<LiveAuditResult | null>(null);
+    const [auditFailure, setAuditFailure] = useState<LiveAuditFailure | null>(null);
     const [writeAudit, setWriteAudit] = useState<WpSmokeRun | null>(null);
     const [auditedContext, setAuditedContext] = useState<FrontendContext | null>(null);
     const allowed = context.permissions.includes('*') || context.permissions.includes('diagnostics.view');
@@ -290,6 +306,7 @@ export function RuntimeInspectorPanel({ context }: { context: FrontendContext })
     const run = async () => {
         setMessage('');
         setLiveAudit(null);
+        setAuditFailure(null);
         setWriteAudit(null);
         setAuditedContext(null);
         await report.refetch();
@@ -298,7 +315,7 @@ export function RuntimeInspectorPanel({ context }: { context: FrontendContext })
 
     const exportReport = () => {
         if (!report.data || report.data.schema !== 'aiwm.runtime-inspector.v1') return;
-        const bundle = safeInspectorBundle(report.data, runtimeInspectorEvents(), auditedContext ?? context, liveAudit, writeAudit);
+        const bundle = safeInspectorBundle(report.data, runtimeInspectorEvents(), auditedContext ?? context, liveAudit, writeAudit, auditFailure);
         const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const anchor = document.createElement('a');
@@ -338,7 +355,7 @@ export function RuntimeInspectorPanel({ context }: { context: FrontendContext })
                 onComplete={(result, selectedContext) => {
                     setLiveAudit(result);
                     setAuditedContext(selectedContext);
-                }} />
+                }} onFailure={setAuditFailure} />
             <WordPressWriteAuditPanel context={context}
                 siteIds={report.data?.sites.map(site => site.site_id) ?? []}
                 onComplete={setWriteAudit} />
