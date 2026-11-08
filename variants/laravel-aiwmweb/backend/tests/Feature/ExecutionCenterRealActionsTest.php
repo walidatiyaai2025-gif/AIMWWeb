@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Jobs\GenerateReportExport;
 use App\Models\Permission;
+use App\Operations\OperationsControlPlaneService;
 use App\Models\Role;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
@@ -65,7 +66,8 @@ final class ExecutionCenterRealActionsTest extends TestCase
     {
         [$tenant, $owner] = $this->tenantWithOwner('bounded-alpha');
         [, $foreign] = $this->tenantWithOwner('bounded-beta');
-        $service = app(\\App\\Operations\\OperationsControlPlaneService::class);
+        app(TenantContext::class)->activate($tenant, $owner);
+        $service = app(OperationsControlPlaneService::class);
         for ($i = 0; $i < 27; $i++) {
             $this->execution($tenant, $owner->user_id, 'failed', 'report.export');
         }
