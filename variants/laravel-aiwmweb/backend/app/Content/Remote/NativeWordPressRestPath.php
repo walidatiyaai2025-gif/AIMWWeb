@@ -54,7 +54,10 @@ final class NativeWordPressRestPath
                 || ($total === 0 && $pages > 1)
                 || count($rows) > $perPage
                 || ($total === 0 && $rows !== [])
-                || ($page > max(1, $pages) && $rows !== [])) {
+                || ($page > max(1, $pages) && $rows !== [])
+                // Even an otherwise plausible total/page count must not contradict
+                // the number of records present at the requested page offset.
+                || ($rows !== [] && (($page - 1) * $perPage + count($rows)) > $total)) {
                 throw new RuntimeException('WordPress REST resource list returned invalid pagination metadata.');
             }
 
