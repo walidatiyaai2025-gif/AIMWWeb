@@ -50,10 +50,19 @@ final class SiteDiagnosticsService
             $siteView->setAttribute($field, $value);
             $metadata[$field] = [
                 'source' => $source,
-                'state' => $source === null
-                    ? ($latest === null ? 'not_probed' : ($latest->classification === SiteConnectionState::AUTH_FAILED ? 'permission_denied' : 'not_supported'))
-                    : 'verified',
-                'checked_at' => $source === 'connector_health' ? $latest?->checked_at?->toIso8601String() : null,
+                'state' => $source !== null ? 'verified' : match ($latest?->classification) {
+                    null => 'not_probed',
+                    SiteConnectionState::AUTH_FAILED => 'permission_denied',
+                    SiteConnectionState::TEMPORARILY_UNAVAILABLE,
+                    SiteConnectionState::DEGRADED,
+                    SiteConnectionState::DISCONNECTED,
+                    SiteConnectionState::CONNECTOR_DISABLED,
+                    SiteConnectionState::CAPABILITY_DISABLED => 'temporarily_unavailable',
+                    default => 'not_supported',
+                },
+                // The last diagnostic timestamp is also relevant for a failed
+                // probe; omitting it makes an outage look like a never-tested site.
+                'checked_at' => $source === 'site' ? null : $latest?->checked_at?->toIso8601String(),
             ];
         }
 
