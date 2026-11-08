@@ -186,7 +186,7 @@ final class OperationalLogsLiteralSearchTest extends TestCase
         $this->assertStringNotContainsString('foreign tenant private event', $response->getContent());
         $this->assertSame($original, DB::table('operation_logs')->where('id', $id)->value('message'));
         $this->actingAs($actor)->getJson('/tenants/beta/admin/logs')->assertNotFound();
-        $this->actingAs($actor)->getJson('/tenants/alpha/admin/logs?q=authorization')
+        $this->actingAs($actor)->getJson('/tenants/alpha/admin/logs?q=configured')
             ->assertOk()
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.message', 'Basic authorization is configured for testing');
