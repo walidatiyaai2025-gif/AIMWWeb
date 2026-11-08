@@ -14,6 +14,7 @@ import {
     type WorkspaceRoute,
 } from './core';
 import { ActionButton, ActionDialog, DataTable, LoadingState, Pagination, StatePanel, useToast } from './components';
+import { authoritativeCollectionTotal } from './canonical-pagination-window';
 import { commonText, useLocale } from './i18n';
 import { CONTENT_HUB_WORKSPACE_URL_OPERATION_ID, contentHubWorkspaceUrl, isContentHubWorkspacePath } from './content-hub-workspace-url';
 import { AiCenterGenerateControl } from './ai-center-generate-control';
@@ -144,17 +145,27 @@ type CollectionEnvelope = {
     page?: number;
     last_page?: number;
     lastPage?: number;
-    meta?: ({ total?: number; current_page?: number; last_page?: number } & AiCenterMetadata);
+    per_page?: number;
+    meta?: ({ total?: number; current_page?: number; last_page?: number; per_page?: number } & AiCenterMetadata);
 };
 
 function normalizeCollection(payload: unknown) {
-    if (Array.isArray(payload)) return { rows: payload as Array<Record<string, unknown>>, total: payload.length, page: 1, lastPage: 1 };
+    if (Array.isArray(payload)) return { rows: payload as Array<Record<string, unknown>>, total: payload.length, authoritativeTotal: undefined as number | undefined, page: 1, lastPage: 1 };
     const envelope = (payload ?? {}) as CollectionEnvelope;
-    const rows = envelope.data ?? envelope.items ?? [];
-    const total = envelope.total ?? envelope.meta?.total ?? rows.length;
-    const page = envelope.current_page ?? envelope.page ?? envelope.meta?.current_page ?? 1;
-    const lastPage = envelope.last_page ?? envelope.lastPage ?? envelope.meta?.last_page ?? Math.max(1, Math.ceil(total / 20));
-    return { rows, total, page, lastPage };
+    const rows = Array.isArray(envelope.data) ? envelope.data : Array.isArray(envelope.items) ? envelope.items : [];
+    const reportedTotal = envelope.total ?? envelope.meta?.total;
+    const authoritativeTotal = authoritativeCollectionTotal(reportedTotal);
+    const total = authoritativeTotal ?? rows.length;
+    const reportedPage = envelope.current_page ?? envelope.page ?? envelope.meta?.current_page;
+    const page = Number.isSafeInteger(reportedPage) && reportedPage! > 0 ? reportedPage! : 1;
+    const perPage = envelope.per_page ?? envelope.meta?.per_page;
+    const reportedLastPage = envelope.last_page ?? envelope.lastPage ?? envelope.meta?.last_page;
+    const calculatedLast = authoritativeTotal !== undefined && Number.isSafeInteger(perPage) && perPage! > 0
+        ? Math.max(1, Math.ceil(authoritativeTotal / perPage!)) : 1;
+    // No fabricated "20 rows/page" fallback: arrays and truncated reads do not
+    // authorize navigating to pages that the API has not declared.
+    const lastPage = Number.isSafeInteger(reportedLastPage) && reportedLastPage! > 0 ? reportedLastPage! : calculatedLast;
+    return { rows, total, authoritativeTotal, page, lastPage };
 }
 
 function isSiteConnectedRow(row: Record<string, unknown>): boolean {
@@ -377,6 +388,10 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const [searchInput, setSearchInput] = useState('');
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
+    // Only enable page-size changes on APIs with verified server-side per_page.
+    const [explorerPageSize, setExplorerPageSize] = useState(25);
+    const [emailHistoryPageSize, setEmailHistoryPageSize] = useState(25);
+    const [sitesPageSize, setSitesPageSize] = useState(25);
     const [wordpressSiteRoleDraft, setWordpressSiteRoleDraft] = useState<WordPressSiteUserRole>('all');
     const [wordpressSiteRoleApplied, setWordpressSiteRoleApplied] = useState<WordPressSiteUserRole>('all');
     const [mediaDraft, setMediaDraft] = useState(defaultGlobalMediaFilters);
@@ -440,6 +455,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         ...(emailHistoryFilters.status ? { status: emailHistoryFilters.status } : {}),
         ...(emailHistoryFilters.correlation.trim() ? { correlation: emailHistoryFilters.correlation.trim() } : {}),
         sort_desc: appDataGridSortDescending ? '1' : '0',
+        per_page: String(emailHistoryPageSize),
     } : {};
     const emailHistoryActiveFilterCount = route.key === 'email-history'
         ? [emailHistoryFilters.siteId, emailHistoryFilters.status, emailHistoryFilters.correlation.trim()].filter(Boolean).length
@@ -453,7 +469,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const readWorkspaceCollection = (url: string): Promise<unknown> =>
         readWorkspaceCollectionResponse(route.key, url, (target) => apiRequest<unknown>(target));
     const query = useQuery(route.key === 'email-history' ? {
-        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType, emailHistoryFilters.siteId, emailHistoryFilters.status, emailHistoryFilters.correlation, appDataGridSortDescending],
+        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType, emailHistoryFilters.siteId, emailHistoryFilters.status, emailHistoryFilters.correlation, appDataGridSortDescending, emailHistoryPageSize],
         queryFn: () => readWorkspaceCollection(endpointWithQuery(endpoint!, page, search, resourceFilters)),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     } : route.key === 'site-reliability' ? {
@@ -468,6 +484,20 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, wordpressSiteRoleApplied],
         queryFn: () => readWorkspaceCollection(endpointWithQuery(endpoint!, page, search,
             wordpressSiteRoleApplied === 'all' ? {} : { role: wordpressSiteRoleApplied })),
+        enabled: state.state === 'enabled' && Boolean(endpoint),
+    } : route.key === 'sites' ? {
+        // Sites opt-in pagination keeps all legacy callers' no-query array shape.
+        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, sitesFilter, sitesPageSize],
+        queryFn: () => readWorkspaceCollection(endpointWithQuery(endpoint!, page, search, {
+            per_page: String(sitesPageSize),
+            connection_filter: sitesFilter,
+        })),
+        enabled: state.state === 'enabled' && Boolean(endpoint),
+    } : route.key === 'explorer' ? {
+        // Explorer explicitly supports server-side per_page, unlike generic
+        // WordPress GETs; never add unsupported query args to other workspaces.
+        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, explorerPageSize],
+        queryFn: () => readWorkspaceCollection(endpointWithQuery(endpoint!, page, search, { per_page: String(explorerPageSize) })),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     } : {
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType, taxonomyApplied.minimumUsage, taxonomyApplied.pageSize, wordpressUsersRole],
@@ -795,8 +825,12 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         : route.key === 'site-operations'
             ? filterSiteOperationsRows(collection.rows, search, siteOperationsFilters)
             : collection.rows;
-    const connectedSiteCount = route.key === 'sites' ? collection.rows.filter(isSiteConnectedRow).length : 0;
-    const reviewSiteCount = route.key === 'sites' ? collection.rows.filter(isSiteReviewRow).length : 0;
+    const sitesCounts = route.key === 'sites' && query.data && typeof query.data === 'object' && !Array.isArray(query.data)
+        ? (query.data as { meta?: { connected_count?: number; review_count?: number } }).meta : undefined;
+    const connectedSiteCount = route.key === 'sites'
+        ? sitesCounts?.connected_count ?? collection.rows.filter(isSiteConnectedRow).length : 0;
+    const reviewSiteCount = route.key === 'sites'
+        ? sitesCounts?.review_count ?? collection.rows.filter(isSiteReviewRow).length : 0;
     const serverErrors = mutation.error instanceof ApiError ? mutation.error.validation : {};
     const aiCenterMeta = route.key === 'ai-center' && query.data && typeof query.data === 'object'
         ? ((query.data as CollectionEnvelope).meta ?? null)
@@ -1051,7 +1085,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             className="btn"
                             data-canonical-operation={SITES_SHOW_ALL_OPERATION_ID}
                             aria-pressed={sitesFilter === 'all'}
-                            onClick={() => setSitesFilter('all')}
+                            onClick={() => { setPage(1); setSitesFilter('all'); }}
                         >{locale === 'ar' ? 'الكل' : 'All'}</button>
                     ) : null}
                     {route.key === 'sites' ? (
@@ -1060,7 +1094,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             className="btn"
                             data-canonical-operation={SITES_SHOW_CONNECTED_OPERATION_ID}
                             aria-pressed={sitesFilter === 'connected'}
-                            onClick={() => setSitesFilter('connected')}
+                            onClick={() => { setPage(1); setSitesFilter('connected'); }}
                         >{locale === 'ar' ? 'متصل' : 'Connected'} <b>{connectedSiteCount}</b></button>
                     ) : null}
                     {route.key === 'sites' ? (
@@ -1069,7 +1103,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             className="btn"
                             data-canonical-operation={SITES_SHOW_REVIEW_OPERATION_ID}
                             aria-pressed={sitesFilter === 'review'}
-                            onClick={() => setSitesFilter('review')}
+                            onClick={() => { setPage(1); setSitesFilter('review'); }}
                         >{locale === 'ar' ? 'يحتاج مراجعة' : 'Needs review'} <b>{reviewSiteCount}</b></button>
                     ) : null}
                     {route.key === 'taxonomy' ? (
@@ -1387,8 +1421,26 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             : (locale === 'ar' ? 'لا توجد سجلات عمليات محفوظة لهذا الحساب. لا يعني ذلك خلو الخادم من الأخطاء.' : 'No tenant operation logs are persisted. This does not prove the server has no errors.')
                         : (locale === 'ar' ? 'لا يتم إنشاء صفوف تجريبية عندما يعيد الخادم نتيجة فارغة.' : 'No sample rows are synthesized when the server returns an empty result.')}</p></div>}
                 {route.key === 'explorer'
-                    ? <ContentExplorerPagination page={collection.page} lastPage={collection.lastPage} onPage={setPage} />
-                    : <Pagination page={collection.page} lastPage={collection.lastPage} onPage={setPage} previousOperationAliasId={route.key === 'comments' ? COMMENTS_PREVIOUS_PAGE_OPERATION_ID : route.key === 'wp-users' ? WORDPRESS_USERS_PREVIOUS_OPERATION_ID : undefined} previousOperationId={readOperations?.previous ?? (route.key === 'email-history' ? APP_DATA_GRID_PREVIOUS_PAGE_OPERATION_ID : undefined)} />}
+                    ? <ContentExplorerPagination page={collection.page} lastPage={collection.lastPage} onPage={setPage}
+                        total={collection.authoritativeTotal} pageSize={explorerPageSize} returnedCount={collection.rows.length}
+                        onPageSizeChange={(size) => {
+                            setPage(1);
+                            setExplorerSelectedKeys(new Set());
+                            setExplorerPageSize(size);
+                        }} />
+                    : <Pagination page={collection.page} lastPage={collection.lastPage} onPage={setPage}
+                        total={collection.authoritativeTotal}
+                        pageSize={route.key === 'email-history' ? emailHistoryPageSize : route.key === 'sites' ? sitesPageSize : undefined}
+                        returnedCount={collection.rows.length}
+                        onPageSizeChange={route.key === 'email-history' ? (size) => {
+                            setPage(1);
+                            setEmailHistoryPageSize(size);
+                        } : route.key === 'sites' ? (size) => {
+                            setPage(1);
+                            setSitesPageSize(size);
+                        } : undefined}
+                        previousOperationAliasId={route.key === 'comments' ? COMMENTS_PREVIOUS_PAGE_OPERATION_ID : route.key === 'wp-users' ? WORDPRESS_USERS_PREVIOUS_OPERATION_ID : undefined}
+                        previousOperationId={readOperations?.previous ?? (route.key === 'email-history' ? APP_DATA_GRID_PREVIOUS_PAGE_OPERATION_ID : undefined)} />}
             </section>
             {route.key === 'explorer' && explorerPreview ? (
                 <ContentExplorerPreviewPanel

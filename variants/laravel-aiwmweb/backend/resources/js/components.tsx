@@ -9,6 +9,7 @@ import React, {
     useState,
 } from 'react';
 import { previousAppDataGridPage } from './app-data-grid-previous-page-control';
+import { SUPPORTED_PAGE_SIZES, visiblePaginationPages } from './canonical-pagination-window';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
     capabilityReason,
@@ -351,20 +352,75 @@ export function Pagination({
     onPage,
     previousOperationId,
     previousOperationAliasId,
+    total,
+    pageSize,
+    returnedCount,
+    onPageSizeChange,
 }: {
     page: number;
     lastPage: number;
     onPage: (page: number) => void;
     previousOperationId?: string;
     previousOperationAliasId?: string;
+    /** Only the server's authoritative total, never a guessed client count. */
+    total?: number;
+    /** Known server per_page, not a guessed page capacity. */
+    pageSize?: number;
+    returnedCount?: number;
+    onPageSizeChange?: (size: number) => void;
 }) {
     const { text, locale } = useLocale();
-    if (lastPage <= 1) return null;
+    const safeLastPage = Number.isSafeInteger(lastPage) ? Math.max(1, lastPage) : 1;
+    const safePage = Number.isSafeInteger(page) ? Math.max(1, Math.min(safeLastPage, page)) : 1;
+    const hasTotal = Number.isSafeInteger(total) && total! >= 0;
+    const hasPageSize = Number.isSafeInteger(pageSize) && pageSize! > 0 && pageSize! <= 100;
+    if (safeLastPage <= 1 && !hasTotal && !onPageSizeChange) return null;
+
+    const firstShown = hasTotal && hasPageSize && total! > (safePage - 1) * pageSize! ? (safePage - 1) * pageSize! + 1 : 0;
+    const count = Number.isSafeInteger(returnedCount) ? Math.max(0, returnedCount!) : pageSize ?? 0;
+    const lastShown = hasTotal && hasPageSize ? Math.min(total!, firstShown > 0 ? firstShown + count - 1 : 0) : 0;
+
     return (
         <nav className="pagination" aria-label={locale === 'ar' ? 'ترقيم الصفحات' : 'Pagination'}>
-            <button type="button" className="btn" data-canonical-operation={previousOperationId} data-canonical-operation-alias={previousOperationAliasId} onClick={() => onPage(previousAppDataGridPage(page))} disabled={page <= 1}>{text(commonText.previous)}</button>
-            <span aria-live="polite">{locale === 'ar' ? `صفحة ${page} من ${lastPage}` : `Page ${page} of ${lastPage}`}</span>
-            <button type="button" className="btn" onClick={() => onPage(page + 1)} disabled={page >= lastPage}>{text(commonText.next)}</button>
+            <div className="pagination-nav">
+                <button type="button" className="btn" onClick={() => onPage(1)} disabled={safePage <= 1}>
+                    {locale === 'ar' ? 'الأولى' : 'First'}
+                </button>
+                <button type="button" className="btn" data-canonical-operation={previousOperationId} data-canonical-operation-alias={previousOperationAliasId} onClick={() => onPage(previousAppDataGridPage(page))} disabled={page <= 1}>{text(commonText.previous)}</button>
+                <div className="pagination-numbers" aria-label={locale === 'ar' ? 'اختيار الصفحة' : 'Choose page'}>
+                    {visiblePaginationPages(safePage, safeLastPage).map((number) => (
+                        <button
+                            type="button"
+                            className={number === safePage ? 'btn pagination-page active' : 'btn pagination-page'}
+                            key={number}
+                            aria-label={locale === 'ar' ? `الصفحة ${number}` : `Page ${number}`}
+                            aria-current={number === safePage ? 'page' : undefined}
+                            disabled={number === safePage}
+                            onClick={() => onPage(number)}
+                        >
+                            {number}
+                        </button>
+                    ))}
+                </div>
+                <span className="pagination-counter" aria-live="polite">{locale === 'ar' ? `صفحة ${safePage} من ${safeLastPage}` : `Page ${safePage} of ${safeLastPage}`}</span>
+                <button type="button" className="btn" onClick={() => onPage(safePage + 1)} disabled={safePage >= safeLastPage}>{text(commonText.next)}</button>
+                <button type="button" className="btn" onClick={() => onPage(safeLastPage)} disabled={safePage >= safeLastPage}>
+                    {locale === 'ar' ? 'الأخيرة' : 'Last'}
+                </button>
+            </div>
+            {hasTotal && hasPageSize ? (
+                <span className="pagination-range" role="status">
+                    {locale === 'ar' ? `${firstShown}–${lastShown} من ${total}` : `${firstShown}–${lastShown} of ${total}`}
+                </span>
+            ) : null}
+            {onPageSizeChange && hasPageSize ? (
+                <label className="pagination-size">
+                    <span>{locale === 'ar' ? 'صفوف لكل صفحة' : 'Rows per page'}</span>
+                    <select aria-label={locale === 'ar' ? 'صفوف لكل صفحة' : 'Rows per page'} value={pageSize} onChange={(event) => onPageSizeChange(Number(event.target.value))}>
+                        {SUPPORTED_PAGE_SIZES.map((size) => <option value={size} key={size}>{size}</option>)}
+                    </select>
+                </label>
+            ) : null}
         </nav>
     );
 }

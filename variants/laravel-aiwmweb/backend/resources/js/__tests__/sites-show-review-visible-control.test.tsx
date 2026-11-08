@@ -48,56 +48,110 @@ function renderWorkspace() {
     );
 }
 
-afterEach(() => {
-    vi.unstubAllGlobals();
-});
+function result(rows: Array<Record<string, unknown>>, connectedCount: number, reviewCount: number) {
+    return new Response(JSON.stringify({
+        data: rows, total: rows.length, current_page: 1, last_page: 1, per_page: 25,
+        meta: { connected_count: connectedCount, review_count: reviewCount },
+    }), { status: 200, headers: { 'content-type': 'application/json' } });
+}
 
-describe(`${OPERATION_ID} ShowReviewSites`, () => {
-    it('filters the authoritative Sites collection to non-connected, non-unknown connection states without another request', async () => {
-        const fetchMock = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify([
-            { id: 11, name: 'Connected site', status: 'active', connection_status: 'connected' },
-            { id: 12, name: 'Authentication failed site', status: 'active', connection_status: 'authentication_failed' },
-            { id: 13, name: 'Degraded site', status: 'active', connection_status: 'degraded' },
-            { id: 14, name: 'Unknown site', status: 'active', connection_status: 'unknown' },
-        ]), { status: 200, headers: { 'content-type': 'application/json' } }));
+afterEach(() => { vi.unstubAllGlobals(); });
+
+function stubPagedSites(rows: Array<{ id: number; name: string; status: string; connection_status: string }>) {
+    const counts = {
+        connected_count: rows.filter(row => row.connection_status === 'connected').length,
+        review_count: rows.filter(row => row.connection_status !== 'connected' && row.connection_status !== 'unknown' && row.connection_status !== '').length,
+    };
+    return vi.fn(async (input: RequestInfo | URL) => {
+        const url = new URL(String(input), 'http://localhost');
+        const filter = url.searchParams.get('connection_filter') ?? 'all';
+        const selected = rows.filter(row => filter === 'connected'
+            ? row.connection_status === 'connected'
+            : filter === 'review'
+                ? row.connection_status !== 'connected' && row.connection_status !== 'unknown' && row.connection_status !== ''
+                : true);
+        return new Response(JSON.stringify({
+            data: selected,
+            total: selected.length,
+            current_page: 1,
+            last_page: 1,
+            per_page: 25,
+            meta: counts,
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+    });
+}
+
+describe('AIMW-CONT-CA17F05024 server-filtered Sites', () => {
+    it('fetches the authoritative review page and preserves accessible filter state', async () => {
+        const fetchMock = stubPagedSites([
+          {
+                    "id": 11,
+                    "name": "Connected site",
+                    "status": "active",
+                    "connection_status": "connected"
+          },
+          {
+                    "id": 12,
+                    "name": "Authentication failed site",
+                    "status": "active",
+                    "connection_status": "authentication_failed"
+          },
+          {
+                    "id": 13,
+                    "name": "Degraded site",
+                    "status": "active",
+                    "connection_status": "degraded"
+          },
+          {
+                    "id": 14,
+                    "name": "Unknown site",
+                    "status": "active",
+                    "connection_status": "unknown"
+          }
+]);
         vi.stubGlobal('fetch', fetchMock);
-
         renderWorkspace();
 
-        expect(await screen.findByText('Connected site')).toBeInTheDocument();
+        expect(await screen.findByText('Authentication failed site')).toBeInTheDocument();
+        const button = screen.getByRole('button', { name: 'Needs review 2' });
+        expect(button).toHaveAttribute('data-canonical-operation', 'AIMW-CONT-CA17F05024');
+        expect(button).toHaveAttribute('aria-pressed', 'false');
+
+        fireEvent.click(button);
+
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Needs review 2' })).toHaveAttribute('aria-pressed', 'true'));
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
         expect(screen.getByText('Authentication failed site')).toBeInTheDocument();
         expect(screen.getByText('Degraded site')).toBeInTheDocument();
-        expect(screen.getByText('Unknown site')).toBeInTheDocument();
-
-        const showReview = screen.getByRole('button', { name: 'Needs review 2' });
-        expect(showReview).toHaveAttribute('data-canonical-operation', OPERATION_ID);
-        expect(showReview).toHaveAttribute('aria-pressed', 'false');
-
-        fireEvent.click(showReview);
-
-        expect(showReview).toHaveAttribute('aria-pressed', 'true');
         expect(screen.queryByText('Connected site')).not.toBeInTheDocument();
-        expect(screen.getByText('Authentication failed site')).toBeInTheDocument();
-        expect(screen.getByText('Degraded site')).toBeInTheDocument();
         expect(screen.queryByText('Unknown site')).not.toBeInTheDocument();
-
-        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-        expect(fetchMock.mock.calls.every(([, options]) => !options || options.method === undefined || options.method === 'GET')).toBe(true);
+        const filteredUrl = String(fetchMock.mock.calls[1][0]);
+        expect(new URL(filteredUrl, 'http://localhost').searchParams.get('connection_filter')).toBe('review');
+        expect(fetchMock.mock.calls.every(([input]) => new URL(String(input), 'http://localhost').pathname === '/api/tenants/alpha/sites')).toBe(true);
     });
 
-    it('renders the existing deterministic empty state when no authoritative site needs review', async () => {
-        const fetchMock = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify([
-            { id: 21, name: 'Connected site', status: 'active', connection_status: 'connected' },
-            { id: 22, name: 'Unknown site', status: 'active', connection_status: 'unknown' },
-        ]), { status: 200, headers: { 'content-type': 'application/json' } }));
+    it('renders a truthful empty response for the review filter', async () => {
+        const fetchMock = stubPagedSites([
+          {
+                    "id": 21,
+                    "name": "Connected site",
+                    "status": "active",
+                    "connection_status": "connected"
+          },
+          {
+                    "id": 22,
+                    "name": "Unknown site",
+                    "status": "active",
+                    "connection_status": "unknown"
+          }
+]);
         vi.stubGlobal('fetch', fetchMock);
-
         renderWorkspace();
 
-        const showReview = await screen.findByRole('button', { name: 'Needs review 0' });
-        fireEvent.click(showReview);
-
-        expect(screen.getByText('No sample rows are synthesized when the server returns an empty result.')).toBeInTheDocument();
-        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+        const button = await screen.findByRole('button', { name: 'Needs review 0' });
+        fireEvent.click(button);
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+        expect(await screen.findByText('No sample rows are synthesized when the server returns an empty result.')).toBeInTheDocument();
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Needs review 0' })).toHaveAttribute('aria-pressed', 'true'));
     });
 });

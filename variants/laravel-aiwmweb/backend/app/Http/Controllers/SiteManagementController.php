@@ -17,11 +17,67 @@ final class SiteManagementController extends Controller
 {
     public const SAVE_OPERATION_ID = 'AIMW-BILL-54E4003BE9';
 
-    public function index(TenantAuthorizer $auth): JsonResponse
+    public function index(Request $request, TenantAuthorizer $auth): JsonResponse
     {
         $auth->authorize('tenant.view');
 
-        return response()->json(Site::query()->latest()->get());
+        // Preserve the original array response for site pickers and onboarding.
+        // Only explicit paging requests receive authoritative tenant-scoped totals.
+        if (! $request->hasAny(['page', 'per_page', 'connection_filter'])) {
+            return response()->json(Site::query()->orderByDesc('created_at')->orderByDesc('id')->get());
+        }
+
+        $validated = $request->validate([
+            'page' => 'sometimes|integer|min:1|max:100000',
+            'per_page' => 'sometimes|integer|in:10,25,50,100',
+            'connection_filter' => 'sometimes|in:all,connected,review',
+            'search' => 'sometimes|nullable|string|max:150',
+        ]);
+        $pageSize = (int) ($validated['per_page'] ?? 25);
+        $requestedPage = (int) ($validated['page'] ?? 1);
+        $filter = $validated['connection_filter'] ?? 'all';
+
+        // Site::query() owns the tenant global scope for records and facets.
+        $tenantSites = Site::query();
+        $connectedCount = (clone $tenantSites)->where('connection_status', 'connected')->count();
+        $reviewCount = (clone $tenantSites)
+            ->whereNotNull('connection_status')
+            ->whereNotIn('connection_status', ['connected', 'unknown', ''])
+            ->count();
+
+        $query = Site::query();
+        if ($filter === 'connected') {
+            $query->where('connection_status', 'connected');
+        } elseif ($filter === 'review') {
+            $query->whereNotNull('connection_status')
+                ->whereNotIn('connection_status', ['connected', 'unknown', '']);
+        }
+
+        $search = trim((string) ($validated['search'] ?? ''));
+        if ($search !== '') {
+            $query->where(function ($builder) use ($search): void {
+                $builder->where('name', 'like', '%'.$search.'%')
+                    ->orWhere('url', 'like', '%'.$search.'%');
+            });
+        }
+
+        $total = (clone $query)->count();
+        $lastPage = max(1, (int) ceil($total / $pageSize));
+        $currentPage = min($requestedPage, $lastPage);
+        $rows = $query->orderByDesc('created_at')->orderByDesc('id')
+            ->forPage($currentPage, $pageSize)->get();
+
+        return response()->json([
+            'data' => $rows,
+            'total' => $total,
+            'current_page' => $currentPage,
+            'last_page' => $lastPage,
+            'per_page' => $pageSize,
+            'meta' => [
+                'connected_count' => $connectedCount,
+                'review_count' => $reviewCount,
+            ],
+        ]);
     }
 
     public function store(
