@@ -143,6 +143,68 @@ final class GlobalPostsApplyFiltersTerminalityTest extends TestCase
             ->assertUnprocessable();
     }
 
+    public function test_server_pagination_exposes_every_real_post_and_clamps_last_page_without_tenant_leakage(): void
+    {
+        $user = User::factory()->create();
+        $alpha = $this->membership($user, 'alpha-post-page', ['tenant.view', 'content.view']);
+        $site = $this->site($alpha, 'Alpha many posts');
+
+        for ($remoteId = 101; $remoteId <= 163; $remoteId++) {
+            $this->seedGlobalPost($alpha, $site, $remoteId, 'Indexed post '.$remoteId, 'publish');
+        }
+
+        $foreignUser = User::factory()->create();
+        $beta = $this->membership($foreignUser, 'beta-post-page', ['tenant.view', 'content.view']);
+        $foreignSite = $this->site($beta, 'Beta private post');
+        $this->seedGlobalPost($beta, $foreignSite, 900, 'Foreign private title', 'publish');
+
+        $first = $this->actingAs($user)
+            ->getJson('/api/v1/tenants/alpha-post-page/global-posts?page=1&per_page=25')
+            ->assertOk()
+            ->assertJsonPath('total', 63)
+            ->assertJsonPath('current_page', 1)
+            ->assertJsonPath('last_page', 3)
+            ->assertJsonPath('per_page', 25)
+            ->assertJsonCount(25, 'data')
+            ->assertJsonPath('data.0.wordpress_id', 163);
+        $this->assertStringNotContainsString('Foreign private title', $first->getContent());
+
+        $this->actingAs($user)
+            ->getJson('/api/v1/tenants/alpha-post-page/global-posts?page=2&per_page=25')
+            ->assertOk()
+            ->assertJsonPath('total', 63)
+            ->assertJsonPath('current_page', 2)
+            ->assertJsonCount(25, 'data')
+            ->assertJsonPath('data.0.wordpress_id', 138);
+
+        $this->actingAs($user)
+            ->getJson('/api/v1/tenants/alpha-post-page/global-posts?page=1000000&per_page=25')
+            ->assertOk()
+            ->assertJsonPath('total', 63)
+            ->assertJsonPath('current_page', 3)
+            ->assertJsonPath('last_page', 3)
+            ->assertJsonCount(13, 'data')
+            ->assertJsonPath('data.0.wordpress_id', 113);
+
+        $this->actingAs($user)
+            ->getJson('/api/v1/tenants/alpha-post-page/global-posts?page=9&per_page=25&search=not-found')
+            ->assertOk()
+            ->assertJsonPath('total', 0)
+            ->assertJsonPath('current_page', 1)
+            ->assertJsonPath('last_page', 1)
+            ->assertJsonCount(0, 'data');
+
+        $this->actingAs($user)
+            ->getJson('/api/v1/tenants/alpha-post-page/global-posts?site_id='.$foreignSite->id.'&page=1')
+            ->assertNotFound();
+        $this->actingAs($user)
+            ->getJson('/api/v1/tenants/alpha-post-page/global-posts?page=1000001')
+            ->assertUnprocessable();
+        $this->actingAs($user)
+            ->getJson('/api/v1/tenants/alpha-post-page/global-posts?page=0')
+            ->assertUnprocessable();
+    }
+
     private function membership(User $user, string $slug, array $permissions): TenantMembership
     {
         $tenant = Tenant::query()->create(['name' => ucfirst($slug), 'slug' => $slug]);
