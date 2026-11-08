@@ -123,16 +123,16 @@ describe('canonical logs copy-visible control', () => {
             'https://example.test/path?signature=confidential',
             '{"api_key":"confidential"}',
             'SQLSTATE[42S02] private trace',
-            'legitimate event\\nAuthorization: Bearer confidential',
+            'legitimate event\nAuthorization: Bearer confidential',
             'Stack trace: /private/vendor/runtime.php',
         ];
         const output = formatVisibleLogs(cases.map((message) => ({ level: 'Error', message })));
-        expect(output.split('\\n')).toHaveLength(cases.length);
-        expect(output.split('\\n').every((line) => line === '[Error] [withheld: unsafe log text]')).toBe(true);
+        expect(output.split('\n')).toHaveLength(cases.length);
+        expect(output.split('\n').every((line) => line === '[Error] [withheld: unsafe log text]')).toBe(true);
         for (const secret of ['confidential', 'not-for-export', 'Bearer', 'SQLSTATE', 'Stack trace']) {
             expect(output).not.toContain(secret);
         }
-        expect(formatVisibleLogs([{ level: 'Warning\\nAdmin', message: 'Safe event' }]))
+        expect(formatVisibleLogs([{ level: 'Warning\nAdmin', message: 'Safe event' }]))
             .toBe('[Unknown] Safe event');
     });
 
