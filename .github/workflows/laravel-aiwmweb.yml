@@ -274,6 +274,55 @@ jobs:
           path: variants/laravel-aiwmweb/backend/public/build
           if-no-files-found: error
 
+
+  content-editor-browser-geometry:
+    # Regression gate for #1603: actual Chromium computed dimensions/RTL and screenshots.
+    # No live credentials, database, external WordPress endpoint or mutating API.
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    defaults:
+      run:
+        working-directory: variants/laravel-aiwmweb/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: variants/laravel-aiwmweb/backend/package-lock.json
+      - name: Install pinned application and browser test dependencies
+        run: |
+          npm ci --no-audit --no-fund
+          # Keep Playwright out of the application dependency tree: npm 10 can
+          # fail with Arborist edgesOut when npm install follows npm ci there.
+          npm --prefix tests/browser install --no-save --package-lock=false --no-audit --no-fund playwright@1.56.1
+          tests/browser/node_modules/.bin/playwright install --with-deps chromium
+      - name: Verify editor geometry in Chromium (EN/AR and desktop/mobile)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Laravel Vite plugin blocks HMR in CI unless explicitly enabled.
+          # This exception applies only to the loopback-only disposable test server.
+          LARAVEL_BYPASS_ENV_CHECK=1 npm run dev -- --host 127.0.0.1 --port 5173 --strictPort > /tmp/aiwm-geometry-vite.log 2>&1 &
+          vite_pid=$!
+          trap 'kill "$vite_pid" || true' EXIT
+          ready=0
+          for _ in $(seq 1 45); do
+            if curl --fail --silent http://127.0.0.1:5173/tests/browser/content-editor-geometry.html > /dev/null; then
+              ready=1
+              break
+            fi
+            sleep 2
+          done
+          if [[ "$ready" -ne 1 ]]; then cat /tmp/aiwm-geometry-vite.log; exit 1; fi
+          node tests/browser/content-editor-geometry.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: laravel-content-editor-geometry-${{ github.event.pull_request.head.sha || github.sha }}
+          path: variants/laravel-aiwmweb/backend/tests/browser/screenshots/
+          if-no-files-found: warn
+
   wordpress-disposable-runtime:
     runs-on: ubuntu-latest
     steps:
