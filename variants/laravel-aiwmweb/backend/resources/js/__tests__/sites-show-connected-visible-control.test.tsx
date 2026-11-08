@@ -145,6 +145,6 @@ describe('AIMW-CONT-E346398EAD server-filtered Sites', () => {
         fireEvent.click(button);
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
         expect(await screen.findByText('No sample rows are synthesized when the server returns an empty result.')).toBeInTheDocument();
-        expect(button).toHaveAttribute('aria-pressed', 'true');
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Connected 0' })).toHaveAttribute('aria-pressed', 'true'));
     });
 });
