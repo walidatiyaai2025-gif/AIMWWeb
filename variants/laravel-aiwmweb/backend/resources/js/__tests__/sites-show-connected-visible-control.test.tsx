@@ -48,53 +48,58 @@ function renderWorkspace() {
     );
 }
 
+function result(rows: Array<Record<string, unknown>>, connectedCount: number, reviewCount: number) {
+    return new Response(JSON.stringify({
+        data: rows, total: rows.length, current_page: 1, last_page: 1, per_page: 25,
+        meta: { connected_count: connectedCount, review_count: reviewCount },
+    }), { status: 200, headers: { 'content-type': 'application/json' } });
+}
+
 afterEach(() => {
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
 });
 
-describe(`${OPERATION_ID} ShowConnectedSites`, () => {
-    it('filters by authoritative connection_status instead of the unrelated status field', async () => {
-        const fetchMock = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify([
-            { id: 11, name: 'Connected but inactive', status: 'inactive', connection_status: 'connected' },
-            { id: 12, name: 'Active but failed', status: 'active', connection_status: 'authentication_failed' },
-            { id: 13, name: 'Active unknown', status: 'active', connection_status: 'unknown' },
-        ]), { status: 200, headers: { 'content-type': 'application/json' } }));
+describe(`${OPERATION_ID} ShowConnectedSites — server paging`, () => {
+    it('filters by real authoritative connection_status, not operational status with tenant-scoped read-only GET and verified totals', async () => {
+        const initial = [{"id":11,"name":"Connected but inactive","status":"inactive","connection_status":"connected"},{"id":12,"name":"Active but failed","status":"active","connection_status":"authentication_failed"},{"id":13,"name":"Active unknown","status":"active","connection_status":"unknown"}];
+        const filtered = [{"id":11,"name":"Connected but inactive","status":"inactive","connection_status":"connected"}];
+        const fetchMock = vi.fn()
+            .mockResolvedValueOnce(result(initial, 1, 2))
+            .mockResolvedValueOnce(result(filtered, 1, 2));
         vi.stubGlobal('fetch', fetchMock);
-
         renderWorkspace();
 
         expect(await screen.findByText('Connected but inactive')).toBeInTheDocument();
-        expect(screen.getByText('Active but failed')).toBeInTheDocument();
-        expect(screen.getByText('Active unknown')).toBeInTheDocument();
+        expect(await screen.findByText('Active but failed')).toBeInTheDocument();
+        expect(await screen.findByText('Active unknown')).toBeInTheDocument();
+        const control = screen.getByRole('button', { name: 'Connected 1' });
+        expect(control).toHaveAttribute('data-canonical-operation', OPERATION_ID);
+        expect(control).toHaveAttribute('aria-pressed', 'false');
+        fireEvent.click(control);
 
-        const connected = screen.getByRole('button', { name: 'Connected 1' });
-        expect(connected).toHaveAttribute('data-canonical-operation', OPERATION_ID);
-        expect(connected).toHaveAttribute('aria-pressed', 'false');
-
-        fireEvent.click(connected);
-
-        expect(connected).toHaveAttribute('aria-pressed', 'true');
-        expect(screen.getByText('Connected but inactive')).toBeInTheDocument();
-        expect(screen.queryByText('Active but failed')).not.toBeInTheDocument();
-        expect(screen.queryByText('Active unknown')).not.toBeInTheDocument();
-
-        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-        expect(fetchMock.mock.calls.every(([, options]) => !options || options.method === undefined || options.method === 'GET')).toBe(true);
+        await waitFor(() => expect(control).toHaveAttribute('aria-pressed', 'true'));
+        expect(await screen.findByText('Connected but inactive')).toBeInTheDocument();
+        await waitFor(() => expect(screen.queryByText('Active but failed')).not.toBeInTheDocument());
+        await waitFor(() => expect(screen.queryByText('Active unknown')).not.toBeInTheDocument());
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+        expect(fetchMock.mock.calls[0][0]).toBe('/api/tenants/alpha/sites?page=1&per_page=25&connection_filter=all');
+        expect(fetchMock.mock.calls[1][0]).toBe('/api/tenants/alpha/sites?page=1&per_page=25&connection_filter=connected');
+        expect(fetchMock.mock.calls.every(([, options]) => !options || !options.method || options.method === 'GET')).toBe(true);
     });
 
-    it('renders the deterministic empty state when no authoritative site is connected', async () => {
-        const fetchMock = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify([
-            { id: 21, name: 'Failed site', status: 'active', connection_status: 'authentication_failed' },
-            { id: 22, name: 'Unknown site', status: 'active', connection_status: 'unknown' },
-        ]), { status: 200, headers: { 'content-type': 'application/json' } }));
+    it('shows the existing empty state when authoritative connected result is empty', async () => {
+        const initial = [{"id":21,"name":"Failed site","status":"active","connection_status":"authentication_failed"},{"id":22,"name":"Unknown site","status":"active","connection_status":"unknown"}];
+        const fetchMock = vi.fn()
+            .mockResolvedValueOnce(result(initial, 0, 1))
+            .mockResolvedValueOnce(result([], 0, 1));
         vi.stubGlobal('fetch', fetchMock);
-
         renderWorkspace();
 
-        const connected = await screen.findByRole('button', { name: 'Connected 0' });
-        fireEvent.click(connected);
-
-        expect(screen.getByText('No sample rows are synthesized when the server returns an empty result.')).toBeInTheDocument();
-        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+        const control = await screen.findByRole('button', { name: 'Connected 0' });
+        fireEvent.click(control);
+        expect(await screen.findByText('No sample rows are synthesized when the server returns an empty result.')).toBeInTheDocument();
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+        expect(fetchMock.mock.calls[1][0]).toBe('/api/tenants/alpha/sites?page=1&per_page=25&connection_filter=connected');
     });
 });

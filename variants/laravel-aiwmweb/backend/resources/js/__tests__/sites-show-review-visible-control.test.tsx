@@ -48,56 +48,60 @@ function renderWorkspace() {
     );
 }
 
+function result(rows: Array<Record<string, unknown>>, connectedCount: number, reviewCount: number) {
+    return new Response(JSON.stringify({
+        data: rows, total: rows.length, current_page: 1, last_page: 1, per_page: 25,
+        meta: { connected_count: connectedCount, review_count: reviewCount },
+    }), { status: 200, headers: { 'content-type': 'application/json' } });
+}
+
 afterEach(() => {
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
 });
 
-describe(`${OPERATION_ID} ShowReviewSites`, () => {
-    it('filters the authoritative Sites collection to non-connected, non-unknown connection states without another request', async () => {
-        const fetchMock = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify([
-            { id: 11, name: 'Connected site', status: 'active', connection_status: 'connected' },
-            { id: 12, name: 'Authentication failed site', status: 'active', connection_status: 'authentication_failed' },
-            { id: 13, name: 'Degraded site', status: 'active', connection_status: 'degraded' },
-            { id: 14, name: 'Unknown site', status: 'active', connection_status: 'unknown' },
-        ]), { status: 200, headers: { 'content-type': 'application/json' } }));
+describe(`${OPERATION_ID} ShowReviewSites — server paging`, () => {
+    it('filters against server's authoritative review status with tenant-scoped read-only GET and verified totals', async () => {
+        const initial = [{"id":11,"name":"Connected site","status":"active","connection_status":"connected"},{"id":12,"name":"Authentication failed site","status":"active","connection_status":"authentication_failed"},{"id":13,"name":"Degraded site","status":"active","connection_status":"degraded"},{"id":14,"name":"Unknown site","status":"active","connection_status":"unknown"}];
+        const filtered = [{"id":12,"name":"Authentication failed site","status":"active","connection_status":"authentication_failed"},{"id":13,"name":"Degraded site","status":"active","connection_status":"degraded"}];
+        const fetchMock = vi.fn()
+            .mockResolvedValueOnce(result(initial, 1, 2))
+            .mockResolvedValueOnce(result(filtered, 1, 2));
         vi.stubGlobal('fetch', fetchMock);
-
         renderWorkspace();
 
         expect(await screen.findByText('Connected site')).toBeInTheDocument();
-        expect(screen.getByText('Authentication failed site')).toBeInTheDocument();
-        expect(screen.getByText('Degraded site')).toBeInTheDocument();
-        expect(screen.getByText('Unknown site')).toBeInTheDocument();
+        expect(await screen.findByText('Authentication failed site')).toBeInTheDocument();
+        expect(await screen.findByText('Degraded site')).toBeInTheDocument();
+        expect(await screen.findByText('Unknown site')).toBeInTheDocument();
+        const control = screen.getByRole('button', { name: 'Needs review 2' });
+        expect(control).toHaveAttribute('data-canonical-operation', OPERATION_ID);
+        expect(control).toHaveAttribute('aria-pressed', 'false');
+        fireEvent.click(control);
 
-        const showReview = screen.getByRole('button', { name: 'Needs review 2' });
-        expect(showReview).toHaveAttribute('data-canonical-operation', OPERATION_ID);
-        expect(showReview).toHaveAttribute('aria-pressed', 'false');
-
-        fireEvent.click(showReview);
-
-        expect(showReview).toHaveAttribute('aria-pressed', 'true');
-        expect(screen.queryByText('Connected site')).not.toBeInTheDocument();
-        expect(screen.getByText('Authentication failed site')).toBeInTheDocument();
-        expect(screen.getByText('Degraded site')).toBeInTheDocument();
-        expect(screen.queryByText('Unknown site')).not.toBeInTheDocument();
-
-        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-        expect(fetchMock.mock.calls.every(([, options]) => !options || options.method === undefined || options.method === 'GET')).toBe(true);
+        await waitFor(() => expect(control).toHaveAttribute('aria-pressed', 'true'));
+        expect(await screen.findByText('Authentication failed site')).toBeInTheDocument();
+        expect(await screen.findByText('Degraded site')).toBeInTheDocument();
+        await waitFor(() => expect(screen.queryByText('Connected site')).not.toBeInTheDocument());
+        await waitFor(() => expect(screen.queryByText('Unknown site')).not.toBeInTheDocument());
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+        expect(fetchMock.mock.calls[0][0]).toBe('/api/tenants/alpha/sites?page=1&per_page=25&connection_filter=all');
+        expect(fetchMock.mock.calls[1][0]).toBe('/api/tenants/alpha/sites?page=1&per_page=25&connection_filter=review');
+        expect(fetchMock.mock.calls.every(([, options]) => !options || !options.method || options.method === 'GET')).toBe(true);
     });
 
-    it('renders the existing deterministic empty state when no authoritative site needs review', async () => {
-        const fetchMock = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify([
-            { id: 21, name: 'Connected site', status: 'active', connection_status: 'connected' },
-            { id: 22, name: 'Unknown site', status: 'active', connection_status: 'unknown' },
-        ]), { status: 200, headers: { 'content-type': 'application/json' } }));
+    it('shows the existing empty state when authoritative review result is empty', async () => {
+        const initial = [{"id":21,"name":"Connected site","status":"active","connection_status":"connected"},{"id":22,"name":"Unknown site","status":"active","connection_status":"unknown"}];
+        const fetchMock = vi.fn()
+            .mockResolvedValueOnce(result(initial, 1, 0))
+            .mockResolvedValueOnce(result([], 1, 0));
         vi.stubGlobal('fetch', fetchMock);
-
         renderWorkspace();
 
-        const showReview = await screen.findByRole('button', { name: 'Needs review 0' });
-        fireEvent.click(showReview);
-
-        expect(screen.getByText('No sample rows are synthesized when the server returns an empty result.')).toBeInTheDocument();
-        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+        const control = await screen.findByRole('button', { name: 'Needs review 0' });
+        fireEvent.click(control);
+        expect(await screen.findByText('No sample rows are synthesized when the server returns an empty result.')).toBeInTheDocument();
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+        expect(fetchMock.mock.calls[1][0]).toBe('/api/tenants/alpha/sites?page=1&per_page=25&connection_filter=review');
     });
 });
