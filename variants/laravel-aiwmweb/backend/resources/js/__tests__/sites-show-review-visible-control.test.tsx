@@ -127,7 +127,7 @@ describe('AIMW-CONT-CA17F05024 server-filtered Sites', () => {
         expect(screen.queryByText('Unknown site')).not.toBeInTheDocument();
         const filteredUrl = String(fetchMock.mock.calls[1][0]);
         expect(new URL(filteredUrl, 'http://localhost').searchParams.get('connection_filter')).toBe('review');
-        expect(fetchMock.mock.calls.every(([, options]) => !options || options.method === undefined || options.method === 'GET')).toBe(true);
+        expect(fetchMock.mock.calls.every(([input]) => new URL(String(input), 'http://localhost').pathname === '/api/tenants/alpha/sites')).toBe(true);
     });
 
     it('renders a truthful empty response for the review filter', async () => {
