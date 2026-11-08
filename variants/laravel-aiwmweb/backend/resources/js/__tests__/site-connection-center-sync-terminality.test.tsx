@@ -7,6 +7,7 @@ import {
     SITE_CONNECTION_CENTER_SYNC_OPERATION_ID,
     SiteConnectionCenterSyncControl,
     connectionCenterSyncOutcome,
+    safeSyncHistoryFailure,
     siteConnectionCenterEndpoints,
 } from '../site-connection-center-sync-control';
 import type { FrontendContext } from '../core';
@@ -155,6 +156,39 @@ describe('AIMW-BILL-3762C05261 Site Connection Center SynchronizeAsync', () => {
         expect(details).toHaveAttribute('href', `/tenants/alpha/site-operations/${correlationId}`);
         expect(fetchMock).toHaveBeenCalledTimes(2);
         expect(screen.queryByText(/private-value|unsafe-token/)).not.toBeInTheDocument();
+    });
+
+    it('never renders legacy raw synchronization errors or forged codes', async () => {
+        const forged = {
+            id: 52, operation: 'synchronization', status: 'failed',
+            message: 'Bearer private-token password=private-password',
+            details: {
+                failure_category: 'authentication',
+                failure_code: 'WP_SYNC_AUTHENTICATION; private-code',
+                failure_message: 'https://private.example.test/?token=private-query',
+            },
+        };
+        expect(safeSyncHistoryFailure(forged)).toBeNull();
+        expect(safeSyncHistoryFailure({
+            ...forged,
+            details: { ...forged.details, failure_code: 'WP_SYNC_AUTHENTICATION' },
+        })).toEqual({
+            code: 'WP_SYNC_AUTHENTICATION',
+            en: 'Check WordPress authentication and Connector permissions.',
+            ar: 'فشل التحقق من اتصال WordPress. راجع بيانات الربط وتوقيع الطلبات.',
+        });
+        const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+            const payload = String(input).includes('/operations')
+                ? { items: [forged] }
+                : { site: { id: 7, name: 'Alpha Site', connection_status: 'CONNECTED' }, connection: 'CONNECTED' };
+            return new Response(JSON.stringify(payload), { status: 200, headers: { 'content-type': 'application/json' } });
+        });
+        vi.stubGlobal('fetch', fetchMock);
+        renderControl(context(['tenant.view', 'sites.view']));
+        expect(await screen.findByText('Alpha Site')).toBeInTheDocument();
+        expect(screen.getByText('Synchronization failed. Review the safe classification below.')).toBeInTheDocument();
+        expect(screen.queryByText(/private-token|private-password|private-code|private-query/)).not.toBeInTheDocument();
+        expect(screen.queryByText(/Failure code:/)).not.toBeInTheDocument();
     });
 
     it('fails closed for invalid identifiers and hides mutation without sites.manage', async () => {
