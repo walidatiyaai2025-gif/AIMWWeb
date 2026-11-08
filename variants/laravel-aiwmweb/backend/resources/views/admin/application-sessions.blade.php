@@ -1,4 +1,6 @@
-@php($isArabic = app()->getLocale() === 'ar')
+@php
+    $isArabic = app()->getLocale() === 'ar';
+@endphp
 <!doctype html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ $isArabic ? 'rtl' : 'ltr' }}" data-mode="dark">
 <head>
