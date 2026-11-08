@@ -280,7 +280,7 @@ class SiteOperationDetailsRouteTerminalityTest extends TestCase
         $this->assertSame($before, SiteOperationHistory::query()->withoutGlobalScopes()->count());
         foreach (['site-operation-details.blade.php', 'site-operation-details-load-error.blade.php'] as $file) {
             $view = (string) file_get_contents(resource_path('views/operations/'.$file));
-            $this->assertStringContainsString("resources/css/app.css", $view);
+            $this->assertStringContainsString('resources/css/app.css', $view);
             $this->assertStringContainsString("@include('layouts.partials.workspace-read-sidebar')", $view);
         }
     }
