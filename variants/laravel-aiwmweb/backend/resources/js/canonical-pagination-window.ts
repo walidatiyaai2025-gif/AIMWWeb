@@ -13,6 +13,8 @@ export function visiblePaginationPages(currentPage: number, lastPage: number, ma
  * Never claim a total from a truncated/current-page result. Only an explicit
  * nonnegative server total is authoritative.
  */
-export function authoritativeCollectionTotal(total: unknown): number | undefined {
+export function authoritativeCollectionTotal(total: unknown, verified: boolean | undefined = true): number | undefined {
+    // WordPress gateways can omit X-WP-Total; their page-local count is not a grand total.
+    if (verified === false) return undefined;
     return typeof total === 'number' && Number.isSafeInteger(total) && total >= 0 ? total : undefined;
 }
