@@ -204,9 +204,12 @@ final class SeoTenantRouteBindingRegressionTest extends TestCase
             'tenant.view', 'seo.view', 'seo.write', 'executions.manage',
         ]);
         $ownSite = $this->site($membership, 'NOB');
-        $otherSite = $this->site($membership, 'Other WordPress Site');
-
         app(TenantContext::class)->activate($membership->tenant, $membership);
+        $otherSite = Site::query()->create([
+            'name' => 'Other WordPress Site',
+            'url' => 'https://other.example.test',
+            'status' => 'active',
+        ]);
         $foreignApprovals = [];
         foreach (['PENDING', 'APPROVED'] as $status) {
             $suggestion = Suggestion::query()->create([
