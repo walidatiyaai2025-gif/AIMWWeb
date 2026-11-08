@@ -19,6 +19,9 @@ type ConnectionSnapshot = {
         name: string;
         url?: unknown;
         connection_status?: string | null;
+        wordpress_version?: string | null;
+        language_code?: string | null;
+        last_verified_at?: string | null;
     };
     connection: string;
     sync_health?: { state: 'not_probed' | 'succeeded' | 'failed'; last_attempt_at?: string | null };
