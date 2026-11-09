@@ -38,7 +38,7 @@ final class AdminOperationsController extends Controller
 
         // Existing integrations without page parameters retain the array envelope.
         // The React Application Users grid opts in to true tenant-scoped SQL pages.
-        if ($request->hasAny(['page', 'per_page'])) {
+        if ($request->hasAny(['page', 'per_page', 'search'])) {
             return response()->json($this->administration->paginatedMembers(
                 $data['search'] ?? null,
                 (int) ($data['page'] ?? 1),
@@ -77,8 +77,8 @@ final class AdminOperationsController extends Controller
     {
         $this->authorizer->authorize('tenant.view');
 
-        // Explicit page parameters opt into real SQL pagination. Existing
-        // role-picker integrations still receive the unchanged array response.
+        // Paging parameters or search opt into real SQL-filtered pagination.
+        // Role pickers without query parameters keep their legacy array response.
         if ($request->hasAny(['page', 'per_page'])) {
             $input = $request->validate([
                 'search' => ['nullable', 'string', 'max:255'],
