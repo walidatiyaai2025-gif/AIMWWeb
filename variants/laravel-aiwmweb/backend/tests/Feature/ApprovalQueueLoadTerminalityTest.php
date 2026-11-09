@@ -150,7 +150,7 @@ class ApprovalQueueLoadTerminalityTest extends TestCase
             ->assertJsonPath('current_page', 1)
             ->assertJsonCount(7, 'data');
 
-        foreach (['page=0', 'page=nope', 'per_page=500', 'per_page=0'] as $invalid) {
+        foreach (['page=0', 'page=-1', 'page=nope', 'page=1000001', 'page%5B%5D=1', 'per_page=500', 'per_page=0'] as $invalid) {
             $this->actingAs($user)->getJson('/api/tenants/approval-page-alpha/approvals?'.$invalid)
                 ->assertUnprocessable();
         }
@@ -158,6 +158,64 @@ class ApprovalQueueLoadTerminalityTest extends TestCase
             ->assertOk()
             ->assertJsonPath('total', 1)
             ->assertJsonCount(1, 'data');
+    }
+
+    public function test_literal_search_escapes_sql_wildcards_and_keeps_exact_totals_and_tenant_scope(): void
+    {
+        $user = User::factory()->create();
+        $alpha = $this->membership($user, 'approval-literal-alpha', ['tenant.view', 'approvals.view']);
+        $beta = $this->membership($user, 'approval-literal-beta', ['tenant.view', 'approvals.view']);
+
+        foreach ([
+            'Revenue 90% gain',
+            'Revenue 90X gain',
+            'queue_worker',
+            'queueXworker',
+            'auth!failed',
+            'authXfailed',
+        ] as $title) {
+            $approval = $this->seedApproval($alpha, 'PENDING');
+            $context = app(TenantContext::class);
+            $context->activate($alpha->tenant, $alpha);
+            $approval->title = $title;
+            $approval->save();
+            $context->forget();
+        }
+        $other = $this->seedApproval($beta, 'PENDING');
+        $context = app(TenantContext::class);
+        $context->activate($beta->tenant, $beta);
+        $other->title = 'Revenue 90% foreign';
+        $other->save();
+        $context->forget();
+
+        $url = '/api/tenants/approval-literal-alpha/approvals';
+        foreach ([
+            ['90%', 'Revenue 90% gain'],
+            ['queue_', 'queue_worker'],
+            ['auth!', 'auth!failed'],
+        ] as [$search, $expectedTitle]) {
+            $this->actingAs($user)
+                ->getJson($url.'?per_page=10&page=1&search='.rawurlencode($search))
+                ->assertOk()
+                ->assertJsonPath('total', 1)
+                ->assertJsonPath('last_page', 1)
+                ->assertJsonPath('data.0.title', $expectedTitle)
+                ->assertJsonCount(1, 'data');
+        }
+
+        // Digit-only search must still support exact approval/suggestion IDs.
+        $this->actingAs($user)
+            ->getJson($url.'?per_page=10&page=1000000&search=NoMatchingLiteral')
+            ->assertOk()
+            ->assertJsonPath('total', 0)
+            ->assertJsonPath('current_page', 1)
+            ->assertJsonCount(0, 'data');
+
+        $this->actingAs($user)
+            ->getJson('/api/tenants/approval-literal-beta/approvals?search='.rawurlencode('90%'))
+            ->assertOk()
+            ->assertJsonPath('total', 1)
+            ->assertJsonPath('data.0.title', 'Revenue 90% foreign');
     }
 
     private function membership(User $user, string $slug, array $permissions): TenantMembership
