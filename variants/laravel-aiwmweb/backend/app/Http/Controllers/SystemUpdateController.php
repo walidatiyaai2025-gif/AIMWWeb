@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Platform\SystemUpdateService;
-use App\Services\CpanelRuntimeActivationService;
 use App\Platform\VerifiedMysqlBackupService;
+use App\Services\CpanelRuntimeActivationService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
