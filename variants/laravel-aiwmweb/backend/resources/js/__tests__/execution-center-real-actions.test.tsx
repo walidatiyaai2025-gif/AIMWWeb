@@ -6,6 +6,8 @@ import { LocaleProvider } from '../i18n';
 import {
     authorizedExecutionAction,
     ExecutionCenterRowActions,
+    ExecutionDateRangeWarning,
+    isValidExecutionDateRange,
     readExecutionUrlState,
     writeExecutionUrlState,
 } from '../execution-center-real-actions';
@@ -112,5 +114,48 @@ describe('Execution Center authoritative actions (#1614)', () => {
         expect(readExecutionUrlState().pageSize).toBe(50);
         window.history.replaceState(null, '', '/tenants/alpha/module/execution?page=1000000&per_page=100');
         expect(readExecutionUrlState().page).toBe(1000000);
+    });
+    it('validates actual Gregorian execution dates including leap years and rejects inverted drafts', () => {
+        expect(isValidExecutionDateRange('2024-02-29', '2024-02-29')).toBe(true);
+        expect(isValidExecutionDateRange('2000-02-29', '2026-11-09')).toBe(true);
+        expect(isValidExecutionDateRange('', '2026-11-09')).toBe(true);
+        expect(isValidExecutionDateRange('2026-11-09', '')).toBe(true);
+        expect(isValidExecutionDateRange('1900-02-29', '')).toBe(false);
+        expect(isValidExecutionDateRange('2026-02-29', '')).toBe(false);
+        expect(isValidExecutionDateRange('2026-04-31', '')).toBe(false);
+        expect(isValidExecutionDateRange('0000-01-01', '')).toBe(false);
+        expect(isValidExecutionDateRange('2026-12-01', '2026-11-01')).toBe(false);
+        expect(isValidExecutionDateRange('2026-11-09', 'not-a-date')).toBe(false);
+    });
+
+    it('shows an accessible correction hint in both RTL Arabic and English for invalid draft ranges', () => {
+        const invalid = { dateFrom: '2026-11-09', dateTo: '2026-11-01' };
+        const { rerender } = render(<ExecutionDateRangeWarning {...invalid} locale="en" />);
+        expect(screen.getByRole('alert')).toHaveTextContent('Invalid date range');
+        expect(screen.getByRole('alert')).toHaveAttribute('id', 'execution-date-range-warning');
+        rerender(<ExecutionDateRangeWarning {...invalid} locale="ar" />);
+        expect(screen.getByRole('alert')).toHaveTextContent('نطاق التاريخ غير صالح');
+        rerender(<ExecutionDateRangeWarning dateFrom="2026-11-01" dateTo="2026-11-09" locale="ar" />);
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
+
+    it('restores valid URL filters without submitting impossible or reversed dates to Laravel', () => {
+        window.history.replaceState(null, '', '/tenants/alpha/module/execution?site=3&status=failed&page=4&per_page=50&date_from=2026-11-09&date_to=2026-11-01');
+        let state = readExecutionUrlState();
+        expect(state).toMatchObject({
+            status: 'failed', page: 4, pageSize: 50,
+            dateFrom: '2026-11-09', dateTo: '',
+        });
+        expect(new URLSearchParams(window.location.search).get('site')).toBe('3');
+
+        window.history.replaceState(null, '', '/tenants/alpha/module/execution?site=3&date_from=2026-02-29&date_to=2024-02-29');
+        state = readExecutionUrlState();
+        expect(state.dateFrom).toBe('');
+        expect(state.dateTo).toBe('2024-02-29');
+
+        window.history.replaceState(null, '', '/tenants/alpha/module/execution?date_from=2024-02-29&date_to=2024-03-01');
+        state = readExecutionUrlState();
+        expect(state.dateFrom).toBe('2024-02-29');
+        expect(state.dateTo).toBe('2024-03-01');
     });
 });
