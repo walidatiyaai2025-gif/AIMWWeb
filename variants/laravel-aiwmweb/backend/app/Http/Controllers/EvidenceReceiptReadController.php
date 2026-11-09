@@ -18,7 +18,7 @@ final class EvidenceReceiptReadController extends Controller
             'site_id' => ['sometimes', 'integer', 'min:1'],
             'verified' => ['sometimes', 'boolean'],
             'search' => ['sometimes', 'string', 'max:120'],
-            'page' => ['sometimes', 'integer', 'min:1'],
+            'page' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
         ]);
 
@@ -37,10 +37,14 @@ final class EvidenceReceiptReadController extends Controller
 
         $search = trim((string) ($filters['search'] ?? ''));
         if ($search !== '') {
-            $query->where(function ($builder) use ($search): void {
-                $builder->where('operation_id', 'like', '%'.$search.'%')
-                    ->orWhere('request_id', 'like', '%'.$search.'%')
-                    ->orWhere('correlation_id', 'like', '%'.$search.'%');
+            // A user's identifier search is literal: raw % and _ must not
+            // match unrelated immutable evidence or inflate its record count.
+            $needle = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $search);
+            $pattern = '%'.$needle.'%';
+            $query->where(function ($builder) use ($search, $pattern): void {
+                $builder->whereRaw("operation_id LIKE ? ESCAPE '!'", [$pattern])
+                    ->orWhereRaw("request_id LIKE ? ESCAPE '!'", [$pattern])
+                    ->orWhereRaw("correlation_id LIKE ? ESCAPE '!'", [$pattern]);
                 if (ctype_digit($search)) {
                     $builder->orWhere('execution_id', (int) $search)
                         ->orWhere('site_id', (int) $search);
@@ -50,12 +54,11 @@ final class EvidenceReceiptReadController extends Controller
 
         $page = (int) ($filters['page'] ?? 1);
         $perPage = (int) ($filters['per_page'] ?? 20);
-        $receipts = $query->paginate($perPage, ['*'], 'page', $page);
-        // Filtering or deletion can leave a bookmarked page past the real end.
-        // Return the last valid page rather than presenting a false empty list.
-        if ($page > $receipts->lastPage()) {
-            $receipts = $query->paginate($perPage, ['*'], 'page', $receipts->lastPage());
-        }
+        // Count within the same tenant and filters before accessing a potentially
+        // enormous OFFSET. A stale bookmark lands on the last real page.
+        $total = (clone $query)->count();
+        $lastPage = max(1, (int) ceil($total / $perPage));
+        $receipts = $query->paginate($perPage, ['*'], 'page', min($page, $lastPage));
         $receipts->setCollection($receipts->getCollection()->map(
             static fn (EvidenceReceipt $receipt): array => [
                 'id' => (int) $receipt->id,

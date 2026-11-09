@@ -156,6 +156,81 @@ final class EvidenceReceiptReadTest extends TestCase
             ->assertJsonMissingPath('data.0.failure');
     }
 
+    public function test_literal_identifier_search_page_bounds_and_filtered_totals_are_safe(): void
+    {
+        $user = User::factory()->create();
+        $alpha = $this->membership($user, 'evidence-literal-alpha', ['tenant.view', 'execution.view']);
+        $beta = $this->membership($user, 'evidence-literal-beta', ['tenant.view', 'execution.view']);
+
+        // Percent and underscore are literal identifier characters, not SQL
+        // wildcard operators. Keep the evidence immutable after creation.
+        $ids = [
+            'audit%9', 'auditX9',
+            'queue_7', 'queueX7',
+            'risk!flag', 'riskXflag',
+        ];
+        $receipts = [];
+        foreach ($ids as $operationId) {
+            $receipts[] = $this->receipt($alpha, true, $operationId);
+        }
+        $foreign = $this->receipt($beta, true, 'audit%9-foreign');
+
+        $url = '/api/tenants/evidence-literal-alpha/evidence';
+        foreach ([
+            ['audit%9', 'audit%9'],
+            ['queue_7', 'queue_7'],
+            ['risk!flag', 'risk!flag'],
+        ] as [$needle, $expected]) {
+            $this->actingAs($user)
+                ->getJson($url.'?page=1&per_page=10&search='.rawurlencode($needle))
+                ->assertOk()
+                ->assertJsonPath('total', 1)
+                ->assertJsonPath('last_page', 1)
+                ->assertJsonPath('data.0.operation_id', $expected)
+                ->assertJsonCount(1, 'data')
+                ->assertJsonMissingPath('data.0.before_state')
+                ->assertJsonMissingPath('data.0.proposed_state')
+                ->assertJsonMissingPath('data.0.actual_after_state')
+                ->assertJsonMissingPath('data.0.failure');
+        }
+
+        // Ordinary search still matches both a literal and a similar string.
+        $this->actingAs($user)
+            ->getJson($url.'?search=audit&per_page=10')
+            ->assertOk()->assertJsonPath('total', 2)->assertJsonCount(2, 'data');
+
+        // Authoritative SQL page membership and last-page recovery never use
+        // a first-page slice or a giant OFFSET before clamping.
+        foreach ([[1, 2], [2, 2], [3, 2], [1000000, 2]] as [$page, $count]) {
+            $this->actingAs($user)
+                ->getJson($url."?page={$page}&per_page=2")
+                ->assertOk()
+                ->assertJsonPath('total', 6)
+                ->assertJsonPath('current_page', min($page, 3))
+                ->assertJsonPath('last_page', 3)
+                ->assertJsonCount($count, 'data');
+        }
+        $this->actingAs($user)
+            ->getJson($url.'?page=1000000&search=nonexistent')
+            ->assertOk()->assertJsonPath('total', 0)
+            ->assertJsonPath('current_page', 1)
+            ->assertJsonPath('last_page', 1)
+            ->assertJsonCount(0, 'data');
+
+        $this->actingAs($user)
+            ->getJson($url.'?site_id='.$receipts[0]->site_id.'&verified=1')
+            ->assertOk()->assertJsonPath('total', 1)
+            ->assertJsonPath('data.0.id', $receipts[0]->id);
+
+        foreach (['page=0', 'page=-1', 'page=nope', 'page=1000001', 'page%5B%5D=2', 'per_page=101', 'per_page=0'] as $invalid) {
+            $this->actingAs($user)->getJson($url.'?'.$invalid)->assertUnprocessable();
+        }
+        $this->actingAs($user)
+            ->getJson('/api/tenants/evidence-literal-beta/evidence?search='.rawurlencode('audit%9'))
+            ->assertOk()->assertJsonPath('total', 1)
+            ->assertJsonPath('data.0.id', $foreign->id);
+    }
+
     private function membership(User $user, string $slug, array $permissions): TenantMembership
     {
         $tenant = Tenant::query()->create(['name' => ucfirst($slug), 'slug' => $slug]);
@@ -174,7 +249,7 @@ final class EvidenceReceiptReadTest extends TestCase
         return $membership->fresh('tenant');
     }
 
-    private function receipt(TenantMembership $membership, bool $verified): EvidenceReceipt
+    private function receipt(TenantMembership $membership, bool $verified, ?string $operationId = null): EvidenceReceipt
     {
         $context = app(TenantContext::class);
         $context->activate($membership->tenant, $membership);
@@ -218,7 +293,7 @@ final class EvidenceReceiptReadTest extends TestCase
             'proposed_state' => ['title' => 'After'],
             'decided_at' => now(),
         ]);
-        $operationId = (string) Str::uuid();
+        $operationId ??= (string) Str::uuid();
         $requestId = (string) Str::uuid();
         $correlationId = (string) Str::uuid();
         $execution = Execution::query()->create([
