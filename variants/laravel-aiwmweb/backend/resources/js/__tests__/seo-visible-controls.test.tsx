@@ -277,7 +277,7 @@ describe('SEO visible-control mass closure', () => {
         await screen.findByText('finding-1');
         fireEvent.click(screen.getAllByRole('button', { name: 'Generate AI proposal' })[0]);
         await screen.findByText(/Saved AI proposal for finding 1 is ready for explicit approval/);
-        expect(screen.getByText(/Saved title/)).toBeInTheDocument();
+        expect(screen.getAllByText(/Saved title/).some(node => node.closest('summary'))).toBe(true);
         expect(sessionStorage.getItem(seoBatchStorageKey('alpha', 7))).toBeNull();
         const posts = fetchMock.mock.calls.filter(([url, init]) => String(url).includes('/ai-proposal') && init?.method === 'POST');
         expect(posts).toHaveLength(2);
@@ -304,7 +304,7 @@ describe('SEO visible-control mass closure', () => {
         });
         const { container } = render(<SeoVisibleControls config={config} />);
         await screen.findByText(/Saved AI proposal for finding 2 is ready for explicit approval/);
-        expect(screen.getByText(/Recovered saved description/)).toBeInTheDocument();
+        expect(screen.getAllByText(/Recovered saved description/).some(node => node.closest('summary'))).toBe(true);
         expect(fetchMock.mock.calls.filter(([url, init]) => String(url).includes('/ai-proposal') && init?.method === 'POST')).toHaveLength(1);
         expect(container.querySelector('[data-canonical-operation="' + SEO_OPERATIONS.generateSuggestions + '"]')).toBeEnabled();
     });
