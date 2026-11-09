@@ -127,6 +127,7 @@
 
         @if ($isFiltered)
             <p role="status" data-audit-filter-limit>{{ $isArabic ? 'البحث والتصفية يفحصان آخر ١٠٠٠ حدث فقط حاليًا. قد توجد نتائج أقدم غير معروضة؛ العدد ليس إجمالي السجلات المطابقة.' : 'Filtered results currently scan the latest 1,000 events only. Older matches may exist; this is not a total matching count.' }}</p>
+            <p role="status" data-audit-filter-window>{{ $filteredMatchCount === 0 ? 0 : (($page - 1) * $perPage + 1) }}–{{ min($filteredMatchCount, $page * $perPage) }} {{ $isArabic ? 'من النتائج ضمن نطاق البحث المحدود' : 'of matches inside the limited search window' }} · {{ $isArabic ? 'الصفحة' : 'Page' }} {{ $page }} / {{ $lastPage }}</p>
         @else
             <p role="status" data-audit-range>{{ $total === 0 ? 0 : (($page - 1) * $perPage + 1) }}–{{ min($total, $page * $perPage) }} {{ $isArabic ? 'من' : 'of' }} {{ $total }} · {{ $isArabic ? 'الصفحة' : 'Page' }} {{ $page }} / {{ $lastPage }}</p>
         @endif
@@ -148,7 +149,7 @@
                 </article>
             @endforeach
         @endif
-        @if (! $isFiltered && $lastPage > 1)
+        @if ($lastPage > 1)
             @php($pagesStart = max(1, min($page - 2, $lastPage - 4)))
             @php($pagesEnd = min($lastPage, $pagesStart + 4))
             <nav class="security-audit-pages" aria-label="{{ $isArabic ? 'صفحات سجل الأمان' : 'Security audit pages' }}">
