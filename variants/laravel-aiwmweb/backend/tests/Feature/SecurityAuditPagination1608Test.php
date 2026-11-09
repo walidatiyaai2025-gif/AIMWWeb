@@ -79,6 +79,12 @@ final class SecurityAuditPagination1608Test extends TestCase
         $this->actingAs($admin)->getJson('/admin/security-audit?page=0')->assertUnprocessable();
         $this->actingAs($admin)->getJson('/admin/security-audit?page=1000001')->assertUnprocessable();
         $this->actingAs($admin)->getJson('/admin/security-audit?per_page=200')->assertUnprocessable();
+        // Legacy take=200 may still bound a filtered compatibility request,
+        // but cannot silently render 200 SQL rows under an invalid page size.
+        $this->actingAs($admin)->get('/admin/security-audit?take=200')
+            ->assertOk()
+            ->assertSee('value="25" selected', false)
+            ->assertSee('data-audit-total="0"', false);
 
         $this->actingAs($admin)->get('/admin/security-audit?q=nonexistent')
             ->assertOk()
