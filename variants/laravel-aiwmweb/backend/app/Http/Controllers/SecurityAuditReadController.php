@@ -18,6 +18,7 @@ final class SecurityAuditReadController
             'category' => ['nullable', 'string', 'max:40'],
             'outcome' => ['nullable', 'string', 'max:20'],
             'q' => ['nullable', 'string', 'max:200'],
+            'event_q' => ['nullable', 'string', 'max:160'],
             'take' => ['nullable', 'integer', 'min:1', 'max:200'],
             'page' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
             'per_page' => ['sometimes', 'integer', 'in:10,25,50,100'],
@@ -28,6 +29,7 @@ final class SecurityAuditReadController
         $category = trim((string) ($input['category'] ?? ''));
         $outcome = trim((string) ($input['outcome'] ?? ''));
         $search = trim((string) ($input['q'] ?? ''));
+        $eventSearch = trim((string) ($input['event_q'] ?? ''));
         // Legacy `take` is only for the filtered, bounded compatibility view.
         // It must not bypass the canonical 10/25/50/100 SQL page-size contract.
         $perPage = (int) ($input['per_page'] ?? 25);
@@ -35,10 +37,10 @@ final class SecurityAuditReadController
         // Legacy consumers can still explicitly limit their results with take.
         $take = isset($input['take']) ? (int) $input['take'] : null;
         $page = (int) ($input['page'] ?? 1);
-        $isFiltered = $category !== '' || $outcome !== '' || $search !== '';
-        // Only these two classification filters can be expressed exactly in
-        // portable, tenant-scoped SQL today. The q/take compatibility window
-        // remains visibly bounded rather than implying full-dataset search.
+        $isFiltered = $category !== '' || $outcome !== '' || $search !== '' || $eventSearch !== '';
+        // Classification and event-name filters are SQL-counted across all
+        // authorized rows. General q and explicit legacy take remain bounded
+        // to the latest 1,000 records and visibly disclose that limitation.
         $isSqlFiltered = $isFiltered && $search === '' && $take === null;
         $total = 0;
         $lastPage = 1;
@@ -75,10 +77,16 @@ final class SecurityAuditReadController
                 if ($outcome !== '') {
                     $query->whereRaw('('.$this->outcomeSql().') = ?', [mb_strtolower($outcome)]);
                 }
+                if ($eventSearch !== '') {
+                    // A literal event search never inspects arbitrary JSON
+                    // metadata and never treats user %/_/! as wildcards.
+                    $needle = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], mb_strtolower($eventSearch));
+                    $query->whereRaw("LOWER(audit_events.event) LIKE ? ESCAPE '!'", ['%'.$needle.'%']);
+                }
             }
-            // Both unfiltered and classification-only views use the same
-            // authoritative SQL COUNT and stable SQL page, never a truncated
-            // list of the most recent 1,000 records.
+            // Unfiltered, classification and event-only searches use
+            // authoritative SQL COUNT + stable SQL page, never a truncated
+            // in-memory latest-1,000 subset.
             $total = $query === null ? 0 : (clone $query)->count('audit_events.id');
             $lastPage = max(1, (int) ceil($total / $perPage));
             $page = min($page, $lastPage);
@@ -92,6 +100,7 @@ final class SecurityAuditReadController
                 ->map(fn ($row): array => $this->snapshot($row))
                 ->filter(fn (array $row): bool => $category === '' || strcasecmp($row['category'], $category) === 0)
                 ->filter(fn (array $row): bool => $outcome === '' || strcasecmp($row['outcome'], $outcome) === 0)
+                ->filter(fn (array $row): bool => $eventSearch === '' || str_contains(mb_strtolower($row['event']), mb_strtolower($eventSearch)))
                 ->filter(function (array $row) use ($search): bool {
                     if ($search === '') {
                         return true;
@@ -110,7 +119,7 @@ final class SecurityAuditReadController
             $events = $filteredCandidates->forPage($page, $perPage)->values();
         }
 
-        return view('security.audit', compact('events', 'category', 'outcome', 'search', 'take', 'settingsHref', 'page', 'perPage', 'total', 'lastPage', 'isFiltered', 'filteredMatchCount') + [
+        return view('security.audit', compact('events', 'category', 'outcome', 'search', 'eventSearch', 'take', 'settingsHref', 'page', 'perPage', 'total', 'lastPage', 'isFiltered', 'filteredMatchCount') + [
             'canonicalOperationId' => self::OPERATION_ID,
             'settingsNavigationOperationId' => self::SETTINGS_NAVIGATION_OPERATION_ID,
             'isSqlFiltered' => $isSqlFiltered,
