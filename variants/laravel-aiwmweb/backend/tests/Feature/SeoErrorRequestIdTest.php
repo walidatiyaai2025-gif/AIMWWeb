@@ -27,6 +27,7 @@ final class SeoErrorRequestIdTest extends TestCase
         $this->assertStringNotContainsString('SQLSTATE', $response->getContent());
         $this->assertStringNotContainsString('/home/private/.env', $response->getContent());
     }
+
     public function test_ai_platform_failures_are_classified_without_leaking_provider_errors(): void
     {
         config()->set('app.debug', false);
