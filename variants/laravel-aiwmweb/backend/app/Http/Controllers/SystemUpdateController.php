@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Platform\SystemUpdateService;
 use App\Platform\VerifiedMysqlBackupService;
+use App\Services\CpanelRuntimeActivationService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -34,7 +35,39 @@ final class SystemUpdateController extends Controller
             'state' => $updates->state(),
             'candidate' => $request->session()->get('system_update_candidate'),
             'history' => array_reverse($entries),
+            'runtimeActivation' => app(CpanelRuntimeActivationService::class)->status(),
         ]);
+    }
+
+    /**
+     * Enable only host-verified, one-at-a-time cPanel runtime stages.
+     * Signed update configuration, user data and provider secrets are never modified.
+     */
+    public function activateRuntime(Request $request, CpanelRuntimeActivationService $activation): RedirectResponse
+    {
+        $validated = $request->validate([
+            'action' => ['required', 'in:queue,ai,disable_ai'],
+            'confirmation' => ['required', 'in:ACTIVATE'],
+        ]);
+
+        try {
+            $activation->activate((string) $validated['action'], (int) $request->user()->getAuthIdentifier());
+
+            return back()->with('status', 'Runtime setting saved securely. Reload after the next cPanel Cron invocation to verify real processing.');
+        } catch (RuntimeException $e) {
+            // The codes are fixed by the activation service, not remote output.
+            $allowed = [
+                'cpanel_profile_required', 'queue_preflight_blocked', 'ai_preflight_blocked',
+                'protected_environment_unavailable', 'activation_lock_unsafe',
+                'runtime_activation_in_progress', 'invalid_runtime_setting',
+                'ambiguous_runtime_setting', 'environment_backup_failed',
+                'environment_write_failed', 'environment_activation_failed',
+                'runtime_config_refresh_failed', 'unsupported_runtime_action',
+            ];
+            $code = in_array($e->getMessage(), $allowed, true) ? $e->getMessage() : 'runtime_activation_unavailable';
+
+            return back()->withErrors(['runtime' => 'Runtime activation blocked: '.$code.'. No AI call was made.']);
+        }
     }
 
     public function check(Request $request, SystemUpdateService $updates): RedirectResponse

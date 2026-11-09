@@ -26,6 +26,21 @@ class CpanelWorkerReceiptHealthTest extends TestCase
         ]);
     }
 
+    public function test_private_cron_invocation_evidence_never_fakes_queue_or_ai_readiness(): void
+    {
+        config(['cpanel.cron_enabled' => false, 'cpanel.preflight_passed' => false]);
+        $store = Cache::store('database');
+        $store->put(RuntimeHealthService::CPANEL_CRON_OBSERVED_KEY, time() - 5, now()->addMinutes(10));
+        $store->forget(RuntimeHealthService::CPANEL_QUEUE_TICK_RECEIPT_KEY);
+
+        $inspection = app(RuntimeHealthService::class)->inspectorEvidence();
+        $this->assertSame('ok', $inspection['cron_invocation']['status']);
+        $this->assertSame('private_cli_cron_invoked', $inspection['cron_invocation']['evidence']);
+        $this->assertSame('disabled', $inspection['worker_cycle']['status']);
+        $this->assertSame('disabled', $inspection['scheduler_heartbeat']['status']);
+        $this->assertSame('not_ready', app(RuntimeHealthService::class)->ready()['status']);
+    }
+
     public function test_enabling_cron_without_execution_does_not_claim_queue_worker_success(): void
     {
         Cache::store('database')->forget(RuntimeHealthService::CPANEL_QUEUE_TICK_RECEIPT_KEY);

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Middleware\CpanelTransportPolicy;
 use App\Models\User;
 use App\Platform\SystemUpdateService;
 use GuzzleHttp\Psr7\Uri;
@@ -31,6 +32,7 @@ final class SystemUpdateCenterTest extends TestCase
             ['POST', '/admin/system-updates/upload'],
             ['POST', '/admin/system-updates/verify'],
             ['POST', '/admin/system-updates/backup'],
+            ['POST', '/admin/system-updates/runtime-activate'],
         ] as [$method, $path]) {
             $route = Route::getRoutes()->match(Request::create($path, $method));
             $this->assertContains('web', $route->gatherMiddleware());
@@ -54,6 +56,7 @@ final class SystemUpdateCenterTest extends TestCase
         $this->post('/admin/system-updates/upload', ['confirmation' => 'INSTALL'])->assertRedirect('/login');
         $this->post('/admin/system-updates/verify')->assertRedirect('/login');
         $this->post('/admin/system-updates/backup', ['confirmation' => 'BACKUP'])->assertRedirect('/login');
+        $this->post('/admin/system-updates/runtime-activate', ['action' => 'queue', 'confirmation' => 'ACTIVATE'])->assertRedirect('/login');
 
         $user = User::factory()->create(['platform_admin' => false]);
         $this->actingAs($user)->get('/admin/system-updates')->assertForbidden();
@@ -62,6 +65,71 @@ final class SystemUpdateCenterTest extends TestCase
         $this->actingAs($user)->post('/admin/system-updates/upload', ['confirmation' => 'INSTALL'])->assertForbidden();
         $this->actingAs($user)->post('/admin/system-updates/verify')->assertForbidden();
         $this->actingAs($user)->post('/admin/system-updates/backup', ['confirmation' => 'BACKUP'])->assertForbidden();
+        $this->actingAs($user)->post('/admin/system-updates/runtime-activate', ['action' => 'queue', 'confirmation' => 'ACTIVATE'])->assertForbidden();
+    }
+
+    public function test_cpanel_queue_activation_stays_blocked_without_real_cron_and_mysql_evidence(): void
+    {
+        $this->withoutMiddleware(ThrottleRequests::class);
+        // Transport HTTPS/308 is proven by the real cPanel Setup ZIP HTTP
+        // browser smoke; this test isolates the guarded runtime activation.
+        $this->withoutMiddleware(CpanelTransportPolicy::class);
+        $this->withoutVite();
+        config([
+            'cpanel.enabled' => true,
+            'app.url' => 'https://aiwm.example.test',
+            'cpanel.cron_enabled' => false,
+            'cpanel.preflight_passed' => false,
+            'cpanel.ai_enabled' => false,
+            'queue.default' => 'database',
+            'cache.default' => 'database',
+            'session.driver' => 'database',
+            'cache.stores.database.connection' => config('database.default'),
+            'cache.stores.database.lock_connection' => config('database.default'),
+            'session.connection' => config('database.default'),
+            'queue.connections.database.connection' => config('database.default'),
+        ]);
+
+        $admin = User::factory()->create(['platform_admin' => true]);
+
+        $this->withServerVariables(['HTTPS' => 'on'])->actingAs($admin)->get('/admin/system-updates')
+            ->assertOk()
+            ->assertSee('Queues, Cron and AI activation')
+            ->assertSee('private_cron_not_observed')
+            ->assertSee('disabled', false)
+            ->assertSee('name="action" value="queue"', false)
+            ->assertSee('name="action" value="ai"', false);
+
+        $this->withServerVariables(['HTTPS' => 'on'])->actingAs($admin)->post('/admin/system-updates/runtime-activate', [
+            'action' => 'queue',
+            'confirmation' => 'ACTIVATE',
+        ])->assertRedirect()
+            ->assertSessionHasErrors('runtime');
+
+        $this->assertFalse(config('cpanel.cron_enabled'));
+        $this->assertFalse(config('cpanel.ai_enabled'));
+    }
+
+    public function test_cpanel_ai_cannot_activate_without_verified_worker_and_model(): void
+    {
+        $this->withoutMiddleware(ThrottleRequests::class);
+        $this->withoutMiddleware(CpanelTransportPolicy::class);
+        config([
+            'cpanel.enabled' => true,
+            'app.url' => 'https://aiwm.example.test',
+            'cpanel.cron_enabled' => true,
+            'cpanel.preflight_passed' => true,
+            'cpanel.ai_enabled' => false,
+        ]);
+        $admin = User::factory()->create(['platform_admin' => true]);
+
+        $this->actingAs($admin)->post('/admin/system-updates/runtime-activate', [
+            'action' => 'ai',
+            'confirmation' => 'ACTIVATE',
+        ])->assertRedirect()
+            ->assertSessionHasErrors('runtime');
+
+        $this->assertFalse(config('cpanel.ai_enabled'));
     }
 
     public function test_backup_now_requires_confirmation_and_never_exposes_database_keys(): void
@@ -139,8 +207,8 @@ final class SystemUpdateCenterTest extends TestCase
         $this->assertStringContainsString('data-dashboard-shell="aiwmweb"', $source);
         $this->assertStringContainsString('data-aiwm-update-center-shell-styles', $source);
         $this->assertStringContainsString('@media (max-width: 760px)', $source);
-        $this->assertSame(5, substr_count($source, '<form '));
-        $this->assertSame(5, substr_count($source, '@csrf'));
+        $this->assertSame(8, substr_count($source, '<form '));
+        $this->assertSame(8, substr_count($source, '@csrf'));
         foreach (['check', 'install', 'upload', 'verify', 'backup'] as $name) {
             $this->assertStringContainsString("route('platform.updates.{$name}')", $source);
         }

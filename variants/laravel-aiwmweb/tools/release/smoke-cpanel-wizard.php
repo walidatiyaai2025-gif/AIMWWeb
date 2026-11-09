@@ -17,6 +17,12 @@ if ($argc !== 6) {
 $installer = $root.'/public/install.php';
 $private = $root.'/app/storage/app/aiwm-install';
 
+if (! is_file($root.'/app/aiwm-cpanel-cron.php')) {
+    throw new RuntimeException('Actual Setup ZIP is missing the private bounded Cron entrypoint.');
+}
+if (is_file($root.'/public/aiwm-cpanel-cron.php')) {
+    throw new RuntimeException('Private Cron entrypoint was exposed in public.');
+}
 if (! is_file($installer) || (! is_dir($private) && ! mkdir($private, 0700, true))) {
     throw new RuntimeException('The extracted full Setup ZIP is missing its installer.');
 }
@@ -173,7 +179,7 @@ $stages = [
         'admin_password_confirmation' => 'Only-For-CI-Smoke-1234!'], 'Secure Environment / APP_KEY'],
     ['environment', [], 'Storage / Uploads'],
     ['storage', [], 'Cache / Queue'],
-    ['queue', ['queue_mode' => 'sync'], 'Mail Configuration'],
+    ['queue', ['queue_mode' => 'database'], 'Mail Configuration'],
     ['mail', [], 'Scheduler / Cron'],
     ['scheduler', [], 'Migrations / Seeders'],
 ];
@@ -259,6 +265,13 @@ if (! str_contains($env, 'APP_VERSION="'.$buildIdentity['version'].'"') ||
     ! str_contains($env, 'APP_ENV="production"') ||
     ! str_contains($env, 'APP_KEY="'.$resumeKey.'"') ||
     ! str_contains($env, 'DB_PORT="3306"') ||
+    ! str_contains($env, 'AIMW_RUNTIME_PROFILE="cpanel"') ||
+    ! str_contains($env, 'QUEUE_CONNECTION="database"') ||
+    ! str_contains($env, 'CACHE_STORE="database"') ||
+    ! str_contains($env, 'SESSION_DRIVER="database"') ||
+    ! str_contains($env, 'CPANEL_AI_ENABLED="false"') ||
+    ! str_contains($env, 'CPANEL_CRON_ENABLED="false"') ||
+    ! str_contains($env, 'CPANEL_PREFLIGHT_PASSED="false"') ||
     str_contains($env, 'AIWM_UPDATES_SECRET_KEY')) {
     throw new RuntimeException('Unexpected unsafe production environment or signing secret.');
 }

@@ -17,6 +17,10 @@ final class RuntimeHealthService
     // Set only after the actual bounded cPanel Cron worker cycle completes.
     public const CPANEL_QUEUE_TICK_RECEIPT_KEY = 'runtime:cpanel:queue:last_successful_tick';
 
+    // Only proves the private CLI entrypoint has actually invoked cpanel:tick.
+    // It does not certify queue processing, scheduler execution or AI readiness.
+    public const CPANEL_CRON_OBSERVED_KEY = 'runtime:cpanel:cron:last_invocation';
+
     /** @return array{status:string,service:string} */
     public function live(): array
     {
@@ -58,6 +62,9 @@ final class RuntimeHealthService
                     : ($cpanel && $cacheMode !== 'database'
                         ? ['status' => 'unavailable', 'reason_code' => 'cache_driver_mismatch']
                         : $this->inspectorReceipt(self::SCHEDULER_HEARTBEAT_KEY, $cpanel, 'scheduler_heartbeat_observed'))),
+            'cron_invocation' => ! $cpanel
+                ? ['status' => 'not_advertised', 'reason_code' => 'no_cpanel_cron_receipt']
+                : $this->inspectorReceipt(self::CPANEL_CRON_OBSERVED_KEY, true, 'private_cli_cron_invoked'),
             'worker_cycle' => ! $cpanel
                 ? ['status' => 'not_advertised', 'reason_code' => 'no_cpanel_worker_receipt']
                 : (! $cron

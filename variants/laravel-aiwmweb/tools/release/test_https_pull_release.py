@@ -25,6 +25,20 @@ PRODUCTION_WORKFLOW = WORKFLOW
 
 
 class HttpsPullReleaseTests(unittest.TestCase):
+    def test_actual_setup_zip_includes_bounded_private_worker_entrypoint(self):
+        source = (VARIANT / "backend/aiwm-cpanel-cron.php").read_text(encoding="utf8")
+        packager = SETUP.read_text(encoding="utf8")
+        installer = (VARIANT / "tools/release/cpanel-one-time-install.php").read_text(encoding="utf8")
+        acceptance = (VARIANT / "tools/release/smoke-cpanel-wizard.php").read_text(encoding="utf8")
+        for expected in ("PHP_SAPI !== 'cli'", "LOCK_EX | LOCK_NB", "setTimeout(110)", "cpanel:tick", "memory_limit=192M"):
+            self.assertIn(expected, source)
+        self.assertIn('"aiwm-cpanel-cron.php"', packager)
+        self.assertIn("Actual Setup ZIP is missing the private bounded Cron entrypoint", acceptance)
+        for expected in ("'QUEUE_CONNECTION' => 'database'", "aiwmEnvironment($hardened, 'CACHE_STORE', 'database')", "aiwmEnvironment($hardened, 'SESSION_DRIVER', 'database')", "'CPANEL_CRON_ENABLED' => 'false'"):
+            self.assertIn(expected, installer)
+        self.assertNotIn("queue:work --daemon", source)
+        self.assertNotIn("schedule:work", source)
+
     def test_cron_entry_is_cli_only_and_explicitly_opted_in(self):
         text = CRON.read_text(encoding="utf8")
         for anchor in (

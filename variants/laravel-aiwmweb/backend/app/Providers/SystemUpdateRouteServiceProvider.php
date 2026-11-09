@@ -19,6 +19,7 @@ final class SystemUpdateRouteServiceProvider extends ServiceProvider
                 Route::post('/upload', [SystemUpdateController::class, 'upload'])->name('platform.updates.upload');
                 Route::post('/verify', [SystemUpdateController::class, 'verify'])->name('platform.updates.verify');
                 Route::post('/backup', [SystemUpdateController::class, 'backup'])->name('platform.updates.backup');
+                Route::post('/runtime-activate', [SystemUpdateController::class, 'activateRuntime'])->name('platform.updates.runtime-activate');
             });
     }
 }

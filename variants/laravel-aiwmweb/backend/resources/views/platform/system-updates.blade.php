@@ -108,6 +108,7 @@
     $shellLinks = [
         ['url' => $shellHomeUrl, 'label' => $shellTitle, 'active' => true],
         ['url' => '#installed', 'label' => $t('Installed version', 'الإصدار الحالي')],
+        ['url' => '#runtime-activation', 'label' => $t('Queues and AI', 'الطوابير والذكاء الاصطناعي')],
         ['url' => '#available', 'label' => $t('Find and install an update', 'فحص وتثبيت تحديث')],
         ['url' => '#backup-now', 'label' => $t('Backup & Recovery', 'النسخ الاحتياطي والاسترجاع')],
         ['url' => '#history', 'label' => $t('Recent update history', 'سجل آخر التحديثات')],
@@ -139,6 +140,67 @@
             <div class="stat"><span>{{ $t('Source commit', 'كود الإصدار') }}</span><strong><code>{{ $state['sha'] }}</code></strong></div>
             <div class="stat"><span>{{ $t('Update channel', 'قناة التحديث') }}</span><strong>{{ $state['enabled'] && $state['configured'] ? $t('Signed stable', 'موقّع ومستقر') : $t('Not configured', 'غير مجهز') }}</strong></div>
         </div>
+    </section>
+    <section class="panel" aria-labelledby="runtime-activation" data-testid="cpanel-runtime-activation">
+        <h2 id="runtime-activation">{{ $t('Queues, Cron and AI activation', 'تفعيل الطوابير وCron والذكاء الاصطناعي') }}</h2>
+        <p class="muted">{{ $t(
+            'Database Queue preserves jobs. The private Cron runner is included in the Setup ZIP and must be registered once through cPanel Cron Jobs. An enabled switch alone never proves work is running.',
+            'تحفظ Database Queue المهام. ملف Cron الخاص موجود داخل Setup ZIP ويحتاج إضافته مرة واحدة من Cron Jobs في cPanel. مجرد التفعيل لا يثبت تشغيل المهام.'
+        ) }}</p>
+        <p class="muted">{{ $t(
+            'Every minute: use your hosting PHP 8.3+ CLI executable to run PRIVATE_APP_ROOT/aiwm-cpanel-cron.php (not public/, queue:work or schedule:run). The host must permit CLI PHP and child processes. No SSH or Composer is needed.',
+            'كل دقيقة: اختر PHP CLI 8.3+ الخاص بالاستضافة وشغّل PRIVATE_APP_ROOT/aiwm-cpanel-cron.php وليس داخل public أو باستخدام queue:work أو schedule:run مباشرة. يجب أن تسمح الاستضافة بعمليات PHP CLI الفرعية. لا يلزم SSH أو Composer.'
+        ) }}</p>
+        <div class="grid">
+            <div class="stat"><span>{{ $t('Queue driver', 'نوع الطابور') }}</span><strong>{{ $runtimeActivation['queue_driver'] }}</strong></div>
+            <div class="stat"><span>{{ $t('Background queue', 'الطابور الخلفي') }}</span><strong>{{ $runtimeActivation['queue_enabled'] ? 'Enabled' : 'Disabled' }}</strong></div>
+            <div class="stat"><span>{{ $t('AI admissions', 'طلبات الذكاء الاصطناعي') }}</span><strong>{{ $runtimeActivation['ai_enabled'] ? 'Enabled' : 'Disabled' }}</strong></div>
+            <div class="stat"><span>{{ $t('Real Cron invocation', 'استدعاء Cron الفعلي') }}</span><strong>{{ $runtimeActivation['cron_invocation']['status'] ?? 'unavailable' }}</strong></div>
+            <div class="stat"><span>{{ $t('Verified worker cycle', 'دورة العامل المثبتة') }}</span><strong>{{ $runtimeActivation['worker_cycle']['status'] ?? 'unavailable' }}</strong></div>
+            <div class="stat"><span>{{ $t('Scheduler heartbeat', 'نبض المجدول') }}</span><strong>{{ $runtimeActivation['scheduler_heartbeat']['status'] ?? 'unavailable' }}</strong></div>
+        </div>
+        @if($runtimeActivation['profile'] !== 'cpanel')
+            <div class="alert">{{ $t('cPanel profile is not active; do not apply cPanel controls to VPS.', 'وضع cPanel غير نشط؛ لا تطبّق هذه الإعدادات على VPS.') }}</div>
+        @else
+            @if(count($runtimeActivation['queue_blockers']))
+                <p class="alert" role="status">{{ $t('Queue activation blocked until these verified preconditions pass:', 'تفعيل الطوابير متوقف حتى اجتياز الشروط الفعلية:') }}
+                    <code>{{ implode(' · ', $runtimeActivation['queue_blockers']) }}</code>
+                </p>
+            @endif
+            <form method="post" action="{{ route('platform.updates.runtime-activate') }}">
+                @csrf
+                <input type="hidden" name="action" value="queue">
+                <label for="queue_activation_confirmation">{{ $t('Type ACTIVATE to confirm database queue + bounded Cron activation', 'اكتب ACTIVATE لتأكيد تشغيل Database Queue وCron المحدود') }}</label>
+                <input id="queue_activation_confirmation" name="confirmation" required pattern="ACTIVATE" autocomplete="off" placeholder="ACTIVATE">
+                <button type="submit" @disabled($runtimeActivation['queue_enabled'] || count($runtimeActivation['queue_blockers']))>{{ $t('Activate verified queue', 'تفعيل الطابور المتحقق منه') }}</button>
+            </form>
+            @if(count($runtimeActivation['ai_blockers']))
+                <p class="alert" role="status">{{ $t('AI activation prerequisites not yet complete:', 'شروط تفعيل الذكاء الاصطناعي غير مكتملة:') }}
+                    <code>{{ implode(' · ', $runtimeActivation['ai_blockers']) }}</code>
+                </p>
+            @endif
+            <p class="muted">{{ $t(
+                'AI activation enables one-at-a-time bounded background generation, not automatic WordPress publishing. Provider READY is not proof that POST generation succeeds; verify a single reviewed SEO proposal after activation.',
+                'تفعيل AI يسمح بتوليد محدود داخل العامل الخلفي وليس بالنشر التلقائي في WordPress. حالة READY لا تثبت نجاح التوليد؛ اختبر اقتراح SEO واحدًا بعد التفعيل.'
+            ) }}</p>
+            @if($runtimeActivation['ai_enabled'])
+                <form method="post" action="{{ route('platform.updates.runtime-activate') }}">
+                    @csrf
+                    <input type="hidden" name="action" value="disable_ai">
+                    <label for="disable_ai_confirmation">ACTIVATE</label>
+                    <input id="disable_ai_confirmation" name="confirmation" required pattern="ACTIVATE" autocomplete="off" placeholder="ACTIVATE">
+                    <button class="install" type="submit">{{ $t('Stop new AI admissions safely', 'إيقاف قبول طلبات AI الجديدة بأمان') }}</button>
+                </form>
+            @else
+                <form method="post" action="{{ route('platform.updates.runtime-activate') }}">
+                    @csrf
+                    <input type="hidden" name="action" value="ai">
+                    <label for="ai_activation_confirmation">{{ $t('Type ACTIVATE to enable bounded AI requests after real worker health', 'اكتب ACTIVATE لتشغيل AI المحدود بعد إثبات صحة العامل') }}</label>
+                    <input id="ai_activation_confirmation" name="confirmation" required pattern="ACTIVATE" autocomplete="off" placeholder="ACTIVATE">
+                    <button type="submit" @disabled(count($runtimeActivation['ai_blockers']))>{{ $t('Activate verified AI', 'تفعيل AI بعد التحقق') }}</button>
+                </form>
+            @endif
+        @endif
     </section>
     <section class="panel" aria-labelledby="available">
         <h2 id="available">{{ $t('Find and install an update', 'فحص وتثبيت تحديث') }}</h2>
