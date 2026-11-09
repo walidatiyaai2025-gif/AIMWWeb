@@ -15,6 +15,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -106,4 +107,15 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(fn (QuotaExceededException $e, Request $r) => $r->is('api/*') ? response()->json(['message' => $e->getMessage(), 'code' => 'QUOTA_EXCEEDED'], 429) : null);
         $exceptions->render(fn (InvalidProviderSignatureException $e, Request $r) => $r->is('api/*') ? response()->json(['message' => 'Invalid provider signature.', 'code' => 'INVALID_PROVIDER_SIGNATURE'], 401) : null);
         $exceptions->render(fn (BillingConflictException $e, Request $r) => $r->is('api/*') ? response()->json(['message' => $e->getMessage(), 'code' => 'BILLING_CONFLICT'], 409) : null);
+        // Preserve a safe correlation reference on responses rendered by the exception
+        // handler. The normal middleware response path already sets this header;
+        // uncaught errors bypass that path, but the request-scoped ID still exists.
+        $exceptions->respond(static function (Response $response): Response {
+            $requestId = request()->attributes->get('request_id');
+            if (is_string($requestId) && preg_match('/^[A-Za-z0-9._:-]{8,128}$/D', $requestId)) {
+                $response->headers->set('X-Request-ID', $requestId);
+            }
+
+            return $response;
+        });
     })->create();
