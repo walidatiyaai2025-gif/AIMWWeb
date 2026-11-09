@@ -440,6 +440,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const [explorerPageSize, setExplorerPageSize] = useState(25);
     const [emailHistoryPageSize, setEmailHistoryPageSize] = useState(25);
     const [applicationUsersPageSize, setApplicationUsersPageSize] = useState(25);
+    const [rolesPageSize, setRolesPageSize] = useState(25);
     const [approvalPageSize, setApprovalPageSize] = useState(25);
     const [evidencePageSize, setEvidencePageSize] = useState(25);
     const [emailSchedulesPageSize, setEmailSchedulesPageSize] = useState(25);
@@ -592,6 +593,14 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, applicationUsersPageSize],
         queryFn: () => readWorkspaceCollection(endpointWithQuery(endpoint!, page, search, {
             per_page: String(applicationUsersPageSize),
+        })),
+        enabled: state.state === 'enabled' && Boolean(endpoint),
+    } : route.key === 'roles' ? {
+        // The Roles grid opts into SQL paging. Role pickers without page
+        // parameters retain the legacy complete array contract.
+        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, rolesPageSize],
+        queryFn: () => readWorkspaceCollection(endpointWithQuery(endpoint!, page, search, {
+            per_page: String(rolesPageSize),
         })),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     } : route.key === 'notifications' ? {
@@ -1657,9 +1666,12 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         }} />
                     : <Pagination page={collection.page} lastPage={collection.lastPage} onPage={route.key === 'sites' ? (next) => navigateSites(next, sitesPageSize, sitesFilter) : route.key === 'execution' ? (next) => navigateExecution({ ...executionState, page: next }) : setPage}
                         total={collection.authoritativeTotal}
-                        pageSize={route.key === 'application-users' ? applicationUsersPageSize : route.key === 'execution' ? executionState.pageSize : route.key === 'email-history' ? emailHistoryPageSize : route.key === 'approvals' ? approvalPageSize : route.key === 'evidence' ? evidencePageSize : route.key === 'email-schedules' ? emailSchedulesPageSize : route.key === 'notifications' ? notificationsPageSize : route.key === 'logs' ? logsPageSize : route.key === 'sites' ? sitesPageSize : undefined}
+                        pageSize={route.key === 'roles' ? rolesPageSize : route.key === 'application-users' ? applicationUsersPageSize : route.key === 'execution' ? executionState.pageSize : route.key === 'email-history' ? emailHistoryPageSize : route.key === 'approvals' ? approvalPageSize : route.key === 'evidence' ? evidencePageSize : route.key === 'email-schedules' ? emailSchedulesPageSize : route.key === 'notifications' ? notificationsPageSize : route.key === 'logs' ? logsPageSize : route.key === 'sites' ? sitesPageSize : undefined}
                         returnedCount={collection.rows.length}
-                        onPageSizeChange={route.key === 'application-users' ? (size) => {
+                        onPageSizeChange={route.key === 'roles' ? (size) => {
+                            setPage(1);
+                            setRolesPageSize(size);
+                        } : route.key === 'application-users' ? (size) => {
                             setPage(1);
                             setApplicationUsersPageSize(size);
                         } : route.key === 'execution' ? (size) => {
