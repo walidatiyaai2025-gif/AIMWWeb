@@ -2,6 +2,7 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SEO_OPERATIONS, SeoVisibleControls } from '../seo-visible-controls';
+import { seoBatchStorageKey } from '../seo-ai-durable';
 
 const config = {
     tenant: 'alpha',
@@ -42,6 +43,7 @@ describe('SEO visible-control mass closure', () => {
 
     beforeEach(() => {
         document.head.innerHTML = '<meta name="csrf-token" content="csrf-test">';
+        sessionStorage.clear();
         proposalsPayload = [];
         fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
             const url = String(input);
@@ -182,12 +184,122 @@ describe('SEO visible-control mass closure', () => {
         expect(SEO_OPERATIONS.generateSuggestions).toBe('AIMW-BILL-E3C47C563B');
 
         fireEvent.click(button);
-        await screen.findByText('Generated 12 reviewable suggestion(s). No WordPress mutation occurred.');
+        await screen.findByText('Generated 1 reviewable suggestion(s). No WordPress mutation occurred.');
 
         const aiCalls = fetchMock.mock.calls.filter(([url, init]) => String(url).includes('/ai-proposal') && init?.method === 'POST');
-        expect(aiCalls).toHaveLength(12);
+        expect(aiCalls).toHaveLength(1);
         expect(aiCalls.every(([, init]) => JSON.parse(String(init?.body)) && true)).toBe(true);
         expect(screen.getAllByText(/AI title/).length).toBeGreaterThan(0);
+        fireEvent.click(button);
+        await waitFor(() => expect(fetchMock.mock.calls.filter(([url, init]) => String(url).includes('/ai-proposal') && init?.method === 'POST').length).toBe(2));
+    });
+
+    it('accepts 202 as durable queued work, GETs owned status and replays the finished proposal without a second generation', async () => {
+        const batchId = '123e4567-e89b-42d3-a456-426614174000';
+        const statusUrl = '/api/tenants/alpha/ai-batches/' + batchId;
+        const previous = fetchMock.getMockImplementation()!;
+        fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+            const url = String(input);
+            if (url === statusUrl) return jsonResponse({
+                data: { id: batchId, site_id: 7, state: 'completed', items: [{ state: 'completed', result: null }] },
+            });
+            if (url.includes('/ai-proposal') && init?.method === 'POST') {
+                if (new Headers(init.headers).get('X-AIMW-AI-BATCH') === batchId) {
+                    return jsonResponse({ proposal: { seo_title: 'Saved title' }, requires_approval: true });
+                }
+                return jsonResponse({
+                    data: { id: batchId, site_id: 7, state: 'pending', status_url: statusUrl, items: [{ state: 'pending' }] },
+                    status_url: statusUrl,
+                }, 202);
+            }
+            return previous(input, init);
+        });
+        const { container } = render(<SeoVisibleControls config={config} />);
+        await screen.findByText('finding-1');
+        fireEvent.click(screen.getAllByRole('button', { name: 'Generate AI proposal' })[0]);
+        await screen.findByText(/Saved AI proposal for finding 1 is ready for explicit approval/);
+        expect(screen.getByText(/Saved title/)).toBeInTheDocument();
+        expect(sessionStorage.getItem(seoBatchStorageKey('alpha', 7))).toBeNull();
+        const posts = fetchMock.mock.calls.filter(([url, init]) => String(url).includes('/ai-proposal') && init?.method === 'POST');
+        expect(posts).toHaveLength(2);
+        expect(posts.filter(([, init]) => !new Headers(init?.headers).has('X-AIMW-AI-BATCH'))).toHaveLength(1);
+        expect(container.querySelector('[data-canonical-operation="' + SEO_OPERATIONS.generateSuggestions + '"]')).toBeEnabled();
+    });
+
+    it('restores a pending tenant/site batch on reload and never creates a second AI generation', async () => {
+        const id = '123e4567-e89b-42d3-a456-426614174001';
+        const statusUrl = '/api/tenants/alpha/ai-batches/' + id;
+        sessionStorage.setItem(seoBatchStorageKey('alpha', 7), JSON.stringify({
+            findingId: 2, id, statusUrl, state: 'queued',
+        }));
+        const previous = fetchMock.getMockImplementation()!;
+        fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+            if (String(input) === statusUrl) return jsonResponse({
+                data: { id, site_id: 7, state: 'completed', items: [{ state: 'completed' }] },
+            });
+            if (String(input).includes('/ai-proposal') && init?.method === 'POST') {
+                expect(new Headers(init.headers).get('X-AIMW-AI-BATCH')).toBe(id);
+                return jsonResponse({ proposal: { seo_description: 'Recovered saved description' }, requires_approval: true });
+            }
+            return previous(input, init);
+        });
+        const { container } = render(<SeoVisibleControls config={config} />);
+        await screen.findByText(/Saved AI proposal for finding 2 is ready for explicit approval/);
+        expect(screen.getByText(/Recovered saved description/)).toBeInTheDocument();
+        expect(fetchMock.mock.calls.filter(([url, init]) => String(url).includes('/ai-proposal') && init?.method === 'POST')).toHaveLength(1);
+        expect(container.querySelector('[data-canonical-operation="' + SEO_OPERATIONS.generateSuggestions + '"]')).toBeEnabled();
+    });
+
+    it('holds a paused batch without resubmitting and rejects a foreign status URL before polling', async () => {
+        const id = '123e4567-e89b-42d3-a456-426614174002';
+        const statusUrl = '/api/tenants/alpha/ai-batches/' + id;
+        const previous = fetchMock.getMockImplementation()!;
+        fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+            if (String(input) === statusUrl) return jsonResponse({
+                data: { id, site_id: 7, state: 'paused', items: [{ state: 'paused', error_code: 'quota_exceeded' }] },
+            });
+            if (String(input).includes('/ai-proposal') && init?.method === 'POST') return jsonResponse({
+                data: { id, site_id: 7, state: 'pending', status_url: statusUrl },
+                status_url: statusUrl,
+            }, 202);
+            return previous(input, init);
+        });
+        const { unmount } = render(<SeoVisibleControls config={config} />);
+        await screen.findByText('finding-1');
+        fireEvent.click(screen.getAllByRole('button', { name: 'Generate AI proposal' })[0]);
+        await screen.findByText(/Saved AI task for finding 1: paused/);
+        expect(screen.getByRole('button', { name: 'Generate next suggestion' })).toBeDisabled();
+        expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'POST' && String(init?.body) === '{}')).toHaveLength(1);
+        expect(JSON.parse(sessionStorage.getItem(seoBatchStorageKey('alpha', 7))!)).toMatchObject({ id, findingId: 1, state: 'paused' });
+        unmount();
+        sessionStorage.clear();
+
+        fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+            if (String(input).includes('/ai-proposal') && init?.method === 'POST') return jsonResponse({
+                data: { id, site_id: 7, state: 'pending', status_url: 'https://foreign.example/ai-batches/' + id },
+                status_url: 'https://foreign.example/ai-batches/' + id,
+            }, 202);
+            return previous(input, init);
+        });
+        render(<SeoVisibleControls config={config} />);
+        await screen.findByText('finding-1');
+        fireEvent.click(screen.getAllByRole('button', { name: 'Generate AI proposal' })[0]);
+        await screen.findByText(/AI batch acceptance contract is invalid/);
+        expect(fetchMock.mock.calls.some(([url]) => String(url).startsWith('https://foreign.example'))).toBe(false);
+    });
+
+    it('shows sanitized AI HTTP failure and does not render remote error bodies', async () => {
+        const previous = fetchMock.getMockImplementation()!;
+        fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+            if (String(input).includes('/ai-proposal') && init?.method === 'POST')
+                return jsonResponse({ message: 'Bearer secret-provider-token SQL exception' }, 504);
+            return previous(input, init);
+        });
+        render(<SeoVisibleControls config={config} />);
+        await screen.findByText('finding-1');
+        fireEvent.click(screen.getAllByRole('button', { name: 'Generate AI proposal' })[0]);
+        await screen.findByText(/AI provider timed out \(HTTP 504\)/);
+        expect(screen.queryByText(/secret-provider-token/)).not.toBeInTheDocument();
     });
 
     it('surfaces the canonical Retry failed control only for retryable failed proposals and posts through the governed retry endpoint', async () => {
