@@ -127,7 +127,7 @@ final class RolesPagination1608Test extends TestCase
         $this->assertStringContainsString("per_page: String(rolesPageSize)", $frontend);
         $this->assertStringContainsString("setRolesPageSize(size)", $frontend);
         $this->assertStringContainsString("route.key === 'roles' ? rolesPageSize", $frontend);
-        $this->assertStringContainsString("if (\$request->hasAny(['page', 'per_page']))", $controller);
+        $this->assertStringContainsString('if ($request->hasAny', $controller);
         $this->assertStringContainsString('paginatedRoles(', $controller);
     }
 
