@@ -94,6 +94,61 @@ final class ExecutionCenterRealActionsTest extends TestCase
         }
     }
 
+    public function test_execution_center_paging_and_search_treat_sql_wildcards_as_literal_identifiers(): void
+    {
+        [$alpha, $owner] = $this->tenantWithOwner('literal-alpha');
+        [$beta, $foreign] = $this->tenantWithOwner('literal-beta');
+
+        for ($i = 0; $i < 26; $i++) {
+            $this->execution($alpha, $owner->user_id, 'failed', 'batch_job');
+        }
+        $this->execution($alpha, $owner->user_id, 'failed', 'batchXjob');
+        $this->execution($alpha, $owner->user_id, 'failed', 'batchZjob');
+        $this->execution($beta, $foreign->user_id, 'failed', 'batch_job');
+
+        $url = '/tenants/literal-alpha/admin/operations?per_page=25&page=1';
+        $this->actingAs($owner->user)->getJson($url.'&type=batch_')
+            ->assertOk()->assertJsonPath('total', 26)
+            ->assertJsonPath('last_page', 2)->assertJsonCount(25, 'data');
+        $this->actingAs($owner->user)->getJson($url.'&search=batch_job')
+            ->assertOk()->assertJsonPath('total', 26)->assertJsonPath('last_page', 2)
+            ->assertJsonCount(25, 'data');
+        $this->actingAs($owner->user)->getJson('/tenants/literal-alpha/admin/operations?per_page=25&page=2&search=batch_job')
+            ->assertOk()->assertJsonPath('total', 26)->assertJsonPath('current_page', 2)
+            ->assertJsonCount(1, 'data');
+        $this->actingAs($owner->user)->getJson($url.'&search=batch_missing')
+            ->assertOk()->assertJsonPath('total', 0)
+            ->assertJsonPath('meta.empty_reason', 'filter_matched_none');
+        $this->actingAs($foreign->user)->getJson('/tenants/literal-beta/admin/operations?per_page=25&page=1&search=batch_job')
+            ->assertOk()->assertJsonPath('total', 1);
+
+        $percent = $this->execution($alpha, $owner->user_id, 'failed', 'literal%code');
+        $bang = $this->execution($alpha, $owner->user_id, 'failed', 'literal!code');
+        $marker = $this->execution($alpha, $owner->user_id, 'failed', 'ordinary');
+        DB::table('operation_executions')->where('id', $marker)
+            ->update(['correlation_id' => 'literal_marker_123']);
+
+        // The internal service must be safe for direct callers as well, even
+        // for special characters excluded by the public HTTP validator.
+        app(TenantContext::class)->activate($alpha, $owner);
+        $service = app(OperationsControlPlaneService::class);
+        foreach ([
+            [['type' => 'literal%'], $percent],
+            [['type' => 'literal!'], $bang],
+            [['search' => '%'], $percent],
+            [['search' => '!'], $bang],
+            [['search' => 'marker_123'], $marker],
+        ] as [$filters, $expectedId]) {
+            $page = $service->paginatedOperations(['page' => 1, 'per_page' => 10, ...$filters], $owner->user_id);
+            $this->assertSame(1, $page['total']);
+            $this->assertSame($expectedId, $page['data'][0]['id']);
+        }
+
+        $this->assertSame(0, $service->paginatedOperations([
+            'page' => 1, 'per_page' => 10, 'search' => 'markerX123',
+        ], $owner->user_id)['total']);
+    }
+
     public function test_cancel_requires_owner_state_and_is_idempotent_with_one_audit_event(): void
     {
         [$tenant, $owner] = $this->tenantWithOwner('alpha');
