@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Middleware\CpanelTransportPolicy;
 use App\Models\User;
 use App\Platform\SystemUpdateService;
 use GuzzleHttp\Psr7\Uri;
@@ -72,7 +73,7 @@ final class SystemUpdateCenterTest extends TestCase
         $this->withoutMiddleware(ThrottleRequests::class);
         // Transport HTTPS/308 is proven by the real cPanel Setup ZIP HTTP
         // browser smoke; this test isolates the guarded runtime activation.
-        $this->withoutMiddleware(\App\Http\Middleware\CpanelTransportPolicy::class);
+        $this->withoutMiddleware(CpanelTransportPolicy::class);
         $this->withoutVite();
         config([
             'cpanel.enabled' => true,
@@ -112,7 +113,7 @@ final class SystemUpdateCenterTest extends TestCase
     public function test_cpanel_ai_cannot_activate_without_verified_worker_and_model(): void
     {
         $this->withoutMiddleware(ThrottleRequests::class);
-        $this->withoutMiddleware(\App\Http\Middleware\CpanelTransportPolicy::class);
+        $this->withoutMiddleware(CpanelTransportPolicy::class);
         config([
             'cpanel.enabled' => true,
             'app.url' => 'https://aiwm.example.test',
