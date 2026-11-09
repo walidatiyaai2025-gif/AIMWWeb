@@ -37,20 +37,20 @@ final class LegacyNotificationReadController extends Controller
                 ->orderByDesc('id');
 
             $serialize = static fn (InAppNotification $notification): array => [
-                    'id' => $notification->id,
-                    'notification_id' => $notification->notification_id,
-                    'category' => $notification->category,
-                    'severity' => $notification->severity,
-                    'source' => $notification->source,
-                    'title' => $notification->title,
-                    'message' => $notification->message,
-                    'deep_link' => $notification->deep_link,
-                    'mandatory' => (bool) $notification->mandatory,
-                    'locale' => $notification->locale,
-                    'delivery_mode' => $notification->delivery_mode,
-                    'read_at' => $notification->read_at?->toIso8601String(),
-                    'created_at' => $notification->created_at?->toIso8601String(),
-                ];
+                'id' => $notification->id,
+                'notification_id' => $notification->notification_id,
+                'category' => $notification->category,
+                'severity' => $notification->severity,
+                'source' => $notification->source,
+                'title' => $notification->title,
+                'message' => $notification->message,
+                'deep_link' => $notification->deep_link,
+                'mandatory' => (bool) $notification->mandatory,
+                'locale' => $notification->locale,
+                'delivery_mode' => $notification->delivery_mode,
+                'read_at' => $notification->read_at?->toIso8601String(),
+                'created_at' => $notification->created_at?->toIso8601String(),
+            ];
 
             if ($request->hasAny(['page', 'per_page'])) {
                 $filters = $request->validate([
