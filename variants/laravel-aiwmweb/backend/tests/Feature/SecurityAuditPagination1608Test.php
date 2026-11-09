@@ -72,6 +72,65 @@ final class SecurityAuditPagination1608Test extends TestCase
             ->assertSee('audit-oldest-marker');
     }
 
+    public function test_filtered_audit_paginates_only_the_disclosed_bounded_window_without_cross_tenant_leakage(): void
+    {
+        $admin = User::factory()->create(['platform_admin' => true]);
+        $tenant = Tenant::query()->create(['name' => 'Filtered tenant', 'slug' => 'filtered-audit']);
+        $foreign = Tenant::query()->create(['name' => 'Other tenant', 'slug' => 'other-audit']);
+        DB::table('tenant_memberships')->insert([
+            'tenant_id' => $tenant->id,
+            'user_id' => $admin->id,
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $rows = [];
+        for ($id = 1; $id <= 36; $id++) {
+            $rows[] = [
+                'tenant_id' => $tenant->id,
+                'actor_user_id' => $admin->id,
+                'event' => $id === 36 ? 'different-event' : 'filtered-match-'.$id,
+                'metadata' => '{}',
+                'occurred_at' => '2026-11-01 00:00:00',
+            ];
+        }
+        DB::table('audit_events')->insert($rows);
+        DB::table('audit_events')->insert([
+            'tenant_id' => $foreign->id,
+            'actor_user_id' => null,
+            'event' => 'filtered-match-foreign',
+            'metadata' => '{}',
+            'occurred_at' => '2026-11-01 00:00:00',
+        ]);
+
+        $first = $this->actingAs($admin)->get('/admin/security-audit?q=filtered-match&per_page=10');
+        $first->assertOk()
+            ->assertSee('data-audit-total="unavailable"', false)
+            ->assertSee('data-audit-filter-window', false)
+            ->assertSee('1–10 of matches inside the limited search window')
+            ->assertSee('filtered-match-35')
+            ->assertDontSee('filtered-match-1</strong>', false)
+            ->assertDontSee('filtered-match-foreign')
+            ->assertSee('page=4', false);
+
+        $last = $this->actingAs($admin)->get('/admin/security-audit?q=filtered-match&per_page=10&page=4');
+        $last->assertOk()
+            ->assertSee('31–35 of matches inside the limited search window')
+            ->assertSee('filtered-match-1</strong>', false)
+            ->assertDontSee('filtered-match-35')
+            ->assertDontSee('filtered-match-foreign')
+            ->assertSee('q=filtered-match', false);
+
+        $overflow = $this->actingAs($admin)->get('/admin/security-audit?q=filtered-match&per_page=10&page=999');
+        $overflow->assertOk()->assertSee('31–35 of matches inside the limited search window');
+
+        $bounded = $this->actingAs($admin)->get('/admin/security-audit?q=filtered-match&take=12&per_page=10&page=2');
+        $bounded->assertOk()
+            ->assertSee('11–12 of matches inside the limited search window')
+            ->assertDontSee('filtered-match-1</strong>', false);
+    }
+
     public function test_unfiltered_audit_rejects_invalid_pages_and_discloses_legacy_filtered_ceiling(): void
     {
         $admin = User::factory()->create(['platform_admin' => true]);

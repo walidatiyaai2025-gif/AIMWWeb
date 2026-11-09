@@ -31,11 +31,12 @@ final class SecurityAuditReadController
         // Legacy `take` is only for the filtered, bounded compatibility view.
         // It must not bypass the canonical 10/25/50/100 SQL page-size contract.
         $perPage = (int) ($input['per_page'] ?? 25);
-        $take = (int) ($input['take'] ?? ($input['per_page'] ?? 200));
+        $take = (int) ($input['take'] ?? 200);
         $page = (int) ($input['page'] ?? 1);
         $isFiltered = $category !== '' || $outcome !== '' || $search !== '';
         $total = 0;
         $lastPage = 1;
+        $filteredMatchCount = 0;
 
         $tenantIds = DB::table('tenant_memberships')
             ->where('user_id', (int) $request->user()->getAuthIdentifier())
@@ -72,7 +73,7 @@ final class SecurityAuditReadController
             // Legacy derived category/outcome/metadata-text search is not yet SQL
             // paginated. Keep its semantics (including secret-safe projection)
             // and explicitly disclose its latest-1000 ceiling in the UI.
-            $events = $query === null ? collect() : $query->limit(1000)->get($columns)
+            $filteredCandidates = $query === null ? collect() : $query->limit(1000)->get($columns)
                 ->map(fn ($row): array => $this->snapshot($row))
                 ->filter(fn (array $row): bool => $category === '' || strcasecmp($row['category'], $category) === 0)
                 ->filter(fn (array $row): bool => $outcome === '' || strcasecmp($row['outcome'], $outcome) === 0)
@@ -85,9 +86,15 @@ final class SecurityAuditReadController
                     return str_contains($haystack, mb_strtolower($search));
                 })
                 ->take($take)->values();
+            // This is a count only within the newest 1,000 authorized events and
+            // the optional legacy take bound, never a global matching total.
+            $filteredMatchCount = $filteredCandidates->count();
+            $lastPage = max(1, (int) ceil($filteredMatchCount / $perPage));
+            $page = min($page, $lastPage);
+            $events = $filteredCandidates->forPage($page, $perPage)->values();
         }
 
-        return view('security.audit', compact('events', 'category', 'outcome', 'search', 'take', 'settingsHref', 'page', 'perPage', 'total', 'lastPage', 'isFiltered') + [
+        return view('security.audit', compact('events', 'category', 'outcome', 'search', 'take', 'settingsHref', 'page', 'perPage', 'total', 'lastPage', 'isFiltered', 'filteredMatchCount') + [
             'canonicalOperationId' => self::OPERATION_ID,
             'settingsNavigationOperationId' => self::SETTINGS_NAVIGATION_OPERATION_ID,
         ]);
