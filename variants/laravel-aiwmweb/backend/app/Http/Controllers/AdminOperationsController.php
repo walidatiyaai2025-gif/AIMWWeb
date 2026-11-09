@@ -77,9 +77,9 @@ final class AdminOperationsController extends Controller
     {
         $this->authorizer->authorize('tenant.view');
 
-        // Explicit page parameters opt into real SQL pagination. Existing
-        // role-picker integrations still receive the unchanged array response.
-        if ($request->hasAny(['page', 'per_page'])) {
+        // Paging parameters or search opt into real SQL-filtered pagination.
+        // Role pickers without query parameters keep their legacy array response.
+        if ($request->hasAny(['page', 'per_page', 'search'])) {
             $input = $request->validate([
                 'search' => ['nullable', 'string', 'max:255'],
                 'page' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
