@@ -99,8 +99,12 @@
                 </select>
             </label>
             <label>
-                <span>Search</span>
-                <input type="search" name="q" value="{{ $search }}" maxlength="200" aria-label="Search security audit trail">
+                <span>{{ $isArabic ? 'البحث باسم الحدث (كل السجلات)' : 'Event search (all history)' }}</span>
+                <input type="search" name="event_q" value="{{ $eventSearch }}" maxlength="160" aria-label="{{ $isArabic ? 'بحث كامل باسم الحدث' : 'Search all authorized audit event names' }}" data-audit-event-search>
+            </label>
+            <label>
+                <span>{{ $isArabic ? 'البحث العام (آخر ١٠٠٠ حدث)' : 'General search (latest 1,000 only)' }}</span>
+                <input type="search" name="q" value="{{ $search }}" maxlength="200" aria-label="{{ $isArabic ? 'بحث عام محدود في سجل الأمان' : 'Bounded general security audit search' }}">
             </label>
             <label>
                 <span>{{ $isArabic ? 'عدد السجلات في الصفحة' : 'Page size' }}</span>
@@ -126,7 +130,7 @@
         </header>
 
         @if ($isFiltered && ! $isSqlFiltered)
-            <p role="status" data-audit-filter-limit>{{ $isArabic ? 'البحث والتصفية يفحصان آخر ١٠٠٠ حدث فقط حاليًا. قد توجد نتائج أقدم غير معروضة؛ العدد ليس إجمالي السجلات المطابقة.' : 'Filtered results currently scan the latest 1,000 events only. Older matches may exist; this is not a total matching count.' }}</p>
+            <p role="status" data-audit-filter-limit>{{ $isArabic ? 'عند استخدام البحث العام أو عدد السجلات القديم، تُفحص آخر ١٠٠٠ حادثة فقط. استخدم بحث اسم الحدث للبحث في كل السجل. العدد الحالي ليس إجمالي المطابقات.' : 'General search or legacy take scans only the latest 1,000 events. Use Event search for all-history matching; this is not a global matching total.' }}</p>
             <p role="status" data-audit-filter-window>{{ $filteredMatchCount === 0 ? 0 : (($page - 1) * $perPage + 1) }}–{{ min($filteredMatchCount, $page * $perPage) }} {{ $isArabic ? 'من النتائج ضمن نطاق البحث المحدود' : 'of matches inside the limited search window' }} · {{ $isArabic ? 'الصفحة' : 'Page' }} {{ $page }} / {{ $lastPage }}</p>
         @else
             <p role="status" data-audit-range>{{ $total === 0 ? 0 : (($page - 1) * $perPage + 1) }}–{{ min($total, $page * $perPage) }} {{ $isArabic ? 'من' : 'of' }} {{ $total }} · {{ $isArabic ? 'الصفحة' : 'Page' }} {{ $page }} / {{ $lastPage }}</p>
