@@ -13,6 +13,7 @@ use App\Models\TenantMembership;
 use App\Models\User;
 use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use ReflectionClass;
 use Tests\TestCase;
@@ -128,10 +129,34 @@ final class AiUsageLoadTerminalityTest extends TestCase
         );
         $this->assertCount(12, array_unique($ids));
         $this->assertNotContains($foreign->id, $ids);
-        $this->actingAs($user)->getJson('/api/v1/tenants/usage-page-alpha/ai/usage?page=99&per_page=10')
-            ->assertOk()->assertJsonPath('current_page', 2)->assertJsonCount(2, 'recent');
+        DB::enableQueryLog();
+        DB::flushQueryLog();
+        try {
+            $this->actingAs($user)
+                ->getJson('/api/v1/tenants/usage-page-alpha/ai/usage?page=1000000&per_page=10')
+                ->assertOk()->assertJsonPath('current_page', 2)
+                ->assertJsonPath('total', 12)->assertJsonCount(2, 'recent');
+            $queries = DB::getQueryLog();
+        } finally {
+            DB::disableQueryLog();
+            DB::flushQueryLog();
+        }
 
-        foreach (['page=0', 'page=abc', 'per_page=500', 'per_page=0'] as $invalid) {
+        $usageQueries = 0;
+        foreach ($queries as $query) {
+            if (preg_match('/\\bfrom\\s+["`]?ai_usage_records["`]?/i', $query['query']) !== 1) {
+                continue;
+            }
+            $usageQueries++;
+            if (preg_match('/\\boffset\\s+(\\d+)/i', $query['query'], $matches) === 1) {
+                $this->assertLessThanOrEqual(10, (int) $matches[1]);
+            } elseif (preg_match('/\\boffset\\s+\\?/i', $query['query']) === 1) {
+                $this->assertLessThanOrEqual(10, (int) end($query['bindings']));
+            }
+        }
+        $this->assertGreaterThanOrEqual(2, $usageQueries);
+
+        foreach (['page=0', 'page=abc', 'page=1000001', 'per_page=500', 'per_page=0'] as $invalid) {
             $this->actingAs($user)
                 ->getJson('/api/v1/tenants/usage-page-alpha/ai/usage?'.$invalid)
                 ->assertUnprocessable();
