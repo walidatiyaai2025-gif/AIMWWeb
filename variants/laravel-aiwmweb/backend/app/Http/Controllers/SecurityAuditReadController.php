@@ -31,7 +31,9 @@ final class SecurityAuditReadController
         // Legacy `take` is only for the filtered, bounded compatibility view.
         // It must not bypass the canonical 10/25/50/100 SQL page-size contract.
         $perPage = (int) ($input['per_page'] ?? 25);
-        $take = (int) ($input['take'] ?? 200);
+        // No implicit 200-match truncation on paginated filtered requests.
+        // Legacy consumers can still explicitly limit their results with take.
+        $take = isset($input['take']) ? (int) $input['take'] : null;
         $page = (int) ($input['page'] ?? 1);
         $isFiltered = $category !== '' || $outcome !== '' || $search !== '';
         $total = 0;
@@ -85,7 +87,8 @@ final class SecurityAuditReadController
 
                     return str_contains($haystack, mb_strtolower($search));
                 })
-                ->take($take)->values();
+                ->when($take !== null, fn ($matches) => $matches->take($take))
+                ->values();
             // This is a count only within the newest 1,000 authorized events and
             // the optional legacy take bound, never a global matching total.
             $filteredMatchCount = $filteredCandidates->count();
