@@ -110,6 +110,10 @@ final class RolesPagination1608Test extends TestCase
 
         $this->actingAs($reader)->getJson('/tenants/roles-foreign/admin/roles?page=1&per_page=25')
             ->assertNotFound();
+    }
+
+    public function test_guest_cannot_read_roles_page(): void
+    {
         $this->getJson('/tenants/roles-safe/admin/roles?page=1&per_page=25')
             ->assertUnauthorized();
     }
