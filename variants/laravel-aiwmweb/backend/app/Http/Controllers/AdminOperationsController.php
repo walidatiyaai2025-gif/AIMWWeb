@@ -32,7 +32,19 @@ final class AdminOperationsController extends Controller
         $this->authorizer->authorize('tenant.view');
         $data = $request->validate([
             'search' => ['nullable', 'string', 'max:255'],
+            'page' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
+            'per_page' => ['sometimes', 'integer', 'in:10,25,50,100'],
         ]);
+
+        // Existing integrations without page parameters retain the array envelope.
+        // The React Application Users grid opts in to true tenant-scoped SQL pages.
+        if ($request->hasAny(['page', 'per_page'])) {
+            return response()->json($this->administration->paginatedMembers(
+                $data['search'] ?? null,
+                (int) ($data['page'] ?? 1),
+                (int) ($data['per_page'] ?? 25),
+            ));
+        }
 
         return response()->json(['data' => $this->administration->members($data['search'] ?? null)]);
     }
