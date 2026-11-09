@@ -138,6 +138,49 @@ describe('AIMW-BILL-D4E1DA62D9 CopyDiagnosticsAsync', () => {
         expect(await screen.findByRole('alert')).toHaveTextContent('Clipboard API is unavailable');
     });
 
+    it('never calls stored-only WordPress and language metadata remotely verified (#1758)', () => {
+        const site = {
+            id: 7, name: 'Local metadata', url: 'https://wp.test',
+            connection_status: 'connected', wordpress_version: '6.7', language_code: 'en_US',
+        };
+        const stored = formatSiteDiagnosticsReport({
+            site, connection: 'CONNECTED',
+            metadata: {
+                wordpress_version: { state: 'stored_unverified', checked_at: null },
+                language_code: { state: 'stored_unverified', checked_at: null },
+            },
+        }, []);
+        expect(stored).toContain('WordPress: 6.7 (stored; not remotely verified)');
+        expect(stored).toContain('Language: en_US (stored; not remotely verified)');
+        expect(stored).toContain('WordPress metadata checked: not verified');
+        expect(stored).not.toContain('6.7 (verified by Connector)');
+
+        const confirmed = formatSiteDiagnosticsReport({
+            site, connection: 'CONNECTED',
+            metadata: {
+                wordpress_version: { state: 'verified', checked_at: '2026-11-08T13:15:00Z' },
+                language_code: { state: 'verified', checked_at: '2026-11-08T13:15:00Z' },
+            },
+        }, []);
+        expect(confirmed).toContain('WordPress: 6.7 (verified by Connector)');
+        expect(confirmed).toContain('Language: en_US (verified by Connector)');
+
+        const legacy = formatSiteDiagnosticsReport({ site, connection: 'CONNECTED' }, []);
+        expect(legacy).toContain('WordPress: 6.7 (verification not established: not_probed)');
+        expect(legacy).not.toContain('verified by Connector');
+
+        const untrusted = formatSiteDiagnosticsReport({
+            site, connection: 'CONNECTED',
+            metadata: {
+                wordpress_version: { state: 'verified password=NEVER_LEAK', checked_at: null },
+                language_code: { state: 'stored_unverified<script>', checked_at: null },
+            },
+        }, []);
+        expect(untrusted).toContain('WordPress: 6.7 (verification not established: not_probed)');
+        expect(untrusted).not.toContain('NEVER_LEAK');
+        expect(untrusted).not.toContain('<script>');
+    });
+
     it('never copies credentialed site URLs, raw upstream failures, or untrusted report fields', () => {
         const report = formatSiteDiagnosticsReport({
             site: {

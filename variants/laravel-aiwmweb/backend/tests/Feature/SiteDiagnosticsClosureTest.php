@@ -351,6 +351,8 @@ class SiteDiagnosticsClosureTest extends TestCase
         $this->assertSame('6.9.1', $status['site']->wordpress_version);
         $this->assertSame('ar_KW', $status['site']->language_code);
         $this->assertSame('connector_health', $status['metadata']['wordpress_version']['source']);
+        $this->assertSame('verified', $status['metadata']['wordpress_version']['state']);
+        $this->assertSame('verified', $status['metadata']['language_code']['state']);
         $this->assertNotNull($status['metadata']['wordpress_version']['checked_at']);
         $this->assertSame('6.7', $site->fresh()->wordpress_version);
         $this->assertSame('en_US', $site->fresh()->language_code);
@@ -367,7 +369,20 @@ class SiteDiagnosticsClosureTest extends TestCase
         $this->assertSame('6.7', $failed['site']->wordpress_version);
         $this->assertSame('en_US', $failed['site']->language_code);
         $this->assertSame('site', $failed['metadata']['wordpress_version']['source']);
+        $this->assertSame('stored_unverified', $failed['metadata']['wordpress_version']['state']);
+        $this->assertSame('stored_unverified', $failed['metadata']['language_code']['state']);
         $this->assertNull($failed['metadata']['wordpress_version']['checked_at']);
+        $this->assertNull($failed['metadata']['language_code']['checked_at']);
+
+        // Neither a failed signed probe nor a locally stored historical value
+        // can be promoted to current remote verification. No write on read.
+        $this->assertSame('6.7', $site->fresh()->wordpress_version);
+        $this->assertSame('en_US', $site->fresh()->language_code);
+        SiteDiagnostic::query()->where('site_id', $site->id)->delete();
+        $storedOnly = $service->status($site->fresh());
+        $this->assertSame('stored_unverified', $storedOnly['metadata']['wordpress_version']['state']);
+        $this->assertSame('stored_unverified', $storedOnly['metadata']['language_code']['state']);
+        $this->assertNull($storedOnly['metadata']['wordpress_version']['checked_at']);
     }
 
     public function test_missing_metadata_distinguishes_transport_auth_and_unsupported_diagnostics(): void

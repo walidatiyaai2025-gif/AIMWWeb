@@ -53,9 +53,12 @@ final class SiteDiagnosticsService
                 }
             }
             $siteView->setAttribute($field, $value);
-            $metadata[$field] = [
-                'source' => $source,
-                'state' => $source !== null ? 'verified' : match ($latest?->classification) {
+            // A locally saved value is displayable, but is not proof that the
+            // latest signed Connector health check verified that value.
+            $provenance = match ($source) {
+                'connector_health' => 'verified',
+                'site' => 'stored_unverified',
+                default => match ($latest?->classification) {
                     null => 'not_probed',
                     SiteConnectionState::AUTH_FAILED => 'permission_denied',
                     SiteConnectionState::TEMPORARILY_UNAVAILABLE,
@@ -65,6 +68,10 @@ final class SiteDiagnosticsService
                     SiteConnectionState::CAPABILITY_DISABLED => 'temporarily_unavailable',
                     default => 'not_supported',
                 },
+            };
+            $metadata[$field] = [
+                'source' => $source,
+                'state' => $provenance,
                 // The last diagnostic timestamp is also relevant for a failed
                 // probe; omitting it makes an outage look like a never-tested site.
                 'checked_at' => $source === 'site' ? null : $latest?->checked_at?->toIso8601String(),
