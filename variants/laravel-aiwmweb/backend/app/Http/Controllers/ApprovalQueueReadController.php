@@ -16,7 +16,7 @@ final class ApprovalQueueReadController extends Controller
 
         $filters = $request->validate([
             'search' => ['sometimes', 'nullable', 'string', 'max:200'],
-            'page' => ['sometimes', 'integer', 'min:1'],
+            'page' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
             'per_page' => ['sometimes', 'integer', 'in:10,20,25,50,100'],
         ]);
 
@@ -26,10 +26,14 @@ final class ApprovalQueueReadController extends Controller
 
         $query = Approval::query()->orderByDesc('created_at')->orderByDesc('id');
         if ($search !== '') {
-            $query->where(function ($query) use ($search): void {
-                $query->where('status', 'like', '%'.$search.'%')
-                    ->orWhere('title', 'like', '%'.$search.'%')
-                    ->orWhere('operation_type', 'like', '%'.$search.'%');
+            // A title/status search is literal: SQL wildcards must not match
+            // unrelated approval records or inflate authoritative totals.
+            $needle = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $search);
+            $pattern = '%'.$needle.'%';
+            $query->where(function ($query) use ($search, $pattern): void {
+                $query->whereRaw("status LIKE ? ESCAPE '!'", [$pattern])
+                    ->orWhereRaw("title LIKE ? ESCAPE '!'", [$pattern])
+                    ->orWhereRaw("operation_type LIKE ? ESCAPE '!'", [$pattern]);
                 if (ctype_digit($search)) {
                     $query->orWhereKey((int) $search)
                         ->orWhere('suggestion_id', (int) $search);
