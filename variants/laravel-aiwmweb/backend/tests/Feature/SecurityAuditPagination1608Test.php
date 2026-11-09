@@ -131,6 +131,52 @@ final class SecurityAuditPagination1608Test extends TestCase
             ->assertDontSee('filtered-match-1</strong>', false);
     }
 
+    public function test_filtered_audit_without_explicit_take_pages_all_matches_in_the_disclosed_window(): void
+    {
+        $admin = User::factory()->create(['platform_admin' => true]);
+        $tenant = Tenant::query()->create(['name' => 'Authorized tenant', 'slug' => 'authorized-tenant']);
+        DB::table('tenant_memberships')->insert([
+            'tenant_id' => $tenant->id,
+            'user_id' => $admin->id,
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $rows = [];
+        for ($id = 1; $id <= 225; $id++) {
+            $rows[] = [
+                'tenant_id' => $tenant->id,
+                'actor_user_id' => $admin->id,
+                'event' => 'audit-filter-matched-'.$id,
+                'metadata' => '{}',
+                'occurred_at' => '2026-11-01 00:00:00',
+            ];
+            if (count($rows) === 75) {
+                DB::table('audit_events')->insert($rows);
+                $rows = [];
+            }
+        }
+
+        $first = $this->actingAs($admin)->get('/admin/security-audit?q=audit-filter-matched&per_page=25');
+        $first->assertOk()
+            ->assertSee('1–25 of matches inside the limited search window')
+            ->assertSee('page=9', false)
+            ->assertSee('audit-filter-matched-225');
+
+        $last = $this->actingAs($admin)->get('/admin/security-audit?q=audit-filter-matched&per_page=25&page=9');
+        $last->assertOk()
+            ->assertSee('201–225 of matches inside the limited search window')
+            ->assertSee('audit-filter-matched-1</strong>', false)
+            ->assertDontSee('audit-filter-matched-225');
+
+        // The explicit legacy take parameter still limits the filtered window.
+        $limited = $this->actingAs($admin)->get('/admin/security-audit?q=audit-filter-matched&take=100&per_page=25&page=4');
+        $limited->assertOk()
+            ->assertSee('76–100 of matches inside the limited search window')
+            ->assertDontSee('page=9', false);
+    }
+
     public function test_unfiltered_audit_rejects_invalid_pages_and_discloses_legacy_filtered_ceiling(): void
     {
         $admin = User::factory()->create(['platform_admin' => true]);
