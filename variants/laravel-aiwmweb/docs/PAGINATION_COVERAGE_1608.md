@@ -21,6 +21,7 @@
 | SEO Audit history | PR #1735 | Implemented bounded stable audit pages | Actual AR/EN mobile UI and deployed verification |
 | SEO Findings | PRs #1736 and #1737; `SeoController::findings` and `seo-visible-controls.tsx` | Implemented filtered server pages, authoritative totals and visible-page selection | Production UI, deep-link/restore, concurrent updates and full AR/EN review |
 | Shared paginator | `canonical-pagination-window.ts`, `components.tsx`, `canonical-pagination-controls.test.tsx` | First/Previous/numbered/Next/Last, 10/25/50/100 sizes where supported, AR/EN labels, returned-count guards | Accessibility browser audit (focus, narrow displays, keyboard) across actual consuming screens |
+| Security Audit (unfiltered) | `/admin/security-audit`; `SecurityAuditReadController`, `security/audit.blade.php`; PR #1741 | Tenant-scoped SQL count and page fetch with deterministic occurred_at/id ordering, bound 10/25/50/100 page sizes and truthful total/range. **PR pending review/CI** | Category/outcome/q still use latest-1,000 in-memory filter; UI explicitly warns, no total asserted. Full SQL-filtered pagination and production UI acceptance outstanding |
 
 The PR identifiers above are historical delivered slices recorded under #1608; they are **not** proof that every current list uses the canonical paginator.
 
@@ -41,6 +42,7 @@ For each list append a row to the matrix below and link exact tests. Rows must d
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `/tenants/{tenant}/sites` (confirm exact route against `routes/web.php`) | Sites management | `SiteManagementController@index` | Real paginated server result in #1613 | Server filters in #1613 | Regression in #1613 | Live proof missing | PARTIAL |
 | SEO findings site/audit route (confirm visible browser URL) | `seo-visible-controls.tsx` | `SeoController::findings` | Verified filtered count in #1737 | Severity/search in #1737 | Scoped API tests | Live proof missing | PARTIAL |
+| `/admin/security-audit` | `security/audit.blade.php` | `SecurityAuditReadController` | Authorized SQL count / unfiltered page; filtered 1000 cap disclosed | Search/category/outcome **not fully paginated** | `platform.admin` + active membership tenancy | PHP feature test `SecurityAuditPagination1608Test`; live AR/EN missing | PARTIAL — PR #1741 pending |
 
 ## Remaining gates before closing #1608
 
