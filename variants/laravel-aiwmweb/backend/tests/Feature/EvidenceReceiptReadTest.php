@@ -173,7 +173,7 @@ final class EvidenceReceiptReadTest extends TestCase
         foreach ($ids as $operationId) {
             $receipts[] = $this->receipt($alpha, true, $operationId);
         }
-        $foreign = $this->receipt($beta, true, 'audit%9');
+        $foreign = $this->receipt($beta, true, 'audit%9-foreign');
 
         $url = '/api/tenants/evidence-literal-alpha/evidence';
         foreach ([
