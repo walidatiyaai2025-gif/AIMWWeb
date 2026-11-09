@@ -112,6 +112,77 @@ final class ContentExplorerPreviousPageTerminalityTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_real_explorer_page_boundaries_and_deleted_last_page_recovery(): void
+    {
+        $user = User::factory()->create();
+        $member = $this->membership($user, 'explorer-page-recovery', ['tenant.view', 'sites.view']);
+        $site = $this->site($member, 'Explorer Recovery Main');
+        $secondSite = $this->site($member, 'Explorer Recovery Other');
+
+        $context = app(TenantContext::class);
+        $context->activate($member->tenant, $member);
+        for ($remoteId = 1001; $remoteId <= 1063; $remoteId++) {
+            ContentItem::query()->create([
+                'site_id' => $site->id,
+                'remote_id' => $remoteId,
+                'type' => 'post',
+                'title' => 'Canonical post '.$remoteId,
+                'slug' => 'canonical-'.$remoteId,
+                'status' => 'publish',
+                'remote_modified_at' => '2026-11-08 12:00:00',
+            ]);
+        }
+        ContentItem::query()->create([
+            'site_id' => $site->id,
+            'remote_id' => 2001,
+            'type' => 'page',
+            'title' => 'Different content type',
+            'status' => 'publish',
+        ]);
+        ContentItem::query()->create([
+            'site_id' => $secondSite->id,
+            'remote_id' => 9001,
+            'type' => 'post',
+            'title' => 'Second site only',
+            'status' => 'publish',
+        ]);
+        $context->forget();
+
+        $url = "/api/v1/tenants/explorer-page-recovery/sites/{$site->id}/explorer";
+        foreach ([[1, 1063, 25], [2, 1038, 25], [3, 1013, 13], [1000000, 1013, 13]] as [$page, $firstId, $count]) {
+            $this->actingAs($user)
+                ->getJson($url."?type=post&status=publish&per_page=25&page={$page}")
+                ->assertOk()
+                ->assertJsonPath('total', 63)
+                ->assertJsonPath('current_page', min($page, 3))
+                ->assertJsonPath('last_page', 3)
+                ->assertJsonCount($count, 'data')
+                ->assertJsonPath('data.0.wordpress_id', $firstId)
+                ->assertJsonPath('meta.totals.posts', 63)
+                ->assertJsonPath('meta.totals.pages', 1);
+        }
+
+        // No fake totals or empty overflow pages after all filtered rows disappear.
+        $this->actingAs($user)->getJson($url.'?search=not-matched&page=1000')
+            ->assertOk()->assertJsonPath('total', 0)
+            ->assertJsonPath('current_page', 1)
+            ->assertJsonPath('last_page', 1)
+            ->assertJsonCount(0, 'data');
+
+        $this->actingAs($user)->getJson($url.'?type=post&per_page=500')
+            ->assertOk()->assertJsonPath('total', 63)
+            ->assertJsonCount(63, 'data'); // Legacy per_page > 100 is capped, not rejected.
+
+        foreach (['page=0', 'page=-1', 'page=1000001', 'page=not-an-integer', 'page%5B%5D=2'] as $invalid) {
+            $this->actingAs($user)->getJson($url.'?'.$invalid)->assertUnprocessable();
+        }
+
+        $this->actingAs($user)
+            ->getJson("/api/v1/tenants/explorer-page-recovery/sites/{$secondSite->id}/explorer?page=1")
+            ->assertOk()->assertJsonPath('total', 1)
+            ->assertJsonPath('data.0.wordpress_id', 9001);
+    }
+
     private function membership(User $user, string $slug, array $permissions): TenantMembership
     {
         $tenant = Tenant::query()->create(['name' => ucfirst($slug), 'slug' => $slug]);
