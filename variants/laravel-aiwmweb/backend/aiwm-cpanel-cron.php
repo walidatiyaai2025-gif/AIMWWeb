@@ -10,6 +10,9 @@
  */
 declare(strict_types=1);
 
+use Symfony\Component\Process\Process;
+use Throwable;
+
 if (PHP_SAPI !== 'cli' || isset($_SERVER['REQUEST_METHOD'])) {
     http_response_code(403);
     exit(1);
@@ -41,7 +44,7 @@ if (! flock($lock, LOCK_EX | LOCK_NB)) {
 try {
     require $autoload;
 
-    $process = new \Symfony\Component\Process\Process([
+    $process = new Process([
         PHP_BINARY, '-d', 'memory_limit=192M', $artisan,
         'cpanel:tick', '--no-interaction',
     ], $root);
@@ -52,8 +55,8 @@ try {
         fwrite(STDERR, "CPANEL_CRON=TICK_FAILED (check private runtime diagnostics)\n");
         exit(1);
     }
-    echo "CPANEL_CRON=TICK_COMPLETED\n";
-} catch (\Throwable) {
+    echo "CPANEL_CRON=INVOCATION_COMPLETED; WORKER_STATUS_NOT_ASSERTED\n";
+} catch (Throwable) {
     // No upstream HTTP error, stack, env, keys or absolute private paths in Cron email.
     fwrite(STDERR, "CPANEL_CRON=ERROR (check private runtime diagnostics)\n");
     exit(1);
