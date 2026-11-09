@@ -73,17 +73,22 @@ final class SystemUpdateCenterTest extends TestCase
         $this->withoutVite();
         config([
             'cpanel.enabled' => true,
+            'app.url' => 'https://aiwm.example.test',
             'cpanel.cron_enabled' => false,
             'cpanel.preflight_passed' => false,
             'cpanel.ai_enabled' => false,
             'queue.default' => 'database',
             'cache.default' => 'database',
             'session.driver' => 'database',
+            'cache.stores.database.connection' => config('database.default'),
+            'cache.stores.database.lock_connection' => config('database.default'),
+            'session.connection' => config('database.default'),
+            'queue.connections.database.connection' => config('database.default'),
         ]);
 
         $admin = User::factory()->create(['platform_admin' => true]);
 
-        $this->actingAs($admin)->get('/admin/system-updates')
+        $this->withServerVariables(['HTTPS' => 'on'])->actingAs($admin)->get('/admin/system-updates')
             ->assertOk()
             ->assertSee('Queues, Cron and AI activation')
             ->assertSee('private_cron_not_observed')
@@ -91,7 +96,7 @@ final class SystemUpdateCenterTest extends TestCase
             ->assertSee('name="action" value="queue"', false)
             ->assertSee('name="action" value="ai"', false);
 
-        $this->actingAs($admin)->post('/admin/system-updates/runtime-activate', [
+        $this->withServerVariables(['HTTPS' => 'on'])->actingAs($admin)->post('/admin/system-updates/runtime-activate', [
             'action' => 'queue',
             'confirmation' => 'ACTIVATE',
         ])->assertRedirect()
@@ -106,6 +111,7 @@ final class SystemUpdateCenterTest extends TestCase
         $this->withoutMiddleware(ThrottleRequests::class);
         config([
             'cpanel.enabled' => true,
+            'app.url' => 'https://aiwm.example.test',
             'cpanel.cron_enabled' => true,
             'cpanel.preflight_passed' => true,
             'cpanel.ai_enabled' => false,
@@ -196,8 +202,8 @@ final class SystemUpdateCenterTest extends TestCase
         $this->assertStringContainsString('data-dashboard-shell="aiwmweb"', $source);
         $this->assertStringContainsString('data-aiwm-update-center-shell-styles', $source);
         $this->assertStringContainsString('@media (max-width: 760px)', $source);
-        $this->assertSame(5, substr_count($source, '<form '));
-        $this->assertSame(5, substr_count($source, '@csrf'));
+        $this->assertSame(8, substr_count($source, '<form '));
+        $this->assertSame(8, substr_count($source, '@csrf'));
         foreach (['check', 'install', 'upload', 'verify', 'backup'] as $name) {
             $this->assertStringContainsString("route('platform.updates.{$name}')", $source);
         }
