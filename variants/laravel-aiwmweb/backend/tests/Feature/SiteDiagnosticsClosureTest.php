@@ -18,6 +18,7 @@ use App\Sites\SiteEntitlementHook;
 use App\Sites\SiteOperationHistoryService;
 use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 use Tests\TestCase;
@@ -164,6 +165,68 @@ class SiteDiagnosticsClosureTest extends TestCase
 
         foreach ([10, 25, 50, 100] as $supported) {
             $this->assertSame($supported, $history->paginateForSite($site->id, 1, $supported)['per_page']);
+        }
+    }
+
+    public function test_site_history_large_bookmarks_count_before_fetch_and_never_query_large_offsets(): void
+    {
+        [$tenant, $member] = $this->tenant('history-offset-safety');
+        app(TenantContext::class)->activate($tenant, $member);
+        $site = Site::query()->create(['name' => 'Primary', 'url' => 'https://primary.test']);
+        $foreignSite = Site::query()->create(['name' => 'Other', 'url' => 'https://other.test']);
+
+        foreach ([$site, $foreignSite] as $target) {
+            SiteDiagnostic::query()->create([
+                'site_id' => $target->id,
+                'classification' => SiteConnectionState::CONNECTED,
+                'connection_state' => SiteConnectionState::CONNECTED,
+                'checked_at' => now(),
+            ]);
+            SiteOperationHistory::query()->create([
+                'site_id' => $target->id,
+                'operation' => 'synchronization',
+                'status' => 'failed',
+                'message' => 'safe',
+                'started_at' => now(),
+                'completed_at' => now(),
+            ]);
+        }
+
+        DB::enableQueryLog();
+        DB::flushQueryLog();
+        try {
+            $diagnostics = $this->service(new SiteGatewayStub)->paginatedDiagnosticHistory($site, PHP_INT_MAX, 25);
+            $history = (new SiteOperationHistoryService)->paginateForSite($site->id, PHP_INT_MAX, 25, 'failed');
+            $queries = DB::getQueryLog();
+        } finally {
+            DB::disableQueryLog();
+            DB::flushQueryLog();
+        }
+
+        $this->assertSame(1, $diagnostics['page']);
+        $this->assertSame(1, $diagnostics['total']);
+        $this->assertSame(1, $history['page']);
+        $this->assertSame(1, $history['total']);
+        $this->assertCount(1, $diagnostics['items']);
+        $this->assertCount(1, $history['items']);
+        $this->assertSame($site->id, $diagnostics['items'][0]->site_id);
+        $this->assertSame($site->id, $history['items'][0]['site_id']);
+
+        $pageQueries = [];
+        foreach ($queries as $query) {
+            if (preg_match('/\\bfrom\\s+["`]?site_(diagnostics|operation_histories)["`]?/i', $query['query']) === 1) {
+                $pageQueries[] = $query;
+            }
+        }
+        $this->assertNotEmpty($pageQueries);
+        foreach ($pageQueries as $query) {
+            // Only inspect OFFSET itself: site IDs may legitimately exceed 25.
+            // MySQL can embed OFFSET as a literal; SQLite may bind it.
+            if (preg_match('/\\boffset\\s+(\\d+)/i', $query['query'], $matches) === 1) {
+                $this->assertLessThanOrEqual(25, (int) $matches[1]);
+            } elseif (preg_match('/\\boffset\\s+\\?/i', $query['query']) === 1) {
+                $this->assertLessThanOrEqual(25, (int) end($query['bindings']));
+            }
         }
     }
 

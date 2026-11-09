@@ -241,20 +241,21 @@ final class SiteDiagnosticsService
         $page = max(1, min(1000000, $page));
         $query = SiteDiagnostic::query()->where('site_id', $site->id)
             ->orderByDesc('checked_at')->orderByDesc('id');
-        $result = $query->paginate($perPage, ['*'], 'page', $page);
-        if ($page > $result->lastPage()) {
-            $page = max(1, $result->lastPage());
-            $result = $query->paginate($perPage, ['*'], 'page', $page);
-        }
+        // Resolve the site-scoped total before SELECT: never execute a giant
+        // OFFSET for a stale bookmark and then repeat the page query.
+        $total = (clone $query)->count();
+        $lastPage = max(1, (int) ceil($total / $perPage));
+        $page = min($page, $lastPage);
+        $items = $query->forPage($page, $perPage)->get();
 
         return [
-            'items' => $result->items(),
+            'items' => $items->all(),
             'page' => $page,
             'per_page' => $perPage,
-            'total' => $result->total(),
-            'last_page' => $result->lastPage(),
-            'from' => $result->firstItem(),
-            'to' => $result->lastItem(),
+            'total' => $total,
+            'last_page' => $lastPage,
+            'from' => $total === 0 ? null : (($page - 1) * $perPage + 1),
+            'to' => $total === 0 ? null : min($total, $page * $perPage),
         ];
     }
 
