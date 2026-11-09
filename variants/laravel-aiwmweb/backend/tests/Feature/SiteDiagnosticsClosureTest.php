@@ -291,7 +291,7 @@ class SiteDiagnosticsClosureTest extends TestCase
         $other = Site::query()->create(['name' => 'Other', 'url' => 'https://other.test']);
         $secret = 'Bearer secret-success https://wp.test/?token=secret-query';
         $rows = [
-            ['synchronization', 'succeeded', 'Synchronization completed.'],
+            ['synchronization', 'succeeded', 'WordPress synchronization completed.'],
             ['diagnostic_recheck', 'failed', 'Site operation failed. Review authorized diagnostics.'],
             ['diagnostic_recheck', 'succeeded', 'Site diagnostic recheck completed.'],
             ['unsafe_private_operation', 'queued', 'Site operation state recorded.'],
