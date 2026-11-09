@@ -76,6 +76,27 @@ final class SitesServerPaginationTest extends TestCase
             ->getJson('/api/tenants/sites-page-alpha/sites?page=99&per_page=10')
             ->assertOk()->assertJsonPath('current_page', 3)->assertJsonCount(8, 'data');
 
+        // Search-only callers must not silently receive an unfiltered legacy array.
+        // This keeps pagination metadata authoritative without breaking no-query pickers.
+        $this->actingAs($user)
+            ->getJson('/api/tenants/sites-page-alpha/sites?search=Alpha%2001')
+            ->assertOk()->assertJsonPath('total', 1)
+            ->assertJsonPath('current_page', 1)
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.name', 'Alpha 01');
+        $this->actingAs($user)
+            ->getJson('/api/tenants/sites-page-alpha/sites?search=Beta')
+            ->assertOk()->assertJsonPath('total', 0)
+            ->assertJsonCount(0, 'data');
+        $this->actingAs($user)
+            ->getJson('/api/tenants/sites-page-alpha/sites?search=Alpha%2001&per_page=10&page=999')
+            ->assertOk()->assertJsonPath('total', 1)
+            ->assertJsonPath('current_page', 1);
+        $this->actingAs($otherUser)
+            ->getJson('/api/tenants/sites-page-beta/sites?search=Beta')
+            ->assertOk()->assertJsonPath('total', 3)
+            ->assertJsonCount(3, 'data');
+
         $this->actingAs($user)
             ->getJson('/api/tenants/sites-page-alpha/sites?page=1&per_page=500')
             ->assertUnprocessable();
