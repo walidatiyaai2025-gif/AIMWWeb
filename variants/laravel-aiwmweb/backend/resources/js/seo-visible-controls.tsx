@@ -6,6 +6,8 @@ import {
     selectAllAppDataGridFiltered,
 } from './app-data-grid-select-all-filtered-control';
 import { createRoot } from 'react-dom/client';
+import { acceptedSeoBatch, completedSeoProposal, parseSeoBatchStatus, seoAiJson, seoBatchStorageKey, validSavedSeoBatch } from './seo-ai-durable';
+import type { SeoBatch, SeoProposalResult } from './seo-ai-durable';
 
 export const SEO_OPERATIONS = {
     execution: 'AIMW-SEO-C48570747C',
@@ -79,6 +81,26 @@ function csrfToken() {
     return document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
 }
 
+// A completed durable SEO result must be replayed through the original
+// proposal endpoint with X-AIMW-AI-BATCH. Laravel verifies request fingerprint,
+// membership, source context and approval semantics without a new AI call.
+async function fetchSeoProposal(config: SeoConfig, findingId: number, replayId?: string, signal?: AbortSignal): Promise<SeoProposalResult> {
+    const url = config.urls.ai_proposal.replace('__FINDING__', String(findingId));
+    const result = await seoAiJson(url, {
+        method: 'POST',
+        body: JSON.stringify({}),
+        ...(replayId ? { headers: { 'X-AIMW-AI-BATCH': replayId } } : {}),
+        signal,
+    });
+    if (result.status === 202) {
+        if (replayId) throw new Error('Completed AI replay was not available. Check saved batch status before retry.');
+        return { kind: 'queued', batch: acceptedSeoBatch(result.payload, config.tenant, config.site.id, findingId) };
+    }
+    if (result.status !== 200) throw new Error('Unexpected AI proposal response status. Review AI diagnostics.');
+    return { kind: 'ready', proposal: completedSeoProposal(result.payload) };
+}
+
+
 async function requestJson<T>(url: string, init: RequestInit = {}): Promise<T> {
     const method = (init.method ?? 'GET').toUpperCase();
     const headers = new Headers(init.headers);
@@ -138,10 +160,73 @@ export function SeoVisibleControls({ config }: { config: SeoConfig }) {
     const [serverLastPage, setServerLastPage] = useState(1);
     const readSequence = useRef(0);
     const announceNextRefresh = useRef(false);
+    const storageKey = seoBatchStorageKey(config.tenant, config.site.id);
+    const [pendingAi, setPendingAi] = useState<SeoBatch | null>(() => {
+        try {
+            const saved = window.sessionStorage.getItem(storageKey);
+            return saved ? validSavedSeoBatch(JSON.parse(saved) as unknown, config.tenant, config.site.id) : null;
+        } catch { return null; }
+    });
     const [busy, setBusy] = useState(false);
     const [auditRunning, setAuditRunning] = useState(false);
     const [loading, setLoading] = useState(true);
     const [feedback, setFeedback] = useState<{ tone: 'success' | 'error' | 'info'; text: string } | null>(null);
+
+    useEffect(() => {
+        try {
+            if (pendingAi) window.sessionStorage.setItem(storageKey, JSON.stringify(pendingAi));
+            else window.sessionStorage.removeItem(storageKey);
+        } catch {
+            // A disabled browser storage API must not leak data or bypass server ownership.
+        }
+    }, [pendingAi, storageKey]);
+
+    useEffect(() => {
+        if (!pendingAi) return;
+        const task = pendingAi;
+        const controller = new AbortController();
+        let cancelled = false;
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        let attempts = 0;
+        const poll = async () => {
+            attempts += 1;
+            try {
+                const status = await seoAiJson(task.statusUrl, { signal: controller.signal });
+                if (status.status !== 200) throw new Error('AI status request did not return a completed read.');
+                const result = parseSeoBatchStatus(status.payload, task, config.site.id);
+                if (cancelled) return;
+                if (result.state === 'completed') {
+                    const replay = await fetchSeoProposal(config, task.findingId, task.id, controller.signal);
+                    if (replay.kind !== 'ready') throw new Error('Saved AI result is not ready for review.');
+                    if (cancelled) return;
+                    setProposalOverrides(current => ({ ...current, [task.findingId]: replay.proposal }));
+                    setPendingAi(current => current?.id === task.id ? null : current);
+                    setFeedback({ tone: 'success', text: 'Saved AI proposal for finding ' + task.findingId + ' is ready for explicit approval. No WordPress mutation occurred.' });
+                    return;
+                }
+                if (result.state === 'failed' || result.state === 'cancelled') {
+                    setPendingAi(current => current?.id === task.id ? null : current);
+                    setFeedback({ tone: 'error', text: 'Saved AI task ' + result.state + (result.code ? ' (' + result.code + ')' : '') + '. Review AI diagnostics before another submission.' });
+                    return;
+                }
+                setPendingAi(current => current?.id === task.id && current.state !== result.state ? { ...current, state: result.state } : current);
+                setFeedback({ tone: 'info', text: 'Saved AI task for finding ' + task.findingId + ': ' + result.state + '. Background status checks do not submit another AI request.' });
+            } catch (error) {
+                if (cancelled || controller.signal.aborted) return;
+                // Do not reflect server error/stack/provider response bodies in the UI.
+                const safeMessage = error instanceof Error ? error.message : 'AI status check failed.';
+                setFeedback({ tone: 'error', text: safeMessage });
+            }
+            if (cancelled) return;
+            if (attempts >= 20) {
+                setFeedback({ tone: 'info', text: 'AI task remains saved. Automatic checks paused; reload to resume without creating a new AI request.' });
+                return;
+            }
+            timer = setTimeout(() => { void poll(); }, Math.min(2000 * (2 ** Math.min(attempts - 1, 3)), 15000));
+        };
+        void poll();
+        return () => { cancelled = true; controller.abort(); if (timer) clearTimeout(timer); };
+    }, [pendingAi?.id, pendingAi?.findingId, config.site.id, config.tenant, config.urls.ai_proposal]);
 
     const loadProposals = useCallback(async () => {
         const payload = await requestJson<unknown>(config.urls.proposals);
@@ -356,48 +441,47 @@ export function SeoVisibleControls({ config }: { config: SeoConfig }) {
         }
     };
 
-    const requestAiProposal = async (finding: Finding): Promise<Record<string, unknown>> => {
-        const payload = await requestJson<{ proposal?: Record<string, unknown>; requires_approval?: boolean }>(
-            config.urls.ai_proposal.replace('__FINDING__', String(finding.id)),
-            { method: 'POST', body: JSON.stringify({}) },
-        );
-        if (!payload.proposal || payload.requires_approval !== true) throw new Error('The AI proposal contract did not return an approval-gated proposal.');
-        return payload.proposal;
-    };
+    const requestAiProposal = async (finding: Finding): Promise<SeoProposalResult> => fetchSeoProposal(config, finding.id);
 
     const generateSuggestions = async () => {
-        if (busy || findings.length === 0) return;
+        // One accepted durable AI submission per user action: never fan out 10+
+        // provider requests from a single click on CPU/cPanel hosting.
+        if (busy || pendingAi || findings.length === 0) return;
+        const finding = findings.find(row => !proposalOverrides[row.id]);
+        if (!finding) {
+            setFeedback({ tone: 'info', text: 'All visible SEO findings already have reviewable AI proposals.' });
+            return;
+        }
         setBusy(true);
-        setFeedback({ tone: 'info', text: 'Generating suggestions from persisted SEO findings...' });
+        setFeedback({ tone: 'info', text: 'Requesting one SEO AI proposal; further tasks require another explicit action.' });
         try {
-            const generated: ProposalState = {};
-            let usable = 0;
-            for (const finding of findings) {
-                try {
-                    generated[finding.id] = await requestAiProposal(finding);
-                    usable += 1;
-                } catch {
-                    // Keep processing independent findings; the aggregate feedback remains truthful.
-                }
+            const outcome = await requestAiProposal(finding);
+            if (outcome.kind === 'queued') {
+                setPendingAi(outcome.batch);
+                setFeedback({ tone: 'info', text: 'SEO AI task queued for finding ' + finding.id + '. It is saved and will be checked without resubmission.' });
+            } else {
+                setProposalOverrides(current => ({ ...current, [finding.id]: outcome.proposal }));
+                setFeedback({ tone: 'success', text: 'Generated 1 reviewable suggestion(s). No WordPress mutation occurred.' });
             }
-            setProposalOverrides((current) => ({ ...current, ...generated }));
-            setFeedback({
-                tone: usable === 0 ? 'error' : 'success',
-                text: usable === 0
-                    ? 'The AI provider produced no usable suggestion. Review provider configuration and try again.'
-                    : `Generated ${usable} reviewable suggestion(s). No WordPress mutation occurred.`,
-            });
+        } catch (error) {
+            setFeedback({ tone: 'error', text: error instanceof Error ? error.message : 'AI proposal generation failed.' });
         } finally {
             setBusy(false);
         }
     };
 
     const generateAiProposal = async (finding: Finding) => {
+        if (busy || pendingAi) return;
         setBusy(true);
         try {
-            const proposal = await requestAiProposal(finding);
-            setProposalOverrides((current) => ({ ...current, [finding.id]: proposal }));
-            setFeedback({ tone: 'info', text: `AI proposal generated for finding ${finding.id}; it still requires explicit approval.` });
+            const outcome = await requestAiProposal(finding);
+            if (outcome.kind === 'queued') {
+                setPendingAi(outcome.batch);
+                setFeedback({ tone: 'info', text: 'AI proposal for finding ' + finding.id + ' queued; status will be restored after reload.' });
+            } else {
+                setProposalOverrides(current => ({ ...current, [finding.id]: outcome.proposal }));
+                setFeedback({ tone: 'info', text: 'AI proposal generated for finding ' + finding.id + '; it still requires explicit approval.' });
+            }
         } catch (error) {
             setFeedback({ tone: 'error', text: error instanceof Error ? error.message : 'AI proposal generation failed.' });
         } finally {
@@ -424,6 +508,7 @@ export function SeoVisibleControls({ config }: { config: SeoConfig }) {
             </section>
 
             {feedback ? <section className={`panel ${feedback.tone === 'error' ? 'state-danger' : ''}`} role={feedback.tone === 'error' ? 'alert' : 'status'}><p>{feedback.text}</p></section> : null}
+            {pendingAi ? <section className="panel" role="status" aria-live="polite"><strong>Saved AI task</strong><p>Finding {pendingAi.findingId}: {pendingAi.state}. No new generation will be submitted while this task is pending.</p><a href={config.urls.execution}>Review in Execution Center</a></section> : null}
 
             <section className="toolbar-panel" aria-label="SEO filters">
                 <label>Search <input aria-label="Search SEO findings" value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); }} /></label>
@@ -446,7 +531,7 @@ export function SeoVisibleControls({ config }: { config: SeoConfig }) {
                                 <td>{finding.severity ?? '—'}</td><td><strong>{finding.code ?? `Finding ${finding.id}`}</strong><p>{finding.recommendation ?? ''}</p></td><td>{finding.field ?? '—'}</td>
                                 <td><code>{proposal ? JSON.stringify(proposal) : 'No deterministic safe proposal'}</code></td>
                                 <td>{external ? <a data-canonical-operation={SEO_OPERATIONS.external} href={external} target="_blank" rel="noreferrer">Open content ↗</a> : '—'}</td>
-                                <td><button type="button" className="btn" disabled={busy} onClick={() => generateAiProposal(finding)}>Generate AI proposal</button></td>
+                                <td><button type="button" className="btn" disabled={busy || Boolean(pendingAi)} onClick={() => generateAiProposal(finding)}>Generate AI proposal</button></td>
                             </tr>;
                         })}
                     </tbody></table></div>
@@ -478,7 +563,7 @@ export function SeoVisibleControls({ config }: { config: SeoConfig }) {
                 <header className="panel-header"><div><span className="workspace-kicker">GOVERNED REMEDIATION</span><h2>Prepare for approval</h2></div><span className="count-badge">{persistedProposalCount} persisted</span></header>
                 <p>{safeCount} finding(s) currently have a deterministic or AI proposal. Preparing a remediation creates a pending Approval; it does not mutate WordPress.</p>
                 <div className="toolbar-actions">
-                    <button type="button" className="btn primary" data-canonical-operation={SEO_OPERATIONS.generateSuggestions} disabled={busy || findings.length === 0} onClick={generateSuggestions}>Generate suggestions</button>
+                    <button type="button" className="btn primary" data-canonical-operation={SEO_OPERATIONS.generateSuggestions} disabled={busy || Boolean(pendingAi) || findings.length === 0} onClick={generateSuggestions}>Generate next suggestion</button>
                     <button type="button" className="btn primary" data-canonical-operation={SEO_OPERATIONS.applySelected} disabled={busy || selected.size === 0} onClick={applySelected}>Apply selected</button>
                     <button type="button" className="btn" data-canonical-operation={SEO_OPERATIONS.applyAllSafe} disabled={busy || safeCount === 0} onClick={applyAllSafe}>Apply all safe</button>
                     <button type="button" className="btn" data-testid="seo-retry-failed" data-canonical-operation={SEO_OPERATIONS.retryFailed} disabled={busy || failedProposalCount === 0} onClick={retryFailed}>Retry failed</button>
