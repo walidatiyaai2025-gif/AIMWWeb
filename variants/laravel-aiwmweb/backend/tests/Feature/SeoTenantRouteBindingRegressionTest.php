@@ -266,6 +266,48 @@ final class SeoTenantRouteBindingRegressionTest extends TestCase
         Queue::assertNotPushed(ExecuteApprovedSuggestionJob::class);
     }
 
+    public function test_seo_audit_paging_is_bounded_stable_and_site_scoped(): void
+    {
+        [$user, $membership] = $this->member('seo-paging', ['tenant.view', 'seo.view']);
+        $site = $this->site($membership, 'Own SEO Site');
+        $otherSite = $this->site($membership, 'Other SEO Site');
+        $context = app(TenantContext::class);
+        $context->activate($membership->tenant, $membership);
+        for ($i = 0; $i < 27; $i++) {
+            SeoAudit::query()->create([
+                'site_id' => $site->id,
+                'actor_user_id' => $user->id,
+                'status' => 'succeeded',
+            ]);
+        }
+        SeoAudit::query()->create([
+            'site_id' => $otherSite->id,
+            'actor_user_id' => $user->id,
+            'status' => 'succeeded',
+        ]);
+        $context->forget();
+
+        $url = "/api/tenants/seo-paging/sites/{$site->id}/seo/audits";
+        $first = $this->actingAs($user)->getJson($url.'?page=1&per_page=10')
+            ->assertOk()->assertJsonPath('total', 27)
+            ->assertJsonPath('last_page', 3)->assertJsonCount(10, 'data');
+        $second = $this->actingAs($user)->getJson($url.'?page=2&per_page=10')
+            ->assertOk()->assertJsonPath('current_page', 2)->assertJsonCount(10, 'data');
+        $this->assertSame([], array_values(array_intersect(
+            array_column($first->json('data'), 'id'),
+            array_column($second->json('data'), 'id'),
+        )));
+        $this->actingAs($user)->getJson($url.'?page=999999&per_page=10')
+            ->assertOk()->assertJsonPath('current_page', 3)->assertJsonCount(7, 'data');
+        $this->actingAs($user)->getJson($url)
+            ->assertOk()->assertJsonPath('per_page', 15)->assertJsonCount(15, 'data');
+        foreach (['page=0', 'page=1000001', 'page=no', 'per_page=500', 'per_page=0'] as $invalid) {
+            $this->actingAs($user)->getJson($url.'?'.$invalid)->assertUnprocessable();
+        }
+        $this->actingAs($user)->getJson("/api/tenants/seo-paging/sites/{$otherSite->id}/seo/audits?page=1&per_page=10")
+            ->assertOk()->assertJsonPath('total', 1);
+    }
+
     /** @return array{User,TenantMembership} */
     private function member(string $slug, array $permissions): array
     {
