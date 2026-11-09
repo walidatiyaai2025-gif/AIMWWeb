@@ -28,13 +28,15 @@ final class LegacyNotificationReadController extends Controller
             $take = min(max((int) $request->query('take', 100), 1), 500);
             $userId = $this->context->membership()->user_id;
 
-            $notifications = InAppNotification::query()
+            // Legacy callers still receive the original bounded array. Explicit
+            // paging opts in to the real SQL paginator and authoritative totals.
+            $query = InAppNotification::query()
                 ->where('user_id', $userId)
                 ->when($unreadOnly, fn ($query) => $query->whereNull('read_at'))
-                ->latest()
-                ->limit($take)
-                ->get()
-                ->map(static fn (InAppNotification $notification): array => [
+                ->orderByDesc('created_at')
+                ->orderByDesc('id');
+
+            $serialize = static fn (InAppNotification $notification): array => [
                     'id' => $notification->id,
                     'notification_id' => $notification->notification_id,
                     'category' => $notification->category,
@@ -48,11 +50,27 @@ final class LegacyNotificationReadController extends Controller
                     'delivery_mode' => $notification->delivery_mode,
                     'read_at' => $notification->read_at?->toIso8601String(),
                     'created_at' => $notification->created_at?->toIso8601String(),
-                ])
-                ->values()
-                ->all();
+                ];
 
-            return response()->json($notifications);
+            if ($request->hasAny(['page', 'per_page'])) {
+                $filters = $request->validate([
+                    'page' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
+                    'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+                ]);
+                $perPage = (int) ($filters['per_page'] ?? 25);
+                $requestedPage = (int) ($filters['page'] ?? 1);
+                // Count first, so a stale/oversized page never triggers an
+                // unnecessarily large SQL OFFSET before last-page recovery.
+                $total = (clone $query)->count();
+                $lastPage = max(1, (int) ceil($total / $perPage));
+                $page = min($requestedPage, $lastPage);
+                $notifications = $query->paginate($perPage, ['*'], 'page', $page);
+                $notifications->setCollection($notifications->getCollection()->map($serialize));
+
+                return response()->json($notifications);
+            }
+
+            return response()->json($query->limit($take)->get()->map($serialize)->values()->all());
         });
     }
 
