@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     APP_DATA_GRID_SELECT_ALL_FILTERED_OPERATION_ID,
     areAllAppDataGridFilteredSelected,
@@ -134,6 +134,9 @@ export function SeoVisibleControls({ config }: { config: SeoConfig }) {
     const [severity, setSeverity] = useState('all');
     const [pageSize, setPageSize] = useState(10);
     const [page, setPage] = useState(1);
+    const [serverTotal, setServerTotal] = useState<number | null>(null);
+    const [serverLastPage, setServerLastPage] = useState(1);
+    const readSequence = useRef(0);
     const [busy, setBusy] = useState(false);
     const [auditRunning, setAuditRunning] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -147,24 +150,50 @@ export function SeoVisibleControls({ config }: { config: SeoConfig }) {
     }, [config.urls.proposals]);
 
     const loadAuthoritative = useCallback(async (announce = false) => {
+        const sequence = ++readSequence.current;
         const auditPayload = await requestJson<unknown>(config.urls.audits);
         const auditRows = collectionRows(auditPayload);
+        if (sequence !== readSequence.current) return;
         setAudits(auditRows);
         const latestAuditId = Number(auditRows[0]?.id ?? 0);
         if (!latestAuditId) {
             setFindings([]);
+            setServerTotal(0);
+            setServerLastPage(1);
+            setSelected(new Set());
             setLinks({});
             if (announce) setFeedback({ tone: 'info', text: 'No persisted SEO audit exists for this site yet.' });
             return;
         }
         const [findingPayload, presentation] = await Promise.all([
-            requestJson<unknown>(config.urls.findings.replace('__AUDIT__', String(latestAuditId))),
+            requestJson<unknown>(config.urls.findings.replace('__AUDIT__', String(latestAuditId)) + '?' + new URLSearchParams({
+                page: String(page),
+                per_page: String(pageSize),
+                ...(query.trim() ? { search: query.trim() } : {}),
+                ...(severity !== 'all' ? { severity } : {}),
+            }).toString()),
             requestJson<{ audit_id: number | null; links: Record<string, string | null> }>(config.urls.presentation),
         ]);
+        if (sequence !== readSequence.current) return;
+        if (!Array.isArray(findingPayload) && findingPayload && typeof findingPayload === 'object'
+            && Array.isArray((findingPayload as { data?: unknown }).data)) {
+            const envelope = findingPayload as { total?: unknown; last_page?: unknown; current_page?: unknown };
+            if (!Number.isSafeInteger(envelope.total) || (envelope.total as number) < 0
+                || !Number.isSafeInteger(envelope.last_page) || (envelope.last_page as number) < 1
+                || !Number.isSafeInteger(envelope.current_page) || (envelope.current_page as number) < 1) {
+                throw new Error('Invalid authoritative SEO findings pagination metadata.');
+            }
+            setServerTotal(envelope.total as number);
+            setServerLastPage(envelope.last_page as number);
+            setSelected(new Set());
+        } else {
+            // Legacy array contract stays locally pageable for older installed backends.
+            setServerTotal(null);
+        }
         setFindings(collectionRows(findingPayload).map((row) => row as Finding));
         setLinks(presentation.links ?? {});
         if (announce) setFeedback({ tone: 'info', text: 'Authoritative SEO findings were refreshed from Laravel.' });
-    }, [config.urls.audits, config.urls.findings, config.urls.presentation]);
+    }, [config.urls.audits, config.urls.findings, config.urls.presentation, page, pageSize, query, severity]);
 
     useEffect(() => {
         let active = true;
@@ -180,16 +209,16 @@ export function SeoVisibleControls({ config }: { config: SeoConfig }) {
         return () => { active = false; };
     }, [loadAuthoritative, loadProposals]);
 
-    const filtered = useMemo(() => findings.filter((finding) => {
+    const filtered = useMemo(() => serverTotal === null ? findings.filter((finding) => {
         const matchesSeverity = severity === 'all' || String(finding.severity ?? '') === severity;
         const needle = query.trim().toLowerCase();
         const haystack = [finding.code, finding.field, finding.recommendation].map((value) => String(value ?? '')).join(' ').toLowerCase();
         return matchesSeverity && (!needle || haystack.includes(needle));
-    }), [findings, query, severity]);
+    }) : findings, [findings, query, severity, serverTotal]);
 
-    const lastPage = Math.max(1, Math.ceil(filtered.length / pageSize));
+    const lastPage = serverTotal === null ? Math.max(1, Math.ceil(filtered.length / pageSize)) : serverLastPage;
     const safePage = Math.min(page, lastPage);
-    const visible = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
+    const visible = serverTotal === null ? filtered.slice((safePage - 1) * pageSize, safePage * pageSize) : filtered;
 
     const proposalFor = useCallback((finding: Finding) => proposalOverrides[finding.id] ?? deterministicProposal(finding), [proposalOverrides]);
 
@@ -202,7 +231,8 @@ export function SeoVisibleControls({ config }: { config: SeoConfig }) {
         [visible, proposalFor],
     );
     const allFilteredSelected = areAllAppDataGridFilteredSelected(selected, selectableFilteredIds);
-    const showSelectAllFiltered = canSelectAllAppDataGridFiltered(
+    // Server pages do not contain the entire filtered set: never claim an all-results selection.
+    const showSelectAllFiltered = serverTotal === null && canSelectAllAppDataGridFiltered(
         selectableFilteredIds.length,
         selectableVisibleIds.length,
     );
@@ -255,22 +285,11 @@ export function SeoVisibleControls({ config }: { config: SeoConfig }) {
     const previousPage = async () => {
         if (safePage <= 1) return;
         setPage(safePage - 1);
-        try {
-            await loadAuthoritative(false);
-            setFeedback({ tone: 'info', text: `Showing page ${safePage - 1} after an authoritative findings refresh.` });
-        } catch (error) {
-            setFeedback({ tone: 'error', text: error instanceof Error ? error.message : 'Previous page could not be reconciled.' });
-        }
     };
 
     const nextPage = async () => {
         if (safePage >= lastPage) return;
         setPage(safePage + 1);
-        try {
-            await loadAuthoritative(false);
-        } catch (error) {
-            setFeedback({ tone: 'error', text: error instanceof Error ? error.message : 'Next page could not be reconciled.' });
-        }
     };
 
     const runBulk = async (items: Array<{ finding_id: number; changes: Record<string, unknown> }>, label: string) => {
@@ -306,7 +325,7 @@ export function SeoVisibleControls({ config }: { config: SeoConfig }) {
         const items = findings
             .map((finding) => ({ finding_id: finding.id, changes: proposalFor(finding) }))
             .filter((item): item is { finding_id: number; changes: Record<string, unknown> } => Boolean(item.changes));
-        return runBulk(items, 'Safe remediation batch');
+        return runBulk(items, serverTotal === null ? 'Safe remediation batch' : 'Visible-page safe remediation batch');
     };
 
     const retryFailed = async () => {
@@ -400,13 +419,13 @@ export function SeoVisibleControls({ config }: { config: SeoConfig }) {
             <section className="toolbar-panel" aria-label="SEO filters">
                 <label>Search <input aria-label="Search SEO findings" value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); }} /></label>
                 <label>Severity <select aria-label="SEO severity" value={severity} onChange={(event) => { setSeverity(event.target.value); setPage(1); }}><option value="all">All</option><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></label>
-                <label>Rows <select aria-label="SEO page size" value={pageSize} onChange={(event) => { setPageSize(Number(event.target.value)); setPage(1); }}><option value={10}>10</option><option value={25}>25</option><option value={50}>50</option></select></label>
+                <label>Rows <select aria-label="SEO page size" value={pageSize} onChange={(event) => { setPageSize(Number(event.target.value)); setPage(1); }}><option value={10}>10</option><option value={25}>25</option><option value={50}>50</option><option value={100}>100</option></select></label>
                 <button type="button" className="btn primary" data-canonical-operation={SEO_OPERATIONS.applyFilters} onClick={applyFilters}>Analyze</button>
                 <button type="button" className="btn" data-canonical-operation={SEO_OPERATIONS.resetFilters} onClick={resetFilters}>Reset filters</button>
             </section>
 
             <section className="panel data-panel">
-                <header className="panel-header"><div><span className="workspace-kicker">LATEST PERSISTED AUDIT</span><h2>SEO findings</h2></div><span className="count-badge">{filtered.length}</span></header>
+                <header className="panel-header"><div><span className="workspace-kicker">LATEST PERSISTED AUDIT</span><h2>SEO findings</h2></div><span className="count-badge">{serverTotal ?? filtered.length}</span></header>
                 {audits.length === 0 ? <div className="empty-state"><strong>No persisted audit yet</strong><p>Run an SEO audit from the SEO Audit workspace before preparing remediations.</p></div> : null}
                 {visible.length ? (
                     <div className="table-wrap"><table><thead><tr><th>Select</th><th>Severity</th><th>Finding</th><th>Field</th><th>Suggested change</th><th>Content</th><th>AI</th></tr></thead><tbody>
@@ -441,7 +460,7 @@ export function SeoVisibleControls({ config }: { config: SeoConfig }) {
 
                 <footer className="toolbar-panel">
                     <button type="button" className="btn" data-canonical-operation={SEO_OPERATIONS.previousPage} disabled={safePage <= 1 || busy} onClick={previousPage}>Previous</button>
-                    <span aria-live="polite">Page {safePage} of {lastPage}</span>
+                    <span aria-live="polite">Page {safePage} of {lastPage}{serverTotal !== null ? ` · ${visible.length} shown of ${serverTotal} matching` : ''}</span>
                     <button type="button" className="btn" disabled={safePage >= lastPage || busy} onClick={nextPage}>Next</button>
                 </footer>
             </section>
