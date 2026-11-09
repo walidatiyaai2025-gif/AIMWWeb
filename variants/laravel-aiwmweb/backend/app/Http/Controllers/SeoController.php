@@ -77,7 +77,20 @@ final class SeoController extends Controller
         $filters = $request->validate([
             'page' => 'sometimes|integer|min:1|max:1000000',
             'per_page' => 'sometimes|integer|in:10,25,50,100',
+            'search' => 'sometimes|string|max:200',
+            'severity' => 'sometimes|in:critical,high,medium,low',
         ]);
+        if (isset($filters['severity'])) {
+            $query->where('severity', $filters['severity']);
+        }
+        if (isset($filters['search']) && trim($filters['search']) !== '') {
+            $term = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], trim($filters['search']));
+            $query->where(function ($builder) use ($term) {
+                $builder->where('code', 'like', '%'.$term.'%')
+                    ->orWhere('field', 'like', '%'.$term.'%')
+                    ->orWhere('recommendation', 'like', '%'.$term.'%');
+            });
+        }
         $perPage = (int) ($filters['per_page'] ?? 25);
         $page = (int) ($filters['page'] ?? 1);
         // Count and clamp before selecting rows to avoid unbounded SQL OFFSET.

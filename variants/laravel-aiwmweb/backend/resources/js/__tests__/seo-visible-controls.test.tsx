@@ -66,6 +66,54 @@ describe('SEO visible-control mass closure', () => {
 
     afterEach(() => vi.unstubAllGlobals());
 
+    it('uses authoritative server pages and filters without claiming all-results selection', async () => {
+        const serverRows = Array.from({ length: 27 }, (_, index) => ({
+            id: index + 1,
+            code: `target-${index + 1}`,
+            severity: index < 17 ? 'high' : 'low',
+            field: 'seo_title',
+            suggested_value: `Title ${index + 1}`,
+        }));
+        fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
+            const url = String(input);
+            if (url.endsWith('/seo/audits')) return jsonResponse({ data: [{ id: 44, status: 'succeeded' }] });
+            if (url.includes('/seo/audits/44/findings')) {
+                const params = new URL(url, 'https://example.test').searchParams;
+                const page = Number(params.get('page') ?? 1);
+                const size = Number(params.get('per_page') ?? 10);
+                const rows = serverRows.filter(row =>
+                    (!params.get('severity') || row.severity === params.get('severity'))
+                    && (!params.get('search') || row.code.includes(params.get('search')!)));
+                const lastPage = Math.max(1, Math.ceil(rows.length / size));
+                const currentPage = Math.min(page, lastPage);
+                return jsonResponse({
+                    data: rows.slice((currentPage - 1) * size, currentPage * size),
+                    total: rows.length, last_page: lastPage, current_page: currentPage,
+                });
+            }
+            if (url.endsWith('/seo/presentation')) return jsonResponse({ audit_id: 44, links: {} });
+            if (url.endsWith('/seo/remediations/proposals')) return jsonResponse({ data: [] });
+            throw new Error(`Unexpected fetch: ${url}`);
+        });
+        const { container } = render(<SeoVisibleControls config={config} />);
+        await screen.findByText('target-1');
+        expect(screen.getByText('Page 1 of 3 · 10 shown of 27 matching')).toBeInTheDocument();
+        expect(container.querySelector(`[data-canonical-operation="${SEO_OPERATIONS.applyAllSafe}"]`)).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Select all filtered rows' })).not.toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+        await screen.findByText('target-11');
+        expect(screen.queryByText('target-1')).not.toBeInTheDocument();
+        expect(fetchMock.mock.calls.some(([url]) => String(url).includes('page=2&per_page=10'))).toBe(true);
+
+        fireEvent.change(screen.getByLabelText('SEO severity'), { target: { value: 'high' } });
+        await waitFor(() => expect(screen.getByText('Page 1 of 2 · 10 shown of 17 matching')).toBeInTheDocument());
+        expect(fetchMock.mock.calls.some(([url]) => String(url).includes('severity=high'))).toBe(true);
+        fireEvent.change(screen.getByLabelText('SEO page size'), { target: { value: '100' } });
+        await waitFor(() => expect(screen.getByText('Page 1 of 1 · 17 shown of 17 matching')).toBeInTheDocument());
+        expect(fetchMock.mock.calls.some(([url]) => String(url).includes('per_page=100'))).toBe(true);
+    });
+
     it('renders the canonical navigation, external link, reset and previous controls against authoritative reads', async () => {
         const { container } = render(<SeoVisibleControls config={config} />);
         await screen.findByText('finding-1');
