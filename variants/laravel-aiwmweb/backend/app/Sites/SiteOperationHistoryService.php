@@ -61,7 +61,8 @@ final class SiteOperationHistoryService
             ->latest('started_at')
             ->limit(max(1, min(self::MAX_RECORDS, $take)))
             ->get()
-            ->toArray();
+            ->map(fn (SiteOperationHistory $item): array => $this->safeSiteItem($item))
+            ->all();
     }
 
     public function getById(int $id): ?SiteOperationHistory
@@ -174,8 +175,34 @@ final class SiteOperationHistoryService
      */
     private function safeSiteItem(SiteOperationHistory $item): array
     {
-        $data = $item->toArray();
+        // Eloquent toArray() also exposes arbitrary legacy details and future
+        // model columns. Site history is user-facing, not a forensic raw dump.
+        $data = array_intersect_key($item->toArray(), array_fill_keys([
+            'id', 'site_id', 'correlation_id', 'operation', 'status',
+            'message', 'details', 'affected_records', 'started_at', 'completed_at', 'site',
+        ], true));
+        $operation = (string) ($data['operation'] ?? '');
+        $data['operation'] = preg_match('/^[a-z][a-z0-9._-]{0,79}$/D', $operation) === 1
+            ? $operation : 'operation_withheld';
+        $data['correlation_id'] = Str::isUuid((string) ($data['correlation_id'] ?? ''))
+            ? $data['correlation_id'] : null;
+
         if ($item->operation !== 'synchronization' || $item->status !== 'failed') {
+            // Do not reflect raw success, diagnostic or legacy error messages:
+            // they can contain URLs, credentials, stack traces and nested data.
+            $data['message'] = match ($item->status) {
+                'succeeded' => match ($item->operation) {
+                    'synchronization' => 'Synchronization completed.',
+                    'diagnostic_recheck' => 'Site diagnostic recheck completed.',
+                    'reconnect' => 'Connector reconnect requested.',
+                    'disconnect' => 'Connector disconnected.',
+                    default => 'Site operation completed.',
+                },
+                'failed' => 'Site operation failed. Review authorized diagnostics.',
+                default => 'Site operation state recorded.',
+            };
+            $data['details'] = [];
+
             return $data;
         }
 
