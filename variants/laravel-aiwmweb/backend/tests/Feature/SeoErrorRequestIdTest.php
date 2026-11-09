@@ -60,5 +60,4 @@ final class SeoErrorRequestIdTest extends TestCase
             $this->assertStringNotContainsString('/home/private/.env', $response->getContent());
         }
     }
-
 }
