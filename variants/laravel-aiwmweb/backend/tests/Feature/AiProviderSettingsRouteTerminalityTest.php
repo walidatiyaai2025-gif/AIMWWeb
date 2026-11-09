@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\AI\Platform\Enums\ProviderReadiness;
+use App\AI\Platform\Services\ProviderSecretStore;
 use App\Http\Controllers\AiProviderSettingsReadController;
 use App\Models\AiProviderProfile;
 use App\Models\Permission;
@@ -12,6 +14,7 @@ use App\Models\User;
 use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
@@ -156,6 +159,57 @@ class AiProviderSettingsRouteTerminalityTest extends TestCase
         $this->assertStringContainsString('@media (max-width: 700px)', $source);
         $this->assertStringContainsString('data-dashboard-shell="aiwmweb"', $source);
         $this->assertDatabaseCount('ai_provider_profiles', 0);
+    }
+
+    public function test_openai_compatible_ready_means_models_discovery_not_verified_generation_in_both_locales(): void
+    {
+        $user = User::factory()->create();
+        $membership = $this->membership($user, 'alpha', ['settings.manage'], 'Model Discovery');
+        $context = app(TenantContext::class);
+        $context->activate($membership->tenant);
+
+        $provider = AiProviderProfile::query()->create([
+            'provider_key' => 'ollama',
+            'adapter_key' => 'openai-compatible',
+            'display_name' => 'Ollama Gateway',
+            'endpoint' => 'https://ai.example.test/v1',
+            'default_model' => 'qwen3:1.7b',
+            'enabled' => true,
+            'priority' => 5,
+            'readiness_state' => ProviderReadiness::Ready,
+            'readiness_checked_at' => now(),
+        ]);
+        $secret = 'sensitive-server-side-only-test-token';
+        app(ProviderSecretStore::class)->put($provider, $secret);
+        $context->forget();
+
+        Http::fake();
+        $previousLocale = app()->getLocale();
+        try {
+            app()->setLocale('en');
+            $this->actingAs($user)
+                ->get('/tenants/alpha/settings/ai-providers')
+                ->assertOk()
+                ->assertSee('data-provider-probe-scope="models-only"', false)
+                ->assertSee('READY confirms model discovery, not successful content generation.')
+                ->assertSee('data-provider-generation-status="unverified"', false)
+                ->assertSee('POST /chat/completions, JSON output validity and cPanel Cron/worker health require separate authorized checks.')
+                ->assertDontSee($secret);
+
+            app()->setLocale('ar');
+            $this->actingAs($user)
+                ->get('/tenants/alpha/settings/ai-providers')
+                ->assertOk()
+                ->assertSee('ظهور READY يعني إمكانية اكتشاف النموذج، ولا يثبت نجاح توليد المحتوى.')
+                ->assertSee('غير مختبر: يحتاج POST /chat/completions وصلاحية JSON')
+                ->assertDontSee($secret);
+        } finally {
+            app()->setLocale($previousLocale);
+        }
+
+        Http::assertNothingSent();
+        $this->assertDatabaseCount('ai_provider_profiles', 1);
+        $this->assertSame(ProviderReadiness::Ready, $provider->fresh()->readiness_state);
     }
 
     public function test_guest_missing_permission_and_cross_tenant_access_fail_closed(): void
