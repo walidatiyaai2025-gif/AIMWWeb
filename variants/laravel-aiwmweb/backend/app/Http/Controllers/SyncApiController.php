@@ -105,12 +105,24 @@ final class SyncApiController extends Controller
         $auth->authorize('content.view');
         // A foreign site must not be distinguishable from an owned empty history.
         Site::query()->findOrFail($site);
-        $query = SyncRun::query()->where('site_id', $site)->latest('id');
-        if ($state = $request->query('state')) {
+        $filters = $request->validate([
+            'state' => 'sometimes|nullable|string|max:80',
+            'per_page' => 'sometimes|integer|min:1|max:100',
+            'page' => 'sometimes|integer|min:1|max:1000000',
+        ]);
+        $query = SyncRun::query()->where('site_id', $site)->orderByDesc('id');
+        if ($state = $filters['state'] ?? null) {
             $query->where('state', $state);
         }
 
-        return response()->json($query->paginate(min(max((int) $request->query('per_page', 25), 1), 100)));
+        $perPage = (int) ($filters['per_page'] ?? 25);
+        $page = (int) ($filters['page'] ?? 1);
+        $paginator = $query->paginate($perPage, ['*'], 'page', $page);
+        if ($page > $paginator->lastPage()) {
+            $paginator = $query->paginate($perPage, ['*'], 'page', max(1, $paginator->lastPage()));
+        }
+
+        return response()->json($paginator);
     }
 
     public function show(TenantAuthorizer $auth, string $tenant, int $site, int $run): JsonResponse
@@ -160,12 +172,24 @@ final class SyncApiController extends Controller
         return response()->json($review->review($site));
     }
 
-    public function conflicts(TenantAuthorizer $auth, string $tenant, int $site): JsonResponse
+    public function conflicts(Request $request, TenantAuthorizer $auth, string $tenant, int $site): JsonResponse
     {
         $auth->authorize('content.view');
         Site::query()->findOrFail($site);
+        $filters = $request->validate([
+            'per_page' => 'sometimes|integer|min:1|max:100',
+            'page' => 'sometimes|integer|min:1|max:1000000',
+        ]);
 
-        return response()->json(ContentConflict::query()->where('site_id', $site)->latest('id')->paginate(50));
+        $perPage = (int) ($filters['per_page'] ?? 50);
+        $page = (int) ($filters['page'] ?? 1);
+        $query = ContentConflict::query()->where('site_id', $site)->orderByDesc('id');
+        $paginator = $query->paginate($perPage, ['*'], 'page', $page);
+        if ($page > $paginator->lastPage()) {
+            $paginator = $query->paginate($perPage, ['*'], 'page', max(1, $paginator->lastPage()));
+        }
+
+        return response()->json($paginator);
     }
 
     public function resolveConflict(Request $request, TenantAuthorizer $auth, string $tenant, int $site, int $conflict): JsonResponse
