@@ -94,8 +94,8 @@ final class SecurityAuditEventHistorySearch1773Test extends TestCase
             ->assertSee('data-audit-total="unavailable"', false)
             ->assertSee('data-audit-filter-limit', false);
 
-        $this->actingAs($admin)->get('/admin/security-audit?event_q[]=nope')->assertUnprocessable();
-        $this->actingAs($admin)->get('/admin/security-audit?event_q='.str_repeat('x', 161))->assertUnprocessable();
+        $this->actingAs($admin)->getJson('/admin/security-audit?event_q[]=nope')->assertUnprocessable();
+        $this->actingAs($admin)->getJson('/admin/security-audit?event_q='.str_repeat('x', 161))->assertUnprocessable();
         $this->assertDatabaseCount('audit_events', 1142);
 
         $unprivileged = User::factory()->create(['platform_admin' => false]);
