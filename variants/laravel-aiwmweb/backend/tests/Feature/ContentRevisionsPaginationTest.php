@@ -84,6 +84,7 @@ final class ContentRevisionsPaginationTest extends TestCase
         } finally {
             $ctx->forget();
         }
-\n        return [$user, $tenant];
+
+        return [$user, $tenant];
     }
 }
