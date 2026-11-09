@@ -83,6 +83,86 @@ class LegacyNotificationApiTerminalityTest extends TestCase
         $this->actingAs($user)->getJson('/api/notifications')->assertForbidden();
     }
 
+    public function test_opt_in_pages_report_real_filtered_totals_across_tied_timestamp_notifications(): void
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $alpha = $this->tenantMembership($user, 'notification-pages-alpha', ['execution.view']);
+        $this->tenantMembershipForExistingTenant($otherUser, $alpha->tenant, ['execution.view']);
+        $beta = $this->tenantMembership($user, 'notification-pages-beta', ['execution.view']);
+
+        // Same timestamps deliberately exercise the stable ID tie-breaker.
+        $this->travelTo(now()->startOfSecond());
+        $mine = [];
+        for ($i = 1; $i <= 63; $i++) {
+            $mine[] = $this->notification($alpha, $user, 'Page row '.$i, read: $i % 2 === 0);
+        }
+        $this->notification($alpha, $otherUser, 'Different member private', read: false);
+        $this->notification($beta, $user, 'Different tenant private', read: false);
+        $this->travelBack();
+
+        $url = '/api/notifications?tenant=notification-pages-alpha';
+        $expected = [
+            [1, 63, 25],
+            [2, 38, 25],
+            [3, 13, 13],
+            [1000000, 13, 13],
+        ];
+        foreach ($expected as [$page, $firstNumber, $size]) {
+            $response = $this->actingAs($user)
+                ->getJson($url."&page={$page}&per_page=25&userId={$otherUser->id}")
+                ->assertOk()
+                ->assertJsonPath('total', 63)
+                ->assertJsonPath('last_page', 3)
+                ->assertJsonPath('current_page', min($page, 3))
+                ->assertJsonPath('per_page', 25)
+                ->assertJsonCount($size, 'data');
+            $this->assertSame('Page row '.$firstNumber, $response->json('data.0.title'));
+        }
+
+        $this->actingAs($user)->getJson($url.'&per_page=100')
+            ->assertOk()->assertJsonPath('total', 63)->assertJsonPath('current_page', 1)
+            ->assertJsonCount(63, 'data');
+        $this->actingAs($user)->getJson($url.'&page=1&take=1')
+            ->assertOk()->assertJsonPath('per_page', 25)->assertJsonCount(25, 'data');
+
+        $unread = $this->actingAs($user)->getJson($url.'&page=1&per_page=25&unreadOnly=true')
+            ->assertOk()->assertJsonPath('total', 32)->assertJsonPath('last_page', 2)
+            ->assertJsonCount(25, 'data');
+        foreach ($unread->json('data') as $row) {
+            $this->assertNull($row['read_at']);
+        }
+        $this->actingAs($user)->getJson($url.'&page=1000000&per_page=25&unreadOnly=true')
+            ->assertOk()->assertJsonPath('current_page', 2)->assertJsonCount(7, 'data');
+
+        // The existing array response still works for clients without paging.
+        $this->actingAs($user)->getJson($url.'&take=5')
+            ->assertOk()->assertJsonCount(5)
+            ->assertJsonPath('0.title', 'Page row 63');
+
+        foreach (['page=0', 'page=-1', 'page=nope', 'page=1000001', 'page%5B%5D=2', 'per_page=0', 'per_page=101', 'per_page=nope'] as $invalid) {
+            $this->actingAs($user)->getJson($url.'&'.$invalid)->assertUnprocessable();
+        }
+
+        $this->actingAs($user)->getJson('/api/notifications?tenant=notification-pages-beta&page=1')
+            ->assertOk()->assertJsonPath('total', 1)
+            ->assertJsonPath('data.0.title', 'Different tenant private');
+
+        $this->actingAs($otherUser)->getJson($url.'&page=1')
+            ->assertOk()->assertJsonPath('total', 1)
+            ->assertJsonPath('data.0.title', 'Different member private');
+
+        $empty = $this->tenantMembership($user, 'notification-pages-empty', ['execution.view']);
+        $this->actingAs($user)->getJson('/api/notifications?tenant='.$empty->tenant->slug.'&page=1000000')
+            ->assertOk()->assertJsonPath('total', 0)
+            ->assertJsonPath('last_page', 1)
+            ->assertJsonPath('current_page', 1)
+            ->assertJsonCount(0, 'data');
+
+        $this->actingAs($user)->getJson('/api/notifications?page=1')
+            ->assertConflict()->assertJsonPath('code', 'TENANT_SELECTION_REQUIRED');
+    }
+
     private function tenantMembership(User $user, string $slug, array $permissions): TenantMembership
     {
         $tenant = Tenant::query()->create(['name' => ucfirst($slug), 'slug' => $slug]);
