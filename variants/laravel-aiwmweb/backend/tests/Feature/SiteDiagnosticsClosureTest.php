@@ -650,6 +650,91 @@ class SiteDiagnosticsClosureTest extends TestCase
         $this->assertArrayNotHasKey('encrypted_secret', Connector::query()->firstOrFail()->toArray());
     }
 
+    public function test_legacy_site_history_tie_order_is_newest_first_and_matches_authoritative_pages(): void
+    {
+        [$ownTenant, $ownMember] = $this->tenant('stable-site-history-own');
+        [$foreignTenant, $foreignMember] = $this->tenant('stable-site-history-foreign');
+        $context = app(TenantContext::class);
+        $context->activate($ownTenant, $ownMember);
+        $site = Site::query()->create(['name' => 'Primary', 'url' => 'https://stable-primary.test']);
+        $otherSite = Site::query()->create(['name' => 'Other', 'url' => 'https://stable-other.test']);
+
+        // Deliberately use the same second for more rows than the legacy 500
+        // limit. Ordering by started_at alone can silently hide newer failures.
+        $at = '2026-11-08 12:00:00';
+        $rows = [];
+        for ($i = 1; $i <= 540; $i++) {
+            $rows[] = [
+                'tenant_id' => $ownTenant->id,
+                'site_id' => $site->id,
+                'operation' => 'synchronization',
+                'status' => $i > 535 ? 'failed' : 'succeeded',
+                'message' => 'Bearer never-expose-legacy-secret',
+                'details' => '{"token":"private-nested-secret"}',
+                'started_at' => $at,
+                'completed_at' => $at,
+                'created_at' => $at,
+                'updated_at' => $at,
+            ];
+        }
+        foreach (array_chunk($rows, 100) as $chunk) {
+            DB::table('site_operation_histories')->insert($chunk);
+        }
+        $ownIds = DB::table('site_operation_histories')
+            ->where('site_id', $site->id)->orderByDesc('id')->pluck('id')->all();
+
+        $otherIds = [];
+        for ($i = 0; $i < 3; $i++) {
+            $otherIds[] = SiteOperationHistory::query()->create([
+                'site_id' => $otherSite->id,
+                'operation' => 'diagnostic_recheck',
+                'status' => 'succeeded',
+                'message' => 'safe',
+                'started_at' => $at,
+                'completed_at' => $at,
+            ])->id;
+        }
+
+        // A later row from a different tenant must not appear in getAll().
+        $context->activate($foreignTenant, $foreignMember);
+        $foreignSite = Site::query()->create(['name' => 'Private', 'url' => 'https://private.test']);
+        $foreignRow = SiteOperationHistory::query()->create([
+            'site_id' => $foreignSite->id,
+            'operation' => 'synchronization',
+            'status' => 'failed',
+            'message' => 'foreign-private-failure',
+            'started_at' => $at,
+            'completed_at' => $at,
+        ]);
+        $context->activate($ownTenant, $ownMember);
+
+        $service = new SiteOperationHistoryService;
+        $latest = $service->get($site->id);
+        $this->assertCount(100, $latest);
+        $this->assertSame(array_slice($ownIds, 0, 100), array_column($latest, 'id'));
+        $this->assertSame('failed', $latest[0]['status']);
+        $this->assertSame('WordPress synchronization failed.', $latest[0]['message']);
+        $this->assertSame([], $latest[0]['details']);
+        $this->assertStringNotContainsString('never-expose-legacy-secret', json_encode($latest, JSON_THROW_ON_ERROR));
+        $this->assertStringNotContainsString('private-nested-secret', json_encode($latest, JSON_THROW_ON_ERROR));
+
+        $maximum = $service->get($site->id, PHP_INT_MAX);
+        $this->assertCount(500, $maximum);
+        $this->assertSame(array_slice($ownIds, 0, 500), array_column($maximum, 'id'));
+        $page = $service->paginateForSite($site->id, 1, 25);
+        $this->assertSame(array_slice($ownIds, 0, 25), array_column($page['items'], 'id'));
+        $this->assertSame(540, $page['total']);
+
+        $all = $service->getAll(10);
+        $this->assertSame(
+            array_merge(array_reverse($otherIds), array_slice($ownIds, 0, 7)),
+            array_column($all, 'id')
+        );
+        $this->assertNotContains($foreignRow->id, array_column($all, 'id'));
+        $this->assertStringNotContainsString('foreign-private-failure', json_encode($all, JSON_THROW_ON_ERROR));
+        $this->assertSame(544, DB::table('site_operation_histories')->count());
+    }
+
     public function test_site_operation_history_supports_inventory_summary_preview_cleanup_and_clear(): void
     {
         [$tenant, $member] = $this->tenant('history');
