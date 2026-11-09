@@ -137,6 +137,7 @@ export function SeoVisibleControls({ config }: { config: SeoConfig }) {
     const [serverTotal, setServerTotal] = useState<number | null>(null);
     const [serverLastPage, setServerLastPage] = useState(1);
     const readSequence = useRef(0);
+    const announceNextRefresh = useRef(false);
     const [busy, setBusy] = useState(false);
     const [auditRunning, setAuditRunning] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -199,7 +200,9 @@ export function SeoVisibleControls({ config }: { config: SeoConfig }) {
         let active = true;
         (async () => {
             try {
-                await Promise.all([loadAuthoritative(false), loadProposals()]);
+                const announce = announceNextRefresh.current;
+                announceNextRefresh.current = false;
+                await Promise.all([loadAuthoritative(announce), loadProposals()]);
             } catch (error) {
                 if (active) setFeedback({ tone: 'error', text: error instanceof Error ? error.message : 'SEO data could not be loaded.' });
             } finally {
@@ -271,15 +274,21 @@ export function SeoVisibleControls({ config }: { config: SeoConfig }) {
     };
 
     const resetFilters = async () => {
+        if (query === '' && severity === 'all' && pageSize === 10 && page === 1) {
+            try {
+                await loadAuthoritative(true);
+            } catch (error) {
+                setFeedback({ tone: 'error', text: error instanceof Error ? error.message : 'Filters reset, but the authoritative refresh failed.' });
+            }
+            return;
+        }
+        // A single effect-driven read must own the reset notification; avoid a
+        // competing stale request clearing the success message.
+        announceNextRefresh.current = true;
         setQuery('');
         setSeverity('all');
         setPageSize(10);
         setPage(1);
-        try {
-            await loadAuthoritative(true);
-        } catch (error) {
-            setFeedback({ tone: 'error', text: error instanceof Error ? error.message : 'Filters reset, but the authoritative refresh failed.' });
-        }
     };
 
     const previousPage = async () => {
