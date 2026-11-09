@@ -84,11 +84,15 @@ final class SeoController extends Controller
             $query->where('severity', $filters['severity']);
         }
         if (isset($filters['search']) && trim($filters['search']) !== '') {
-            $term = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], trim($filters['search']));
-            $query->where(function ($builder) use ($term) {
-                $builder->where('code', 'like', '%'.$term.'%')
-                    ->orWhere('field', 'like', '%'.$term.'%')
-                    ->orWhere('recommendation', 'like', '%'.$term.'%');
+            // SQLite does not implicitly escape LIKE wildcards with a backslash.
+            // Use an explicit portable escape so literal %, _ and ! searches
+            // match the same rows on SQLite and production MySQL/MariaDB.
+            $term = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], trim($filters['search']));
+            $pattern = '%'.$term.'%';
+            $query->where(function ($builder) use ($pattern) {
+                $builder->whereRaw("code LIKE ? ESCAPE '!'", [$pattern])
+                    ->orWhereRaw("field LIKE ? ESCAPE '!'", [$pattern])
+                    ->orWhereRaw("recommendation LIKE ? ESCAPE '!'", [$pattern]);
             });
         }
         $perPage = (int) ($filters['per_page'] ?? 25);
