@@ -511,8 +511,10 @@ try {
                 // cPanel background work is durable. Never run AI/Sync jobs
                 // inline in a web request even if hosting Cron is not yet set.
                 'AIMW_RUNTIME_PROFILE' => 'cpanel',
-                'CACHE_STORE' => 'database',
-                'SESSION_DRIVER' => 'database',
+                // Bootstrap must not ask for database cache/session tables
+                // BEFORE migrate creates them on a fresh installation.
+                'CACHE_STORE' => 'file',
+                'SESSION_DRIVER' => 'file',
                 'QUEUE_CONNECTION' => 'database',
                 'DB_QUEUE_RETRY_AFTER' => '90',
                 'CPANEL_AI_ENABLED' => 'false',
@@ -571,6 +573,15 @@ try {
 
             $console->call('view:cache');
             $console->call('optimize:clear');
+
+            // Only after migrations and owner setup have succeeded may the
+            // installed runtime switch to durable database cache/sessions.
+            // It stays safely disabled until an actual private Cron invocation
+            // and the operator's authenticated preflight activation.
+            $hardened = (string) file_get_contents($envPath);
+            $hardened = aiwmEnvironment($hardened, 'CACHE_STORE', 'database');
+            $hardened = aiwmEnvironment($hardened, 'SESSION_DRIVER', 'database');
+            aiwmSave($envPath, $hardened);
 
             // Initial deployment provenance must be present before the installer
             // locks. The dashboard can then report both exact version and SHA
