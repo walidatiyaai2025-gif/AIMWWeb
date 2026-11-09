@@ -3,7 +3,8 @@ export const SUPPORTED_PAGE_SIZES = [10, 25, 50, 100] as const;
 
 export function visiblePaginationPages(currentPage: number, lastPage: number, maxVisible = 5): number[] {
     if (!Number.isSafeInteger(currentPage) || !Number.isSafeInteger(lastPage) || lastPage < 1) return [];
-    const count = Math.max(1, Math.min(7, Math.trunc(maxVisible)));
+    const safeMaxVisible = Number.isFinite(maxVisible) ? Math.trunc(maxVisible) : 5;
+    const count = Math.max(1, Math.min(7, safeMaxVisible));
     const center = Math.min(lastPage, Math.max(1, currentPage));
     const start = Math.max(1, Math.min(center - Math.floor(count / 2), lastPage - count + 1));
     return Array.from({ length: Math.min(count, lastPage) }, (_, index) => start + index);
