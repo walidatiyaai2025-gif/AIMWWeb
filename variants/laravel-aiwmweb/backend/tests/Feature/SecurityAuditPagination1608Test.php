@@ -86,7 +86,6 @@ final class SecurityAuditPagination1608Test extends TestCase
             ->assertSee('value="25" selected', false)
             ->assertSee('data-audit-total="0"', false);
 
-
         $this->actingAs($admin)->get('/admin/security-audit?q=nonexistent')
             ->assertOk()
             ->assertSee('data-audit-filter-limit', false)
