@@ -50,10 +50,11 @@ final class AiUsageService
     public function pagedRecent(array $filters, int $page, int $perPage): array
     {
         $query = $this->query($filters)->orderByDesc('created_at')->orderByDesc('id');
-        $results = $query->paginate($perPage, ['*'], 'page', $page);
-        if ($page > $results->lastPage()) {
-            $results = $query->paginate($perPage, ['*'], 'page', $results->lastPage());
-        }
+        // Determine the filtered tenant/user total before issuing any OFFSET.
+        // Stale links must not run a millionth-page SELECT and then retry.
+        $total = (clone $query)->count();
+        $lastPage = max(1, (int) ceil($total / $perPage));
+        $results = $query->paginate($perPage, ['*'], 'page', min($page, $lastPage));
 
         return $results->through(fn (AiUsageRecord $record): array => $this->serialize($record))->toArray();
     }
