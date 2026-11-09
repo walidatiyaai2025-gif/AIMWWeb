@@ -442,6 +442,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const [applicationUsersPageSize, setApplicationUsersPageSize] = useState(25);
     const [rolesPageSize, setRolesPageSize] = useState(25);
     const [schedulesPageSize, setSchedulesPageSize] = useState(25);
+    const [automationPageSize, setAutomationPageSize] = useState(25);
     const [approvalPageSize, setApprovalPageSize] = useState(25);
     const [evidencePageSize, setEvidencePageSize] = useState(25);
     const [emailSchedulesPageSize, setEmailSchedulesPageSize] = useState(25);
@@ -609,6 +610,13 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, schedulesPageSize],
         queryFn: () => readWorkspaceCollection(endpointWithQuery(endpoint!, page, search, {
             per_page: String(schedulesPageSize),
+        })),
+        enabled: state.state === 'enabled' && Boolean(endpoint),
+    } : route.key === 'automation' ? {
+        // Automation rules are tenant-scoped and expose genuine SQL page totals.
+        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, automationPageSize],
+        queryFn: () => readWorkspaceCollection(endpointWithQuery(endpoint!, page, search, {
+            per_page: String(automationPageSize),
         })),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     } : route.key === 'notifications' ? {
@@ -1674,9 +1682,12 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         }} />
                     : <Pagination page={collection.page} lastPage={collection.lastPage} onPage={route.key === 'sites' ? (next) => navigateSites(next, sitesPageSize, sitesFilter) : route.key === 'execution' ? (next) => navigateExecution({ ...executionState, page: next }) : setPage}
                         total={collection.authoritativeTotal}
-                        pageSize={route.key === 'schedules' ? schedulesPageSize : route.key === 'roles' ? rolesPageSize : route.key === 'application-users' ? applicationUsersPageSize : route.key === 'execution' ? executionState.pageSize : route.key === 'email-history' ? emailHistoryPageSize : route.key === 'approvals' ? approvalPageSize : route.key === 'evidence' ? evidencePageSize : route.key === 'email-schedules' ? emailSchedulesPageSize : route.key === 'notifications' ? notificationsPageSize : route.key === 'logs' ? logsPageSize : route.key === 'sites' ? sitesPageSize : undefined}
+                        pageSize={route.key === 'automation' ? automationPageSize : route.key === 'schedules' ? schedulesPageSize : route.key === 'roles' ? rolesPageSize : route.key === 'application-users' ? applicationUsersPageSize : route.key === 'execution' ? executionState.pageSize : route.key === 'email-history' ? emailHistoryPageSize : route.key === 'approvals' ? approvalPageSize : route.key === 'evidence' ? evidencePageSize : route.key === 'email-schedules' ? emailSchedulesPageSize : route.key === 'notifications' ? notificationsPageSize : route.key === 'logs' ? logsPageSize : route.key === 'sites' ? sitesPageSize : undefined}
                         returnedCount={collection.rows.length}
-                        onPageSizeChange={route.key === 'schedules' ? (size) => {
+                        onPageSizeChange={route.key === 'automation' ? (size) => {
+                            setPage(1);
+                            setAutomationPageSize(size);
+                        } : route.key === 'schedules' ? (size) => {
                             setPage(1);
                             setSchedulesPageSize(size);
                         } : route.key === 'roles' ? (size) => {
