@@ -80,6 +80,20 @@ final class RolesPagination1608Test extends TestCase
             ->assertJsonCount(10, 'data');
         $this->assertSame('Search Role 10', $second->json('data.0.name'));
 
+        // Search-only requests must not fall back to the full legacy role list.
+        $this->actingAs($reader)
+            ->getJson('/tenants/roles-search/admin/roles?search=Literal%25Role')
+            ->assertOk()->assertJsonPath('total', 1)
+            ->assertJsonPath('current_page', 1)
+            ->assertJsonPath('per_page', 25)
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.name', 'Literal%Role');
+
+        $this->actingAs($reader)
+            ->getJson('/tenants/roles-search/admin/roles?search=missing')
+            ->assertOk()->assertJsonPath('total', 0)
+            ->assertJsonCount(0, 'data');
+
         foreach ([
             'search=%25' => 'Literal%Role',
             'search=%5F' => 'Literal_Role',
