@@ -30,6 +30,38 @@ final class OperationsControlPlaneService
         return DB::table('scheduled_tasks')->where('tenant_id', $this->context->id())->orderBy('name')->get()->map(fn ($row) => $this->objectToArray($row))->all();
     }
 
+    /**
+     * Tenant-scoped, bounded SQL pagination for the Schedules grid. Legacy
+     * callers of schedules() retain the original unpaged response.
+     *
+     * @return array{data: array, total: int, current_page: int, last_page: int, per_page: int}
+     */
+    public function paginatedSchedules(?string $search, int $page, int $perPage): array
+    {
+        $query = DB::table('scheduled_tasks')->where('tenant_id', $this->context->id());
+        $term = trim($search ?? '');
+        if ($term !== '') {
+            $escaped = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], Str::upper($term));
+            $query->whereRaw("UPPER(name) LIKE ? ESCAPE '!'", ['%'.$escaped.'%']);
+        }
+
+        $total = (clone $query)->count();
+        $lastPage = max(1, (int) ceil($total / $perPage));
+        $currentPage = min($page, $lastPage);
+        $rows = $total === 0
+            ? collect()
+            : $query->orderBy('name')->orderBy('id')
+                ->forPage($currentPage, $perPage)->get();
+
+        return [
+            'data' => $rows->map(fn ($row): array => $this->objectToArray($row))->values()->all(),
+            'total' => $total,
+            'current_page' => $currentPage,
+            'last_page' => $lastPage,
+            'per_page' => $perPage,
+        ];
+    }
+
     public function saveSchedule(?int $id, array $data, int $actorUserId): array
     {
         $type = (string) ($data['task_type'] ?? '');
