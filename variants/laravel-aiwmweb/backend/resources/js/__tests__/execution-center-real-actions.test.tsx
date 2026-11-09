@@ -7,7 +7,10 @@ import {
     authorizedExecutionAction,
     ExecutionCenterRowActions,
     ExecutionDateRangeWarning,
+    ExecutionTextFilterWarning,
     isValidExecutionDateRange,
+    isValidExecutionSearch,
+    isValidExecutionType,
     readExecutionUrlState,
     writeExecutionUrlState,
 } from '../execution-center-real-actions';
@@ -157,5 +160,54 @@ describe('Execution Center authoritative actions (#1614)', () => {
         state = readExecutionUrlState();
         expect(state.dateFrom).toBe('2024-02-29');
         expect(state.dateTo).toBe('2024-03-01');
+    });
+    it('matches Laravel identifier allowlists and bounds for Execution Center filters', () => {
+        expect(isValidExecutionSearch('report.export: 122-alpha_9')).toBe(true);
+        expect(isValidExecutionSearch('  report.export  ')).toBe(true);
+        expect(isValidExecutionSearch('')).toBe(true);
+        expect(isValidExecutionType('sync.wordpress_recheck-2')).toBe(true);
+        expect(isValidExecutionType('')).toBe(true);
+
+        for (const value of ['%', '_%_', 'بحث', 'report/export', 'retry[1]', 'report?type', 'report"export']) {
+            expect(isValidExecutionSearch(value)).toBe(false);
+        }
+        expect(isValidExecutionSearch('a'.repeat(121))).toBe(false);
+        expect(isValidExecutionSearch('a'.repeat(120))).toBe(true);
+        expect(isValidExecutionType('report export')).toBe(false);
+        expect(isValidExecutionType('sync:site')).toBe(false);
+        expect(isValidExecutionType('نوع')).toBe(false);
+        expect(isValidExecutionType('a'.repeat(81))).toBe(false);
+        expect(isValidExecutionType('a'.repeat(80))).toBe(true);
+    });
+
+    it('shows accessible English and Arabic guidance for rejected search/type drafts', () => {
+        const { rerender } = render(<ExecutionTextFilterWarning
+            search="بحث%" type="report export" locale="en" />);
+        expect(screen.getAllByRole('alert')).toHaveLength(2);
+        expect(screen.getByText(/Search accepts English letters/)).toHaveAttribute(
+            'id', 'execution-search-filter-warning',
+        );
+        expect(screen.getByText(/Operation type accepts English letters/)).toHaveAttribute(
+            'id', 'execution-type-filter-warning',
+        );
+
+        rerender(<ExecutionTextFilterWarning search="بحث%" type="report export" locale="ar" />);
+        expect(screen.getByText(/البحث يقبل الحروف الإنجليزية/)).toBeInTheDocument();
+        expect(screen.getByText(/نوع العملية يقبل الحروف الإنجليزية/)).toBeInTheDocument();
+        rerender(<ExecutionTextFilterWarning search="report.export" type="sync.site" locale="ar" />);
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
+
+    it('restores invalid shared URL search/type without forwarding them to a future HTTP query', () => {
+        window.history.replaceState(null, '', '/tenants/alpha/module/execution?site=4&tab=work&page=2&per_page=50&search=%25&type=sync%3Aunsafe&status=failed');
+        const saved = readExecutionUrlState();
+        expect(saved).toMatchObject({
+            search: '', type: '', status: 'failed', page: 2, pageSize: 50,
+        });
+        expect(new URLSearchParams(window.location.search).get('site')).toBe('4');
+        expect(new URLSearchParams(window.location.search).get('tab')).toBe('work');
+        writeExecutionUrlState({ ...saved, search: 'report.export', type: 'sync.site' });
+        expect(new URLSearchParams(window.location.search).get('search')).toBe('report.export');
+        expect(new URLSearchParams(window.location.search).get('type')).toBe('sync.site');
     });
 });
