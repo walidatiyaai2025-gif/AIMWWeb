@@ -142,6 +142,41 @@ final class OperationsControlPlaneService
         return DB::table('automation_rules')->where('tenant_id', $this->context->id())->orderBy('name')->get()->map(fn ($row) => $this->decodeColumns($this->objectToArray($row), ['conditions', 'actions']))->all();
     }
 
+    /**
+     * Opt-in SQL paging for the Automation Center rules grid. Preserve
+     * automations() for legacy integrations that request the full array.
+     *
+     * @return array{data: array, total: int, current_page: int, last_page: int, per_page: int}
+     */
+    public function paginatedAutomations(?string $search, int $page, int $perPage): array
+    {
+        $query = DB::table('automation_rules')->where('tenant_id', $this->context->id());
+        $term = trim($search ?? '');
+        if ($term !== '') {
+            $escaped = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], Str::upper($term));
+            $query->whereRaw("UPPER(name) LIKE ? ESCAPE '!'", ['%'.$escaped.'%']);
+        }
+
+        $total = (clone $query)->count();
+        $lastPage = max(1, (int) ceil($total / $perPage));
+        $currentPage = min($page, $lastPage);
+        $rows = $total === 0
+            ? collect()
+            : $query->orderBy('name')->orderBy('id')
+                ->forPage($currentPage, $perPage)->get();
+
+        return [
+            'data' => $rows->map(fn ($row): array => $this->decodeColumns(
+                $this->objectToArray($row),
+                ['conditions', 'actions'],
+            ))->values()->all(),
+            'total' => $total,
+            'current_page' => $currentPage,
+            'last_page' => $lastPage,
+            'per_page' => $perPage,
+        ];
+    }
+
     public function saveAutomation(?int $id, array $data, int $actorUserId): array
     {
         $trigger = (string) ($data['trigger'] ?? '');

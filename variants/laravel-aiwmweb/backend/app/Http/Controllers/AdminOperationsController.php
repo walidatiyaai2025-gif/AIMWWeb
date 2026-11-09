@@ -327,9 +327,25 @@ final class AdminOperationsController extends Controller
         return response()->json($this->operations->saveSchedule($task, $request->all(), (int) $request->user()->getAuthIdentifier()), $task ? 200 : 201);
     }
 
-    public function automations(string $tenant): JsonResponse
+    public function automations(Request $request, string $tenant): JsonResponse
     {
         $this->authorizer->authorize('operations.manage');
+
+        // Search and explicit paging opt in to SQL-filtered pages. Calls with
+        // no query parameters retain the original complete data array.
+        if ($request->hasAny(['page', 'per_page', 'search'])) {
+            $input = $request->validate([
+                'search' => ['nullable', 'string', 'max:160'],
+                'page' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
+                'per_page' => ['sometimes', 'integer', 'in:10,25,50,100'],
+            ]);
+
+            return response()->json($this->operations->paginatedAutomations(
+                $input['search'] ?? null,
+                (int) ($input['page'] ?? 1),
+                (int) ($input['per_page'] ?? 25),
+            ));
+        }
 
         return response()->json(['data' => $this->operations->automations()]);
     }
