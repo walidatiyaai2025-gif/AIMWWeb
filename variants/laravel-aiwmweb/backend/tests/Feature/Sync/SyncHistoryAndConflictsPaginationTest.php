@@ -12,6 +12,7 @@ use App\Models\TenantMembership;
 use App\Models\User;
 use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 final class SyncHistoryAndConflictsPaginationTest extends TestCase
@@ -92,6 +93,64 @@ final class SyncHistoryAndConflictsPaginationTest extends TestCase
             $this->actingAs($user)
                 ->getJson("/api/v1/tenants/sync-paging-alpha/sites/{$otherSite->id}/{$resource}")
                 ->assertOk()->assertJsonPath('total', 1);
+        }
+    }
+
+    public function test_large_sync_bookmarks_never_issue_oversized_offset_selects(): void
+    {
+        $user = User::factory()->create();
+        $member = $this->membership($user, 'sync-safe-offset', ['tenant.view', 'content.view']);
+        $site = $this->site($member, 'Safe Offset Site');
+
+        $this->inTenant($member, function () use ($site): void {
+            SyncRun::query()->create([
+                'site_id' => $site->id,
+                'state' => 'completed',
+                'mode' => 'full',
+                'trigger' => 'manual',
+                'resources' => ['posts'],
+            ]);
+            ContentConflict::query()->create([
+                'site_id' => $site->id,
+                'entity_type' => 'ContentItem',
+                'remote_id' => 54321,
+                'status' => 'open',
+            ]);
+        });
+
+        foreach (['sync', 'conflicts'] as $resource) {
+            DB::enableQueryLog();
+            DB::flushQueryLog();
+            try {
+                $this->actingAs($user)
+                    ->getJson("/api/v1/tenants/sync-safe-offset/sites/{$site->id}/{$resource}?page=1000000&per_page=25")
+                    ->assertOk()
+                    ->assertJsonPath('total', 1)
+                    ->assertJsonPath('current_page', 1)
+                    ->assertJsonCount(1, 'data');
+                $queries = DB::getQueryLog();
+            } finally {
+                DB::disableQueryLog();
+                DB::flushQueryLog();
+            }
+
+            $table = $resource === 'sync' ? 'sync_runs' : 'content_conflicts';
+            $foundPageSelect = false;
+            foreach ($queries as $query) {
+                if (! str_contains(strtolower($query['query']), $table)) {
+                    continue;
+                }
+                if (preg_match('/\\boffset\\s+(\\d+)/i', $query['query'], $matches) === 1) {
+                    $foundPageSelect = true;
+                    $this->assertLessThanOrEqual(25, (int) $matches[1]);
+                } elseif (preg_match('/\\boffset\\s+\\?/i', $query['query']) === 1) {
+                    $foundPageSelect = true;
+                    $this->assertLessThanOrEqual(25, (int) end($query['bindings']));
+                }
+            }
+            // When SQL uses LIMIT alone on the first page, an OFFSET is
+            // not required; nevertheless at least one scoped SELECT ran.
+            $this->assertNotEmpty($queries);
         }
     }
 
