@@ -8,6 +8,7 @@ import {
 import { createRoot } from 'react-dom/client';
 import { acceptedSeoBatch, completedSeoProposal, parseSeoBatchStatus, seoAiJson, seoBatchStorageKey, validSavedSeoBatch } from './seo-ai-durable';
 import type { SeoBatch, SeoProposalResult } from './seo-ai-durable';
+import { SEO_NETWORK_ERROR, safeSeoRequestError } from './seo-safe-request-error';
 
 export const SEO_OPERATIONS = {
     execution: 'AIMW-SEO-C48570747C',
@@ -109,13 +110,16 @@ async function requestJson<T>(url: string, init: RequestInit = {}): Promise<T> {
         headers.set('Content-Type', 'application/json');
         headers.set('X-CSRF-TOKEN', csrfToken());
     }
-    const response = await fetch(url, { credentials: 'same-origin', ...init, headers });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) {
-        const message = typeof payload?.message === 'string' ? payload.message : `Request failed with HTTP ${response.status}.`;
-        throw new Error(message);
+    let response: Response;
+    try {
+        response = await fetch(url, { credentials: 'same-origin', ...init, headers });
+    } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') throw error;
+        throw new Error(SEO_NETWORK_ERROR);
     }
-    return payload as T;
+    // Do not display any Laravel/provider response text, even on 4xx.
+    if (!response.ok) throw new Error(safeSeoRequestError(response.status));
+    return await response.json().catch(() => ({})) as T;
 }
 
 function collectionRows(payload: unknown): Array<Record<string, unknown>> {

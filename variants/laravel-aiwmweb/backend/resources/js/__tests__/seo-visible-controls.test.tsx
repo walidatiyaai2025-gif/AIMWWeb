@@ -302,6 +302,60 @@ describe('SEO visible-control mass closure', () => {
         expect(screen.queryByText(/secret-provider-token/)).not.toBeInTheDocument();
     });
 
+    it('redacts hostile Laravel HTTP 500 bodies from SEO findings reads without fabricating results', async () => {
+        const prior = fetchMock.getMockImplementation() as (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+        fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+            if (String(input).includes('/seo/audits/44/findings')) {
+                return jsonResponse({ message: 'Bearer PRIVATE_TOKEN SQLSTATE stack /home/secret/.env' }, 500);
+            }
+            return prior(input, init);
+        });
+        render(<SeoVisibleControls config={config} />);
+        await screen.findByRole('alert');
+        expect(screen.getByRole('alert')).toHaveTextContent('SEO server error (HTTP 500).');
+        expect(screen.queryByText(/PRIVATE_TOKEN|SQLSTATE|stack|\/home\/secret/i)).not.toBeInTheDocument();
+        expect(screen.queryByText('finding-1')).not.toBeInTheDocument();
+        expect(fetchMock.mock.calls.filter(([url]) => String(url).includes('/ai-proposal'))).toHaveLength(0);
+    });
+
+    it('sanitizes 403 audit starts and 422 remediation failures without retry or approval bypass', async () => {
+        const prior = fetchMock.getMockImplementation() as (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+        fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+            const url = String(input);
+            if (url.endsWith('/seo/audits') && init?.method === 'POST')
+                return jsonResponse({ message: 'Bearer unauthorized-session-secret for tenant alpha' }, 403);
+            if (url.endsWith('/seo/remediations/bulk') && init?.method === 'POST')
+                return jsonResponse({ message: 'Validation exception secret-credential in field' }, 422);
+            return prior(input, init);
+        });
+        const { container } = render(<SeoVisibleControls config={config} />);
+        await screen.findByText('finding-1');
+        fireEvent.click(screen.getByTestId('seo-run-full-audit'));
+        await screen.findByText('SEO request is not authorized (HTTP 403).');
+        expect(screen.queryByText(/unauthorized-session-secret/i)).not.toBeInTheDocument();
+
+        fireEvent.click(screen.getByLabelText('Select finding 1'));
+        fireEvent.click(container.querySelector(`[data-canonical-operation="${SEO_OPERATIONS.applySelected}"]`) as HTMLElement);
+        await screen.findByText('SEO request validation failed (HTTP 422). Review selected fields.');
+        expect(screen.queryByText(/secret-credential/i)).not.toBeInTheDocument();
+        expect(fetchMock.mock.calls.filter(([url]) => String(url).endsWith('/seo/remediations/bulk'))).toHaveLength(1);
+        expect(fetchMock.mock.calls.filter(([url]) => String(url).includes('/ai-proposal'))).toHaveLength(0);
+    });
+
+    it('hides transport exception text while surfacing actionable connection diagnostics', async () => {
+        const prior = fetchMock.getMockImplementation() as (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+        fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+            if (String(input).includes('/seo/audits/44/findings')) {
+                throw new Error('Network Bearer leaked-token connection exception');
+            }
+            return prior(input, init);
+        });
+        render(<SeoVisibleControls config={config} />);
+        await screen.findByText('SEO network request failed. Check connectivity and Runtime Inspector.');
+        expect(screen.queryByText(/leaked-token|connection exception/i)).not.toBeInTheDocument();
+        expect(screen.queryByText('finding-1')).not.toBeInTheDocument();
+    });
+
     it('surfaces the canonical Retry failed control only for retryable failed proposals and posts through the governed retry endpoint', async () => {
         proposalsPayload = [
             { proposed_state: { seo_title: 'Retry title' }, execution: { id: 501, status: 'failed', attempts: 2 } },
