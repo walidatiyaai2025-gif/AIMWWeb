@@ -12,7 +12,10 @@ final class SiteOperationHistoryService
 
     public function get(int $siteId, int $take = 100): array
     {
-        return SiteOperationHistory::query()->where('site_id', $siteId)->latest('started_at')->limit(max(1, min(500, $take)))->get()->map(fn (SiteOperationHistory $item): array => $this->safeSiteItem($item))->all();
+        return SiteOperationHistory::query()->where('site_id', $siteId)
+            ->orderByDesc('started_at')->orderByDesc('id')
+            ->limit(max(1, min(500, $take)))->get()
+            ->map(fn (SiteOperationHistory $item): array => $this->safeSiteItem($item))->all();
     }
 
     /**
@@ -58,7 +61,7 @@ final class SiteOperationHistoryService
     {
         return SiteOperationHistory::query()
             ->with('site:id,name')
-            ->latest('started_at')
+            ->orderByDesc('started_at')->orderByDesc('id')
             ->limit(max(1, min(self::MAX_RECORDS, $take)))
             ->get()
             ->map(fn (SiteOperationHistory $item): array => $this->safeSiteItem($item))
