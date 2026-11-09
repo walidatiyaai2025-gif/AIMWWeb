@@ -192,7 +192,7 @@ final class SiteOperationHistoryService
             // they can contain URLs, credentials, stack traces and nested data.
             $data['message'] = match ($item->status) {
                 'succeeded' => match ($item->operation) {
-                    'synchronization' => 'Synchronization completed.',
+                    'synchronization' => 'WordPress synchronization completed.',
                     'diagnostic_recheck' => 'Site diagnostic recheck completed.',
                     'reconnect' => 'Connector reconnect requested.',
                     'disconnect' => 'Connector disconnected.',
