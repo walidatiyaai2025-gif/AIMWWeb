@@ -28,7 +28,9 @@ final class SecurityAuditReadController
         $category = trim((string) ($input['category'] ?? ''));
         $outcome = trim((string) ($input['outcome'] ?? ''));
         $search = trim((string) ($input['q'] ?? ''));
-        // Legacy `take` is only for the filtered, bounded compatibility view.\n        // It must not bypass the canonical 10/25/50/100 SQL page-size contract.\n        $perPage = (int) ($input['per_page'] ?? 25);
+        // Legacy `take` is only for the filtered, bounded compatibility view.
+        // It must not bypass the canonical 10/25/50/100 SQL page-size contract.
+        $perPage = (int) ($input['per_page'] ?? 25);
         $take = (int) ($input['take'] ?? ($input['per_page'] ?? 200));
         $page = (int) ($input['page'] ?? 1);
         $isFiltered = $category !== '' || $outcome !== '' || $search !== '';
