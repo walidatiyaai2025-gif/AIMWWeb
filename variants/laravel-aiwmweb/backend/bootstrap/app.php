@@ -1,5 +1,7 @@
 <?php
 
+use App\AI\Platform\Enums\AiFailureKind;
+use App\AI\Platform\Exceptions\AiPlatformException;
 use App\Billing\Exceptions\BillingConflictException;
 use App\Billing\Exceptions\EntitlementDeniedException;
 use App\Billing\Exceptions\InvalidProviderSignatureException;
@@ -102,6 +104,28 @@ return Application::configure(basePath: dirname(__DIR__))
             return response()->view('platform.access-denied', [
                 'profileUrl' => $profileUrl,
             ], 403);
+        });
+        // AiPlatformException extends RuntimeException, not HttpException.
+        // Without this handler Laravel turns provider policy/timeouts into
+        // misleading HTTP 500s. Use enum-only status and code; never return
+        // upstream exception messages, provider bodies, tokens or stack traces.
+        $exceptions->render(static function (AiPlatformException $error, Request $request) {
+            if (! $request->is('api/*') && ! $request->expectsJson()) {
+                return null;
+            }
+
+            $status = match ($error->kind) {
+                AiFailureKind::Timeout => 504,
+                AiFailureKind::RateLimit, AiFailureKind::QuotaExceeded => 429,
+                AiFailureKind::InvalidOutput, AiFailureKind::PolicyRejection => 422,
+                AiFailureKind::Unknown => 502,
+                default => 503,
+            };
+
+            return response()->json([
+                'code' => $error->kind->value,
+                'message' => 'AI request could not be completed. Review AI diagnostics.',
+            ], $status);
         });
         $exceptions->render(fn (EntitlementDeniedException $e, Request $r) => $r->is('api/*') ? response()->json(['message' => $e->getMessage(), 'code' => 'ENTITLEMENT_DENIED'], 403) : null);
         $exceptions->render(fn (QuotaExceededException $e, Request $r) => $r->is('api/*') ? response()->json(['message' => $e->getMessage(), 'code' => 'QUOTA_EXCEEDED'], 429) : null);
