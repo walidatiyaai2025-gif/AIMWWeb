@@ -152,6 +152,13 @@ class LegacyNotificationApiTerminalityTest extends TestCase
             ->assertOk()->assertJsonPath('total', 1)
             ->assertJsonPath('data.0.title', 'Different member private');
 
+        $empty = $this->tenantMembership($user, 'notification-pages-empty', ['execution.view']);
+        $this->actingAs($user)->getJson('/api/notifications?tenant='.$empty->tenant->slug.'&page=1000000')
+            ->assertOk()->assertJsonPath('total', 0)
+            ->assertJsonPath('last_page', 1)
+            ->assertJsonPath('current_page', 1)
+            ->assertJsonCount(0, 'data');
+
         $this->actingAs($user)->getJson('/api/notifications?page=1')
             ->assertConflict()->assertJsonPath('code', 'TENANT_SELECTION_REQUIRED');
     }
