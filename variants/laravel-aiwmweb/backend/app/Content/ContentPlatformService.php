@@ -30,7 +30,15 @@ final class ContentPlatformService
             $q->where('status', $status);
         }
 
-        return $q->latest('remote_modified_at')->paginate(min(max((int) ($filters['per_page'] ?? 25), 1), 100));
+        $perPage = min(max((int) ($filters['per_page'] ?? 25), 1), 100);
+        $page = min(max((int) ($filters['page'] ?? 1), 1), 1000000);
+        $ordered = $q->orderByDesc('remote_modified_at')->orderByDesc('id');
+        $paginator = $ordered->paginate($perPage, ['*'], 'page', $page);
+        if ($page > $paginator->lastPage()) {
+            $paginator = $ordered->paginate($perPage, ['*'], 'page', max(1, $paginator->lastPage()));
+        }
+
+        return $paginator;
     }
 
     private const DIRECT_SYNC_PAGE_SIZE = 100;
