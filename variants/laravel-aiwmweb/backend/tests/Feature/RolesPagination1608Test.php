@@ -124,8 +124,8 @@ final class RolesPagination1608Test extends TestCase
         $controller = (string) file_get_contents(app_path('Http/Controllers/AdminOperationsController.php'));
 
         $this->assertStringContainsString("route.key === 'roles' ? {", $frontend);
-        $this->assertStringContainsString("per_page: String(rolesPageSize)", $frontend);
-        $this->assertStringContainsString("setRolesPageSize(size)", $frontend);
+        $this->assertStringContainsString('per_page: String(rolesPageSize)', $frontend);
+        $this->assertStringContainsString('setRolesPageSize(size)', $frontend);
         $this->assertStringContainsString("route.key === 'roles' ? rolesPageSize", $frontend);
         $this->assertStringContainsString('if ($request->hasAny', $controller);
         $this->assertStringContainsString('paginatedRoles(', $controller);
