@@ -470,9 +470,25 @@ final class AdminOperationsController extends Controller
         return response()->json(['data' => $this->operations->syncOperations()]);
     }
 
-    public function backups(string $tenant): JsonResponse
+    public function backups(Request $request, string $tenant): JsonResponse
     {
         $this->authorizer->authorize('backup.manage');
+
+        // Read-only page/search requests opt into an authoritative SQL count.
+        // Existing integrations without these params retain their old shape.
+        if ($request->hasAny(['page', 'per_page', 'search'])) {
+            $input = $request->validate([
+                'search' => ['nullable', 'string', 'max:160'],
+                'page' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
+                'per_page' => ['sometimes', 'integer', 'in:10,25,50,100'],
+            ]);
+
+            return response()->json($this->operations->paginatedBackups(
+                $input['search'] ?? null,
+                (int) ($input['page'] ?? 1),
+                (int) ($input['per_page'] ?? 25),
+            ));
+        }
 
         return response()->json(['data' => $this->operations->backups()]);
     }
