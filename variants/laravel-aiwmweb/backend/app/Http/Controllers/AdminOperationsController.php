@@ -297,9 +297,25 @@ final class AdminOperationsController extends Controller
         return response()->json($this->administration->saveSetting($data['scope'], $data['key'], $data['value'], (bool) ($data['secret'] ?? false), $data['site_key'] ?? null, (int) $request->user()->getAuthIdentifier()));
     }
 
-    public function schedules(string $tenant): JsonResponse
+    public function schedules(Request $request, string $tenant): JsonResponse
     {
         $this->authorizer->authorize('operations.manage');
+
+        // Explicit pagination is opt-in so existing integrations keep their
+        // legacy data-only response with no change to schedule mutations.
+        if ($request->hasAny(['page', 'per_page'])) {
+            $input = $request->validate([
+                'search' => ['nullable', 'string', 'max:160'],
+                'page' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
+                'per_page' => ['sometimes', 'integer', 'in:10,25,50,100'],
+            ]);
+
+            return response()->json($this->operations->paginatedSchedules(
+                $input['search'] ?? null,
+                (int) ($input['page'] ?? 1),
+                (int) ($input['per_page'] ?? 25),
+            ));
+        }
 
         return response()->json(['data' => $this->operations->schedules()]);
     }
