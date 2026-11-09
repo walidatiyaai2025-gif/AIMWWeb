@@ -34,7 +34,7 @@ class HttpsPullReleaseTests(unittest.TestCase):
             self.assertIn(expected, source)
         self.assertIn('"aiwm-cpanel-cron.php"', packager)
         self.assertIn("Actual Setup ZIP is missing the private bounded Cron entrypoint", acceptance)
-        for expected in ("'QUEUE_CONNECTION' => 'database'", "'CACHE_STORE' => 'database'", "'SESSION_DRIVER' => 'database'", "'CPANEL_CRON_ENABLED' => 'false'"):
+        for expected in ("'QUEUE_CONNECTION' => 'database'", "aiwmEnvironment($hardened, 'CACHE_STORE', 'database')", "aiwmEnvironment($hardened, 'SESSION_DRIVER', 'database')", "'CPANEL_CRON_ENABLED' => 'false'"):
             self.assertIn(expected, installer)
         self.assertNotIn("queue:work --daemon", source)
         self.assertNotIn("schedule:work", source)
