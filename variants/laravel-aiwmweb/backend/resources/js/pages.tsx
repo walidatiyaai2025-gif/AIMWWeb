@@ -57,7 +57,7 @@ import { DashboardMediaNavigationControl } from './dashboard-media-navigation-co
 import { DashboardConnectorDownloadControl } from './dashboard-connector-download-control';
 import { LiveSystemStatusRefreshControl } from './live-system-status-refresh-control';
 import { EMAIL_HISTORY_CLEAR_FILTERS_OPERATION_ID, EmailHistoryFiltersControl, type EmailHistoryFilterState } from './email-history-filters-control';
-import { ExecutionCenterRowActions, EXECUTION_PAGE_SIZES, EXECUTION_STATUSES, readExecutionUrlState, writeExecutionUrlState, type ExecutionUrlState } from './execution-center-real-actions';
+import { ExecutionCenterRowActions, ExecutionDateRangeWarning, isValidExecutionDateRange, EXECUTION_PAGE_SIZES, EXECUTION_STATUSES, readExecutionUrlState, writeExecutionUrlState, type ExecutionUrlState } from './execution-center-real-actions';
 import { GlobalUsersFullManagementControl } from './global-users-full-management-control';
 import { WordPressUsersRefreshControl } from './wordpress-users-refresh-control';
 import {
@@ -1136,6 +1136,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         return;
                     }
                     if (route.key === 'execution') {
+                        // Keep invalid drafts visible for correction; never issue a
+                        // server request that Laravel must reject with 422.
+                        if (!isValidExecutionDateRange(executionDraft.dateFrom, executionDraft.dateTo)) return;
                         navigateExecution({
                             ...executionDraft,
                             page: 1,
@@ -1179,8 +1182,14 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             <label>{locale === 'ar' ? 'إلى تاريخ' : 'To date'}
                                 <input type="date" aria-label={locale === 'ar' ? 'إلى تاريخ' : 'To date'}
                                     value={executionDraft.dateTo}
+                                    min={executionDraft.dateFrom || undefined}
+                                    aria-invalid={!isValidExecutionDateRange(executionDraft.dateFrom, executionDraft.dateTo)}
+                                    aria-describedby={!isValidExecutionDateRange(executionDraft.dateFrom, executionDraft.dateTo)
+                                        ? 'execution-date-range-warning' : undefined}
                                     onChange={(event) => setExecutionDraft((current) => ({ ...current, dateTo: event.target.value }))} />
                             </label>
+                            <ExecutionDateRangeWarning dateFrom={executionDraft.dateFrom}
+                                dateTo={executionDraft.dateTo} locale={locale} />
                         </span>
                     ) : null}
                     <label className="sr-only" htmlFor={`search-${route.key}`}>{text(commonText.search)}</label>
@@ -1243,7 +1252,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             data-canonical-operation={route.key === 'wp-users'
                                 ? (siteUsersManagerSearch ? WORDPRESS_SITE_USERS_SEARCH_OPERATION_ID : WORDPRESS_USERS_SEARCH_OPERATION_ID)
                                 : (route.key === 'comments' ? COMMENTS_SEARCH_OPERATION_ID : undefined)}
-                            disabled={(route.key === 'comments' || route.key === 'wp-users') && query.isFetching}
+                            disabled={((route.key === 'comments' || route.key === 'wp-users') && query.isFetching)
+                                || (route.key === 'execution'
+                                    && !isValidExecutionDateRange(executionDraft.dateFrom, executionDraft.dateTo))}
                             aria-busy={(route.key === 'comments' || route.key === 'wp-users') && query.isFetching ? 'true' : 'false'}
                         >
                             {text(commonText.search)}
