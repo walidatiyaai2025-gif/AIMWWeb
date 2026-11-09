@@ -439,6 +439,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     // Only enable page-size changes on APIs with verified server-side per_page.
     const [explorerPageSize, setExplorerPageSize] = useState(25);
     const [emailHistoryPageSize, setEmailHistoryPageSize] = useState(25);
+    const [applicationUsersPageSize, setApplicationUsersPageSize] = useState(25);
     const [approvalPageSize, setApprovalPageSize] = useState(25);
     const [evidencePageSize, setEvidencePageSize] = useState(25);
     const [emailSchedulesPageSize, setEmailSchedulesPageSize] = useState(25);
@@ -583,6 +584,14 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
             ...(executionState.type ? { type: executionState.type } : {}),
             ...(executionState.dateFrom ? { date_from: executionState.dateFrom } : {}),
             ...(executionState.dateTo ? { date_to: executionState.dateTo } : {}),
+        })),
+        enabled: state.state === 'enabled' && Boolean(endpoint),
+    } : route.key === 'application-users' ? {
+        // The membership grid opts in to a real SQL page and filtered count.
+        // Do not use the legacy unlimited array as a paginated collection.
+        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, applicationUsersPageSize],
+        queryFn: () => readWorkspaceCollection(endpointWithQuery(endpoint!, page, search, {
+            per_page: String(applicationUsersPageSize),
         })),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     } : route.key === 'notifications' ? {
@@ -770,8 +779,10 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         setSearch(nextSearch);
         try {
             await queryClient.fetchQuery({
-                queryKey: ['workspace', context.tenant.slug, route.key, endpoint, 1, nextSearch, taxonomyType],
-                queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint, 1, nextSearch)),
+                queryKey: ['workspace', context.tenant.slug, route.key, endpoint, 1, nextSearch, applicationUsersPageSize],
+                queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint, 1, nextSearch, {
+                    per_page: String(applicationUsersPageSize),
+                })),
                 staleTime: 0,
             });
         } finally {
@@ -787,8 +798,10 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         setSearch('');
         setPage(1);
         await queryClient.fetchQuery({
-            queryKey: ['workspace', context.tenant.slug, route.key, endpoint, 1, ''],
-            queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint, 1, '')),
+            queryKey: ['workspace', context.tenant.slug, route.key, endpoint, 1, '', applicationUsersPageSize],
+            queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint, 1, '', {
+                per_page: String(applicationUsersPageSize),
+            })),
         });
     };
 
@@ -1644,9 +1657,12 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         }} />
                     : <Pagination page={collection.page} lastPage={collection.lastPage} onPage={route.key === 'sites' ? (next) => navigateSites(next, sitesPageSize, sitesFilter) : route.key === 'execution' ? (next) => navigateExecution({ ...executionState, page: next }) : setPage}
                         total={collection.authoritativeTotal}
-                        pageSize={route.key === 'execution' ? executionState.pageSize : route.key === 'email-history' ? emailHistoryPageSize : route.key === 'approvals' ? approvalPageSize : route.key === 'evidence' ? evidencePageSize : route.key === 'email-schedules' ? emailSchedulesPageSize : route.key === 'notifications' ? notificationsPageSize : route.key === 'logs' ? logsPageSize : route.key === 'sites' ? sitesPageSize : undefined}
+                        pageSize={route.key === 'application-users' ? applicationUsersPageSize : route.key === 'execution' ? executionState.pageSize : route.key === 'email-history' ? emailHistoryPageSize : route.key === 'approvals' ? approvalPageSize : route.key === 'evidence' ? evidencePageSize : route.key === 'email-schedules' ? emailSchedulesPageSize : route.key === 'notifications' ? notificationsPageSize : route.key === 'logs' ? logsPageSize : route.key === 'sites' ? sitesPageSize : undefined}
                         returnedCount={collection.rows.length}
-                        onPageSizeChange={route.key === 'execution' ? (size) => {
+                        onPageSizeChange={route.key === 'application-users' ? (size) => {
+                            setPage(1);
+                            setApplicationUsersPageSize(size);
+                        } : route.key === 'execution' ? (size) => {
                             if (EXECUTION_PAGE_SIZES.includes(size as typeof EXECUTION_PAGE_SIZES[number])) {
                                 navigateExecution({ ...executionState, page: 1, pageSize: size });
                             }
