@@ -23,7 +23,7 @@ final class AiUsageReadController extends Controller
 
         $validated = $request->validate([
             'site' => ['nullable', 'integer', 'min:1'],
-            'page' => ['sometimes', 'integer', 'min:1'],
+            'page' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
             'per_page' => ['sometimes', 'integer', 'in:10,25,50,100'],
         ]);
 
