@@ -71,6 +71,20 @@ final class SchedulesPagination1608Test extends TestCase
             ->assertJsonCount(10, 'data');
         $this->assertSame('Search Task 010', $second->json('data.0.name'));
 
+        // Search-only requests must not silently return the full legacy list.
+        $this->actingAs($owner)
+            ->getJson('/tenants/schedules-search/admin/schedules?search=Literal%25Task')
+            ->assertOk()->assertJsonPath('total', 1)
+            ->assertJsonPath('current_page', 1)
+            ->assertJsonPath('per_page', 25)
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.name', 'Literal%Task 000');
+
+        $this->actingAs($owner)
+            ->getJson('/tenants/schedules-search/admin/schedules?search=doesnotexist')
+            ->assertOk()->assertJsonPath('total', 0)
+            ->assertJsonCount(0, 'data');
+
         foreach ([
             'search=%25' => 'Literal%Task 000',
             'search=%5F' => 'Literal_Task 000',
