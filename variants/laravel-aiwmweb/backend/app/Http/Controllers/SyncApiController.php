@@ -117,10 +117,12 @@ final class SyncApiController extends Controller
 
         $perPage = (int) ($filters['per_page'] ?? 25);
         $page = (int) ($filters['page'] ?? 1);
+        // Count within the selected site and filters before querying any OFFSET.
+        // A stale bookmark must not issue an expensive millionth-page SELECT.
+        $total = (clone $query)->count();
+        $lastPage = max(1, (int) ceil($total / $perPage));
+        $page = min($page, $lastPage);
         $paginator = $query->paginate($perPage, ['*'], 'page', $page);
-        if ($page > $paginator->lastPage()) {
-            $paginator = $query->paginate($perPage, ['*'], 'page', max(1, $paginator->lastPage()));
-        }
 
         return response()->json($paginator);
     }
@@ -184,10 +186,12 @@ final class SyncApiController extends Controller
         $perPage = (int) ($filters['per_page'] ?? 50);
         $page = (int) ($filters['page'] ?? 1);
         $query = ContentConflict::query()->where('site_id', $site)->orderByDesc('id');
+        // Count within the selected site and filters before querying any OFFSET.
+        // A stale bookmark must not issue an expensive millionth-page SELECT.
+        $total = (clone $query)->count();
+        $lastPage = max(1, (int) ceil($total / $perPage));
+        $page = min($page, $lastPage);
         $paginator = $query->paginate($perPage, ['*'], 'page', $page);
-        if ($page > $paginator->lastPage()) {
-            $paginator = $query->paginate($perPage, ['*'], 'page', max(1, $paginator->lastPage()));
-        }
 
         return response()->json($paginator);
     }
