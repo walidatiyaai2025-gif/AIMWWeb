@@ -148,6 +148,24 @@ function deterministicProposal(finding: Finding): Record<string, unknown> | null
     return { [field]: finding.suggested_value };
 }
 
+const SEO_FIELD_LABELS: Record<string, string> = {
+    title: 'Title', slug: 'Slug', seo_title: 'SEO title',
+    seo_description: 'SEO description', seo_canonical: 'Canonical URL',
+    seo_robots: 'Search robots',
+};
+
+function readableSeoValue(value: unknown): string {
+    if (value === null) return 'Clear existing value';
+    if (Array.isArray(value)) return value.map(item => String(item)).join(', ') || 'Empty list';
+    if (typeof value === 'string') return value || 'Empty value';
+    if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+    return 'Review structured value';
+}
+
+function readableSeoField(field: string): string {
+    return SEO_FIELD_LABELS[field] ?? field.replace(/_/g, ' ');
+}
+
 export function SeoVisibleControls({ config }: { config: SeoConfig }) {
     const [audits, setAudits] = useState<Array<Record<string, unknown>>>([]);
     const [findings, setFindings] = useState<Finding[]>([]);
@@ -526,14 +544,29 @@ export function SeoVisibleControls({ config }: { config: SeoConfig }) {
                 <header className="panel-header"><div><span className="workspace-kicker">LATEST PERSISTED AUDIT</span><h2>SEO findings</h2></div><span className="count-badge">{serverTotal ?? filtered.length}</span></header>
                 {audits.length === 0 ? <div className="empty-state"><strong>No persisted audit yet</strong><p>Run an SEO audit from the SEO Audit workspace before preparing remediations.</p></div> : null}
                 {visible.length ? (
-                    <div className="table-wrap"><table><thead><tr><th>Select</th><th>Severity</th><th>Finding</th><th>Field</th><th>Suggested change</th><th>Content</th><th>AI</th></tr></thead><tbody>
+                    <div className="table-wrap seo-findings-overflow" role="region" aria-label="SEO findings table" tabIndex={0}><table className="seo-findings-table" aria-label="SEO findings"><thead><tr><th>Select</th><th>Severity</th><th>Finding</th><th>Field</th><th>Suggested change</th><th>Content</th><th>AI</th></tr></thead><tbody>
                         {visible.map((finding) => {
                             const proposal = proposalFor(finding);
                             const external = links[String(finding.id)];
+                            const parts = proposal ? Object.entries(proposal) : [];
+                            const firstPart = parts[0];
                             return <tr key={finding.id}>
                                 <td><input aria-label={`Select finding ${finding.id}`} type="checkbox" disabled={!proposal || busy} checked={selected.has(finding.id)} onChange={(event) => setSelected((current) => { const next = new Set(current); if (event.target.checked) next.add(finding.id); else next.delete(finding.id); return next; })} /></td>
-                                <td>{finding.severity ?? '—'}</td><td><strong>{finding.code ?? `Finding ${finding.id}`}</strong><p>{finding.recommendation ?? ''}</p></td><td>{finding.field ?? '—'}</td>
-                                <td><code>{proposal ? JSON.stringify(proposal) : 'No deterministic safe proposal'}</code></td>
+                                <td>{finding.severity ?? '—'}</td><td className="seo-finding-description"><strong>{finding.code ?? `Finding ${finding.id}`}</strong><p>{finding.recommendation ?? ''}</p></td><td>{finding.field ?? '—'}</td>
+                                <td className="seo-proposal-cell">{proposal && firstPart ? (
+                                    <details className="seo-proposal-details">
+                                        <summary>
+                                            <span className="seo-proposal-preview">
+                                                {readableSeoField(firstPart[0])}: {readableSeoValue(firstPart[1])}
+                                                {parts.length > 1 ? ` (+${parts.length - 1} more)` : ''}
+                                            </span>
+                                            <span className="seo-proposal-expand">View details</span>
+                                        </summary>
+                                        <dl>{parts.map(([field, value]) => (
+                                            <div key={field}><dt>{readableSeoField(field)}</dt><dd>{readableSeoValue(value)}</dd></div>
+                                        ))}</dl>
+                                    </details>
+                                ) : <span className="seo-no-proposal">No deterministic safe proposal</span>}</td>
                                 <td>{external ? <a data-canonical-operation={SEO_OPERATIONS.external} href={external} target="_blank" rel="noreferrer">Open content ↗</a> : '—'}</td>
                                 <td><button type="button" className="btn" disabled={busy || Boolean(pendingAi)} onClick={() => generateAiProposal(finding)}>Generate AI proposal</button></td>
                             </tr>;
