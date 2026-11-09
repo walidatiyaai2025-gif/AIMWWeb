@@ -122,10 +122,10 @@
     <section>
         <header>
             <h2>{{ $isArabic ? 'أحدث أحداث الأمان' : 'Latest security events' }}</h2>
-            <span data-audit-total="{{ $isFiltered ? 'unavailable' : $total }}">{{ $isFiltered ? $events->count() : $total }}</span>
+            <span data-audit-total="{{ $isFiltered && ! $isSqlFiltered ? 'unavailable' : $total }}">{{ $isFiltered && ! $isSqlFiltered ? $events->count() : $total }}</span>
         </header>
 
-        @if ($isFiltered)
+        @if ($isFiltered && ! $isSqlFiltered)
             <p role="status" data-audit-filter-limit>{{ $isArabic ? 'البحث والتصفية يفحصان آخر ١٠٠٠ حدث فقط حاليًا. قد توجد نتائج أقدم غير معروضة؛ العدد ليس إجمالي السجلات المطابقة.' : 'Filtered results currently scan the latest 1,000 events only. Older matches may exist; this is not a total matching count.' }}</p>
             <p role="status" data-audit-filter-window>{{ $filteredMatchCount === 0 ? 0 : (($page - 1) * $perPage + 1) }}–{{ min($filteredMatchCount, $page * $perPage) }} {{ $isArabic ? 'من النتائج ضمن نطاق البحث المحدود' : 'of matches inside the limited search window' }} · {{ $isArabic ? 'الصفحة' : 'Page' }} {{ $page }} / {{ $lastPage }}</p>
         @else
