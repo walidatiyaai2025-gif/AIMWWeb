@@ -220,12 +220,12 @@ class SiteDiagnosticsClosureTest extends TestCase
         }
         $this->assertNotEmpty($pageQueries);
         foreach ($pageQueries as $query) {
-            // Any LIMIT/OFFSET binding must be bounded to the actual first page,
-            // not the capped millionth-page request.
-            foreach ($query['bindings'] as $binding) {
-                if (is_int($binding)) {
-                    $this->assertLessThanOrEqual(25, $binding);
-                }
+            // Only inspect OFFSET itself: site IDs may legitimately exceed 25.
+            // MySQL can embed OFFSET as a literal; SQLite may bind it.
+            if (preg_match('/\\boffset\\s+(\\d+)/i', $query['query'], $matches) === 1) {
+                $this->assertLessThanOrEqual(25, (int) $matches[1]);
+            } elseif (preg_match('/\\boffset\\s+\\?/i', $query['query']) === 1) {
+                $this->assertLessThanOrEqual(25, (int) end($query['bindings']));
             }
         }
     }
