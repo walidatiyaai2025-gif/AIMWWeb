@@ -297,7 +297,10 @@ final class OperationsControlPlaneService
             $query->where('status', $filters['status']);
         }
         if (filled($filters['type'] ?? null)) {
-            $query->where('type', 'like', $filters['type'].'%');
+            // An underscore in a legitimate operation type is a literal
+            // identifier character, not the SQL LIKE single-character wildcard.
+            $type = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], (string) $filters['type']);
+            $query->whereRaw("type LIKE ? ESCAPE '!'", [$type.'%']);
         }
         if (filled($filters['date_from'] ?? null)) {
             $query->whereDate('created_at', '>=', $filters['date_from']);
@@ -307,10 +310,13 @@ final class OperationsControlPlaneService
         }
         if (filled($filters['search'] ?? null)) {
             $search = (string) $filters['search'];
-            // Only the allowlisted identifier/type columns are searchable.
-            $query->where(function ($q) use ($search): void {
-                $q->where('type', 'like', '%'.$search.'%')
-                    ->orWhere('correlation_id', 'like', '%'.$search.'%');
+            $literal = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $search);
+            $like = '%'.$literal.'%';
+            // Search only allowlisted identifiers. Escape literal SQL wildcard
+            // characters before database-side filtering, counts and paging.
+            $query->where(function ($q) use ($search, $like): void {
+                $q->whereRaw("type LIKE ? ESCAPE '!'", [$like])
+                    ->orWhereRaw("correlation_id LIKE ? ESCAPE '!'", [$like]);
                 if (ctype_digit($search) && strlen($search) <= 18) {
                     $q->orWhere('id', (int) $search);
                 }
