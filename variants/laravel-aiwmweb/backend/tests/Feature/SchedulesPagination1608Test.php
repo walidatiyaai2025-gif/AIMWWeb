@@ -102,7 +102,7 @@ final class SchedulesPagination1608Test extends TestCase
 
         foreach ([
             'page=0', 'page=1000001', 'page=abc', 'per_page=0',
-            'per_page=200', 'search%5B%5D=unsafe',
+            'per_page=200', 'search%5B%5D=unsafe&page=1',
         ] as $invalid) {
             $this->actingAs($owner)
                 ->getJson('/tenants/schedules-owner/admin/schedules?'.$invalid)
