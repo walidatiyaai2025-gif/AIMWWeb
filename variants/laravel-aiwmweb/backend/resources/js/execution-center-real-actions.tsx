@@ -22,6 +22,39 @@ const DEFAULTS: ExecutionUrlState = {
     page: 1, pageSize: 25, search: '', status: '', type: '', dateFrom: '', dateTo: '',
 };
 
+/**
+ * Validate actual Gregorian calendar dates before sending the Execution Center
+ * date range to Laravel. Regex-only URL checks accepted impossible days and
+ * inverted bounds, making an otherwise valid workspace fail with HTTP 422.
+ */
+export function isValidExecutionDateRange(dateFrom: string, dateTo: string): boolean {
+    const valid = (value: string): boolean => {
+        if (value === '') return true;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+        const year = Number(value.slice(0, 4));
+        const month = Number(value.slice(5, 7));
+        const day = Number(value.slice(8, 10));
+        if (year < 1 || month < 1 || month > 12 || day < 1) return false;
+        const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+        const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+        return day <= days[month - 1];
+    };
+    return valid(dateFrom) && valid(dateTo) && (!dateFrom || !dateTo || dateFrom <= dateTo);
+}
+
+export function ExecutionDateRangeWarning({ dateFrom, dateTo, locale }: {
+    dateFrom: string;
+    dateTo: string;
+    locale: 'ar' | 'en';
+}) {
+    if (isValidExecutionDateRange(dateFrom, dateTo)) return null;
+    return <small id="execution-date-range-warning" role="alert" className="muted">
+        {locale === 'ar'
+            ? 'نطاق التاريخ غير صالح: اختر تاريخين صحيحين، ويجب ألا يسبق تاريخ النهاية تاريخ البداية.'
+            : 'Invalid date range: choose valid dates with the end date on or after the start date.'}
+    </small>;
+}
+
 export function readExecutionUrlState(): ExecutionUrlState {
     const params = new URLSearchParams(window.location.search);
     const page = Number(params.get('page'));
@@ -31,6 +64,13 @@ export function readExecutionUrlState(): ExecutionUrlState {
         return value.length <= max && pattern.test(value) ? value : '';
     };
     const status = params.get('status') ?? '';
+    const rawFrom = bounded('date_from', 10, /^\d{4}-\d{2}-\d{2}$/);
+    const rawTo = bounded('date_to', 10, /^\d{4}-\d{2}-\d{2}$/);
+    const dateFrom = isValidExecutionDateRange(rawFrom, '') ? rawFrom : '';
+    const validTo = isValidExecutionDateRange('', rawTo) ? rawTo : '';
+    // Preserve a valid start date while clearing an inverted end date.
+    // Never present a malformed shareable URL as an empty-data result.
+    const dateTo = dateFrom && validTo && validTo < dateFrom ? '' : validTo;
 
     return {
         page: Number.isSafeInteger(page) && page > 0 && page <= 1000000 ? page : DEFAULTS.page,
@@ -39,8 +79,8 @@ export function readExecutionUrlState(): ExecutionUrlState {
         search: bounded('search', 120, /^[a-zA-Z0-9 .:_-]*$/),
         status: EXECUTION_STATUSES.includes(status as typeof EXECUTION_STATUSES[number]) ? status : '',
         type: bounded('type', 80, /^[a-zA-Z0-9._-]*$/),
-        dateFrom: bounded('date_from', 10, /^\d{4}-\d{2}-\d{2}$/),
-        dateTo: bounded('date_to', 10, /^\d{4}-\d{2}-\d{2}$/),
+        dateFrom,
+        dateTo,
     };
 }
 
