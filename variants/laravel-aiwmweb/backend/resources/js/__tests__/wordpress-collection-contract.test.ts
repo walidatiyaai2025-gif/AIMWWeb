@@ -21,6 +21,9 @@ describe('WordPress collection GET fail-closed contract', () => {
             { data: [], success: false }, { data: [], error: 'remote_failed' },
             { data: [], total: -1 }, { data: [], current_page: 0 },
             { data: [], last_page: 'next' }, { data: [], meta: [] },
+            { data: [], current_page: 3, last_page: 2 },
+            { data: [], page: 4, lastPage: 3 },
+            { data: [], meta: { current_page: 2, last_page: 1 } },
         ];
         for (const payload of malformed) {
             const transport = vi.fn().mockResolvedValue(payload);
@@ -61,6 +64,14 @@ describe('WordPress collection GET fail-closed contract', () => {
                 pagination_authoritative: flag, per_page: 25, meta: { per_page: 25 },
             })).not.toThrow();
         }
+        // A cursor-only API may omit last_page, and a last-page response can
+        // legitimately contain no rows after a concurrent deletion.
+        expect(() => assertValidWordPressCollection(route, {
+            data: [], current_page: 4,
+        })).not.toThrow();
+        expect(() => assertValidWordPressCollection(route, {
+            data: [], current_page: 2, last_page: 2,
+        })).not.toThrow();
         // Legacy endpoints may legitimately omit authority and page size entirely.
         expect(() => assertValidWordPressCollection(route, {
             data: [{ id: 7 }], total: 1, current_page: 1, last_page: 1,

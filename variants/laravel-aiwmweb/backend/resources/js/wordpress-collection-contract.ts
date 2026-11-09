@@ -34,6 +34,15 @@ function checkPageFields(container: Record<string, unknown>): void {
         throw invalidCollection();
     }
 
+    // A successful HTTP response must not put the browser on a page beyond
+    // the server-declared last page. Otherwise the UI can display impossible
+    // navigation even though the transport returned 200.
+    const currentPage = container.current_page ?? container.page;
+    const lastPage = container.last_page ?? container.lastPage;
+    if (typeof currentPage === 'number' && typeof lastPage === 'number' && currentPage > lastPage) {
+        throw invalidCollection();
+    }
+
     const perPage = container.per_page;
     if (perPage !== undefined && (
         typeof perPage !== 'number' ||
