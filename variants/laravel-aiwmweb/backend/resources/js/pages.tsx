@@ -1202,7 +1202,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             busyText={locale === 'ar' ? 'جارٍ البحث' : 'Searching'}
                         />
                     ) : (
-                        <input id={`search-${route.key}`} value={searchInput} onChange={(event) => setSearchInput(event.target.value)} placeholder={locale === 'ar' ? 'بحث في البيانات الحية…' : 'Search live data…'} />
+                        <input id={`search-${route.key}`} value={searchInput} maxLength={route.key === 'notifications' ? 100 : undefined} onChange={(event) => setSearchInput(event.target.value)} placeholder={locale === 'ar' ? 'بحث في البيانات الحية…' : 'Search live data…'} />
                     )}
                     {siteUsersManagerSearch ? (
                         <label>
