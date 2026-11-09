@@ -55,6 +55,50 @@ final class AdministrationService
             ])->all();
     }
 
+    /**
+     * Opt-in SQL pagination for the Application Users workspace. Legacy callers
+     * keep members()' array shape; this query never loads another tenant's rows.
+     *
+     * @return array{data: array, total: int, current_page: int, last_page: int, per_page: int}
+     */
+    public function paginatedMembers(?string $search, int $page, int $perPage): array
+    {
+        $query = TenantMembership::query()
+            ->with(['user:id,name,email', 'roles:id,name']);
+
+        $term = Str::upper(trim($search ?? ''));
+        if ($term !== '') {
+            $escaped = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $term);
+            $query->whereHas('user', fn ($userQuery) => $userQuery
+                ->whereRaw("UPPER(name) LIKE ? ESCAPE '!'", ['%'.$escaped.'%']));
+            // Match the legacy search's alphabetical order, but paginate in SQL
+            // and use membership id to break ties deterministically.
+            $query->leftJoin('users as member_users', 'member_users.id', '=', 'tenant_memberships.user_id')
+                ->orderByRaw('LOWER(member_users.name) ASC');
+        }
+
+        $query->orderBy('tenant_memberships.id');
+        $total = (clone $query)->count('tenant_memberships.id');
+        $lastPage = max(1, (int) ceil($total / $perPage));
+        $currentPage = min($page, $lastPage);
+        $rows = $total === 0 ? collect() : $query
+            ->forPage($currentPage, $perPage)
+            ->get(['tenant_memberships.*']);
+
+        return [
+            'data' => $rows->map(fn (TenantMembership $membership): array => [
+                'id' => $membership->id,
+                'status' => $membership->status,
+                'user' => $membership->user?->only(['id', 'name', 'email']),
+                'roles' => $membership->roles->map->only(['id', 'name'])->values(),
+            ])->values()->all(),
+            'total' => $total,
+            'current_page' => $currentPage,
+            'last_page' => $lastPage,
+            'per_page' => $perPage,
+        ];
+    }
+
     public function addOrInvite(string $email, ?int $roleId, int $actorUserId): array
     {
         $email = strtolower(trim($email));
