@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\ContentItem;
 use App\Models\MediaItem;
 use App\Models\Permission;
 use App\Models\Role;
@@ -146,6 +147,93 @@ final class GlobalMediaApplyTerminalityTest extends TestCase
         $this->actingAs($readDenied)
             ->getJson("/api/v1/tenants/denied-apply-guard/sites/{$alphaSite->id}/media?per_page=24")
             ->assertForbidden(); // 403: permission gate is independent of caller-controlled site IDs.
+    }
+
+    public function test_content_and_media_pages_have_stable_order_and_clamp_last_page_after_deletions(): void
+    {
+        $user = User::factory()->create();
+        $membership = $this->membership($user, 'alpha-content-pagination', ['tenant.view', 'content.view']);
+        $site = $this->site($membership, 'Stable Content Site');
+        $other = $this->site($membership, 'Other Content Site');
+
+        $this->inTenant($membership, function () use ($site, $other): void {
+            for ($id = 101; $id <= 163; $id++) {
+                foreach (['post', 'page'] as $type) {
+                    ContentItem::query()->create([
+                        'site_id' => $site->id,
+                        'remote_id' => $id,
+                        'type' => $type,
+                        'title' => $type.' '.$id,
+                        'status' => 'publish',
+                        'remote_modified_at' => '2026-11-08 00:00:00',
+                    ]);
+                }
+                MediaItem::query()->create([
+                    'site_id' => $site->id,
+                    'remote_id' => $id,
+                    'title' => 'Asset '.$id,
+                    'mime_type' => 'image/jpeg',
+                    'remote_modified_at' => '2026-11-08 00:00:00',
+                ]);
+            }
+
+            ContentItem::query()->create([
+                'site_id' => $other->id,
+                'remote_id' => 1000,
+                'type' => 'post',
+                'title' => 'Different site',
+                'status' => 'publish',
+            ]);
+            MediaItem::query()->create([
+                'site_id' => $other->id,
+                'remote_id' => 1000,
+                'title' => 'Different site asset',
+            ]);
+        });
+
+        foreach (['content/post', 'content/page', 'media'] as $resource) {
+            $endpoint = "/api/v1/tenants/alpha-content-pagination/sites/{$site->id}/{$resource}";
+            $first = $this->actingAs($user)->getJson($endpoint.'?page=1&per_page=25')
+                ->assertOk()->assertJsonPath('total', 63)
+                ->assertJsonPath('current_page', 1)
+                ->assertJsonPath('last_page', 3)
+                ->assertJsonCount(25, 'data');
+            $this->assertSame(163, (int) $first->json('data.0.remote_id'));
+
+            $second = $this->actingAs($user)->getJson($endpoint.'?page=2&per_page=25')
+                ->assertOk()->assertJsonPath('total', 63)
+                ->assertJsonPath('current_page', 2)
+                ->assertJsonCount(25, 'data');
+            $this->assertSame(138, (int) $second->json('data.0.remote_id'));
+
+            $last = $this->actingAs($user)->getJson($endpoint.'?page=1000000&per_page=25')
+                ->assertOk()->assertJsonPath('total', 63)
+                ->assertJsonPath('current_page', 3)
+                ->assertJsonPath('last_page', 3)
+                ->assertJsonCount(13, 'data');
+            $this->assertSame(113, (int) $last->json('data.0.remote_id'));
+
+            $this->actingAs($user)->getJson($endpoint.'?page=2&per_page=25&search=not-present')
+                ->assertOk()->assertJsonPath('total', 0)
+                ->assertJsonPath('current_page', 1)
+                ->assertJsonPath('last_page', 1)
+                ->assertJsonCount(0, 'data');
+
+            $this->actingAs($user)->getJson($endpoint.'?page=0')->assertUnprocessable();
+            $this->actingAs($user)->getJson($endpoint.'?page=1000001')->assertUnprocessable();
+            $this->actingAs($user)->getJson($endpoint.'?per_page=101')->assertUnprocessable();
+        }
+
+        $this->actingAs($user)
+            ->getJson("/api/v1/tenants/alpha-content-pagination/sites/{$site->id}/content/post")
+            ->assertOk()->assertJsonPath('per_page', 25);
+        $this->actingAs($user)
+            ->getJson("/api/v1/tenants/alpha-content-pagination/sites/{$site->id}/media")
+            ->assertOk()->assertJsonPath('per_page', 30);
+
+        $this->actingAs($user)
+            ->getJson('/api/v1/tenants/alpha-content-pagination/sites/999999/content/post?page=1')
+            ->assertOk()->assertJsonCount(0, 'data');
     }
 
     private function membership(User $user, string $slug, array $permissions): TenantMembership

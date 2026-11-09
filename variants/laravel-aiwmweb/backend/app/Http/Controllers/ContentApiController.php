@@ -56,8 +56,16 @@ final class ContentApiController extends Controller
     {
         $auth->authorize('content.view');
         abort_unless(in_array($type, ['post', 'page'], true), 404);
+        // Preserve the historical authorized-empty response for a foreign/missing site;
+        // tenant-scoped ContentItem queries prevent data or total leakage.
+        $filters = $request->validate([
+            'search' => 'sometimes|nullable|string|max:200',
+            'status' => 'sometimes|nullable|string|max:100',
+            'per_page' => 'sometimes|integer|min:1|max:100',
+            'page' => 'sometimes|integer|min:1|max:1000000',
+        ]);
 
-        return response()->json($this->content->content($site, $type, $request->only(['search', 'status', 'per_page'])));
+        return response()->json($this->content->content($site, $type, $filters));
     }
 
     public function show(TenantAuthorizer $auth, string $tenant, int $site, int $content): JsonResponse
@@ -420,18 +428,32 @@ final class ContentApiController extends Controller
         $auth->authorize('content.view');
         // A foreign/missing site must not look like an authorized empty media library.
         Site::query()->findOrFail($site);
+        $filters = $request->validate([
+            'search' => 'sometimes|nullable|string|max:200',
+            'mime_type' => 'sometimes|nullable|string|max:150',
+            'per_page' => 'sometimes|integer|min:1|max:100',
+            'page' => 'sometimes|integer|min:1|max:1000000',
+        ]);
         $q = MediaItem::query()->where('site_id', $site);
-        if ($search = trim((string) $request->query('search'))) {
+        if ($search = trim((string) ($filters['search'] ?? ''))) {
             $q->where(fn ($x) => $x->where('title', 'like', "%{$search}%")
                 ->orWhere('alt_text', 'like', "%{$search}%")
                 ->orWhere('slug', 'like', "%{$search}%")
                 ->orWhere('mime_type', 'like', "%{$search}%"));
         }
-        if ($mime = $request->query('mime_type')) {
+        if ($mime = $filters['mime_type'] ?? null) {
             $q->where('mime_type', 'like', $mime.'%');
         }
 
-        return response()->json($q->latest('remote_modified_at')->paginate(min(max((int) $request->query('per_page', 30), 1), 100)));
+        $perPage = (int) ($filters['per_page'] ?? 30);
+        $page = (int) ($filters['page'] ?? 1);
+        $ordered = $q->orderByDesc('remote_modified_at')->orderByDesc('id');
+        $paginator = $ordered->paginate($perPage, ['*'], 'page', $page);
+        if ($page > $paginator->lastPage()) {
+            $paginator = $ordered->paginate($perPage, ['*'], 'page', max(1, $paginator->lastPage()));
+        }
+
+        return response()->json($paginator);
     }
 
     public function mediaDetails(TenantAuthorizer $auth, string $tenant, int $site, int $media): JsonResponse
