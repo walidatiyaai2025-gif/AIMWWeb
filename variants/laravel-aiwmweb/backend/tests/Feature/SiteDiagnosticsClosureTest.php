@@ -211,9 +211,12 @@ class SiteDiagnosticsClosureTest extends TestCase
         $this->assertSame($site->id, $diagnostics['items'][0]->site_id);
         $this->assertSame($site->id, $history['items'][0]['site_id']);
 
-        $pageQueries = array_values(array_filter($queries, static fn (array $query): bool =>
-            preg_match('/\\bfrom\\s+["`]?site_(diagnostics|operation_histories)["`]?/i', $query['query']) === 1
-        ));
+        $pageQueries = [];
+        foreach ($queries as $query) {
+            if (preg_match('/\\bfrom\\s+["`]?site_(diagnostics|operation_histories)["`]?/i', $query['query']) === 1) {
+                $pageQueries[] = $query;
+            }
+        }
         $this->assertNotEmpty($pageQueries);
         foreach ($pageQueries as $query) {
             // Any LIMIT/OFFSET binding must be bounded to the actual first page,
