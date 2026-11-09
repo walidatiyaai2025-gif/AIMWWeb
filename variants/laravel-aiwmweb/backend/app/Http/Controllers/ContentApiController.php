@@ -56,7 +56,8 @@ final class ContentApiController extends Controller
     {
         $auth->authorize('content.view');
         abort_unless(in_array($type, ['post', 'page'], true), 404);
-        Site::query()->findOrFail($site);
+        // Preserve the historical authorized-empty response for a foreign/missing site;
+        // tenant-scoped ContentItem queries prevent data or total leakage.
         $filters = $request->validate([
             'search' => 'sometimes|nullable|string|max:200',
             'status' => 'sometimes|nullable|string|max:100',
