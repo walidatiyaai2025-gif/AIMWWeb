@@ -129,7 +129,7 @@ export function siteConnectionCenterDynamicLinks(
 // Clipboard reports may be forwarded outside this tenant. Do not copy raw
 // upstream messages, signed URLs, credentials, SQL or untrusted extra fields.
 const DIAGNOSTIC_METADATA_STATES = new Set([
-    'verified', 'not_probed', 'not_supported', 'permission_denied', 'temporarily_unavailable',
+    'verified', 'stored_unverified', 'not_probed', 'not_supported', 'permission_denied', 'temporarily_unavailable',
 ]);
 const DIAGNOSTIC_FAILURE_GUIDANCE: Record<string, string> = {
     authentication: 'Check WordPress authentication and Connector permissions.',
@@ -165,6 +165,15 @@ function copiedTimestamp(value: unknown): string {
 }
 function copiedMetadataState(value: unknown): string {
     return typeof value === 'string' && DIAGNOSTIC_METADATA_STATES.has(value) ? value : 'not_probed';
+}
+function copiedMetadataValue(value: string | null, rawState: unknown): string {
+    const state = copiedMetadataState(rawState);
+    if (value === null) return 'unavailable (' + state + ')';
+    if (state === 'verified') return value + ' (verified by Connector)';
+    if (state === 'stored_unverified') return value + ' (stored; not remotely verified)';
+    // Older servers may return stored values without any signed-probe provenance.
+    // Never silently turn a merely plausible value into a verified assertion.
+    return value + ' (verification not established: ' + state + ')';
 }
 function copiedOperationName(value: unknown): string {
     return typeof value === 'string' && /^[a-z][a-z0-9_-]{0,79}$/.test(value) ? value : 'operation_withheld';
@@ -215,8 +224,8 @@ export function formatSiteDiagnosticsReport(connection: ConnectionSnapshot, hist
         'Site: ' + copiedSiteLabel(site.name),
         'URL: ' + copiedSiteOrigin(site.url),
         'Status: ' + status,
-        'WordPress: ' + (version ?? 'unavailable (' + copiedMetadataState(connection.metadata?.wordpress_version?.state) + ')'),
-        'Language: ' + (language ?? 'unavailable (' + copiedMetadataState(connection.metadata?.language_code?.state) + ')'),
+        'WordPress: ' + copiedMetadataValue(version, connection.metadata?.wordpress_version?.state),
+        'Language: ' + copiedMetadataValue(language, connection.metadata?.language_code?.state),
         'WordPress metadata checked: ' + copiedTimestamp(connection.metadata?.wordpress_version?.checked_at),
         'Language metadata checked: ' + copiedTimestamp(connection.metadata?.language_code?.checked_at),
         'Last test: ' + copiedTimestamp(connection.last_verified_at ?? site.last_verified_at),
