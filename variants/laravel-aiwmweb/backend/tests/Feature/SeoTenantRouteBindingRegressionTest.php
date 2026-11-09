@@ -270,9 +270,13 @@ final class SeoTenantRouteBindingRegressionTest extends TestCase
     {
         [$user, $membership] = $this->member('seo-paging', ['tenant.view', 'seo.view']);
         $site = $this->site($membership, 'Own SEO Site');
-        $otherSite = $this->site($membership, 'Other SEO Site');
         $context = app(TenantContext::class);
         $context->activate($membership->tenant, $membership);
+        $otherSite = Site::query()->create([
+            'name' => 'Other SEO Site',
+            'url' => 'https://other-seo.example.test',
+            'status' => 'active',
+        ]);
         for ($i = 0; $i < 27; $i++) {
             SeoAudit::query()->create([
                 'site_id' => $site->id,
