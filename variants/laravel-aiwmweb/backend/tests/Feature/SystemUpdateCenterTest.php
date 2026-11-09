@@ -31,6 +31,7 @@ final class SystemUpdateCenterTest extends TestCase
             ['POST', '/admin/system-updates/upload'],
             ['POST', '/admin/system-updates/verify'],
             ['POST', '/admin/system-updates/backup'],
+            ['POST', '/admin/system-updates/runtime-activate'],
         ] as [$method, $path]) {
             $route = Route::getRoutes()->match(Request::create($path, $method));
             $this->assertContains('web', $route->gatherMiddleware());
@@ -54,6 +55,7 @@ final class SystemUpdateCenterTest extends TestCase
         $this->post('/admin/system-updates/upload', ['confirmation' => 'INSTALL'])->assertRedirect('/login');
         $this->post('/admin/system-updates/verify')->assertRedirect('/login');
         $this->post('/admin/system-updates/backup', ['confirmation' => 'BACKUP'])->assertRedirect('/login');
+        $this->post('/admin/system-updates/runtime-activate', ['action' => 'queue', 'confirmation' => 'ACTIVATE'])->assertRedirect('/login');
 
         $user = User::factory()->create(['platform_admin' => false]);
         $this->actingAs($user)->get('/admin/system-updates')->assertForbidden();
@@ -62,6 +64,61 @@ final class SystemUpdateCenterTest extends TestCase
         $this->actingAs($user)->post('/admin/system-updates/upload', ['confirmation' => 'INSTALL'])->assertForbidden();
         $this->actingAs($user)->post('/admin/system-updates/verify')->assertForbidden();
         $this->actingAs($user)->post('/admin/system-updates/backup', ['confirmation' => 'BACKUP'])->assertForbidden();
+        $this->actingAs($user)->post('/admin/system-updates/runtime-activate', ['action' => 'queue', 'confirmation' => 'ACTIVATE'])->assertForbidden();
+    }
+
+    public function test_cpanel_queue_activation_stays_blocked_without_real_cron_and_mysql_evidence(): void
+    {
+        $this->withoutMiddleware(ThrottleRequests::class);
+        $this->withoutVite();
+        config([
+            'cpanel.enabled' => true,
+            'cpanel.cron_enabled' => false,
+            'cpanel.preflight_passed' => false,
+            'cpanel.ai_enabled' => false,
+            'queue.default' => 'database',
+            'cache.default' => 'database',
+            'session.driver' => 'database',
+        ]);
+
+        $admin = User::factory()->create(['platform_admin' => true]);
+
+        $this->actingAs($admin)->get('/admin/system-updates')
+            ->assertOk()
+            ->assertSee('Queues, Cron and AI activation')
+            ->assertSee('private_cron_not_observed')
+            ->assertSee('disabled', false)
+            ->assertSee('name="action" value="queue"', false)
+            ->assertSee('name="action" value="ai"', false);
+
+        $this->actingAs($admin)->post('/admin/system-updates/runtime-activate', [
+            'action' => 'queue',
+            'confirmation' => 'ACTIVATE',
+        ])->assertRedirect()
+            ->assertSessionHasErrors('runtime');
+
+        $this->assertFalse(config('cpanel.cron_enabled'));
+        $this->assertFalse(config('cpanel.ai_enabled'));
+    }
+
+    public function test_cpanel_ai_cannot_activate_without_verified_worker_and_model(): void
+    {
+        $this->withoutMiddleware(ThrottleRequests::class);
+        config([
+            'cpanel.enabled' => true,
+            'cpanel.cron_enabled' => true,
+            'cpanel.preflight_passed' => true,
+            'cpanel.ai_enabled' => false,
+        ]);
+        $admin = User::factory()->create(['platform_admin' => true]);
+
+        $this->actingAs($admin)->post('/admin/system-updates/runtime-activate', [
+            'action' => 'ai',
+            'confirmation' => 'ACTIVATE',
+        ])->assertRedirect()
+            ->assertSessionHasErrors('runtime');
+
+        $this->assertFalse(config('cpanel.ai_enabled'));
     }
 
     public function test_backup_now_requires_confirmation_and_never_exposes_database_keys(): void
