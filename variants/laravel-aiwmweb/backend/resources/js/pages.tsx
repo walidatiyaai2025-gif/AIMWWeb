@@ -57,7 +57,7 @@ import { DashboardMediaNavigationControl } from './dashboard-media-navigation-co
 import { DashboardConnectorDownloadControl } from './dashboard-connector-download-control';
 import { LiveSystemStatusRefreshControl } from './live-system-status-refresh-control';
 import { EMAIL_HISTORY_CLEAR_FILTERS_OPERATION_ID, EmailHistoryFiltersControl, type EmailHistoryFilterState } from './email-history-filters-control';
-import { ExecutionCenterRowActions, ExecutionDateRangeWarning, isValidExecutionDateRange, EXECUTION_PAGE_SIZES, EXECUTION_STATUSES, readExecutionUrlState, writeExecutionUrlState, type ExecutionUrlState } from './execution-center-real-actions';
+import { ExecutionCenterRowActions, ExecutionDateRangeWarning, ExecutionTextFilterWarning, isValidExecutionDateRange, isValidExecutionSearch, isValidExecutionType, EXECUTION_PAGE_SIZES, EXECUTION_STATUSES, readExecutionUrlState, writeExecutionUrlState, type ExecutionUrlState } from './execution-center-real-actions';
 import { GlobalUsersFullManagementControl } from './global-users-full-management-control';
 import { WordPressUsersRefreshControl } from './wordpress-users-refresh-control';
 import {
@@ -1138,7 +1138,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                     if (route.key === 'execution') {
                         // Keep invalid drafts visible for correction; never issue a
                         // server request that Laravel must reject with 422.
-                        if (!isValidExecutionDateRange(executionDraft.dateFrom, executionDraft.dateTo)) return;
+                        if (!isValidExecutionDateRange(executionDraft.dateFrom, executionDraft.dateTo)
+                            || !isValidExecutionSearch(searchInput)
+                            || !isValidExecutionType(executionDraft.type)) return;
                         navigateExecution({
                             ...executionDraft,
                             page: 1,
@@ -1172,6 +1174,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                                 <input aria-label={locale === 'ar' ? 'نوع العملية' : 'Operation type'}
                                     value={executionDraft.type}
                                     maxLength={80}
+                                    aria-invalid={!isValidExecutionType(executionDraft.type)}
+                                    aria-describedby={!isValidExecutionType(executionDraft.type)
+                                        ? 'execution-type-filter-warning' : undefined}
                                     onChange={(event) => setExecutionDraft((current) => ({ ...current, type: event.target.value }))} />
                             </label>
                             <label>{locale === 'ar' ? 'من تاريخ' : 'From date'}
@@ -1190,6 +1195,8 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             </label>
                             <ExecutionDateRangeWarning dateFrom={executionDraft.dateFrom}
                                 dateTo={executionDraft.dateTo} locale={locale} />
+                            <ExecutionTextFilterWarning search={searchInput} type={executionDraft.type}
+                                locale={locale} />
                         </span>
                     ) : null}
                     <label className="sr-only" htmlFor={`search-${route.key}`}>{text(commonText.search)}</label>
@@ -1211,7 +1218,13 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             busyText={locale === 'ar' ? 'جارٍ البحث' : 'Searching'}
                         />
                     ) : (
-                        <input id={`search-${route.key}`} value={searchInput} maxLength={route.key === 'notifications' ? 100 : undefined} onChange={(event) => setSearchInput(event.target.value)} placeholder={locale === 'ar' ? 'بحث في البيانات الحية…' : 'Search live data…'} />
+                        <input id={`search-${route.key}`} value={searchInput}
+                            maxLength={route.key === 'notifications' ? 100 : route.key === 'execution' ? 120 : undefined}
+                            aria-invalid={route.key === 'execution' && !isValidExecutionSearch(searchInput)}
+                            aria-describedby={route.key === 'execution' && !isValidExecutionSearch(searchInput)
+                                ? 'execution-search-filter-warning' : undefined}
+                            onChange={(event) => setSearchInput(event.target.value)}
+                            placeholder={locale === 'ar' ? 'بحث في البيانات الحية…' : 'Search live data…'} />
                     )}
                     {siteUsersManagerSearch ? (
                         <label>
@@ -1254,7 +1267,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                                 : (route.key === 'comments' ? COMMENTS_SEARCH_OPERATION_ID : undefined)}
                             disabled={((route.key === 'comments' || route.key === 'wp-users') && query.isFetching)
                                 || (route.key === 'execution'
-                                    && !isValidExecutionDateRange(executionDraft.dateFrom, executionDraft.dateTo))}
+                                    && (!isValidExecutionDateRange(executionDraft.dateFrom, executionDraft.dateTo)
+                                        || !isValidExecutionSearch(searchInput)
+                                        || !isValidExecutionType(executionDraft.type)))}
                             aria-busy={(route.key === 'comments' || route.key === 'wp-users') && query.isFetching ? 'true' : 'false'}
                         >
                             {text(commonText.search)}
