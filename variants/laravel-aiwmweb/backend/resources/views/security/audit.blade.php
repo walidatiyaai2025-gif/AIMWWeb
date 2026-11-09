@@ -130,7 +130,7 @@
         </header>
 
         @if ($isFiltered && ! $isSqlFiltered)
-            <p role="status" data-audit-filter-limit>{{ $isArabic ? 'عند استخدام البحث العام أو عدد السجلات القديم، تُفحص آخر ١٠٠٠ حادثة فقط. استخدم بحث اسم الحدث للبحث في كل السجل. العدد الحالي ليس إجمالي المطابقات.' : 'General search or legacy take scans only the latest 1,000 events. Use Event search for all-history matching; this is not a global matching total.' }}</p>
+            <p role="status" data-audit-filter-limit>{{ $isArabic ? 'عند استخدام البحث العام أو عدد السجلات القديم، تُفحص آخر ١٠٠٠ حادثة فقط. استخدم بحث اسم الحدث للبحث في كل السجل. العدد الحالي ليس إجمالي المطابقات.' : 'General search or legacy take scans the latest 1,000 events only. Use Event search for all-history matching; this is not a global matching total.' }}</p>
             <p role="status" data-audit-filter-window>{{ $filteredMatchCount === 0 ? 0 : (($page - 1) * $perPage + 1) }}–{{ min($filteredMatchCount, $page * $perPage) }} {{ $isArabic ? 'من النتائج ضمن نطاق البحث المحدود' : 'of matches inside the limited search window' }} · {{ $isArabic ? 'الصفحة' : 'Page' }} {{ $page }} / {{ $lastPage }}</p>
         @else
             <p role="status" data-audit-range>{{ $total === 0 ? 0 : (($page - 1) * $perPage + 1) }}–{{ min($total, $page * $perPage) }} {{ $isArabic ? 'من' : 'of' }} {{ $total }} · {{ $isArabic ? 'الصفحة' : 'Page' }} {{ $page }} / {{ $lastPage }}</p>
