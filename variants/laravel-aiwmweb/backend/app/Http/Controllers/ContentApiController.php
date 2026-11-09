@@ -396,12 +396,23 @@ final class ContentApiController extends Controller
         ]);
     }
 
-    public function revisions(TenantAuthorizer $auth, string $tenant, int $site, int $content): JsonResponse
+    public function revisions(TenantAuthorizer $auth, string $tenant, int $site, int $content, Request $request): JsonResponse
     {
         $auth->authorize('content.view');
         $item = ContentItem::query()->where('site_id', $site)->findOrFail($content);
+        $filters = $request->validate([
+            'page' => 'sometimes|integer|min:1|max:1000000',
+            'per_page' => 'sometimes|integer|in:10,25,50,100',
+        ]);
+        // Preserve the existing 50-row default for callers not opting into page size.
+        $perPage = (int) ($filters['per_page'] ?? 50);
+        $page = (int) ($filters['page'] ?? 1);
+        $revisions = $item->revisions()->orderByDesc('created_at')->orderByDesc('id');
+        // Clamp before querying rows so stale deep links cannot issue massive OFFSETs.
+        $total = (clone $revisions)->count();
+        $lastPage = max(1, (int) ceil($total / $perPage));
 
-        return response()->json($item->revisions()->latest()->paginate(50));
+        return response()->json($revisions->paginate($perPage, ['*'], 'page', min($page, $lastPage)));
     }
 
     public function compareRevisions(TenantAuthorizer $auth, string $tenant, int $site, int $content, int $from, int $to): JsonResponse
