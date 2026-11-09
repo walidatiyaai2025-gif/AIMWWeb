@@ -88,7 +88,10 @@ final class SiteOperationsRouteTerminalityTest extends TestCase
             ->assertJsonPath('items.0.status', 'succeeded')
             ->assertJsonPath('items.0.message', 'WordPress synchronization completed.')
             ->assertJsonPath('items.0.affected_records', 4)
-            ->assertJsonPath('items.0.details.provider_secret', '[REDACTED]');
+            // A public history read never returns arbitrary provider detail keys,
+            // not even their redacted placeholders.
+            ->assertJsonPath('items.0.details', [])
+            ->assertJsonMissingPath('items.0.details.provider_secret');
 
         $apiRoute = Route::getRoutes()->match(Request::create("/api/tenants/alpha/sites/{$site->id}/operations", 'GET'));
         $this->assertSame(SiteDiagnosticsController::class.'@operations', ltrim($apiRoute->getActionName(), '\\'));

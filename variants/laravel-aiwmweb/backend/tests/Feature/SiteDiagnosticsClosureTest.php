@@ -283,6 +283,84 @@ class SiteDiagnosticsClosureTest extends TestCase
         $this->assertStringNotContainsString('private-', json_encode($invalid, JSON_THROW_ON_ERROR));
     }
 
+    public function test_all_site_history_read_projections_redact_success_and_other_failures_without_mutating_evidence(): void
+    {
+        [$tenant, $member] = $this->tenant('history-read-projection');
+        app(TenantContext::class)->activate($tenant, $member);
+        $site = Site::query()->create(['name' => 'Primary', 'url' => 'https://wp.test']);
+        $other = Site::query()->create(['name' => 'Other', 'url' => 'https://other.test']);
+        $secret = 'Bearer secret-success https://wp.test/?token=secret-query';
+        $rows = [
+            ['synchronization', 'succeeded', 'WordPress synchronization completed.'],
+            ['diagnostic_recheck', 'failed', 'Site operation failed. Review authorized diagnostics.'],
+            ['diagnostic_recheck', 'succeeded', 'Site diagnostic recheck completed.'],
+            ['unsafe_private_operation', 'queued', 'Site operation state recorded.'],
+        ];
+        $ids = [];
+        foreach ($rows as [$operation, $status, $expected]) {
+            $row = SiteOperationHistory::query()->create([
+                'site_id' => $site->id,
+                'operation' => $operation,
+                'status' => $status,
+                'message' => $secret,
+                'details' => [
+                    'provider_response' => ['access_token' => 'secret-nested'],
+                    'authorization' => 'secret-auth',
+                ],
+                'started_at' => now(),
+                'completed_at' => now(),
+            ]);
+            $ids[$row->id] = $expected;
+        }
+        $invalid = SiteOperationHistory::query()->create([
+            'site_id' => $site->id,
+            'correlation_id' => 'Bearer secret-correlation',
+            'operation' => 'bad operation password=secret-operation',
+            'status' => 'failed',
+            'message' => $secret,
+            'details' => ['secret_key' => 'secret-detail'],
+            'started_at' => now(),
+            'completed_at' => now(),
+        ]);
+        $ids[$invalid->id] = 'Site operation failed. Review authorized diagnostics.';
+        SiteOperationHistory::query()->create([
+            'site_id' => $other->id,
+            'operation' => 'synchronization',
+            'status' => 'failed',
+            'message' => 'other-site-sensitive',
+            'started_at' => now(),
+            'completed_at' => now(),
+        ]);
+
+        $history = new SiteOperationHistoryService;
+        foreach ([$history->get($site->id), $history->paginateForSite($site->id, 1, 10)['items']] as $items) {
+            $this->assertCount(5, $items);
+            $this->assertEqualsCanonicalizing(array_keys($ids), array_column($items, 'id'));
+            foreach ($items as $item) {
+                $this->assertSame($ids[$item['id']], $item['message']);
+                $this->assertSame([], $item['details']);
+                $this->assertArrayHasKey('started_at', $item);
+                $this->assertArrayHasKey('site_id', $item);
+            }
+            $malformed = collect($items)->firstWhere('id', $invalid->id);
+            $this->assertSame('operation_withheld', $malformed['operation']);
+            $this->assertNull($malformed['correlation_id']);
+            $json = json_encode($items, JSON_THROW_ON_ERROR);
+            foreach (['secret-success', 'secret-query', 'secret-nested', 'secret-auth',
+                'secret-correlation', 'secret-operation', 'secret-detail', 'other-site-sensitive'] as $forbidden) {
+                $this->assertStringNotContainsString($forbidden, $json);
+            }
+        }
+
+        $all = $history->getAll();
+        $this->assertCount(6, $all);
+        $this->assertStringNotContainsString('secret-success', json_encode($all, JSON_THROW_ON_ERROR));
+        $this->assertStringNotContainsString('secret-nested', json_encode($all, JSON_THROW_ON_ERROR));
+        $this->assertSame($secret, SiteOperationHistory::query()->findOrFail(array_key_first($ids))->message);
+        $this->assertSame('secret-nested',
+            SiteOperationHistory::query()->findOrFail(array_key_first($ids))->details['provider_response']['access_token']);
+    }
+
     public function test_status_projects_connector_wordpress_metadata_without_persisting_or_fabricating_values(): void
     {
         [$tenant, $member] = $this->tenant('site-health-metadata');
