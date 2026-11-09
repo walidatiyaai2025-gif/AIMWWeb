@@ -43,10 +43,10 @@ final class ApprovalQueueReadController extends Controller
 
         // Preserve accurate server-side totals while clamping stale page URLs
         // after filters change or the last row on the last page is deleted.
+        $total = (clone $query)->count();
+        $lastPage = max(1, (int) ceil($total / $perPage));
+        $page = min($page, $lastPage);
         $paginator = $query->paginate($perPage, ['*'], 'page', $page);
-        if ($page > $paginator->lastPage()) {
-            $paginator = $query->paginate($perPage, ['*'], 'page', $paginator->lastPage());
-        }
         $approvalIds = $paginator->getCollection()->pluck('id');
         $executions = Execution::query()
             ->whereIn('approval_id', $approvalIds)
