@@ -32,8 +32,9 @@ final class SystemUpdatePackageTransportTest extends TestCase
             }
 
             Http::assertSentCount(1);
-            $request = Http::recorded()[0][0];
-            $options = $request->getOptions();
+            $pending = (new ReflectionMethod(SystemUpdateService::class, 'packageDownloadRequest'))
+                ->invoke(app(SystemUpdateService::class), $path);
+            $options = $pending->getOptions();
 
             $this->assertSame(180, $options['timeout']);
             $this->assertGreaterThanOrEqual(3, $options['connect_timeout']);
