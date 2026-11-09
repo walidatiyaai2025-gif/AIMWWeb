@@ -424,6 +424,85 @@ final class SeoTenantRouteBindingRegressionTest extends TestCase
             ->assertUnprocessable();
     }
 
+    public function test_seo_findings_search_treats_underscore_percent_and_bang_as_literals_before_paging(): void
+    {
+        [$user, $membership] = $this->member('seo-literal-filters', ['tenant.view', 'seo.view']);
+        $site = $this->site($membership, 'Literal SEO search');
+        app(TenantContext::class)->activate($membership->tenant, $membership);
+        $content = SyncedContent::query()->create([
+            'site_id' => $site->id,
+            'resource_type' => 'post', 'remote_id' => 1234,
+            'title' => 'SEO article', 'slug' => 'seo-article', 'content' => 'Body',
+        ]);
+        $audit = SeoAudit::query()->create([
+            'site_id' => $site->id, 'actor_user_id' => $user->id, 'status' => 'succeeded',
+        ]);
+        $otherAudit = SeoAudit::query()->create([
+            'site_id' => $site->id, 'actor_user_id' => $user->id, 'status' => 'succeeded',
+        ]);
+        for ($i = 1; $i <= 27; $i++) {
+            SeoFinding::query()->create([
+                'seo_audit_id' => $audit->id, 'synced_content_id' => $content->id,
+                'code' => "matched-{$i}",
+                'severity' => $i === 27 ? 'low' : 'high',
+                'field' => 'seo_title', 'recommendation' => 'Review SEO',
+            ]);
+        }
+        foreach ([
+            ['wildcard-decoy', 'seoXtitle'],
+            ['percent-decoy', 'literalXmarker'],
+            ['literal-percent', 'literal%marker'],
+            ['bang-decoy', 'bangXmarker'],
+            ['literal-bang', 'bang!marker'],
+            ['literal-slash', 'slash\\marker'],
+        ] as [$code, $field]) {
+            SeoFinding::query()->create([
+                'seo_audit_id' => $audit->id, 'synced_content_id' => $content->id,
+                'code' => $code, 'severity' => 'high',
+                'field' => $field, 'recommendation' => 'Review SEO',
+            ]);
+        }
+        SeoFinding::query()->create([
+            'seo_audit_id' => $otherAudit->id, 'synced_content_id' => $content->id,
+            'code' => 'other-audit-record', 'severity' => 'high',
+            'field' => 'seo_title', 'recommendation' => 'Different audit',
+        ]);
+        app(TenantContext::class)->forget();
+
+        $url = "/api/tenants/seo-literal-filters/sites/{$site->id}/seo/audits/{$audit->id}/findings";
+        $this->actingAs($user)->getJson($url)
+            ->assertOk()->assertJsonCount(33); // Legacy unpaged array contract.
+        $first = $this->actingAs($user)->getJson($url.'?page=1&per_page=10&severity=high&search=seo_title')
+            ->assertOk()->assertJsonPath('total', 26)->assertJsonPath('last_page', 3)
+            ->assertJsonCount(10, 'data');
+        $second = $this->actingAs($user)->getJson($url.'?page=2&per_page=10&severity=high&search=seo_title')
+            ->assertOk()->assertJsonPath('current_page', 2)->assertJsonCount(10, 'data');
+        $last = $this->actingAs($user)->getJson($url.'?page=999999&per_page=10&severity=high&search=seo_title')
+            ->assertOk()->assertJsonPath('current_page', 3)->assertJsonCount(6, 'data');
+        $this->assertSame([], array_intersect(array_column($first->json('data'), 'id'), array_column($second->json('data'), 'id')));
+        $this->assertSame([], array_intersect(array_column($second->json('data'), 'id'), array_column($last->json('data'), 'id')));
+
+        foreach ([
+            ['literal%marker', 'literal-percent'],
+            ['bang!marker', 'literal-bang'],
+            ['slash\\marker', 'literal-slash'],
+        ] as [$search, $expectedCode]) {
+            $response = $this->actingAs($user)->getJson(
+                $url.'?page=1&per_page=10&search='.rawurlencode($search)
+            )->assertOk()->assertJsonPath('total', 1)->assertJsonCount(1, 'data');
+            $this->assertSame($expectedCode, $response->json('data.0.code'));
+        }
+        $this->actingAs($user)->getJson($url.'?page=1&search=seoXtitle')
+            ->assertOk()->assertJsonPath('total', 1)->assertJsonPath('data.0.code', 'wildcard-decoy');
+        $this->actingAs($user)->getJson($url.'?page=1&search=seo_title&severity=low')
+            ->assertOk()->assertJsonPath('total', 1);
+        $this->actingAs($user)->getJson($url.'?page=1&search=seo_title%')
+            ->assertOk()->assertJsonPath('total', 0)->assertJsonPath('data', []);
+        $this->actingAs($user)->getJson(
+            "/api/tenants/seo-literal-filters/sites/{$site->id}/seo/audits/{$otherAudit->id}/findings?page=1&search=seo_title"
+        )->assertOk()->assertJsonPath('total', 1);
+    }
+
     /** @return array{User,TenantMembership} */
     private function member(string $slug, array $permissions): array
     {
