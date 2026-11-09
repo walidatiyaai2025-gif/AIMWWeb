@@ -580,15 +580,31 @@ final class ContentApiController extends Controller
     public function comments(Request $request, TenantAuthorizer $auth, string $tenant, int $site): JsonResponse
     {
         $auth->authorize('content.view');
+        $filters = $request->validate([
+            'status' => 'sometimes|nullable|string|max:80',
+            'search' => 'sometimes|nullable|string|max:200',
+            'per_page' => 'sometimes|integer|min:1|max:100',
+            'page' => 'sometimes|integer|min:1|max:1000000',
+        ]);
+        // Retain the legacy authorized-empty response for an absent/foreign
+        // site; the tenant-scoped Comment model never exposes foreign rows.
         $q = Comment::query()->where('site_id', $site);
-        if ($status = $request->query('status')) {
+        if ($status = $filters['status'] ?? null) {
             $q->where('status', $status);
         }
-        if ($search = trim((string) $request->query('search'))) {
+        if ($search = trim((string) ($filters['search'] ?? ''))) {
             $q->where(fn ($x) => $x->where('author_name', 'like', "%{$search}%")->orWhere('author_email', 'like', "%{$search}%")->orWhere('body', 'like', "%{$search}%"));
         }
 
-        return response()->json($q->latest('remote_created_at')->paginate(min(max((int) $request->query('per_page', 25), 1), 100)));
+        $perPage = (int) ($filters['per_page'] ?? 25);
+        $page = (int) ($filters['page'] ?? 1);
+        $ordered = $q->orderByDesc('remote_created_at')->orderByDesc('id');
+        $paginator = $ordered->paginate($perPage, ['*'], 'page', $page);
+        if ($page > $paginator->lastPage()) {
+            $paginator = $ordered->paginate($perPage, ['*'], 'page', max(1, $paginator->lastPage()));
+        }
+
+        return response()->json($paginator);
     }
 
     public function commentAction(Request $request, TenantAuthorizer $auth, string $tenant, int $site, int $comment): JsonResponse
@@ -624,16 +640,24 @@ final class ContentApiController extends Controller
     {
         $auth->authorize('content.view');
         Site::query()->findOrFail($site);
+        $filters = $request->validate([
+            'taxonomy' => 'sometimes|nullable|string|max:96',
+            'minimum_usage' => 'sometimes|integer|min:0|max:1000000',
+            'search' => 'sometimes|nullable|string|max:200',
+            // Preserve the existing API limit for non-browser consumers.
+            'per_page' => 'sometimes|integer|min:1|max:200',
+            'page' => 'sometimes|integer|min:1|max:1000000',
+        ]);
         $q = TaxonomyTerm::query()->where('site_id', $site);
-        if ($taxonomy = $request->query('taxonomy')) {
+        if ($taxonomy = $filters['taxonomy'] ?? null) {
             $q->where('taxonomy', $taxonomy);
         }
         // #958 ApplyAsync: minimum usage is checked against persisted, site-scoped rows.
-        $minimumUsage = max(0, (int) $request->query('minimum_usage', 0));
+        $minimumUsage = (int) ($filters['minimum_usage'] ?? 0);
         if ($minimumUsage > 0) {
             $q->where('usage_count', '>=', $minimumUsage);
         }
-        $search = trim((string) $request->query('search', ''));
+        $search = trim((string) ($filters['search'] ?? ''));
         if ($search !== '') {
             $q->where(function ($terms) use ($search): void {
                 $terms->where('name', 'like', '%'.$search.'%')
@@ -641,7 +665,15 @@ final class ContentApiController extends Controller
             });
         }
 
-        return response()->json($q->orderBy('taxonomy')->orderBy('name')->paginate(min(max((int) $request->query('per_page', 100), 1), 200)));
+        $perPage = (int) ($filters['per_page'] ?? 100);
+        $page = (int) ($filters['page'] ?? 1);
+        $ordered = $q->orderBy('taxonomy')->orderBy('name')->orderBy('id');
+        $paginator = $ordered->paginate($perPage, ['*'], 'page', $page);
+        if ($page > $paginator->lastPage()) {
+            $paginator = $ordered->paginate($perPage, ['*'], 'page', max(1, $paginator->lastPage()));
+        }
+
+        return response()->json($paginator);
     }
 
     public function discoverTaxonomy(TenantAuthorizer $auth, string $tenant, int $site): JsonResponse
