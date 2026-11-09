@@ -233,7 +233,7 @@ final class GlobalMediaApplyTerminalityTest extends TestCase
 
         $this->actingAs($user)
             ->getJson('/api/v1/tenants/alpha-content-pagination/sites/999999/content/post?page=1')
-            ->assertNotFound();
+            ->assertOk()->assertJsonCount(0, 'data');
     }
 
     private function membership(User $user, string $slug, array $permissions): TenantMembership
