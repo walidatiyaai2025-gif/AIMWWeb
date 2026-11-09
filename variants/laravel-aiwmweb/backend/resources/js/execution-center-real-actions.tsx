@@ -55,6 +55,43 @@ export function ExecutionDateRangeWarning({ dateFrom, dateTo, locale }: {
     </small>;
 }
 
+/**
+ * Match the existing Laravel Execution Center GET validator exactly. Do not
+ * normalize an invalid user draft into a different search or send a 422 query.
+ * The query is limited to the backend's allowlisted identifiers, not free text.
+ */
+export function isValidExecutionSearch(search: string): boolean {
+    const value = search.trim();
+    return value.length <= 120 && /^[a-zA-Z0-9 .:_-]*$/.test(value);
+}
+
+export function isValidExecutionType(type: string): boolean {
+    return type.length <= 80 && /^[a-zA-Z0-9._-]*$/.test(type);
+}
+
+export function ExecutionTextFilterWarning({ search, type, locale }: {
+    search: string;
+    type: string;
+    locale: 'ar' | 'en';
+}) {
+    const badSearch = !isValidExecutionSearch(search);
+    const badType = !isValidExecutionType(type);
+    if (!badSearch && !badType) return null;
+
+    return <>
+        {badSearch ? <small id="execution-search-filter-warning" role="alert" className="muted">
+            {locale === 'ar'
+                ? 'البحث يقبل الحروف الإنجليزية والأرقام والمسافات والنقطة والنقطتين والشرطة والشرطة السفلية فقط (120 حرفًا كحد أقصى).'
+                : 'Search accepts English letters, digits, spaces, periods, colons, underscores and hyphens (up to 120 characters).'}
+        </small> : null}
+        {badType ? <small id="execution-type-filter-warning" role="alert" className="muted">
+            {locale === 'ar'
+                ? 'نوع العملية يقبل الحروف الإنجليزية والأرقام والنقطة والشرطة والشرطة السفلية فقط (80 حرفًا كحد أقصى).'
+                : 'Operation type accepts English letters, digits, periods, underscores and hyphens (up to 80 characters).'}
+        </small> : null}
+    </>;
+}
+
 export function readExecutionUrlState(): ExecutionUrlState {
     const params = new URLSearchParams(window.location.search);
     const page = Number(params.get('page'));
