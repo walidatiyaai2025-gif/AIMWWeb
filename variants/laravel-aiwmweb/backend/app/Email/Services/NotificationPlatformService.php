@@ -140,6 +140,23 @@ final class NotificationPlatformService implements NotificationEventSink
             ->when($filters['source'] ?? null, fn ($q, $v) => $q->where('source', $v))
             ->orderByDesc('created_at')->orderByDesc('id');
 
+        // The Notifications workspace sends search with its page request.
+        // Apply that term before count/pagination, never to a single page.
+        // Match only the authenticated user's tenant-scoped notification rows.
+        $search = trim((string) ($filters['search'] ?? ''));
+        if (mb_strlen($search) > 100) {
+            throw ValidationException::withMessages(['search' => 'Notification search must be at most 100 characters.']);
+        }
+        if ($search !== '') {
+            $escaped = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], Str::upper($search));
+            $like = '%'.$escaped.'%';
+            $query->where(function ($q) use ($like): void {
+                $q->whereRaw("UPPER(title) LIKE ? ESCAPE '!'", [$like])
+                    ->orWhereRaw("UPPER(message) LIKE ? ESCAPE '!'", [$like])
+                    ->orWhereRaw("UPPER(source) LIKE ? ESCAPE '!'", [$like]);
+            });
+        }
+
         $perPage = min(max((int) ($filters['per_page'] ?? 25), 1), 100);
         $page = max((int) ($filters['page'] ?? 1), 1);
         $notifications = $query->paginate($perPage, ['*'], 'page', $page);

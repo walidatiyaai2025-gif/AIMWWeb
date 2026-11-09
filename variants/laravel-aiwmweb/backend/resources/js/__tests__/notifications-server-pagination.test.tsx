@@ -56,4 +56,44 @@ describe('Notification Inbox server pagination (#1608)', () => {
         expect(screen.getByRole('button', { name: 'First' })).toBeDisabled();
         expect(fetchMock.mock.calls.every(([, options]) => !options || !options.method || options.method === 'GET')).toBe(true);
     });
+    it('sends submitted search with page reset and uses filtered server totals', async () => {
+        const fetchMock = vi.fn().mockImplementation(async (url: string) => {
+            const parsed = new URL(url, 'https://app.example.test');
+            const page = Number(parsed.searchParams.get('page') || 1);
+            const search = parsed.searchParams.get('search');
+            const id = search === 'action' ? 303 : page === 2 ? 202 : 101;
+            const total = search === 'action' ? 1 : 30;
+            return new Response(JSON.stringify({
+                data: [{ id, title: search === 'action' ? 'Action reminder' : 'Regular notice' }],
+                current_page: page, last_page: Math.ceil(total / 25),
+                per_page: 25, total,
+            }), { status: 200, headers: { 'content-type': 'application/json' } });
+        });
+        vi.stubGlobal('fetch', fetchMock);
+        const context: FrontendContext = {
+            user: { id: 1, name: 'Alpha', email: 'alpha@example.test' },
+            tenant: { slug: 'alpha', name: 'Alpha' },
+            tenants: [{ slug: 'alpha', name: 'Alpha' }],
+            permissions: ['tenant.view', 'notifications.view'], connectors: [], capabilities: {},
+            api: { notifications: '/api/tenants/alpha/notifications' }, actions: {},
+        };
+        const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+        render(
+            <QueryClientProvider client={client}>
+                <LocaleProvider><ToastProvider><WorkspacePage context={context} route={route} /></ToastProvider></LocaleProvider>
+            </QueryClientProvider>,
+        );
+        expect(await screen.findByRole('cell', { name: '101' })).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+        expect(await screen.findByRole('cell', { name: '202' })).toBeInTheDocument();
+        fireEvent.change(screen.getByRole('textbox', { name: 'Search' }), { target: { value: 'action' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Search' }));
+        expect(await screen.findByRole('cell', { name: '303' })).toBeInTheDocument();
+        await waitFor(() => expect(fetchMock.mock.calls.at(-1)?.[0]).toBe(
+            '/api/tenants/alpha/notifications?page=1&search=action&per_page=25',
+        ));
+        expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+        expect(fetchMock.mock.calls.every(([, options]) => !options || !options.method || options.method === 'GET')).toBe(true);
+    });
+
 });

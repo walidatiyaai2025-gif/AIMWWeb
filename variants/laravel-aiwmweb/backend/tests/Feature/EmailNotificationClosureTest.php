@@ -193,6 +193,88 @@ class EmailNotificationClosureTest extends TestCase
         $this->assertSame([], $other['data']);
     }
 
+    public function test_inbox_search_filters_authoritative_pages_with_literal_wildcards_and_user_isolation(): void
+    {
+        [$alpha, $member] = $this->tenantWithMember('inbox-search-alpha');
+        [$beta, $foreignMember] = $this->tenantWithMember('inbox-search-beta');
+        $context = app(TenantContext::class);
+        $context->activate($alpha, $member);
+
+        for ($i = 0; $i < 31; $i++) {
+            InAppNotification::query()->create([
+                'user_id' => $member->user_id,
+                'event_id' => (string) Str::uuid(),
+                'notification_id' => (string) Str::uuid(),
+                'category' => 'sync',
+                'severity' => $i === 29 ? 'warning' : 'info',
+                'source' => 'sync',
+                'title' => in_array($i, [1, 17, 29], true) ? 'Action Required '.$i : 'Routine update '.$i,
+                'message' => $i === 20 ? 'Special reminder token' : 'Ordinary message',
+                'locale' => 'en',
+                'delivery_mode' => 'immediate',
+                'mandatory' => false,
+            ]);
+        }
+
+        $service = app(NotificationPlatformService::class);
+        $first = $service->listForCurrentUser(['page' => 1, 'per_page' => 2, 'search' => 'ACTION REQUIRED']);
+        $second = $service->listForCurrentUser(['page' => 2, 'per_page' => 2, 'search' => 'action required']);
+        $this->assertSame(3, $first['total']);
+        $this->assertSame(2, $first['last_page']);
+        $this->assertCount(2, $first['data']);
+        $this->assertSame(2, $second['current_page']);
+        $this->assertCount(1, $second['data']);
+        $this->assertSame([], array_intersect(array_column($first['data'], 'id'), array_column($second['data'], 'id')));
+        $this->assertSame(1, $service->listForCurrentUser(['search' => 'Special reminder token'])['total']);
+        $this->assertSame(1, $service->listForCurrentUser(['search' => 'sync', 'severity' => 'warning'])['total']);
+        $this->assertSame(0, $service->listForCurrentUser(['search' => 'not-found'])['total']);
+        $this->assertCount(1, $service->listForCurrentUser(['page' => 999, 'per_page' => 2, 'search' => 'action required'])['data']);
+        $this->assertSame(2, $service->listForCurrentUser(['page' => 999, 'per_page' => 2, 'search' => 'action required'])['current_page']);
+
+        InAppNotification::query()->create([
+            'user_id' => $member->user_id,
+            'event_id' => (string) Str::uuid(),
+            'notification_id' => (string) Str::uuid(),
+            'category' => 'sync',
+            'severity' => 'info',
+            'source' => 'sync',
+            'title' => 'Literal percent % underscore _ bang !',
+            'message' => 'Special wildcard tokens',
+            'locale' => 'en',
+            'delivery_mode' => 'immediate',
+            'mandatory' => false,
+        ]);
+        foreach (['%', '_', '!'] as $literal) {
+            $match = $service->listForCurrentUser(['search' => $literal]);
+            $this->assertSame(1, $match['total'], 'Special SQL character must match literally: '.$literal);
+            $this->assertCount(1, $match['data']);
+        }
+
+        // The same tenant can contain notifications for another user. Their
+        // matching title must never be counted or serialized to this member.
+        $otherUser = User::factory()->create();
+        TenantMembership::query()->create(['user_id' => $otherUser->id, 'status' => 'active']);
+        InAppNotification::query()->create([
+            'user_id' => $otherUser->id,
+            'event_id' => (string) Str::uuid(),
+            'notification_id' => (string) Str::uuid(),
+            'category' => 'sync',
+            'severity' => 'info',
+            'source' => 'sync',
+            'title' => 'Other member private secret',
+            'message' => 'Other private notification',
+            'locale' => 'en',
+            'delivery_mode' => 'immediate',
+            'mandatory' => false,
+        ]);
+        $this->assertSame(0, $service->listForCurrentUser(['search' => 'private secret'])['total']);
+        $this->assertSame(3, $service->listForCurrentUser(['search' => 'action required'])['total']);
+
+        $context->activate($beta, $foreignMember);
+        $this->assertSame(0, app(NotificationPlatformService::class)
+            ->listForCurrentUser(['search' => 'action required'])['total']);
+    }
+
     private function tenantWithMember(string $slug): array
     {
         $tenant = Tenant::query()->create(['name' => ucfirst($slug), 'slug' => $slug]);

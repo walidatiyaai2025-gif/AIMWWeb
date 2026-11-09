@@ -31,6 +31,7 @@ final class EmailNotificationController extends Controller
             'unread' => ['sometimes', 'boolean'],
             'severity' => ['sometimes', 'nullable', 'string', 'max:50'],
             'source' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'search' => ['sometimes', 'nullable', 'string', 'max:100'],
             'page' => ['sometimes', 'integer', 'min:1'],
             'per_page' => ['sometimes', 'integer', 'between:1,100'],
         ]);
