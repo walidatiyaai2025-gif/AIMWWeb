@@ -41,6 +41,11 @@
         .security-audit-shell select, .security-audit-shell input { background: #1b2130; color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
         .security-audit-shell button { background: var(--accent); color: #14100b; border: 0; border-radius: 8px; padding: 10px 14px; cursor: pointer; }
         .security-audit-shell a { color: #e0bf73; }
+        .security-audit-pages { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 16px; }
+        .security-audit-pages a, .security-audit-pages span { display: inline-flex; min-height: 44px; min-width: 44px; align-items: center; justify-content: center; border-radius: 8px; padding: 8px; border: 1px solid var(--border); text-decoration: none; }
+        .security-audit-pages [aria-current="page"] { color: #14100b; background: var(--accent); }
+        .security-audit-pages [aria-disabled="true"] { opacity: .5; }
+        .security-audit-pages a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
         @media (max-width: 700px) { .security-audit-shell { grid-template-columns: minmax(0, 1fr); } .security-audit-shell .sidebar { position: static; height: auto; padding: 12px; } .security-audit-shell .main-nav { grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); } .security-audit-shell .topbar, .security-audit-shell main { padding: 12px; } }
 </style>
 </head>
@@ -97,6 +102,14 @@
                 <span>Search</span>
                 <input type="search" name="q" value="{{ $search }}" maxlength="200" aria-label="Search security audit trail">
             </label>
+            <label>
+                <span>{{ $isArabic ? 'عدد السجلات في الصفحة' : 'Page size' }}</span>
+                <select name="per_page" aria-label="{{ $isArabic ? 'عدد السجلات في الصفحة' : 'Audit page size' }}">
+                    @foreach ([10, 25, 50, 100] as $size)
+                        <option value="{{ $size }}" @selected($perPage === $size)>{{ $size }}</option>
+                    @endforeach
+                </select>
+            </label>
             <button type="submit" data-canonical-operation="AIMW-BILL-A152D6A7DE">Apply</button>
             <a
                 href="/admin/security-audit"
@@ -109,9 +122,14 @@
     <section>
         <header>
             <h2>{{ $isArabic ? 'أحدث أحداث الأمان' : 'Latest security events' }}</h2>
-            <span>{{ $events->count() }}</span>
+            <span data-audit-total="{{ $isFiltered ? 'unavailable' : $total }}">{{ $isFiltered ? $events->count() : $total }}</span>
         </header>
 
+        @if ($isFiltered)
+            <p role="status" data-audit-filter-limit>{{ $isArabic ? 'البحث والتصفية يفحصان آخر ١٠٠٠ حدث فقط حاليًا. قد توجد نتائج أقدم غير معروضة؛ العدد ليس إجمالي السجلات المطابقة.' : 'Filtered results currently scan the latest 1,000 events only. Older matches may exist; this is not a total matching count.' }}</p>
+        @else
+            <p role="status" data-audit-range>{{ $total === 0 ? 0 : (($page - 1) * $perPage + 1) }}–{{ min($total, $page * $perPage) }} {{ $isArabic ? 'من' : 'of' }} {{ $total }} · {{ $isArabic ? 'الصفحة' : 'Page' }} {{ $page }} / {{ $lastPage }}</p>
+        @endif
         @if ($events->isEmpty())
             <p>{{ $isArabic ? 'لا توجد أحداث أمان مطابقة.' : 'No matching security events.' }}</p>
         @else
@@ -129,6 +147,33 @@
                     @endif
                 </article>
             @endforeach
+        @endif
+        @if (! $isFiltered && $lastPage > 1)
+            @php($pagesStart = max(1, min($page - 2, $lastPage - 4)))
+            @php($pagesEnd = min($lastPage, $pagesStart + 4))
+            <nav class="security-audit-pages" aria-label="{{ $isArabic ? 'صفحات سجل الأمان' : 'Security audit pages' }}">
+                @if ($page > 1)
+                    <a href="{{ request()->fullUrlWithQuery(['page' => 1, 'per_page' => $perPage]) }}">{{ $isArabic ? 'الأولى' : 'First' }}</a>
+                    <a href="{{ request()->fullUrlWithQuery(['page' => $page - 1, 'per_page' => $perPage]) }}">{{ $isArabic ? 'السابقة' : 'Previous' }}</a>
+                @else
+                    <span aria-disabled="true">{{ $isArabic ? 'الأولى' : 'First' }}</span>
+                    <span aria-disabled="true">{{ $isArabic ? 'السابقة' : 'Previous' }}</span>
+                @endif
+                @for ($number = $pagesStart; $number <= $pagesEnd; $number++)
+                    @if ($number === $page)
+                        <span aria-current="page">{{ $number }}</span>
+                    @else
+                        <a href="{{ request()->fullUrlWithQuery(['page' => $number, 'per_page' => $perPage]) }}">{{ $number }}</a>
+                    @endif
+                @endfor
+                @if ($page < $lastPage)
+                    <a href="{{ request()->fullUrlWithQuery(['page' => $page + 1, 'per_page' => $perPage]) }}">{{ $isArabic ? 'التالية' : 'Next' }}</a>
+                    <a href="{{ request()->fullUrlWithQuery(['page' => $lastPage, 'per_page' => $perPage]) }}">{{ $isArabic ? 'الأخيرة' : 'Last' }}</a>
+                @else
+                    <span aria-disabled="true">{{ $isArabic ? 'التالية' : 'Next' }}</span>
+                    <span aria-disabled="true">{{ $isArabic ? 'الأخيرة' : 'Last' }}</span>
+                @endif
+            </nav>
         @endif
     </section>
 </main>
