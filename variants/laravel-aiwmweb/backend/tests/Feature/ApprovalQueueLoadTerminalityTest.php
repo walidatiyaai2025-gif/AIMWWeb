@@ -18,6 +18,7 @@ use App\Models\User;
 use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
@@ -158,6 +159,43 @@ class ApprovalQueueLoadTerminalityTest extends TestCase
             ->assertOk()
             ->assertJsonPath('total', 1)
             ->assertJsonCount(1, 'data');
+    }
+
+    public function test_stale_approval_bookmark_never_executes_a_large_offset_select(): void
+    {
+        $user = User::factory()->create();
+        $alpha = $this->membership($user, 'approval-safe-offset', ['tenant.view', 'approvals.view']);
+        $this->seedApproval($alpha, 'PENDING');
+
+        DB::enableQueryLog();
+        DB::flushQueryLog();
+        try {
+            $this->actingAs($user)
+                ->getJson('/api/tenants/approval-safe-offset/approvals?page=1000000&per_page=10&search=PENDING')
+                ->assertOk()
+                ->assertJsonPath('total', 1)
+                ->assertJsonPath('current_page', 1)
+                ->assertJsonCount(1, 'data');
+            $queries = DB::getQueryLog();
+        } finally {
+            DB::disableQueryLog();
+            DB::flushQueryLog();
+        }
+
+        $approvalSelects = 0;
+        foreach ($queries as $query) {
+            if (preg_match('/\\bfrom\\s+["`]?approvals["`]?/i', $query['query']) !== 1) {
+                continue;
+            }
+            $approvalSelects++;
+            // Tenant IDs and search IDs are not offset values.
+            if (preg_match('/\\boffset\\s+(\\d+)/i', $query['query'], $matches) === 1) {
+                $this->assertLessThanOrEqual(10, (int) $matches[1]);
+            } elseif (preg_match('/\\boffset\\s+\\?/i', $query['query']) === 1) {
+                $this->assertLessThanOrEqual(10, (int) end($query['bindings']));
+            }
+        }
+        $this->assertGreaterThanOrEqual(2, $approvalSelects);
     }
 
     public function test_literal_search_escapes_sql_wildcards_and_keeps_exact_totals_and_tenant_scope(): void
