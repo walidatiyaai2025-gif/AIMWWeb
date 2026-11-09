@@ -19,6 +19,8 @@ final class SecurityAuditReadController
             'outcome' => ['nullable', 'string', 'max:20'],
             'q' => ['nullable', 'string', 'max:200'],
             'take' => ['nullable', 'integer', 'min:1', 'max:200'],
+            'page' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
+            'per_page' => ['sometimes', 'integer', 'in:10,25,50,100'],
             'tenant_id' => ['prohibited'],
             'actor_user_id' => ['prohibited'],
         ]);
@@ -26,7 +28,12 @@ final class SecurityAuditReadController
         $category = trim((string) ($input['category'] ?? ''));
         $outcome = trim((string) ($input['outcome'] ?? ''));
         $search = trim((string) ($input['q'] ?? ''));
-        $take = (int) ($input['take'] ?? 200);
+        $perPage = (int) ($input['per_page'] ?? ($input['take'] ?? 25));
+        $take = (int) ($input['take'] ?? ($input['per_page'] ?? 200));
+        $page = (int) ($input['page'] ?? 1);
+        $isFiltered = $category !== '' || $outcome !== '' || $search !== '';
+        $total = 0;
+        $lastPage = 1;
 
         $tenantIds = DB::table('tenant_memberships')
             ->where('user_id', (int) $request->user()->getAuthIdentifier())
@@ -37,34 +44,48 @@ final class SecurityAuditReadController
 
         $settingsHref = $this->settingsHref($request, $tenantIds);
 
-        $events = $tenantIds === [] ? collect() : DB::table('audit_events')
+        $query = $tenantIds === [] ? null : DB::table('audit_events')
             ->leftJoin('users', 'users.id', '=', 'audit_events.actor_user_id')
             ->join('tenants', 'tenants.id', '=', 'audit_events.tenant_id')
             ->whereIn('audit_events.tenant_id', $tenantIds)
             ->orderByDesc('audit_events.occurred_at')
-            ->orderByDesc('audit_events.id')
-            ->limit(1000)
-            ->get([
-                'audit_events.id', 'audit_events.tenant_id', 'audit_events.actor_user_id',
-                'audit_events.event', 'audit_events.subject_type', 'audit_events.subject_id',
-                'audit_events.metadata', 'audit_events.occurred_at', 'users.name as actor_name',
-                'users.email as actor_email', 'tenants.name as tenant_name', 'tenants.slug as tenant_slug',
-            ])
-            ->map(fn ($row): array => $this->snapshot($row))
-            ->filter(fn (array $row): bool => $category === '' || strcasecmp($row['category'], $category) === 0)
-            ->filter(fn (array $row): bool => $outcome === '' || strcasecmp($row['outcome'], $outcome) === 0)
-            ->filter(function (array $row) use ($search): bool {
-                if ($search === '') {
-                    return true;
-                }
-                $haystack = mb_strtolower(implode(' ', [$row['event'], $row['actor'], $row['target'], $row['tenant'], $row['metadata_text']]));
+            ->orderByDesc('audit_events.id');
 
-                return str_contains($haystack, mb_strtolower($search));
-            })
-            ->take($take)
-            ->values();
+        $columns = [
+            'audit_events.id', 'audit_events.tenant_id', 'audit_events.actor_user_id',
+            'audit_events.event', 'audit_events.subject_type', 'audit_events.subject_id',
+            'audit_events.metadata', 'audit_events.occurred_at', 'users.name as actor_name',
+            'users.email as actor_email', 'tenants.name as tenant_name', 'tenants.slug as tenant_slug',
+        ];
 
-        return view('security.audit', compact('events', 'category', 'outcome', 'search', 'take', 'settingsHref') + [
+        if (! $isFiltered) {
+            // Never paginate a truncated in-memory slice. The unfiltered list is
+            // counted and fetched from the authorized tenant-scoped SQL query.
+            $total = $query === null ? 0 : (clone $query)->count('audit_events.id');
+            $lastPage = max(1, (int) ceil($total / $perPage));
+            $page = min($page, $lastPage);
+            $events = $query === null ? collect() : $query->forPage($page, $perPage)->get($columns)
+                ->map(fn ($row): array => $this->snapshot($row));
+        } else {
+            // Legacy derived category/outcome/metadata-text search is not yet SQL
+            // paginated. Keep its semantics (including secret-safe projection)
+            // and explicitly disclose its latest-1000 ceiling in the UI.
+            $events = $query === null ? collect() : $query->limit(1000)->get($columns)
+                ->map(fn ($row): array => $this->snapshot($row))
+                ->filter(fn (array $row): bool => $category === '' || strcasecmp($row['category'], $category) === 0)
+                ->filter(fn (array $row): bool => $outcome === '' || strcasecmp($row['outcome'], $outcome) === 0)
+                ->filter(function (array $row) use ($search): bool {
+                    if ($search === '') {
+                        return true;
+                    }
+                    $haystack = mb_strtolower(implode(' ', [$row['event'], $row['actor'], $row['target'], $row['tenant'], $row['metadata_text']]));
+
+                    return str_contains($haystack, mb_strtolower($search));
+                })
+                ->take($take)->values();
+        }
+
+        return view('security.audit', compact('events', 'category', 'outcome', 'search', 'take', 'settingsHref', 'page', 'perPage', 'total', 'lastPage', 'isFiltered') + [
             'canonicalOperationId' => self::OPERATION_ID,
             'settingsNavigationOperationId' => self::SETTINGS_NAVIGATION_OPERATION_ID,
         ]);
