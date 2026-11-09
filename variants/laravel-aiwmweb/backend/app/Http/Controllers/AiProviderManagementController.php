@@ -90,8 +90,14 @@ final class AiProviderManagementController extends Controller
         $profile = AiProviderProfile::query()->where('provider_key', $provider)->firstOrFail();
         $result = $readiness->check($profile);
 
+        $scope = $profile->adapter_key === 'openai-compatible'
+            ? (app()->getLocale() === 'ar'
+                ? ' فحص GET /models فقط؛ توليد POST /chat/completions وصلاحية JSON وتشغيل Cron/Worker لم يتم التحقق منها.'
+                : ' GET /models discovery only; POST /chat/completions, JSON validity and Cron/worker execution are not verified.')
+            : '';
+
         return redirect()->route('tenant.settings.ai-providers', ['tenant' => $tenant])
-            ->with('status', 'Provider readiness: '.$result['state'].'. '.($result['message'] ?? ''));
+            ->with('status', 'Provider readiness: '.$result['state'].'. '.($result['message'] ?? '').$scope);
     }
 
     private function assertSafeHttpsEndpoint(string $value): void
