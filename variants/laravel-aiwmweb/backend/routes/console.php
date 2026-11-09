@@ -229,7 +229,25 @@ Artisan::command('ai:run-one', function (BatchService $batches): void {
 })->purpose('Process no more than one durable AI action and exit');
 
 Artisan::command('cpanel:tick', function (): int {
-    if (! config('cpanel.enabled') || ! config('cpanel.cron_enabled') || ! config('cpanel.preflight_passed')) {
+    if (! config('cpanel.enabled')) {
+        $this->line('CPANEL_CRON=DISABLED');
+
+        return self::SUCCESS;
+    }
+
+    // First bootstrapping invocation is recorded even while AI/scheduler stay
+    // fail-closed. This proves the private PHP CLI Cron line is running and
+    // lets an authorized operator distinguish "Cron not installed" from
+    // "Cron installed but activation preflight pending".
+    if (! Cache::store('database')->put(
+        RuntimeHealthService::CPANEL_CRON_OBSERVED_KEY,
+        time(),
+        now()->addMinutes(10),
+    )) {
+        return self::FAILURE;
+    }
+
+    if (! config('cpanel.cron_enabled') || ! config('cpanel.preflight_passed')) {
         $this->line('CPANEL_CRON=DISABLED');
 
         return self::SUCCESS;
