@@ -26,6 +26,10 @@ describe('Canonical server paging navigation (#1608)', () => {
         expect(visiblePaginationPages(5, 20)).toEqual([3, 4, 5, 6, 7]);
         expect(visiblePaginationPages(1, 3)).toEqual([1, 2, 3]);
         expect(visiblePaginationPages(20, 20)).toEqual([16, 17, 18, 19, 20]);
+        expect(visiblePaginationPages(5, 20, Number.NaN)).toEqual([3, 4, 5, 6, 7]);
+        expect(visiblePaginationPages(5, 20, Number.POSITIVE_INFINITY)).toEqual([3, 4, 5, 6, 7]);
+        expect(visiblePaginationPages(5, 20, Number.NEGATIVE_INFINITY)).toEqual([3, 4, 5, 6, 7]);
+        expect(visiblePaginationPages(5, 20, 0)).toEqual([5]);
         expect(SUPPORTED_PAGE_SIZES).toEqual([10, 25, 50, 100]);
     });
 
