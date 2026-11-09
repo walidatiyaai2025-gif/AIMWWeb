@@ -61,13 +61,30 @@ final class SeoController extends Controller
         return response()->json($audit, 202);
     }
 
-    public function findings(string $tenant, int $site, int $audit, TenantAuthorizer $auth): JsonResponse
+    public function findings(string $tenant, int $site, int $audit, TenantAuthorizer $auth, Request $request): JsonResponse
     {
         $auth->authorize('tenant.view');
         Site::query()->findOrFail($site);
         SeoAudit::query()->where('site_id', $site)->findOrFail($audit);
 
-        return response()->json(SeoFinding::query()->where('seo_audit_id', $audit)->orderBy('severity')->get());
+        $query = SeoFinding::query()->where('seo_audit_id', $audit)
+            ->orderBy('severity')->orderBy('id');
+        // Existing integrations expect an array; pagination is explicit opt-in.
+        if (! $request->exists('page') && ! $request->exists('per_page')) {
+            return response()->json($query->get());
+        }
+
+        $filters = $request->validate([
+            'page' => 'sometimes|integer|min:1|max:1000000',
+            'per_page' => 'sometimes|integer|in:10,25,50,100',
+        ]);
+        $perPage = (int) ($filters['per_page'] ?? 25);
+        $page = (int) ($filters['page'] ?? 1);
+        // Count and clamp before selecting rows to avoid unbounded SQL OFFSET.
+        $total = (clone $query)->count();
+        $lastPage = max(1, (int) ceil($total / $perPage));
+
+        return response()->json($query->paginate($perPage, ['*'], 'page', min($page, $lastPage)));
     }
 
     public function metadata(string $tenant, int $site, string $type, int $remoteId, TenantAuthorizer $auth, SeoManagerService $seo): JsonResponse

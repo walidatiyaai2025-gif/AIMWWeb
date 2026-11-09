@@ -312,6 +312,72 @@ final class SeoTenantRouteBindingRegressionTest extends TestCase
             ->assertOk()->assertJsonPath('total', 1);
     }
 
+    public function test_seo_findings_opt_in_paging_preserves_legacy_array_and_audit_isolation(): void
+    {
+        [$user, $membership] = $this->member('seo-findings-pages', ['tenant.view', 'seo.view']);
+        $site = $this->site($membership, 'SEO findings workspace');
+        $context = app(TenantContext::class);
+        $context->activate($membership->tenant, $membership);
+        $content = SyncedContent::query()->create([
+            'site_id' => $site->id,
+            'resource_type' => 'post',
+            'remote_id' => 900,
+            'title' => 'Article',
+            'slug' => 'article',
+            'content' => 'Body',
+        ]);
+        $audit = SeoAudit::query()->create([
+            'site_id' => $site->id,
+            'actor_user_id' => $user->id,
+            'status' => 'succeeded',
+        ]);
+        $otherAudit = SeoAudit::query()->create([
+            'site_id' => $site->id,
+            'actor_user_id' => $user->id,
+            'status' => 'succeeded',
+        ]);
+        for ($i = 1; $i <= 27; $i++) {
+            SeoFinding::query()->create([
+                'seo_audit_id' => $audit->id,
+                'synced_content_id' => $content->id,
+                'code' => 'finding-'.$i,
+                'severity' => 'high',
+                'recommendation' => 'Fix SEO finding',
+            ]);
+        }
+        SeoFinding::query()->create([
+            'seo_audit_id' => $otherAudit->id,
+            'synced_content_id' => $content->id,
+            'code' => 'other-audit',
+            'severity' => 'high',
+            'recommendation' => 'Other audit',
+        ]);
+        $context->forget();
+
+        $url = "/api/tenants/seo-findings-pages/sites/{$site->id}/seo/audits/{$audit->id}/findings";
+        $this->actingAs($user)->getJson($url)
+            ->assertOk()->assertJsonCount(27)->assertJsonPath('0.code', 'finding-1');
+        $first = $this->actingAs($user)->getJson($url.'?page=1&per_page=10')
+            ->assertOk()->assertJsonPath('total', 27)
+            ->assertJsonPath('last_page', 3)->assertJsonCount(10, 'data');
+        $second = $this->actingAs($user)->getJson($url.'?page=2&per_page=10')
+            ->assertOk()->assertJsonPath('current_page', 2)->assertJsonCount(10, 'data');
+        $this->assertSame([], array_values(array_intersect(
+            array_column($first->json('data'), 'id'),
+            array_column($second->json('data'), 'id'),
+        )));
+        $this->actingAs($user)->getJson($url.'?page=999999&per_page=10')
+            ->assertOk()->assertJsonPath('current_page', 3)->assertJsonCount(7, 'data');
+        $this->actingAs($user)->getJson($url.'?page=1')
+            ->assertOk()->assertJsonPath('per_page', 25)->assertJsonCount(25, 'data');
+        foreach (['page=0', 'page=1000001', 'page=no', 'per_page=500', 'per_page=0'] as $invalid) {
+            $this->actingAs($user)->getJson($url.'?'.$invalid)->assertUnprocessable();
+        }
+        $this->actingAs($user)->getJson(
+            "/api/tenants/seo-findings-pages/sites/{$site->id}/seo/audits/{$otherAudit->id}/findings?page=1"
+        )->assertOk()->assertJsonPath('total', 1);
+    }
+
     /** @return array{User,TenantMembership} */
     private function member(string $slug, array $permissions): array
     {
