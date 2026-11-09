@@ -66,14 +66,14 @@ describe(`${OPERATION_ID} Reload backups`, () => {
         const reload = screen.getByRole('button', { name: 'Reload backups' });
         expect(reload).toHaveAttribute('data-canonical-operation', OPERATION_ID);
         expect(fetchMock).toHaveBeenCalledTimes(1);
-        expect(fetchMock.mock.calls[0][0]).toBe('/tenants/alpha/admin/backups?page=1');
+        expect(fetchMock.mock.calls[0][0]).toBe('/tenants/alpha/admin/backups?page=1&per_page=25');
 
         fireEvent.click(reload);
 
         expect(await screen.findByText('12')).toBeInTheDocument();
         expect(screen.queryByText('11')).not.toBeInTheDocument();
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-        expect(fetchMock.mock.calls[1][0]).toBe('/tenants/alpha/admin/backups?page=1');
+        expect(fetchMock.mock.calls[1][0]).toBe('/tenants/alpha/admin/backups?page=1&per_page=25');
         expect(fetchMock.mock.calls.every(([, options]) => !options || options.method === undefined || options.method === 'GET')).toBe(true);
     });
 
