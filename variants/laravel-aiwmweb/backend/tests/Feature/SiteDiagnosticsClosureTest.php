@@ -335,7 +335,7 @@ class SiteDiagnosticsClosureTest extends TestCase
         $history = new SiteOperationHistoryService;
         foreach ([$history->get($site->id), $history->paginateForSite($site->id, 1, 10)['items']] as $items) {
             $this->assertCount(5, $items);
-            $this->assertSameCanonicalizing(array_keys($ids), array_column($items, 'id'));
+            $this->assertEqualsCanonicalizing(array_keys($ids), array_column($items, 'id'));
             foreach ($items as $item) {
                 $this->assertSame($ids[$item['id']], $item['message']);
                 $this->assertSame([], $item['details']);
