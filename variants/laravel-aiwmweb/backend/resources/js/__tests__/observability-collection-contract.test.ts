@@ -21,8 +21,8 @@ describe('tenant observability read contracts (#1514)', () => {
         );
         expect(result).toEqual({
             data: [
-                { source: 'failed_operation', record_id: 17, event_type: 'sync.run', status: 'failed', occurred_at: '2026-11-07T10:15:00Z' },
                 { source: 'audit_event', record_id: 19, event_type: 'site.updated', status: 'recorded', occurred_at: '2026-11-07T10:25:00Z' },
+                { source: 'failed_operation', record_id: 17, event_type: 'sync.run', status: 'failed', occurred_at: '2026-11-07T10:15:00Z' },
             ],
             total: 2,
             current_page: 1,
@@ -30,6 +30,31 @@ describe('tenant observability read contracts (#1514)', () => {
             meta: { failed_operations_count: 1, recent_audit_count: 1 },
         });
         expect(JSON.stringify(result)).not.toMatch(/NEVER_SHOW|actor_user_id|payload|result|metadata/i);
+    });
+
+    it('merges sanitized diagnostic sources by real UTC chronology with stable ties (#1786)', () => {
+        const result = normalizeObservabilityCollection('diagnostics', {
+            failed_operations: [
+                { id: 4, type: 'sync.run', updated_at: '2026-11-08T05:20:00Z', payload: 'NEVER_LEAK' },
+                { id: 2, type: 'sync.run', updated_at: '2026-11-08T08:15:00+03:00' },
+                { id: 6, type: 'sync.run', updated_at: '<script>SECRET</script>' },
+                { id: 7, type: 'sync.run', updated_at: '2026-11-08T05:15:00Z' },
+            ],
+            recent_audit: [
+                { id: 20, event: 'site.updated', occurred_at: '2026-11-08T04:50:00-01:00', metadata: { key: 'SECRET' } },
+                { id: 8, event: 'site.updated', occurred_at: '2026-11-08 05:15:00' },
+                { id: 9, event: 'site.updated', occurred_at: 'INVALID' },
+            ],
+        }) as { data: Array<{ source: string; record_id: number; occurred_at: string | null }> };
+        // Correct UTC order: audit 05:50, failure 05:20, then three
+        // 05:15 events (failure before audit, higher ID before lower ID).
+        expect(result.data.map(row => row.record_id)).toEqual([20, 4, 7, 2, 8, 6, 9]);
+        expect(result.data.map(row => row.source)).toEqual([
+            'audit_event', 'failed_operation', 'failed_operation', 'failed_operation',
+            'audit_event', 'failed_operation', 'audit_event',
+        ]);
+        expect(result.data.slice(-2).map(row => row.occurred_at)).toEqual([null, null]);
+        expect(JSON.stringify(result)).not.toMatch(/NEVER_LEAK|SECRET|payload|metadata|<script>/);
     });
 
     it('shows last updated failure time, with legacy fallback and safe malformed timestamp handling (#1566)', () => {

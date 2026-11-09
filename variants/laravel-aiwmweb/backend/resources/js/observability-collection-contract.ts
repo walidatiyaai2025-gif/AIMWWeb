@@ -134,6 +134,26 @@ export function normalizeObservabilityCollection(routeKey: string, payload: unkn
         })),
     ];
 
+    // Each API source is newest-first, but concatenation alone puts every
+    // failure ahead of newer audit events. Sort the sanitized union by actual
+    // UTC instant; SQL timestamps without a timezone are interpreted as UTC.
+    // Keep untrusted/malformed times last and ties deterministic.
+    const eventTime = (value: unknown): number => {
+        if (typeof value !== 'string') return Number.NEGATIVE_INFINITY;
+        const iso = value.replace(' ', 'T');
+        const withZone = /(?:Z|[+-]\d{2}:\d{2})$/.test(iso) ? iso : iso + 'Z';
+        const millis = Date.parse(withZone);
+        return Number.isFinite(millis) ? millis : Number.NEGATIVE_INFINITY;
+    };
+    rows.sort((left, right) => {
+        const a = eventTime(left.occurred_at), b = eventTime(right.occurred_at);
+        if (a !== b) return a > b ? -1 : 1;
+        // Sort failures ahead of audits on exact ties; within a source the
+        // newest positive record ID wins. No raw payload is ever consulted.
+        if (left.source !== right.source) return left.source === 'failed_operation' ? -1 : 1;
+        return Number(right.record_id ?? 0) - Number(left.record_id ?? 0);
+    });
+
     // Older deployed Laravel versions returned no meta. On newer versions,
     // validate server-side source totals before explaining a genuinely empty
     // tenant or a bounded sample. Never mistake an incomplete sample for zero.
