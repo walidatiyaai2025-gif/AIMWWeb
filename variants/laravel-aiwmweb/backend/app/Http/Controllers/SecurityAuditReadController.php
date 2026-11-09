@@ -67,7 +67,7 @@ final class SecurityAuditReadController
             'users.email as actor_email', 'tenants.name as tenant_name', 'tenants.slug as tenant_slug',
         ];
 
-        if (! $isFiltered || $isSqlFiltered) {
+        if ($isFiltered === false || $isSqlFiltered) {
             if ($isSqlFiltered && $query !== null) {
                 if ($category !== '') {
                     $query->whereRaw('('.$this->categorySql().') = ?', [mb_strtolower($category)]);
@@ -125,7 +125,7 @@ final class SecurityAuditReadController
     private function safeJsonText(string $key): string
     {
         // All callers use hardcoded internal keys; no user-supplied JSON path.
-        $path = "'$.". $key ."'";
+        $path = "'$.".$key."'";
         $extract = DB::getDriverName() === 'mysql'
             ? "JSON_UNQUOTE(JSON_EXTRACT(audit_events.metadata, {$path}))"
             : "json_extract(audit_events.metadata, {$path})";
