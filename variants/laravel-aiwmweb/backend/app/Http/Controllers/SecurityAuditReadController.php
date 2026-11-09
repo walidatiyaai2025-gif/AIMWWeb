@@ -36,6 +36,10 @@ final class SecurityAuditReadController
         $take = isset($input['take']) ? (int) $input['take'] : null;
         $page = (int) ($input['page'] ?? 1);
         $isFiltered = $category !== '' || $outcome !== '' || $search !== '';
+        // Only these two classification filters can be expressed exactly in
+        // portable, tenant-scoped SQL today. The q/take compatibility window
+        // remains visibly bounded rather than implying full-dataset search.
+        $isSqlFiltered = $isFiltered && $search === '' && $take === null;
         $total = 0;
         $lastPage = 1;
         $filteredMatchCount = 0;
@@ -63,9 +67,18 @@ final class SecurityAuditReadController
             'users.email as actor_email', 'tenants.name as tenant_name', 'tenants.slug as tenant_slug',
         ];
 
-        if (! $isFiltered) {
-            // Never paginate a truncated in-memory slice. The unfiltered list is
-            // counted and fetched from the authorized tenant-scoped SQL query.
+        if ($isFiltered === false || $isSqlFiltered) {
+            if ($isSqlFiltered && $query !== null) {
+                if ($category !== '') {
+                    $query->whereRaw('('.$this->categorySql().') = ?', [mb_strtolower($category)]);
+                }
+                if ($outcome !== '') {
+                    $query->whereRaw('('.$this->outcomeSql().') = ?', [mb_strtolower($outcome)]);
+                }
+            }
+            // Both unfiltered and classification-only views use the same
+            // authoritative SQL COUNT and stable SQL page, never a truncated
+            // list of the most recent 1,000 records.
             $total = $query === null ? 0 : (clone $query)->count('audit_events.id');
             $lastPage = max(1, (int) ceil($total / $perPage));
             $page = min($page, $lastPage);
@@ -100,7 +113,70 @@ final class SecurityAuditReadController
         return view('security.audit', compact('events', 'category', 'outcome', 'search', 'take', 'settingsHref', 'page', 'perPage', 'total', 'lastPage', 'isFiltered', 'filteredMatchCount') + [
             'canonicalOperationId' => self::OPERATION_ID,
             'settingsNavigationOperationId' => self::SETTINGS_NAVIGATION_OPERATION_ID,
+            'isSqlFiltered' => $isSqlFiltered,
         ]);
+    }
+
+    /**
+     * Extract only the fixed allowlisted metadata keys needed for classification.
+     * Never search or expose arbitrary metadata JSON; invalid historical JSON
+     * has the same fallback behavior as the PHP snapshot projection.
+     */
+    private function safeJsonText(string $key): string
+    {
+        // All callers use hardcoded internal keys; no user-supplied JSON path.
+        $path = "'$.".$key."'";
+        $extract = DB::getDriverName() === 'mysql'
+            ? "JSON_UNQUOTE(JSON_EXTRACT(audit_events.metadata, {$path}))"
+            : "json_extract(audit_events.metadata, {$path})";
+
+        return "(CASE WHEN JSON_VALID(audit_events.metadata) THEN {$extract} ELSE NULL END)";
+    }
+
+    private function categorySql(): string
+    {
+        $raw = 'LOWER(TRIM('.$this->safeJsonText('category').'))';
+        $event = 'LOWER(COALESCE(audit_events.event, \'\'))';
+
+        // The allowlisted metadata category overrides event-derived classes.
+        // Fallthrough precedence must mirror category() exactly.
+        return "CASE WHEN {$raw} IN ('authentication','account','authorization','session','configuration') THEN {$raw}
+            WHEN {$event} LIKE '%session%' THEN 'session'
+            WHEN {$event} LIKE '%permission%' OR {$event} LIKE '%role%' OR {$event} LIKE '%authoriz%' THEN 'authorization'
+            WHEN {$event} LIKE '%config%' OR {$event} LIKE '%setting%' OR {$event} LIKE '%provider%' OR {$event} LIKE '%connector%' THEN 'configuration'
+            WHEN {$event} LIKE '%login%' OR {$event} LIKE '%auth%' THEN 'authentication'
+            ELSE 'account' END";
+    }
+
+    private function outcomeSql(): string
+    {
+        $driver = DB::getDriverName();
+        $stringType = $driver === 'mysql' ? 'STRING' : 'text';
+        // MySQL JSON_TYPE accepts ONE JSON expression; SQLite json_type
+        // accepts JSON + path. Keep both on their native, tested syntax.
+        $outcomeType = $driver === 'mysql'
+            ? "JSON_TYPE(JSON_EXTRACT(audit_events.metadata, '$.outcome'))"
+            : "json_type(audit_events.metadata, '$.outcome')";
+        $statusType = $driver === 'mysql'
+            ? "JSON_TYPE(JSON_EXTRACT(audit_events.metadata, '$.status'))"
+            : "json_type(audit_events.metadata, '$.status')";
+        $outcomeValue = $this->safeJsonText('outcome');
+        $statusValue = $this->safeJsonText('status');
+        // If outcome is a string, even an unrecognized string takes precedence
+        // over status, as in the snapshot projection's legacy PHP contract.
+        $raw = "(CASE WHEN JSON_VALID(audit_events.metadata) THEN
+            CASE WHEN {$outcomeType} = '{$stringType}' THEN {$outcomeValue}
+                 WHEN {$statusType} = '{$stringType}' THEN {$statusValue}
+                 ELSE NULL END ELSE NULL END)";
+        $value = "LOWER(TRIM({$raw}))";
+        $event = 'LOWER(COALESCE(audit_events.event, \'\'))';
+
+        return "CASE WHEN {$value} IN ('failed','failure','error') THEN 'failed'
+            WHEN {$value} IN ('blocked','denied','forbidden') THEN 'blocked'
+            WHEN {$value} IN ('success','succeeded','ok','completed') THEN 'succeeded'
+            WHEN {$event} LIKE '%failed%' OR {$event} LIKE '%error%' THEN 'failed'
+            WHEN {$event} LIKE '%blocked%' OR {$event} LIKE '%denied%' OR {$event} LIKE '%forbidden%' THEN 'blocked'
+            ELSE 'succeeded' END";
     }
 
     /**
