@@ -22,8 +22,8 @@ final class SiteManagementController extends Controller
         $auth->authorize('tenant.view');
 
         // Preserve the original array response for site pickers and onboarding.
-        // Only explicit paging requests receive authoritative tenant-scoped totals.
-        if (! $request->hasAny(['page', 'per_page', 'connection_filter'])) {
+        // Explicit paging, connection filtering or search opts into authoritative tenant-scoped totals.
+        if (! $request->hasAny(['page', 'per_page', 'connection_filter', 'search'])) {
             return response()->json(Site::query()->orderByDesc('created_at')->orderByDesc('id')->get());
         }
 
