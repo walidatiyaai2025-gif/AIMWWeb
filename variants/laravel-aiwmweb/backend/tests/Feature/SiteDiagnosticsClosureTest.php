@@ -167,6 +167,65 @@ class SiteDiagnosticsClosureTest extends TestCase
         }
     }
 
+    public function test_site_history_large_bookmarks_count_before_fetch_and_never_query_large_offsets(): void
+    {
+        [$tenant, $member] = $this->tenant('history-offset-safety');
+        app(TenantContext::class)->activate($tenant, $member);
+        $site = Site::query()->create(['name' => 'Primary', 'url' => 'https://primary.test']);
+        $foreignSite = Site::query()->create(['name' => 'Other', 'url' => 'https://other.test']);
+
+        foreach ([$site, $foreignSite] as $target) {
+            SiteDiagnostic::query()->create([
+                'site_id' => $target->id,
+                'classification' => SiteConnectionState::CONNECTED,
+                'connection_state' => SiteConnectionState::CONNECTED,
+                'checked_at' => now(),
+            ]);
+            SiteOperationHistory::query()->create([
+                'site_id' => $target->id,
+                'operation' => 'synchronization',
+                'status' => 'failed',
+                'message' => 'safe',
+                'started_at' => now(),
+                'completed_at' => now(),
+            ]);
+        }
+
+        \Illuminate\Support\Facades\DB::enableQueryLog();
+        \Illuminate\Support\Facades\DB::flushQueryLog();
+        try {
+            $diagnostics = $this->service(new SiteGatewayStub)->paginatedDiagnosticHistory($site, PHP_INT_MAX, 25);
+            $history = (new SiteOperationHistoryService)->paginateForSite($site->id, PHP_INT_MAX, 25, 'failed');
+            $queries = \Illuminate\Support\Facades\DB::getQueryLog();
+        } finally {
+            \Illuminate\Support\Facades\DB::disableQueryLog();
+            \Illuminate\Support\Facades\DB::flushQueryLog();
+        }
+
+        $this->assertSame(1, $diagnostics['page']);
+        $this->assertSame(1, $diagnostics['total']);
+        $this->assertSame(1, $history['page']);
+        $this->assertSame(1, $history['total']);
+        $this->assertCount(1, $diagnostics['items']);
+        $this->assertCount(1, $history['items']);
+        $this->assertSame($site->id, $diagnostics['items'][0]->site_id);
+        $this->assertSame($site->id, $history['items'][0]['site_id']);
+
+        $pageQueries = array_values(array_filter($queries, static fn (array $query): bool =>
+            preg_match('/\\bfrom\\s+["`]?site_(diagnostics|operation_histories)["`]?/i', $query['query']) === 1
+        ));
+        $this->assertNotEmpty($pageQueries);
+        foreach ($pageQueries as $query) {
+            // Any LIMIT/OFFSET binding must be bounded to the actual first page,
+            // not the capped millionth-page request.
+            foreach ($query['bindings'] as $binding) {
+                if (is_int($binding)) {
+                    $this->assertLessThanOrEqual(25, $binding);
+                }
+            }
+        }
+    }
+
     public function test_failed_sync_history_api_projection_never_serializes_legacy_secrets(): void
     {
         [$tenant, $member] = $this->tenant('safe-sync-history');
