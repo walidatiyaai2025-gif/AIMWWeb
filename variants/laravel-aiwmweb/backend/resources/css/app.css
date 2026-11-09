@@ -1098,3 +1098,77 @@ body, button, input, textarea, select, option { font-family: var(--aiwm-google-f
     .site-settings-shell .topbar-actions { width: 100%; flex-wrap: wrap; justify-content: flex-start; }
     .site-settings-content .site-settings-links { display: grid; grid-template-columns: minmax(0, 1fr); }
 }
+
+
+/* #1777: SEO findings must remain readable without shrinking columns into
+   overlapping text. Horizontal scroll is contained to the grid only. */
+.seo-findings-overflow {
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+}
+.seo-findings-table {
+    width: 100%;
+    min-width: 1040px;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+.seo-findings-table :is(th, td) {
+    min-width: 0;
+    padding: .7rem .65rem;
+    vertical-align: top;
+    text-align: start;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+.seo-findings-table th:nth-child(1) { width: 4%; }
+.seo-findings-table th:nth-child(2) { width: 7%; }
+.seo-findings-table th:nth-child(3) { width: 22%; }
+.seo-findings-table th:nth-child(4) { width: 12%; }
+.seo-findings-table th:nth-child(5) { width: 32%; }
+.seo-findings-table th:nth-child(6) { width: 11%; }
+.seo-findings-table th:nth-child(7) { width: 12%; }
+.seo-findings-table .seo-finding-description p { margin: .35rem 0 0; line-height: 1.45; }
+.seo-findings-table .seo-proposal-cell { min-width: 0; }
+.seo-proposal-details { min-width: 0; max-width: 100%; }
+.seo-proposal-details summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem .5rem;
+    align-items: start;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: .45rem .55rem;
+    background: var(--surface2);
+}
+.seo-proposal-details summary:focus-visible {
+    outline: 2px solid var(--accent-strong);
+    outline-offset: 2px;
+}
+.seo-proposal-preview {
+    min-width: 0;
+    flex: 1 1 180px;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+.seo-proposal-expand { font-size: .77rem; color: var(--accent-strong); white-space: nowrap; }
+.seo-proposal-details[open] .seo-proposal-preview {
+    display: block;
+    overflow: visible;
+}
+.seo-proposal-details dl { margin: .6rem 0 0; display: grid; gap: .5rem; }
+.seo-proposal-details dl > div { min-width: 0; padding: .5rem; border-radius: 8px; background: var(--surface2); }
+.seo-proposal-details dt { font-size: .76rem; color: var(--muted); font-weight: 700; }
+.seo-proposal-details dd { margin: .2rem 0 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.seo-findings-table td:last-child .btn {
+    width: 100%;
+    min-width: 0;
+    padding-inline: .4rem;
+    white-space: normal;
+}
