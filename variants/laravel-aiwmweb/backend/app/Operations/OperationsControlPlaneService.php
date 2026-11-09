@@ -595,6 +595,47 @@ final class OperationsControlPlaneService
         return DB::table('backups')->where('tenant_id', $this->context->id())->orderByDesc('id')->get()->map(fn ($row) => $this->decodeColumns($this->objectToArray($row), ['manifest', 'verification']))->all();
     }
 
+    /**
+     * Read-only, tenant-scoped SQL paging for the Backup & Restore history
+     * grid. Keep backups() unchanged for integrations expecting a full array.
+     *
+     * @return array{data: array, total: int, current_page: int, last_page: int, per_page: int}
+     */
+    public function paginatedBackups(?string $search, int $page, int $perPage): array
+    {
+        $query = DB::table('backups')->where('tenant_id', $this->context->id());
+        $term = trim($search ?? '');
+        if ($term !== '') {
+            $escaped = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], Str::upper($term));
+            $like = '%'.$escaped.'%';
+            // Never search backup manifests or verification JSON: those may
+            // contain private data and are not a public history index.
+            $query->where(function ($filter) use ($like): void {
+                $filter->whereRaw("UPPER(site_key) LIKE ? ESCAPE '!'", [$like])
+                    ->orWhereRaw("UPPER(status) LIKE ? ESCAPE '!'", [$like])
+                    ->orWhereRaw("UPPER(level) LIKE ? ESCAPE '!'", [$like]);
+            });
+        }
+
+        $total = (clone $query)->count();
+        $lastPage = max(1, (int) ceil($total / $perPage));
+        $currentPage = min($page, $lastPage);
+        $rows = $total === 0
+            ? collect()
+            : $query->orderByDesc('id')->forPage($currentPage, $perPage)->get();
+
+        return [
+            'data' => $rows->map(fn ($row): array => $this->decodeColumns(
+                $this->objectToArray($row),
+                ['manifest', 'verification'],
+            ))->values()->all(),
+            'total' => $total,
+            'current_page' => $currentPage,
+            'last_page' => $lastPage,
+            'per_page' => $perPage,
+        ];
+    }
+
     public function logs(array $filters = []): array
     {
         // Preserve the data-only service interface for existing callers.
