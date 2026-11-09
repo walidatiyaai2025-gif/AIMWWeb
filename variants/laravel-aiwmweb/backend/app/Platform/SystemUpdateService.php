@@ -355,10 +355,24 @@ final class SystemUpdateService
             throw new RuntimeException('Release package URL is not approved.');
         }
 
-        // releaseMetadataRequest already constrains redirect count, HTTPS, CDN
-        // hostnames, userinfo and ports. Override only the timeout for a large
-        // streamed ZIP, and disable implicit retries after a partial write.
-        $response = $this->releaseMetadataRequest()
+        $response = $this->packageDownloadRequest($destination)->get($url);
+
+        if (! $response->successful() || ! is_file($destination) ||
+            filesize($destination) < 1 || filesize($destination) > self::MAX_PACKAGE ||
+            ! preg_match('/^[a-f0-9]{64}$/D', $expectedSha) ||
+            ! hash_equals($expectedSha, hash_file('sha256', $destination))) {
+            throw new RuntimeException('Package download or SHA-256 verification failed.');
+        }
+    }
+
+    /**
+     * Inherit the same pinned HTTPS GitHub/CDN redirect policy as signed
+     * metadata, but stream one large ZIP once (no retry after partial write).
+     * Kept separate to exercise actual request options in PHP regression tests.
+     */
+    private function packageDownloadRequest(string $destination): PendingRequest
+    {
+        return $this->releaseMetadataRequest()
             ->retry(1, 0, null, false)
             ->timeout(180)
             ->accept('application/octet-stream')
@@ -375,15 +389,7 @@ final class SystemUpdateService
                         throw new RuntimeException('Release package exceeds the streaming size limit.');
                     }
                 },
-            ])
-            ->get($url);
-
-        if (! $response->successful() || ! is_file($destination) ||
-            filesize($destination) < 1 || filesize($destination) > self::MAX_PACKAGE ||
-            ! preg_match('/^[a-f0-9]{64}$/D', $expectedSha) ||
-            ! hash_equals($expectedSha, hash_file('sha256', $destination))) {
-            throw new RuntimeException('Package download or SHA-256 verification failed.');
-        }
+            ]);
     }
 
     /**
