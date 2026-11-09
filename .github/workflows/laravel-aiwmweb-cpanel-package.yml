@@ -186,7 +186,15 @@ jobs:
           # cPanel runs behind a TLS-terminating reverse proxy. The loopback
           # HTTP transport needs an authenticated trusted-proxy scheme header;
           # bare HTTP MUST still be rejected with 308 by CpanelTransportPolicy.
-          test "$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 http://127.0.0.1:18780/)" = "308" || { echo "ERROR: cPanel HTTPS redirect missing"; exit 1; }
+          # Wait for the PHP built-in server to bind before asserting the
+          # mandatory redirect; a connection-refused 000 is not a policy failure.
+          http_code=000
+          for i in $(seq 1 30); do
+            http_code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 2 http://127.0.0.1:18780/ || true)"
+            if [ "$http_code" != "000" ]; then break; fi
+            sleep 1
+          done
+          test "$http_code" = "308" || { echo "ERROR: cPanel HTTPS redirect missing (code $http_code)"; exit 1; }
           for i in $(seq 1 30); do
             if curl -fsS --max-time 2 -H 'X-Forwarded-Proto: https' http://127.0.0.1:18780/ -o /tmp/aiwm-home.html; then break; fi
             sleep 1
