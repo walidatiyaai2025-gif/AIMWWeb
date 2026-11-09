@@ -40,7 +40,9 @@ final class ApplicationUsersSearchTerminalityTest extends TestCase
         $this->assertStringContainsString("route.key === 'application-users'", $pages);
         $this->assertStringContainsString("context.permissions.includes('members.manage')", $pages);
         $this->assertStringContainsString('applicationUsersSearchInFlight.current', $pages);
-        $this->assertStringContainsString('endpointWithQuery(endpoint, 1, nextSearch)', $pages);
+        $this->assertStringContainsString('endpointWithQuery(endpoint, 1, nextSearch, {', $pages);
+        $this->assertStringContainsString('per_page: String(applicationUsersPageSize)', $pages);
+        $this->assertStringContainsString("route.key === 'application-users' ? {", $pages);
 
         $this->assertStringContainsString('public function members(Request $request, string $tenant)', $controller);
         $this->assertStringContainsString("'search' => ['nullable', 'string', 'max:255']", $controller);
