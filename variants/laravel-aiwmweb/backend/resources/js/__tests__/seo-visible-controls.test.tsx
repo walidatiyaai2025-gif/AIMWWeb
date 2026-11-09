@@ -197,7 +197,7 @@ describe('SEO visible-control mass closure', () => {
     it('accepts 202 as durable queued work, GETs owned status and replays the finished proposal without a second generation', async () => {
         const batchId = '123e4567-e89b-42d3-a456-426614174000';
         const statusUrl = '/api/tenants/alpha/ai-batches/' + batchId;
-        const previous = fetchMock.getMockImplementation()!;
+        const previous = fetchMock.getMockImplementation() as (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
         fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
             const url = String(input);
             if (url === statusUrl) return jsonResponse({
@@ -232,7 +232,7 @@ describe('SEO visible-control mass closure', () => {
         sessionStorage.setItem(seoBatchStorageKey('alpha', 7), JSON.stringify({
             findingId: 2, id, statusUrl, state: 'queued',
         }));
-        const previous = fetchMock.getMockImplementation()!;
+        const previous = fetchMock.getMockImplementation() as (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
         fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
             if (String(input) === statusUrl) return jsonResponse({
                 data: { id, site_id: 7, state: 'completed', items: [{ state: 'completed' }] },
@@ -253,7 +253,7 @@ describe('SEO visible-control mass closure', () => {
     it('holds a paused batch without resubmitting and rejects a foreign status URL before polling', async () => {
         const id = '123e4567-e89b-42d3-a456-426614174002';
         const statusUrl = '/api/tenants/alpha/ai-batches/' + id;
-        const previous = fetchMock.getMockImplementation()!;
+        const previous = fetchMock.getMockImplementation() as (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
         fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
             if (String(input) === statusUrl) return jsonResponse({
                 data: { id, site_id: 7, state: 'paused', items: [{ state: 'paused', error_code: 'quota_exceeded' }] },
@@ -289,7 +289,7 @@ describe('SEO visible-control mass closure', () => {
     });
 
     it('shows sanitized AI HTTP failure and does not render remote error bodies', async () => {
-        const previous = fetchMock.getMockImplementation()!;
+        const previous = fetchMock.getMockImplementation() as (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
         fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
             if (String(input).includes('/ai-proposal') && init?.method === 'POST')
                 return jsonResponse({ message: 'Bearer secret-provider-token SQL exception' }, 504);
