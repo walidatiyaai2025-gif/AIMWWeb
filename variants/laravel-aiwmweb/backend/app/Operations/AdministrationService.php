@@ -198,6 +198,42 @@ final class AdministrationService
         ])->all();
     }
 
+    /**
+     * Opt-in server pagination for Roles & Permissions. The legacy roles()
+     * collection contract is intentionally unchanged for role-picker clients.
+     *
+     * @return array{data: array, total: int, current_page: int, last_page: int, per_page: int}
+     */
+    public function paginatedRoles(?string $search, int $page, int $perPage): array
+    {
+        $query = Role::query()->with('permissions:id,name');
+        $term = Str::upper(trim($search ?? ''));
+        if ($term !== '') {
+            $escaped = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $term);
+            $query->whereRaw("UPPER(name) LIKE ? ESCAPE '!'", ['%'.$escaped.'%']);
+        }
+
+        $total = (clone $query)->count();
+        $lastPage = max(1, (int) ceil($total / $perPage));
+        $currentPage = min($page, $lastPage);
+        $roles = $total === 0
+            ? collect()
+            : $query->orderBy('name')->orderBy('id')
+                ->forPage($currentPage, $perPage)->get();
+
+        return [
+            'data' => $roles->map(fn (Role $role): array => [
+                'id' => $role->id,
+                'name' => $role->name,
+                'permissions' => $role->permissions->pluck('name')->values(),
+            ])->values()->all(),
+            'total' => $total,
+            'current_page' => $currentPage,
+            'last_page' => $lastPage,
+            'per_page' => $perPage,
+        ];
+    }
+
     public function saveRole(?int $roleId, string $name, array $permissionNames, int $actorUserId): array
     {
         $name = trim($name);

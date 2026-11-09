@@ -73,9 +73,25 @@ final class AdminOperationsController extends Controller
         return response()->json([], 204);
     }
 
-    public function roles(string $tenant): JsonResponse
+    public function roles(Request $request, string $tenant): JsonResponse
     {
         $this->authorizer->authorize('tenant.view');
+
+        // Explicit page parameters opt into real SQL pagination. Existing
+        // role-picker integrations still receive the unchanged array response.
+        if ($request->hasAny(['page', 'per_page'])) {
+            $input = $request->validate([
+                'search' => ['nullable', 'string', 'max:255'],
+                'page' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
+                'per_page' => ['sometimes', 'integer', 'in:10,25,50,100'],
+            ]);
+
+            return response()->json($this->administration->paginatedRoles(
+                $input['search'] ?? null,
+                (int) ($input['page'] ?? 1),
+                (int) ($input['per_page'] ?? 25),
+            ));
+        }
 
         return response()->json(['data' => $this->administration->roles()]);
     }
