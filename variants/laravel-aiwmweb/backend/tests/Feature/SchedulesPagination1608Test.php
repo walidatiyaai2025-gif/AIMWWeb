@@ -126,9 +126,7 @@ final class SchedulesPagination1608Test extends TestCase
         $this->assertStringContainsString('paginatedSchedules(', $controller);
     }
 
-    /** @param list<string> $permissions
-     *  @return array{Tenant, User}
-     */
+    /** @return array{Tenant, User} */
     private function tenantWithPermissions(string $slug, array $permissions): array
     {
         $tenant = Tenant::query()->create(['name' => $slug, 'slug' => $slug]);
