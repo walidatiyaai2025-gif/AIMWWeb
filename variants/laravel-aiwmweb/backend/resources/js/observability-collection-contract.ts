@@ -141,7 +141,7 @@ export function normalizeObservabilityCollection(routeKey: string, payload: unkn
     const eventTime = (value: unknown): number => {
         if (typeof value !== 'string') return Number.NEGATIVE_INFINITY;
         const iso = value.replace(' ', 'T');
-        const withZone = /(?:Z|[+-]\\d{2}:\\d{2})$/.test(iso) ? iso : iso + 'Z';
+        const withZone = /(?:Z|[+-]\d{2}:\d{2})$/.test(iso) ? iso : iso + 'Z';
         const millis = Date.parse(withZone);
         return Number.isFinite(millis) ? millis : Number.NEGATIVE_INFINITY;
     };
