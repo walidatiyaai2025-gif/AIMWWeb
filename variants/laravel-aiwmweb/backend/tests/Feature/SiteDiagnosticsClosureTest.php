@@ -18,6 +18,7 @@ use App\Sites\SiteEntitlementHook;
 use App\Sites\SiteOperationHistoryService;
 use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 use Tests\TestCase;
@@ -191,15 +192,15 @@ class SiteDiagnosticsClosureTest extends TestCase
             ]);
         }
 
-        \Illuminate\Support\Facades\DB::enableQueryLog();
-        \Illuminate\Support\Facades\DB::flushQueryLog();
+        DB::enableQueryLog();
+        DB::flushQueryLog();
         try {
             $diagnostics = $this->service(new SiteGatewayStub)->paginatedDiagnosticHistory($site, PHP_INT_MAX, 25);
             $history = (new SiteOperationHistoryService)->paginateForSite($site->id, PHP_INT_MAX, 25, 'failed');
-            $queries = \Illuminate\Support\Facades\DB::getQueryLog();
+            $queries = DB::getQueryLog();
         } finally {
-            \Illuminate\Support\Facades\DB::disableQueryLog();
-            \Illuminate\Support\Facades\DB::flushQueryLog();
+            DB::disableQueryLog();
+            DB::flushQueryLog();
         }
 
         $this->assertSame(1, $diagnostics['page']);
