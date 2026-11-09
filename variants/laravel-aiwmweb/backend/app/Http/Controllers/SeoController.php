@@ -25,12 +25,24 @@ final class SeoController extends Controller
 {
     public const RUN_FULL_AUDIT_OPERATION_ID = 'AIMW-BILL-3C55B3C299';
 
-    public function audits(string $tenant, int $site, TenantAuthorizer $auth): JsonResponse
+    public function audits(string $tenant, int $site, TenantAuthorizer $auth, Request $request): JsonResponse
     {
         $auth->authorize('tenant.view');
         Site::query()->findOrFail($site);
+        $filters = $request->validate([
+            'page' => 'sometimes|integer|min:1|max:1000000',
+            'per_page' => 'sometimes|integer|in:10,15,25,50,100',
+        ]);
+        // Preserve the existing Laravel default of 15 for legacy clients.
+        $perPage = (int) ($filters['per_page'] ?? 15);
+        $page = (int) ($filters['page'] ?? 1);
+        $query = SeoAudit::query()->where('site_id', $site)
+            ->orderByDesc('created_at')->orderByDesc('id');
+        $total = (clone $query)->count();
+        $lastPage = max(1, (int) ceil($total / $perPage));
 
-        return response()->json(SeoAudit::query()->where('site_id', $site)->latest()->paginate());
+        // Clamp before selecting rows, not after a potentially huge OFFSET.
+        return response()->json($query->paginate($perPage, ['*'], 'page', min($page, $lastPage)));
     }
 
     public function startAudit(string $tenant, int|string $site, Request $request, TenantContext $context, TenantAuthorizer $auth): JsonResponse
