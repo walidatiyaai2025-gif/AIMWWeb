@@ -75,6 +75,15 @@ export function safeSeoAiError(status: number): string {
     }
 }
 
+// Only a short, validated request identifier is surfaced. Provider bodies and
+// arbitrary headers must never reach the browser's error feedback.
+export function seoAiFailureWithReference(status: number, requestId: string | null): string {
+    const base = safeSeoAiError(status);
+    return status >= 500 && requestId && /^[A-Za-z0-9._:-]{8,128}$/.test(requestId)
+        ? base + ' Request ID: ' + requestId + '.'
+        : base;
+}
+
 export async function seoAiJson(url: string, init: RequestInit = {}): Promise<{ status: number; payload: unknown }> {
     const method = (init.method ?? 'GET').toUpperCase();
     const headers = new Headers(init.headers);
@@ -86,7 +95,7 @@ export async function seoAiJson(url: string, init: RequestInit = {}): Promise<{ 
     }
     const response = await fetch(url, { credentials: 'same-origin', ...init, headers });
     const payload: unknown = await response.json().catch(() => null);
-    if (!response.ok) throw new Error(safeSeoAiError(response.status));
+    if (!response.ok) throw new Error(seoAiFailureWithReference(response.status, response.headers?.get('X-Request-ID') ?? null));
     return { status: response.status, payload };
 }
 

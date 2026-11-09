@@ -1,5 +1,7 @@
 <?php
 
+use App\AI\Platform\Enums\AiFailureKind;
+use App\AI\Platform\Exceptions\AiPlatformException;
 use App\Billing\Exceptions\BillingConflictException;
 use App\Billing\Exceptions\EntitlementDeniedException;
 use App\Billing\Exceptions\InvalidProviderSignatureException;
@@ -15,6 +17,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -102,8 +105,41 @@ return Application::configure(basePath: dirname(__DIR__))
                 'profileUrl' => $profileUrl,
             ], 403);
         });
+        // AiPlatformException extends RuntimeException, not HttpException.
+        // Without this handler Laravel turns provider policy/timeouts into
+        // misleading HTTP 500s. Use enum-only status and code; never return
+        // upstream exception messages, provider bodies, tokens or stack traces.
+        $exceptions->render(static function (AiPlatformException $error, Request $request) {
+            if (! $request->is('api/*') && ! $request->expectsJson()) {
+                return null;
+            }
+
+            $status = match ($error->kind) {
+                AiFailureKind::Timeout => 504,
+                AiFailureKind::RateLimit, AiFailureKind::QuotaExceeded => 429,
+                AiFailureKind::InvalidOutput, AiFailureKind::PolicyRejection => 422,
+                AiFailureKind::Unknown => 502,
+                default => 503,
+            };
+
+            return response()->json([
+                'code' => $error->kind->value,
+                'message' => 'AI request could not be completed. Review AI diagnostics.',
+            ], $status);
+        });
         $exceptions->render(fn (EntitlementDeniedException $e, Request $r) => $r->is('api/*') ? response()->json(['message' => $e->getMessage(), 'code' => 'ENTITLEMENT_DENIED'], 403) : null);
         $exceptions->render(fn (QuotaExceededException $e, Request $r) => $r->is('api/*') ? response()->json(['message' => $e->getMessage(), 'code' => 'QUOTA_EXCEEDED'], 429) : null);
         $exceptions->render(fn (InvalidProviderSignatureException $e, Request $r) => $r->is('api/*') ? response()->json(['message' => 'Invalid provider signature.', 'code' => 'INVALID_PROVIDER_SIGNATURE'], 401) : null);
         $exceptions->render(fn (BillingConflictException $e, Request $r) => $r->is('api/*') ? response()->json(['message' => $e->getMessage(), 'code' => 'BILLING_CONFLICT'], 409) : null);
+        // Preserve a safe correlation reference on responses rendered by the exception
+        // handler. The normal middleware response path already sets this header;
+        // uncaught errors bypass that path, but the request-scoped ID still exists.
+        $exceptions->respond(static function (Response $response): Response {
+            $requestId = request()->attributes->get('request_id');
+            if (is_string($requestId) && preg_match('/^[A-Za-z0-9._:-]{8,128}$/D', $requestId)) {
+                $response->headers->set('X-Request-ID', $requestId);
+            }
+
+            return $response;
+        });
     })->create();

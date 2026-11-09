@@ -68,6 +68,65 @@ describe('SEO visible-control mass closure', () => {
 
     afterEach(() => vi.unstubAllGlobals());
 
+    it('presents the suggested SEO value as a readable expandable preview, never as JSON source', async () => {
+        const { container } = render(<SeoVisibleControls config={config} />);
+        await screen.findByText('finding-1');
+
+        const table = screen.getByRole('table', { name: 'SEO findings' });
+        expect(table).toHaveClass('seo-findings-table');
+        expect(container.querySelector('.seo-findings-overflow')).toHaveAttribute('tabindex', '0');
+        const firstProposal = table.querySelector('tbody tr .seo-proposal-details');
+        expect(firstProposal).not.toBeNull();
+        expect(firstProposal?.querySelector('summary')).toHaveTextContent('SEO title: Title 1');
+        expect(firstProposal).not.toHaveTextContent('{"seo_title"');
+        fireEvent.click(firstProposal?.querySelector('summary') as HTMLElement);
+        expect(firstProposal?.querySelector('dd')).toHaveTextContent('Title 1');
+        expect(screen.getByLabelText('Select finding 1')).toBeEnabled();
+    });
+
+    it('shows only a validated opaque request ID on AI HTTP 500, not provider exception bodies', async () => {
+        const previous = fetchMock.getMockImplementation() as (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+        fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+            if (String(input).includes('/ai-proposal')) {
+                return {
+                    ...jsonResponse({ message: 'Bearer PRIVATE_AI_TOKEN SQLSTATE /home/private/.env' }, 500),
+                    headers: new Headers({ 'X-Request-ID': 'seo-request-500-0001' }),
+                } as Response;
+            }
+            return previous(input, init);
+        });
+        render(<SeoVisibleControls config={config} />);
+        await screen.findByText('finding-1');
+        fireEvent.click(screen.getAllByRole('button', { name: 'Generate AI proposal' })[0]);
+
+        const alert = await screen.findByRole('alert');
+        expect(alert).toHaveTextContent('AI request failed (HTTP 500)');
+        expect(alert).toHaveTextContent('Request ID: seo-request-500-0001');
+        expect(alert).not.toHaveTextContent(/PRIVATE_AI_TOKEN|SQLSTATE|\/home\/private/i);
+    });
+
+    it('rejects untrusted request-reference headers on AI failures', async () => {
+        const previous = fetchMock.getMockImplementation() as (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+        fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+            if (String(input).includes('/ai-proposal')) {
+                return {
+                    ...jsonResponse({ message: 'raw-secret-should-never-render' }, 500),
+                    headers: new Headers({ 'X-Request-ID': '<unsafe>bad' }),
+                } as Response;
+            }
+            return previous(input, init);
+        });
+        render(<SeoVisibleControls config={config} />);
+        await screen.findByText('finding-1');
+        fireEvent.click(screen.getAllByRole('button', { name: 'Generate AI proposal' })[0]);
+
+        const alert = await screen.findByRole('alert');
+        expect(alert).toHaveTextContent('AI request failed (HTTP 500)');
+        expect(alert).not.toHaveTextContent('Request ID:');
+        expect(alert).not.toHaveTextContent(/raw-secret|unsafe/);
+    });
+
+
     it('uses authoritative server pages and filters without claiming all-results selection', async () => {
         const serverRows = Array.from({ length: 27 }, (_, index) => ({
             id: index + 1,
@@ -218,7 +277,7 @@ describe('SEO visible-control mass closure', () => {
         await screen.findByText('finding-1');
         fireEvent.click(screen.getAllByRole('button', { name: 'Generate AI proposal' })[0]);
         await screen.findByText(/Saved AI proposal for finding 1 is ready for explicit approval/);
-        expect(screen.getByText(/Saved title/)).toBeInTheDocument();
+        expect(screen.getAllByText(/Saved title/).some(node => node.closest('summary'))).toBe(true);
         expect(sessionStorage.getItem(seoBatchStorageKey('alpha', 7))).toBeNull();
         const posts = fetchMock.mock.calls.filter(([url, init]) => String(url).includes('/ai-proposal') && init?.method === 'POST');
         expect(posts).toHaveLength(2);
@@ -245,7 +304,7 @@ describe('SEO visible-control mass closure', () => {
         });
         const { container } = render(<SeoVisibleControls config={config} />);
         await screen.findByText(/Saved AI proposal for finding 2 is ready for explicit approval/);
-        expect(screen.getByText(/Recovered saved description/)).toBeInTheDocument();
+        expect(screen.getAllByText(/Recovered saved description/).some(node => node.closest('summary'))).toBe(true);
         expect(fetchMock.mock.calls.filter(([url, init]) => String(url).includes('/ai-proposal') && init?.method === 'POST')).toHaveLength(1);
         expect(container.querySelector('[data-canonical-operation="' + SEO_OPERATIONS.generateSuggestions + '"]')).toBeEnabled();
     });
