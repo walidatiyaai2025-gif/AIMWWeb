@@ -151,10 +151,15 @@ final class SecurityAuditReadController
     private function outcomeSql(): string
     {
         $driver = DB::getDriverName();
-        $type = $driver === 'mysql' ? 'JSON_TYPE' : 'json_type';
         $stringType = $driver === 'mysql' ? 'STRING' : 'text';
-        $outcomeType = "{$type}(audit_events.metadata, '$.outcome')";
-        $statusType = "{$type}(audit_events.metadata, '$.status')";
+        // MySQL JSON_TYPE accepts ONE JSON expression; SQLite json_type
+        // accepts JSON + path. Keep both on their native, tested syntax.
+        $outcomeType = $driver === 'mysql'
+            ? "JSON_TYPE(JSON_EXTRACT(audit_events.metadata, '$.outcome'))"
+            : "json_type(audit_events.metadata, '$.outcome')";
+        $statusType = $driver === 'mysql'
+            ? "JSON_TYPE(JSON_EXTRACT(audit_events.metadata, '$.status'))"
+            : "json_type(audit_events.metadata, '$.status')";
         $outcomeValue = $this->safeJsonText('outcome');
         $statusValue = $this->safeJsonText('status');
         // If outcome is a string, even an unrecognized string takes precedence
