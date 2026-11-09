@@ -26,6 +26,7 @@ final class ContentExplorerReadController extends Controller
             'status' => ['sometimes', 'nullable', 'string', 'max:64'],
             'type' => ['sometimes', 'nullable', 'string', 'max:16'],
             'per_page' => ['sometimes', 'nullable', 'integer', 'min:1'],
+            'page' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
         ]);
         $search = trim((string) ($filters['search'] ?? ''));
         $status = trim((string) ($filters['status'] ?? ''));
@@ -52,10 +53,14 @@ final class ContentExplorerReadController extends Controller
             });
         }
 
-        $items = $query
-            ->orderByDesc('remote_modified_at')
-            ->orderByDesc('id')
-            ->paginate($perPage);
+        $page = (int) ($filters['page'] ?? 1);
+        $ordered = $query->orderByDesc('remote_modified_at')->orderByDesc('id');
+        $items = $ordered->paginate($perPage, ['*'], 'page', $page);
+        // A last-page deletion or a changed search must not leave an empty
+        // visible page when matching rows still exist. Keep SQL totals real.
+        if ($page > $items->lastPage()) {
+            $items = $ordered->paginate($perPage, ['*'], 'page', max(1, $items->lastPage()));
+        }
 
         $rows = $items->getCollection()->map(static fn (ContentItem $item): array => [
             'id' => (int) $item->id,
