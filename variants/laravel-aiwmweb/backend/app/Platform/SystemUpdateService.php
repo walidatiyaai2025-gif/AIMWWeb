@@ -231,13 +231,9 @@ final class SystemUpdateService
             } else {
                 $release = $this->latest();
                 $asset = $release['package_asset'];
-                $response = Http::timeout(180)->withOptions(['sink' => $zipPath])->get($asset['url']);
-
-                if (! $response->successful() || ! is_file($zipPath) ||
-                    filesize($zipPath) < 1 || filesize($zipPath) > self::MAX_PACKAGE ||
-                    ! hash_equals($release['manifest']['sha256'], hash_file('sha256', $zipPath))) {
-                    throw new RuntimeException('Package download or SHA-256 verification failed.');
-                }
+                // Do not trust a CDN redirect or large response merely because
+                // the asset URL came from the published (still untrusted) feed.
+                $this->downloadVerifiedPackage($asset, $zipPath, $release['manifest']['sha256']);
             }
 
             if (! $release['available']) {
@@ -340,6 +336,53 @@ final class SystemUpdateService
             }
             flock($lock, LOCK_UN);
             fclose($lock);
+        }
+    }
+
+    /**
+     * Stream only the approved GitHub update ZIP into private staging. The
+     * signed manifest remains the source of truth for its exact SHA-256.
+     * Reject oversize transfers while they arrive, not after disk exhaustion.
+     *
+     * @param  array{url:string,size:int,id:?int}  $asset
+     */
+    private function downloadVerifiedPackage(array $asset, string $destination, string $expectedSha): void
+    {
+        $url = (string) ($asset['url'] ?? '');
+        $prefix = 'https://github.com/walidatiyaai2025-gif/AIMWWeb/releases/download/';
+        if (! str_starts_with($url, $prefix) ||
+            ! preg_match('~^https://github\\.com/walidatiyaai2025-gif/AIMWWeb/releases/download/[^/]+/AIWMWeb-Laravel-update\\.zip$~D', $url)) {
+            throw new RuntimeException('Release package URL is not approved.');
+        }
+
+        // releaseMetadataRequest already constrains redirect count, HTTPS, CDN
+        // hostnames, userinfo and ports. Override only the timeout for a large
+        // streamed ZIP, and disable implicit retries after a partial write.
+        $response = $this->releaseMetadataRequest()
+            ->retry(1, 0, null, false)
+            ->timeout(180)
+            ->accept('application/octet-stream')
+            ->withOptions([
+                'sink' => $destination,
+                'on_headers' => static function ($response): void {
+                    $length = $response->getHeaderLine('Content-Length');
+                    if ($length !== '' && ctype_digit($length) && (float) $length > self::MAX_PACKAGE) {
+                        throw new RuntimeException('Release package exceeds the streaming size limit.');
+                    }
+                },
+                'progress' => static function ($total, $downloaded): void {
+                    if ($downloaded > self::MAX_PACKAGE) {
+                        throw new RuntimeException('Release package exceeds the streaming size limit.');
+                    }
+                },
+            ])
+            ->get($url);
+
+        if (! $response->successful() || ! is_file($destination) ||
+            filesize($destination) < 1 || filesize($destination) > self::MAX_PACKAGE ||
+            ! preg_match('/^[a-f0-9]{64}$/D', $expectedSha) ||
+            ! hash_equals($expectedSha, hash_file('sha256', $destination))) {
+            throw new RuntimeException('Package download or SHA-256 verification failed.');
         }
     }
 
