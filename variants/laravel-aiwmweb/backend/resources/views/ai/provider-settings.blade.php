@@ -152,6 +152,12 @@
                         <dt>{{ $isArabic ? 'أقصى المحاولات' : 'Maximum attempts' }}</dt><dd>{{ $provider['max_attempts'] }}</dd>
                         <dt>{{ $isArabic ? 'الانتقال التلقائي عند الفشل' : 'Automatic failover' }}</dt><dd>{{ $provider['automatic_failover'] ? 'Enabled' : 'Disabled' }}</dd>
                         <dt>{{ $isArabic ? 'الجاهزية' : 'Readiness' }}</dt><dd>{{ $provider['readiness'] }}</dd>
+                        @if ($provider['adapter_key'] === 'openai-compatible')
+                            <dt>{{ $isArabic ? 'نطاق اختبار الاتصال' : 'Connection check scope' }}</dt>
+                            <dd data-provider-probe-scope="models-only">{{ $isArabic ? 'فحص GET /models فقط: ظهور READY يعني إمكانية اكتشاف النموذج، ولا يثبت نجاح توليد المحتوى.' : 'GET /models only: READY confirms model discovery, not successful content generation.' }}</dd>
+                            <dt>{{ $isArabic ? 'حالة اختبار التوليد' : 'Generation verification' }}</dt>
+                            <dd data-provider-generation-status="unverified">{{ $isArabic ? 'غير مختبر: يحتاج POST /chat/completions وصلاحية JSON والتحقق من Cron وWorker بصورة منفصلة، باختبار آمن مصرح به.' : 'Not verified: POST /chat/completions, JSON output validity and cPanel Cron/worker health require separate authorized checks.' }}</dd>
+                        @endif
                         <dt>{{ $isArabic ? 'آخر فحص جاهزية' : 'Readiness checked' }}</dt><dd>{{ $provider['readiness_checked_at'] ?: 'Not checked' }}</dd>
                         <dt>{{ $isArabic ? 'سبب عدم الجاهزية' : 'Readiness error' }}</dt><dd>{{ $provider['readiness_error'] ?: 'None' }}</dd>
                         <dt>{{ $isArabic ? 'مفتاح API' : 'API credential' }}</dt><dd>{{ $provider['has_api_key'] ? 'Configured' : 'Not configured' }}</dd>
