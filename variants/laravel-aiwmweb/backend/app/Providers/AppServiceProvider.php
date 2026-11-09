@@ -70,14 +70,21 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         if (config('cpanel.enabled')) {
-            // A packaged cPanel profile must never inherit a Redis/sync driver
-            // or the Redis connection alias "default" from an older .env.
+            // On the first Setup ZIP invocation the database is intentionally
+            // EMPTY. The verified, private pending setup marker must allow
+            // migrations to bootstrap using file cache/sessions before tables
+            // exist. A completed install cannot be put back into this mode.
+            $pendingSetup = is_file(storage_path('app/aiwm-install/fresh-migration-pending.lock'))
+                && ! is_file(storage_path('app/aiwm-install/installed.lock'));
             $database = config('database.default');
             config([
+                // Never inherit Redis or sync queue on shared hosting.
                 'queue.default' => 'database', 'queue.connections.database.connection' => $database,
-                'cache.default' => 'database', 'cache.stores.database.connection' => $database,
+                'cache.default' => $pendingSetup ? 'file' : 'database',
+                'cache.stores.database.connection' => $database,
                 'cache.stores.database.lock_connection' => $database,
-                'session.driver' => 'database', 'session.connection' => $database,
+                'session.driver' => $pendingSetup ? 'file' : 'database',
+                'session.connection' => $database,
                 'session.secure' => true, 'session.http_only' => true, 'session.same_site' => 'lax',
             ]);
             $this->app->make('queue')->addConnector('database', fn () => new BoundedDatabaseConnector($this->app['db']));
