@@ -301,9 +301,9 @@ final class AdminOperationsController extends Controller
     {
         $this->authorizer->authorize('operations.manage');
 
-        // Explicit pagination is opt-in so existing integrations keep their
-        // legacy data-only response with no change to schedule mutations.
-        if ($request->hasAny(['page', 'per_page'])) {
+        // Search or paging opts into scoped SQL filtering and real pages.
+        // Legacy consumers with no query parameters retain the data-only response.
+        if ($request->hasAny(['page', 'per_page', 'search'])) {
             $input = $request->validate([
                 'search' => ['nullable', 'string', 'max:160'],
                 'page' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
