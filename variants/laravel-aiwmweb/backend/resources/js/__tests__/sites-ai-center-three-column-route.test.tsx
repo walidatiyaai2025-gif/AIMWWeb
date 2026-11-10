@@ -2,31 +2,33 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-// Route markup is composed inside RouteElement which requires TenantBootstrap's
-// authenticated React Query outlet. Validate the actual owner-facing route
-// composition and breakpoints without synthesizing a separate authentication shell.
-// Vitest's jsdom runtime uses an http: import.meta.url. Node file reads
-// must instead be anchored to the backend package's working directory.
+// Validate the actual authenticated route composition and the visual contracts.
+// AI Center remains a grid; Sites is deliberately a tabbed, full-width table.
 const jsPath = resolve(process.cwd(), 'resources/js');
 const app = readFileSync(resolve(jsPath, 'app.tsx'), 'utf8');
+const tabs = readFileSync(resolve(jsPath, 'sites-management-tabs.tsx'), 'utf8');
 const page = readFileSync(resolve(jsPath, 'pages.tsx'), 'utf8');
 const approval = readFileSync(resolve(jsPath, 'ai-center-approval-status-control.tsx'), 'utf8');
 const css = readFileSync(resolve(process.cwd(), 'resources/css/app.css'), 'utf8');
 
-describe('Sites and AI Center compact route layout contract', () => {
-    it('groups the six actual Sites operations before the real resource list', () => {
+describe('Sites tabs and AI Center route layout contract', () => {
+    it('renders a real Sites table and six original operations behind accessible tabs', () => {
         const sitesRoute = app.split('\n').find((line) => line.includes("if (route.key === 'sites') return"));
-        expect(sitesRoute).toBeDefined();
-        expect(sitesRoute).toContain('className="sites-management-grid"');
-        expect(sitesRoute).toContain('data-testid="sites-management-grid"');
-        for (const control of [
+        expect(sitesRoute).toContain('<SitesManagementTabs context={context}><WorkspacePage context={context} route={route} /></SitesManagementTabs>');
+        expect(tabs).toContain('role="tablist"');
+        expect(tabs).toContain('role="tab"');
+        expect(tabs).toContain('role="tabpanel"');
+        expect(tabs).toContain("params.get('sites_tab')");
+        for (const operation of [
             'SitesSaveControl', 'SitesRetestSelectedControl',
             'SitesBulkOperationalStateControl', 'SitesDeleteControl',
             'SitesBulkDeleteControl', 'SitesDisableSelectedControl',
         ]) {
-            expect(sitesRoute).toContain('<' + control + ' context={context} />');
+            expect(tabs).toContain('<' + operation + ' context={context} />');
         }
-        expect(sitesRoute?.indexOf('</div><WorkspacePage')).toBeGreaterThan(0);
+        expect(tabs).toContain('activeId === tab.id ? tab.content : null');
+        expect(page).toContain('layout="table"');
+        expect(page).toMatch(/const pageSize = rawSize && .* : 10;/);
     });
 
     it('keeps AI session, history, composer and authoritative metadata in their own responsive groups', () => {
@@ -37,10 +39,14 @@ describe('Sites and AI Center compact route layout contract', () => {
         expect(page).toContain('<AiCenterGenerateControl');
     });
 
-    it('provides desktop three columns, tablet two columns and mobile one column', () => {
-        expect(css).toMatch(/\.sites-management-grid,\s*\.ai-center-controls-grid\s*\{\s*display:\s*grid;\s*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/);
+    it('gives Sites full-width, horizontal-scrollable tabs while retaining the AI Center grid breakpoints', () => {
+        expect(css).toContain('.sites-tab-list {');
+        expect(css).toContain('overflow-x: auto');
+        expect(css).toContain('.sites-tab-panel[hidden] { display: none; }');
+        expect(css).not.toContain('.sites-management-grid');
+        expect(css).toMatch(/\.ai-center-controls-grid\s*\{\s*display:\s*grid;\s*grid-template-columns:\s*repeat\(3/);
         expect(css).toContain('@media (min-width: 761px) and (max-width: 1199px)');
         expect(css).toContain('@media (max-width: 760px)');
-        expect(css).toContain('.sites-management-grid, .ai-center-controls-grid, .ai-center-resource-grid { grid-template-columns: minmax(0, 1fr)');
+        expect(css).toContain('.ai-center-controls-grid, .ai-center-resource-grid { grid-template-columns: minmax(0, 1fr)');
     });
 });
