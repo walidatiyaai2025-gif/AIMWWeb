@@ -144,7 +144,7 @@ Route::prefix('v1/tenants/{tenant}/sites/{site}/seo/remediations')
         Route::get('/proposals', [SeoRemediationClosureController::class, 'proposals'])->whereNumber('site');
         Route::get('/history', [SeoRemediationClosureController::class, 'history'])->whereNumber('site');
         Route::post('/failed/retry', [SeoRemediationClosureController::class, 'retryFailed'])->whereNumber('site');
-        Route::post('/executions/{execution}/undo', [SeoRemediationClosureController::class, 'undo'])->whereNumber('site');
+        Route::post('/executions/{execution}/undo', [SeoRemediationClosureController::class, 'undo'])->whereNumber('site')->whereNumber('execution');
     });
 
 // Session-authenticated tenant APIs are consumed by the same-origin Laravel SPA.
