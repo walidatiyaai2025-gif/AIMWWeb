@@ -145,6 +145,50 @@ final class WordPressUsersRouteTerminalityTest extends TestCase
         });
     }
 
+    public function test_users_page_validation_rejects_invalid_offsets_without_contacting_wordpress(): void
+    {
+        $user = User::factory()->create();
+        $membership = $this->membership($user, 'alpha', ['tenant.view', 'sites.view']);
+        $site = $this->site($membership, 'https://alpha.example.test');
+        $this->credential($membership, $site);
+        $uri = "/api/v1/tenants/alpha/sites/{$site->id}/users";
+
+        Http::fake([
+            'https://alpha.example.test/wp-json/wp/v2/users*' => Http::response(
+                [['id' => 51, 'name' => 'Editor']],
+                200,
+                ['X-WP-Total' => '51', 'X-WP-TotalPages' => '2'],
+            ),
+        ]);
+
+        foreach (['0', '-1', 'invalid', '1.5', '1000001', '999999999999999999999'] as $invalidPage) {
+            $this->actingAs($user)
+                ->getJson("{$uri}?page={$invalidPage}&per_page=50")
+                ->assertUnprocessable()
+                ->assertJsonValidationErrors('page');
+        }
+
+        // Validation must run before a credential-bearing remote REST request.
+        Http::assertNothingSent();
+
+        $this->actingAs($user)
+            ->getJson("{$uri}?page=2&per_page=50")
+            ->assertOk()
+            ->assertJsonPath('data.0.id', 51)
+            ->assertJsonPath('current_page', 2)
+            ->assertJsonPath('total', 51)
+            ->assertJsonPath('last_page', 2)
+            ->assertJsonPath('pagination_authoritative', true);
+
+        Http::assertSentCount(1);
+        Http::assertSent(static function ($request): bool {
+            parse_str((string) parse_url($request->url(), PHP_URL_QUERY), $query);
+
+            return ($query['page'] ?? null) === '2'
+                && ($query['per_page'] ?? null) === '50';
+        });
+    }
+
     public function test_native_wordpress_headers_drive_totals_across_users_pages(): void
     {
         $user = User::factory()->create();
