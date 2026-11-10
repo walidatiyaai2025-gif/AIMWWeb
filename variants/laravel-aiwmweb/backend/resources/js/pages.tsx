@@ -387,7 +387,7 @@ function Unavailable({ route, context, state = resolveCapability(context, route)
 type SitesPageFilter = 'all' | 'connected' | 'review';
 type SitesUrlPageState = { page: number; pageSize: number; filter: SitesPageFilter; search: string };
 
-// The Sites grid uses the same bounded URL contract as its Laravel paginator.
+// The Sites table uses the same bounded URL contract as its Laravel paginator.
 // Preserve unrelated query parameters (for example a dashboard tab) and avoid
 // treating a malformed user-supplied page number as a valid API request.
 function isSitesRouteLocation(): boolean {
@@ -402,7 +402,7 @@ function readSitesUrlPageState(): SitesUrlPageState {
     const number = rawPage && /^[1-9][0-9]*$/.test(rawPage) ? Number(rawPage) : 1;
     const page = Number.isSafeInteger(number) && number <= 100000 ? number : 1;
     const rawSize = params.get('per_page');
-    const pageSize = rawSize && ['10', '25', '50', '100'].includes(rawSize) ? Number(rawSize) : 25;
+    const pageSize = rawSize && ['10', '25', '50', '100'].includes(rawSize) ? Number(rawSize) : 10;
     const rawFilter = params.get('connection_filter');
     const filter: SitesPageFilter = rawFilter === 'connected' || rawFilter === 'review' ? rawFilter : 'all';
     // Laravel accepts at most 150 characters for the Sites search request.
@@ -1596,7 +1596,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                     <DataTable
                         rows={visibleRows}
                         preferredColumns={route.key === 'logs' ? ['id', 'level', 'message', 'occurred_at'] : route.key === 'execution' ? ['id', 'type', 'status', 'progress', 'attempts', 'max_attempts', 'created_at', 'updated_at'] : undefined}
-                        layout={route.key === 'sites' ? 'cards' : 'table'}
+                        layout="table"
                         renderActions={route.key === 'execution' ? (row) => (
                             <ExecutionCenterRowActions context={context} row={row}
                                 onReconcile={async () => {
