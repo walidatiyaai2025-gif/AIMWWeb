@@ -54,10 +54,11 @@ final class SiteDiagnosticsController extends Controller
         return response()->json($diagnostics->capabilities(Site::query()->findOrFail($site)));
     }
 
-    public function diagnosticHistory(Request $request, int $site, TenantAuthorizer $auth, SiteDiagnosticsService $diagnostics): JsonResponse
+    public function diagnosticHistory(Request $request, int|string $site, TenantAuthorizer $auth, SiteDiagnosticsService $diagnostics): JsonResponse
     {
         $auth->authorize('tenant.view');
-        $model = Site::query()->findOrFail($site);
+        $siteId = $this->siteId($site);
+        $model = Site::query()->findOrFail($siteId);
 
         // Explicit page/per_page opt in to preserve the legacy bounded items envelope.
         if ($request->exists('page') || $request->exists('per_page')) {
