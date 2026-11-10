@@ -54,10 +54,12 @@ final class SiteDiagnosticsController extends Controller
         return response()->json($diagnostics->capabilities(Site::query()->findOrFail($site)));
     }
 
-    public function diagnosticHistory(Request $request, int $site, TenantAuthorizer $auth, SiteDiagnosticsService $diagnostics): JsonResponse
+    public function diagnosticHistory(Request $request, string $tenant, int|string $site, TenantContext $context, TenantAuthorizer $auth, SiteDiagnosticsService $diagnostics): JsonResponse
     {
         $auth->authorize('tenant.view');
-        $model = Site::query()->findOrFail($site);
+        abort_unless($tenant === $context->tenant()->slug, 404);
+        $siteId = $this->siteId($site);
+        $model = Site::query()->findOrFail($siteId);
 
         // Explicit page/per_page opt in to preserve the legacy bounded items envelope.
         if ($request->exists('page') || $request->exists('per_page')) {
@@ -73,7 +75,11 @@ final class SiteDiagnosticsController extends Controller
             ));
         }
 
-        return response()->json(['items' => $diagnostics->diagnosticHistory($model, $request->integer('take', 100))]);
+        // Keep the legacy items-only envelope, but reject malformed limits
+        // instead of silently coercing array/string values into a history read.
+        $params = $request->validate(['take' => 'sometimes|integer|min:1|max:500']);
+
+        return response()->json(['items' => $diagnostics->diagnosticHistory($model, (int) ($params['take'] ?? 100))]);
     }
 
     public function operations(Request $request, string $tenant, int|string $site, TenantContext $context, TenantAuthorizer $auth, SiteOperationHistoryService $history): JsonResponse
@@ -102,7 +108,9 @@ final class SiteDiagnosticsController extends Controller
             ));
         }
 
-        return response()->json(['items' => $history->get($siteId, max(1, min(500, $request->integer('take', 100))))]);
+        $params = $request->validate(['take' => 'sometimes|integer|min:1|max:500']);
+
+        return response()->json(['items' => $history->get($siteId, (int) ($params['take'] ?? 100))]);
     }
 
     private function siteId(int|string $site): int
