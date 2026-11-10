@@ -65,13 +65,13 @@ describe(`${OPERATION_ID} ReloadClickedAsync`, () => {
         const refresh = screen.getByRole('button', { name: 'Refresh' });
         expect(refresh).toHaveAttribute('data-canonical-operation', OPERATION_ID);
         expect(fetchMock).toHaveBeenCalledTimes(1);
-        expect(fetchMock.mock.calls[0][0]).toBe('/api/tenants/alpha/sites?page=1&per_page=25&connection_filter=all');
+        expect(fetchMock.mock.calls[0][0]).toBe('/api/tenants/alpha/sites?page=1&per_page=10&connection_filter=all');
 
         fireEvent.click(refresh);
 
         expect(await screen.findByText('After refresh')).toBeInTheDocument();
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-        expect(fetchMock.mock.calls[1][0]).toBe('/api/tenants/alpha/sites?page=1&per_page=25&connection_filter=all');
+        expect(fetchMock.mock.calls[1][0]).toBe('/api/tenants/alpha/sites?page=1&per_page=10&connection_filter=all');
         expect(fetchMock.mock.calls.every(([, options]) => !options || options.method === undefined || options.method === 'GET')).toBe(true);
     });
 });

@@ -26,11 +26,13 @@ final class SitesDisableSelectedTerminalityTest extends TestCase
         $source = (string) file_get_contents(base_path('../../../src/AIWordPressManager.Web/Components/Pages/Sites.razor'));
         $ui = (string) file_get_contents(resource_path('js/sites-disable-selected-control.tsx'));
         $app = (string) file_get_contents(resource_path('js/app.tsx'));
+        $tabs = (string) file_get_contents(resource_path('js/sites-management-tabs.tsx'));
         $this->assertStringContainsString('OnClick="DisableSelectedAsync"', $source);
         $this->assertStringContainsString('SetSelectedDisabledAsync(true)', $source);
         $this->assertStringContainsString(self::OPERATION_ID, $ui);
         $this->assertStringContainsString('query.refetch()', $ui);
-        $this->assertStringContainsString('SitesDisableSelectedControl', $app);
+        $this->assertStringContainsString('SitesManagementTabs', $app);
+        $this->assertStringContainsString('SitesDisableSelectedControl', $tabs);
         $route = Route::getRoutes()->match(Request::create('/api/tenants/alpha/sites/bulk-disable', 'POST'));
         $this->assertSame(SitesBulkDisableSelectedController::class, ltrim($route->getActionName(), '\\'));
         $this->assertSame(self::OPERATION_ID, $route->defaults['canonical_operation_id'] ?? null);

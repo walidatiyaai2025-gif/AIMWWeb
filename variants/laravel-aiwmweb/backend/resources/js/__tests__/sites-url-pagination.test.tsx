@@ -133,13 +133,13 @@ describe('Sites URL-backed server pagination (#1608)', () => {
 
         expect(await screen.findByText('Site page 1')).toBeInTheDocument();
         expect(String(fetchMock.mock.calls[0][0])).toContain('page=1');
-        expect(String(fetchMock.mock.calls[0][0])).toContain('per_page=25');
+        expect(String(fetchMock.mock.calls[0][0])).toContain('per_page=10');
         fireEvent.click(screen.getByRole('button', { name: 'Connected 30' }));
         await waitFor(() => expect(window.location.search).toContain('connection_filter=connected'));
         expect(window.location.search).toContain('tab=other');
         expect(window.location.search).toContain('page=1');
-        fireEvent.change(await screen.findByRole('combobox', { name: 'Rows per page' }), { target: { value: '10' } });
-        await waitFor(() => expect(window.location.search).toContain('per_page=10'));
+        fireEvent.change(await screen.findByRole('combobox', { name: 'Rows per page' }), { target: { value: '25' } });
+        await waitFor(() => expect(window.location.search).toContain('per_page=25'));
         expect(window.location.search).toContain('page=1');
         expect(fetchMock.mock.calls.every(([input]) => new URL(String(input), 'http://localhost').pathname === '/api/tenants/alpha/sites')).toBe(true);
     });

@@ -869,34 +869,48 @@ body, button, input, textarea, select, option { font-family: var(--aiwm-google-f
     .site-record-card { padding: 14px; }
 }
 
-/* Actual Sites operations and AI Center controls are sibling route panels,
-   not DataTable rows: explicitly compose those panels into responsive grids. */
-.sites-management-grid,
-.ai-center-controls-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 16px;
-    align-items: start;
-    margin-bottom: 18px;
+/* Sites use one full-width workspace with accessible text tabs; no six-card grid. */
+.sites-management-tabs { min-width: 0; margin-block-end: 18px; }
+.sites-tab-list {
+    display: flex; align-items: stretch; gap: clamp(6px, 1vw, 18px);
+    overflow-x: auto; overscroll-behavior-inline: contain; scrollbar-width: thin;
+    border-block-end: 1px solid var(--border);
 }
-.sites-management-grid > .panel,
-.ai-center-controls-grid > .panel {
-    min-width: 0; margin: 0;
-    overflow: hidden;
+.sites-tab-button {
+    flex: 0 0 auto; min-height: var(--touch); padding: 10px 12px;
+    border: 0; border-block-end: 3px solid transparent; border-radius: 0;
+    background: transparent; color: var(--muted); cursor: pointer;
+    font-size: .93rem; font-weight: 650; white-space: nowrap;
 }
-.sites-management-grid .panel-header,
-.ai-center-controls-grid .panel-header { flex-wrap: wrap; align-items: flex-start; }
-.sites-management-grid .panel-header > div,
-.ai-center-controls-grid .panel-header > div { min-width: 0; }
-.sites-management-grid .table-scroll,
-.ai-center-controls-grid .table-scroll { width: 100%; max-width: 100%; overflow: auto; }
-.sites-management-grid .data-table { min-width: 460px; }
-.sites-management-grid > .panel > table.data-table {
+.sites-tab-button:hover { background: var(--accent-soft); color: var(--text); }
+.sites-tab-button[aria-selected='true'] { color: var(--text); border-block-end-color: var(--accent); }
+.sites-tab-button-danger { color: var(--danger); }
+.sites-tab-button:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+.sites-tab-panel { min-width: 0; padding-block: 18px; }
+.sites-tab-panel[hidden] { display: none; }
+.sites-tab-panel > .panel {
+    min-width: 0; margin: 0; padding: 0; border: 0; border-radius: 0;
+    background: transparent; box-shadow: none; overflow: visible;
+}
+.sites-tab-panel .panel-header { flex-wrap: wrap; align-items: flex-start; }
+.sites-tab-panel .panel-header > div { min-width: 0; }
+.sites-tab-panel .table-scroll { width: 100%; max-width: 100%; overflow: auto; }
+.sites-tab-panel > .panel > table.data-table {
     display: block; max-width: 100%; min-width: 0; overflow-x: auto;
 }
-.sites-management-grid :is(input, select, textarea),
+.sites-tab-panel :is(input, select, textarea) { max-width: 100%; min-width: 0; }
+.sites-tab-panel .toolbar-actions { flex-wrap: wrap; }
+
+/* AI Center retains its independent responsive grid. */
+.ai-center-controls-grid {
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px; align-items: start; margin-bottom: 18px;
+}
+.ai-center-controls-grid > .panel { min-width: 0; margin: 0; overflow: hidden; }
+.ai-center-controls-grid .panel-header { flex-wrap: wrap; align-items: flex-start; }
+.ai-center-controls-grid .panel-header > div { min-width: 0; }
+.ai-center-controls-grid .table-scroll { width: 100%; max-width: 100%; overflow: auto; }
 .ai-center-controls-grid :is(input, select, textarea) { max-width: 100%; min-width: 0; }
-.sites-management-grid .panel .toolbar-actions { flex-wrap: wrap; }
 .ai-center-controls-grid .ai-center-navigation-row {
     grid-column: 1 / -1;
     display: flex; flex-wrap: wrap; align-items: center;
@@ -937,7 +951,7 @@ body, button, input, textarea, select, option { font-family: var(--aiwm-google-f
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 @media (min-width: 761px) and (max-width: 1199px) {
-    .sites-management-grid, .ai-center-controls-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .ai-center-controls-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .ai-center-controls-grid > .ai-session-controls,
     .ai-center-controls-grid > .ai-approval-box { grid-column: span 2; }
     .ai-center-resource-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -946,7 +960,7 @@ body, button, input, textarea, select, option { font-family: var(--aiwm-google-f
     .ai-center-resource-grid [data-testid="ai-center-generate"] > .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 760px) {
-    .sites-management-grid, .ai-center-controls-grid, .ai-center-resource-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+    .ai-center-controls-grid, .ai-center-resource-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
     .ai-center-controls-grid > .ai-session-controls,
     .ai-center-controls-grid > .ai-approval-box,
     .content > .ai-center-resource-grid > [data-ai-center-metadata],

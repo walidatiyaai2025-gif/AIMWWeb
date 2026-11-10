@@ -24,6 +24,7 @@ final class SitesCloseFormClickedTerminalityTest extends TestCase
         );
         $control = (string) file_get_contents(resource_path('js/sites-save-control.tsx'));
         $app = (string) file_get_contents(resource_path('js/app.tsx'));
+        $tabs = (string) file_get_contents(resource_path('js/sites-management-tabs.tsx'));
 
         $this->assertStringContainsString('OnClick="CloseFormClicked"', $source);
         $this->assertStringContainsString('private Task CloseFormClicked(MouseEventArgs _)', $source);
@@ -33,7 +34,8 @@ final class SitesCloseFormClickedTerminalityTest extends TestCase
         $this->assertStringContainsString('data-canonical-operation={SITES_CLOSE_FORM_CLICKED_OPERATION_ID}', $control);
         $this->assertStringContainsString('data-source-handler="CloseFormClicked"', $control);
         $this->assertStringContainsString('disabled={m.isPending} onClick={closeForm}', $control);
-        $this->assertStringContainsString('<SitesSaveControl context={context} />', $app);
+        $this->assertStringContainsString('SitesManagementTabs', $app);
+        $this->assertStringContainsString('<SitesSaveControl context={context} />', $tabs);
     }
 
     public function test_foreign_tenant_sites_surface_is_not_available(): void
