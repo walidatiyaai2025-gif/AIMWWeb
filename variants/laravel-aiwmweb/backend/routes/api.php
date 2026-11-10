@@ -141,10 +141,10 @@ Route::prefix('v1/tenants/{tenant}/sites/{site}')->middleware(['web', 'tenant.co
 Route::prefix('v1/tenants/{tenant}/sites/{site}/seo/remediations')
     ->middleware(['web', 'auth', 'tenant.context'])
     ->group(function (): void {
-        Route::get('/proposals', [SeoRemediationClosureController::class, 'proposals']);
-        Route::get('/history', [SeoRemediationClosureController::class, 'history']);
-        Route::post('/failed/retry', [SeoRemediationClosureController::class, 'retryFailed']);
-        Route::post('/executions/{execution}/undo', [SeoRemediationClosureController::class, 'undo']);
+        Route::get('/proposals', [SeoRemediationClosureController::class, 'proposals'])->whereNumber('site');
+        Route::get('/history', [SeoRemediationClosureController::class, 'history'])->whereNumber('site');
+        Route::post('/failed/retry', [SeoRemediationClosureController::class, 'retryFailed'])->whereNumber('site');
+        Route::post('/executions/{execution}/undo', [SeoRemediationClosureController::class, 'undo'])->whereNumber('site');
     });
 
 // Session-authenticated tenant APIs are consumed by the same-origin Laravel SPA.
