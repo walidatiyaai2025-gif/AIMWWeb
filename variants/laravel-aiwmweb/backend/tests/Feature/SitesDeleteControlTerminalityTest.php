@@ -109,9 +109,11 @@ class SitesDeleteControlTerminalityTest extends TestCase
     public function test_production_sites_workspace_binds_exact_operation_and_authoritative_reread_contract(): void
     {
         $app = (string) file_get_contents(resource_path('js/app.tsx'));
+        $tabs = (string) file_get_contents(resource_path('js/sites-management-tabs.tsx'));
         $control = (string) file_get_contents(resource_path('js/sites-delete-control.tsx'));
         $this->assertStringContainsString("route.key === 'sites'", $app);
-        $this->assertStringContainsString('<SitesDeleteControl context={context} />', $app);
+        $this->assertStringContainsString('SitesManagementTabs', $app);
+        $this->assertStringContainsString('<SitesDeleteControl context={context} />', $tabs);
         $this->assertStringContainsString(self::OPERATION_ID, $control);
         $this->assertStringContainsString("method: 'DELETE'", $control);
         $this->assertStringContainsString('await query.refetch()', $control);
