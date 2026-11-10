@@ -136,14 +136,14 @@ Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->
         ->whereNumber('site')
         ->defaults('canonical_operation_id', SeoController::RUN_FULL_AUDIT_OPERATION_ID)
         ->name('canonical.api.seo.audit.run');
-    Route::get('/sites/{site}/seo/audits/{audit}/findings', [SeoController::class, 'findings'])->whereNumber('site');
-    Route::get('/sites/{site}/seo/metadata/{type}/{remoteId}', [SeoController::class, 'metadata'])->whereNumber('site');
-    Route::get('/sites/{site}/seo/content/{content}/provider', [SeoController::class, 'provider'])->whereNumber('site');
-    Route::post('/sites/{site}/seo/findings/{finding}/prepare', [SeoController::class, 'prepare'])->whereNumber('site');
+    Route::get('/sites/{site}/seo/audits/{audit}/findings', [SeoController::class, 'findings'])->whereNumber('site')->whereNumber('audit');
+    Route::get('/sites/{site}/seo/metadata/{type}/{remoteId}', [SeoController::class, 'metadata'])->whereNumber('site')->whereNumber('remoteId');
+    Route::get('/sites/{site}/seo/content/{content}/provider', [SeoController::class, 'provider'])->whereNumber('site')->whereNumber('content');
+    Route::post('/sites/{site}/seo/findings/{finding}/prepare', [SeoController::class, 'prepare'])->whereNumber('site')->whereNumber('finding');
     Route::post('/sites/{site}/seo/remediations/bulk', [SeoController::class, 'prepareBulk'])->whereNumber('site');
-    Route::post('/sites/{site}/seo/findings/{finding}/ai-proposal', [SeoController::class, 'aiProposal'])->whereNumber('site');
+    Route::post('/sites/{site}/seo/findings/{finding}/ai-proposal', [SeoController::class, 'aiProposal'])->whereNumber('site')->whereNumber('finding');
     Route::post('/sites/{site}/seo/executions/bulk', [SeoController::class, 'executeBulk'])->whereNumber('site');
-    Route::post('/sites/{site}/seo/executions/{execution}/retry', [SeoController::class, 'retry'])->whereNumber('site');
+    Route::post('/sites/{site}/seo/executions/{execution}/retry', [SeoController::class, 'retry'])->whereNumber('site')->whereNumber('execution');
 
     Route::get('/sites/{site}/connection', [SiteDiagnosticsController::class, 'status']);
     Route::post('/sites/{site}/connection/recheck', [SiteDiagnosticsController::class, 'recheck'])
