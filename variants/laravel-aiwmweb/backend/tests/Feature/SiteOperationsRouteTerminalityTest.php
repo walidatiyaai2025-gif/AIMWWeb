@@ -139,6 +139,64 @@ final class SiteOperationsRouteTerminalityTest extends TestCase
             ->assertOk()->assertJsonCount(27, 'items')->assertJsonMissingPath('total');
     }
 
+    public function test_legacy_site_history_take_validation_prevents_invalid_inputs_without_changing_envelope(): void
+    {
+        $user = User::factory()->create();
+        $alpha = $this->membership($user, 'history-take-alpha', ['tenant.view', 'sites.view']);
+        $beta = $this->membership($user, 'history-take-beta', ['tenant.view', 'sites.view']);
+        $site = $this->site($alpha, 'Take Alpha');
+        $otherSite = $this->site($beta, 'Take Beta');
+
+        $context = app(TenantContext::class);
+        $context->activate($alpha->tenant, $alpha);
+        for ($index = 0; $index < 3; $index++) {
+            app(SiteOperationHistoryService::class)->record(
+                $site->id,
+                'synchronization',
+                true,
+                'WordPress synchronization completed.',
+            );
+        }
+        $context->forget();
+
+        $endpoints = [
+            "/api/tenants/history-take-alpha/sites/{$site->id}/operations",
+            "/api/tenants/history-take-alpha/sites/{$site->id}/diagnostics",
+        ];
+        $invalid = [
+            'take=0', 'take=-1', 'take=1.5', 'take=abc',
+            'take=501', 'take=999999999999999999999', 'take%5B%5D=20',
+        ];
+
+        foreach ($endpoints as $endpoint) {
+            foreach ($invalid as $query) {
+                $this->actingAs($user)->getJson($endpoint.'?'.$query)
+                    ->assertUnprocessable()
+                    ->assertJsonValidationErrors('take');
+            }
+
+            $this->actingAs($user)->getJson($endpoint.'?take=2')
+                ->assertOk()
+                ->assertJsonStructure(['items'])
+                ->assertJsonMissingPath('total');
+
+            $this->actingAs($user)->getJson($endpoint)
+                ->assertOk()
+                ->assertJsonStructure(['items'])
+                ->assertJsonMissingPath('total');
+
+            $this->actingAs($user)->getJson(
+                "/api/tenants/history-take-alpha/sites/{$otherSite->id}/".basename($endpoint).'?take=2'
+            )->assertNotFound();
+        }
+
+        $this->actingAs($user)->getJson($endpoints[0].'?take=2')
+            ->assertJsonCount(2, 'items');
+        // Paginated consumers continue to use their authoritative counts.
+        $this->actingAs($user)->getJson($endpoints[0].'?page=1&per_page=10')
+            ->assertOk()->assertJsonPath('total', 3)->assertJsonCount(3, 'items');
+    }
+
     public function test_foreign_site_and_missing_permission_fail_closed(): void
     {
         $user = User::factory()->create();
