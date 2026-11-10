@@ -131,18 +131,19 @@ Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->
     Route::post('/executions/{execution}/cancel', [DemoController::class, 'cancel']);
     Route::get('/executions/{execution}/receipt', [DemoController::class, 'receipt']);
 
-    Route::get('/sites/{site}/seo/audits', [SeoController::class, 'audits']);
+    Route::get('/sites/{site}/seo/audits', [SeoController::class, 'audits'])->whereNumber('site');
     Route::post('/sites/{site}/seo/audits', [SeoController::class, 'startAudit'])
+        ->whereNumber('site')
         ->defaults('canonical_operation_id', SeoController::RUN_FULL_AUDIT_OPERATION_ID)
         ->name('canonical.api.seo.audit.run');
-    Route::get('/sites/{site}/seo/audits/{audit}/findings', [SeoController::class, 'findings']);
-    Route::get('/sites/{site}/seo/metadata/{type}/{remoteId}', [SeoController::class, 'metadata']);
-    Route::get('/sites/{site}/seo/content/{content}/provider', [SeoController::class, 'provider']);
-    Route::post('/sites/{site}/seo/findings/{finding}/prepare', [SeoController::class, 'prepare']);
-    Route::post('/sites/{site}/seo/remediations/bulk', [SeoController::class, 'prepareBulk']);
-    Route::post('/sites/{site}/seo/findings/{finding}/ai-proposal', [SeoController::class, 'aiProposal']);
-    Route::post('/sites/{site}/seo/executions/bulk', [SeoController::class, 'executeBulk']);
-    Route::post('/sites/{site}/seo/executions/{execution}/retry', [SeoController::class, 'retry']);
+    Route::get('/sites/{site}/seo/audits/{audit}/findings', [SeoController::class, 'findings'])->whereNumber('site');
+    Route::get('/sites/{site}/seo/metadata/{type}/{remoteId}', [SeoController::class, 'metadata'])->whereNumber('site');
+    Route::get('/sites/{site}/seo/content/{content}/provider', [SeoController::class, 'provider'])->whereNumber('site');
+    Route::post('/sites/{site}/seo/findings/{finding}/prepare', [SeoController::class, 'prepare'])->whereNumber('site');
+    Route::post('/sites/{site}/seo/remediations/bulk', [SeoController::class, 'prepareBulk'])->whereNumber('site');
+    Route::post('/sites/{site}/seo/findings/{finding}/ai-proposal', [SeoController::class, 'aiProposal'])->whereNumber('site');
+    Route::post('/sites/{site}/seo/executions/bulk', [SeoController::class, 'executeBulk'])->whereNumber('site');
+    Route::post('/sites/{site}/seo/executions/{execution}/retry', [SeoController::class, 'retry'])->whereNumber('site');
 
     Route::get('/sites/{site}/connection', [SiteDiagnosticsController::class, 'status']);
     Route::post('/sites/{site}/connection/recheck', [SiteDiagnosticsController::class, 'recheck'])
