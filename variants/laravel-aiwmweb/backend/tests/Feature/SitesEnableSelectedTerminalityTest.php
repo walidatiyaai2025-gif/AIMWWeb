@@ -26,12 +26,14 @@ final class SitesEnableSelectedTerminalityTest extends TestCase
         $source = (string) file_get_contents(base_path('../../../src/AIWordPressManager.Web/Components/Pages/Sites.razor'));
         $ui = (string) file_get_contents(resource_path('js/sites-bulk-operational-state-control.tsx'));
         $app = (string) file_get_contents(resource_path('js/app.tsx'));
+        $tabs = (string) file_get_contents(resource_path('js/sites-management-tabs.tsx'));
         $this->assertStringContainsString('OnClick="EnableSelectedAsync"', $source);
         $this->assertStringContainsString('SetSelectedDisabledAsync(false)', $source);
         $this->assertStringContainsString(self::OPERATION_ID, $ui);
         $this->assertStringContainsString('/bulk-enable', $ui);
         $this->assertStringContainsString('query.refetch()', $ui);
-        $this->assertStringContainsString('SitesBulkOperationalStateControl', $app);
+        $this->assertStringContainsString('SitesManagementTabs', $app);
+        $this->assertStringContainsString('SitesBulkOperationalStateControl', $tabs);
 
         $route = Route::getRoutes()->match(Request::create('/api/tenants/alpha/sites/bulk-enable', 'POST'));
         $this->assertSame(SitesBulkOperationalStateController::class.'@enable', ltrim($route->getActionName(), '\\'));
