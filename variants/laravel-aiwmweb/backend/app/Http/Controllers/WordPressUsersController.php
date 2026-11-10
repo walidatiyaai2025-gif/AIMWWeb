@@ -24,14 +24,16 @@ final class WordPressUsersController extends Controller
         $request->validate([
             'search' => ['nullable', 'string', 'max:255'],
             // Do not coerce invalid or huge browser page values into a remote
-            // WordPress REST request. Keep the existing per_page compatibility.
+            // WordPress REST request. Reject malformed page sizes rather than
+            // silently clamping them; retain the default page size of 50.
             'page' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
+            'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
             'role' => ['nullable', Rule::in(['all', 'administrator', 'editor', 'author', 'contributor', 'subscriber'])],
         ]);
 
         $query = [
             'page' => max(1, $request->integer('page', 1)),
-            'per_page' => min(max($request->integer('per_page', 50), 1), 100),
+            'per_page' => $request->integer('per_page', 50),
             'context' => 'edit',
             'orderby' => 'registered_date',
             'order' => 'desc',
