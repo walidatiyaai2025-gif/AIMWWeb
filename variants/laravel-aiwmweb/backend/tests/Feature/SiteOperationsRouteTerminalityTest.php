@@ -143,7 +143,8 @@ final class SiteOperationsRouteTerminalityTest extends TestCase
     {
         $user = User::factory()->create();
         $alpha = $this->membership($user, 'history-take-alpha', ['tenant.view', 'sites.view']);
-        $beta = $this->membership($user, 'history-take-beta', ['tenant.view', 'sites.view']);
+        $otherUser = User::factory()->create();
+        $beta = $this->membership($otherUser, 'history-take-beta', ['tenant.view', 'sites.view']);
         $site = $this->site($alpha, 'Take Alpha');
         $otherSite = $this->site($beta, 'Take Beta');
 
@@ -170,9 +171,9 @@ final class SiteOperationsRouteTerminalityTest extends TestCase
 
         foreach ($endpoints as $endpoint) {
             foreach ($invalid as $query) {
-                $this->actingAs($user)->getJson($endpoint.'?'.$query)
-                    ->assertUnprocessable()
-                    ->assertJsonValidationErrors('take');
+                $response = $this->actingAs($user)->getJson($endpoint.'?'.$query);
+                $this->assertSame(422, $response->status(), $endpoint.'?'.$query.' -> '.$response->getContent());
+                $response->assertJsonValidationErrors('take');
             }
 
             $this->actingAs($user)->getJson($endpoint.'?take=2')
