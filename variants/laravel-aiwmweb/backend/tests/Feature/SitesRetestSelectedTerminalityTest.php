@@ -26,6 +26,7 @@ final class SitesRetestSelectedTerminalityTest extends TestCase
         $source = (string) file_get_contents(base_path('../../../src/AIWordPressManager.Web/Components/Pages/Sites.razor'));
         $frontend = (string) file_get_contents(resource_path('js/sites-retest-selected-control.tsx'));
         $app = (string) file_get_contents(resource_path('js/app.tsx'));
+        $tabs = (string) file_get_contents(resource_path('js/sites-management-tabs.tsx'));
 
         $this->assertStringContainsString('RetestSelectedAsync', $source);
         $this->assertStringContainsString('SiteService.RetestSitesAsync(ids)', $source);
@@ -34,7 +35,8 @@ final class SitesRetestSelectedTerminalityTest extends TestCase
         $this->assertStringContainsString('/connection/recheck', $frontend);
         $this->assertStringContainsString('query.refetch()', $frontend);
         $this->assertStringContainsString('connector.manage', $frontend);
-        $this->assertStringContainsString('SitesRetestSelectedControl', $app);
+        $this->assertStringContainsString('SitesManagementTabs', $app);
+        $this->assertStringContainsString('SitesRetestSelectedControl', $tabs);
 
         $route = Route::getRoutes()->match(Request::create('/api/tenants/alpha/sites/7/connection/recheck', 'POST'));
         $this->assertSame(SiteDiagnosticsController::class.'@recheck', ltrim($route->getActionName(), '\\'));
