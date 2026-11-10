@@ -48,7 +48,7 @@ final class ContentExplorerApplyFiltersTerminalityTest extends TestCase
         $this->assertStringContainsString("'search' => ['sometimes', 'nullable', 'string', 'max:200']", $controller);
         $this->assertStringContainsString("'status' => ['sometimes', 'nullable', 'string', 'max:64']", $controller);
         $this->assertStringContainsString("'type' => ['sometimes', 'nullable', 'string', 'max:16']", $controller);
-        $this->assertStringContainsString("'per_page' => ['sometimes', 'nullable', 'integer', 'min:1']", $controller);
+        $this->assertStringContainsString("'per_page' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:10000']", $controller);
         $this->assertStringContainsString("whereRaw(\"title LIKE ? ESCAPE '!'\"", $controller);
     }
 

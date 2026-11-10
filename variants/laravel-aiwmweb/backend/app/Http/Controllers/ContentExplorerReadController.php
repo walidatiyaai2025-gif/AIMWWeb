@@ -25,7 +25,7 @@ final class ContentExplorerReadController extends Controller
             'search' => ['sometimes', 'nullable', 'string', 'max:200'],
             'status' => ['sometimes', 'nullable', 'string', 'max:64'],
             'type' => ['sometimes', 'nullable', 'string', 'max:16'],
-            'per_page' => ['sometimes', 'nullable', 'integer', 'min:1'],
+            'per_page' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:10000'],
             'page' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
         ]);
         $search = trim((string) ($filters['search'] ?? ''));
