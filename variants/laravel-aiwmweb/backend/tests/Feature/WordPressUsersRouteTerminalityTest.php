@@ -145,6 +145,54 @@ final class WordPressUsersRouteTerminalityTest extends TestCase
         });
     }
 
+    public function test_users_page_size_is_validated_before_any_wordpress_rest_request(): void
+    {
+        $user = User::factory()->create();
+        $membership = $this->membership($user, 'alpha', ['tenant.view', 'sites.view']);
+        $site = $this->site($membership, 'https://alpha.example.test');
+        $this->credential($membership, $site);
+        $uri = "/api/v1/tenants/alpha/sites/{$site->id}/users";
+
+        Http::fake([
+            'https://alpha.example.test/wp-json/wp/v2/users*' => Http::response(
+                [['id' => 26, 'name' => 'Editor']],
+                200,
+                ['X-WP-Total' => '26', 'X-WP-TotalPages' => '2'],
+            ),
+        ]);
+
+        foreach (['0', '-1', 'invalid', '1.5', '101', '999999999999999999999', ''] as $invalidSize) {
+            $this->actingAs($user)
+                ->getJson("{$uri}?page=2&per_page={$invalidSize}")
+                ->assertUnprocessable()
+                ->assertJsonValidationErrors('per_page');
+        }
+        $this->actingAs($user)
+            ->getJson("{$uri}?page=2&per_page%5B%5D=25")
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('per_page');
+
+        // Malformed pagination must never contact a credential-bearing provider.
+        Http::assertNothingSent();
+
+        $this->actingAs($user)
+            ->getJson("{$uri}?page=2&per_page=25")
+            ->assertOk()
+            ->assertJsonPath('data.0.id', 26)
+            ->assertJsonPath('current_page', 2)
+            ->assertJsonPath('last_page', 2)
+            ->assertJsonPath('total', 26)
+            ->assertJsonPath('pagination_authoritative', true);
+
+        Http::assertSentCount(1);
+        Http::assertSent(static function ($request): bool {
+            parse_str((string) parse_url($request->url(), PHP_URL_QUERY), $query);
+
+            return ($query['page'] ?? null) === '2'
+                && ($query['per_page'] ?? null) === '25';
+        });
+    }
+
     public function test_users_page_validation_rejects_invalid_offsets_without_contacting_wordpress(): void
     {
         $user = User::factory()->create();
