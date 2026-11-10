@@ -48,6 +48,41 @@ final class SeoTenantRouteBindingRegressionTest extends TestCase
         }
     }
 
+    public function test_non_numeric_seo_site_ids_are_rejected_by_route_matching_before_controller_binding(): void
+    {
+        // All these handlers accept a typed site ID. A malformed URI must
+        // terminate at the router with 404, not throw a PHP TypeError / 500.
+        $routes = [
+            ['GET', '/api/tenants/wordpress/sites/{site}/seo/audits'],
+            ['POST', '/api/tenants/wordpress/sites/{site}/seo/audits'],
+            ['GET', '/api/tenants/wordpress/sites/{site}/seo/audits/1/findings'],
+            ['GET', '/api/tenants/wordpress/sites/{site}/seo/metadata/post/1'],
+            ['GET', '/api/tenants/wordpress/sites/{site}/seo/content/1/provider'],
+            ['POST', '/api/tenants/wordpress/sites/{site}/seo/findings/1/prepare'],
+            ['POST', '/api/tenants/wordpress/sites/{site}/seo/remediations/bulk'],
+            ['POST', '/api/tenants/wordpress/sites/{site}/seo/findings/1/ai-proposal'],
+            ['POST', '/api/tenants/wordpress/sites/{site}/seo/executions/bulk'],
+            ['POST', '/api/tenants/wordpress/sites/{site}/seo/executions/1/retry'],
+            ['GET', '/api/v1/tenants/wordpress/sites/{site}/seo/remediations/proposals'],
+            ['GET', '/api/v1/tenants/wordpress/sites/{site}/seo/remediations/history'],
+            ['POST', '/api/v1/tenants/wordpress/sites/{site}/seo/remediations/failed/retry'],
+            ['POST', '/api/v1/tenants/wordpress/sites/{site}/seo/remediations/executions/1/undo'],
+        ];
+
+        foreach (['not-a-site', '1invalid'] as $siteId) {
+            foreach ($routes as [$method, $path]) {
+                $url = str_replace('{site}', $siteId, $path);
+                $response = $method === 'GET'
+                    ? $this->getJson($url)
+                    : $this->postJson($url, []);
+                $response->assertNotFound();
+            }
+        }
+
+        $this->assertDatabaseCount('seo_audits', 0);
+        $this->assertDatabaseCount('executions', 0);
+    }
+
     public function test_authorized_empty_seo_audits_and_remediation_reads_return_json_not_server_error(): void
     {
         [$user, $membership] = $this->member('wordpress', ['tenant.view', 'seo.view']);
