@@ -23,6 +23,9 @@ final class WordPressUsersController extends Controller
         // Never trust the browser's role filter: validate before querying WordPress REST.
         $request->validate([
             'search' => ['nullable', 'string', 'max:255'],
+            // Do not coerce invalid or huge browser page values into a remote
+            // WordPress REST request. Keep the existing per_page compatibility.
+            'page' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
             'role' => ['nullable', Rule::in(['all', 'administrator', 'editor', 'author', 'contributor', 'subscriber'])],
         ]);
 
