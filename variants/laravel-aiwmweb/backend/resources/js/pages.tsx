@@ -437,7 +437,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const [search, setSearch] = useState(() => route.key === 'sites' ? readSitesUrlPageState().search : route.key === 'execution' ? readExecutionUrlState().search : '');
     const [page, setPage] = useState(() => route.key === 'sites' ? readSitesUrlPageState().page : route.key === 'execution' ? readExecutionUrlState().page : 1);
     // Only enable page-size changes on APIs with verified server-side per_page.
-    const [explorerPageSize, setExplorerPageSize] = useState(25);
+    const [explorerPageSize, setExplorerPageSize] = useState(10);
     const [emailHistoryPageSize, setEmailHistoryPageSize] = useState(25);
     const [applicationUsersPageSize, setApplicationUsersPageSize] = useState(25);
     const [rolesPageSize, setRolesPageSize] = useState(25);

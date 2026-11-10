@@ -27,7 +27,7 @@ const context = (overrides: Partial<SiteContext> = {}): SiteContext => ({
 
 describe('AIMW-SYNC-D805D5D9A8 GlobalMediaExplorer ApplyAsync', () => {
     it('preserves source media type and page-size choices with page-one read parameters', () => {
-        expect(defaultGlobalMediaFilters()).toEqual({ mediaType: 'all', pageSize: 24 });
+        expect(defaultGlobalMediaFilters()).toEqual({ mediaType: 'all', pageSize: 10 });
         expect(globalMediaApplyQuery({ mediaType: 'image', pageSize: 12 }))
             .toEqual({ mime_type: 'image', per_page: '12' });
         expect(globalMediaApplyQuery({ mediaType: 'all', pageSize: 96 }))

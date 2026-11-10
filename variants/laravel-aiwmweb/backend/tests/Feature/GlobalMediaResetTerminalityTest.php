@@ -37,7 +37,7 @@ final class GlobalMediaResetTerminalityTest extends TestCase
         $this->assertStringContainsString(self::OPERATION_ID, $control);
         $this->assertStringContainsString("search: ''", $control);
         $this->assertStringContainsString("mediaType: 'all'", $control);
-        $this->assertStringContainsString('pageSize: 24', $control);
+        $this->assertStringContainsString('pageSize: 10', $control);
         $this->assertStringContainsString('page: 1', $control);
         $this->assertStringContainsString('authoritativeGlobalMediaApplyEndpoint(context)', $page);
         $this->assertStringContainsString('resetGlobalMediaFilters', $page);
@@ -89,10 +89,10 @@ final class GlobalMediaResetTerminalityTest extends TestCase
             ->assertJsonPath('data.0.remote_id', 701);
 
         $this->actingAs($user)
-            ->getJson("/api/v1/tenants/alpha-media-reset/sites/{$site->id}/media?page=1&per_page=24")
+            ->getJson("/api/v1/tenants/alpha-media-reset/sites/{$site->id}/media?page=1&per_page=10")
             ->assertOk()
             ->assertJsonCount(2, 'data')
-            ->assertJsonPath('per_page', 24)
+            ->assertJsonPath('per_page', 10)
             ->assertJsonPath('current_page', 1);
     }
 
@@ -107,15 +107,15 @@ final class GlobalMediaResetTerminalityTest extends TestCase
         $betaSite = $this->site($beta, 'Beta Reset Boundary');
 
         $this->actingAs($alphaUser)
-            ->getJson("/api/v1/tenants/beta-reset-boundary/sites/{$betaSite->id}/media?page=1&per_page=24")
+            ->getJson("/api/v1/tenants/beta-reset-boundary/sites/{$betaSite->id}/media?page=1&per_page=10")
             ->assertNotFound();
 
         $this->actingAs($alphaUser)
-            ->getJson("/api/v1/tenants/alpha-reset-boundary/sites/{$betaSite->id}/media?page=1&per_page=24")
+            ->getJson("/api/v1/tenants/alpha-reset-boundary/sites/{$betaSite->id}/media?page=1&per_page=10")
             ->assertNotFound();
 
         $this->actingAs($alphaUser)
-            ->getJson("/api/v1/tenants/alpha-reset-boundary/sites/{$alphaSite->id}/media?page=1&per_page=24")
+            ->getJson("/api/v1/tenants/alpha-reset-boundary/sites/{$alphaSite->id}/media?page=1&per_page=10")
             ->assertOk();
     }
 

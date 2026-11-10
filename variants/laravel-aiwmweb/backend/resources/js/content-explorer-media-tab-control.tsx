@@ -34,23 +34,17 @@ export function authoritativeContentExplorerMediaHref(context: FrontendContext):
     return `${tenantUrl(context.tenant.slug, mediaRoute.path)}?site=${encodeURIComponent(String(siteId))}`;
 }
 
-export function ContentExplorerMediaTabControl({ context }: { context: FrontendContext }) {
+export function ContentExplorerMediaTabControl({ context, active = false }: { context: FrontendContext; active?: boolean }) {
     const { locale } = useLocale();
     const href = authoritativeContentExplorerMediaHref(context);
 
     if (!href) return null;
 
     return (
-        <nav className="toolbar-panel" aria-label={locale === 'ar' ? 'تبويبات مستكشف المحتوى' : 'Content Explorer tabs'}>
-            <div className="toolbar-actions">
-                <a
-                    className="btn"
-                    href={href}
-                    data-canonical-operation={CONTENT_EXPLORER_MEDIA_TAB_OPERATION_ID}
-                >
-                    ▣ {locale === 'ar' ? 'الوسائط' : 'Media'}
-                </a>
-            </div>
-        </nav>
+        <a className={active ? 'explorer-tab active' : 'explorer-tab'}
+            href={href} aria-current={active ? 'page' : undefined}
+            data-canonical-operation={CONTENT_EXPLORER_MEDIA_TAB_OPERATION_ID}>
+            ▣ {locale === 'ar' ? 'الوسائط' : 'Media'}
+        </a>
     );
 }

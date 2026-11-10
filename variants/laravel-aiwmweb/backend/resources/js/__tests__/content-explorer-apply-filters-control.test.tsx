@@ -86,6 +86,40 @@ describe('AIMW-SYNC-419C403EFB ContentExplorer ApplyFiltersAsync', () => {
         expect(fetchMock.mock.calls[0][1]?.method ?? 'GET').toBe('GET');
     });
 
+    it('loads ten filtered rows by default and allows the second authoritative page', async () => {
+        const fetchMock = vi.fn(async (url: string) => {
+            const next = String(url).includes('page=2');
+            const rows = Array.from({ length: next ? 7 : 10 }, (_, index) => ({
+                id: (next ? 10 : 0) + index + 1,
+                wordpress_id: (next ? 10 : 0) + index + 1,
+                type: 'post',
+                title: `Result ${(next ? 10 : 0) + index + 1}`,
+                slug: 'result',
+                status: 'publish',
+            }));
+            return new Response(JSON.stringify({
+                data: rows,
+                total: 17,
+                current_page: next ? 2 : 1,
+                last_page: 2,
+            }), { status: 200, headers: { 'content-type': 'application/json' } });
+        });
+        vi.stubGlobal('fetch', fetchMock);
+
+        renderControl();
+        expect(screen.getByLabelText('Page size')).toHaveValue('10');
+        fireEvent.click(screen.getByRole('button', { name: 'Search' }));
+        expect(await screen.findByText('Page 1 of 2')).toBeInTheDocument();
+        expect(screen.getAllByRole('row')).toHaveLength(11);
+        expect(fetchMock.mock.calls[0][0]).toContain('per_page=10');
+
+        fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+        expect(await screen.findByText('Page 2 of 2')).toBeInTheDocument();
+        await waitFor(() => expect(screen.getAllByRole('row')).toHaveLength(8));
+        expect(fetchMock.mock.calls[1][0]).toContain('per_page=10&page=2');
+        expect(screen.getByText('11–17 of 17')).toBeInTheDocument();
+    });
+
     it('surfaces read failure without a fabricated success state', async () => {
         vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(
             JSON.stringify({ message: 'Apply failed' }),

@@ -35,23 +35,17 @@ export function authoritativeContentExplorerCategoriesHref(context: FrontendCont
     return `${tenantUrl(context.tenant.slug, taxonomyRoute.path)}?site=${encodeURIComponent(String(siteId))}`;
 }
 
-export function ContentExplorerCategoriesTabControl({ context }: { context: FrontendContext }) {
+export function ContentExplorerCategoriesTabControl({ context, active = false }: { context: FrontendContext; active?: boolean }) {
     const { locale } = useLocale();
     const href = authoritativeContentExplorerCategoriesHref(context);
 
     if (!href) return null;
 
     return (
-        <nav className="toolbar-panel" aria-label={locale === 'ar' ? 'تبويبات مستكشف المحتوى' : 'Content Explorer tabs'}>
-            <div className="toolbar-actions">
-                <a
-                    className="btn"
-                    href={href}
-                    data-canonical-operation={CONTENT_EXPLORER_CATEGORIES_TAB_OPERATION_ID}
-                >
-                    # {locale === 'ar' ? 'التصنيفات' : 'Categories'}
-                </a>
-            </div>
-        </nav>
+        <a className={active ? 'explorer-tab active' : 'explorer-tab'}
+            href={href} aria-current={active ? 'page' : undefined}
+            data-canonical-operation={CONTENT_EXPLORER_CATEGORIES_TAB_OPERATION_ID}>
+            # {locale === 'ar' ? 'التصنيفات' : 'Categories'}
+        </a>
     );
 }

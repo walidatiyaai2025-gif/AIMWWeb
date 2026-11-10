@@ -3,12 +3,12 @@ import type { FrontendContext } from './core';
 
 export const GLOBAL_MEDIA_APPLY_OPERATION_ID = 'AIMW-SYNC-D805D5D9A8';
 export type GlobalMediaType = 'all' | 'image' | 'video' | 'audio' | 'application';
-export type GlobalMediaPageSize = 12 | 24 | 48 | 96;
+export type GlobalMediaPageSize = 10 | 12 | 24 | 48 | 96;
 export type GlobalMediaAppliedFilters = { mediaType: GlobalMediaType; pageSize: GlobalMediaPageSize };
 
 export const defaultGlobalMediaFilters = (): GlobalMediaAppliedFilters => ({
     mediaType: 'all',
-    pageSize: 24,
+    pageSize: 10,
 });
 
 export function globalMediaApplyQuery(filters: GlobalMediaAppliedFilters): Record<string, string> {
@@ -78,7 +78,7 @@ export function GlobalMediaApplyControl({
                     disabled={busy}
                     onChange={(event) => onPageSizeChange(Number(event.currentTarget.value) as GlobalMediaPageSize)}
                 >
-                    {[12, 24, 48, 96].map((size) => (
+                    {[10, 12, 24, 48, 96].map((size) => (
                         <option key={size} value={size}>{size}</option>
                     ))}
                 </select>
