@@ -83,6 +83,35 @@ final class SeoTenantRouteBindingRegressionTest extends TestCase
         $this->assertDatabaseCount('executions', 0);
     }
 
+    public function test_malformed_nested_seo_identifiers_fail_at_router_before_typed_controller_binding(): void
+    {
+        // All nested placeholders below bind to PHP int arguments in the
+        // corresponding SEO controller methods. Do not allow invalid strings
+        // through to controller dispatch (TypeError / HTTP 500).
+        $routes = [
+            ['GET', '/api/tenants/wordpress/sites/1/seo/audits/{id}/findings'],
+            ['GET', '/api/tenants/wordpress/sites/1/seo/metadata/post/{id}'],
+            ['GET', '/api/tenants/wordpress/sites/1/seo/content/{id}/provider'],
+            ['POST', '/api/tenants/wordpress/sites/1/seo/findings/{id}/prepare'],
+            ['POST', '/api/tenants/wordpress/sites/1/seo/findings/{id}/ai-proposal'],
+            ['POST', '/api/tenants/wordpress/sites/1/seo/executions/{id}/retry'],
+            ['POST', '/api/v1/tenants/wordpress/sites/1/seo/remediations/executions/{id}/undo'],
+        ];
+
+        foreach (['not-an-id', '1invalid'] as $identifier) {
+            foreach ($routes as [$method, $path]) {
+                $url = str_replace('{id}', $identifier, $path);
+                $response = $method === 'GET'
+                    ? $this->getJson($url)
+                    : $this->postJson($url, []);
+                $response->assertNotFound();
+            }
+        }
+
+        $this->assertDatabaseCount('seo_audits', 0);
+        $this->assertDatabaseCount('executions', 0);
+    }
+
     public function test_authorized_empty_seo_audits_and_remediation_reads_return_json_not_server_error(): void
     {
         [$user, $membership] = $this->member('wordpress', ['tenant.view', 'seo.view']);
