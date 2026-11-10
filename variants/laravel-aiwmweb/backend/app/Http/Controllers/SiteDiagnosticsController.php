@@ -54,9 +54,10 @@ final class SiteDiagnosticsController extends Controller
         return response()->json($diagnostics->capabilities(Site::query()->findOrFail($site)));
     }
 
-    public function diagnosticHistory(Request $request, int|string $site, TenantAuthorizer $auth, SiteDiagnosticsService $diagnostics): JsonResponse
+    public function diagnosticHistory(Request $request, string $tenant, int|string $site, TenantContext $context, TenantAuthorizer $auth, SiteDiagnosticsService $diagnostics): JsonResponse
     {
         $auth->authorize('tenant.view');
+        abort_unless($tenant === $context->tenant()->slug, 404);
         $siteId = $this->siteId($site);
         $model = Site::query()->findOrFail($siteId);
 
