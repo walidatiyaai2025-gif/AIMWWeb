@@ -39,15 +39,16 @@ export function authoritativeContentExplorerTagsHref(context: FrontendContext): 
     return `${tenantUrl(context.tenant.slug, taxonomyRoute.path)}?site=${encodeURIComponent(String(siteId))}&taxonomy=post_tag`;
 }
 
-export function ContentExplorerTagsTabControl({ context }: { context: FrontendContext }) {
+export function ContentExplorerTagsTabControl({ context, active = false }: { context: FrontendContext; active?: boolean }) {
     const { locale } = useLocale();
     const href = authoritativeContentExplorerTagsHref(context);
     if (!href) return null;
 
     return (
         <a
-            className="explorer-tab"
+            className={active ? 'explorer-tab active' : 'explorer-tab'}
             href={href}
+            aria-current={active ? 'page' : undefined}
             data-canonical-operation={CONTENT_EXPLORER_TAGS_TAB_OPERATION_ID}
         >
             ⌗ {locale === 'ar' ? 'الوسوم' : 'Tags'}

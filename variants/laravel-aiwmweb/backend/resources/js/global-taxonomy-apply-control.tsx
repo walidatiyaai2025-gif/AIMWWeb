@@ -10,7 +10,7 @@ export type GlobalTaxonomyApplyFilters = {
 };
 export const defaultGlobalTaxonomyApplyFilters = (): GlobalTaxonomyApplyFilters => ({
     minimumUsage: 0,
-    pageSize: 25,
+    pageSize: 10,
 });
 export function globalTaxonomyApplyQuery(filters: GlobalTaxonomyApplyFilters): Record<string, string> {
     return { minimum_usage: String(filters.minimumUsage), per_page: String(filters.pageSize) };

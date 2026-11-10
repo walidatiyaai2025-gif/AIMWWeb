@@ -33,7 +33,7 @@ describe('AIMW-SYNC-9B87CACA17 GlobalMediaExplorer ResetAsync', () => {
         expect(globalMediaResetState()).toEqual({
             search: '',
             mediaType: 'all',
-            pageSize: 24,
+            pageSize: 10,
             page: 1,
         });
         expect(GLOBAL_MEDIA_RESET_OPERATION_ID).toBe('AIMW-SYNC-9B87CACA17');

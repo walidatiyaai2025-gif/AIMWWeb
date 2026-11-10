@@ -2,6 +2,7 @@ import React, { type FormEvent, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest, type FrontendContext } from './core';
 import { useLocale } from './i18n';
+import { ContentExplorerPagination } from './content-explorer-previous-page-control';
 
 export const CONTENT_EXPLORER_APPLY_FILTERS_OPERATION_ID = 'AIMW-SYNC-419C403EFB';
 
@@ -74,8 +75,11 @@ export function ContentExplorerApplyFiltersControl({ context }: { context: Front
     const [perPage, setPerPage] = useState(10);
     const [applied, setApplied] = useState<ExplorerFilters | null>(null);
     const [revision, setRevision] = useState(0);
+    const [page, setPage] = useState(1);
 
-    const requestUrl = endpoint && applied ? contentExplorerFilterUrl(endpoint, applied) : null;
+    const requestUrl = endpoint && applied
+        ? contentExplorerFilterUrl(endpoint, applied) + (page > 1 ? `&page=${page}` : '')
+        : null;
     const query = useQuery({
         queryKey: [
             'content-explorer-apply-filters',
@@ -92,6 +96,7 @@ export function ContentExplorerApplyFiltersControl({ context }: { context: Front
 
     const apply = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        setPage(1);
         setApplied({ search, type, status, perPage });
         setRevision((value) => value + 1);
     };
@@ -189,6 +194,14 @@ export function ContentExplorerApplyFiltersControl({ context }: { context: Front
                             </table>
                         </div>
                     )}
+                    <ContentExplorerPagination
+                        page={query.data.current_page}
+                        lastPage={query.data.last_page}
+                        total={query.data.total}
+                        pageSize={applied?.perPage}
+                        returnedCount={query.data.data.length}
+                        onPage={setPage}
+                    />
                 </div>
             ) : null}
         </section>

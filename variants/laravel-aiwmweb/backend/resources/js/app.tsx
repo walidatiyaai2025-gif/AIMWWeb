@@ -42,8 +42,8 @@ import { GlobalSynchronizationLocalContentLinkControl } from './global-synchroni
 import { GlobalSynchronizationConnectSiteLinkControl } from './global-synchronization-connect-site-link-control';
 import { ContentExplorerSynchronizeControl } from './content-explorer-synchronize-control';
 import { ContentExplorerExecutionLinkControl } from './content-explorer-execution-link-control';
-import { ContentExplorerContentTabControl } from './content-explorer-content-tab-control';
-import { ContentExplorerTagsTabControl } from './content-explorer-tags-tab-control';
+import { canSelectAuthoritativeContentExplorerTab, CONTENT_EXPLORER_CONTENT_TAB_OPERATION_ID, ContentExplorerContentTabControl } from './content-explorer-content-tab-control';
+import { ContentExplorerTagsTabControl, requestedTaxonomyTypeFromLocation } from './content-explorer-tags-tab-control';
 import { ContentExplorerCategoriesTabControl } from './content-explorer-categories-tab-control';
 import { ContentExplorerMediaTabControl } from './content-explorer-media-tab-control';
 import { ContentEditorSaveControl } from './content-editor-save-control';
@@ -222,6 +222,36 @@ function AiWorkspaceRoute() {
     return <AiWorkspaceHub context={context} />;
 }
 
+
+/** Navigation tabs retain the site context while switching between real Laravel workspaces. */
+function ExplorerTabStrip({ context, section }: { context: FrontendContext; section: 'explorer' | 'taxonomy' | 'media' }) {
+    const { locale } = useLocale();
+    const siteId = (context as FrontendContext & { active_site?: { id: number } | null }).active_site?.id;
+    if (!Number.isSafeInteger(siteId) || Number(siteId) <= 0) return null;
+
+    const selected = section === 'taxonomy'
+        ? (requestedTaxonomyTypeFromLocation() === 'post_tag' ? 'tags' : 'categories')
+        : section === 'media' ? 'media' : 'content';
+    const explorerPath = workspaceRoutes.find((entry) => entry.key === 'explorer')?.path;
+    const contentHref = explorerPath && canSelectAuthoritativeContentExplorerTab(context)
+        ? `${tenantUrl(context.tenant.slug, explorerPath)}?site=${encodeURIComponent(String(siteId))}`
+        : null;
+
+    return (
+        <nav className="content-explorer-tabs" aria-label={locale === 'ar' ? 'أقسام المستكشف' : 'Explorer sections'}>
+            {section === 'explorer'
+                ? <ContentExplorerContentTabControl context={context} />
+                : contentHref ? <Link className="explorer-tab" to={contentHref}
+                    data-canonical-operation={CONTENT_EXPLORER_CONTENT_TAB_OPERATION_ID}>
+                    ▤ {locale === 'ar' ? 'المحتوى' : 'Content'}
+                </Link> : null}
+            <ContentExplorerCategoriesTabControl context={context} active={selected === 'categories'} />
+            <ContentExplorerTagsTabControl context={context} active={selected === 'tags'} />
+            <ContentExplorerMediaTabControl context={context} active={selected === 'media'} />
+        </nav>
+    );
+}
+
 function RouteElement({ route }: { route: WorkspaceRoute }) {
     const { context } = useOutletContext<OutletState>();
     if (route.key === 'site-snapshot' || route.key === 'site-offline-data') return <SiteDataSnapshotSyncControl context={context} />;
@@ -238,11 +268,11 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
         </>
     );
     if (route.key === 'dashboard') return <><DashboardExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
-    if (route.key === 'sites') return <SitesManagementTabs context={context}><WorkspacePage context={context} route={route} /></SitesManagementTabs>;
-    if (route.key === 'explorer') return <><ContentExplorerContentTabControl context={context} /><ContentExplorerTagsTabControl context={context} /><ContentExplorerCategoriesTabControl context={context} /><ContentExplorerDynamicLinksControl context={context} /><ContentExplorerMediaTabControl context={context} /><ContentExplorerExecutionLinkControl context={context} /><ContentExplorerSynchronizeControl context={context} /><ContentExplorerApplyFiltersControl context={context} /><ContentExplorerBulkTrashControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'sites') return <SitesManagementTabs context={context}><WorkspacePage context={context} route={route} /></SitesManagementTabs>;;
+    if (route.key === 'explorer') return <><ExplorerTabStrip context={context} section="explorer" /><ContentExplorerDynamicLinksControl context={context} /><ContentExplorerExecutionLinkControl context={context} /><ContentExplorerSynchronizeControl context={context} /><ContentExplorerApplyFiltersControl context={context} /><ContentExplorerBulkTrashControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'content-hub') return <><ContentHubAllSitesControl context={context} /><ContentHubLiveContentPanel context={context} /><ContentHubSiteLinksControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'content-planner') return <><ContentPlannerAiCenterLinkControl context={context} /><ContentPlannerExecutionLinkControl context={context} /><ContentPlannerNewItemControl context={context} /><ContentPlannerReloadControl context={context} /><WorkspacePage context={context} route={route} /></>;
-    if (route.key === 'media') return <><MediaPagesLinkControl context={context} /><MediaBatchClearSelectionControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'media') return <><ExplorerTabStrip context={context} section="media" /><MediaPagesLinkControl context={context} /><MediaBatchClearSelectionControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'pages') return <><GlobalPagesConfirmTrashControl context={context} /><GlobalPagesOpenSynchronizationLinkControl context={context} /><PagesPostsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'posts') return <><GlobalPostsOpenSynchronizationLinkControl context={context} /><GlobalPostsConfirmTrashControl context={context} /><PostsExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'sync') return <><GlobalSynchronizationRefreshStatusControl context={context} /><GlobalSynchronizationConnectSiteLinkControl context={context} /><GlobalSynchronizationLocalContentLinkControl context={context} /><GlobalSynchronizationReviewConflictsControl context={context} /><GlobalSynchronizationAcceptRemoteControl context={context} /><WorkspacePage context={context} route={route} /></>;
@@ -250,7 +280,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     if (route.key === 'import-export') return <ImportExportWorkspace context={context} />;
     if (route.key === 'comments') return <><CommentsBackToSitesControl context={context} /><CommentsCommentLinksControl context={context} /><CommentsContentHubLink context={context} /><CommentsManageSiteControl context={context} /><WorkspacePage context={context} route={route} /><CommentsBackToExplorerControl context={context} /></>;
     if (route.key === 'wp-users') return <><WordPressUsersBackToSitesControl context={context} /><WordPressUsersBackToExplorerControl context={context} /><WorkspacePage context={context} route={route} /></>;
-    if (route.key === 'taxonomy') return <><TaxonomyBackToSitesControl context={context} /><GlobalTaxonomyPostsLinkControl context={context} /><GlobalTaxonomySyncLinkControl context={context} /><TaxonomyBackToExplorerControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'taxonomy') return <><ExplorerTabStrip context={context} section="taxonomy" /><TaxonomyBackToSitesControl context={context} /><GlobalTaxonomyPostsLinkControl context={context} /><GlobalTaxonomySyncLinkControl context={context} /><TaxonomyBackToExplorerControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'approvals') return <ApprovalQueueRoute context={context} route={route} />;
     if (route.key === 'email-schedules') return <><EmailSchedulesHistoryLinkControl context={context} /><EmailSchedulesCreateControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'execution') return <><ExecutionConnectSiteControl context={context} /><WorkspacePage context={context} route={route} /></>;

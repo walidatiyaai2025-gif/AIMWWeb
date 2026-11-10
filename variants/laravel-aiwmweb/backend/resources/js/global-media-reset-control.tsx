@@ -6,7 +6,7 @@ export const GLOBAL_MEDIA_RESET_OPERATION_ID = 'AIMW-SYNC-9B87CACA17';
 export type GlobalMediaResetState = {
     search: string;
     mediaType: string;
-    pageSize: 24;
+    pageSize: 10;
     page: 1;
 };
 
@@ -18,7 +18,7 @@ export function globalMediaResetState(): GlobalMediaResetState {
     return {
         search: '',
         mediaType: 'all',
-        pageSize: 24,
+        pageSize: 10,
         page: 1,
     };
 }

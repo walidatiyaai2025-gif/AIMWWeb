@@ -1186,3 +1186,50 @@ body, button, input, textarea, select, option { font-family: var(--aiwm-google-f
     padding-inline: .4rem;
     white-space: normal;
 }
+
+/* #1796 — Explorer navigation is one tab strip, not a row of separate cards. */
+.content-explorer-tabs {
+    display: flex;
+    align-items: stretch;
+    gap: .35rem;
+    max-width: 100%;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--border);
+    padding-inline: .35rem;
+    background: transparent;
+    scrollbar-width: thin;
+}
+.content-explorer-tabs .explorer-tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    min-height: 44px;
+    padding: .7rem 1rem;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    color: var(--muted);
+    box-shadow: none;
+    text-decoration: none;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.content-explorer-tabs .explorer-tab:is(.active, [aria-current="page"]) {
+    color: var(--accent-strong);
+    border-bottom-color: var(--accent);
+}
+.content-explorer-tabs .explorer-tab:hover {
+    color: var(--text);
+    background: var(--surface2);
+}
+.content-explorer-tabs .explorer-tab:focus-visible {
+    outline: 2px solid var(--accent-strong);
+    outline-offset: -3px;
+}
+@media (max-width: 720px) {
+    .content-explorer-tabs .explorer-tab { padding-inline: .7rem; }
+}

@@ -28,7 +28,7 @@ afterEach(() => { vi.restoreAllMocks(); window.localStorage.clear(); });
 describe('AIMW-SYNC-B955324F04 GlobalTaxonomyExplorer ApplyAsync', () => {
     it('exposes exact source default/minimum usage/page size filters for server read', () => {
         expect(GLOBAL_TAXONOMY_APPLY_OPERATION_ID).toBe('AIMW-SYNC-B955324F04');
-        expect(defaultGlobalTaxonomyApplyFilters()).toEqual({ minimumUsage: 0, pageSize: 25 });
+        expect(defaultGlobalTaxonomyApplyFilters()).toEqual({ minimumUsage: 0, pageSize: 10 });
         expect(globalTaxonomyApplyQuery({ minimumUsage: 5, pageSize: 50 }))
             .toEqual({ minimum_usage: '5', per_page: '50' });
     });
@@ -42,7 +42,7 @@ describe('AIMW-SYNC-B955324F04 GlobalTaxonomyExplorer ApplyAsync', () => {
                 busy={false} onApplyRequested={onApplyRequested} />
         </LocaleProvider>);
         fireEvent.change(screen.getByLabelText('Minimum usage'), { target: { value: '10' } });
-        expect(onChange).toHaveBeenCalledWith({ minimumUsage: 10, pageSize: 25 });
+        expect(onChange).toHaveBeenCalledWith({ minimumUsage: 10, pageSize: 10 });
         fireEvent.change(screen.getByLabelText('Page size'), { target: { value: '100' } });
         expect(onChange).toHaveBeenCalledWith({ minimumUsage: 0, pageSize: 100 });
         const button = screen.getByRole('button', { name: 'Apply filters' });
