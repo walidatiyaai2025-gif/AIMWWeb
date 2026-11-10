@@ -108,12 +108,7 @@ import { SiteDetailsSiteUrlControl } from './site-details-site-url-control';
 import { SiteOnboardingSaveTestSyncControl } from './site-onboarding-save-test-sync-control';
 import { SiteDataSnapshotSyncControl } from './site-data-snapshot-sync-control';
 import { SiteConnectionCenterSyncControl } from './site-connection-center-sync-control';
-import { SitesBulkDeleteControl } from './sites-bulk-delete-control';
-import { SitesDisableSelectedControl } from './sites-disable-selected-control';
-import { SitesBulkOperationalStateControl } from './sites-bulk-operational-state-control';
-import { SitesDeleteControl } from './sites-delete-control';
-import { SitesSaveControl } from './sites-save-control';
-import { SitesRetestSelectedControl } from './sites-retest-selected-control';
+import { SitesManagementTabs } from './sites-management-tabs';
 import { SystemHealthWorkspace } from './system-health-workspace';
 
 installRuntimeInspectorCapture();
@@ -243,7 +238,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
         </>
     );
     if (route.key === 'dashboard') return <><DashboardExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
-    if (route.key === 'sites') return <><div className="sites-management-grid" data-testid="sites-management-grid"><SitesSaveControl context={context} /><SitesRetestSelectedControl context={context} /><SitesBulkOperationalStateControl context={context} /><SitesDeleteControl context={context} /><SitesBulkDeleteControl context={context} /><SitesDisableSelectedControl context={context} /></div><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'sites') return <SitesManagementTabs context={context}><WorkspacePage context={context} route={route} /></SitesManagementTabs>;
     if (route.key === 'explorer') return <><ContentExplorerContentTabControl context={context} /><ContentExplorerTagsTabControl context={context} /><ContentExplorerCategoriesTabControl context={context} /><ContentExplorerDynamicLinksControl context={context} /><ContentExplorerMediaTabControl context={context} /><ContentExplorerExecutionLinkControl context={context} /><ContentExplorerSynchronizeControl context={context} /><ContentExplorerApplyFiltersControl context={context} /><ContentExplorerBulkTrashControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'content-hub') return <><ContentHubAllSitesControl context={context} /><ContentHubLiveContentPanel context={context} /><ContentHubSiteLinksControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'content-planner') return <><ContentPlannerAiCenterLinkControl context={context} /><ContentPlannerExecutionLinkControl context={context} /><ContentPlannerNewItemControl context={context} /><ContentPlannerReloadControl context={context} /><WorkspacePage context={context} route={route} /></>;
